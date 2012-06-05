@@ -1,4 +1,4 @@
-comic-django
-============
+Comic Django Frontend
+=====================
 
-Django web-frontend for the Comic project
+This repository contains the Django-based web frontend for the Comic project.  "Comic" stands for *Consortium for Open Medical Image Computing*.
