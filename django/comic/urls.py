@@ -1,8 +1,9 @@
 from django.conf.urls import patterns, include, url
+from django.views.generic import ListView
+from django.contrib import admin
+from ComicSite.models import ComicSite 
 
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
@@ -13,5 +14,12 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls)),
+    
+    # main page 
+    url(r'^$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
+    
+    #specific view of single comicsite
+    url(r'^site/(?P<site_id>\d+)/$','ComicSite.views.site'),
 )
+    
