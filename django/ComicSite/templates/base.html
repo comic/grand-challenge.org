@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>COMIC main portal</title>
+		<meta name="description" content="COMIC main portal" />
+		<meta name="keywords" content="COMIC, open, science, medical, image, computing" />
+		<link href="{{STATIC_URL}}css/base.css" type="text/css" rel="stylesheet">
+	</head>
+	<body>
+		<div id="page">
+			<div id="header" style="background-image:url('{{ STATIC_URL }}img/top_image.jpg'); background-repeat:no-repeat">				
+			</div>
+			<div id="navMenuContainer">
+				<div class = "grayBar" id="navMenu">
+					<ul>
+						<li class="selectedMenuItem">
+							<a href="/">Home</a>
+					</ul>
+				</div>
+			</div>
+
+			<div id="container">
+				{% block content %} content {% endblock %}
+
+			</div>
+			<!-- container -->
+			<div id="footer">				
+			</div>
+
+		</div>
+		<!-- page -->
+
+	</body>
+</html>

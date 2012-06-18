@@ -1,0 +1,354 @@
+body {
+	font-size: large;
+	background-color: #F9F9F9;
+	font-family: sans-serif;
+
+}
+
+
+/*=================  everything below this line pasted from lola 11 just to get someting going*/
+
+
+/**/
+html
+{
+    overflow: -moz-scollbars-vertical; /*make scollbar always visable to counteract scrolbar shift*/
+    overflow-y:scroll;
+}
+
+#page 
+{
+   
+   margin-left:auto;
+   margin-right:auto;
+  
+      
+   width: 95ex;
+   
+   font-family : Verdana,helvetica,sans-serif;
+   font-size: 10pt;
+ 
+   
+}
+#header {
+   width: 100%;   
+   float: left;
+   
+}
+#header-content {
+   width: 100%;   
+   border:3px solid #dfdfdf;
+   border-bottom-style:none;
+   
+}
+#container {
+   width: 100%;
+   background-color: #ffffff;
+   float: left;
+}
+
+
+#main-content {
+   width: 95ex; /*For better readbility*/   
+   float: left;
+}
+
+#content-item {
+   background-color: #ffffff;
+   margin-left: 15px;
+   margin-right: 20px;
+   margin-bottom: 20px;
+}
+
+#footer {
+   width: 100%;   
+   float: left;
+   padding:0.5em;
+   font-size:smaller;
+   border-top: 3px solid #dfdfdf;
+   margin-top: 1.5em;
+   color: #666666;
+   
+   
+}
+#footer-content {      
+
+}
+#footer div
+{
+    margin-right:1em;
+    float:left;    
+}
+
+#footer a
+{    
+    text-decoration:none;  
+    color:inherit;    
+}
+
+/*============================= Einde Extra CSS om 2 page layout te testen  ============================================*/
+
+/*============================= Nieuwe syntax na 27/01/2011  ============================================*/
+
+
+#navMenu
+{
+    padding-left: 0.8ex; /*Allign menu and text*/
+       
+    
+    
+}
+
+#navMenu li
+{    
+    float:left;
+    padding-right: 1ex;    
+    padding-left: 1ex;        
+    padding-bottom:0.5ex;
+    padding-top:0.5ex;
+    list-style-type:none;
+    vertical-align:baseline;
+    
+    font-weight:bold;
+    
+    
+}
+
+#navMenu li:hover
+{
+    background-color:#efefef;
+}
+
+
+li.selectedMenuItem
+{    
+    /*background-color:White;*/
+    
+}
+
+#headerImageAndText
+{
+    height: 80px;
+    /*background-color:White;*/
+    
+}
+
+#navMenu ul
+{    
+    padding-left:0px;
+   
+}
+
+#navMenuContainer
+{
+    
+}
+
+#login
+{    
+    float:right;        
+    font-size:small;
+    background-color:White;
+    padding:0.5ex;
+        
+}
+
+#headerImage{
+    float:left;
+}
+#headerText
+{
+    margin-left:1em; 
+    float:left;
+}
+
+.fileCollectionContainer th /*Used in download file menu*/
+{   
+    text-align:left;
+    padding-right:4em;
+}
+
+.fileCollectionContainer td
+{    
+    padding-right:4em;
+}
+
+.editButtonContainer
+{
+    height:1px;
+    width:100%;    
+}
+
+.editButtonDiv /*Edit this page button */
+{
+    font-size:x-small;
+    float:right
+    
+                  
+}
+
+.grayBar
+{
+    background-color: #dfdfdf;          
+}
+.grayBar a
+{
+    text-decoration:none; /*stop menu links going purple underlined*/ 
+    color:inherit;
+}
+
+.validation-summary-errors
+{
+    color:Red;
+      
+}
+
+#footer #copyrightNotice
+{
+    float:right;
+}
+
+.editor-field
+{
+    
+    
+    
+}
+ 
+ .editor-label
+{
+        
+}    
+
+.sideInfo
+{
+    font-size:small;
+}
+
+#RegistrationForm
+{
+    padding-left:2ex; /*align form with text */
+        
+}
+
+#TeamUrl, #Email, #ContactPerson, #Affiliation
+{
+    width:60ex; /*Extra space for specific registration fields*/
+}
+
+.field-validation-error
+{
+    color:Red;
+    background-color:#ffdfdf;
+    
+    
+}
+
+.fileCollectionContainer
+{
+    margin-bottom:4ex;
+    
+    
+}
+
+.fileCollectionContainer table
+{
+    padding-left: 1ex;
+            
+}
+
+.fileCollectionContainer table
+{
+    padding-left: 1ex;
+       
+}
+.greyedOutText
+{
+    color: Gray;
+}
+
+.resultsTable
+{
+	width: 100%;
+	
+}
+
+.resultsTable th
+{
+	border-bottom: 2px solid #dfdfdf;
+	border-right: 2px solid #dfdfdf;
+	
+}
+.resultsTable td
+{
+	border-right: 2px solid #dfdfdf;
+	
+	
+}
+
+.Score td
+{
+	border-top: 2px solid #dfdfdf;
+}
+
+.ResultsOverviewTable td
+{
+	padding-right: 1em
+	/*
+	border-bottom: 2px solid #dfdfdf;
+	border-left: 2px solid #dfdfdf;
+	*/
+
+}
+
+.ResultsOverviewTable th
+{
+	border: 1px #dfdfdf solid;
+	/*
+	border-bottom: 2px solid #dfdfdf;
+	border-left: 2px solid #dfdfdf;
+	*/
+
+}
+
+.ResultsOverviewTable .trOdd
+{
+	background-color: #dfdfdf;
+	
+
+}
+
+/*07/10/2011 - used in result display for error messages*/
+.generalChallengeError
+{
+    color:Red;
+    background-color:#ffdfdf;
+    
+}
+
+/*07/10/2011 - used for displaying result screenshots*/
+.resultImageContainer
+{
+    float:left;
+    padding-right:1em;
+}
+
+/*10/10/2011 - used for entering an int, for example scan number*/
+.intSelectTextBox
+{
+    width:3em;
+    margin-left:1ex;
+    margin-right:1ex;
+}
+
+/*10/10/2011 - used for layout of resultviewer controls into columns*/
+.resultviewerControlsColumn
+{
+    padding-right:5em;
+}
+
+/*10/10/2011 - So not pad last column because it eats up space*/
+.resultviewerControlsLastColumn
+{
+    
+}
