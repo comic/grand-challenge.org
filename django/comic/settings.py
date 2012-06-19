@@ -1,4 +1,5 @@
 # Django settings for comic project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -7,18 +8,27 @@ ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
+
+# Sjoerd 19-06-2012: used as starting points for various other paths.
+# realpath(__file__) starts in the "Comic" app dir. We need to 
+# go one dir higher. Path.dirname twice will do this
+SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+
 MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'D:\\userdata\\Sjoerd\\Aptana Studio 3 Workspace\\comic-django\\django\\sqlite.db',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(SITE_ROOT,'sqlite.db'),                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+print("path = "+os.path.join(SITE_ROOT,'sqlite.db'))
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -71,7 +81,8 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     
-    "D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic-django/django/Static",
+    os.path.join(SITE_ROOT,"Static"),
+    #"D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic-django/django/Static",
 )
 
 # List of finder classes that know how to find static files in
