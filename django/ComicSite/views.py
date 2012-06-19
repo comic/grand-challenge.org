@@ -9,6 +9,7 @@ Testing views. Each of these views is referenced in urls.py
 from django.http import HttpResponse
 from ComicSite.models import ComicSite,Page
 from django.http import Http404
+from django.shortcuts import render_to_response
 
 def index(request):
     return  HttpResponse("ComicSite index page.")
@@ -24,8 +25,11 @@ def site(request, site_id):
     pages = Page.objects.filter(ComicSite=s)
     pageHTML = ""
     for page in pages:
-        pageHTML += givePageHTML(page) 
-    return HttpResponse("Loading site id '%s', name was '%s'<br/>%s" %(s.pk ,s.name,pageHTML))
+        pageHTML += givePageHTML(page)
+        
+    allHTML = "Loading site id '%s', name was '%s'<br/>%s" %(s.pk ,s.name,pageHTML)
+    return render_to_response('site.html', {'site': s, 'pages': pages})
+    # return HttpResponse("Loading site id '%s', name was '%s'<br/>%s" %(s.pk ,s.name,pageHTML))
 
 
 def page(request, page_id):

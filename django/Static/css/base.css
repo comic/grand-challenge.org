@@ -33,6 +33,7 @@ html
 #header {
    width: 100%;   
    float: left;
+   height:80px;
    
 }
 #header-content {

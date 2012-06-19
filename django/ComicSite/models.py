@@ -4,8 +4,7 @@ from django.contrib.sites.models import Site
 # Create your models here.
 class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
-    
-    
+        
     skin = models.CharField(max_length = 225)
 
 
