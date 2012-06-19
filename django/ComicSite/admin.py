@@ -17,9 +17,7 @@ class PageAdmin(admin.ModelAdmin):
     #Show these page params in admin overview list 
     list_display = ('title','ComicSite')
     ordering = ['ComicSite']
+        
     
-    
-    
-
 
 admin.site.register(Page,PageAdmin)    

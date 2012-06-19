@@ -20,7 +20,10 @@ urlpatterns = patterns('',
     url(r'^$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
     
     #specific view of single comicsite
-    url(r'^site/(?P<site_id>\d+)/$','ComicSite.views.site'),
-    url(r'^site/(?P<site_id>\d+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
+    url(r'^site/(?P<site_name>\w+)/$','ComicSite.views.site'),
+    
+    url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
+    
+    #url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
 )
     
