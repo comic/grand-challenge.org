@@ -12,6 +12,6 @@ class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
     ComicSite = models.ForeignKey("ComicSite")
-    title = models.CharField(max_length = 255)
+    title = models.CharField(max_length = 255, unique=True)
     html = models.TextField()
     

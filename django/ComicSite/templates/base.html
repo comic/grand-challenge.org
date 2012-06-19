@@ -11,12 +11,17 @@
 	<body>
 		<div id="page">
 			<div id="header" style="background-image:url('{% get_static_prefix %}img/top_image.jpg'); background-repeat:no-repeat">				
+				<div id="headerTitle"?>
+					{% block headerTitle %} {% endblock %}
+				</div>
 			</div>
 			<div id="navMenuContainer">
 				<div class = "grayBar" id="navMenu">
 					<ul>
 						<li class="selectedMenuItem">
 							<a href="/">Home</a>
+						</li>
+						{% block topmenu %} {% endblock %}
 					</ul>
 				</div>
 			</div>

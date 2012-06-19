@@ -21,5 +21,6 @@ urlpatterns = patterns('',
     
     #specific view of single comicsite
     url(r'^site/(?P<site_id>\d+)/$','ComicSite.views.site'),
+    url(r'^site/(?P<site_id>\d+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
 )
     

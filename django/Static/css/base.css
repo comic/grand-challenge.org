@@ -36,6 +36,15 @@ html
    height:80px;
    
 }
+
+#headerTitle{
+	
+	font-size: 48px;
+    padding-left: 12px;
+    padding-top: 10px;
+
+}
+
 #header-content {
    width: 100%;   
    border:3px solid #dfdfdf;

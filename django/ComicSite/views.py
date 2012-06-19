@@ -16,28 +16,42 @@ def index(request):
 
 
 def site(request, site_id):
+    """ show a single COMIC site, default start page """
     
     try:
         s = ComicSite.objects.get(pk=site_id)
     except ComicSite.DoesNotExist:                
         raise Http404            
     
-    pages = Page.objects.filter(ComicSite=s)
-    pageHTML = ""
-    for page in pages:
-        pageHTML += givePageHTML(page)
-        
-    allHTML = "Loading site id '%s', name was '%s'<br/>%s" %(s.pk ,s.name,pageHTML)
+    pages = getPages(site_id)
+                    
     return render_to_response('site.html', {'site': s, 'pages': pages})
-    # return HttpResponse("Loading site id '%s', name was '%s'<br/>%s" %(s.pk ,s.name,pageHTML))
+    
 
 
-def page(request, page_id):
+def page(request, site_id, page_title):
+    """ show a single page on a site """
+    
     try:
-        p = Page.objects.get(pk=page_id)
+        p = Page.objects.get(ComicSite__pk=site_id, title=page_title)
     except Page.DoesNotExist:                
-        raise Http404            
-    return HttpResponse(givePageHTML(p))
+        raise Http404
+    pages = getPages(site_id)
+    
+    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages })
+                
+    #return HttpResponse(givePageHTML(p))
+    
+
+def getPages(site_id):
+    """ get all pages of the given site from db"""
+    try:
+        pages = Page.objects.filter(ComicSite__pk=site_id)
+    except Page.DoesNotExist:                
+        raise Http404
+    return pages
+
+    
 
 def givePageHTML(page):
     return "<h1>%s</h1> <p>%s</p>" %(page.title ,page.html)

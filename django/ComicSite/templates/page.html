@@ -1,12 +1,10 @@
-<head>
-	
-</head>
+{% extends "site.html" %}
 
-<body>
-	<p>Show single page</p>
-	{% for hw in object_list %}
-	<li>{{hw.string}}</li>
-	{% endfor %}
-
+{% block pagecontent %}		
+		
+	<p>{{page.title}}</p>
 	
-</body>
+	<div>{{page.html}}</div>
+
+{% endblock %}
+	
