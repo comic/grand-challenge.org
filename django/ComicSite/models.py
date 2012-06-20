@@ -11,7 +11,7 @@ class ComicSite(Site):
     # because names are used in URLS in COMIC, dublicate sitenames would make trouble.     
     #Site.name.unique = True    
     
-    skin = models.CharField(max_length = 225)
+    skin = models.CharField(max_length = 225)    
         
 
 class Page(models.Model):
