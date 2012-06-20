@@ -74,7 +74,7 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = '/Static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (                    
@@ -82,7 +82,7 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     
-    os.path.join(SITE_ROOT,"static"),
+    os.path.join(SITE_ROOT,"Static"),
     #"D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic-django/django/Static",
 )
 

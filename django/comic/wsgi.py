@@ -19,7 +19,7 @@ import sys
 SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 sys.path.append(SITE_ROOT)
-sys.path.append(os.path.join(SITE_ROOT,"comic"))
+sys.path.append(os.path.join(SITE_ROOT,"Comic"))
 
 os.environ.setdefault("PYTHON_EGG_CACHE", "/tmp/")
 
