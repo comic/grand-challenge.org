@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block headerTitle %} {{site.name}} {% endblock %}
+
+
+	
+{% block topmenu %}
+	{% for page in pages %}
+		<li>
+			<a href="/site/{{site.name}}/{{page.title}}">{{page.title}}</a>
+		</li>
+	{% endfor %}
+{% endblock %}
+	
+	
+{% block content %}
+	
+	{% block pagecontent %}
+		<p>redirect to first page here.</p>
+	{% endblock %}	
+
+	<a href="/admin"> goto admin </a>
+
+{% endblock %}
+
