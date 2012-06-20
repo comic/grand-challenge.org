@@ -9,10 +9,11 @@ ADMINS = (
 )
 
 
-# Sjoerd 19-06-2012: used as starting points for various other paths.
+
+# Sjoerd: used as starting points for various other paths.
 # realpath(__file__) starts in the "Comic" app dir. We need to 
-# go one dir higher. Path.dirname twice will do this
-SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+# go one dir higher so path.join("..")
+SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 MANAGERS = ADMINS
@@ -20,7 +21,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(SITE_ROOT,'sqlite.db'),                      # Or path to database file if using sqlite3.
+        'NAME': 'D:\\userdata\\Sjoerd\\Aptana Studio 3 Workspace\\comic-django\\django\\sqlite.db',                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -113,10 +114,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'comic.urls'
+ROOT_URLCONF = 'Comic.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'comic.wsgi.application'
+WSGI_APPLICATION = 'Comic.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
