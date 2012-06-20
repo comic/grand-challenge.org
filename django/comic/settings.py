@@ -75,9 +75,9 @@ STATIC_ROOT = ''
 # Example: "http://media.lawrence.com/static/"
 
 # Serve files using django (debug only) 
-# STATIC_URL = '/static/'
+STATIC_URL = '/static/'
 # serve files from sjoerds local webserver
-STATIC_URL = 'http://localhost/django/Comic/'
+# STATIC_URL = 'http://localhost/django/Comic/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (                    
