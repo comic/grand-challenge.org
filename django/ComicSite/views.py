@@ -11,7 +11,6 @@ from ComicSite.models import ComicSite,Page
 from django.http import Http404
 from django.shortcuts import render_to_response
 from DataProviders import FileSystemDataProvider
-from Comic import settings
 
 
 def index(request):
