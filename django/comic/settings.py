@@ -29,7 +29,6 @@ DATABASES = {
     }
 }
 
-print("path = "+os.path.join(SITE_ROOT,'sqlite.db'))
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -74,7 +73,11 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+
+# Serve files using django (debug only) 
+# STATIC_URL = '/static/'
+# serve files from sjoerds local webserver
+STATIC_URL = 'http://localhost/django/Comic/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (                    
@@ -84,6 +87,7 @@ STATICFILES_DIRS = (
     
     os.path.join(SITE_ROOT,"static"),
     #"D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic-django/django/Static",
+    
 )
 
 # List of finder classes that know how to find static files in

@@ -24,6 +24,9 @@ urlpatterns = patterns('',
     
     url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
     
+    
+    url(r'^test/showData/$','ComicSite.views.dataPage'),
+    
     #url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','ComicSite.views.page'),
 )
     
