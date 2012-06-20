@@ -21,7 +21,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'D:\\userdata\\Sjoerd\\Aptana Studio 3 Workspace\\comic-django\\django\\sqlite.db',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(SITE_ROOT,"sqlite.db"),  # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -82,7 +82,7 @@ STATICFILES_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     
-    os.path.join(SITE_ROOT,"Static"),
+    os.path.join(SITE_ROOT,"static"),
     #"D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic-django/django/Static",
 )
 
