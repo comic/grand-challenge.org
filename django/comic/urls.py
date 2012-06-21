@@ -11,10 +11,7 @@ admin.autodiscover()
 urlPrefix = "Comic/"
 
 urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'Comic.views.home', name='home'),
-    # url(r'^comic/', include('Comic.foo.urls')),
-
+    
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
