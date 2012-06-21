@@ -8,7 +8,7 @@ admin.autodiscover()
 
 # prefix introduced to make it possible to serve django from non-root dir on server.
 # see https://github.com/comic/comic-django/issues/14 
-urlPrefix = "Comic/"
+urlPrefix = ""
 
 urlpatterns = patterns('',
     
@@ -17,7 +17,7 @@ urlpatterns = patterns('',
 
     # for convenience in developing: redirect to not have to type /Comic 
     # after 'localhost' to load site for the first time
-    (r'^$', redirect_to, {'url': '/'+urlPrefix}),
+    #(r'^$', redirect_to, {'url': '/'+urlPrefix}),
      
     # Uncomment the next line to enable the admin:
     url(r'^'+urlPrefix+'admin/', include(admin.site.urls)),
