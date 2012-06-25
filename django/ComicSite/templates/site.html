@@ -7,7 +7,7 @@
 {% block topmenu %}
 	{% for page in pages %}
 		<li>
-			<a href="{%url ComicSite.views.page site.name page.title %}">{{page.title}}</a>
+			<a href="{%url comicsite.views.page site.name page.title %}">{{page.title}}</a>
 		</li>
 	{% endfor %}
 {% endblock %}
@@ -19,7 +19,7 @@
 		<p>redirect to first page here.</p>
 	{% endblock %}	
 
-	<a href="{%url admin:index %}"> goto admin </a>
+	#<a href="{%url admin:index %}"> goto admin </a>
 
 {% endblock %}
 

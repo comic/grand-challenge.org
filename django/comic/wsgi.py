@@ -19,11 +19,11 @@ import sys
 SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 sys.path.append(SITE_ROOT)
-sys.path.append(os.path.join(SITE_ROOT,"Comic"))
+sys.path.append(os.path.join(SITE_ROOT,"comic"))
 
 os.environ.setdefault("PYTHON_EGG_CACHE", "/tmp/")
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Comic.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
