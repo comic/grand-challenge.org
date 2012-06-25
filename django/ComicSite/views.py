@@ -36,7 +36,7 @@ def page(request, site_name, page_title):
         raise Http404
     pages = getPages(site_name)
     
-    return render_to_response('page.html', {'site': p.comicSite, 'page': p, "pages":pages })
+    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages })
                 
     #return HttpResponse(givePageHTML(p))
     
@@ -59,7 +59,7 @@ def dataPage(request):
 
 def getSite(site_name):
     try:
-        site = comicSite.objects.get(name=site_name)
+        site = ComicSite.objects.get(name=site_name)
     except ComicSite.DoesNotExist:                
         raise Http404   
     return site  
@@ -83,7 +83,7 @@ def createTestPage(title="testPage",html=""):
     except Http404:
         raise ComicSite.DoesNotExist("To show a testpage you have to have a ComicSite called 'test' (called by /test)..")
     
-    return Page(comicSite=site,title=title,html=html)
+    return Page(ComicSite=site,title=title,html=html)
     
 
 def givePageHTML(page):
