@@ -15,15 +15,16 @@ ADMINS = (
 # go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-
 MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(SITE_ROOT,"sqlite.db"),  # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        #'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        #'NAME': os.path.join(SITE_ROOT,"sqlite.db"),  # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'comic',
+        'USER': 'comic',                     # Not used with sqlite3.
+        'PASSWORD': 'django',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -118,10 +119,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'Comic.urls'
+ROOT_URLCONF = 'comic.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'Comic.wsgi.application'
+WSGI_APPLICATION = 'comic.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -140,8 +141,76 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'ComicSite',  
+    'comicsite',  
+    'social_auth',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'social_auth.backends.twitter.TwitterBackend',
+    'social_auth.backends.facebook.FacebookBackend',
+    'social_auth.backends.google.GoogleOAuthBackend',
+    'social_auth.backends.google.GoogleOAuth2Backend',
+    'social_auth.backends.google.GoogleBackend',
+    'social_auth.backends.yahoo.YahooBackend',
+    'social_auth.backends.browserid.BrowserIDBackend',
+    'social_auth.backends.contrib.linkedin.LinkedinBackend',
+    'social_auth.backends.contrib.livejournal.LiveJournalBackend',
+    'social_auth.backends.contrib.orkut.OrkutBackend',
+    'social_auth.backends.contrib.foursquare.FoursquareBackend',
+    'social_auth.backends.contrib.github.GithubBackend',
+    'social_auth.backends.contrib.dropbox.DropboxBackend',
+    'social_auth.backends.contrib.flickr.FlickrBackend',
+    'social_auth.backends.contrib.instagram.InstagramBackend',
+    #'social_auth.backends.contrib.vkontakte.VkontakteBackend',
+    'social_auth.backends.contrib.skyrock.SkyrockBackend',
+    'social_auth.backends.contrib.yahoo.YahooOAuthBackend',
+    'social_auth.backends.OpenIDBackend',
+    'social_auth.backends.contrib.bitbucket.BitbucketBackend',
+    'social_auth.backends.contrib.live.LiveBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+TWITTER_CONSUMER_KEY         = ''
+TWITTER_CONSUMER_SECRET      = ''
+FACEBOOK_APP_ID              = ''
+FACEBOOK_API_SECRET          = ''
+LINKEDIN_CONSUMER_KEY        = ''
+LINKEDIN_CONSUMER_SECRET     = ''
+ORKUT_CONSUMER_KEY           = ''
+ORKUT_CONSUMER_SECRET        = ''
+GOOGLE_CONSUMER_KEY          = ''
+GOOGLE_CONSUMER_SECRET       = ''
+GOOGLE_OAUTH2_CLIENT_ID      = ''
+GOOGLE_OAUTH2_CLIENT_SECRET  = ''
+FOURSQUARE_CONSUMER_KEY      = ''
+FOURSQUARE_CONSUMER_SECRET   = ''
+GITHUB_APP_ID                = ''
+GITHUB_API_SECRET            = ''
+DROPBOX_APP_ID               = ''
+DROPBOX_API_SECRET           = ''
+FLICKR_APP_ID                = ''
+FLICKR_API_SECRET            = ''
+INSTAGRAM_CLIENT_ID          = ''
+INSTAGRAM_CLIENT_SECRET      = ''
+#VK_APP_ID                    = ''
+#VK_API_SECRET                = ''
+BITBUCKET_CONSUMER_KEY       = ''
+BITBUCKET_CONSUMER_SECRET    = ''
+LIVE_CLIENT_ID               = ''
+LIVE_CLIENT_SECRET           = ''
+SKYROCK_CONSUMER_KEY         = ''
+SKYROCK_CONSUMER_SECRET      = ''
+YAHOO_CONSUMER_KEY           = ''
+YAHOO_CONSUMER_SECRET        = ''
+
+LOGIN_URL          = '/login-form/'
+LOGIN_REDIRECT_URL = '/logged-in/'
+LOGIN_ERROR_URL    = '/login-error/'
+
+SOCIAL_AUTH_COMPLETE_URL_NAME  = 'socialauth_complete'
+SOCIAL_AUTH_ASSOCIATE_URL_NAME = 'socialauth_associate_complete'
+
+
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

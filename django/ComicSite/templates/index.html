@@ -8,7 +8,7 @@
 
 <ol>
 {% for site in object_list %}
-	<li><a href="{% url ComicSite.views.site site.name %}">{{site.name}}</a></li>
+	<li><a href="{% url comicsite.views.site site.name %}">{{site.name}}</a></li>
 {% endfor %}
 	
 
