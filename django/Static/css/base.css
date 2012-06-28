@@ -2,6 +2,7 @@ body {
 	font-size: large;
 	background-color: #F9F9F9;
 	font-family: sans-serif;
+	padding-top: 1px;
 
 }
 
@@ -23,7 +24,7 @@ html
    margin-right:auto;
   
       
-   width: 95ex;
+   width: 1000px;
    
    font-family : Verdana,helvetica,sans-serif;
    font-size: 10pt;
@@ -33,7 +34,7 @@ html
 #header {
    width: 100%;   
    float: left;
-   height:80px;
+   background-color:#339819;
    
 }
 
@@ -55,6 +56,7 @@ html
    width: 100%;
    background-color: #ffffff;
    float: left;
+   padding-left: 8px;
 }
 
 
@@ -104,30 +106,43 @@ html
 #navMenu
 {
     padding-left: 0.8ex; /*Allign menu and text*/
+    float:left;
+    height: 43px;
        
     
     
 }
 
+li.menuBullet{
+	padding:0px;
+	margin:0px;
+}
+
+
 #navMenu li
 {    
-    float:left;
-    padding-right: 1ex;    
-    padding-left: 1ex;        
-    padding-bottom:0.5ex;
-    padding-top:0.5ex;
-    list-style-type:none;
-    vertical-align:baseline;
-    
-    font-weight:bold;
-    
+    color: #FFFFFF;
+    float: left;
+    font-weight: bold;
+    list-style-type: none;
+    padding: 0.5ex 0.5ex;
+    vertical-align: baseline;    
     
 }
 
-#navMenu li:hover
+
+.menuItem:link, .menuItem:visited
 {
-    background-color:#efefef;
+    color: #FFFFFF;    
+    text-decoration: none;
 }
+
+.menuItem:hover
+{
+    color: #FFFFFF;
+    text-decoration: underline;    
+}
+
 
 
 li.selectedMenuItem
@@ -150,7 +165,8 @@ li.selectedMenuItem
 }
 
 #navMenuContainer
-{
+{    
+    float:left;
     
 }
 
