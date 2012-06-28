@@ -8,11 +8,11 @@ class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
     # add requirement to native django 'site' obejct that site name should be unique.
-    # because names are used in URLS in COMIC, dublicate sitenames would make trouble.     
-    #Site.name.unique = True    
-    
+    # because names are used in URLS in COMIC, dublicate sitenames would make trouble.
+        
+    short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)
-    comment = models.CharField(max_length = 1024, default="")
+    comment = models.CharField(max_length = 1024, default="", blank=True)
         
 
 class Page(models.Model):
