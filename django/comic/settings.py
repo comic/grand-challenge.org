@@ -144,6 +144,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'comicsite',  
     'social_auth',
+    'south',
+    
 )
 
 AUTHENTICATION_BACKENDS = (
