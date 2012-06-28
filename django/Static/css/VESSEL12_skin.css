@@ -3,3 +3,9 @@
     float: left;
     width: 100%;
 }
+
+.menuItem, .menuItem:link, .menuItem:visited {
+    color: Black;
+    
+}
+ 
