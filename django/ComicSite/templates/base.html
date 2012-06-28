@@ -25,21 +25,21 @@
 					<ul>					
 						{% block topmenu %} {% endblock %}
 					</ul>
-				</div>
+				</div>				
 			</div>
+			<div id="additionalNavigation">
+					<a class="menuItem" href="{% url home %}">COMIC main portal</a>
+				</div>
 			</div>
 			
 
 			<div id="container">
-				{% block content %} content {% endblock %}
-
+				<div id="mainContent">
+					{% block content %} content {% endblock %}
+				</div>
 			</div>
 			<!-- container -->
 			<div id="footer">
-				<div id="GrandChallengesLogo" >
-					<a href="{% url home %}">COMIC main portal</a>
-				</div>
-
 				<div id="copyrightNotice">
 					COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
 				</div>
