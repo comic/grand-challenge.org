@@ -7,14 +7,16 @@ Testing views. Each of these views is referenced in urls.py
 '''
 
 from django.http import HttpResponse
-from comicsite.models import ComicSite,Page
 from django.http import Http404
 from django.shortcuts import render_to_response
+from django.template import RequestContext
+
+from comicsite.models import ComicSite,Page
 from dataproviders import FileSystemDataProvider
 
 
 def index(request):
-    return  HttpResponse("ComicSite index page.")
+    return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
 def site(request, site_name):
@@ -24,7 +26,7 @@ def site(request, site_name):
                     
     pages = getPages(site_name)
                     
-    return render_to_response('site.html', {'site': site, 'pages': pages})
+    return render_to_response('site.html', {'site': site, 'pages': pages},context_instance=RequestContext(request))
     
 
 def page(request, site_name, page_title):
@@ -36,7 +38,7 @@ def page(request, site_name, page_title):
         raise Http404
     pages = getPages(site_name)
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages })
+    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
                 
     #return HttpResponse(givePageHTML(p))
     
@@ -53,7 +55,7 @@ def dataPage(request):
     p = createTestPage(html=htmlOut)
     pages = [p]
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages })
+    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 

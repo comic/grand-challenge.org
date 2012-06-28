@@ -7,8 +7,11 @@
 {% block topmenu %}
 	{% for page in pages %}
 		<li>
-			<a href="{%url comicsite.views.page site.name page.title %}">{{page.title}}</a>
+			<a class="menuItem" href="{%url comicsite.views.page site.name page.title %}">{{page.title}}</a>			
 		</li>
+		{% if not forloop.last %}
+			<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+		{% endif %}
 	{% endfor %}
 {% endblock %}
 	
@@ -18,8 +21,6 @@
 	{% block pagecontent %}
 		<p>redirect to first page here.</p>
 	{% endblock %}	
-
-	#<a href="{%url admin:index %}"> goto admin </a>
-
+	
 {% endblock %}
 

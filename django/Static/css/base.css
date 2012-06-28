@@ -2,6 +2,7 @@ body {
 	font-size: large;
 	background-color: #F9F9F9;
 	font-family: sans-serif;
+	padding-top: 1px;
 
 }
 
@@ -23,23 +24,40 @@ html
    margin-right:auto;
   
       
-   width: 95ex;
+   width: 1000px;
    
    font-family : Verdana,helvetica,sans-serif;
    font-size: 10pt;
  
    
 }
+
+h1{
+   font-size: 17px;
+}
+
+h2{
+   font-size: 15px;
+}
+
+h3{
+   font-size: 12px;
+}
+
+
+
+
+
 #header {
    width: 100%;   
    float: left;
-   height:80px;
+   background-color:#339819;
    
 }
 
 #headerTitle{
-	
-	font-size: 48px;
+    color: White;
+    font-size: 48px;
     padding-left: 12px;
     padding-top: 10px;
 
@@ -51,12 +69,19 @@ html
    border-bottom-style:none;
    
 }
+
 #container {
    width: 100%;
    background-color: #ffffff;
    float: left;
+   
 }
 
+/*Extra div to do padding without messing up div container*/  
+#mainContent{
+   padding-left: 8px;
+   padding-bottom: 12px;
+}
 
 #main-content {
    width: 95ex; /*For better readbility*/   
@@ -71,14 +96,13 @@ html
 }
 
 #footer {
+   background-color: White;
    width: 100%;   
-   float: left;
-   padding:0.5em;
-   font-size:smaller;
-   border-top: 3px solid #dfdfdf;
-   margin-top: 1.5em;
+   float: left;   
+   font-size:smaller;   
+   margin-top: 1px;
    color: #666666;
-   
+   padding-bottom: 2px;
    
 }
 #footer-content {      
@@ -104,30 +128,46 @@ html
 #navMenu
 {
     padding-left: 0.8ex; /*Allign menu and text*/
+    float:left;
+    height: 43px;
        
     
     
 }
 
+li.menuBullet{
+	padding:0px;
+	margin:0px;
+}
+
+
 #navMenu li
 {    
-    float:left;
-    padding-right: 1ex;    
-    padding-left: 1ex;        
-    padding-bottom:0.5ex;
-    padding-top:0.5ex;
-    list-style-type:none;
-    vertical-align:baseline;
     
-    font-weight:bold;
-    
+    float: left;
+    list-style-type: none;
+    padding: 0.5ex 0.5ex;
+    vertical-align: baseline;    
     
 }
 
-#navMenu li:hover
-{
-    background-color:#efefef;
+.menuItem{
+    color: #FFFFFF;
+    font-weight: bold;
 }
+
+.menuItem:link, .menuItem:visited
+{
+    color: #FFFFFF;    
+    text-decoration: none;
+}
+
+.menuItem:hover
+{
+    color: #FFFFFF;
+    text-decoration: underline;    
+}
+
 
 
 li.selectedMenuItem
@@ -150,7 +190,8 @@ li.selectedMenuItem
 }
 
 #navMenuContainer
-{
+{    
+    float:left;
     
 }
 
@@ -170,6 +211,15 @@ li.selectedMenuItem
 {
     margin-left:1em; 
     float:left;
+}
+
+
+
+
+#additionalNavigation{
+	float:right;
+	padding-right: 10px;
+	padding-top: 18px;
 }
 
 .fileCollectionContainer th /*Used in download file menu*/
