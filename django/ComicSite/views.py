@@ -19,24 +19,24 @@ def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
-def site(request, site_name):
+def site(request, site_short_name):
     """ show a single COMIC site, default start page """
     #TODO: Is it bad to use site name here, which is not the specified key?
-    site = getSite(site_name)
+    site = getSite(site_short_name)
                     
-    pages = getPages(site_name)
+    pages = getPages(site_short_name)
                     
     return render_to_response('site.html', {'site': site, 'pages': pages},context_instance=RequestContext(request))
     
 
-def page(request, site_name, page_title):
+def page(request, site_short_name, page_title):
     """ show a single page on a site """
     
     try:
-        p = Page.objects.get(ComicSite__name=site_name, title=page_title)
+        p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
     except Page.DoesNotExist:                
         raise Http404
-    pages = getPages(site_name)
+    pages = getPages(site_short_name)
     
     return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
                 
@@ -59,19 +59,19 @@ def dataPage(request):
 
 # ======================================== not called directly from urls.py =========================================
 
-def getSite(site_name):
+def getSite(site_short_name):
     try:
-        site = ComicSite.objects.get(name=site_name)
+        site = ComicSite.objects.get(short_name=site_short_name)
     except ComicSite.DoesNotExist:                
         raise Http404   
     return site  
     
     
 
-def getPages(site_name):
+def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(ComicSite__name=site_name)
+        pages = Page.objects.filter(ComicSite__short_name=site_short_name)
     except Page.DoesNotExist:                
         raise Http404
     return pages

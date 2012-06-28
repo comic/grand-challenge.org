@@ -20,9 +20,9 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
         
     #specific view of single comicsite
-    url(r'^site/(?P<site_name>\w+)/$','comicsite.views.site'),
+    url(r'^site/(?P<site_short_name>\w+)/$','comicsite.views.site'),
     
-    url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
+    url(r'^site/(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
 
     url(r'^test/showData/$','comicsite.views.dataPage'),
     
