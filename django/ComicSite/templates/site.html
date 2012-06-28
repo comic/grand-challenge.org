@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
+{% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
+
 {% block headerTitle %} {{site.name}} {% endblock %}
 
 
-	
 {% block topmenu %}
 	{% for page in pages %}
 		<li>
