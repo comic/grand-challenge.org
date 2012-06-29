@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
- 
+from django.db.models import Max
 
 # Create your models here.
 class ComicSite(Site):
@@ -18,11 +18,22 @@ class ComicSite(Site):
 class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
-    order = models.IntegerField(editable=False, default=1) #for determining order in which pages appear on site    
+    order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")     
     ComicSite = models.ForeignKey("ComicSite")
     
     title = models.CharField(max_length = 255)
     html = models.TextField()
+    
+    def clean(self):
+        """ clean method is called automatically for each save in admin"""
+        
+        #when saving for the first time only, put this page last in oder 
+        if not self.id:
+            # get max value of order for current pages.
+            max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                
+            self.order = max_order["order__max"] + 1
+        
+            
     
     def rawHTML(self):
         """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
