@@ -7,8 +7,7 @@ from django.utils.safestring import mark_safe
 class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
-    # add requirement to native django 'site' obejct that site name should be unique.
-    # because names are used in URLS in COMIC, dublicate sitenames would make trouble.
+    # TODO: Sjoerd - Is it correct to define the params below as class params, or should these be in an init method? 
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)    
@@ -51,11 +50,18 @@ class Page(models.Model):
     
     class Meta:
         """special class holding meta info for this class"""
-        # make sure a single site never has two pages with the same name
+        # make sure a single site never has two pages with the same name because page names
+        # are used as keys in urls
         unique_together = (("ComicSite", "title"),)
-        
+         
         # when getting a list of these objects this ordering is used
         ordering = ['ComicSite','order']
     
     
-
+class ComicSiteException(Exception):
+    """ any type of exception for which a django or python exception is not defined """
+    def __init__(self, value):
+        self.parameter = value
+    def __str__(self):
+        return repr(self.parameter)
+    
