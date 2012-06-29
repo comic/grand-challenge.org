@@ -11,7 +11,7 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from comicsite.models import ComicSite,Page
+from comicsite.models import ComicSite,Page,ComicSiteException
 from dataproviders import FileSystemDataProvider
 
 
@@ -44,7 +44,7 @@ def page(request, site_short_name, page_title):
     
 
 def dataPage(request):
-    """ test function for data provider"""
+    """ test function for data provider. Just get some files from provider and show them as list"""
     #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
     
     path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
@@ -67,7 +67,6 @@ def getSite(site_short_name):
     return site  
     
     
-
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
@@ -76,15 +75,29 @@ def getPages(site_short_name):
         raise Http404
     return pages
 
+# trying to follow pep 0008 here, finally.
+def site_exists(site_short_name):
+    try:
+        site = ComicSite.objects.get(short_name=site_short_name)
+        return True
+    except ComicSite.DoesNotExist:                
+        return False
+    
     
 # ======================================================  debug and test ==================================================
 def createTestPage(title="testPage",html=""):
     """ Create a quick mockup on the ComicSite 'Test'"""
-    try: 
-        site = getSite("test")
-    except Http404:
-        raise ComicSite.DoesNotExist("To show a testpage you have to have a ComicSite called 'test' (called by /test)..")
     
+    if site_exists("test"):
+        #TODO log a warning here, no exception.
+        raise ComicSiteException("I am creating a spoof ComicSite called 'test' on the fly, by a project called 'test' was already defined in DB. This message should be a warning instead of an exception")                
+    
+    # if no site exists by that name, create it on the fly.
+    site = ComicSite()
+    site.short_name = "test"
+    site.name = "Test Page"
+    site.skin = ""
+        
     return Page(ComicSite=site,title=title,html=html)
     
 
