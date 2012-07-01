@@ -7,6 +7,7 @@
 		<meta name="description" content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms." />
 		<meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
 		<link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
+		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet"> <!--Put any site or page specific css here -->
 		
 		
 		<title>COMIC main portal</title>
@@ -41,7 +42,7 @@
 			<!-- container -->
 			<div id="footer">
 				<div id="copyrightNotice">
-					COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
+					COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
 				</div>
 
 			</div>
