@@ -2,6 +2,8 @@ from django.conf.urls import patterns, include, url
 from django.views.generic import ListView
 from django.contrib import admin
 from comicsite.models import ComicSite
+from django.views.generic.simple import redirect_to
+
  
 admin.autodiscover()
 
@@ -19,10 +21,13 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
         
-    #specific view of single comicsite
-    url(r'^site/(?P<site_name>\w+)/$','comicsite.views.site'),
+    #when viewing a site, redirect to /home page for that site
+    url(r'^site/(?P<site_short_name>\w+)/$', redirect_to, {'url': '/site/%(site_short_name)s/Home'}),
     
-    url(r'^site/(?P<site_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
+    #this one is needed to be able make {% url work}  TODO: having two identical regexes here seems stinky.. can this be different?    
+    url(r'^site/(?P<site_short_name>\w+)/$','comicsite.views.site'),
+    
+    url(r'^site/(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
 
     url(r'^test/showData/$','comicsite.views.dataPage'),
     
