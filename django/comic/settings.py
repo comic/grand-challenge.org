@@ -30,6 +30,16 @@ DATABASES = {
     }
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
+ANONYMOUS_USER_ID = -1
+
+AUTH_PROFILE_MODULE = 'profiles.UserProfile'
+USERENA_USE_HTTPS = False
+LOGIN_URL = '/accounts/signin/'
+LOGOUT_URL = '/accounts/signout/'
+LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/accounts/'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -38,7 +48,8 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+#TIME_ZONE = 'America/Chicago'
+TIME_ZONE = None
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -128,6 +139,10 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+
+    # FIXME: Path to template path. This might be temporary.
+    # At the moment some of the admin templates are overloaded here. I think the comicsite app is a better place to do that.
+    os.path.normpath(os.path.dirname(__file__) + '/../templates'),
 )
 
 INSTALLED_APPS = (
@@ -137,14 +152,23 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'comicsite',  
-    'social_auth',
+    # comicsite is the where main web portal of this framework lives
+    'comicsite',
+    # profiles extends userena and gives functionality to manage user profiles
+    'profiles',
+    # South provides schema and data migrations
     'south',
-    
+    # userena provides advanced user management
+    'userena',
+    # guardian (depency of userena) implements advanced authentication on a per object basis
+    'guardian',
+    # easy-thumbnails (depency of userena) is a thumbnailing application
+    'easy_thumbnails',    
+    # social-auth provides authentication via social accounts using openid and oauth2
+    'social_auth',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -169,6 +193,9 @@ AUTHENTICATION_BACKENDS = (
     'social_auth.backends.OpenIDBackend',
     'social_auth.backends.contrib.bitbucket.BitbucketBackend',
     'social_auth.backends.contrib.live.LiveBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    'userena.backends.UserenaAuthenticationBackend',
+    'guardian.backends.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -205,12 +232,11 @@ SKYROCK_CONSUMER_SECRET      = ''
 YAHOO_CONSUMER_KEY           = ''
 YAHOO_CONSUMER_SECRET        = ''
 
-LOGIN_URL          = '/login-form/'
-LOGIN_REDIRECT_URL = '/logged-in/'
-LOGIN_ERROR_URL    = '/login-error/'
-
 SOCIAL_AUTH_COMPLETE_URL_NAME  = 'socialauth_complete'
 SOCIAL_AUTH_ASSOCIATE_URL_NAME = 'socialauth_associate_complete'
+SOCIAL_AUTH_EXPIRATION = 'expires'
+SOCAIL_AUTH_RAISE_EXCEPTIONS = DEBUG
+SOCIAL_AUTH_USER_MODEL = 'auth.User'
 
 
 
