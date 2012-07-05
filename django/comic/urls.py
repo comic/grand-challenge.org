@@ -4,6 +4,7 @@ from django.contrib import admin
 from comicsite.models import ComicSite
 from django.views.generic.simple import redirect_to
 
+from profiles.forms import SignupFormExtra
  
 admin.autodiscover()
 
@@ -12,7 +13,6 @@ urlpatterns = patterns('',
     
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
 
     # main page 
     url(r'^$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
@@ -25,6 +25,9 @@ urlpatterns = patterns('',
         
     
     # requirement for social_auth
-    #url(r'',include('social_auth.urls')),
+    url(r'',include('social_auth.urls')),
+    # all normal accounts stuff is redirected to accounts
+    url(r'^accounts/',include('profiles.urls')),
+    
 )
     
