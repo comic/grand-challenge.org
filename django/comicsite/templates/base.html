@@ -7,47 +7,60 @@
 		<meta name="description" content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms." />
 		<meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
 		<link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
-		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet"> <!--Put any site or page specific css here -->
+		<link href="{% block stylesheet %}{% endblock %}" type="text/css" rel="stylesheet"> <!--Put any site or page specific css here -->
 		
 		
 		<title>COMIC main portal</title>
-		
 	</head>
 	<body>
-		
 		<div id="page">
-			
 			<div id="header">				
 				<div id="headerTitle"?>
-					{% block headerTitle %} {% endblock %}
+                    {% block headerTitle %} COMIC {% endblock %}
 				</div>
-				<div id="navMenuContainer">
-				<div id="navMenu">
-					<ul>					
-						{% block topmenu %} {% endblock %}
-					</ul>
-				</div>				
-			</div>
-			<div id="additionalNavigation">
-					<a class="menuItem" href="{% url home %}">COMIC main portal</a>
-				</div>
-			</div>
-			
+                <div id="navMenuContainer">
+                    <div id="navMenu">
+                        <ul>					
+                            {% block topmenu %} {% endblock %}
+                        </ul>
+                    </div>				
+                    <div id="additionalNavigation">
+                        <ul>
+                            {% if user.is_authenticated %}
+                            <li>
+                                <a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.first_name}} {{user.last_name}}</a>
+                            </li>
+                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+                            <li>
+                                <a class="menuItem" href="{% url userena_signout %}">Signout</a>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="menuItem" href="{% url userena_signin %}">Signin / Register</a>
+                            </li>
+                            {% endif %}
+                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+                            <li>
+                                <a class="menuItem" href="{% url home %}">COMIC main portal</a>
+                            </li>
+                        </ul>
+                    </div> 
+                </div>
 
-			<div id="container">
-				<div id="mainContent">
-					{% block content %} content {% endblock %}
-				</div>
-			</div>
-			<!-- container -->
-			<div id="footer">
-				<div id="copyrightNotice">
-					COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
-				</div>
+                <div id="container">
+                    <div id="mainContent">
+                        {% block content %} content {% endblock %}
+                    </div>
+                </div>
+                <!-- container -->
+                <div id="footer">
+                    <div id="copyrightNotice">
+                        COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
+                    </div>
 
-			</div>
-		</div>		
-		<!-- page -->
-
+                </div>
+            </div>
+        </div>		
+        <!-- page -->
 	</body>
 </html>
