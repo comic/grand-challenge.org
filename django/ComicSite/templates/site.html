@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
+
+{% block headerTitle %} {{site.name}} {% endblock %}
+
+
+{% block topmenu %}
+	{% for page in pages %}
+		<li>
+			<a class="menuItem" href="{%url comicsite.views.page site.short_name page.title %}">{{page.title}}</a>			
+		</li>
+		{% if not forloop.last %}
+			<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+		{% endif %}
+	{% endfor %}
+{% endblock %}
+	
+	
+{% block content %}
+	
+	{% block pagecontent %}
+		<p>redirect to first page here.</p>
+	{% endblock %}	
+	
+{% endblock %}
+
