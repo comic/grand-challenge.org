@@ -18,9 +18,21 @@
 		<div id="page">
 
 			<div id="header">
-				<div id="headerTitle"?>
-					{% block headerTitle %} {% endblock %}
+				<div id="headerTop">
+					<div id="headerTitle">
+						{% block headerTitle %} {% endblock %}
+
+					</div>
+					<div id="loginInfo">
+						{% if user.is_authenticated %}
+							{{ user.username }}
+						{%else %}
+							<a href="{% url userena.views.signin %}">log in</a>
+						{% endif%}
+						
+					</div>
 				</div>
+
 				<div id="navMenuContainer">
 					<div id="navMenu">
 						<ul>

@@ -34,6 +34,13 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem:link, .menuItem:visited { color:#fff; text-decoration:none; }
 .menuItem:hover { color:#fff; text-decoration:underline; }
 
+/* main page, base.html */
+#header { width: 100%; float: left; background-color:#6f91ab; color:white;}
+#headerTop{ padding: 12px; height:100px; }
+#headerTitle{ font-size: 48px; float:left;}
+#loginInfo{ float:right;}
+
+
 
 
 
@@ -81,7 +88,6 @@ h3{
    
 }
 
-#headerTitle{ color: White; font-size: 48px; padding-left: 12px; padding-top: 10px; height:110px;}
 
 #header-content {
    width: 100%;   
