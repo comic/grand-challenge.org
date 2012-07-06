@@ -2,8 +2,6 @@ from django.conf.urls import patterns, include, url
 from django.views.generic import ListView
 from django.contrib import admin
 from comicsite.models import ComicSite
-
-from profiles.forms import SignupFormExtra
  
 admin.autodiscover()
 
