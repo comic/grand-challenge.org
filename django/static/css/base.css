@@ -24,20 +24,20 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
 /* header navigation menu */
-#navMenuContainer { padding-left:1.8ex; padding-right:0.8ex; height:26px; }
-#navMenuContainer li { float:left; list-style-type:none; padding-left:0.5ex; padding-right:0.5ex; vertical-align:baseline; }
-#navMenuContainer ul { padding-left:0px; }
-#navMenu { float:left; }
-#additionalNavigation {	float:right; }
+#navMenuContainer { padding-left:0.8ex; height:43px; }
+#navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
+#navMenuContainer ul { padding-left:0px;}
+#navMenu { float:left; vertical-align:baseline; }
+#additionalNavigation {	float:right; vertical-align:baseline; }
 li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem{ color:#fff; font-weight:bold; }
 .menuItem:link, .menuItem:visited { color:#fff; text-decoration:none; }
 .menuItem:hover { color:#fff; text-decoration:underline; }
 
 /* main page, base.html */
-#header { width: 100%; float: left; background-color:#6f91ab; color:white;}
+#header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
-#headerTitle{ font-size: 48px; float:left;}
+#headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
 #loginInfo{ float:right;}
 
 
@@ -204,12 +204,6 @@ li.selectedMenuItem
     float:right
     
                   
-}
-
-#navMenu ul{
-	padding: 0px;
-	margin: 0px;
-
 }
 
 .grayBar
