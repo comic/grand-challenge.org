@@ -24,8 +24,8 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
 /* header navigation menu */
-#navMenuContainer { padding-left:0.8ex; height:43px; }
-#navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
+#navMenuContainer { padding-left:1.8ex; padding-right:0.8ex; height:26px; }
+#navMenuContainer li { float:left; list-style-type:none; padding-left:0.5ex; padding-right:0.5ex; vertical-align:baseline; }
 #navMenuContainer ul { padding-left:0px; }
 #navMenu { float:left; }
 #additionalNavigation {	float:right; }
@@ -81,13 +81,7 @@ h3{
    
 }
 
-#headerTitle{
-    color: White;
-    font-size: 48px;
-    padding-left: 12px;
-    padding-top: 10px;
-
-}
+#headerTitle{ color: White; font-size: 48px; padding-left: 12px; padding-top: 10px; height:110px;}
 
 #header-content {
    width: 100%;   
@@ -204,6 +198,12 @@ li.selectedMenuItem
     float:right
     
                   
+}
+
+#navMenu ul{
+	padding: 0px;
+	margin: 0px;
+
 }
 
 .grayBar
