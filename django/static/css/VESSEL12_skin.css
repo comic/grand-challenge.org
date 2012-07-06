@@ -1,11 +1,4 @@
-#header {
-    background-color: #DFDFDF;
-    float: left;
-    width: 100%;
-}
+#header { background-color: #DFDFDF; color:#000000;}
 
-.menuItem, .menuItem:link, .menuItem:visited {
-    color: Black;
-    
-}
+.menuItem, .menuItem:link, .menuItem:visited { color: Black;}
  
