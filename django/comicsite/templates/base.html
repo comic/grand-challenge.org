@@ -52,19 +52,19 @@
                         </ul>
                     </div> 
                 </div>
+            </div> <!-- end header -->
 
-                <div id="container">
-                    <div id="mainContent">
-                        {% block content %} content {% endblock %}
-                    </div>
+            <div id="container">
+                <div id="mainContent">
+                    {% block content %} content {% endblock %}
                 </div>
-                <!-- container -->
-                <div id="footer">
-                    <div id="copyrightNotice">
-                        COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
-                    </div>
+            </div>
+            <!-- container -->
+            <div id="footer">
+                <div id="copyrightNotice">
+                    COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
+                </div>
 
-                </div>
             </div>
         </div>		
         <!-- page -->
