@@ -8,7 +8,8 @@ from django.contrib import admin
 from django import forms
 from django.db import models 
 
-from models import ComicSite,Page 
+from guardian.admin import GuardedModelAdmin
+from models import ComicSite,Page
 
 
 
@@ -26,7 +27,7 @@ class PageAdminForm(forms.ModelForm):
     class Meta:
         model = Page
 
-class PageAdmin(admin.ModelAdmin):
+class PageAdmin(GuardedModelAdmin):
     """Define the admin interface for pages"""
     form = PageAdminForm
     
