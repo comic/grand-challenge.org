@@ -66,8 +66,10 @@ Finally login to the admin on ``localhost:8000`` and go to ``Sites``. Change ``e
 If you run this in something else as the testserver, change it to your needs.
 
 Here is a short list of urls which are useful to know:
+
 - /admin # The admin of the framework, you can login in here with your superuser account.
 - /accounts # Overview of all accounts
 - /accounts/signin # Signin to an account
 - /accounts/signup # Register an account
 - /accounts/singout # Signout the current user
+
