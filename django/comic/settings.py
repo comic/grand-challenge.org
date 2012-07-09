@@ -244,12 +244,24 @@ YAHOO_CONSUMER_SECRET        = ''
 #        'social_auth.backends.pipeline.social.load_extra_data',
 #        'social_auth.backends.pipeline.user.update_user_details'
 #        )
+SOCIAL_AUTH_PIPELINE = (
+        'social_auth.backends.pipeline.social.social_auth_user',
+        'social_auth.backends.pipeline.associate.associate_by_email',
+        'social_auth.backends.pipeline.user.get_username',
+        'social_auth.backends.pipeline.user.create_user',
+        'profile.social_auth.pipeline.create_profile',
+        'profile.social_auth.pipeline.set_guardian_permissions',
+        #'profile.social_auth.pipeline.userena_signup',
+        'social_auth.backends.pipeline.social.associate_user',
+        'social_auth.backends.pipeline.social.load_extra_data',
+        'social_auth.backends.pipeline.user.update_user_details',
+)
 
 SOCIAL_AUTH_COMPLETE_URL_NAME  = 'socialauth_complete'
 SOCIAL_AUTH_ASSOCIATE_URL_NAME = 'socialauth_associate_complete'
 SOCIAL_AUTH_EXPIRATION = 'expires'
 SOCAIL_AUTH_RAISE_EXCEPTIONS = DEBUG
-SOCIAL_AUTH_USER_MODEL = 'auth.User'
+#SOCIAL_AUTH_USER_MODEL = 'auth.User'
 
 
 
