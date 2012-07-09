@@ -1,22 +1,16 @@
 from userena.models import UserenaSignup
 from profiles.models import UserProfile as Profile
 from userena.managers import ASSIGNED_PERMISSIONS
-
-def userena_signup(user=None, profile=None, *args, **kwargs):
-    """ Create user using UserenaSignup
-    """
-    print user, profile
-    return {'user': UserenaSignup.objects.get_or_create(user=user) }
+from guardian.shortcuts import assign
 
 def create_profile(user=None, profile=None, *args, **kwargs):
     """ Create user profile if necessary
     """
-    print "+++++++++++++++++++++++++++++++++++++++"
     if profile:
         return { 'profile':profile }
     if not user:
         return
-    return { 'profile': Profile.objects.get_or_create(user.user.profile)[0] }
+    return { 'profile': Profile.objects.get_or_create(user=user)[0] }
 
 def set_guardian_permissions(user=None, profile=None, *args, **kwargs):
     """ Give the user permission to modify themselves
