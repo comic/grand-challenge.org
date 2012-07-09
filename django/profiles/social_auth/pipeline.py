@@ -11,6 +11,7 @@ def userena_signup(user=None, profile=None, *args, **kwargs):
 def create_profile(user=None, profile=None, *args, **kwargs):
     """ Create user profile if necessary
     """
+    print "+++++++++++++++++++++++++++++++++++++++"
     if profile:
         return { 'profile':profile }
     if not user:
