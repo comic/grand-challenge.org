@@ -31,6 +31,8 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
 
 ANONYMOUS_USER_ID = -1
 
