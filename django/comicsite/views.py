@@ -27,7 +27,7 @@ def site(request, site_short_name):
                     
     pages = getPages(site_short_name)
     
-    return render_to_response('page.html', {'site': site, 'page': pages[0], "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': site, 'currentpage': pages[0], "pages":pages },context_instance=RequestContext(request))
     
 
 def page(request, site_short_name, page_title):
@@ -39,7 +39,7 @@ def page(request, site_short_name, page_title):
         raise Http404
     pages = getPages(site_short_name)
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
                 
     
     
