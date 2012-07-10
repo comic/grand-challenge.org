@@ -41,7 +41,7 @@ USERENA_USE_HTTPS = False
 LOGIN_URL = '/accounts/signin/'
 LOGOUT_URL = '/accounts/signout/'
 LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/accounts/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/accounts/profile/'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
