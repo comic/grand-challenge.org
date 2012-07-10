@@ -38,11 +38,17 @@ class PageAdmin(GuardedModelAdmin):
     
     #Show these page params in admin overview list 
     list_display = ('title','ComicSite','order')
+
+
+class ComicSiteAdmin(GuardedModelAdmin):
+    pass
+    
     
         
 
-admin.site.register(ComicSite)
+admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)
+
 
     
 
