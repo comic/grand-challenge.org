@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.db.models import Max
+from guardian.shortcuts import assign
+import pdb
 
 # Create your models here.
 class ComicSite(Site):
@@ -12,7 +14,12 @@ class ComicSite(Site):
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)    
         
-    comment = models.CharField(max_length = 1024, default="", blank=True)
+    comment = models.CharField(max_length = 1024, default="", blank=True)    
+    
+    def clean(self):
+        """ clean method is called automatically for each save in admin"""
+        #TODO check whether short name is really clean and short!
+            
         
 
 class Page(models.Model):
@@ -27,7 +34,7 @@ class Page(models.Model):
     def clean(self):
         """ clean method is called automatically for each save in admin"""
         
-        #when saving for the first time only, put this page last in oder 
+        #when saving for the first time only, put this page last in order 
         if not self.id:
             # get max value of order for current pages.
             max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                
