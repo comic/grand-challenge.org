@@ -44,6 +44,7 @@ class SignupFormExtra(SignupForm):
         user_profile = user.get_profile()
         user_profile.institution = self.cleaned_data['institution']
         user_profile.department = self.cleaned_data['department']
+        user_profile.country = self.cleaned_data['country']
         user_profile.save()
 
         return user
