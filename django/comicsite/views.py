@@ -5,6 +5,7 @@ Testing views. Each of these views is referenced in urls.py
 
 @author: Sjoerd
 '''
+import pdb 
 
 from django.http import HttpResponse
 from django.http import Http404
@@ -12,8 +13,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from comicsite.models import ComicSite,Page,ComicSiteException
+from comicsite.forms import ComicSiteForm
 from dataproviders import FileSystemDataProvider
-
+ 
 
 def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
@@ -41,8 +43,22 @@ def page(request, site_short_name, page_title):
     
     return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
                 
+def newsite(request):
+    """ create new site """
+    form = ComicSiteForm(request.POST or None)
+    if form.is_valid():
+        model = form.save()
+        model.save()
+        
+        return redirect(site)
+    
+    return render_to_response("new_site.html", {"formset": form,})
     
     
+    
+    
+
+
 
 def dataPage(request):
     """ test function for data provider. Just get some files from provider and show them as list"""
