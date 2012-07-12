@@ -36,8 +36,7 @@ class PageAdmin(GuardedModelAdmin):
     
     def save_model(self, request, obj, form, change):
         
-        # get admin group for the comicsite of this page     
-        pdb.set_trace()
+        # get admin group for the comicsite of this page             
         agn = obj.ComicSite.admin_group_name()
         admingroup = Group.objects.get(name=agn)
         
