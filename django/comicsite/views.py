@@ -43,23 +43,7 @@ def page(request, site_short_name, page_title):
     
     return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
                 
-def newsite(request):
-    """ create new site """
-    form = ComicSiteForm(request.POST or None)
-    if form.is_valid():
-        model = form.save()
-        model.save()
-        
-        return redirect(site)
     
-    return render_to_response("new_site.html", {"formset": form,})
-    
-    
-    
-    
-
-
-
 def dataPage(request):
     """ test function for data provider. Just get some files from provider and show them as list"""
     #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"

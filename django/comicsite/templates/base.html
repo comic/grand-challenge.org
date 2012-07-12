@@ -33,6 +33,8 @@
                     </div>				
                     <div id="additionalNavigation">
                         <ul>
+                        	{% block adminbutton %} {% endblock %}
+                        	
                             {% if user.is_authenticated %}
                             <li>
                                 <a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.first_name}} {{user.last_name}}</a>
