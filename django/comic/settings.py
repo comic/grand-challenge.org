@@ -32,7 +32,7 @@ DATABASES = {
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
-DEFAULT_EMAIL_FROM = 'noreply@comicframework.org'
+DEFAULT_FROM_EMAIL = 'noreply@comicframework.org'
 
 ANONYMOUS_USER_ID = -1
 
