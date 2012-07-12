@@ -69,11 +69,8 @@ class PageAdmin(GuardedModelAdmin):
 
 
 class ComicSiteAdmin(GuardedModelAdmin):
-    
-    def __init__(self,*args,**kwargs):
-        super(ComicSiteAdmin, self).__init__(*args, **kwargs)  
-        self.user_can_access_owned_objects_only = True
-    
+            
+        
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
         qs = super(admin.ModelAdmin, self).queryset(request)
@@ -117,35 +114,15 @@ class ComicSiteAdmin(GuardedModelAdmin):
             admingroup.permissions.add(can_add,can_change,can_delete,can_add_site,can_change_site,
                                        can_delete_site,can_add_page,can_change_page,can_delete_page)
             
-            # add object-level permission to the specific ComicSite so it shows up in admin
+            # add object-level permission to the specific ComicSite so it shows up in admin    
             admingroup.save()
             obj.save()                    
             assign("change_comicsite",admingroup,obj)
             
             # add current user to admins for this site 
             request.user.groups.add(admingroup)
-            
-            
-            
-            
-            
-            
-            
-            
+                        
             #pdb.set_trace()
-            
-            # add current user to admins group
-            
-            
-            
-            
-            
-            
-              
-            
-            
-            
-            
     
         obj.save()
         

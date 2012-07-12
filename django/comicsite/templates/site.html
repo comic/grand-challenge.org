@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% load guardian_tags %}
 
 {% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
 
 {% block headerTitle %} {{site.name}} {% endblock %}
 
+	
 
 {% block topmenu %}
 	{% for page in pages %}
@@ -16,7 +18,18 @@
 		{% endif %}
 	{% endfor %}
 {% endblock %}
+
+{% block adminbutton %}
+
+	{% get_obj_perms user for site as "site_perms" %}	
+
+	{% if "change_comicsite" in site_perms %}	   
+	   <li> <a class="menuItem" href="{% url admin:index %}">Admin</a></li>
+       <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+	{% endif %}
 	
+{% endblock %}
+
 	
 {% block content %}
 	

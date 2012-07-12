@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.db.models import Max
+from django.contrib.auth.models import Group
+
 from guardian.shortcuts import assign
 import pdb
 
@@ -10,9 +12,10 @@ class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225)    
+    skin = models.CharField(max_length = 225)
+            
+    comment = models.CharField(max_length = 1024, default="", blank=True)
         
-    comment = models.CharField(max_length = 1024, default="", blank=True)    
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""
