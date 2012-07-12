@@ -5,7 +5,6 @@ from django.db.models import Max
 from django.contrib.auth.models import Group
 
 from guardian.shortcuts import assign
-import pdb
 
 # Create your models here.
 class ComicSite(Site):
@@ -13,10 +12,8 @@ class ComicSite(Site):
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)
-            
     comment = models.CharField(max_length = 1024, default="", blank=True)
         
-    
     def clean(self):
         """ clean method is called automatically for each save in admin"""
         #TODO check whether short name is really clean and short!
@@ -35,7 +32,6 @@ class Page(models.Model):
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")     
     ComicSite = models.ForeignKey("ComicSite")
-    
     title = models.CharField(max_length = 255)
     html = models.TextField()
     
@@ -50,7 +46,6 @@ class Page(models.Model):
                 self.order = 1
             else:
                 self.order = max_order["order__max"] + 1
-        
             
     
     def rawHTML(self):
@@ -75,9 +70,7 @@ class Page(models.Model):
             raise NotImplementedError("Somebody should implement this!")
         if move == 'LAST':
             raise NotImplementedError("Somebody should implement this!")
-    
-     
-    
+
     
     class Meta:
         """special class holding meta info for this class"""

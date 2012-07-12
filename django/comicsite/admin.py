@@ -14,8 +14,6 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
 from models import ComicSite,Page
-import pdb
-
 
 
 class PageAdminForm(forms.ModelForm):
@@ -33,12 +31,12 @@ class PageAdminForm(forms.ModelForm):
 
 class PageAdmin(GuardedModelAdmin):
     """Define the admin interface for pages"""
+    
     form = PageAdminForm
     
     def save_model(self, request, obj, form, change):
         
-        # get admin group for the comicsite of this page
-        
+        # get admin group for the comicsite of this page     
         pdb.set_trace()
         agn = obj.ComicSite.admin_group_name()
         admingroup = Group.objects.get(name=agn)
@@ -62,15 +60,13 @@ class PageAdmin(GuardedModelAdmin):
         user_qs = get_objects_for_user(request.user, 'comicsite.change_page')
         return user_qs
 
-    
     #Show these page params in admin overview list 
     list_display = ('title','ComicSite','order')
     
 
 
 class ComicSiteAdmin(GuardedModelAdmin):
-            
-        
+                    
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
         qs = super(admin.ModelAdmin, self).queryset(request)
@@ -86,17 +82,14 @@ class ComicSiteAdmin(GuardedModelAdmin):
         """ when saving for the first time, set object permissions; give all permissions to creator """
      
         if obj.id is None:      
-            # create admins group
-            #vb = "Can manage pages/users site settings for COMIC site '"+obj.short_name+"'"
+            # create admins group            
             admingroup = Group.objects.create(name=obj.admin_group_name())
-            #admingroup.save()
             
-            # create participants group
-            #vb = "Have registered for the COMIC site '"+obj.short_name+"'"            
+            
+            # create participants group                    
             participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
             participantsgroup.save()
-            
-                                                
+                                                        
             # add regular django class-level permissions so this group can use admin interface
             can_add = Permission.objects.get(codename="add_comicsite")
             can_change = Permission.objects.get(codename="change_comicsite")
@@ -110,7 +103,6 @@ class ComicSiteAdmin(GuardedModelAdmin):
             can_change_page = Permission.objects.get(codename="change_page")
             can_delete_page = Permission.objects.get(codename="delete_page")
             
-            
             admingroup.permissions.add(can_add,can_change,can_delete,can_add_site,can_change_site,
                                        can_delete_site,can_add_page,can_change_page,can_delete_page)
             
@@ -121,12 +113,8 @@ class ComicSiteAdmin(GuardedModelAdmin):
             
             # add current user to admins for this site 
             request.user.groups.add(admingroup)
-                        
-            #pdb.set_trace()
     
         obj.save()
-        
-    
         
 
 admin.site.register(ComicSite,ComicSiteAdmin)
