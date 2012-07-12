@@ -84,8 +84,7 @@ class ComicSiteAdmin(GuardedModelAdmin):
         if obj.id is None:      
             # create admins group            
             admingroup = Group.objects.create(name=obj.admin_group_name())
-            
-            
+                        
             # create participants group                    
             participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
             participantsgroup.save()
