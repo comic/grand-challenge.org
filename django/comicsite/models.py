@@ -2,37 +2,50 @@ from django.db import models
 from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.db.models import Max
+from django.contrib.auth.models import Group
+
+from guardian.shortcuts import assign
 
 # Create your models here.
 class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
-    # TODO: Sjoerd - Is it correct to define the params below as class params, or should these be in an init method? 
-    
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225)    
-        
+    skin = models.CharField(max_length = 225)
     comment = models.CharField(max_length = 1024, default="", blank=True)
         
+    def clean(self):
+        """ clean method is called automatically for each save in admin"""
+        #TODO check whether short name is really clean and short!
+            
+    def admin_group_name(self):
+        """ returns the name of the admin group which should have all rights to this ComicSite instance"""
+        return self.short_name+"_admins"
+    
+    def participants_group_name(self):
+        """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
+        return self.short_name+"_participants"
+    
 
 class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")     
     ComicSite = models.ForeignKey("ComicSite")
-    
     title = models.CharField(max_length = 255)
     html = models.TextField()
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""
         
-        #when saving for the first time only, put this page last in oder 
+        #when saving for the first time only, put this page last in order 
         if not self.id:
-            # get max value of order for current pages.
-            max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                
-            self.order = max_order["order__max"] + 1
-        
+            # get max value of order for current pages.            
+            max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                        
+            if max_order["order__max"] == None:
+                self.order = 1
+            else:
+                self.order = max_order["order__max"] + 1
             
     
     def rawHTML(self):
@@ -57,7 +70,7 @@ class Page(models.Model):
             raise NotImplementedError("Somebody should implement this!")
         if move == 'LAST':
             raise NotImplementedError("Somebody should implement this!")
-    
+
     
     class Meta:
         """special class holding meta info for this class"""
