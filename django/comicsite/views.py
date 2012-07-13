@@ -13,7 +13,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from comicsite.models import ComicSite,Page,ComicSiteException
-from comicsite.forms import ComicSiteForm
 from dataproviders import FileSystemDataProvider
  
 
