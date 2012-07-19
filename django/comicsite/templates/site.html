@@ -23,7 +23,7 @@
 
 	{% get_obj_perms user for site as "site_perms" %}	
 
-	{% if "change_comicsite" in site_perms %}	   
+	{% if "change_comicsite" in site_perms or request.user.is_superuser %}	   
 	   <li> <a class="menuItem" href="{% url admin:index %}">Admin</a></li>
        <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
 	{% endif %}

@@ -7,6 +7,16 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign
 
 # Create your models here.
+
+
+class ComicSiteModel(models.Model):
+    """An object which can be shown or used in the comicsite framework. This base class should handle common functions
+     such as authorization.
+    """
+    #user = models.ManyToManyField()
+    pass
+
+
 class ComicSite(Site):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
@@ -26,6 +36,7 @@ class ComicSite(Site):
         """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
         return self.short_name+"_participants"
     
+    
 
 class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
@@ -34,6 +45,11 @@ class Page(models.Model):
     ComicSite = models.ForeignKey("ComicSite")
     title = models.CharField(max_length = 255)
     html = models.TextField()
+    
+    def __unicode__(self):
+        """ string representation for this object"""
+        return "Page '"+self.title+"'";
+    
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""
@@ -46,7 +62,8 @@ class Page(models.Model):
                 self.order = 1
             else:
                 self.order = max_order["order__max"] + 1
-            
+      
+    
     
     def rawHTML(self):
         """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
@@ -88,4 +105,5 @@ class ComicSiteException(Exception):
         self.parameter = value
     def __str__(self):
         return repr(self.parameter)
+    
     
