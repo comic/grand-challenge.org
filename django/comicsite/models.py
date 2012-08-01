@@ -3,6 +3,7 @@ from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.db.models import Max
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 
 from guardian.shortcuts import assign
 
@@ -56,8 +57,12 @@ class Page(models.Model):
         
         #when saving for the first time only, put this page last in order 
         if not self.id:
-            # get max value of order for current pages.            
-            max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                        
+            # get max value of order for current pages.
+            try:            
+                max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                
+            except ObjectDoesNotExist :
+                max_order = None
+                                        
             if max_order["order__max"] == None:
                 self.order = 1
             else:

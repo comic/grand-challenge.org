@@ -95,7 +95,7 @@ class PageInline(LinkedInline):
 
 class ComicSiteAdmin(GuardedModelAdmin):
     
-    form = ComicSiteAdminForm
+    #form = ComicSiteAdminForm
     inlines = [PageInline]
                     
     def queryset(self, request):
