@@ -9,6 +9,8 @@ from django import forms
 from django.db import models 
 from django.contrib.auth.models import Group,Permission
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.options import InlineModelAdmin
+from django.forms import TextInput, Textarea
 
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
@@ -34,6 +36,12 @@ class PageAdmin(GuardedModelAdmin):
     
     form = PageAdminForm
     
+    #Show these page params in admin overview list 
+    list_display = ('title','ComicSite','order')
+    
+    list_filter = ['ComicSite']
+    
+    
     def save_model(self, request, obj, form, change):
         
         # get admin group for the comicsite of this page             
@@ -50,21 +58,45 @@ class PageAdmin(GuardedModelAdmin):
         obj.move(move)
     
     def queryset(self, request):
-        """ overwrite this method to return only pages comicsites to which current user has access """
-        qs = super(admin.ModelAdmin, self).queryset(request)
-
-        if request.user.is_superuser:
-            return qs
-                
+        """ overwrite this method to return only pages comicsites to which current user has access """                    
         user_qs = get_objects_for_user(request.user, 'comicsite.change_page')
         return user_qs
 
-    #Show these page params in admin overview list 
-    list_display = ('title','ComicSite','order')
     
+
+class LinkedInline(InlineModelAdmin):
+    """ Show some info and link to complete model admin
+    Created to show all pages belonging to a site on site admin without having to edit pages
+    there in a cramped interface 
+    """
+    template = 'admin/edit_inline/linked.html'
+    admin_model_path = None
+    can_delete = False
+    
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size':'40'})},
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40})},
+    }
+
+
+    def __init__(self, *args):
+        super(LinkedInline, self).__init__(*args)
+        if self.admin_model_path is None:
+            self.admin_model_path = self.model.__name__.lower()
+            
+            
+
+
+
+class PageInline(LinkedInline):
+    model = Page
+    extra = 0
 
 
 class ComicSiteAdmin(GuardedModelAdmin):
+    
+    #form = ComicSiteAdminForm
+    inlines = [PageInline]
                     
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
