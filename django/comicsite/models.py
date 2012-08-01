@@ -25,7 +25,11 @@ class ComicSite(models.Model):
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)
     comment = models.CharField(max_length = 1024, default="", blank=True)
-        
+    
+    def __unicode__(self):
+        """ string representation for this object"""
+        return self.short_name
+    
     def clean(self):
         """ clean method is called automatically for each save in admin"""
         #TODO check whether short name is really clean and short!
@@ -45,7 +49,7 @@ class Page(models.Model):
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")
     ComicSiteTemp = models.IntegerField(default = 0, help_text = "just a temp var to hold foreign key while rebasing this model from ComicSite model")     
-    #ComicSite = models.ForeignKey("ComicSite")
+    ComicSite = models.ForeignKey("ComicSite")
     title = models.CharField(max_length = 255)
     html = models.TextField()
     
@@ -100,10 +104,10 @@ class Page(models.Model):
         """special class holding meta info for this class"""
         # make sure a single site never has two pages with the same name because page names
         # are used as keys in urls
-        #unique_together = (("ComicSite", "title"),)
+        unique_together = (("ComicSite", "title"),)
          
         # when getting a list of these objects this ordering is used
-        #ordering = ['ComicSite','order']
+        ordering = ['ComicSite','order']
     
     
 class ComicSiteException(Exception):
