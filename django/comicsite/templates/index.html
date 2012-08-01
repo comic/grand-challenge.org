@@ -7,8 +7,9 @@
 <p> Welcome to the main portal site of COMIC, the Consortium for Open Medical Image Computing. The following sites are registered at COMIC:</p>
 
 <ol>
+
 {% for site in object_list %}
-	<li><a href="{% url comicsite.views.site site.short_name %}">{{site.name}}</a></li>
+	<li><a href="{% url comicsite.views.site site.short_name %}">{{site.short_name}}</a></li>
 {% endfor %}
 	
 
