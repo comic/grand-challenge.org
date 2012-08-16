@@ -46,8 +46,7 @@ class ComicSite(models.Model):
 class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
-    order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")
-    ComicSiteTemp = models.IntegerField(default = 0, help_text = "just a temp var to hold foreign key while rebasing this model from ComicSite model")     
+    order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")        
     ComicSite = models.ForeignKey("ComicSite")
     title = models.CharField(max_length = 255)
     html = models.TextField()
