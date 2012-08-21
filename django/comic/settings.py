@@ -171,6 +171,8 @@ INSTALLED_APPS = (
     'easy_thumbnails',    
     # social-auth provides authentication via social accounts using openid and oauth2
     'social_auth',
+    # MeVisLab Visualisation through the browser. see https://github.com/comic/comic-django/issues/10
+    'mevislab_visualisation',
 )
 
 AUTHENTICATION_BACKENDS = (
