@@ -26,5 +26,8 @@ urlpatterns = patterns('',
     # all normal accounts stuff is redirected to accounts
     url(r'^accounts/',include('profiles.urls')),
     
+    #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
+    url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
+    
 )
     
