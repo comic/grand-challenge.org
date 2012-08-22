@@ -77,6 +77,8 @@ class LinkedInline(InlineModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size':'40'})},
         models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40})},
     }
+    
+    
 
 
     def __init__(self, *args):
@@ -90,7 +92,10 @@ class LinkedInline(InlineModelAdmin):
 
 class PageInline(LinkedInline):
     model = Page
-    extra = 0
+    extra = 0    
+    
+    # make sure page is only displayed, not edited
+    readonly_fields=("title","html")
 
 
 class ComicSiteAdmin(GuardedModelAdmin):
