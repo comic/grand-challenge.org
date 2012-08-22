@@ -1,0 +1,22 @@
+<DOCTYPE!>
+<html>
+    <head>
+        <script type="text/javascript" src="/static/js/mlabRemote/Application.js"></script>
+        
+    </head>
+    <script type="text/javascript">
+        console.log("loading viewer...");
+        function loadDemo() {
+          gApp.bodyReady(function (moduleCtx) {
+            console.log("viewer loaded");
+          });
+        }
+    </script>
+    <body onload="javascript:gApp.initialize(function() { loadDemo(); }, { 'framework': 'jQueryMobile', 'jpgQuality':50 })" >
+        <div>
+            <div data-role="content">
+                <div name="runmacro" id="Comic_View2D" class="Comic_View2D"></div>
+            </div>
+        </div>
+    </body>
+</html>
