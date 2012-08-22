@@ -482,7 +482,7 @@ function MCStateCreatingModule(moduleContext) {
   this.handleMessageAndGetNextState = function(message) {
     var nextState = null;    
     switch (message.type) {
-      case MLAB_MSG_MODULE_INFO:
+      case MLAB_MSG_MODULE_INFO:      
         if (message.status == 0) {
          // status == 0 means successful module creation
           nextState = new MCStateModuleReady(self._moduleContext);
@@ -493,7 +493,7 @@ function MCStateCreatingModule(moduleContext) {
           nextState = new MCStateFailedToCreateModule(self._moduleContext);
         }
         break;
-
+        
       case MLAB_MSG_MODULE_PROCESS_INFORMATION:
         // this message is currently not handled
         break;
@@ -531,6 +531,7 @@ function MCStateAddPendingBaseFieldMessages(name, moduleContext) {
       case MLAB_MSG_ITEM_MODEL_ITEMS_INSERTED:
       case MLAB_MSG_ITEM_MODEL_ITEMS_REMOVED:
       case MLAB_MSG_ITEM_MODEL_DATA_CHANGED:
+      case MLAB_MSG_ITEM_MODEL_CHILDREN_DONE:
         // these messages are handled by a special handler:
         mc._handleBaseFieldHandlerMessage(message);
 
@@ -635,6 +636,7 @@ function MCStateRenderingSlavesActivated(moduleContext) {
       case MLAB_MSG_ITEM_MODEL_ITEMS_INSERTED:
       case MLAB_MSG_ITEM_MODEL_ITEMS_REMOVED:
       case MLAB_MSG_ITEM_MODEL_DATA_CHANGED:
+      case MLAB_MSG_ITEM_MODEL_CHILDREN_DONE:
         // these messages are handled by a special handler:
         mc._handleBaseFieldHandlerMessage(message);
         break;
@@ -686,7 +688,11 @@ function MLABModuleContext(moduleDiv, id, requiresLogin) {
   };
   
   this.setModuleContextReadyCallback = function(callback) {
-    self._modulyReadyCallback = callback;
+    self._moduleReadyCallback = callback;
+  };
+  
+  this.setModuleWindowCreatedCallback = function(callback) {
+    self._moduleWindowCreatedCallback = callback;
   };
   
   this.createControl = function(mdlTree) {
@@ -931,16 +937,44 @@ function MLABModuleContext(moduleDiv, id, requiresLogin) {
   };
 
   this.disconnect = function() { self._remoteManager.close(); };
+
+  this.getWebSocketPort = function(httpUrl) {
+    var port = "4114";
+    var request = new XMLHttpRequest();
+    // do a synchronous request, because we need to know the web socket port now
+    request.open("GET", httpUrl + "/Settings/webSocketPort", false);
+    request.onreadystatechange = function() {
+      if (request.readyState==4) {
+        port = request.responseText;
+      }
+    };
+    request.send(null);
+    return port;
+  };
   
   this.connect = function() {
-    var hostname = window.location.hostname;
-    // Hardcoded superbus-pc.cevis.uni-bremen.de
-    var socketUri = "ws://134.102.230.19:4114/mevislab";
-    if (hostname) {
-      socketUri = "ws://" + hostname + ":4114/mevislab";
+    var hostname = gApp.getWebSocketHostName();
+    if (!hostname) {
+      hostname = window.location.hostname;
     }
-    socketUri = "ws://134.102.230.19:4114/mevislab";
+    if (!hostname) {
+      hostname = "127.0.0.1";
+    }
+    var port = gApp.getWebSocketPort();
+    if (!port) {
+      var httpUrl = window.location.protocol + "//" + hostname;
+      var httpPort = window.location.port;
+      if (httpPort) {
+        httpUrl = httpUrl + ":" + httpPort;
+      }
+      port = self.getWebSocketPort(httpUrl);
+    }
+    var protocol = "ws://"
+    if (window.location.protocol == "https:") {
+      protocol = "wss://"
+    }
     
+    var socketUri = protocol + hostname + ":" + port + "/mevislab";
     try {
       self._remoteManager.close();
       self._remoteManager.setup(socketUri);
@@ -950,8 +984,8 @@ function MLABModuleContext(moduleDiv, id, requiresLogin) {
   };
   
   this._notifyModuleReadyCallback = function(messageStatus) {
-    if (self._modulyReadyCallback) { 
-      self._modulyReadyCallback(self, messageStatus); 
+    if (self._moduleReadyCallback) { 
+      self._moduleReadyCallback(self, messageStatus); 
     }
   };
   
@@ -979,6 +1013,10 @@ function MLABModuleContext(moduleDiv, id, requiresLogin) {
         self.log("Windows created.");
         
         self.changeState(new MCStateMDLReady(self));
+        
+        if (self._moduleWindowCreatedCallback) {
+          self._moduleWindowCreatedCallback(self);
+        }
       } catch (e) {
         self.logError("Failed to create window, see exception below.");
         self.logException(e);

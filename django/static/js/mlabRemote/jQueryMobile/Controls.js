@@ -68,6 +68,17 @@ function YUIFieldControl(mdlTree, moduleContext) {
     }
   };
   
+  this._setupStringField = function() {
+    var input = document.createElement("input");
+    input.value = self._field.getValue();
+    input.onkeydown = self._onLineEditKeyDown;
+    self._fieldDomElement = input;
+    
+    $(input).focusout(function (event) {
+      var input = self._fieldDomElement;
+      self._field.setValue(input.value);
+    });
+  }
   this.fieldChanged = function(field) {
     if (field == self._field) {
       if (self._disabledLabelDomElement) {
@@ -209,6 +220,11 @@ function JQMWindowControl(mdlTree, moduleContext) {
   this.setupFinished = function() {
     elem = $("div[data-role=content]");
     elem.trigger("create");
+    
+    /*
+    $('.starRating').raty({
+      start: 0
+    });*/
   }
 }
 

@@ -297,7 +297,7 @@ function MLABEventHandler() {
   
     var canvasX = event.pageX - totalOffsetX;
     var canvasY = event.pageY - totalOffsetY;
-  
+
     return {x:canvasX, y:canvasY};
   }
   
@@ -419,8 +419,9 @@ function MLABEventHandler() {
         } else if (type == "mousemove") {
           msg.push(5);
         }
-        evt.preventDefault();
-       
+        if (!evt.isTouch) {
+          evt.preventDefault();
+        }
         var position = self._relMouseCoords(evt, target)
         if (self.isWheelEvent(evt)) {
           var qtOrientation = 2; // 1 == x, 2 == y
@@ -549,10 +550,20 @@ function MLABEventHandler() {
   
       var target = event.touches[0].target;
       var touch = event.touches[0];
-      self.handleEvent({type:"mouseover",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}, target);
-      
-      self._mouseEvent = {type:"mousedown",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}; 
+      //self.handleEvent({type:"mouseover",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}, target);
+      self._mouseEvent = {};
+      self._mouseEvent.isTouch = true;
+      self._mouseEvent.button = event.touches.length-1;
+      self._mouseEvent.pageX = touch.pageX;
+      self._mouseEvent.pageY = touch.pageY;
+      self._mouseEvent.target = event.target;
+      self._mouseEvent.type = "mouseover";
       self.handleEvent(self._mouseEvent, target);
+      self._mouseEvent.type = "mousedown"
+      self.handleEvent(self._mouseEvent, event.target);
+
+      //self._mouseEvent = {type:"mousedown",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}; 
+      //self.handleEvent(self._mouseEvent, target);
     } catch (e) {
       gApp.logException(e);
     }
@@ -566,9 +577,22 @@ function MLABEventHandler() {
   //    document.getElementById("status").innerHTML = "touch move " + pos.x + " " + pos.y; 
   
       var target = event.touches[0].target;
+       if (!target) return;
+      //console.log(target + " - "+ event.target);
       var touch = event.touches[0];
-      mouseEvent = {type:"mousemove",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}; 
-      self.handleEvent(mouseEvent, target);
+      self._mouseEvent = {}
+      self._mouseEvent.isTouch = true;
+      self._mouseEvent.button = event.touches.length-1
+      self._mouseEvent.type = "mousemove"
+      self._mouseEvent.pageX = touch.pageX;
+      self._mouseEvent.pageY = touch.pageY;
+      self._mouseEvent.target = event.target;
+      self.handleEvent(self._mouseEvent, event.target);
+      
+
+      //var touch = event.touches[0];
+      //mouseEvent = {type:"mousemove",button:0, pageX:touch.pageX, pageY:touch.pageY, target:target}; 
+      //self.handleEvent(mouseEvent, target);
     } catch (e) {
       gApp.logException(e);
     }
@@ -578,10 +602,25 @@ function MLABEventHandler() {
     try {
       event.preventDefault();
   
+      var touch = event.changedTouches[0];
+      //self._mouseEvent = {}
+      self._mouseEvent.isTouch = true;
       self._mouseEvent.type = "mouseup";
+      self._mouseEvent.pageX = touch.pageX;
+      self._mouseEvent.pageY = touch.pageY;
+      //self._mouseEvent.target = event.target;
       self.handleEvent(self._mouseEvent, self._mouseEvent.target);
+      self._mouseEvent.type = "mouseout"
+      self.handleEvent(self._mouseEvent, self._mouseEvent.target);
+      
+      //self._mouseEvent.type = "mouseup";
+      //self._mouseEvent.button = 1;
+      //self.handleEvent(self._mouseEvent, self._mouseEvent.target);
+
+      //self._mouseEvent.type = "mouseup";
+      //self.handleEvent(self._mouseEvent, self._mouseEvent.target);
   
-      self.handleEvent({type:"mouseout", target:self._mouseEvent.target}, self._mouseEvent.target);
+      //self.handleEvent({type:"mouseout", target:self._mouseEvent.target}, self._mouseEvent.target);
     } catch (e) {
       gApp.logException(e);
     }

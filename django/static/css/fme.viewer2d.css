@@ -1,0 +1,29 @@
+input.ui-input-text.ui-slider-input {
+  display: none;
+}
+
+.JQMCheckBoxControl .ui-checkbox, .ui-radio {
+  margin: 0;
+}
+
+div.ui-content {
+  padding: 0px;
+}
+
+table {
+ margin: 0px;
+}
+
+.JQMCheckBoxControl .ui-checkbox-on .ui-icon, JQMCheckBoxControl .ui-radio-on .ui-icon
+{
+  background-color:#E1006B;
+}
+
+.csoStats {
+  border: 1px solid #E1006B;
+}
+
+.csoStats td{
+  border-top: 1px solid #F194C3;
+  opacity: 0.5;
+}

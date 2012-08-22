@@ -95,7 +95,7 @@ function YUIApplication() {
   };
   
   this.loadOwnFrameworkModules = function(loadingFinishedCallback) {
-    var scriptModules = ["yui.Controls"];
+    var scriptModules = ["yui/Controls.js"];
     var cssModules = [];
     self._resourceManager.loadResources(scriptModules, cssModules, function() { self.initializeYUIApplication(loadingFinishedCallback); });
   };

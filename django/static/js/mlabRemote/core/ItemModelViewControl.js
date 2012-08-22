@@ -48,10 +48,10 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
   };
 
   this.setupTypicalTags = function() {
-    var w = self.getMDLAttribute("w", null);
-    if (w) { self._domElement.style.width = w + "px"; }
-    var h = self.getMDLAttribute("h", null);
-    if (h) { self._domElement.style.height = h + "px"; }
+    self._width = self.getMDLAttribute("w", null);
+    if (self._width) { self._domElement.style.width = self._width + "px"; }
+    self._height = self.getMDLAttribute("h", null);
+    if (self._height) { self._domElement.style.height = self._height + "px"; }
   };
   
   // check if an attribute even exists:
@@ -141,14 +141,16 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
   
   this._synchronizeHeader = function() {
     var headerRow = self._headerRow;
+    var totalWidth = 0;
     if (self._tableBody.rows.length > 0) {
       var firstRow = self._tableBody.rows[0];
       for (var i=0;i<headerRow.cells.length;i++) {
         var w = firstRow.cells[i].clientWidth;
-        var headerElem = headerRow.cells[i];
-        headerElem.style.width = w;
-        headerElem.style.minWidth = w;
-        headerElem.style.maxWidth = w;
+        //var headerElem = headerRow.cells[i];
+        totalWidth += w;
+        //headerElem.style.width = w;
+        //headerElem.style.minWidth = w;
+        //headerElem.style.maxWidth = w;
       }
     } else {
       for (var i=0;i<headerRow.length;i++) {
@@ -158,6 +160,21 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
         delete headerElem.style.maxWidth;
       }
     }
+    if (totalWidth < self._width) {
+      var dif = self._width - totalWidth;
+      if (self._tableBody.rows.length > 0) {
+        var firstRow = self._tableBody.rows[0];
+        var add = dif / firstRow.cells.length;
+        for (var i=0;i<headerRow.cells.length;i++) {
+          var w = firstRow.cells[i].clientWidth;
+          firstRow.cells[i].style.width = w + add;
+          var headerElem = headerRow.cells[i];
+          headerElem.style.width =  w + add;
+          //headerElem.style.minWidth = firstWidth + dif;
+          headerElem.style.maxWidth = w + add;
+        }
+      } 
+    } 
     self._synchronizeHeaderPos();
   }
   
@@ -178,7 +195,7 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
     }
     self._headerRow = self._header.insertRow(0);
     self._headerRow.setAttribute("class", "MLABMLItemModelViewControl_HeaderRow");
-    var columnTrees = mlabGetMDLChildren(self._mdlTree, "column");
+    var columnTrees = mlabGetMDLChildren(self._mdlTree, "Column");
     for (var i=0; i<columnTrees.length; i++) {
       var childTree = columnTrees[i];
       var column = new Object();
@@ -696,6 +713,7 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
           cell.appendChild(self._createExpanderElement());
         }
         var expander = self._createExpanderElement();
+        expander.style.verticalAlign = "middle";
         expander.onclick = self._handleExpanderClick;
         row.mevis_expander = expander;
         if (modelItem.hasChildren()) {
@@ -707,6 +725,7 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
       }
       content = document.createElement("div");
       content.setAttribute("class", "MLABMLItemModelViewControl_CellContent");
+      content.style.verticalAlign = "middle";
       if (column.alignment) {
         content.setAttribute("align", column.alignment.toLowerCase());
       }
@@ -734,7 +753,10 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
       // purge the old content:
       content.removeChild(content.firstChild);
     }
-    content.appendChild(document.createTextNode(self._getAttribute(modelItem, column.displayAttribute)));
+    value = self._getAttribute(modelItem, column.displayAttribute);
+    if (value) {
+      content.appendChild(document.createTextNode(value));
+    }
     // icon?
     if (column.iconAttribute) {
       var iconValue = self._getAttribute(modelItem, column.iconAttribute);
@@ -744,6 +766,9 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
           icon = cell.mevis_icon;
         } else {
           icon = document.createElement("img");
+          // ako: add class to be able to style that
+          //icon.style.verticalAlign = "middle";
+          //icon.style.paddingRight = "3px";
           cell.mevis_icon = icon;
           cell.insertBefore(icon, previousElement);
         }
