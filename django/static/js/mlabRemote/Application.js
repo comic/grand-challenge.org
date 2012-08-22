@@ -7,9 +7,6 @@ Array.prototype.remove = function(element) {
 }
 
 
-
-
-
 //=============================================================================
 // MLABSystemInfo
 //=============================================================================
@@ -38,6 +35,11 @@ function MLABSystemInfo() {
     return (/iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()));
   };
   
+  // check of Android devices
+  this.isAndroid = function() {
+    return navigator.userAgent.toLowerCase().indexOf("android") >= 0;
+  };
+  
   this.isMacOS = function() {
     return navigator.platform.indexOf("Mac") >= 0;
   };
@@ -55,9 +57,17 @@ function MLABSystemInfo() {
 //=============================================================================
 // MLABResource
 //=============================================================================
-function MLABResource(type, url, attributes) {
+function MLABResource(type, url, attributes, rootDirectory) {
   this.type = type;
   this.url = url;
+  if ((url[0] != "/") && !url.match(/(^[a-zA-Z]+:.*)/i)) {
+    // a relative url has been given, prepend the root directory
+    var root = rootDirectory;
+    if (!root) {
+      root = gApp.getResourcesRootDirectory();
+    }
+    this.url = root + this.url;
+  }
   this.attributes = attributes;
 }
 
@@ -65,26 +75,20 @@ function MLABResource(type, url, attributes) {
 //=============================================================================
 // MLABScriptResource
 //=============================================================================
-function MLABScriptResource(name) {
-  var url = "/static/"+name;
-  if (!name.match(/(^(http|https|file):.*)/i)) {
-      //url = "/static/js/" + name.replace(".", "/") + ".js";
-  }
+function MLABScriptResource(name, rootDirectory) {
+  var url = name;
   this.inheritFrom = MLABResource;
-  this.inheritFrom("script", url, {"type": "text/javascript"});
+  this.inheritFrom("script", url, {"type": "text/javascript"}, rootDirectory);
 }
 
 
 //=============================================================================
 // MLABCssResource
 //=============================================================================
-function MLABCssResource(name) {
-  var url = "/static/"+name;
-  if (!name.match(/(^(http|https|file):.*)/i)) {
-    //url = "/static/css/" + name.replace(".", "/") + ".css";
-  }
+function MLABCssResource(name, rootDirectory) {
+  var url = name;
   this.inheritFrom = MLABResource;
-  this.inheritFrom("link", url, {"rel": "stylesheet", "type": "text/css"});
+  this.inheritFrom("link", url, {"rel": "stylesheet", "type": "text/css"}, rootDirectory);
 }
 
 
@@ -144,12 +148,20 @@ function MLABResourceLoader(resourceList, loadingFinishedCallback) {
 //=============================================================================
 // MLABResourceManager
 //=============================================================================
-function MLABResourceManager() {
+function MLABResourceManager(jsRootDirectory, cssRootDirectory) {
   var self = this;
   
   this._loadedScriptModules = new Array();
   this._loadedCssModules = new Array();
   this._activeResourceLoader = null;
+  this._cssRootDirectory = cssRootDirectory;
+  if (cssRootDirectory[cssRootDirectory.length-1] != '/') {
+    this._cssRootDirectory = cssRootDirectory + '/';
+  }
+  this._jsRootDirectory = jsRootDirectory;
+  if (jsRootDirectory[jsRootDirectory.length-1] != '/') {
+    this._jsRootDirectory = jsRootDirectory + '/';
+  }
   
   this.loadResources = function(scriptModules, cssModules, loadingFinishedCallback, loader) {
     var resourceList = new Array();
@@ -157,14 +169,14 @@ function MLABResourceManager() {
     for (var i=0; i<scriptModules.length; i++) {
       if (self._loadedScriptModules.indexOf(scriptModules[i]) == -1) {
         self._loadedScriptModules.push(scriptModules[i]);
-        resourceList.push(new MLABScriptResource(scriptModules[i]));
+        resourceList.push(new MLABScriptResource(scriptModules[i], self._jsRootDirectory));
       }
     }
     
     for (var i=0; i<cssModules.length; i++) {
       if (self._loadedCssModules.indexOf(cssModules[i]) == -1) {
         self._loadedCssModules.push(cssModules[i]);
-        resourceList.push(new MLABCssResource(cssModules[i]));
+        resourceList.push(new MLABCssResource(cssModules[i], self._cssRootDirectory));
       }
     }
     
@@ -193,7 +205,23 @@ function MLABResourceManager() {
 function MLABApplication() {
   var self = this;
   app = this;
+
+  // make the port and hostname for the web socket configurable, so that the web server and mevislab server
+  // may be different hosts
+  this._webSocketPort = null;
+  this._webSocketHostName = null;
   
+  this.getWebSocketPort = function() { return self._webSocketPort; };
+  this.getWebSocketHostName = function() { return self._webSocketHostName; };
+  
+  this.setWebSocketPort = function(port) {
+    self._webSocketPort = port;
+  };
+  
+  this.setWebSocketHostName = function(hostname) {
+    self._webSocketHostName = hostname;
+  };
+    
   this._loginRequired = false;
   
   this._pendingModuleContexts = []; // contains all newly created module contexts 
@@ -248,6 +276,11 @@ function MLABApplication() {
     return null;
   };
   
+  this._renderQualitySettings = {maxPendingImages:3, jpegQuality:75};
+  this.getRenderQualitySettings = function() { 
+    return self._renderQualitySettings; 
+  };
+  
   this.showIDE = function(moduleContextId) {
     var moduleContext = null;
     for (var i=0; i<self._moduleContexts.length; i++) {
@@ -267,7 +300,7 @@ function MLABApplication() {
   this.debugRemoteMessages = function() { return ("debug_remote_messages" in self._args); }
   this.isFieldSyncronizationProfilingEnabled = function() { return ("enable_field_sync_profiling" in self._args); }
   
-  this.initialize = function(initializationFinishedCallback) {
+  this.initialize = function(initializationFinishedCallback, settingObj) {
     self._initializationFinishedCallback = initializationFinishedCallback;
     function parsePageArguments() {
       var tmp = window.location.href.split('?');
@@ -282,46 +315,59 @@ function MLABApplication() {
           args[tmp[i]] = '1';
         }
       }
+      for (key in settingObj) {
+        args[key] = settingObj[key];
+      }
+
       return args;
     }
 
     self._args = parsePageArguments();
     
-    if ("diagnosis" in self._args) { self._showDiagnosisPanel = true; }    
+    if ("diagnosis" in self._args) { self._showDiagnosisPanel = true; }
     if ("mlab_root" in self._args) { self._urlToMLABRoot = self._args["mlab_root"]; }
     else { 
       // assume that MLAB_ROOT is http://server/Packages
       self._urlToMLABRoot = window.location.protocol + "//" + window.location.host + "/Packages";
     }
+    var resourcesDirectory = window.location.pathname.substr(0, window.location.pathname.lastIndexOf('/')+1);
+    if ("resourcesRoot" in self._args) { resourcesDirectory = self._args["resourcesRoot"]; }
+    if (resourcesDirectory[resourcesDirectory.length-1] != '/') { resourcesDirectory = resourcesDirectory+'/'; }
+    var cssResourcesDirectory = resourcesDirectory + 'css/';
+    var jsResourcesDirectory = resourcesDirectory + 'js/';
+    if ("jsResourcesRoot" in self._args) { jsResourcesDirectory = self._args["jsResourcesRoot"]; }
+    if ("cssResourcesRoot" in self._args) { cssResourcesDirectory = self._args["cssResourcesRoot"]; }
     
     if ("streaming" in self._args) { self._useStreaming = (self._args["streaming"] != "0"); }    
-    if (!("framework" in self._args)) { self._args["framework"] = "jQueryMobile"; }    
+    if (!("framework" in self._args)) { self._args["framework"] = "yui"; }    
 
     // Setup streaming settings from URL params:
-    this._renderQualitySettings = {maxPendingImages:3, jpegQuality:75};
     if ("maxPendingImages" in self._args) {
-      this._renderQualitySettings.maxPendingImages = parseInt(self._args["maxPendingImages"]);
+      self._renderQualitySettings.maxPendingImages = parseInt(self._args["maxPendingImages"]);
     }    
     if ("jpgQuality" in self._args) {
-      this._renderQualitySettings.jpgQuality = parseInt(self._args["jpgQuality"]);
-    }    
+      self._renderQualitySettings.jpgQuality = parseInt(self._args["jpgQuality"]);
+    }
+    if ("interactiveScaling" in self._args) {
+      self._renderQualitySettings.interactiveScaling = parseFloat(self._args["interactiveScaling"]);
+    }
     if ("minUpdateDelayInMs" in self._args) {
-      this._renderQualitySettings.minUpdateDelayInMs = parseInt(self._args["minUpdateDelayInMs"]);
+      self._renderQualitySettings.minUpdateDelayInMs = parseInt(self._args["minUpdateDelayInMs"]);
     }    
     if ("maxUpdateDelayInMs" in self._args) {
-      this._renderQualitySettings.maxUpdateDelayInMs = parseInt(self._args["maxUpdateDelayInMs"]);
+      self._renderQualitySettings.maxUpdateDelayInMs = parseInt(self._args["maxUpdateDelayInMs"]);
     }    
-    this.getRenderQualitySettings = function() { return self._renderQualitySettings; }
 
-    var styleModule = "css/default.css";
+    //console.log("jpeg quality: "+this._renderQualitySettings.jpgQuality);
+    var styleModule = "default.css";
     if ("style" in self._args) { styleModule = self._args["style"]; }
     
-    var scriptModules = ["js/core/Utilities.js", "js/core/Controls.js", 
-                         "js/core/RemoteMessages.js", "js/core/RemoteManager.js", "js/core/Event.js",
-                         "js/core/ItemModelHandler.js", "js/core/ItemModelViewControl.js",
-                         "js/core/ModuleContext.js"];
+    var scriptModules = ["core/Utilities.js", "core/Controls.js", 
+                         "core/RemoteMessages.js", "core/RemoteManager.js", "core/Event.js",
+                         "core/ItemModelHandler.js", "core/ItemModelViewControl.js",
+                         "core/ModuleContext.js"];
     var cssModules = [styleModule];
-    self._resourceManager = new MLABResourceManager();
+    self._resourceManager = new MLABResourceManager(jsResourcesDirectory, cssResourcesDirectory);
     self.loadResources(scriptModules, cssModules, self.coreModulesLoaded);
   };
   
@@ -331,7 +377,7 @@ function MLABApplication() {
   
   this.coreModulesLoaded = function() {
     self.log("Core modules loaded.");    
-    self.loadResources(["js/"+self._args["framework"] + "/Application.js"], [], self.frameworkModuleLoaded);
+    self.loadResources([self._args["framework"] + "/Application.js"], [], self.frameworkModuleLoaded);
   };
   
   this.frameworkModuleLoaded = function() {
@@ -339,14 +385,14 @@ function MLABApplication() {
     self.loadFrameworkModules(self.frameworkLoaded);
   };
     
-  this.frameworkLoaded = function() {    
+  this.frameworkLoaded = function() {
     self.log("Framework loaded.");
     self._systemInfo = new MLABSystemInfo();
     self._eventHandler = new MLABEventHandler();
     self._initializationFinishedCallback();
   };
   
-  this.createModuleContext = function(moduleDiv, isLoginRequired) {
+  this.createModuleContext = function(moduleDiv, isLoginRequired, moduleWindowCreatedCallback) {
     self.log("Creating module context for " + moduleDiv.id);
     try {
       var moduleContext = new MLABModuleContext(moduleDiv, self._nextModuleContextID, isLoginRequired);
@@ -355,6 +401,7 @@ function MLABApplication() {
       self._pendingModuleContexts.push(moduleContext);
       self.registerWidgetControls(moduleContext);
       moduleContext.setModuleContextReadyCallback(self._handleModuleContextReady);
+      moduleContext.setModuleWindowCreatedCallback(moduleWindowCreatedCallback);
       return moduleContext;
     } catch (e) {
       self.logException(e);
@@ -427,7 +474,7 @@ function MLABApplication() {
   
   this.getEventHandler = function() { return self._eventHandler; };
   
-  this.bodyReady = function() {
+  this.bodyReady = function(moduleWindowCreatedCallback) {
     document.body.onunload = self.shutdown;
     try {
       self.frameworkBodyReady();
@@ -462,7 +509,7 @@ function MLABApplication() {
         if (moduleDivs.length > 0) {
           var moduleContexts = [];
           for (var i=0; i<moduleDivs.length; i++) {
-            moduleContexts.push(self.createModuleContext(moduleDivs[i], isLoginRequired));
+            moduleContexts.push(self.createModuleContext(moduleDivs[i], isLoginRequired, moduleWindowCreatedCallback));
           }
           for (var i=0; i<moduleContexts.length; i++) {
             if (moduleContexts[i]) {

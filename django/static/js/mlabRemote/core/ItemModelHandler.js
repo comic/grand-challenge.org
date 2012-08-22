@@ -196,6 +196,9 @@ function MLABItemModelHandler(field, generationID) {
       case MLAB_MSG_ITEM_MODEL_DATA_CHANGED:
         self._handleDataChangedMessage(msg);
         break;
+      case MLAB_MSG_ITEM_MODEL_CHILDREN_DONE:
+        // currently not used
+        break;
         
       default:
         mlabThrowException("MLABItemModelHandler.handleMessage: unhandled message type: " + msg.type);

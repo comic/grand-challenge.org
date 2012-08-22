@@ -64,23 +64,16 @@ function JQMApplication() {
   var self = this;
   
   this._diagnosisPanel = null;
-  
-  // TODO: this should either be a relative url to this page or be specified 
-  // by the server and queried
-  //this.jqmBaseUrl = "http://mevislab.mevis.lokal/resources/yui"
-  //this.jqmBaseUrl = "http://192.168.0.104:88/Packages/MeVisLab/Private/Sources/Web/yui/2.6.0"
-  //this.jqmBaseUrl = "http://127.0.0.1:88/Packages/MeVisLab/Private/Sources/Web/yui/2.6.0"
-  //this.jqmBaseUrl = "http://192.168.77.1/static/js/yui"
-  this.jqmBaseUrl = "/"
+  this._hasLoginDialog = false;
   this.loadFrameworkModules = function(loadingFinishedCallback) {
-    var scriptModules = ["js/jquery-1.7.1.min.js",
-                         "js/jquery.mobile-1.1.0-rc.1.min.js"];
-    var cssModules = ["css/jquery.mobile-1.1.0-rc.1.min.css"];
+    var scriptModules = ["jquery.mobile-1.1.0-rc.1.min.js"];
+                       
+    var cssModules = ["jquery.mobile-1.1.0-rc.1.min.css"];
     self._resourceManager.loadResources(scriptModules, cssModules, function() { self.loadOwnFrameworkModules(loadingFinishedCallback); }, JQMResourceLoader);
   };
   
   this.loadOwnFrameworkModules = function(loadingFinishedCallback) {
-    var scriptModules = ["js/jQueryMobile/Controls.js"];
+    var scriptModules = ["jQueryMobile/Controls.js"];
     var cssModules = [];
     self._resourceManager.loadResources(scriptModules, cssModules, function() { self.initializeJQMApplication(loadingFinishedCallback); });
   };
@@ -137,81 +130,66 @@ function JQMApplication() {
   };
   
   this._createLoginDialog = function() {
-    
-    var hd = document.createElement("div");
-    hd.setAttribute("class", "hd");
-    hd.innerHTML = "Login";
-    
-    var p = document.createElement("p");
-    p.innerHTML = "Enter your username and passwort:";
-    
-    var userLabel  = document.createElement("label");
-    userLabel.setAttribute("for", "user");
-    userLabel.innerHTML = "Username:";
-    var passwordLabel = document.createElement("label");
-    passwordLabel.setAttribute("for", "password");
-    passwordLabel.innerHTML = "Password:";
-    var userInput = document.createElement("input");
-    userInput.setAttribute("type", "text");
-    userInput.setAttribute("name", "user");
-    var passwordInput = document.createElement("input");
-    passwordInput.setAttribute("type", "password");
-    passwordInput.setAttribute("name", "password");
-    
-    var table = document.createElement("table");
-    var r0 = table.insertRow(0);
-    r0.insertCell(0).appendChild(userLabel);
-    r0.insertCell(1).appendChild(userInput);
-    var r1 = table.insertRow(1);
-    r1.insertCell(0).appendChild(passwordLabel);
-    r1.insertCell(1).appendChild(passwordInput);
-    
-    var form = document.createElement("form");
-    form.setAttribute("name", "loginDialogForm");
-    form.appendChild(p);
-    form.appendChild(table);
-    
-    var bd = document.createElement("div");
-    bd.setAttribute("class", "bd");
-    bd.appendChild(form);
-    
-    self._loginDialog = document.createElement("div");
-    self._loginDialog.id = "loginDialog";
-    self._loginDialog.appendChild(hd);
-    self._loginDialog.appendChild(bd);
-    document.body.appendChild(self._loginDialog);
-/*
-    var handleSubmit = function() {
-      self._yuiLoginDialog.hide();
-      self._authentication = [userInput.value, mlabEncodeBase64(passwordInput.value)];
-      passwordInput.value = "";
-      self._yuiLoginDialog.authenticatedCallback(); 
-    };
-    
-    self._yuiLoginDialog = new YAHOO.widget.Dialog("loginDialog", { 
-       width : "25em",
-       fixedcenter : true,
-       visible : false, 
-       constraintoviewport : true,
-       buttons : [ { text:"Login", handler:handleSubmit, isDefault:true },
-                   { text:"Cancel", handler:function(){self._yuiLoginDialog.hide();} } ]
+    if (self._hasLoginDialog) {
+      return;
+    }
+    html = '<a href="#_mevislab_login_dialog" id="_mevislab_login_dialog_button" style="display:none;" data-rel="dialog">Open dialog</a><div data-role="page" id="_mevislab_login_dialog" data-theme="a"><div id="_mevislab_login_dialog" title="Enter your username and passwort:"> \
+            <p class="validateTips">All form fields are required.</p> \
+            <form name="loginDialogForm">  \
+            <fieldset>  \
+              <label for="name">Username:</label>  \
+              <input type="text" name="user" id="_mevislab_login_dialog_user" class="text ui-widget-content ui-corner-all" />  \
+              <label for="password">Password:</label>  \
+              <input type="password" name="password" id="_mevislab_login_dialog_password" value="" class="text ui-widget-content ui-corner-all" />  \
+            </fieldset>  \
+            <button type="submit" id="_mevislab_login_dialog_submit"> Login</button> \
+            <button id="_mevislab_login_dialog_cancel"> Cancel</button> \
+            </form>  \
+          </div></div>';
+    $("body").append($(html))
+    self._hasLoginDialog = true;
+    $("#_mevislab_login_dialog_submit").click(function () {
+      self._authentication = [$("#_mevislab_login_dialog_user").val(), mlabEncodeBase64($("#_mevislab_login_dialog_password").val())];
+      $("#_mevislab_login_dialog_password").val("");
+      self.authenticatedCallback();
+      $('.ui-dialog').dialog('close')
+      return false;
     });
-    
-    var enterKeyListener = new YAHOO.util.KeyListener(document, { keys:13 },
-        { fn:handleSubmit, scope:self._yuiLoginDialog, correctScope:true }, 
-        "keyup");
-    self._yuiLoginDialog.cfg.queueProperty("keylisteners", enterKeyListener);
-    
-    self._yuiLoginDialog.render();
+    $("#_mevislab_login_dialog_cancel").click(function () {
+      $('.ui-dialog').dialog('close')
+      return false;
+    });
+    /*
+    $( "#_mevislab_login_dialog" ).dialog({
+      autoOpen: false,
+      height: 300,
+      width: 350,
+      modal: true,
+      buttons: {
+        Login: function() {
+          
+          self._authentication = [user.val(), mlabEncodeBase64(password.val())];
+          password.val("");
+          self.authenticatedCallback(); 
+          $( this ).dialog( "close" );
+        },
+        Cancel: function() {
+          $( this ).dialog( "close" );
+        }
+      },
+      close: function() {
+        //allFields.val( "" ).removeClass( "ui-state-error" );
+      }
+    });
     */
   };
   
-  this.requestAuthentication = function(authenticatedCallback) {    
-    if (!self._loginDialog) {
+  this.requestAuthentication = function(authenticatedCallback) {
+    if (!self._hasLoginDialog) {
       self._createLoginDialog();
     }
-    self._yuiLoginDialog.authenticatedCallback = authenticatedCallback;
-    self._yuiLoginDialog.show();
+    self.authenticatedCallback = authenticatedCallback;
+    $( "#_mevislab_login_dialog_button" ).click();
   };
   
   this.showLoadDialog = function() {
