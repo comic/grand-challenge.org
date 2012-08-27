@@ -72,10 +72,11 @@ class LinkedInline(InlineModelAdmin):
     template = 'admin/edit_inline/linked.html'
     admin_model_path = None
     can_delete = False
+        
     
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'40'})},
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40})},
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':20})},
     }
     
     
@@ -94,8 +95,14 @@ class PageInline(LinkedInline):
     model = Page
     extra = 0    
     
+    fields = ('title','html_trunc')    
     # make sure page is only displayed, not edited
-    readonly_fields=("title","html")
+    #readonly_fields=("title","html")
+    readonly_fields=('title','html_trunc')
+    
+    
+    def html_trunc(self,obj):
+        return obj.html[:300]
 
 
 class ComicSiteAdmin(GuardedModelAdmin):

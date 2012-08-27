@@ -31,13 +31,16 @@
         {% for fieldset in inline_admin_form %}
           {% for line in fieldset %}
             {% for field in line %}
+                        	
               <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
+              	<a href="/admin/{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">              	
               {% if field.is_readonly %}
                   <p>{{ field.contents }}</p>
               {% else %}
                   {{ field.field.errors.as_ul }}
                   {{ field.field }}
               {% endif %}
+              </a>
               </td>
             {% endfor %}
           {% endfor %}
