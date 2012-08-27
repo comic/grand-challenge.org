@@ -37,6 +37,7 @@ MLAB_MSG_ITEM_MODEL_ITEMS_INSERTED = '1052';
 MLAB_MSG_ITEM_MODEL_ITEMS_REMOVED  = '1053';
 MLAB_MSG_ITEM_MODEL_DATA_CHANGED   = '1054';
 MLAB_MSG_ITEM_MODEL_GET_CHILDREN   = '1055';
+MLAB_MSG_ITEM_MODEL_CHILDREN_DONE  = '1056';
 
 
 function mlabGetMessageTypeName(msgType) {
@@ -76,6 +77,7 @@ function mlabGetMessageTypeName(msgType) {
     case '1053': return 'MLAB_MSG_ITEM_MODEL_ITEMS_REMOVED ';
     case '1054': return 'MLAB_MSG_ITEM_MODEL_DATA_CHANGED  ';
     case '1055': return 'MLAB_MSG_ITEM_MODEL_GET_CHILDREN  ';
+    case '1056': return 'MLAB_MSG_ITEM_MODEL_CHILDREN_DONE ';
   }
   return "UNKNOWN_MESSAGE_TYPE(" + msgType + ")";
 }
@@ -516,6 +518,23 @@ function MLABItemModelGetChildrenMessage() {
   };
 }
 
+function MLABItemModelChildrenDoneMessage() {
+  var self = this;
+  
+  this.inheritFrom = MLABRemoteMessage;
+  this.inheritFrom(MLAB_MSG_ITEM_MODEL_CHILDREN_DONE);
+  
+  this.read = function(data) {
+    self.baseField = data.shift();
+    self.baseGeneration = parseInt(data.shift());
+    self.itemID = parseInt(data.shift());
+  };
+
+  this.setData = function(baseField, baseGeneration, itemID) {
+    self.data = [baseField, baseGeneration, itemID];
+  };
+}
+
 function MLABItemModelItemChanged() {
   var self = this;
   
@@ -646,3 +665,4 @@ gMessageClassMap[MLAB_MSG_ITEM_MODEL_ITEMS_INSERTED] = MLABItemModelItemsInserte
 gMessageClassMap[MLAB_MSG_ITEM_MODEL_ITEMS_REMOVED]  = MLABItemModelItemsRemoved;
 gMessageClassMap[MLAB_MSG_ITEM_MODEL_DATA_CHANGED]   = MLABItemModelDataChanged;
 gMessageClassMap[MLAB_MSG_ITEM_MODEL_GET_CHILDREN]   = MLABItemModelGetChildrenMessage;
+gMessageClassMap[MLAB_MSG_ITEM_MODEL_CHILDREN_DONE]  = MLABItemModelChildrenDoneMessage;

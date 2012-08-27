@@ -22,12 +22,16 @@ function MLABWidgetControl(mdlTree, moduleContext) {
     console.log("field changed:" + self._mdlTree.value);
   };
   
+  this.getName = function() { return self._name; };
+  
   // extends the id by the widget control id
   this.getElementId = function(id) {
-    return id + "_" + self._id;
+    // do not include self._id in the element id, otherwise css rules cannot be applied,
+    // because self._id is generated at runtime, it is not known when writing css rules
+    return id + "_" + self._ctx.getModule().getName() + "_" + self.getName();
   };
   
-  this.setupWidgetControl = function(className, parentControl) {    
+  this.setupWidgetControl = function(className, parentControl) {
     if (self._mdlTree.value && self._mdlTree.value.length > 0) {
       var f = self._ctx.lookupField(self._mdlTree.value);
       if (f) { 
@@ -36,12 +40,13 @@ function MLABWidgetControl(mdlTree, moduleContext) {
       }
     }
     
-    var name = self.getMDLAttribute("name", null);
-    if (name) {
-      className += " " + name;
+    self._name = self.getMDLAttribute("name", null);
+    if (self._name) {
+      className += " " + self._name;
     }
     self._domElement = document.createElement('div');
     self._domElement.setAttribute("class", className);
+    
     self._domElement.mlabControl = self;
     
     self._isEnabled = mlabIsTrue(self.getMDLAttribute("enabled", "yes"));
@@ -144,9 +149,17 @@ function MLABFrameControl(mdlTree, moduleContext) {
   this.inheritFrom = MLABWidgetControl;
   this.inheritFrom(mdlTree, moduleContext);
   
+  this.widgetControlSetupTypicalTags = this.setupTypicalTags;
   this.setupTypicalTags = function() {
+    self.widgetControlSetupTypicalTags();
     var margin = self.getMDLAttribute("margin", "2");
     self._table.style.margin = margin + "px";
+    if (self.getMDLAttribute("w", null) != null) {
+      self._table.style.width = self._domElement.style.width;
+    } 
+    if (self.getMDLAttribute("h", null) != null) {
+      self._table.style.height = self._domElement.style.height;
+    }
     
     self._spacing = self.getMDLAttribute("spacing", "2");
   };
@@ -183,7 +196,12 @@ function MLABHorizontalControl(mdlTree, moduleContext) {
     self.setupWidgetControl("MLABHorizontalControl", parentControl);
     self._table = document.createElement("table");
     self._row = self._table.insertRow(0);
-    self._row.style.verticalAlign = "top";
+    var verticalAlign = null;
+    var verticalAlignTree = mlabGetMDLChild(self._mdlTree, "alignY");
+    if (verticalAlignTree) {
+      verticalAlign = verticalAlignTree.value;
+    }
+    self._row.style.verticalAlign = verticalAlign ? verticalAlign : "top";
     self._domElement.appendChild(self._table);    
   };
   
@@ -268,7 +286,7 @@ function MLABFieldControl(mdlTree, moduleContext) {
       var textAlign = self.getMDLAttribute("textAlign", null);
       if (textAlign) {
         self._fieldDomElement.style.textAlign = textAlign.toLowerCase();
-      }      
+      }
     }
 
     // TODO: c++ MLABFieldControl uses MLABModule::translate() on the title
@@ -297,6 +315,7 @@ function MLABFieldControl(mdlTree, moduleContext) {
         }
       }
 
+      // ako: add class to enable making labels invisible via css
       self._labelDomElement = document.createElement("div");
       self._labelDomElement.innerHTML = self._title + (self._hasAutomaticTitle ? ":" : "");
       self._tableRow.insertCell(0).appendChild(self._labelDomElement);
@@ -491,6 +510,11 @@ function MLABRemoteRenderingControl(mdlTree, moduleContext) {
   this._pendingBaseFieldMessages = [];
   
   this._cursorShapes = {};
+
+  this._sizeHint = [0,0];
+  this._maximumSizeHint = [0,0];
+  this._useSizeHintWidth = false;
+  this._useSizeHintHeight = false;
   
   // the remote rendering module supports more than one slave for the rendered
   // image, so we could have multiple images of the same scene with different
@@ -508,15 +532,27 @@ function MLABRemoteRenderingControl(mdlTree, moduleContext) {
     self._canvasCtx = self._canvas.getContext('2d'); 
     self._imgObject = new Image();
     self._imgObject.onload = function() {  
-      // draw the image onto the canvas using it's context
-      self._canvasCtx.drawImage(self._imgObject,0,0)
+      self._canvasCtx.clearRect(0,0,self._imgWidth,self._imgHeight);
+      // draw the image onto the canvas using its context
+      if (self._imgWidth != self._imgObject.width) {
+        // scale images which have a different size
+        self._canvasCtx.drawImage(self._imgObject,0,0, self._imgWidth, self._imgHeight)
+      } else {
+        self._canvasCtx.drawImage(self._imgObject,0,0)
+      }
     };  
     self._domElement.appendChild(self._canvas);
     self._moduleContext.registerRemoteRenderingControl(self._baseField, self);
   };
   
   this.setupTypicalTags = function() {
-    self.resizeViewport(self.getMDLAttribute("w", "400"), self.getMDLAttribute("h", "400"));
+    var w = self.getMDLAttribute("w", "-1");
+    var h = self.getMDLAttribute("h", "-1");
+    self._useSizeHintWidth = false;
+    self._useSizeHintHeight = false;
+    if (w == "-1") { w = "400"; self._useSizeHintWidth = true; }
+    if (h == "-1") { h = "400"; self._useSizeHintHeight = true; }
+    self.resizeViewport(w, h);
   };
   
   this._addPendingBaseFieldMessage = function(message) {
@@ -589,7 +625,8 @@ function MLABRemoteRenderingControl(mdlTree, moduleContext) {
       return;
     }    
     self._renderingSlaveAdded = true;
-    if (gApp.getSystemInfo().isIOS()) {
+    systemInfo = gApp.getSystemInfo();
+    if (systemInfo.isIOS() || systemInfo.isAndroid()) {
       self._canvas.addEventListener("touchstart",  gApp.getEventHandler().touchStart,  false);
       self._canvas.addEventListener("touchmove",   gApp.getEventHandler().touchMove,   false);
       self._canvas.addEventListener("touchend",    gApp.getEventHandler().touchEnd,    false);
@@ -686,8 +723,26 @@ function MLABRemoteRenderingControl(mdlTree, moduleContext) {
   
   this.setSizeHints = function(message)
   {
-    if (message.sizeHint[0]>0 && message.sizeHint[1]>0) {
-      self.resizeViewport(message.sizeHint[0], message.sizeHint[1]);
+    self._sizeHint = message.sizeHint;
+    self._maximumSizeHint = message.maximumSizeHint;
+    if (self._sizeHint[0] <= 0) {
+      self._useSizeHintWidth = false;
+    }
+    if (self._sizeHint[1] <= 0) {
+      self._useSizeHintHeight  = false;
+    }
+
+    // if no width or height is given in the MDL, then use the size hint now
+    if (self._useSizeHintWidth || self._useSizeHintHeight) {
+      var w = self._useSizeHintWidth ? self._sizeHint[0] : self._imgWidth;
+      var h = self._useSizeHintHeight ? self._sizeHint[1] : self._imgHeight;
+      this.resizeViewport(w, h);
+
+      var baseGeneration = 1; // TODO: should this be a global, incremented value?
+      // send the render size we require:
+      var m = new MLABRenderingSetRenderSizeMessage();
+      m.setData(self._baseField, baseGeneration, self._remoteRenderingSlaveID, self._imgWidth, self._imgHeight);
+      self._moduleContext.sendMessage(m);
     }
   }
   
@@ -860,6 +915,86 @@ function MLABButtonControl(mdlTree, moduleContext) {
     }
   };
 }
+
+//=============================================================================
+// MLABSliderControl
+//=============================================================================
+function MLABSliderControl(mdlTree, moduleContext) {
+  var self = this;
+  
+  this.inheritFrom = MLABWidgetControl;
+  this.inheritFrom(mdlTree, moduleContext);
+  
+  this.setup = this.setupSliderControl = function(parentControl) {
+    self.setupWidgetControl("MLABSliderControl", parentControl);
+   
+    var title = null;
+    var titleTree = mlabGetMDLChild(self._mdlTree, "title");
+    if (titleTree) {
+      title = titleTree.value;
+    }
+    
+    self._slider = document.createElement("div");
+    self._domElement.appendChild(self._slider);
+    
+    if (title) {
+      self._slider.innerHTML = title;
+    }
+    
+    var commandTree = mlabGetMDLChild(self._mdlTree, "command");
+    if (commandTree) {
+      self._command = commandTree.value;
+    } else {
+      self._command = null;
+    }
+    
+  };
+  
+  this.fieldChanged = function(field) {
+    //console.log(field.value);
+  };
+}
+
+
+//=============================================================================
+// MLABCheckBoxControl
+//=============================================================================
+function MLABCheckBoxControl(mdlTree, moduleContext) {
+  var self = this;
+  
+  this.inheritFrom = MLABWidgetControl;
+  this.inheritFrom(mdlTree, moduleContext);
+  
+  this.setup = this.setupCheckBoxControl = function(parentControl) {
+    self.setupWidgetControl("MLABCheckBoxControl", parentControl);
+   
+    var title = null;
+    var titleTree = mlabGetMDLChild(self._mdlTree, "title");
+    if (titleTree) {
+      title = titleTree.value;
+    }
+    
+    self._checkbox = document.createElement("div");
+    self._domElement.appendChild(self._checkbox);
+    
+    if (title) {
+      self._checkbox.innerHTML = title;
+    }
+    
+    var commandTree = mlabGetMDLChild(self._mdlTree, "command");
+    if (commandTree) {
+      self._command = commandTree.value;
+    } else {
+      self._command = null;
+    }
+    
+  };
+  
+  this.fieldChanged = function(field) {
+    //console.log(field.value);
+  };
+}
+
 
 //=============================================================================
 // MLABComboBoxControl
@@ -1082,6 +1217,9 @@ function MLABWindowControl(mdlTree, moduleContext) {
   this.setup = this.setupWindowControl = function(parentControl) {
     self.setupWidgetControl("MLABWindowControl", parentControl);
   }; 
+  
+  // Can be overriden by framework implementation to issue commands after window is build in html
+  this.setupFinished = function() {};
 }
 
 
@@ -1117,6 +1255,7 @@ function MLABWidgetControlFactory(moduleContext) {
           if (!parentDiv) { parentDiv = self._moduleContext.getDiv(); }
           parentDiv.appendChild(c._domElement);
           c.setupChildren();
+          c.setupFinished();
         } catch(e) {
           self._moduleContext.logError("Failed to setup window control, see exception below");
           self._moduleContext.logException(e);

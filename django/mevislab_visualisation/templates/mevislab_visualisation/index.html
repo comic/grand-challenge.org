@@ -1,22 +1,29 @@
-<DOCTYPE!>
 <html>
     <head>
-        <script type="text/javascript" src="/static/js/mlabRemote/Application.js"></script>
+        <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+        <script type="text/javascript" src="/static/js/fme.viewer2d.js"></script>
         
+        <script type="text/javascript">
+            var fmeViewer = null;
+                
+            $(document).ready(function (){
+              console.log("loading viewer...");
+              fmeViewer = new ComicViewer2D("viewerContainer");
+              fmeViewer.init(function() {
+                // called when Viewer is completly loaded into DOM
+                console.log("Viewer loaded");
+              });
+            });
+        </script>
     </head>
-    <script type="text/javascript">
-        console.log("loading viewer...");
-        function loadDemo() {
-          gApp.bodyReady(function (moduleCtx) {
-            console.log("viewer loaded");
-          });
-        }
-    </script>
-    <body onload="javascript:gApp.initialize(function() { loadDemo(); }, { 'framework': 'jQueryMobile', 'jpgQuality':50 })" >
-        <div>
-            <div data-role="content">
-                <div name="runmacro" id="Comic_View2D" class="Comic_View2D"></div>
-            </div>
-        </div>
+    <body>
+      <div data-role="page" data-theme="a" id="page1">
+          <div data-role="header">
+              <h1>COMIC MeVisLab Viewer Demo</h1>
+          </div><!-- /header -->
+          <div data-role="content">
+              <div id="viewerContainer"></div>
+          </div>
+      </div>
     </body>
 </html>

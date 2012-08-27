@@ -86,7 +86,8 @@ function MLABRemoteManager() {
   };
 
   this.setup = function(socketUri) {
-    if (true || "WebSocket" in window || "MozWebSocket" in window) {
+    // ako: enhance check, since Android can have a WebSocket browser plugin.
+    if ("WebSocket" in window || "MozWebSocket" in window) {
       if ("MozWebSocket" in window) {
           // Firefox 6.0 uses a prefixed name:
         self._webSocket = new MozWebSocket(socketUri);
