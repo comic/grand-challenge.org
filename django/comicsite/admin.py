@@ -3,7 +3,7 @@ Created on Jun 18, 2012
 
 @author: Sjoerd
 '''
-
+import pdb
 from django.contrib import admin
 from django import forms
 from django.db import models 
@@ -44,15 +44,18 @@ class PageAdmin(GuardedModelAdmin):
     
     def save_model(self, request, obj, form, change):
         
-        # get admin group for the comicsite of this page             
-        agn = obj.ComicSite.admin_group_name()
-        admingroup = Group.objects.get(name=agn)
-        
-        # add change_page permission to the current page
-        obj.save()                    
-        assign("change_page",admingroup,obj)
-        
-        # todo: is this double save really needed?        
+        if obj.id is None:
+            #at page creation, set the correct object permissions            
+            # get admin group for the comicsite of this page                        
+            agn = obj.ComicSite.admin_group_name()            
+            admingroup = Group.objects.get(name=agn)
+                    
+            # add change_page permission to the current page
+            obj.save()                    
+            assign("change_page",admingroup,obj)
+                    
+            # FIXME: is this double save really needed?        
+            
         obj.save()
         move = form.cleaned_data['move']
         obj.move(move)
