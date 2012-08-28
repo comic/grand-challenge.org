@@ -37,7 +37,7 @@
                         	
                             {% if user.is_authenticated %}
                             <li>
-                                <a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.first_name}} {{user.last_name}}</a>
+                                <a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.username}}</a>
                             </li>
                             <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
                             <li>
