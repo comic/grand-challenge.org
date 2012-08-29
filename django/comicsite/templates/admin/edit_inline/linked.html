@@ -35,6 +35,7 @@
             {% for field in line %}
                         	
               <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
+              
               	<a href="/admin/{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">              	
               {% if field.is_readonly %}
                   <p>{{ field.contents }}</p>
@@ -77,10 +78,12 @@
           {% endspaceless %}
         </td>
         </tr>
-        <tr>
-        	<td><a class="menuItem" href="{% url admin:comicsite_page_add %}">Add a new page</a></td>
-        </tr>
+        
      {% endfor %}
+     <tr>
+        	<td><a class="menuItem" href="{% url admin:comicsite_page_add %}?ComicSite={{object_id}}">Add a new page</a></td>
+        	
+        </tr>
      </tbody>
    </table>
 </fieldset>
