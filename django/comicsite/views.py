@@ -5,15 +5,18 @@ Testing views. Each of these views is referenced in urls.py
 
 @author: Sjoerd
 '''
-import pdb 
 
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from django.contrib.admin.options import ModelAdmin
+
 from comicsite.models import ComicSite,Page,ComicSiteException
+from comicsite.admin import ComicSiteAdmin
 from dataproviders import FileSystemDataProvider
+
  
 
 def index(request):
@@ -47,6 +50,7 @@ def page(request, site_short_name, page_title):
     pages = getPages(site_short_name)
     
     return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+
                 
     
 def dataPage(request):
