@@ -73,6 +73,7 @@ class LinkedInline(InlineModelAdmin):
     there in a cramped interface 
     """
     template = 'admin/edit_inline/linked.html'
+    
     admin_model_path = None
     can_delete = False
         

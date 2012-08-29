@@ -1,9 +1,11 @@
 {% load i18n admin_static admin_modify %}
+{% load admin_urls %}
 <div class="inline-group" id="{{ inline_admin_formset.formset.prefix }}-group">
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module">
-   <h2>Links to related {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+   <h2>Links to related {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}   	
+   	</h2>
    {{ inline_admin_formset.formset.non_form_errors }}
    <table>
      <thead><tr>
@@ -74,6 +76,9 @@
           {% endfor %}
           {% endspaceless %}
         </td>
+        </tr>
+        <tr>
+        	<td><a class="menuItem" href="{% url admin:comicsite_page_add %}">Add a new page</a></td>
         </tr>
      {% endfor %}
      </tbody>
