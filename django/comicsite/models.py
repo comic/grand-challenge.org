@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.sites.models import Site
 from django.utils.safestring import mark_safe
 from django.db.models import Max
 from django.contrib.auth.models import Group
