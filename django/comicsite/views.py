@@ -53,15 +53,16 @@ def dataPage(request):
     """ test function for data provider. Just get some files from provider and show them as list"""
     #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
     
-    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
+    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django\django\static\files"
     dp = FileSystemDataProvider.FileSystemDataProvider(path)
     images = dp.getImages()
     
     htmlOut = "available files:"+", ".join(images)
     p = createTestPage(html=htmlOut)
+    
     pages = [p]
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
