@@ -28,7 +28,13 @@ def site(request, site_short_name):
                     
     pages = getPages(site_short_name)
     
-    return render_to_response('page.html', {'site': site, 'currentpage': pages[0], "pages":pages },context_instance=RequestContext(request))
+    if len(pages) == 0:
+        page = Page(ComicSite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
+        currentpage = page    
+    else:
+        currentpage = pages[0]
+    
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages },context_instance=RequestContext(request))
     
 
 def page(request, site_short_name, page_title):
@@ -83,6 +89,7 @@ def site_exists(site_short_name):
     except ComicSite.DoesNotExist:                
         return False
     
+
     
 # ======================================================  debug and test ==================================================
 def createTestPage(title="testPage",html=""):
