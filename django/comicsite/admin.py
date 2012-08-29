@@ -139,27 +139,25 @@ class ComicSiteAdmin(GuardedModelAdmin):
             can_add = Permission.objects.get(codename="add_comicsite")
             can_change = Permission.objects.get(codename="change_comicsite")
             can_delete = Permission.objects.get(codename="delete_comicsite")
-                        
-            can_add_site = Permission.objects.get(codename="add_site")
-            can_change_site = Permission.objects.get(codename="change_site")
-            can_delete_site = Permission.objects.get(codename="delete_site")
-            
+                                                
             can_add_page = Permission.objects.get(codename="add_page")
             can_change_page = Permission.objects.get(codename="change_page")
             can_delete_page = Permission.objects.get(codename="delete_page")
             
-            admingroup.permissions.add(can_add,can_change,can_delete,can_add_site,can_change_site,
-                                       can_delete_site,can_add_page,can_change_page,can_delete_page)
+            admingroup.permissions.add(can_add,can_change,can_delete,can_add_page,
+                                       can_change_page,can_delete_page)
             
             # add object-level permission to the specific ComicSite so it shows up in admin    
-            admingroup.save()
-            obj.save()                    
+            #admingroup.save()
+            obj.save()
+            #pdb.set_trace()
             assign("change_comicsite",admingroup,obj)
             
             # add current user to admins for this site 
             request.user.groups.add(admingroup)
-    
-        obj.save()
+        else:
+            #if object already existed just save
+            obj.save()
         
 
 admin.site.register(ComicSite,ComicSiteAdmin)
