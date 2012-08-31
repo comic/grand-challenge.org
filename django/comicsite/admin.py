@@ -11,6 +11,8 @@ from django.contrib.auth.models import Group,Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.options import InlineModelAdmin
 from django.forms import TextInput, Textarea
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
@@ -64,6 +66,16 @@ class PageAdmin(GuardedModelAdmin):
         """ overwrite this method to return only pages comicsites to which current user has access """                    
         user_qs = get_objects_for_user(request.user, 'comicsite.change_page')
         return user_qs
+    
+    def response_change(self, request, obj, post_url_continue=None):
+        """This makes the response after adding go to another apps changelist for some model"""        
+        return HttpResponseRedirect(reverse("admin:comicsite_comicsite_change",args=[obj.ComicSite.pk]))
+
+
+
+    def response_add(self, request, obj, post_url_continue=None):        
+        return self.response_change(request, obj, post_url_continue=None)
+
 
     
 
@@ -99,10 +111,10 @@ class PageInline(LinkedInline):
     model = Page
     extra = 0    
     
-    fields = ('title','html_trunc')    
+    fields = ('title','html_trunc','order')    
     # make sure page is only displayed, not edited
     #readonly_fields=("title","html")
-    readonly_fields=('title','html_trunc')
+    readonly_fields=('title','html_trunc','order')
     
     
     def html_trunc(self,obj):
@@ -111,7 +123,10 @@ class PageInline(LinkedInline):
 
 class ComicSiteAdmin(GuardedModelAdmin):
     
-    #form = ComicSiteAdminForm
+    # 
+    change_form_template = None
+    
+    #form = ComicSiteAdminForm    
     inlines = [PageInline]
                     
     def queryset(self, request):
