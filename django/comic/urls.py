@@ -18,7 +18,7 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
         
-    url(r'^site/',include('comicsite.urls')),
+    url(r'^site/',include('comicsite.urls'),name='site'),
         
     
     # requirement for social_auth
