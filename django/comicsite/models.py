@@ -49,6 +49,8 @@ class Page(models.Model):
     ComicSite = models.ForeignKey("ComicSite")
     title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed.")
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in tabs, use this as link text. Spaces and special chars allowed here. Optional field. If emtpy, title is used.")
+    hidden = models.BooleanField(default=False, help_text = "Do not display this page among the tabs on site.")
+ 
     html = models.TextField()
     
     def __unicode__(self):
