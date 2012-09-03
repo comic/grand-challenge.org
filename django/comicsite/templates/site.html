@@ -12,7 +12,13 @@
 	{% for page in pages %}
 		
 		<li>
-			<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url comicsite.views.page site.short_name page.title %}">{{page.title}}</a>			
+			<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url comicsite.views.page site.short_name page.title %}">
+				{% if page.display_title == "" %}
+					{{page.title}}
+				{% else %}
+					{{page.display_title}}
+				{% endif %}
+			</a>			
 		</li>
 		{% if not forloop.last %}
 			<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
