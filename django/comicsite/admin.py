@@ -3,7 +3,7 @@ Created on Jun 18, 2012
 
 @author: Sjoerd
 '''
-
+import pdb
 from django.contrib import admin
 from django import forms
 from django.db import models 
@@ -11,6 +11,8 @@ from django.contrib.auth.models import Group,Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.options import InlineModelAdmin
 from django.forms import TextInput, Textarea
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
@@ -44,15 +46,18 @@ class PageAdmin(GuardedModelAdmin):
     
     def save_model(self, request, obj, form, change):
         
-        # get admin group for the comicsite of this page             
-        agn = obj.ComicSite.admin_group_name()
-        admingroup = Group.objects.get(name=agn)
-        
-        # add change_page permission to the current page
-        obj.save()                    
-        assign("change_page",admingroup,obj)
-        
-        # todo: is this double save really needed?        
+        if obj.id is None:
+            #at page creation, set the correct object permissions            
+            # get admin group for the comicsite of this page                        
+            agn = obj.ComicSite.admin_group_name()            
+            admingroup = Group.objects.get(name=agn)
+                    
+            # add change_page permission to the current page
+            obj.save()                    
+            assign("change_page",admingroup,obj)
+                    
+            # FIXME: is this double save really needed?        
+            
         obj.save()
         move = form.cleaned_data['move']
         obj.move(move)
@@ -61,6 +66,16 @@ class PageAdmin(GuardedModelAdmin):
         """ overwrite this method to return only pages comicsites to which current user has access """                    
         user_qs = get_objects_for_user(request.user, 'comicsite.change_page')
         return user_qs
+    
+    def response_change(self, request, obj, post_url_continue=None):
+        """This makes the response after adding go to another apps changelist for some model"""        
+        return HttpResponseRedirect(reverse("admin:comicsite_comicsite_change",args=[obj.ComicSite.pk]))
+
+
+
+    def response_add(self, request, obj, post_url_continue=None):        
+        return self.response_change(request, obj, post_url_continue=None)
+
 
     
 
@@ -70,12 +85,14 @@ class LinkedInline(InlineModelAdmin):
     there in a cramped interface 
     """
     template = 'admin/edit_inline/linked.html'
+    
     admin_model_path = None
     can_delete = False
+        
     
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'40'})},
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40})},
+        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':20})},
     }
     
     
@@ -94,13 +111,22 @@ class PageInline(LinkedInline):
     model = Page
     extra = 0    
     
+    fields = ('title','html_trunc','order')    
     # make sure page is only displayed, not edited
-    readonly_fields=("title","html")
+    #readonly_fields=("title","html")
+    readonly_fields=('title','html_trunc','order')
+    
+    
+    def html_trunc(self,obj):
+        return obj.html[:300]
 
 
 class ComicSiteAdmin(GuardedModelAdmin):
     
-    #form = ComicSiteAdminForm
+    # 
+    change_form_template = None
+    
+    #form = ComicSiteAdminForm    
     inlines = [PageInline]
                     
     def queryset(self, request):
@@ -129,27 +155,25 @@ class ComicSiteAdmin(GuardedModelAdmin):
             can_add = Permission.objects.get(codename="add_comicsite")
             can_change = Permission.objects.get(codename="change_comicsite")
             can_delete = Permission.objects.get(codename="delete_comicsite")
-                        
-            can_add_site = Permission.objects.get(codename="add_site")
-            can_change_site = Permission.objects.get(codename="change_site")
-            can_delete_site = Permission.objects.get(codename="delete_site")
-            
+                                                
             can_add_page = Permission.objects.get(codename="add_page")
             can_change_page = Permission.objects.get(codename="change_page")
             can_delete_page = Permission.objects.get(codename="delete_page")
             
-            admingroup.permissions.add(can_add,can_change,can_delete,can_add_site,can_change_site,
-                                       can_delete_site,can_add_page,can_change_page,can_delete_page)
+            admingroup.permissions.add(can_add,can_change,can_delete,can_add_page,
+                                       can_change_page,can_delete_page)
             
             # add object-level permission to the specific ComicSite so it shows up in admin    
-            admingroup.save()
-            obj.save()                    
+            #admingroup.save()
+            obj.save()
+            #pdb.set_trace()
             assign("change_comicsite",admingroup,obj)
             
             # add current user to admins for this site 
             request.user.groups.add(admingroup)
-    
-        obj.save()
+        else:
+            #if object already existed just save
+            obj.save()
         
 
 admin.site.register(ComicSite,ComicSiteAdmin)

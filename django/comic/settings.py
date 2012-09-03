@@ -117,8 +117,9 @@ SECRET_KEY = 'd=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.Loader',
+    
 #     'django.template.loaders.eggs.Loader',
 )
 
@@ -145,16 +146,15 @@ TEMPLATE_DIRS = (
     # FIXME: Path to template path. This might be temporary.
     # At the moment some of the admin templates are overloaded here. I think the comicsite app is a better place to do that.
     os.path.normpath(os.path.dirname(__file__) + '/../templates'),
+    
 )
 
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
+    'django.contrib.sessions',    
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.admin',
+    'django.contrib.staticfiles',    
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # comicsite is the where main web portal of this framework lives
@@ -173,6 +173,8 @@ INSTALLED_APPS = (
     'social_auth',
     # MeVisLab Visualisation through the browser. see https://github.com/comic/comic-django/issues/10
     'mevislab_visualisation',
+    #Moved admin to last position to make sure any admin interface template overrides defined in other modules are heeded  
+    'django.contrib.admin',
 )
 
 AUTHENTICATION_BACKENDS = (
