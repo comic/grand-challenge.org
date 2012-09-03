@@ -10,18 +10,19 @@
 
 {% block topmenu %}
 	{% for page in pages %}
-		
-		<li>
-			<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url comicsite.views.page site.short_name page.title %}">
-				{% if page.display_title == "" %}
-					{{page.title}}
-				{% else %}
-					{{page.display_title}}
-				{% endif %}
-			</a>			
-		</li>
-		{% if not forloop.last %}
-			<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+		{% if not page.hidden %}
+			<li>
+				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url comicsite.views.page site.short_name page.title %}">				
+					{% if page.display_title == "" %}
+						{{page.title}}
+					{% else %}
+						{{page.display_title}}
+					{% endif %}
+				</a>			
+			</li>
+			{% if not forloop.last %}
+				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+			{% endif %}
 		{% endif %}
 	{% endfor %}
 {% endblock %}

@@ -116,10 +116,10 @@ class PageInline(LinkedInline):
     model = Page
     extra = 0    
     
-    fields = ('title','html_trunc','order')    
+    fields = ('title','html_trunc','hidden','order')
     # make sure page is only displayed, not edited
     #readonly_fields=("title","html")
-    readonly_fields=('title','html_trunc','order')
+    readonly_fields=('title','html_trunc','hidden','order')
         
     
     def html_trunc(self,obj):
