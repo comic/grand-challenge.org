@@ -38,6 +38,11 @@ class PageAdmin(GuardedModelAdmin):
     
     form = PageAdminForm
     
+    # Make sure regular template overrides work. GuardedModelAdmin disables this
+    # With change_form_template = None templates in templates/admin/comicsite/page
+    # will be heeded again. 
+    change_form_template = None
+        
     #Show these page params in admin overview list 
     list_display = ('title','ComicSite','order')
     
@@ -86,7 +91,7 @@ class LinkedInline(InlineModelAdmin):
     """
     template = 'admin/edit_inline/linked.html'
     
-    admin_model_path = None
+    admin_model_path = None    
     can_delete = False
         
     
@@ -115,7 +120,7 @@ class PageInline(LinkedInline):
     # make sure page is only displayed, not edited
     #readonly_fields=("title","html")
     readonly_fields=('title','html_trunc','order')
-    
+        
     
     def html_trunc(self,obj):
         return obj.html[:300]
@@ -123,7 +128,9 @@ class PageInline(LinkedInline):
 
 class ComicSiteAdmin(GuardedModelAdmin):
     
-    # 
+    # Make sure regular template overrides work. GuardedModelAdmin disables this
+    # With change_form_template = None templates in templates/admin/comicsite/page
+    # will be heeded again.
     change_form_template = None
     
     #form = ComicSiteAdminForm    
