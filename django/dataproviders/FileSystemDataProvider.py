@@ -9,9 +9,7 @@ import glob
 
 class FileSystemDataProvider:
     """ Get and Put files, images and datasets from and to filesystem """
-    
-     
-    
+             
     def __init__(self,dataDir):            
         self.dataDir = dataDir   
     
