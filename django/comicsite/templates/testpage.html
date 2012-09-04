@@ -15,9 +15,11 @@
 	   	   
 	   <a class="editPageLink" href="{% url admin:comicsite_page_change currentpage.pk%}">Edit this page</a>	          
 {% endif %}	
-LUIOHGLRUIHGR
+<p>Testing template tags:</p>
 <p>Current time:</p>
 <p>The time is {% current_time "%Y-%m-%d %I:%M %p" %}.</p>
+<p>The other time is {% filelist "D:/userdata/Sjoerd/Aptana Studio 3 Workspace/comic/comic-django/django/static/files" %}.</p>
+<p>Also these are some theses {% filelist "D:/Sites/shared/images/publications" %}.</p>
 
 
 {% endblock %}
