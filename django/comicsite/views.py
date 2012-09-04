@@ -66,7 +66,7 @@ def dataPage(request):
     
     pages = [p]
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('testpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
