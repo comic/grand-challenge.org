@@ -1,5 +1,5 @@
 {% extends "site.html" %}
-
+{% load guardian_tags %}
 
 
 {% block pagecontent %}		
@@ -8,7 +8,12 @@
 	
 	
 	<br/>
-	
+
+{% get_obj_perms user for site as "site_perms" %}
+{% if "change_comicsite" in site_perms or request.user.is_superuser %}   	   
+	   <a class="" href="{% url admin:comicsite_page_change currentpage.pk%}">Edit this page</a>	          
+{% endif %}	
+
 
 {% endblock %}
 	

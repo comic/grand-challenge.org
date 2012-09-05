@@ -1,9 +1,11 @@
 {% load i18n admin_static admin_modify %}
+{% load admin_urls %}
 <div class="inline-group" id="{{ inline_admin_formset.formset.prefix }}-group">
   <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module">
-   <h2>Links to related {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+   <h2>Links to related {{ inline_admin_formset.opts.verbose_name_plural|capfirst }}   	
+   	</h2>
    {{ inline_admin_formset.formset.non_form_errors }}
    <table>
      <thead><tr>
@@ -12,8 +14,13 @@
          <th{% if forloop.last %} colspan=""{% endif %}{% if field.required %} class="required"{% endif %}>{{ field.label|capfirst }}
          {% if field.help_text %}&nbsp;<img src="{% static "admin/img/icon-unknown.gif" %}" class="help help-tooltip" width="10" height="10" alt="({{ field.help_text|striptags }})" title="{{ field.help_text|striptags }}" />{% endif %}
          </th>
+         
+         
        {% endif %}
      {% endfor %}
+     <th>
+     	options
+     </th>
      {% if inline_admin_formset.formset.can_delete %}<th>{% trans "Delete?" %}</th>{% endif %}
      </tr></thead>
 
@@ -31,13 +38,17 @@
         {% for fieldset in inline_admin_form %}
           {% for line in fieldset %}
             {% for field in line %}
+                     	
               <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
+              
+              	<a href="/admin/{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">              	
               {% if field.is_readonly %}
                   <p>{{ field.contents }}</p>
               {% else %}
                   {{ field.field.errors.as_ul }}
                   {{ field.field }}
               {% endif %}
+              </a>
               </td>
             {% endfor %}
           {% endfor %}
@@ -46,11 +57,17 @@
           <td class="delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
         {% endif %}
         <td >
+        	
           {% if inline_admin_form.original or inline_admin_form.show_url %}<p>
-          {% if inline_admin_form.original %} {{ inline_admin_form.original }}{% endif %}
-          {% if inline_admin_form.show_url %}<a href="../../../r/{{ inline_admin_form.original_content_type_id }}/{{ inline_admin_form.original.id }}/">{% trans "View on site" %}</a>{% endif %}
-        	{% if inline_admin_form.original.pk %}
+          	
           
+          
+          {% if inline_admin_form.show_url %}<a href="../../../r/{{ inline_admin_form.original_content_type_id }}/{{ inline_admin_form.original.id }}/">{% trans "View on site" %}</a>{% endif %}
+        	
+        	{% if inline_admin_form.original.pk %}
+        	
+        	
+				          	          	          
               <a href="/admin/{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">Edit</a>
           
 			{% endif %}
@@ -72,7 +89,12 @@
           {% endspaceless %}
         </td>
         </tr>
+        
      {% endfor %}
+     <tr>
+        	<td><a class="menuItem" href="{% url admin:comicsite_page_add %}?ComicSite={{object_id}}">Add a new page</a></td>
+        	
+        </tr>
      </tbody>
    </table>
 </fieldset>

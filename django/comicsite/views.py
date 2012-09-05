@@ -5,15 +5,18 @@ Testing views. Each of these views is referenced in urls.py
 
 @author: Sjoerd
 '''
-import pdb 
 
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from django.contrib.admin.options import ModelAdmin
+
 from comicsite.models import ComicSite,Page,ComicSiteException
+from comicsite.admin import ComicSiteAdmin
 from dataproviders import FileSystemDataProvider
+
  
 
 def index(request):
@@ -28,7 +31,13 @@ def site(request, site_short_name):
                     
     pages = getPages(site_short_name)
     
-    return render_to_response('page.html', {'site': site, 'currentpage': pages[0], "pages":pages },context_instance=RequestContext(request))
+    if len(pages) == 0:
+        page = Page(ComicSite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
+        currentpage = page    
+    else:
+        currentpage = pages[0]
+    
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages },context_instance=RequestContext(request))
     
 
 def page(request, site_short_name, page_title):
@@ -41,21 +50,23 @@ def page(request, site_short_name, page_title):
     pages = getPages(site_short_name)
     
     return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+
                 
     
 def dataPage(request):
     """ test function for data provider. Just get some files from provider and show them as list"""
     #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
     
-    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
+    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django\django\static\files"
     dp = FileSystemDataProvider.FileSystemDataProvider(path)
     images = dp.getImages()
     
     htmlOut = "available files:"+", ".join(images)
     p = createTestPage(html=htmlOut)
+    
     pages = [p]
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'page': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
@@ -83,6 +94,7 @@ def site_exists(site_short_name):
     except ComicSite.DoesNotExist:                
         return False
     
+
     
 # ======================================================  debug and test ==================================================
 def createTestPage(title="testPage",html=""):
