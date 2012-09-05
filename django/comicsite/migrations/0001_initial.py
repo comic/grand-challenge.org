@@ -8,16 +8,25 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'ComicSiteModel'
+        db.create_table('comicsite_comicsitemodel', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        ))
+        db.send_create_signal('comicsite', ['ComicSiteModel'])
+
         # Adding model 'ComicSite'
         db.create_table('comicsite_comicsite', (
-            ('site_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['sites.Site'], unique=True, primary_key=True)),
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('short_name', self.gf('django.db.models.fields.CharField')(default='', max_length=50)),
             ('skin', self.gf('django.db.models.fields.CharField')(max_length=225)),
+            ('comment', self.gf('django.db.models.fields.CharField')(default='', max_length=1024, blank=True)),
         ))
         db.send_create_signal('comicsite', ['ComicSite'])
 
         # Adding model 'Page'
         db.create_table('comicsite_page', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('order', self.gf('django.db.models.fields.IntegerField')(default=1)),
             ('ComicSite', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['comicsite.ComicSite'])),
             ('title', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('html', self.gf('django.db.models.fields.TextField')()),
@@ -32,6 +41,9 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Page', fields ['ComicSite', 'title']
         db.delete_unique('comicsite_page', ['ComicSite_id', 'title'])
 
+        # Deleting model 'ComicSiteModel'
+        db.delete_table('comicsite_comicsitemodel')
+
         # Deleting model 'ComicSite'
         db.delete_table('comicsite_comicsite')
 
@@ -41,22 +53,23 @@ class Migration(SchemaMigration):
 
     models = {
         'comicsite.comicsite': {
-            'Meta': {'ordering': "('domain',)", 'object_name': 'ComicSite', '_ormbases': ['sites.Site']},
-            'site_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['sites.Site']", 'unique': 'True', 'primary_key': 'True'}),
+            'Meta': {'object_name': 'ComicSite'},
+            'comment': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '1024', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'short_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '50'}),
             'skin': ('django.db.models.fields.CharField', [], {'max_length': '225'})
+        },
+        'comicsite.comicsitemodel': {
+            'Meta': {'object_name': 'ComicSiteModel'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'comicsite.page': {
             'ComicSite': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['comicsite.ComicSite']"}),
-            'Meta': {'unique_together': "(('ComicSite', 'title'),)", 'object_name': 'Page'},
+            'Meta': {'ordering': "['ComicSite', 'order']", 'unique_together': "(('ComicSite', 'title'),)", 'object_name': 'Page'},
             'html': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'order': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
-        'sites.site': {
-            'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
         }
     }
 
