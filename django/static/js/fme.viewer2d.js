@@ -78,9 +78,9 @@ function ComicViewer2D(domElementId, options) {
     });
   }
   
-  this.loadImage = function(imageUID){
+  this.loadImage = function(imageFilename){
     ctx = self._gApp.getModuleContext(this._mlabModuleName);
-    ctx.sendGenericRequest("loadImage", [imageUID], function(arguments) {
+    ctx.sendGenericRequest("loadImage", [imageFilename], function(arguments) {
       // process return value
     });
   }
