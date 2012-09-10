@@ -159,6 +159,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     # comicsite is the where main web portal of this framework lives
     'comicsite',
+    # all objects used in the framework, e.g. algorithm, dataset, team, result. 
+    'comicmodels',
     # profiles extends userena and gives functionality to manage user profiles
     'profiles',
     # South provides schema and data migrations

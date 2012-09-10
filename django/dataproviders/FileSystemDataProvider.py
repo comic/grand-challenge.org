@@ -22,5 +22,12 @@ class FileSystemDataProvider:
         
         return images
     
-    
+    def getAllFileNames(self):
+        """ get all images related to project as file objects"""
+        #images = ["image1.jpg","image2.jpg","image3.jpg"]
+        
+        os.chdir(self.dataDir)
+        filenames = glob.glob("*.*")
+        
+        return filenames
     
