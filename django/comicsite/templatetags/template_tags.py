@@ -57,6 +57,7 @@ class FileListNode(template.Node):
         
     def render(self, context):    
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
+        
         images = dp.getImages()    
         htmlOut = "available files:"+", ".join(images)
         return htmlOut
