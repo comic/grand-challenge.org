@@ -6,8 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from guardian.shortcuts import assign
 
-# Create your models here.
-
 
 class ComicSiteModel(models.Model):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions

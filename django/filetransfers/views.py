@@ -1,3 +1,5 @@
+import pdb
+
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -17,7 +19,7 @@ def upload_handler(request):
         return HttpResponseRedirect(view_url)
 
     upload_url, upload_data = prepare_upload(request, view_url)
-    form = UploadForm()
+    form = UploadForm()    
     return direct_to_template(request, 'upload/upload.html',
         {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
          'uploads': UploadModel.objects.all()})
@@ -32,3 +34,6 @@ def delete_handler(request, pk):
         upload.file.delete()
         upload.delete()
     return HttpResponseRedirect(reverse('filetransfers.views.upload_handler'))
+
+
+    
