@@ -62,11 +62,18 @@ class FileSystemDataset(Dataset):
         
     
     def get_data_dir(self):
-        """ In which dir Where should this dataset be located?  
+        """ In which dir should this dataset be located? Return full path  
         """        
         
         data_dir_path = os.path.join(settings.MEDIA_ROOT,self.comicsite.short_name,self.cleantitle)
         #data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
+        return data_dir_path
+    
+    def get_relative_data_dir(self):
+        """ In which dir Where should this dataset be located?  Return relative to MEDIA_ROOT
+        """        
+        
+        data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
         return data_dir_path
     
     def ensure_dir(self,dir):
