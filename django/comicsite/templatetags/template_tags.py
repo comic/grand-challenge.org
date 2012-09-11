@@ -7,7 +7,9 @@ Custom tags to use in templates or code to render file lists etc.
 """
 import pdb
 import datetime
+from os import path
 from django import template
+from django.core.urlresolvers import reverse
 
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
@@ -81,23 +83,34 @@ def render_dataset(parser, token):
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return DatasetNode(format_string[1:-1],filefolder)
+    return DatasetNode(format_string[1:-1],filefolder,dataset)
 
 
 class DatasetNode(template.Node):	
-    """ Show list of files for given dataset 
+    """ Show list of linked files for given dataset 
     """	
 	
-    def __init__(self, format_string,filefolder):
+    def __init__(self, format_string,filefolder,dataset):
         self.format_string = format_string
         self.filefolder = filefolder       
-        
+        self.dataset = dataset
         
     def render(self, context):    
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
         
-        images = dp.getImages()    
-        htmlOut = "available files:"+", ".join(images)
+        filenames = dp.getAllFileNames()
+        links = []
+        for filename in filenames:
+        	
+        	downloadlink = reverse('filetransfers.views.download_handler_filename', kwargs={'project_name':self.dataset.comicsite.short_name, 
+																						    'dataset_title':self.dataset.title,
+																						    'filename':filename})
+        	#<a href="{% url filetransfers.views.download_handler_filename project_name='VESSEL12' dataset_title='vessel12' filename='test.png' %}">test </a>
+        	links.append("<li><a href=\""+downloadlink+"\">"+ filename+ " </a></li>")
+        	
+        description = self.dataset.description
+        htmlOut = description+"<ul class=\"dataset\">"+"".join(links)+"</ul>"
+        
         return htmlOut
 
        
