@@ -7,11 +7,15 @@
 import os
 import glob
 
+import comicmodels.models
+
+
 class FileSystemDataProvider:
     """ Get and Put files, images and datasets from and to filesystem """
              
     def __init__(self,dataDir):            
         self.dataDir = dataDir   
+            
     
     def getImages(self,Project=""):
         """ get all images related to project """
@@ -31,3 +35,6 @@ class FileSystemDataProvider:
         
         return filenames
     
+    
+    
+ 

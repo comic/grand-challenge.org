@@ -62,18 +62,35 @@ class FileListNode(template.Node):
         htmlOut = "available files:"+", ".join(images)
         return htmlOut
        
+@register.tag(name="dataset")
+def render_dataset(parser, token):
+    """ Given a challenge and a dataset name, show all files in this dataset as list"""	
+    try:
+        # split_contents() knows not to split quoted strings.
+        tag_name, filefolder = token.split_contents()
+        format_string = "\"%Y-%m-%d %I:%M %p\""
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
+    if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
+        raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
+    return DatasetNode(format_string[1:-1],filefolder[1:-1])
+
+
+class DatasetNode(template.Node):	
+    """ Show list of files for given dataset 
+    """	
+	
+    def __init__(self, format_string,filefolder):
+        self.format_string = format_string
+        self.filefolder = filefolder       
+        
+        
+    def render(self, context):    
+        dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
+        
+        images = dp.getImages()    
+        htmlOut = "available files:"+", ".join(images)
+        return htmlOut
+
        
-def dataPage(request):
-    """ test function for data provider. Just get some files from provider and show them as list"""
-    #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
-    
-    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django\django\static\files"
-    dp = FileSystemDataProvider.FileSystemDataProvider(path)
-    images = dp.getImages()
-    
-    htmlOut = "available files:"+", ".join(images)
-    p = createTestPage(html=htmlOut)
-    
-    pages = [p]
-    
-    return render_to_response('testpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+       
