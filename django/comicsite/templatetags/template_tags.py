@@ -5,9 +5,12 @@ Custom tags to use in templates or code to render file lists etc.
  03/09/2012    -     Sjoerd    -    Created this file
 
 """
+import pdb
 import datetime
 from django import template
+
 from dataproviders import FileSystemDataProvider
+from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 
 # This is needed to use the @register.tag decorator
 register = template.Library()
@@ -67,13 +70,18 @@ def render_dataset(parser, token):
     """ Given a challenge and a dataset name, show all files in this dataset as list"""	
     try:
         # split_contents() knows not to split quoted strings.
-        tag_name, filefolder = token.split_contents()
+        tag_name, args = token.split_contents()
+        project_name, dataset_title = args.split(",")
+        #pdb.set_trace()
+        dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
+        filefolder = dataset.get_data_dir()
+        
         format_string = "\"%Y-%m-%d %I:%M %p\""
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return DatasetNode(format_string[1:-1],filefolder[1:-1])
+    return DatasetNode(format_string[1:-1],filefolder)
 
 
 class DatasetNode(template.Node):	
