@@ -10,6 +10,7 @@ import datetime
 from os import path
 from django import template
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
@@ -74,16 +75,22 @@ def render_dataset(parser, token):
         # split_contents() knows not to split quoted strings.
         tag_name, args = token.split_contents()
         project_name, dataset_title = args.split(",")
-        #pdb.set_trace()
+        #pdb.set_trace()        
         dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
-        filefolder = dataset.get_data_dir()
-        
+        filefolder = dataset.get_data_dir()        
         format_string = "\"%Y-%m-%d %I:%M %p\""
+    except ObjectDoesNotExist as e:    	
+    	
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any dataset named '"+dataset_title+"' belonging to project '"+project_name+"' in database."
+    	#raise template.TemplateSyntaxError(errormsg)    	
+    	return DatasetErrorNode(errormsg)
+    	
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
     return DatasetNode(format_string[1:-1],filefolder,dataset)
+
 
 
 class DatasetNode(template.Node):	
@@ -113,5 +120,15 @@ class DatasetNode(template.Node):
         
         return htmlOut
 
+
+class DatasetErrorNode(template.Node):
+	"""Render error message in place of this template tag. This makes it directly obvious where the error occured
+	"""
+	def __init__(self, errormsg):
+		self.msg = errormsg
+	
+	def render(self,context):
+		errormsgHTML = "<span class=\"pageError\"> "+self.msg+" </span>"
+		return errormsgHTML
        
        

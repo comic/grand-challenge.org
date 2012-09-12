@@ -6,12 +6,13 @@ Testing views. Each of these views is referenced in urls.py
 @author: Sjoerd
 '''
 import pdb
+
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext,Context,Template
-
 from django.contrib.admin.options import ModelAdmin
+from django.template import TemplateSyntaxError
 
 import comicsite.templatetags.template_tags
 from comicsite.models import ComicSite,Page,ComicSiteException
@@ -52,9 +53,22 @@ def page(request, site_short_name, page_title):
     
     # render page contents using django template system
     # This makes it possible to use tags like '{% dataset %}' in page
-    t = Template("{% load template_tags %}"+p.html)    
-    rendered = t.render(RequestContext(request))    
-    p.html = rendered
+    
+    
+    rendererror = ""
+    try:
+        t = Template("{% load template_tags %}"+p.html)        
+    except TemplateSyntaxError as e:        
+        rendererror = e.message  
+            
+    if(rendererror):
+        # when page contents cannot be rendered, just display raw contents and include error message on page
+        errormsg = "<span class=\"pageError\"> Error rendering template: "+rendererror+" </span>"
+        pagecontents = p.html + errormsg
+    else:
+        pagecontents = t.render(RequestContext(request))
+    
+    p.html = pagecontents
     
     return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 

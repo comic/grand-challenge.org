@@ -41,8 +41,11 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
-.editPageLink{ clear: both; float: left; width: 100%; }
 #copyrightNotice{ margin-left: 331px; margin-top: 40px; }
+.editPageLink{ clear: both; float: left; width: 100%; }
+.pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
+
+
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
