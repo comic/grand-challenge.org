@@ -72,7 +72,9 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = ''
+# FIXME: put site source root here for testing purposes. This should be a real data drive 
+MEDIA_ROOT = os.path.join(SITE_ROOT,"static/media") 
+
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -159,6 +161,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     # comicsite is the where main web portal of this framework lives
     'comicsite',
+    # all objects used in the framework, e.g. algorithm, dataset, team, result. 
+    'comicmodels',
     # profiles extends userena and gives functionality to manage user profiles
     'profiles',
     # South provides schema and data migrations
@@ -173,6 +177,8 @@ INSTALLED_APPS = (
     'social_auth',
     # MeVisLab Visualisation through the browser. see https://github.com/comic/comic-django/issues/10
     'mevislab_visualisation',
+    # provides abstraction layer for file upload/download  
+    'filetransfers',
     #Moved admin to last position to make sure any admin interface template overrides defined in other modules are heeded  
     'django.contrib.admin',
 )
