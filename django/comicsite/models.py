@@ -6,8 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from guardian.shortcuts import assign
 
-# Create your models here.
-
 
 class ComicSiteModel(models.Model):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions
@@ -47,7 +45,10 @@ class Page(models.Model):
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")        
     ComicSite = models.ForeignKey("ComicSite")
-    title = models.CharField(max_length = 255)
+    title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed.")
+    display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in tabs, use this as link text. Spaces and special chars allowed here. Optional field. If emtpy, title is used.")
+    hidden = models.BooleanField(default=False, help_text = "Do not display this page among the tabs on site.")
+ 
     html = models.TextField()
     
     def __unicode__(self):
@@ -77,6 +78,9 @@ class Page(models.Model):
         """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
         #TODO : do checking for scripts and hacks here? 
         return mark_safe(self.html)
+    
+    def rawHTMLrendered(self):
+        """Display raw html, but render any template tags found using django's template system """
     
     def move(self, move):
         if move == 'UP':
