@@ -2,8 +2,10 @@ import os
 import re
 import pdb
 
+from django import forms
 from django.db import models
 from django.conf import settings
+
 
 from dataproviders import FileSystemDataProvider
 from comicsite.models import ComicSite 
@@ -43,7 +45,8 @@ class FileSystemDataset(Dataset):
     """
     A folder location on disk
     """
-    folder = models.FilePathField(editable=False)
+    folder = models.FilePathField()
+    
         
     def get_all_files(self):
         """ return array of all files in this folder
@@ -54,17 +57,24 @@ class FileSystemDataset(Dataset):
         return htmlOut
 
     
-    def save(self):                    
-        data_dir = self.get_data_dir()
+    def save(self):
+        #when saving for the first time only 
+        if not self.id:
+            # initialise data dir 
+            data_dir = self.get_relative_data_dir()
+        else:
+            
+            data_dir = self.folder
+                       
+        
         self.ensure_dir(data_dir)
         self.folder = data_dir
         super(FileSystemDataset,self).save()
         
     
-    def get_data_dir(self):
+    def get_default_data_dir(self):
         """ In which dir should this dataset be located? Return full path  
-        """        
-                
+        """                        
         data_dir_path = os.path.join(settings.MEDIA_ROOT,self.comicsite.short_name,self.cleantitle)
         #data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
         return data_dir_path
