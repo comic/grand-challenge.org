@@ -24,9 +24,9 @@ class Dataset(models.Model):
     """
     Collection of files 
     """
-    title = models.CharField(max_length=64, blank=True)
+    title = models.CharField(max_length=64, blank=True, help_text = "short name used to refer to this dataset, do not use spaces")
     description = models.TextField()
-    comicsite = models.ForeignKey(ComicSite)
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
     
        
     @property
@@ -46,6 +46,7 @@ class FileSystemDataset(Dataset):
     A folder location on disk
     """
     folder = models.FilePathField()
+    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on 
     
         
     def get_all_files(self):
@@ -60,14 +61,14 @@ class FileSystemDataset(Dataset):
     def save(self):
         #when saving for the first time only 
         if not self.id:
-            # initialise data dir 
+            # initialize data dir 
             data_dir = self.get_relative_data_dir()
         else:
-            
+            # take possibly edited value from form
             data_dir = self.folder
                        
-        
-        self.ensure_dir(data_dir)
+        pdb.set_trace()
+        self.ensure_dir(self.get_default_data_dir())
         self.folder = data_dir
         super(FileSystemDataset,self).save()
         
@@ -75,7 +76,7 @@ class FileSystemDataset(Dataset):
     def get_default_data_dir(self):
         """ In which dir should this dataset be located? Return full path  
         """                        
-        data_dir_path = os.path.join(settings.MEDIA_ROOT,self.comicsite.short_name,self.cleantitle)
+        data_dir_path = os.path.join(settings.MEDIA_ROOT,self.get_relative_data_dir())
         #data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
         return data_dir_path
     
@@ -83,7 +84,7 @@ class FileSystemDataset(Dataset):
         """ In which dir Where should this dataset be located?  Return relative to MEDIA_ROOT
         """        
         
-        data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
+        data_dir_path = os.path.join(self.folder_prefix,self.comicsite.short_name,self.cleantitle)
         return data_dir_path
     
     def ensure_dir(self,dir):
