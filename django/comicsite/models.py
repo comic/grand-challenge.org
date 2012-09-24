@@ -21,6 +21,7 @@ class ComicSite(models.Model):
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225)    
     description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
+    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="")
         
     def __unicode__(self):
         """ string representation for this object"""

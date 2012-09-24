@@ -125,6 +125,9 @@ def comic_site_to_html(comic_site):
      if comic_site.description !="":
          html += " - " + comic_site.description
          
+     img_html = create_HTML_a_img(link,comic_site.logo)
+     
+     html = "<table><tr valign=\"top\" ><td class = \"thumb\">" + img_html +"</td><td class = \"description\">"+ html + "</td></tr></table>"
      
      html = "<div class = \"comicSiteSummary\">" + html + "</div>"
      return html
@@ -132,6 +135,12 @@ def comic_site_to_html(comic_site):
 def create_HTML_a(link_url,link_text):
     return "<a href=\"" + link_url + "\">" +  link_text + "</a>"
 
+
+def create_HTML_a_img(link_url,image_url):
+    """ create a linked image """
+    img = "<img src=\"" + image_url + "\">"
+    linked_image = create_HTML_a(link_url,img)    
+    return linked_image
     
 # ======================================================  debug and test ==================================================
 def createTestPage(title="testPage",html=""):
