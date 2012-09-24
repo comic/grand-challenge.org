@@ -122,8 +122,8 @@ def comic_site_to_html(comic_site):
      link = reverse('comicsite.views.site', args=[comic_site.short_name])
      html = create_HTML_a(link,comic_site.short_name)
      
-     if comic_site.comment !="":
-         html += " - " + comic_site.comment
+     if comic_site.description !="":
+         html += " - " + comic_site.description
          
      
      html = "<div class = \"comicSiteSummary\">" + html + "</div>"

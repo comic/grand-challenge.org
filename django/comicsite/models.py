@@ -19,9 +19,9 @@ class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225)
-    comment = models.CharField(max_length = 1024, default="", blank=True)
-    
+    skin = models.CharField(max_length = 225)    
+    description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
+        
     def __unicode__(self):
         """ string representation for this object"""
         return self.short_name
