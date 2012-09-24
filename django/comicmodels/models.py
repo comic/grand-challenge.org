@@ -88,7 +88,7 @@ class FileSystemDataset(Dataset):
     
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
-            os.makedirs(dir)
+            os.makedirs(dir)        
 
 
         
