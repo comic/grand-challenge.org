@@ -10,7 +10,7 @@ from comicmodels.models import FileSystemDataset
 
 class FileSystemDatasetForm(forms.ModelForm):
         
-    folder = forms.CharField(widget=forms.TextInput)
+    folder = forms.CharField(widget=forms.TextInput(attrs={'size': 60}),help_text = "All files for this dataset are stored in this folder on disk")
     folder.required = False
     
     class Meta:
