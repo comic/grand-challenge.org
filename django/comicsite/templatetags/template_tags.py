@@ -14,6 +14,9 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicsite.models import ComicSite,Page
+import comicsite.views
+
 
 # This is needed to use the @register.tag decorator
 register = template.Library()
@@ -62,7 +65,7 @@ def render_dataset(parser, token):
     	
     	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any dataset named '"+dataset_title+"' belonging to project '"+project_name+"' in database."
     	#raise template.TemplateSyntaxError(errormsg)    	
-    	return DatasetErrorNode(errormsg)
+    	return TemplateErrorNode(errormsg)
     	
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
@@ -100,7 +103,37 @@ class DatasetNode(template.Node):
         return htmlOut
 
 
-class DatasetErrorNode(template.Node):
+@register.tag(name="all_projects")
+def render_all_projects(parser, token):
+    """ Render an overview of all projects """
+    try:    	
+        projects = ComicSite.objects.all()
+    except ObjectDoesNotExist as e:
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any comicSite object.."    	
+    	return TemplateErrorNode(errormsg)
+    
+    return AllProjectsNode(projects)
+
+
+
+class AllProjectsNode(template.Node):	
+    """ return html list listing all projects in COMIC 
+    """	
+	
+    def __init__(self, projects):
+        self.projects = projects
+                
+    def render(self, context):           
+        html = ""
+        for project in self.projects:	
+        	html += comicsite.views.comic_site_to_html(project)
+        	        	
+        	                
+        return html
+
+
+
+class TemplateErrorNode(template.Node):
 	"""Render error message in place of this template tag. This makes it directly obvious where the error occured
 	"""
 	def __init__(self, errormsg):
