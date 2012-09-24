@@ -66,8 +66,7 @@ class FileSystemDataset(Dataset):
         else:
             # take possibly edited value from form
             data_dir = self.folder
-                       
-        pdb.set_trace()
+                               
         self.ensure_dir(self.get_default_data_dir())
         self.folder = data_dir
         super(FileSystemDataset,self).save()
