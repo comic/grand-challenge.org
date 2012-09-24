@@ -37,6 +37,7 @@ class ComicSite(models.Model):
     def participants_group_name(self):
         """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
         return self.short_name+"_participants"
+        
     
     
 
