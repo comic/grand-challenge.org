@@ -46,7 +46,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
 .comicSiteSummary .thumb { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
-
+.comicSiteSummary { padding-bottom: 10px; }
 
 
 
