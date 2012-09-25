@@ -71,6 +71,9 @@ class FileSystemDataset(Dataset):
         self.folder = data_dir
         super(FileSystemDataset,self).save()
         
+    def get_data_dir(self):
+        data_dir_path = os.path.join(settings.MEDIA_ROOT,self.folder)
+        return data_dir_path
     
     def get_default_data_dir(self):
         """ In which dir should this dataset be located? Return full path  
@@ -88,7 +91,7 @@ class FileSystemDataset(Dataset):
     
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
-            os.makedirs(dir)
+            os.makedirs(dir)        
 
 
         

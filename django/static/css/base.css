@@ -44,6 +44,9 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #copyrightNotice{ margin-left: 331px; margin-top: 40px; }
 .editPageLink{ clear: both; float: left; width: 100%; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
+.comicSiteSummary .thumb { width:100px; height:100px; }
+.comicSiteSummary .description { width:550px;  padding-left: 8px;}
+.comicSiteSummary { padding-bottom: 10px; }
 
 
 

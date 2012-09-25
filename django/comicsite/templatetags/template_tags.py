@@ -14,31 +14,13 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicsite.models import ComicSite,Page
+import comicsite.views
+
 
 # This is needed to use the @register.tag decorator
 register = template.Library()
 
-@register.tag(name="current_time")
-def do_current_time(parser, token):
-    try:
-        # split_contents() knows not to split quoted strings.
-        tag_name, format_string = token.split_contents()
-    except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
-    if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
-        raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return CurrentTimeNode(format_string[1:-1])
-
-
-class CurrentTimeNode(template.Node):	
-	
-    def __init__(self, format_string):
-        self.format_string = format_string
-    def render(self, context):
-        return datetime.datetime.now().strftime(self.format_string)
-       
-       
-       
 @register.tag(name="filelist")
 def do_get_files(parser, token):	
     try:
@@ -83,7 +65,7 @@ def render_dataset(parser, token):
     	
     	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any dataset named '"+dataset_title+"' belonging to project '"+project_name+"' in database."
     	#raise template.TemplateSyntaxError(errormsg)    	
-    	return DatasetErrorNode(errormsg)
+    	return TemplateErrorNode(errormsg)
     	
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
@@ -121,7 +103,37 @@ class DatasetNode(template.Node):
         return htmlOut
 
 
-class DatasetErrorNode(template.Node):
+@register.tag(name="all_projects")
+def render_all_projects(parser, token):
+    """ Render an overview of all projects """
+    try:    	
+        projects = ComicSite.objects.all()
+    except ObjectDoesNotExist as e:
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any comicSite object.."    	
+    	return TemplateErrorNode(errormsg)
+    
+    return AllProjectsNode(projects)
+
+
+
+class AllProjectsNode(template.Node):	
+    """ return html list listing all projects in COMIC 
+    """	
+	
+    def __init__(self, projects):
+        self.projects = projects
+                
+    def render(self, context):           
+        html = ""
+        for project in self.projects:	
+        	html += comicsite.views.comic_site_to_html(project)
+        	        	
+        	                
+        return html
+
+
+
+class TemplateErrorNode(template.Node):
 	"""Render error message in place of this template tag. This makes it directly obvious where the error occured
 	"""
 	def __init__(self, errormsg):

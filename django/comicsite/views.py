@@ -7,12 +7,13 @@ Testing views. Each of these views is referenced in urls.py
 '''
 import pdb
 
-from django.http import HttpResponse
-from django.http import Http404
-from django.shortcuts import render_to_response
-from django.template import RequestContext,Context,Template
+
 from django.contrib.admin.options import ModelAdmin
-from django.template import TemplateSyntaxError
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse,Http404
+from django.shortcuts import render_to_response
+from django.template import RequestContext,Context,Template,TemplateSyntaxError
+
 
 import comicsite.templatetags.template_tags
 from comicsite.models import ComicSite,Page,ComicSiteException
@@ -114,8 +115,32 @@ def site_exists(site_short_name):
         return True
     except ComicSite.DoesNotExist:                
         return False
-    
 
+
+def comic_site_to_html(comic_site):
+     """ Return an html overview of the given ComicSite """
+     link = reverse('comicsite.views.site', args=[comic_site.short_name])
+     html = create_HTML_a(link,comic_site.short_name)
+     
+     if comic_site.description !="":
+         html += " - " + comic_site.description
+         
+     img_html = create_HTML_a_img(link,comic_site.logo)
+     
+     html = "<table><tr valign=\"top\" ><td class = \"thumb\">" + img_html +"</td><td class = \"description\">"+ html + "</td></tr></table>"
+     
+     html = "<div class = \"comicSiteSummary\">" + html + "</div>"
+     return html
+    
+def create_HTML_a(link_url,link_text):
+    return "<a href=\"" + link_url + "\">" +  link_text + "</a>"
+
+
+def create_HTML_a_img(link_url,image_url):
+    """ create a linked image """
+    img = "<img src=\"" + image_url + "\">"
+    linked_image = create_HTML_a(link_url,img)    
+    return linked_image
     
 # ======================================================  debug and test ==================================================
 def createTestPage(title="testPage",html=""):
