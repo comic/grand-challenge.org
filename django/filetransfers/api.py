@@ -23,6 +23,7 @@ def serve_file(request, file, backend=None, save_as=False, content_type=None):
     # Backends are responsible for handling range requests.
     handler = _load_backend(backend, SERVE_FILE_BACKEND)
     filename = file.name.rsplit('/')[-1]
+    filename = filename.rsplit('\\')[-1]
     if save_as is True:
         save_as = filename
     if not content_type:

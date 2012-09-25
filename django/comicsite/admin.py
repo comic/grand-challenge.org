@@ -30,6 +30,8 @@ class PageAdminForm(forms.ModelForm):
                          ('DOWN', 'Down'),
                          ('LAST', 'Last'),
                         )
+        
+    
     class Meta:
         model = Page
 
@@ -126,6 +128,12 @@ class PageInline(LinkedInline):
         return obj.html[:300]
 
 
+class ComicSiteAdminForm(forms.ModelForm):
+    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")
+    
+    class Meta:
+        model = ComicSite
+
 class ComicSiteAdmin(GuardedModelAdmin):
     
     # Make sure regular template overrides work. GuardedModelAdmin disables this
@@ -133,7 +141,7 @@ class ComicSiteAdmin(GuardedModelAdmin):
     # will be heeded again.
     change_form_template = None
     
-    #form = ComicSiteAdminForm    
+    form = ComicSiteAdminForm    
     inlines = [PageInline]
                     
     def queryset(self, request):
@@ -182,6 +190,20 @@ class ComicSiteAdmin(GuardedModelAdmin):
             #if object already existed just save
             obj.save()
         
+
+class PageAdminForm():
+    move = forms.CharField(widget=forms.Select)
+    move.required = False
+    move.widget.choices=(
+                         (models.BLANK_CHOICE_DASH[0]),
+                         ('FIRST', 'First'),
+                         ('UP', 'Up'),
+                         ('DOWN', 'Down'),
+                         ('LAST', 'Last'),
+                        )
+        
+        
+
 
 admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)

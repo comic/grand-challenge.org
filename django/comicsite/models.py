@@ -19,9 +19,10 @@ class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225)
-    comment = models.CharField(max_length = 1024, default="", blank=True)
-    
+    skin = models.CharField(max_length = 225)    
+    description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
+    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="")
+        
     def __unicode__(self):
         """ string representation for this object"""
         return self.short_name
@@ -37,17 +38,18 @@ class ComicSite(models.Model):
     def participants_group_name(self):
         """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
         return self.short_name+"_participants"
+        
     
     
 
 class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
-    order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which pages appear on site")        
+    order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
     ComicSite = models.ForeignKey("ComicSite")
-    title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed.")
-    display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in tabs, use this as link text. Spaces and special chars allowed here. Optional field. If emtpy, title is used.")
-    hidden = models.BooleanField(default=False, help_text = "Do not display this page among the tabs on site.")
+    title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed")
+    display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
+    hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
  
     html = models.TextField()
     
