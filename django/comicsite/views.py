@@ -29,10 +29,13 @@ def index(request):
 def site(request, site_short_name):
     """ show a single COMIC site, default start page """
     #TODO: Is it bad to use site name here, which is not the specified key?
-    
+        
     site = getSite(site_short_name)
                     
     pages = getPages(site_short_name)
+    
+    #to display pages from 'comic' project at the very bottom of the site
+    metafooterpages = getPages("COMIC")
     
     if len(pages) == 0:
         page = Page(ComicSite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
@@ -40,8 +43,31 @@ def site(request, site_short_name):
     else:
         currentpage = pages[0]
     
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages },context_instance=RequestContext(request))
+    currentpage.html = renderTags(request, currentpage)
+            
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     
+
+
+
+def renderTags(request, p):
+    """ render page contents using django template system
+    This makes it possible to use tags like '{% dataset %}' in page 
+    """
+    rendererror = ""
+    try:
+        t = Template("{% load template_tags %}" + p.html)
+    except TemplateSyntaxError as e:
+        rendererror = e.message
+    if (rendererror):
+        # when page contents cannot be rendered, just display raw contents and include error message on page
+        errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
+        pagecontents = p.html + errormsg
+    else:
+        pagecontents = t.render(RequestContext(request))
+    return pagecontents
+
+
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
@@ -52,26 +78,41 @@ def page(request, site_short_name, page_title):
         raise Http404
     pages = getPages(site_short_name)
     
+    #to display pages from 'comic' project at the very bottom of the site
+    metafooterpages = getPages("COMIC")
+    
+    p.html = renderTags(request, p)
+    
+    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+
+
+def comicmain(request, page_title=""):
+    """ show content as main page item. Loads pages from the 'comic' project """
+    
+    site_short_name = "comic"
+    
+    pages = getPages(site_short_name)
+    
+    #if no page title is given, just use the first page found 
+    if page_title=="":        
+        p = pages[0]    
+        p.html = renderTags(request, p)
+    else:    
+        try:
+            p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
+        except Page.DoesNotExist:                
+            raise Http404
+    
+    
+    p.html = renderTags(request, p)
+    
     # render page contents using django template system
     # This makes it possible to use tags like '{% dataset %}' in page
     
+    #to display pages from 'comic' project at the very bottom of the site
+    metafooterpages = getPages("COMIC")
     
-    rendererror = ""
-    try:
-        t = Template("{% load template_tags %}"+p.html)        
-    except TemplateSyntaxError as e:        
-        rendererror = e.message  
-            
-    if(rendererror):
-        # when page contents cannot be rendered, just display raw contents and include error message on page
-        errormsg = "<span class=\"pageError\"> Error rendering template: "+rendererror+" </span>"
-        pagecontents = p.html + errormsg
-    else:
-        pagecontents = t.render(RequestContext(request))
-    
-    p.html = pagecontents
-    
-    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('mainpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 
                 
     

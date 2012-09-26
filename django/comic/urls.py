@@ -12,7 +12,7 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # main page 
-    url(r'^$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
+    url(r'^$','comicsite.views.comicmain',name = 'home'),
     #url(r'^Comic/$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
      
     # Uncomment the next line to enable the admin:
@@ -29,6 +29,10 @@ urlpatterns = patterns('',
     
     #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
     url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
+    
+    # when all other urls have been checked, try to load page from 'comic' project
+    # keep this url at the bottom of this list, because urls are checked in order 
+    url(r'^(?P<page_title>\w+)/$','comicsite.views.comicmain'),
     
 )
     
