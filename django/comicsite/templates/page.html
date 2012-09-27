@@ -2,6 +2,7 @@
 {% load guardian_tags %}
 {% load template_tags %}
 
+{% block pageName %} {{currentpage.ComicSite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block pagecontent %}		
 		
