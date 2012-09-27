@@ -17,7 +17,7 @@
 		
 		
 
-		<title>COMIC main portal</title>
+		<title> {% block pageName %} COMIC main portal {% endblock %} </title>
 	</head>
 	<body>
 		<div id="page">
@@ -33,25 +33,18 @@
                     </div>				
                     <div id="additionalNavigation">
                         <ul>
-                        	{% block adminbutton %} {% endblock %}
+                        	
                         	
                             {% if user.is_authenticated %}
-                            <li>
-                                <a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.username}}</a>
-                            </li>
-                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-                            <li>
-                                <a class="menuItem" href="{% url userena_signout %}">Signout</a>
-                            </li>
+	                            <li><a class="menuItem" href="{% url userena_profile_detail user.username %}">{{user.username}}</a></li>
+	                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+	                            <li> <a class="menuItem" href="{% url userena_signout %}">Signout</a> </li>
                             {% else %}
-                            <li>
-                                <a class="menuItem" href="{% url userena_signin %}">Sign in / Register</a>
-                            </li>
+                            	<li><a class="menuItem" href="{% url userena_signin %}">Sign in / Register</a></li>
                             {% endif %}
-                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-                            <li>
-                                <a class="menuItem" href="{% url home %}">COMIC main portal</a>
-                            </li>
+                            
+                            {% block adminbutton %} {% endblock %}                            
+                            
                         </ul>
                     </div> 
                 </div>
@@ -63,13 +56,19 @@
                 </div>
             </div>
             <!-- container -->
-            <div id="footer">
-                <div id="copyrightNotice">
-                    COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
-                </div>
-
-            </div>
+            
         </div>		
         <!-- page -->
+               	<div id="metafooter">
+               		<div id="metaFooterMenu">
+            			{% block metafootermenu %}  {% endblock %}
+            		</div>
+            	            	
+	            	<div id="copyrightNotice">
+	                	COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
+	                </div>
+	
+	            </div>
+
 	</body>
 </html>

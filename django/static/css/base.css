@@ -6,6 +6,8 @@ body {
 
 }
 
+#page { margin-left:auto; margin-right:auto; width: 1000px; font-family : Verdana,helvetica,sans-serif; font-size: 10pt; }
+
 /* Formatting for forms (at the moment only tested on /accounts/signup */
 label { display:block; float:left; width:180px; }
 span.required:after { content: " *"; color: #f00; }
@@ -29,11 +31,20 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #navMenuContainer ul { padding-left:0px;}
 #navMenu { float:left; vertical-align:baseline; }
 #additionalNavigation {	float:right; vertical-align:baseline; }
+#footer { width: 100%; font-size:smaller; padding-top:20px; }
+#metafooter {float:left; width:100%; border-top:1px solid #cccccc; font-size:smaller; margin-top: 47px; }
+#metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
+#metafooter div {font-size: small;}
+#metafooter div a {text-decoration:none;}
+#metaFooterMenu .text{ float:left; color:#666666; }
+#metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem{ color:#fff; font-weight:bold; }
 .menuItem:link, .menuItem:visited { color:#fff; text-decoration:none; }
 .menuItem:hover { color:#fff; text-decoration:underline; }
+.metaFooterMenuItem {color:#cccccc; float:left; margin-left:10px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
+
 
 /* main page, base.html */
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
@@ -41,8 +52,9 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
-#copyrightNotice{ margin-left: 331px; margin-top: 40px; }
-.editPageLink{ clear: both; float: left; width: 100%; }
+#copyrightNotice{ width:500px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
+#copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
+.editPageLink{ clear: both; float: left; width: 100%; text-decoration:none; color:#cccccc; margin-top: 30px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
 .comicSiteSummary .thumb { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
@@ -60,20 +72,6 @@ html
     overflow-y:scroll;
 }
 
-#page 
-{
-   
-   margin-left:auto;
-   margin-right:auto;
-  
-      
-   width: 1000px;
-   
-   font-family : Verdana,helvetica,sans-serif;
-   font-size: 10pt;
- 
-   
-}
 
 h1{
    font-size: 17px;
