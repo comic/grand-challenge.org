@@ -52,23 +52,29 @@ class FileListNode(template.Node):
        
 @register.tag(name="dataset")
 def render_dataset(parser, token):
-    """ Given a challenge and a dataset name, show all files in this dataset as list"""	
+    """ Given a challenge and a dataset name, show all files in this dataset as list"""	    
+    # split_contents() knows not to split quoted strings.
+    tag_name, args = token.split_contents()
+    project_name, dataset_title = args.split(",")
+        
     try:
-        # split_contents() knows not to split quoted strings.
-        tag_name, args = token.split_contents()
-        project_name, dataset_title = args.split(",")
         #pdb.set_trace()        
         dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
-        filefolder = dataset.get_data_dir()        
-        format_string = "\"%Y-%m-%d %I:%M %p\""
+        
     except ObjectDoesNotExist as e:    	
     	
     	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any dataset named '"+dataset_title+"' belonging to project '"+project_name+"' in database."
     	#raise template.TemplateSyntaxError(errormsg)    	
-    	return TemplateErrorNode(errormsg)
-    	
-    except ValueError:
+    	return TemplateErrorNode(errormsg)      
+        	
+    except ValueError:    	
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
+    
+    else:
+    	filefolder = dataset.get_data_dir()        
+        format_string = "\"%Y-%m-%d %I:%M %p\""
+    
+    
     if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
     return DatasetNode(format_string[1:-1],filefolder,dataset)
@@ -87,7 +93,15 @@ class DatasetNode(template.Node):
     def render(self, context):    
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
         
-        filenames = dp.getAllFileNames()
+        try:
+          filenames = dp.getAllFileNames()        
+        except (WindowsError,OSError) as e:
+          
+          errormsg = "Error rendering dataset '"+self.dataset.title+"'.. error: '"+str(e)
+    	  #raise template.TemplateSyntaxError(errormsg)    	
+          return makeErrorMsgHtml(errormsg)
+        
+         
         links = []
         for filename in filenames:
         	
@@ -140,7 +154,11 @@ class TemplateErrorNode(template.Node):
 		self.msg = errormsg
 	
 	def render(self,context):
-		errormsgHTML = "<span class=\"pageError\"> "+self.msg+" </span>"
-		return errormsgHTML
+		return makeErrorMsgHtml(self.msg)		
+		
        
        
+def makeErrorMsgHtml(text):
+	 errorMsgHTML = "<p><span class=\"pageError\"> "+text+" </span></p>"
+	 return errorMsgHTML;
+	 
