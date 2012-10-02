@@ -62,32 +62,26 @@ class FileSystemDataset(Dataset):
         #when saving for the first time only 
         if not self.id:
             # initialize data dir 
-            data_dir = self.get_relative_data_dir()
+            data_dir = self.get_default_data_dir()
+            self.folder = data_dir            
         else:
-            # take possibly edited value from form
-            data_dir = self.folder
-                               
-        self.ensure_dir(self.get_default_data_dir())
-        self.folder = data_dir
+            # take possibly edited value from form, keep self.folder.
+            pass
+                                                       
+        self.ensure_dir(self.folder)        
         super(FileSystemDataset,self).save()
         
-    def get_data_dir(self):
+    def get_full_folder_path(self):
+        """ Return full path of the folder in which this datasets files reside """
         data_dir_path = os.path.join(settings.MEDIA_ROOT,self.folder)
         return data_dir_path
     
     def get_default_data_dir(self):
-        """ In which dir should this dataset be located? Return full path  
+        """ In which dir should this dataset be located by default? Return path relative to MEDIA_ROOT  
         """                        
-        data_dir_path = os.path.join(settings.MEDIA_ROOT,self.get_relative_data_dir())
-        #data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
+        data_dir_path = os.path.join(self.comicsite.short_name,self.folder_prefix,self.cleantitle)
         return data_dir_path
-    
-    def get_relative_data_dir(self):
-        """ In which dir Where should this dataset be located?  Return relative to MEDIA_ROOT
-        """        
         
-        data_dir_path = os.path.join(self.folder_prefix,self.comicsite.short_name,self.cleantitle)
-        return data_dir_path
     
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
