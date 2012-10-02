@@ -10,6 +10,7 @@ import pdb
 
 from django.contrib.admin.options import ModelAdmin
 from django.core.urlresolvers import reverse
+from django.core.mail import send_mail
 from django.http import HttpResponse,Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
@@ -184,6 +185,25 @@ def create_HTML_a_img(link_url,image_url):
     return linked_image
     
 # ======================================================  debug and test ==================================================
+
+def sendEmail(request):
+    """Test email sending"""
+    
+    adress = 'w.s.kerkstra@gmail.com' 
+    title = 'Your email setting are ok for sending'
+    message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
+    
+    
+    send_mail(title, 'Here is the message.', 'from@example.com',
+    [adress], fail_silently=False)
+    text="Sent test email titled '" + title + "' to email adress '"+ adress +"'"
+    
+    return HttpResponse(text);
+        
+    
+    
+    
+
 def createTestPage(title="testPage",html=""):
     """ Create a quick mockup on the ComicSite 'Test'"""
     
