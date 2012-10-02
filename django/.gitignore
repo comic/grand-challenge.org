@@ -1,1 +1,8 @@
-﻿/static/media/
+﻿# Let Git ignore the following: # 
+
+# local static test location #
+/static/media/*
+
+
+# settings files containing local and sensitive server settings#
+comic/settings/*_local.conf
