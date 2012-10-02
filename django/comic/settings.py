@@ -156,7 +156,9 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',    
     'django.contrib.messages',
-    'django.contrib.staticfiles',    
+    'django.contrib.staticfiles',
+    # Needed for userena
+    'django.contrib.sites',    
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # comicsite is the where main web portal of this framework lives
