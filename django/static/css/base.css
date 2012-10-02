@@ -52,7 +52,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
-#copyrightNotice{ width:500px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
+#copyrightNotice{ width:370px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
 .editPageLink{ clear: both; float: left; width: 100%; text-decoration:none; color:#cccccc; margin-top: 30px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
