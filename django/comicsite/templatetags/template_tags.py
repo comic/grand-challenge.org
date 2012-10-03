@@ -70,9 +70,8 @@ def render_dataset(parser, token):
     except ValueError:    	
         raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     
-    else:
-    	pdb.set_trace()
-    	filefolder = dataset.get_data_dir()        
+    else:    	
+    	filefolder = dataset.get_full_folder_path()        
         format_string = "\"%Y-%m-%d %I:%M %p\""
     
     
