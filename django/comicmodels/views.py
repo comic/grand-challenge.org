@@ -22,9 +22,11 @@ def upload_handler(request,site_short_name):
     
     view_url = reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':site_short_name})
     if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)        
-        if form.is_valid():
+        form = UploadForm(request.POST, request.FILES)
+                    
+        if form.is_valid():        
             form.save()
+                    
         return HttpResponseRedirect(view_url)
 
     upload_url, upload_data = prepare_upload(request, view_url)
@@ -33,9 +35,19 @@ def upload_handler(request,site_short_name):
         comicsite = ComicSite.objects.get(short_name=site_short_name)
     except ComicSite.DoesNotExist:                
         raise Http404
-        
-    form = UploadForm(initial = {'comicsite': comicsite.pk ,"title":"sometitle"})
     
-    return direct_to_template(request, 'upload/upload.html',
+    # set inital values    
+    form = UploadForm(initial = {'comicsite': comicsite.pk})    
+    # FIXME: I want to make the comicsite field uneditable, but setting
+    # disabled using line below will trigger 'field required" error
+    # How to disable this field but still send it when the form is 
+    # submitted?
+    
+    #form.fields['comicsite'].widget.attrs['disabled'] = True
+    
+    uploadsforcurrentsite = UploadModel.objects.filter(comicsite=comicsite)
+    
+    return direct_to_template(request, 'upload/comicupload.html',
         {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
-         'uploads': UploadModel.objects.all()})
+         'uploads': uploadsforcurrentsite})
+
