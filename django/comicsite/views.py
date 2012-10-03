@@ -29,13 +29,22 @@ def index(request):
 
 def site(request, site_short_name):
     """ show a single COMIC site, default start page """
-    #TODO: Is it bad to use site name here, which is not the specified key?
-        
-    site = getSite(site_short_name)
-                    
-    pages = getPages(site_short_name)
+   
+    standardvars = site_get_standard_vars(site_short_name)
     
-    #to display pages from 'comic' project at the very bottom of the site
+    
+    standardvars['currentpage'].html = renderTags(request, currentpage)
+            
+    return render_to_response('page.html', standardvars,context_instance=RequestContext(request))
+    
+
+def site_get_standard_vars(site_short_name):
+    """ When rendering a site you need to pass the current site, all current pages, and footer pages.
+    Get all this info and return a dictionary ready to pass to render_to_response. Convenience method
+    to save typing.
+    """
+    site = getSite(site_short_name)                    
+    pages = getPages(site_short_name)        
     metafooterpages = getPages("COMIC")
     
     if len(pages) == 0:
@@ -43,13 +52,18 @@ def site(request, site_short_name):
         currentpage = page    
     else:
         currentpage = pages[0]
-    
-    currentpage.html = renderTags(request, currentpage)
             
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     
-
-
+    return {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages}
+    
+def site_add_standard_vars(site_short_name,dict):
+    """ add all vars required to render a site (menu items etc) to the given dictionary """
+    
+    standardvars = site_get_standard_vars(site_short_name)
+    return concatdics(dict,standardvars)
+    
+def concatdicts(d1,d2):
+    return dict(d1, **d2)
 
 def renderTags(request, p):
     """ render page contents using django template system
