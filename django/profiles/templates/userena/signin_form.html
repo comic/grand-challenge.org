@@ -4,9 +4,21 @@
 {% block title %}{% trans "Signin" %}{% endblock %}
 
 {% block content %}
+    <!-- BEGIN: Shamelessly copied from stackoverflow.com -->
+    Do you already have an account on one of these sites? Click the logo to <strong>sign in</strong> with it here:
+    <div style="float: right; width: 210px; margin: 10px; padding: 5px; background-color: #DFDFDF;">
+        <strong>Why OpenID?</strong><br>
+        It&rsquo;s a single username and password that allows you to sign in to any
+        OpenID-enabled site. <br><br>
+        It works on thousands of websites.<br><br>
+        It&rsquo;s an open standard.
+        <p style="float: right;">
+        <strong><a href="http://openid.net/what">learn more &raquo;</a></strong>
+        </p>
+    </div>
+    <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
-    Signin using <a href="http://openid.net">OpenID</a>:
-    <ul>
+    <ul class="signinlist">
         <li><a href="{% url socialauth_begin 'google' %}">Google</a></li>
         <li><a href="{% url socialauth_begin 'yahoo' %}">Yahoo</a></li>
         <li><a href="{% url socialauth_begin 'myopenid' %}">myOpenID</a></li>
