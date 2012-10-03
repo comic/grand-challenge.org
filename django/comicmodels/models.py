@@ -10,11 +10,18 @@ from django.conf import settings
 from dataproviders import FileSystemDataProvider
 from comicsite.models import ComicSite 
 
+def giveFileUploadDestinationPath(uploadmodel,filename):
+    """ Where should this file go relative to MEDIA_ROOT? """
+    
+    path = os.path.join(uploadmodel.comicsite.short_name,"uploads",filename)    
+    return path
+
 class UploadModel(models.Model):
     
     title = models.CharField(max_length=64, blank=True)
-    file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/%S/')
-
+    file = models.FileField(upload_to=giveFileUploadDestinationPath)
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this file belong? Used to determine permissions")
+    
     @property    
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
@@ -22,11 +29,11 @@ class UploadModel(models.Model):
     
 class Dataset(models.Model):
     """
-    Collection of files 
+    Collection of files
     """
     title = models.CharField(max_length=64, blank=True, help_text = "short name used to refer to this dataset, do not use spaces")
     description = models.TextField()
-    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
+    comicsite = models.ForeignKey(ComicSite, default=None, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
     
        
     @property
