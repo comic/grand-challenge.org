@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib import admin
 
 from guardian.admin import GuardedModelAdmin
-from comicmodels.models import FileSystemDataset
+from comicmodels.models import FileSystemDataset,UploadModel
 
 
 
@@ -38,7 +38,7 @@ class FileSystemDatasetInitialForm(forms.ModelForm):
     class Meta:
         exclude = ['folder',]        
         model = FileSystemDataset        
-        
+
 
 class FileSystemDatasetAdmin(GuardedModelAdmin):    
     """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
@@ -60,11 +60,22 @@ class FileSystemDatasetAdmin(GuardedModelAdmin):
 
     form = FileSystemDatasetForm
         
+class UploadModelAdmin(GuardedModelAdmin):    
+    """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
+        
+    list_display = ('title','file','comicsite')
+                
+            
 
+    
+        
+
+        
 
     
                     
 
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
+admin.site.register(UploadModel,UploadModelAdmin)
 
  

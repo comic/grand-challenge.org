@@ -26,6 +26,10 @@ class UploadModel(models.Model):
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
     
+    class Meta:
+        verbose_name = "uploaded file"
+        verbose_name_plural = "uploaded files"
+    
     
 class Dataset(models.Model):
     """
