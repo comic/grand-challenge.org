@@ -32,8 +32,9 @@ def site(request, site_short_name):
    
     standardvars = site_get_standard_vars(site_short_name)
     
-    
-    standardvars['currentpage'].html = renderTags(request, currentpage)
+        
+    currentpage = standardvars['currentpage'] 
+    currentpage.html = renderTags(request, currentpage)
             
     return render_to_response('page.html', standardvars,context_instance=RequestContext(request))
     
