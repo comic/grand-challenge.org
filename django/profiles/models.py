@@ -13,7 +13,7 @@ class UserProfile(UserenaBaseProfile):
     institution = models.CharField(max_length = 100)
     department = models.CharField(max_length = 100)
     country = CountryField(default=_(u'NL'))
-    website = models.CharField(max_length = 150)
+    website = models.CharField(max_length = 150, blank=True)
 
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
