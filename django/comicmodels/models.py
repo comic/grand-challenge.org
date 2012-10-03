@@ -46,8 +46,7 @@ class FileSystemDataset(Dataset):
     A folder location on disk
     """
     folder = models.FilePathField()
-    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on 
-    
+    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on     
         
     def get_all_files(self):
         """ return array of all files in this folder
@@ -82,6 +81,11 @@ class FileSystemDataset(Dataset):
         data_dir_path = os.path.join(self.comicsite.short_name,self.folder_prefix,self.cleantitle)
         return data_dir_path
         
+    def get_template_tag(self):
+        """ Return the django template tag that can be used in page text to render this dataset on the page"""
+        return "{% dataset " + self.comicsite.short_name + "," + self.cleantitle + " %}" 
+        
+    
     
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
