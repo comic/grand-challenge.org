@@ -12,6 +12,7 @@ from django.views.generic.simple import direct_to_template
 from comicsite.models import ComicSite
 from comicmodels.forms import UploadForm
 from comicmodels.models import UploadModel
+from comicsite.views import site_get_standard_vars,concatdicts
 from filetransfers.api import prepare_upload, serve_file
 #
 #from comicmodels.models import FileSystemDataset
@@ -31,10 +32,10 @@ def upload_handler(request,site_short_name):
 
     upload_url, upload_data = prepare_upload(request, view_url)
     
-    try:
-        comicsite = ComicSite.objects.get(short_name=site_short_name)
-    except ComicSite.DoesNotExist:                
-        raise Http404
+    standardvars = site_get_standard_vars(site_short_name)
+    comicsite = standardvars['site']    
+    
+    uploadsforcurrentsite = UploadModel.objects.filter(comicsite=comicsite)
     
     # set inital values    
     form = UploadForm(initial = {'comicsite': comicsite.pk})    
@@ -44,10 +45,14 @@ def upload_handler(request,site_short_name):
     # submitted?
     
     #form.fields['comicsite'].widget.attrs['disabled'] = True
+        
+    templatevars = {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
+         'uploads': uploadsforcurrentsite}
     
-    uploadsforcurrentsite = UploadModel.objects.filter(comicsite=comicsite)
+    allvars = concatdicts(standardvars,templatevars)
+    
+     
     
     return direct_to_template(request, 'upload/comicupload.html',
-        {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
-         'uploads': uploadsforcurrentsite})
+        allvars)
 

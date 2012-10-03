@@ -64,15 +64,6 @@ class UploadModelAdmin(GuardedModelAdmin):
     """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
         
     list_display = ('title','file','comicsite')
-                
-            
-
-    
-        
-
-        
-
-    
                     
 
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
