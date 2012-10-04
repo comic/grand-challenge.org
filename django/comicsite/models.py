@@ -7,14 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from guardian.shortcuts import assign
 
 
-class ComicSiteModel(models.Model):
-    """An object which can be shown or used in the comicsite framework. This base class should handle common functions
-     such as authorization.
-    """
-    #user = models.ManyToManyField()
-    pass
-
-
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
