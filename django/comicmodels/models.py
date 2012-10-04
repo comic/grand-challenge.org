@@ -10,26 +10,48 @@ from django.conf import settings
 from dataproviders import FileSystemDataProvider
 from comicsite.models import ComicSite 
 
+
 def giveFileUploadDestinationPath(uploadmodel,filename):
     """ Where should this file go relative to MEDIA_ROOT? """
     
     path = os.path.join(uploadmodel.comicsite.short_name,"uploads",filename)    
     return path
 
-class UploadModel(models.Model):
-    
+
+class ComicSiteModel(models.Model):
+    """An object which can be shown or used in the comicsite framework. This base class should handle common functions
+     such as authorization.
+    """
+    #user = models.ManyToManyField()
     title = models.CharField(max_length=64, blank=True)
-    file = models.FileField(upload_to=giveFileUploadDestinationPath)
     comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this file belong? Used to determine permissions")
+    # = models.CharField(max_length=64, blank=True)
+    
+        
+    
+    def __unicode__(self):
+       """ string representation for this object"""
+       return self.title
+                
+    class Meta:
+       abstract = True
+       permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
+
+
+class UploadModel(ComicSiteModel):
+        
+    file = models.FileField(upload_to=giveFileUploadDestinationPath)
+    
     
     @property    
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
     
-    class Meta:
+    class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
         verbose_name_plural = "uploaded files"
-    
+        
+
     
 class Dataset(models.Model):
     """
