@@ -4,9 +4,10 @@ from os import path
 from django.core.files import File
 
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect,HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic.simple import direct_to_template
+
 
 from filetransfers.forms import UploadForm
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
@@ -39,8 +40,13 @@ def download_handler(request, pk):
 def fileserve_handler(request, pk):
     """ Serve a file through django, for displaying images etc. """
     upload = get_object_or_404(UploadModel, pk=pk)
-    pdb.set_trace()
-    return serve_file(request, upload.file, save_as=False)
+    #pdb.set_trace()
+    if request.user.has_perm("comicmodels.view_ComicSiteModel"):
+        return serve_file(request, upload.file, save_as=False)
+    else:
+        return HttpResponse("You do not have permission. Bad user!")
+    
+    
 
 
 def download_handler_filename(request, project_name, dataset_title,filename):    
