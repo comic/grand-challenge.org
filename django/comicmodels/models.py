@@ -10,23 +10,34 @@ from django.conf import settings
 from dataproviders import FileSystemDataProvider
 from comicsite.models import ComicSite 
 
+def giveFileUploadDestinationPath(uploadmodel,filename):
+    """ Where should this file go relative to MEDIA_ROOT? """
+    
+    path = os.path.join(uploadmodel.comicsite.short_name,"uploads",filename)    
+    return path
+
 class UploadModel(models.Model):
     
     title = models.CharField(max_length=64, blank=True)
-    file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/%S/')
-
+    file = models.FileField(upload_to=giveFileUploadDestinationPath)
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this file belong? Used to determine permissions")
+    
     @property    
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
     
+    class Meta:
+        verbose_name = "uploaded file"
+        verbose_name_plural = "uploaded files"
+    
     
 class Dataset(models.Model):
     """
-    Collection of files 
+    Collection of files
     """
     title = models.CharField(max_length=64, blank=True, help_text = "short name used to refer to this dataset, do not use spaces")
     description = models.TextField()
-    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
+    comicsite = models.ForeignKey(ComicSite, default=None, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
     
        
     @property
@@ -46,8 +57,7 @@ class FileSystemDataset(Dataset):
     A folder location on disk
     """
     folder = models.FilePathField()
-    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on 
-    
+    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on     
         
     def get_all_files(self):
         """ return array of all files in this folder
@@ -62,32 +72,31 @@ class FileSystemDataset(Dataset):
         #when saving for the first time only 
         if not self.id:
             # initialize data dir 
-            data_dir = self.get_relative_data_dir()
+            data_dir = self.get_default_data_dir()
+            self.folder = data_dir            
         else:
-            # take possibly edited value from form
-            data_dir = self.folder
-                               
-        self.ensure_dir(self.get_default_data_dir())
-        self.folder = data_dir
+            # take possibly edited value from form, keep self.folder.
+            pass
+                                                       
+        self.ensure_dir(self.folder)        
         super(FileSystemDataset,self).save()
         
-    def get_data_dir(self):
+    def get_full_folder_path(self):
+        """ Return full path of the folder in which this datasets files reside """
         data_dir_path = os.path.join(settings.MEDIA_ROOT,self.folder)
         return data_dir_path
     
     def get_default_data_dir(self):
-        """ In which dir should this dataset be located? Return full path  
+        """ In which dir should this dataset be located by default? Return path relative to MEDIA_ROOT  
         """                        
-        data_dir_path = os.path.join(settings.MEDIA_ROOT,self.get_relative_data_dir())
-        #data_dir_path = os.path.join(self.comicsite.short_name,self.cleantitle)
+        data_dir_path = os.path.join(self.comicsite.short_name,self.folder_prefix,self.cleantitle)
         return data_dir_path
-    
-    def get_relative_data_dir(self):
-        """ In which dir Where should this dataset be located?  Return relative to MEDIA_ROOT
-        """        
         
-        data_dir_path = os.path.join(self.folder_prefix,self.comicsite.short_name,self.cleantitle)
-        return data_dir_path
+    def get_template_tag(self):
+        """ Return the django template tag that can be used in page text to render this dataset on the page"""
+        return "{% dataset " + self.comicsite.short_name + "," + self.cleantitle + " %}" 
+        
+    
     
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
