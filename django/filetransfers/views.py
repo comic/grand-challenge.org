@@ -36,6 +36,13 @@ def download_handler(request, pk):
     return serve_file(request, upload.file, save_as=True)
 
 
+def fileserve_handler(request, pk):
+    """ Serve a file through django, for displaying images etc. """
+    upload = get_object_or_404(UploadModel, pk=pk)
+    pdb.set_trace()
+    return serve_file(request, upload.file, save_as=False)
+
+
 def download_handler_filename(request, project_name, dataset_title,filename):    
     """offer file for download based on filename """
     
@@ -44,7 +51,7 @@ def download_handler_filename(request, project_name, dataset_title,filename):
     filepath = path.join(filefolder,filename)
     f = open(filepath, 'r')
     file = File(f) # create django file object
-        
+            
     return serve_file(request, file, save_as=True)
 
 
