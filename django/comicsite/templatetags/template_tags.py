@@ -13,7 +13,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
 from dataproviders import FileSystemDataProvider
-from comicmodels.models import FileSystemDataset #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import FileSystemDataset,UploadModel #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicsite.models import ComicSite,Page
 import comicsite.views
 
@@ -146,6 +146,50 @@ class AllProjectsNode(template.Node):
         return html
 
 
+@register.tag(name="image_url")
+def render_image_url(parser, token):
+    """ render image based on image title """	    
+    # split_contents() knows not to split quoted strings.
+    tag_name, args = token.split_contents()
+    imagetitle = args
+        
+    try:
+        #pdb.set_trace()        
+        image = UploadModel.objects.get(title=imagetitle)        
+        
+    except ObjectDoesNotExist as e:    	
+    	
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any images named '"+imagetitle+"' in database."
+    	#raise template.TemplateSyntaxError(errormsg)
+    	return TemplateErrorNode(errormsg)      
+        	
+    except ValueError:    	
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
+    
+    [isImage,errorMessage] = hasImgExtension(str(image.file))     
+    if not isImage:
+    	errormsg = "Error rendering {% "+token.contents+" %}:"+ errorMessage
+    	#raise template.TemplateSyntaxError(errormsg)
+    	return TemplateErrorNode(errormsg)
+    	
+		
+    return imagePathNode(image)
+
+
+
+class imagePathNode(template.Node):	
+    """ return local path to the given UploadModel 
+    """	
+	
+    def __init__(self, image):
+        self.image = image
+                
+    def render(self, context):
+        path = "/static/media/"+str(self.image.file)
+        	        	
+        return path
+
+
 
 class TemplateErrorNode(template.Node):
 	"""Render error message in place of this template tag. This makes it directly obvious where the error occured
@@ -156,7 +200,16 @@ class TemplateErrorNode(template.Node):
 	def render(self,context):
 		return makeErrorMsgHtml(self.msg)		
 		
-       
+
+def hasImgExtension(filename):
+	
+	allowedextensions = [".jpg",".jpeg",".gif",".png",".bmp"]
+	ext = path.splitext(filename)[1]
+	if ext in allowedextensions:
+	     return [True,""]	
+	else:
+	     return [False,"file \""+ filename +"\" does not look like an image. Allowed extensions: ["+",".join(allowedextensions)+"]"]
+	
        
 def makeErrorMsgHtml(text):
 	 errorMsgHTML = "<p><span class=\"pageError\"> "+text+" </span></p>"
