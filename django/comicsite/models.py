@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 
 from guardian.shortcuts import assign
+from comicmodels.models import ComicSiteModel
 
 
 class ComicSite(models.Model):
@@ -42,7 +43,7 @@ class ComicSite(models.Model):
     
     
 
-class Page(models.Model):
+class Page(ComicSiteModel):
     """ A single editable page containing html and maybe special output plugins """
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
