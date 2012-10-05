@@ -30,12 +30,11 @@ def index(request):
 def site(request, site_short_name):
     """ show a single COMIC site, default start page """
    
-    standardvars = site_get_standard_vars(site_short_name)
-    
+    standardvars = site_get_standard_vars(site_short_name)    
         
     currentpage = standardvars['currentpage'] 
     currentpage.html = renderTags(request, currentpage)
-            
+    
     return render_to_response('page.html', standardvars,context_instance=RequestContext(request))
     
 

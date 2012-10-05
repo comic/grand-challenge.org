@@ -3,8 +3,12 @@ import re
 import pdb
 
 from django import forms
-from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import Group,User,Permission
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+
+
 
 
 from dataproviders import FileSystemDataProvider
@@ -18,6 +22,12 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     return path
 
 
+def get_anonymous_user():
+    """Anymous user is the default user for non logged in users. I is also the only member of group
+      'everyone' for which permissions can be set """
+    return User.objects.get(username = "anonymousUser")
+
+
 class ComicSiteModel(models.Model):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions
      such as authorization.
@@ -26,13 +36,27 @@ class ComicSiteModel(models.Model):
     title = models.CharField(max_length=64, blank=True)
     comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this file belong? Used to determine permissions")
     # = models.CharField(max_length=64, blank=True)
-    
         
     
     def __unicode__(self):
        """ string representation for this object"""
        return self.title
-                
+   
+    def can_be_viewed_by(self,user):
+        """ boolean, is user allowed to view this? """
+        
+        # check whether everyone is allowed to view this. Anymous user is the only member of group
+        # 'everyone' for which permissions can be set
+        anonymousUser = get_anonymous_user()
+        #pdb.set_trace()        
+        
+        if anonymousUser.has_perm("view_ComicSiteModel",self):
+            return True
+        else:
+            # if not everyone has access, check whether given user has permissions
+            return user.has_perm("view_ComicSiteModel",self)
+        
+        
     class Meta:
        abstract = True
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)

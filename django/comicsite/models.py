@@ -1,8 +1,9 @@
-from django.db import models
-from django.utils.safestring import mark_safe
-from django.db.models import Max
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
+from django.db.models import Max
+from django.db.models import Q
+from django.utils.safestring import mark_safe
 
 from guardian.shortcuts import assign
 
@@ -30,7 +31,14 @@ class ComicSite(models.Model):
     def participants_group_name(self):
         """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
         return self.short_name+"_participants"
-        
+    
+    def get_relevant_perm_groups(self):
+        """ Return all auth groups which are directly relevant for this ComicSite. 
+            This method is used for showin permissions for these groups, even if none
+            are defined """
+                
+        groups = Group.objects.filter(Q(name="everyone") | Q(name=self.admin_group_name()) | Q(name=self.participants_group_name()))
+        return groups
     
     
 
