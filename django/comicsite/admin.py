@@ -71,7 +71,7 @@ class PageAdmin(GuardedModelAdmin):
     
     def queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access """                    
-        user_qs = get_objects_for_user(request.user, 'comicsite.change_page')
+        user_qs = get_objects_for_user(request.user, 'comicmodels.change_page')
         return user_qs
     
     def response_change(self, request, obj, post_url_continue=None):
@@ -151,7 +151,7 @@ class ComicSiteAdmin(GuardedModelAdmin):
         if request.user.is_superuser:
             return qs
                 
-        user_qs = get_objects_for_user(request.user, 'comicsite.change_comicsite')
+        user_qs = get_objects_for_user(request.user, 'comicmodels.change_comicsite')
         return user_qs
     
     
