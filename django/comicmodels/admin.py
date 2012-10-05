@@ -44,6 +44,7 @@ class FileSystemDatasetAdmin(GuardedModelAdmin):
     """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
         
     list_display = ('title','description','get_tag','comicsite')
+    form = FileSystemDatasetForm
     
     def get_tag(self,obj):
         return obj.get_template_tag()
@@ -54,11 +55,8 @@ class FileSystemDatasetAdmin(GuardedModelAdmin):
             return FileSystemDatasetForm
         else:
             return FileSystemDatasetInitialForm 
-            
-     
-            
-
-    form = FileSystemDatasetForm
+                        
+    
         
 class UploadModelAdmin(GuardedModelAdmin):    
         
