@@ -12,7 +12,7 @@ from django.db import models
 
 
 from dataproviders import FileSystemDataProvider
-from comicsite.models import ComicSite 
+ 
 
 
 def giveFileUploadDestinationPath(uploadmodel,filename):

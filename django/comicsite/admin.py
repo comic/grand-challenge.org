@@ -43,7 +43,7 @@ class PageAdmin(GuardedModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again. 
-    change_form_template = None
+    #change_form_template = None
         
     #Show these page params in admin overview list 
     list_display = ('title','ComicSite','order')
