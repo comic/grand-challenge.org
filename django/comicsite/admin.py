@@ -17,7 +17,7 @@ from django.http import HttpResponseRedirect
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
-from models import ComicSite,Page
+from comicmodels.models import ComicSite,Page
 
 
 class PageAdminForm(forms.ModelForm):
@@ -76,7 +76,7 @@ class PageAdmin(GuardedModelAdmin):
     
     def response_change(self, request, obj, post_url_continue=None):
         """This makes the response after adding go to another apps changelist for some model"""        
-        return HttpResponseRedirect(reverse("admin:comicsite_comicsite_change",args=[obj.ComicSite.pk]))
+        return HttpResponseRedirect(reverse("admin:comicmodels_comicsite_change",args=[obj.ComicSite.pk]))
 
 
 

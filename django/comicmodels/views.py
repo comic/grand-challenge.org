@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 #from django.shortcuts import get_object_or_404
 from django.views.generic.simple import direct_to_template
 #
-from comicsite.models import ComicSite
+from comicmodels.models import ComicSite
 from comicmodels.forms import UploadForm
 from comicmodels.models import UploadModel
 from comicsite.views import site_get_standard_vars,concatdicts
