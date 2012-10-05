@@ -17,8 +17,9 @@ from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
 import comicsite.templatetags.template_tags
-from comicsite.models import ComicSite,Page,ComicSiteException
+from comicmodels.models	 import ComicSite,Page
 from comicsite.admin import ComicSiteAdmin
+from comicsite.models import ComicSiteException
 from dataproviders import FileSystemDataProvider
 
  
