@@ -4,7 +4,7 @@
 
 {% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
 
-{% block pageName %} {{currentpage.ComicSite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block headerTitle %} {{site.short_name}} {% endblock %}
 
