@@ -107,20 +107,14 @@ class ComicSiteModel(models.Model):
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
 
 
-class Page(models.Model):
+class Page(ComicSiteModel):
     """ A single editable page containing html and maybe special output plugins """
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
-    comicsite = models.ForeignKey("ComicSite")
-    title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed")
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
     hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
  
     html = models.TextField()
-    
-    def __unicode__(self):
-        """ string representation for this object"""
-        return "Page '"+self.title+"'";
     
     
     def clean(self):
@@ -168,14 +162,14 @@ class Page(models.Model):
             raise NotImplementedError("Somebody should implement this!")
 
     
-    class Meta:
+    class Meta(ComicSiteModel.Meta):
         """special class holding meta info for this class"""
         # make sure a single site never has two pages with the same name because page names
         # are used as keys in urls
         unique_together = (("comicsite", "title"),)
          
         # when getting a list of these objects this ordering is used
-        ordering = ['comicsite','order']
+        ordering = ['comicsite','order']        
 
 
 

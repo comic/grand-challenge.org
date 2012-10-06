@@ -92,6 +92,11 @@ def page(request, site_short_name, page_title):
         p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
     except Page.DoesNotExist:                
         raise Http404
+    
+    if not p.can_be_viewed_by(request.user):        
+        return HttpResponse("You do not have permission. Bad user!")
+
+    
     pages = getPages(site_short_name)
     
     #to display pages from 'comic' project at the very bottom of the site
