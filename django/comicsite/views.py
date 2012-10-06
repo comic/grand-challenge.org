@@ -89,7 +89,7 @@ def page(request, site_short_name, page_title):
     """ show a single page on a site """
     
     try:
-        p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
+        p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
     except Page.DoesNotExist:                
         raise Http404
     pages = getPages(site_short_name)
@@ -99,7 +99,7 @@ def page(request, site_short_name, page_title):
     
     p.html = renderTags(request, p)
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': p.comicsite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 
 
 def comicmain(request, page_title=""):
@@ -115,7 +115,7 @@ def comicmain(request, page_title=""):
         p.html = renderTags(request, p)
     else:    
         try:
-            p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
+            p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
         except Page.DoesNotExist:                
             raise Http404
     
@@ -128,7 +128,7 @@ def comicmain(request, page_title=""):
     #to display pages from 'comic' project at the very bottom of the site
     metafooterpages = getPages("COMIC")
     
-    return render_to_response('mainpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+    return render_to_response('mainpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 
                 
     
@@ -145,7 +145,7 @@ def dataPage(request):
     
     pages = [p]
     
-    return render_to_response('testpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('testpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
@@ -160,7 +160,7 @@ def getSite(site_short_name):
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(ComicSite__short_name=site_short_name)
+        pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
         raise Http404
     return pages
