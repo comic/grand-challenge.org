@@ -46,9 +46,9 @@ class PageAdmin(GuardedModelAdmin):
     #change_form_template = None
         
     #Show these page params in admin overview list 
-    list_display = ('title','ComicSite','order')
+    list_display = ('title','comicsite','order')
     
-    list_filter = ['ComicSite']
+    list_filter = ['comicsite']
     
     
     def save_model(self, request, obj, form, change):
@@ -56,7 +56,7 @@ class PageAdmin(GuardedModelAdmin):
         if obj.id is None:
             #at page creation, set the correct object permissions            
             # get admin group for the comicsite of this page                        
-            agn = obj.ComicSite.admin_group_name()            
+            agn = obj.comicsite.admin_group_name()            
             admingroup = Group.objects.get(name=agn)
                     
             # add change_page permission to the current page
@@ -76,7 +76,7 @@ class PageAdmin(GuardedModelAdmin):
     
     def response_change(self, request, obj, post_url_continue=None):
         """This makes the response after adding go to another apps changelist for some model"""        
-        return HttpResponseRedirect(reverse("admin:comicmodels_comicsite_change",args=[obj.ComicSite.pk]))
+        return HttpResponseRedirect(reverse("admin:comicmodels_comicsite_change",args=[obj.comicsite.pk]))
 
 
 

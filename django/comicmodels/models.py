@@ -111,7 +111,7 @@ class Page(models.Model):
     """ A single editable page containing html and maybe special output plugins """
     
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
-    ComicSite = models.ForeignKey("ComicSite")
+    comicsite = models.ForeignKey("ComicSite")
     title = models.CharField(max_length = 255, help_text = "Short name used in url to load this page. E.g. /comic/people. No spaces or special chars allowed")
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
     hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
@@ -130,7 +130,7 @@ class Page(models.Model):
         if not self.id:
             # get max value of order for current pages.
             try:            
-                max_order = Page.objects.filter(ComicSite__pk=self.ComicSite.pk).aggregate(Max('order'))                
+                max_order = Page.objects.filter(comicsite__pk=self.comicsite.pk).aggregate(Max('order'))                
             except ObjectDoesNotExist :
                 max_order = None
                                         
@@ -151,13 +151,13 @@ class Page(models.Model):
     
     def move(self, move):
         if move == 'UP':
-            mm = Page.objects.get(ComicSite=self.ComicSite,order=self.order-1)
+            mm = Page.objects.get(ComicSite=self.comicsite,order=self.order-1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
         if move == 'DOWN':
-            mm = Page.objects.get(ComicSite=self.ComicSite,order=self.order+1)
+            mm = Page.objects.get(ComicSite=self.comicsite,order=self.order+1)
             mm.order -= 1
             mm.save()
             self.order += 1
@@ -172,10 +172,10 @@ class Page(models.Model):
         """special class holding meta info for this class"""
         # make sure a single site never has two pages with the same name because page names
         # are used as keys in urls
-        unique_together = (("ComicSite", "title"),)
+        unique_together = (("comicsite", "title"),)
          
         # when getting a list of these objects this ordering is used
-        ordering = ['ComicSite','order']
+        ordering = ['comicsite','order']
 
 
 
