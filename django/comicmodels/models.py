@@ -18,14 +18,6 @@ from dataproviders import FileSystemDataProvider
 
 
 
-
-
-
-
-
-
-
-
 def giveFileUploadDestinationPath(uploadmodel,filename):
     """ Where should this file go relative to MEDIA_ROOT? """
     
@@ -113,6 +105,7 @@ class Page(ComicSiteModel):
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
     hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
+    
  
     html = models.TextField()
     
@@ -145,13 +138,13 @@ class Page(ComicSiteModel):
     
     def move(self, move):
         if move == 'UP':
-            mm = Page.objects.get(ComicSite=self.comicsite,order=self.order-1)
+            mm = Page.objects.get(comicsite=self.comicsite,order=self.order-1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
         if move == 'DOWN':
-            mm = Page.objects.get(ComicSite=self.comicsite,order=self.order+1)
+            mm = Page.objects.get(comicsite=self.comicsite,order=self.order+1)
             mm.order -= 1
             mm.save()
             self.order += 1
@@ -172,7 +165,14 @@ class Page(ComicSiteModel):
         ordering = ['comicsite','order']        
 
 
-
+class ErrorPage(Page):
+    """ Just the same as a Page, just that it does not display an edit button as admin"""
+    is_error_page=True
+    
+    class Meta:
+       abstract = True  #error pages should only be generated on the fly currently. 
+       
+    
 
 class UploadModel(ComicSiteModel):
         
