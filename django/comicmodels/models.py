@@ -12,7 +12,7 @@ from django.db.models import Max
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 
-from guardian.shortcuts import assign
+from guardian.shortcuts import assign,remove_perm
 
 from dataproviders import FileSystemDataProvider
 
@@ -71,7 +71,21 @@ class ComicSiteModel(models.Model):
     """
     #user = models.ManyToManyField()
     title = models.CharField(max_length=64, blank=True)
-    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this file belong? Used to determine permissions")
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong? Used to determine permissions")
+    
+    ALL = 'ALL'
+    REGISTERED_ONLY = 'REG'
+    ADMIN_ONLY = 'ADM'
+    
+    PERMISSIONS_CHOICES = (
+        (ALL, 'All'),
+        (REGISTERED_ONLY, 'Registered users only'),
+        (ADMIN_ONLY, 'Administrators only')        
+    )
+    permission_lvl = models.CharField(max_length=3,
+                                      choices=PERMISSIONS_CHOICES,
+                                      default=ALL)
+    
     # = models.CharField(max_length=64, blank=True)
         
     
@@ -93,7 +107,33 @@ class ComicSiteModel(models.Model):
             # if not everyone has access, check whether given user has permissions
             return user.has_perm("view_ComicSiteModel",self)
         
+    
+    def setpermissions(self, lvl):
+        """ Give the right groups permissions to this object """
         
+        admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
+        participantsgroup = Group.objects.get(name=self.comicsite.short_name+"_participants")
+        everyonegroup = Group.objects.get(name="everyone")
+        if lvl == self.ALL:
+            assign("view_ComicSiteModel",admingroup,self)
+            assign("view_ComicSiteModel",participantsgroup,self)
+            assign("view_ComicSiteModel",everyonegroup,self)            
+            self.save()
+        elif lvl == self.REGISTERED_ONLY:
+            assign("view_ComicSiteModel",admingroup,self)
+            assign("view_ComicSiteModel",participantsgroup,self)
+            remove_perm("view_ComicSiteModel",everyonegroup,self)            
+            self.save()
+        elif lvl == self.ADMIN_ONLY:
+            assign("view_ComicSiteModel",admingroup,self)
+            remove_perm("view_ComicSiteModel",participantsgroup,self)
+            remove_perm("view_ComicSiteModel",everyonegroup,self)            
+            self.save()
+        else:
+            raise ValueError("Unknown permissions level '"+ lvl +"'. I don't know which groups to give permissions to this object")
+
+
+                
     class Meta:
        abstract = True
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
