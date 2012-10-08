@@ -44,7 +44,6 @@ class PageAdmin(GuardedModelAdmin):
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again. 
     #change_form_template = None
-        
     #Show these page params in admin overview list 
     list_display = ('title','comicsite','order')
     
@@ -68,6 +67,9 @@ class PageAdmin(GuardedModelAdmin):
         obj.save()
         move = form.cleaned_data['move']
         obj.move(move)
+        
+        permission_lvl = form.cleaned_data['permission_lvl']
+        obj.setpermissions(permission_lvl)
     
     def queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access """                    
