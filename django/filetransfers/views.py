@@ -41,7 +41,6 @@ def fileserve_handler(request, pk):
     """ Serve a file through django, for displaying images etc. """
     upload = get_object_or_404(UploadModel, pk=pk)
     
-    
     #if request.user.has_perm("comicmodels.view_ComicSiteModel"):
     if upload.can_be_viewed_by(request.user):
         return serve_file(request, upload.file, save_as=False)
