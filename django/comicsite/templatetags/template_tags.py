@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset,UploadModel #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
-from comicsite.models import ComicSite,Page
+from comicmodels.models import ComicSite,Page
 import comicsite.views
 
 
