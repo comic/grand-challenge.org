@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 #from django.shortcuts import get_object_or_404
 from django.views.generic.simple import direct_to_template
 #
-from comicsite.models import ComicSite
+from comicmodels.models import ComicSite
 from comicmodels.forms import UploadForm
 from comicmodels.models import UploadModel
 from comicsite.views import site_get_standard_vars,concatdicts
@@ -32,13 +32,13 @@ def upload_handler(request,site_short_name):
 
     upload_url, upload_data = prepare_upload(request, view_url)
     
-    standardvars = site_get_standard_vars(site_short_name)
-    comicsite = standardvars['site']    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+        
     
-    uploadsforcurrentsite = UploadModel.objects.filter(comicsite=comicsite)
+    uploadsforcurrentsite = UploadModel.objects.filter(comicsite=site)
     
     # set inital values    
-    form = UploadForm(initial = {'comicsite': comicsite.pk})    
+    form = UploadForm(initial = {'comicsite': site.pk})    
     # FIXME: I want to make the comicsite field uneditable, but setting
     # disabled using line below will trigger 'field required" error
     # How to disable this field but still send it when the form is 
@@ -46,13 +46,14 @@ def upload_handler(request,site_short_name):
     
     #form.fields['comicsite'].widget.attrs['disabled'] = True
         
-    templatevars = {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
-         'uploads': uploadsforcurrentsite}
     
-    allvars = concatdicts(standardvars,templatevars)
+    
+    
     
      
     
     return direct_to_template(request, 'upload/comicupload.html',
-        allvars)
+        {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
+         'uploads': uploadsforcurrentsite,'site': site,'pages': pages, 
+         'metafooterpages' : metafooterpages})
 

@@ -17,8 +17,9 @@ from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
 import comicsite.templatetags.template_tags
-from comicsite.models import ComicSite,Page,ComicSiteException
+from comicmodels.models	 import ComicSite,Page,ErrorPage
 from comicsite.admin import ComicSiteAdmin
+from comicsite.models import ComicSiteException
 from dataproviders import FileSystemDataProvider
 
  
@@ -30,41 +31,34 @@ def index(request):
 def site(request, site_short_name):
     """ show a single COMIC site, default start page """
    
-    standardvars = site_get_standard_vars(site_short_name)
-    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
         
-    currentpage = standardvars['currentpage'] 
-    currentpage.html = renderTags(request, currentpage)
-            
-    return render_to_response('page.html', standardvars,context_instance=RequestContext(request))
+    if len(pages) == 0:
+        page = Page(comicsite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
+        currentpage = page    
+    else:
+        currentpage = pages[0]
+        
+    currentpage = getRenderedPageIfAllowed(currentpage,request,site)
+        
+    
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     
 
 def site_get_standard_vars(site_short_name):
-    """ When rendering a site you need to pass the current site, all current pages, and footer pages.
+    """ When rendering a site you need to pass the current site, all pages for this site, and footer pages.
     Get all this info and return a dictionary ready to pass to render_to_response. Convenience method
     to save typing.
     """
     site = getSite(site_short_name)                    
     pages = getPages(site_short_name)        
-    metafooterpages = getPages("COMIC")
-    
-    if len(pages) == 0:
-        page = Page(ComicSite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
-        currentpage = page    
-    else:
-        currentpage = pages[0]
-            
-    
-    return {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages}
-    
-def site_add_standard_vars(site_short_name,dict):
-    """ add all vars required to render a site (menu items etc) to the given dictionary """
-    
-    standardvars = site_get_standard_vars(site_short_name)
-    return concatdics(dict,standardvars)
-    
+    metafooterpages = getPages("COMIC")        
+                
+    return [site, pages, metafooterpages]
+        
 def concatdicts(d1,d2):
     return dict(d1, **d2)
+    
 
 def renderTags(request, p):
     """ render page contents using django template system
@@ -84,22 +78,47 @@ def renderTags(request, p):
     return pagecontents
 
 
+def getRenderedPageIfAllowed(page_or_page_title,request,site):
+    """ check permissions and render tags in page. If string title is given page is looked for 
+        return nice message if not allowed to view"""
+        
+    if isinstance(page_or_page_title,unicode) or isinstance(page_or_page_title,str):
+        page_title = page_or_page_title
+        try:
+            p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
+        except Page.DoesNotExist:                
+            raise Http404
+    else:
+        p = page_or_page_title                
+    
+    if not p.can_be_viewed_by(request.user):        
+        
+        if request.user.is_authenticated():
+            msg = "You do not have permission to view page '"+p.title+"'. If you feel this is and error, please contact the project administrators"
+            title = "No permission"
+        else:
+            msg = "The page '"+p.title+"' can only be viewed by registered users. Sign in to view this page."
+            title = "Sign in required"
+                    
+        page = ErrorPage(comicsite=site,title=title,html=msg)
+        currentpage = page
+    else:
+        p.html = renderTags(request, p)
+        currentpage = p
+    
+    return currentpage
+    
+    
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
     
-    try:
-        p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
-    except Page.DoesNotExist:                
-        raise Http404
-    pages = getPages(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     
-    #to display pages from 'comic' project at the very bottom of the site
-    metafooterpages = getPages("COMIC")
+    currentpage = getRenderedPageIfAllowed(page_title,request,site)
     
-    p.html = renderTags(request, p)
     
-    return render_to_response('page.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 
 
 def comicmain(request, page_title=""):
@@ -115,7 +134,7 @@ def comicmain(request, page_title=""):
         p.html = renderTags(request, p)
     else:    
         try:
-            p = Page.objects.get(ComicSite__short_name=site_short_name, title=page_title)
+            p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
         except Page.DoesNotExist:                
             raise Http404
     
@@ -128,7 +147,7 @@ def comicmain(request, page_title=""):
     #to display pages from 'comic' project at the very bottom of the site
     metafooterpages = getPages("COMIC")
     
-    return render_to_response('mainpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+    return render_to_response('mainpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 
                 
     
@@ -145,7 +164,7 @@ def dataPage(request):
     
     pages = [p]
     
-    return render_to_response('testpage.html', {'site': p.ComicSite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('testpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
@@ -160,7 +179,7 @@ def getSite(site_short_name):
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(ComicSite__short_name=site_short_name)
+        pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
         raise Http404
     return pages
@@ -232,7 +251,7 @@ def createTestPage(title="testPage",html=""):
     site.name = "Test Page"
     site.skin = ""
         
-    return Page(ComicSite=site,title=title,html=html)
+    return Page(comicsite=site,title=title,html=html)
     
 
 def givePageHTML(page):
