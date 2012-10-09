@@ -21,6 +21,19 @@ import comicsite.views
 # This is needed to use the @register.tag decorator
 register = template.Library()
 
+@register.simple_tag
+def metafooterpages():
+	""" Get the metafooter pages. """
+	html_string = "<div class='text'>COMIC:</div>"
+	pages = comicsite.views.getPages('COMIC')
+	for p in pages:
+		if not p.hidden:
+			url = reverse('comicsite.views.comicmain', kwargs={'page_title':p.title})
+			html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
+			html_string += p.display_title == "" and p.title or p.display_title
+			html_string += "</a>"
+	return html_string
+
 @register.tag(name="filelist")
 def do_get_files(parser, token):	
     try:
