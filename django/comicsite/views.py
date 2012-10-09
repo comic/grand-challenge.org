@@ -16,8 +16,10 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
+
 import comicsite.templatetags.template_tags
 from comicmodels.models	 import ComicSite,Page,ErrorPage
+from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
 from comicsite.admin import ComicSiteAdmin
 from comicsite.models import ComicSiteException
 from dataproviders import FileSystemDataProvider
@@ -64,6 +66,7 @@ def renderTags(request, p):
     """ render page contents using django template system
     This makes it possible to use tags like '{% dataset %}' in page 
     """
+    
     rendererror = ""
     try:
         t = Template("{% load template_tags %}" + p.html)
@@ -74,7 +77,10 @@ def renderTags(request, p):
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
     else:
-        pagecontents = t.render(RequestContext(request))
+        request.comicsitecontext = p.comicsite
+        #pagecontents = t.render(RequestContext(request))
+        pagecontents = t.render(ComicSiteRequestContext(request,p.comicsite))
+        
     return pagecontents
 
 
