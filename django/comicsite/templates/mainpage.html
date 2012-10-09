@@ -4,7 +4,7 @@
 
 {% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
 
-{% block pageName %} {{currentpage.ComicSite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block headerTitle %} {{site.short_name}} {% endblock %}
 
@@ -21,7 +21,7 @@
 
 	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
 		<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>   	   
-	    <li> <a class="menuItem" href="{% url admin:comicsite_comicsite_change site.pk%}">Admin</a></li>	   
+	    <li> <a class="menuItem" href="{% url admin:comicmodels_comicsite_change site.pk%}">Admin</a></li>	   
        
 	{% endif %}
 	
@@ -41,7 +41,7 @@
 	{% get_obj_perms user for site as "site_perms" %}
 	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
 	   	   
-	   <a class="editPageLink" href="{% url admin:comicsite_page_change currentpage.pk%}">Edit this page</a>	          
+	   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk%}">Edit this page</a>	          
 	{% endif %}	
 
 

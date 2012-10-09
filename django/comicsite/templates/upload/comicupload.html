@@ -1,0 +1,29 @@
+{% extends 'site.html' %}
+{% load filetransfers %}
+{% block title %}Upload file to Blobstore{% endblock %}
+
+{% block content %}
+<h1>Upload</h1>
+<form action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% render_upload_data upload_data %}
+  <table>{{ form }}</table>
+  <input type="submit" value="Upload" />
+</form>
+
+<h1>Files</h1>
+<ul>
+  {% for upload in uploads %}
+  
+    <li>          
+      <a href="{% url filetransfers.views.download_handler pk=upload.pk %}">{% firstof upload.title 'unnamed' %} - {{ upload.filename }} </a>
+      ({{ upload.file.size|filesizeformat }})
+      <form method="post" action="{% url filetransfers.views.delete_handler pk=upload.pk %}" style="display:inline">
+        {% csrf_token %}
+        <input type="submit" value="Delete" />
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
