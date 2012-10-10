@@ -12,10 +12,13 @@ from django import template
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
+from profiles.forms import SignupFormExtra
+
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset,UploadModel #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite,Page
 import comicsite.views
+
 
 
 # This is needed to use the @register.tag decorator
@@ -221,6 +224,37 @@ class imagePathNode(template.Node):
         path = "/static/media/"+str(self.image.file)
         	        	
         return path
+
+
+@register.tag(name="registration")
+def render_registration_form(parser, token):
+    """ Render a registration form for the current site """
+    
+    try:    	
+        projects = ComicSite.objects.all()
+    except ObjectDoesNotExist as e:
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any comicSite object.."    	
+    	return TemplateErrorNode(errormsg)
+    
+    return RegistrationFormNode(projects)
+
+
+
+class RegistrationFormNode(template.Node):	
+    """ return HTML form of registration, which links to main registration 
+    Currently just links to registration
+    """	
+	
+    def __init__(self, projects):
+        self.projects = projects
+                
+    def render(self, context):
+        html = ""
+        url = reverse('userena.views.signup', kwargs={'signup_form':SignupFormExtra})
+        
+        sitename = context.comicsite.short_name
+        html = html+ "<a href=\""+url+"\">"+ "register for "+sitename+" </a>"
+        return html
 
 
 
