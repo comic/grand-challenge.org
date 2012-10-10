@@ -22,10 +22,11 @@ Package Requirements.
 - Django Countries
 - Django Userena
 - Django Social Auth
+- PIL
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth
+    pip install South django-countries django-userena django-social-auth pil 
 
 
 Configuration.

@@ -54,7 +54,7 @@ def download_handler_filename(request, project_name, dataset_title,filename):
     """offer file for download based on filename """
     
     dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
-    filefolder = dataset.get_data_dir()
+    filefolder = dataset.get_full_folder_path()
     filepath = path.join(filefolder,filename)
     f = open(filepath, 'r')
     file = File(f) # create django file object
