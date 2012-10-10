@@ -15,11 +15,8 @@ class ComicSiteRequestContext(RequestContext):
     # This does not contain any info on which comicsite is rendering, so I chose to add
     # comicsite param to init.
         
-    def __init__(self,request,comicsite,*args,**kwargs):
+    def __init__(self,request,comicsite=None,*args,**kwargs):
         super(ComicSiteRequestContext, self).__init__(request,*args,**kwargs)
         self.comicsite = comicsite
         
     
-    
-class test():
-    test = "yes"

@@ -249,12 +249,21 @@ class RegistrationFormNode(template.Node):
         self.projects = projects
                 
     def render(self, context):
-        html = ""
-        url = reverse('userena.views.signup', kwargs={'signup_form':SignupFormExtra})
+    	sitename = context.comicsite.short_name
+    	signup_url = reverse('userena_signin') + "?next=" + reverse('comicsite.views.site',kwargs={'site_short_name':sitename})
+    	signuplink = makeHTMLLink(signup_url,"sign in")
+    	registerlink = makeHTMLLink(reverse('userena.views.signup', 
+										     kwargs={'signup_form':SignupFormExtra}),"register")
+    	
+    	
+        if not context['user'].is_authenticated():
+        	return "To register for "+ sitename +", you need be logged in to COMIC.\
+        	please "+ signuplink+ " or " + registerlink
         
-        sitename = context.comicsite.short_name
-        html = html+ "<a href=\""+url+"\">"+ "register for "+sitename+" </a>"
-        return html
+        else:
+        	return makeHTMLLink("","register for "+ sitename )
+        
+        
 
 
 
@@ -267,6 +276,9 @@ class TemplateErrorNode(template.Node):
 	def render(self,context):
 		return makeErrorMsgHtml(self.msg)		
 		
+
+def makeHTMLLink(url,linktext):
+	return "<a href=\""+url+"\">"+ linktext+ "</a>"
 
 def hasImgExtension(filename):
 	
