@@ -9,7 +9,9 @@ urlpatterns = patterns('',
                             
     url(r'^(?P<site_short_name>\w+)/$','comicsite.views.site'),
     
-    url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),    
+    url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),
+    
+    url(r'^(?P<site_short_name>\w+)/_register/$','comicsite.views._register'),
     
     url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
         
