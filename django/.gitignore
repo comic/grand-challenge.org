@@ -6,3 +6,4 @@
 
 # settings files containing local and sensitive server settings#
 comic/settings/*_local.conf
+
