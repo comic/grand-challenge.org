@@ -276,7 +276,7 @@ class FileSystemDataset(Dataset):
             # take possibly edited value from form, keep self.folder.
             pass
                                                        
-        self.ensure_dir(self.folder)        
+        self.ensure_dir(self.folder)
         super(FileSystemDataset,self).save()
         
     def get_full_folder_path(self):
@@ -292,7 +292,7 @@ class FileSystemDataset(Dataset):
         
     def get_template_tag(self):
         """ Return the django template tag that can be used in page text to render this dataset on the page"""
-        return "{% dataset " + self.comicsite.short_name + "," + self.cleantitle + " %}" 
+        return "{% dataset " + self.cleantitle + " %}"
         
     
     
