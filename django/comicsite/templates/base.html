@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
-
+{% load template_tags %}
 <html>	
 	<head>
 		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
@@ -61,7 +61,7 @@
         <!-- page -->
                	<div id="metafooter">
                		<div id="metaFooterMenu">
-            			{% block metafootermenu %}  {% endblock %}
+            			{% metafooterpages %}
             		</div>
             	            	
 	            	<div id="copyrightNotice">
