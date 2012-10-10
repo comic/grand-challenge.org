@@ -9,6 +9,7 @@ import pdb
 
 
 from django.contrib.admin.options import ModelAdmin
+from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse,Http404
@@ -30,8 +31,30 @@ def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
-def site(request, site_short_name):
+def _register(request, site_short_name):
     """ show a single COMIC site, default start page """
+   
+    #TODO: check whether user is allowed to register, maybe wait for verification,
+    #send email to admins of new registration 
+        
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    title = "registration successful"
+   
+    if request.user.is_authenticated():
+        participantsgroup = Group.objects.get(name=site.participants_group_name())
+        request.user.groups.add(participantsgroup)
+        html = "<p> You are now registered to "+ site.short_name + "<p>"
+        
+    else:
+        html = "you need to be logged in to use this url"
+        
+    currentpage = Page(comicsite=site,title=title,html=html)
+    
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
+    
+def site(request, site_short_name):
+    """ Register the current user for the given comicsite """
    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
         
@@ -45,7 +68,6 @@ def site(request, site_short_name):
  
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
-    
 
 def site_get_standard_vars(site_short_name):
     """ When rendering a site you need to pass the current site, all pages for this site, and footer pages.
@@ -77,9 +99,9 @@ def renderTags(request, p):
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
     else:
-        request.comicsitecontext = p.comicsite
-        #pagecontents = t.render(RequestContext(request))
-        pagecontents = t.render(ComicSiteRequestContext(request,p.comicsite))
+        
+        #pass page to context here to be able to render tags based on which page does the rendering
+        pagecontents = t.render(ComicSiteRequestContext(request,p))
         
     return pagecontents
 

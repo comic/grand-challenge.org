@@ -115,7 +115,7 @@ class DatasetNode(template.Node):
     def render(self, context):
     	
     	if self.project_name == "":
-        	self.project_name = context.comicsite.short_name
+        	self.project_name = context.page.comicsite.short_name
         
     	try:
         #pdb.set_trace()
@@ -249,8 +249,10 @@ class RegistrationFormNode(template.Node):
         self.projects = projects
                 
     def render(self, context):
-    	sitename = context.comicsite.short_name
-    	signup_url = reverse('userena_signin') + "?next=" + reverse('comicsite.views.site',kwargs={'site_short_name':sitename})
+    	sitename = context.page.comicsite.short_name
+    	pagetitle = context.page.title
+    	signup_url = reverse('userena_signin') + "?next=" \
+    				 + reverse('comicsite.views.page',kwargs={'site_short_name':sitename,'page_title':pagetitle})
     	signuplink = makeHTMLLink(signup_url,"sign in")
     	registerlink = makeHTMLLink(reverse('userena.views.signup', 
 										     kwargs={'signup_form':SignupFormExtra}),"register")
@@ -261,7 +263,8 @@ class RegistrationFormNode(template.Node):
         	please "+ signuplink+ " or " + registerlink
         
         else:
-        	return makeHTMLLink("","register for "+ sitename )
+        	register_url = reverse('comicsite.views._register',kwargs={'site_short_name':sitename}) 
+        	return makeHTMLLink(register_url,"register for "+ sitename )
         
         
 
