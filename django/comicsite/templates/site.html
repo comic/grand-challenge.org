@@ -57,24 +57,5 @@
 	
 {% endblock %}
 
-{% block metafootermenu %}
-
-	<div class="text">COMIC:</div> 
-	{% for page in metafooterpages %}
-
-	
-		{% if not page.hidden %}
-			
-				<a class="metaFooterMenuItem" href="{%url comicsite.views.comicmain page.title %}">				
-					{% if page.display_title == "" %}
-						{{page.title}}
-					{% else %}
-						{{page.display_title}}
-					{% endif %}
-				</a>			
-						
-		{% endif %}
-	{% endfor %}
-{% endblock %}
 
 
