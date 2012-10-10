@@ -18,6 +18,10 @@ class SignupFormExtra(SignupForm):
             required = True)
     website = forms.CharField(label=_(u'Website'),
             max_length = 150,
+            required = False,
+            help_text=_(u'A website which describes you or your department'))
+    comicsite = forms.CharField(label=_(u'comicsite'),
+            max_length = 30,
             required = False)
     first_name = forms.CharField(label=_(u'First Name'),
             max_length = 30,
@@ -25,6 +29,8 @@ class SignupFormExtra(SignupForm):
     last_name = forms.CharField(label=_(u'Last Name'),
             max_length = 30,
             required = True)
+    
+    
 
     def __init__(self, *args, **kw):
         """ Bit of hackery to get the first and last name at the top of the form.
@@ -35,6 +41,7 @@ class SignupFormExtra(SignupForm):
         new_order.insert(0, 'first_name')
         new_order.insert(1, 'last_name')
         self.fields.keyOrder = new_order
+        self.base_fields['comicsite'].initial = "je moeder"
 
     def save(self):
         user = super(SignupFormExtra,self).save()
