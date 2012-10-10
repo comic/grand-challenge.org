@@ -19,7 +19,6 @@ from guardian.shortcuts import get_objects_for_user,assign
 
 from comicmodels.models import ComicSite,Page
 
-
 class PageAdminForm(forms.ModelForm):
     move = forms.CharField(widget=forms.Select)
     move.required = False
