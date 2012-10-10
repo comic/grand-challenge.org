@@ -12,10 +12,13 @@ from django import template
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
+from profiles.forms import SignupFormExtra
+
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset,UploadModel #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite,Page
 import comicsite.views
+
 
 
 # This is needed to use the @register.tag decorator
@@ -112,7 +115,7 @@ class DatasetNode(template.Node):
     def render(self, context):
     	
     	if self.project_name == "":
-        	self.project_name = context.comicsite.short_name
+        	self.project_name = context.page.comicsite.short_name
         
     	try:
         #pdb.set_trace()
@@ -223,6 +226,49 @@ class imagePathNode(template.Node):
         return path
 
 
+@register.tag(name="registration")
+def render_registration_form(parser, token):
+    """ Render a registration form for the current site """
+    
+    try:    	
+        projects = ComicSite.objects.all()
+    except ObjectDoesNotExist as e:
+    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any comicSite object.."    	
+    	return TemplateErrorNode(errormsg)
+    
+    return RegistrationFormNode(projects)
+
+
+
+class RegistrationFormNode(template.Node):	
+    """ return HTML form of registration, which links to main registration 
+    Currently just links to registration
+    """	
+	
+    def __init__(self, projects):
+        self.projects = projects
+                
+    def render(self, context):
+    	sitename = context.page.comicsite.short_name
+    	pagetitle = context.page.title
+    	signup_url = reverse('userena_signin') + "?next=" \
+    				 + reverse('comicsite.views.page',kwargs={'site_short_name':sitename,'page_title':pagetitle})
+    	signuplink = makeHTMLLink(signup_url,"sign in")
+    	registerlink = makeHTMLLink(reverse('userena.views.signup', 
+										     kwargs={'signup_form':SignupFormExtra}),"register")
+    	
+    	
+        if not context['user'].is_authenticated():
+        	return "To register for "+ sitename +", you need be logged in to COMIC.\
+        	please "+ signuplink+ " or " + registerlink
+        
+        else:
+        	register_url = reverse('comicsite.views._register',kwargs={'site_short_name':sitename}) 
+        	return makeHTMLLink(register_url,"register for "+ sitename )
+        
+        
+
+
 
 class TemplateErrorNode(template.Node):
 	"""Render error message in place of this template tag. This makes it directly obvious where the error occured
@@ -233,6 +279,9 @@ class TemplateErrorNode(template.Node):
 	def render(self,context):
 		return makeErrorMsgHtml(self.msg)		
 		
+
+def makeHTMLLink(url,linktext):
+	return "<a href=\""+url+"\">"+ linktext+ "</a>"
 
 def hasImgExtension(filename):
 	
