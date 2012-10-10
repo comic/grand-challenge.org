@@ -35,7 +35,8 @@ def metafooterpages():
 	return html_string
 
 @register.tag(name="filelist")
-def do_get_files(parser, token):	
+def do_get_files(parser, token):
+	
     try:
         # split_contents() knows not to split quoted strings.
         tag_name, filefolder = token.split_contents()
@@ -65,74 +66,95 @@ class FileListNode(template.Node):
        
 @register.tag(name="dataset")
 def render_dataset(parser, token):
-    """ Given a challenge and a dataset name, show all files in this dataset as list"""	    
-    # split_contents() knows not to split quoted strings.
-    tag_name, args = token.split_contents()
-    project_name, dataset_title = args.split(",")
-        
+    """ Given a challenge and a dataset name, show all files in this dataset as list"""	 
+    
+    
+    usagestr = "Tag usage: {% dataset <datasetname>,<comicsitename> %}. <comicsitename> can be\
+     			omitted, defaults to current site"
+    
+    #check some basic stuff
     try:
-        #pdb.set_trace()        
-        dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
-        
-    except ObjectDoesNotExist as e:    	
-    	
-    	errormsg = "Error rendering {% "+token.contents+" %}: Could not find any dataset named '"+dataset_title+"' belonging to project '"+project_name+"' in database."
+    	tag_name, args = token.split_contents()
+    except ValueError:   
+    	errormsg = "Error rendering {% "+token.contents+" %}: tag requires at least one \
+    				argument. "	+ usagestr
     	#raise template.TemplateSyntaxError(errormsg)    	
     	return TemplateErrorNode(errormsg)      
-        	
-    except ValueError:    	
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     
-    else:    	
-    	filefolder = dataset.get_full_folder_path()        
-        format_string = "\"%Y-%m-%d %I:%M %p\""
+    	
+    if args.count(",") == 0:
+        dataset_title = args
+        project_name = ""
+    elif args.count(",") == 1 :
+        dataset_title,project_name = args.split(",")
+    else:
+    	errormsg = "Error rendering {% "+token.contents+" %}: found "+str(args.count(",")) +\
+    				" comma's, expected at most 1."	+ usagestr    	
+    	return TemplateErrorNode(errormsg)	
+       
     
-    
-    if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
-        raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return DatasetNode(format_string[1:-1],filefolder,dataset)
-
+    return DatasetNode(dataset_title,project_name)
 
 
 class DatasetNode(template.Node):	
     """ Show list of linked files for given dataset 
-    """	
-	
-    def __init__(self, format_string,filefolder,dataset):
-        self.format_string = format_string
-        self.filefolder = filefolder       
-        self.dataset = dataset
+    """
+    
+    def __init__(self, dataset_title,project_name):
+        self.dataset_title = dataset_title
+        self.project_name = project_name
         
-    def render(self, context):    
+        
+    def make_dataset_error_msg(self,msg):
+    	errormsg = "Error rendering DataSet '"+ self.dataset_title +"' for project '"+ self.project_name+"': "+msg
+        return makeErrorMsgHtml(errormsg)
+        
+    def render(self, context):
+    	
+    	if self.project_name == "":
+        	self.project_name = context.comicsite.short_name
+        
+    	try:
+        #pdb.set_trace()
+        	dataset = FileSystemDataset.objects.get(comicsite__short_name=self.project_name,title=self.dataset_title)        
+        
+      	except ObjectDoesNotExist as e:    	    	   
+    	   return self.make_dataset_error_msg("could not find object in database")
+    
+    	else:
+    		self.filefolder = dataset.get_full_folder_path()        
+        
+    	    
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
         
         try:
-          filenames = dp.getAllFileNames()        
-        except (WindowsError,OSError) as e:
-          
-          errormsg = "Error rendering dataset '"+self.dataset.title+"'.. error: '"+str(e)
-    	  #raise template.TemplateSyntaxError(errormsg)    	
-          return makeErrorMsgHtml(errormsg)
+          	filenames = dp.getAllFileNames()        
+        except (OSError) as e:
+
+          return self.make_dataset_error_msg(str(e))
         
          
         links = []
         for filename in filenames:
         	
-        	downloadlink = reverse('filetransfers.views.download_handler_filename', kwargs={'project_name':self.dataset.comicsite.short_name, 
-																						    'dataset_title':self.dataset.title,
+        	downloadlink = reverse('filetransfers.views.download_handler_filename', kwargs={'project_name':dataset.comicsite.short_name, 
+																						    'dataset_title':dataset.title,
 																						    'filename':filename})
         	#<a href="{% url filetransfers.views.download_handler_filename project_name='VESSEL12' dataset_title='vessel12' filename='test.png' %}">test </a>
         	links.append("<li><a href=\""+downloadlink+"\">"+ filename+ " </a></li>")
         	
-        description = self.dataset.description
+        description = dataset.description
         htmlOut = description+"<ul class=\"dataset\">"+"".join(links)+"</ul>"
         
         return htmlOut
+	      
+		
 
 
 @register.tag(name="all_projects")
 def render_all_projects(parser, token):
     """ Render an overview of all projects """
+    
     try:    	
         projects = ComicSite.objects.all()
     except ObjectDoesNotExist as e:
@@ -150,12 +172,10 @@ class AllProjectsNode(template.Node):
     def __init__(self, projects):
         self.projects = projects
                 
-    def render(self, context):           
+    def render(self, context):
         html = ""
-        for project in self.projects:	
-        	html += comicsite.views.comic_site_to_html(project)
-        	        	
-        	                
+        for project in self.projects:
+        	html += comicsite.views.comic_site_to_html(project)    	        	        	                
         return html
 
 
