@@ -196,7 +196,6 @@ class ComicSiteAdmin(GuardedModelAdmin):
 
 def add_standard_permissions(group,objname):
     """ Add delete_objname change_objname and add_objname to the given group"""  
-    pdb.set_trace()
     can_add_obj = Permission.objects.get(codename="add_"+objname)
     can_change_obj = Permission.objects.get(codename="change_"+objname)
     can_delete_obj = Permission.objects.get(codename="delete_"+objname)
