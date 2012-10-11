@@ -35,9 +35,9 @@ class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
     short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225)    
+    skin = models.CharField(max_length = 225, blank=True, help_text = "additional css to use for this comic site. Not required")    
     description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
-    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="")
+    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="http://www.grand-challenge.org/images/a/a7/Grey.png")
         
     def __unicode__(self):
         """ string representation for this object"""
@@ -209,6 +209,10 @@ class ErrorPage(Page):
     """ Just the same as a Page, just that it does not display an edit button as admin"""
     is_error_page=True
     
+    def can_be_viewed_by(self,user):
+        """ overwrites Page class method. Errorpages can always be viewed"""
+        return True
+    
     class Meta:
        abstract = True  #error pages should only be generated on the fly currently. 
        
@@ -268,15 +272,15 @@ class FileSystemDataset(Dataset):
     
     def save(self):
         #when saving for the first time only 
+        
         if not self.id:
             # initialize data dir 
             data_dir = self.get_default_data_dir()
             self.folder = data_dir            
         else:
             # take possibly edited value from form, keep self.folder.
-            pass
-                                                       
-        self.ensure_dir(self.folder)
+            pass                                          
+        self.ensure_dir(self.get_full_folder_path())
         super(FileSystemDataset,self).save()
         
     def get_full_folder_path(self):
@@ -294,8 +298,6 @@ class FileSystemDataset(Dataset):
         """ Return the django template tag that can be used in page text to render this dataset on the page"""
         return "{% dataset " + self.cleantitle + " %}"
         
-    
-    
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
             os.makedirs(dir)        
