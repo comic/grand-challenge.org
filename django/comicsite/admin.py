@@ -180,6 +180,8 @@ class ComicSiteAdmin(GuardedModelAdmin):
             admingroup.permissions.add(can_add,can_change,can_delete,can_add_page,
                                        can_change_page,can_delete_page)
             
+            add_standard_permissions(admingroup,"filesystemdataset")
+            
             # add object-level permission to the specific ComicSite so it shows up in admin    
             #admingroup.save()
             obj.save()
@@ -191,7 +193,16 @@ class ComicSiteAdmin(GuardedModelAdmin):
         else:
             #if object already existed just save
             obj.save()
-        
+
+def add_standard_permissions(group,objname):
+    """ Add delete_objname change_objname and add_objname to the given group"""  
+    pdb.set_trace()
+    can_add_obj = Permission.objects.get(codename="add_"+objname)
+    can_change_obj = Permission.objects.get(codename="change_"+objname)
+    can_delete_obj = Permission.objects.get(codename="delete_"+objname)
+    group.permissions.add(can_add_obj,can_change_obj,can_delete_obj)
+    
+      
 
 class PageAdminForm():
     move = forms.CharField(widget=forms.Select)
