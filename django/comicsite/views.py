@@ -57,13 +57,14 @@ def site(request, site_short_name):
     """ Register the current user for the given comicsite """
    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
-        
+    
     if len(pages) == 0:
-        page = Page(comicsite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
+        page = ErrorPage(comicsite=site,title="no_pages_found",html="No pages found for this site. Please log in and use the admin button to add pages.")
         currentpage = page    
     else:
         currentpage = pages[0]
         
+    
     currentpage = getRenderedPageIfAllowed(currentpage,request,site)
  
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
@@ -119,8 +120,12 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
     else:
         p = page_or_page_title                
     
-    if not p.can_be_viewed_by(request.user):        
-        
+    
+    if p.can_be_viewed_by(request.user):
+        p.html = renderTags(request, p)
+        currentpage = p
+    else:
+         
         if request.user.is_authenticated():
             msg = "You do not have permission to view page '"+p.title+"'. If you feel this is and error, please contact the project administrators"
             title = "No permission"
@@ -130,9 +135,7 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
                     
         page = ErrorPage(comicsite=site,title=title,html=msg)
         currentpage = page
-    else:
-        p.html = renderTags(request, p)
-        currentpage = p
+        
     
     return currentpage
     
