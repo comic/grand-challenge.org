@@ -1,3 +1,99 @@
+div.MLABMLItemModelViewControl table {
+  overflow: hidden;
+  display: block;
+}
+
+div.MLABMLItemModelViewControl tbody {
+  display: block;
+  max-height: 250px;
+  overflow: auto;
+}
+
+div.MLABMLItemModelViewControl thead {
+  display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+th.MLABMLItemModelViewControl_AscendingOrder {
+  background: url(arrowDown.png) no-repeat right;
+}
+
+th.MLABMLItemModelViewControl_DescendingOrder {
+  background: url(arrowUp.png) no-repeat right;
+}
+
+tr.MLABMLItemModelViewControl_HeaderRow th {
+  font-size: 120%;
+  padding-left: 4px;
+  padding-right: 4px;
+  background-color: rgba(192, 192, 192, 1.0);
+  border-left: 1px solid white;
+  border-right: 1px solid white;
+  text-align: left;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+div.MLABMLItemModelViewControl_HeaderLabel {
+  margin-right: 12px;
+}
+
+tr.MLABMLItemModelViewControl_TableRow {
+  white-space: nowrap;
+}
+
+tr.MLABMLItemModelViewControl_TableRow td {
+  vertical-align: middle;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+tr.MLABMLItemModelViewControl_TableRow:hover {
+  background-color: rgb(224, 224, 224);
+}
+
+tr.MLABMLItemModelViewControl_SelectedRow td {
+  background: rgba(128, 128, 255, 1.0);
+}
+
+div.MLABMLItemModelViewControl tr {
+  cursor: pointer;
+}
+
+div.MLABMLItemModelViewControl table {
+  border-spacing: 0px;
+}
+
+div.MLABMLItemModelViewControl_EmptyHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+}
+
+div.MLABMLItemModelViewControl_CollapsedHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+  background: url(expand.gif) 0 2px no-repeat;
+}
+
+div.MLABMLItemModelViewControl_ExpandedHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+  background: url(collapse.gif) 0 2px no-repeat;
+}
+
+div.MLABMLItemModelViewControl_CellContent {
+  display: inline-block;
+}
+
+div.VerticalSplitterChild, div.HorizontalSplitterChild {
+  overflow: hidden;
+}
+
+
 input.ui-input-text.ui-slider-input {
   display: none;
 }
