@@ -5,7 +5,8 @@ function ComicViewer2D(domElementId, options) {
   // May contain:
   // host: MeVisLab WorkerService IP
   // port: websocket port
-  this._options = options || {'host': "134.102.230.19", 'port': 4114};
+  this._options = {'host': "134.102.230.19", 'port': 4114};
+  jQuery.extend(this._options, options);
   this._elementId = domElementId;
   this._elementSelector = "#"+domElementId;
   this._mlabModuleName = "Comic_View2D"
@@ -40,7 +41,7 @@ function ComicViewer2D(domElementId, options) {
     if (self._options.port) {
       self._gApp.setWebSocketPort(self._options.port)
     }
-    options = {"framework": "jQueryMobile",
+    options = {"framework": "jQueryUI",
                "streaming": "1",
                "jsResourcesRoot": "/static/js/mlabRemote/",
                "cssResourcesRoot": "/static/css/",
@@ -73,7 +74,7 @@ function ComicViewer2D(domElementId, options) {
   
   this.setDataRoot = function(rootPath) {
     ctx = self._gApp.getModuleContext(this._mlabModuleName);
-    ctx.sendGenericRequest("setDataRoot", rootPath, function(arguments) {
+    ctx.sendGenericRequest("setDataRoot", [rootPath], function(arguments) {
       // process return value
     });
   }
