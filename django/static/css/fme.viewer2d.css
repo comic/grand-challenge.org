@@ -94,11 +94,16 @@ div.VerticalSplitterChild, div.HorizontalSplitterChild {
 }
 
 
+div.Comic_View2D {
+    
+  background: url(images/loadingbar.gif) no-repeat center;
+}
+
 input.ui-input-text.ui-slider-input {
   display: none;
 }
 
-.JQMCheckBoxControl .ui-checkbox, .ui-radio {
+.JQUICheckBoxControl .ui-checkbox, .ui-radio {
   margin: 0;
 }
 
@@ -110,7 +115,7 @@ table {
  margin: 0px;
 }
 
-.JQMCheckBoxControl .ui-checkbox-on .ui-icon, JQMCheckBoxControl .ui-radio-on .ui-icon
+.JQUICheckBoxControl .ui-checkbox-on .ui-icon, JQUICheckBoxControl .ui-radio-on .ui-icon
 {
   background-color:#E1006B;
 }
