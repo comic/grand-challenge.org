@@ -28,7 +28,7 @@ def parseKeyValueToken(token):
     \return A dictionary
     """
     tag, args = token.split_contents()
-    return tag, dict([param.split(":") for param in args.split(",")])
+    return dict([param.split(":") for param in args.split(",")])
 
 # This is needed to use the @register.tag decorator
 register = template.Library()
@@ -166,12 +166,10 @@ def render_visualization(parser, token):
     """ Given a challenge and a dataset name, show all files in this dataset as list"""
 
     usagestr = "Tag usage: {% visualization dataset:string,file:string,showBrowser:[YES|NO] %}"
-    #check some basic stuff
     try:
-        tag_name, args = parseKeyValueToken(token)
+        args = parseKeyValueToken(token)
     except ValueError:
         errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
-        #raise template.TemplateSyntaxError(errormsg)        
         return TemplateErrorNode(errormsg)
 
     if "dataset" not in args.keys():
@@ -181,7 +179,8 @@ def render_visualization(parser, token):
     return VisualizationNode(args)
 
 class VisualizationNode(template.Node):
-    """ Show list of linked files for given dataset 
+    """ 
+    Renders a MeVisLab 2D Viewer.
     """
 
     def __init__(self, args):
@@ -193,18 +192,23 @@ class VisualizationNode(template.Node):
 
     def render(self, context):
         htmlOut = """
-          <div id="comicViewer%(id)d"></div>
+          <div id="comicViewer%(id)d" style="width:%(w)spx; height:%(h)spx"></div>
           <script type="text/javascript">
             var fmeViewer%(id)d = null;
                 
             $(document).ready(function (){
-              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d");
+              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':%(extensionFilter)s});
               fmeViewer%(id)d.init(function() {
-                this.setDataRoot('%(path)s');
+                fmeViewer%(id)d.setDataRoot('%(path)s');
               });
             });
           </script>
-        """ % ({"id": id(self), "path": self.args.get("dataset")})
+        """ % ({"id": id(self),
+                "path": self.args.get("dataset"),
+                "w": self.args.get("width", "300"),
+                "h": self.args.get("height", "300"),
+                "extensionFilter": self.args.get("extensionFilter", "''"),
+                "deferredLoad":self.args.get("deferredLoad", "0")})
         return htmlOut
 
 
