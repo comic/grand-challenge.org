@@ -5,7 +5,7 @@ function ComicViewer2D(domElementId, options) {
   // May contain:
   // host: MeVisLab WorkerService IP
   // port: websocket port
-  this._options = {'host': "134.102.230.19", 'port': 4114, 'width': 400, 'height': 300, 'deferredLoad':false, 'extensionFilter':""};
+  this._options = {'host': "134.102.230.19", 'port': 4114, 'width': 400, 'height': 300, 'deferredLoad':false, 'extensionFilter':"", 'showBrowser':1};
   jQuery.extend(this._options, options);
   this._elementId = domElementId;
   this._elementSelector = "#"+domElementId;
@@ -22,6 +22,10 @@ function ComicViewer2D(domElementId, options) {
     var element = document.createElement("script");
     element.src = "/static/js/mlabRemote/Application.js";
     element.onload = function() {
+      
+      if (!self._options['showBrowser']) {
+        $(self._elementSelector + " .MLABMLItemModelViewControl").hide();
+      }
       if (self._options['deferredLoad']) {
         $(self._elementSelector).html("<br><br>Please click me to load");
         $(self._elementSelector).css("background", "nil");

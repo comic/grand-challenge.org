@@ -165,7 +165,7 @@ class DatasetNode(template.Node):
 def render_visualization(parser, token):
     """ Given a challenge and a dataset name, show all files in this dataset as list"""
 
-    usagestr = "Tag usage: {% visualization dataset:string,file:string,showBrowser:[YES|NO] %}"
+    usagestr = "Tag usage: {% visualization dataset:string,width:number,height:number,deferredLoad:0|1,extensionFilter:ext1.ext2.ext3,showBrowser:0|1 %} The only mandatory argument is dataset. Extensions for extensionFilter must be lowercase."
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -197,7 +197,7 @@ class VisualizationNode(template.Node):
             var fmeViewer%(id)d = null;
                 
             $(document).ready(function (){
-              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':%(extensionFilter)s});
+              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':%(extensionFilter)s, 'showBrowser':%(showBrowser)s});
               fmeViewer%(id)d.init(function() {
                 fmeViewer%(id)d.setDataRoot('%(path)s');
               });
@@ -208,7 +208,8 @@ class VisualizationNode(template.Node):
                 "w": self.args.get("width", "300"),
                 "h": self.args.get("height", "300"),
                 "extensionFilter": self.args.get("extensionFilter", "''"),
-                "deferredLoad":self.args.get("deferredLoad", "0")})
+                "deferredLoad": self.args.get("deferredLoad", "0"),
+                "showBrowser": self.args.get("showBrowser", "1")})
         return htmlOut
 
 
