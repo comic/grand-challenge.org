@@ -66,4 +66,25 @@ class UploadModelAdmin(GuardedModelAdmin):
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 
+class ComicModelAdmin(GuardedModelAdmin):
+    """Base class for ComicModel admin. Handles common functionality like setting permissions"""
+    
+    # if user has this permission, user can access this ComicModel.
+    permission_name = 'comicmodels.change_page'
+
+    def save_model(self, request, obj, form, change):
+        
+        permission_lvl = form.cleaned_data['permission_lvl']
+        obj.setpermissions(permission_lvl)
+    
+    def queryset(self, request):
+        """ overwrite this method to return only pages comicsites to which current user has access """                    
+        user_qs = get_objects_for_user(request.user, self.permission_name)
+        return user_qs
+    
+    
+    
+
+
+
  
