@@ -109,29 +109,56 @@ class ComicSiteModel(models.Model):
         
     
     def setpermissions(self, lvl):
-        """ Give the right groups permissions to this object """
+        """ Give the right groups permissions to this object 
+            object needs to be saved befor setting perms"""
         
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
         participantsgroup = Group.objects.get(name=self.comicsite.short_name+"_participants")
         everyonegroup = Group.objects.get(name="everyone")
+        self.persist_if_needed()
         if lvl == self.ALL:
+            
             assign("view_ComicSiteModel",admingroup,self)
             assign("view_ComicSiteModel",participantsgroup,self)
-            assign("view_ComicSiteModel",everyonegroup,self)            
-            self.save()
+            assign("view_ComicSiteModel",everyonegroup,self)                    
         elif lvl == self.REGISTERED_ONLY:
+            
             assign("view_ComicSiteModel",admingroup,self)
             assign("view_ComicSiteModel",participantsgroup,self)
-            remove_perm("view_ComicSiteModel",everyonegroup,self)            
-            self.save()
+            remove_perm("view_ComicSiteModel",everyonegroup,self)                    
         elif lvl == self.ADMIN_ONLY:
+            
             assign("view_ComicSiteModel",admingroup,self)
             remove_perm("view_ComicSiteModel",participantsgroup,self)
-            remove_perm("view_ComicSiteModel",everyonegroup,self)            
-            self.save()
+            remove_perm("view_ComicSiteModel",everyonegroup,self)                    
         else:
             raise ValueError("Unknown permissions level '"+ lvl +"'. I don't know which groups to give permissions to this object")
+        
+    def persist_if_needed(self):
+        """ setting permissions needs a persisted object. This method makes sure."""
+        if not self.id:
+            super(ComicSiteModel,self).save()
 
+    def save(self):
+        """ split save into common base part for all ComicSiteModels and default which can be overwritten """        
+        
+        #common save functionality for all models
+        self._save_base()                
+        self.save_default()
+        super(ComicSiteModel,self).save()
+    
+    
+    def _save_base(self):
+        """ common save functionality for all models """   
+             
+        #make sure this object gets the permissions set in the form            
+        self.setpermissions(self.permission_lvl)        
+        
+        
+    def save_default(self):
+        """ overwrite this in child methods for custom save functionality 
+            object is saved after this method so no explicit save needed"""                
+        pass
 
                 
     class Meta:
@@ -233,22 +260,17 @@ class UploadModel(ComicSiteModel):
         
 
     
-class Dataset(models.Model):
+class Dataset(ComicSiteModel):
     """
     Collection of files
-    """
-    title = models.CharField(max_length=64, blank=True, help_text = "short name used to refer to this dataset, do not use spaces")
+    """    
     description = models.TextField()
-    comicsite = models.ForeignKey(ComicSite, default=None, help_text = "To which comicsite does this dataset belong? Used to determine permissions")
+    
     
        
     @property
     def cleantitle(self):
-        return re.sub('[\[\]/{}., ]+', '',self.title)
-   
-    def __unicode__(self):
-       """ string representation for this object"""
-       return self.title
+        return re.sub('[\[\]/{}., ]+', '',self.title)       
                 
     class Meta:
        abstract = True
@@ -270,9 +292,7 @@ class FileSystemDataset(Dataset):
         return htmlOut
 
     
-    def save(self):
-        #when saving for the first time only 
-        
+    def save_default(self):            
         if not self.id:
             # initialize data dir 
             data_dir = self.get_default_data_dir()
@@ -280,8 +300,9 @@ class FileSystemDataset(Dataset):
         else:
             # take possibly edited value from form, keep self.folder.
             pass                                          
-        self.ensure_dir(self.get_full_folder_path())
-        super(FileSystemDataset,self).save()
+        self.ensure_dir(self.get_full_folder_path())        
+        
+            
         
     def get_full_folder_path(self):
         """ Return full path of the folder in which this datasets files reside """
