@@ -755,6 +755,9 @@ function MLABRemoteRenderingControl(mdlTree, moduleContext) {
     
     // TODO: if we want to allow dynamic resizing of the viewer in the future,
     //       we need to send a new SetRenderSize message to the server here.
+    var m = new MLABRenderingSetRenderSizeMessage();
+    var baseGeneration = 2; // TODO: should this be a global, incremented value?
+    m.setData(self._baseField, baseGeneration, self._remoteRenderingSlaveID, w, h);
   }
   
   this.remoteCursorReceived = function(message) {

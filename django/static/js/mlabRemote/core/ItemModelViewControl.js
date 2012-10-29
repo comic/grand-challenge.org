@@ -195,7 +195,7 @@ function MLABMLItemModelViewControl(mdlTree, moduleContext) {
     }
     self._headerRow = self._header.insertRow(0);
     self._headerRow.setAttribute("class", "MLABMLItemModelViewControl_HeaderRow");
-    var columnTrees = mlabGetMDLChildren(self._mdlTree, "Column");
+    var columnTrees = mlabGetMDLChildren(self._mdlTree, "column");
     for (var i=0; i<columnTrees.length; i++) {
       var childTree = columnTrees[i];
       var column = new Object();
