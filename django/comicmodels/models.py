@@ -117,7 +117,7 @@ class ComicSiteModel(models.Model):
         everyonegroup = Group.objects.get(name="everyone")
         self.persist_if_needed()
         if lvl == self.ALL:
-            
+            #pdb.set_trace()
             assign("view_ComicSiteModel",admingroup,self)
             assign("view_ComicSiteModel",participantsgroup,self)
             assign("view_ComicSiteModel",everyonegroup,self)                    
@@ -142,20 +142,24 @@ class ComicSiteModel(models.Model):
     def save(self):
         """ split save into common base part for all ComicSiteModels and default which can be overwritten """        
         
+        if self.id:
+            firstcreation = False
+        else:
+            firstcreation = True
+            
         #common save functionality for all models
         self._save_base()                
-        self.save_default()
+        self.save_default(firstcreation)
         super(ComicSiteModel,self).save()
     
     
     def _save_base(self):
-        """ common save functionality for all models """   
-             
+        """ common save functionality for all models """                
         #make sure this object gets the permissions set in the form            
         self.setpermissions(self.permission_lvl)        
         
         
-    def save_default(self):
+    def save_default(self,firstcreation):
         """ overwrite this in child methods for custom save functionality 
             object is saved after this method so no explicit save needed"""                
         pass
@@ -292,8 +296,10 @@ class FileSystemDataset(Dataset):
         return htmlOut
 
     
-    def save_default(self):            
-        if not self.id:
+    def save_default(self,firstcreation):
+        pdb.set_trace()
+        
+        if firstcreation:
             # initialize data dir 
             data_dir = self.get_default_data_dir()
             self.folder = data_dir            
