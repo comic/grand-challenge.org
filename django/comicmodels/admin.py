@@ -2,11 +2,52 @@ import pdb
 from django import forms
 from django.db import models
 from django.contrib import admin
+from django.core.exceptions import ObjectDoesNotExist
 
 from guardian.admin import GuardedModelAdmin
+from guardian.shortcuts import get_objects_for_user
 from comicmodels.models import FileSystemDataset,UploadModel
 
 
+
+
+
+class ComicModelAdmin(GuardedModelAdmin):
+    """Base class for ComicModel admin. Handles common functionality like setting permissions"""
+    
+    # if user has this permission, user can access this ComicModel.
+    permission_name = 'view_ComicSiteModel'
+    
+
+    def save_model(self, request, obj, form, change):
+        
+        permission_lvl = form.cleaned_data['permission_lvl']
+        obj.setpermissions(permission_lvl)
+    
+    def queryset(self, request): 
+        """ overwrite this method to return only pages comicsites to which current user has access 
+            
+            note: GuardedModelAdmin can also restrict queryset to owned by user only, but this
+            needs a 'user' field for each model, which I don't want because we use permission
+            groups and do not restrict to user owned only.
+        """
+        try:
+            user_qs = self.defaultQuerySet(request)
+        except ObjectDoesNotExist as e:
+            return UploadModel.objects.none()
+        return user_qs
+    
+    def defaultQuerySet(self,request):
+        """ Overwrite this method in child classes to make sure instance of that class is passed to 
+            get_objects_for_users """ 
+                
+        
+        return get_objects_for_user(request.user, self.permission_name,self)
+    
+    
+    
+    
+    
 
 class FileSystemDatasetForm(forms.ModelForm):
                 
@@ -54,34 +95,26 @@ class FileSystemDatasetAdmin(GuardedModelAdmin):
             
             return FileSystemDatasetForm
         else:
-            return FileSystemDatasetInitialForm 
+            return FileSystemDatasetInitialForm
+    
+    def defaultQuerySet(self,request):
+        """ Overwrite this method in child classes to make sure instance of that class is passed to 
+            get_objects_for_users """ 
+        
+        return get_objects_for_user(request.user, self.permission_name,self)
                         
     
         
-class UploadModelAdmin(GuardedModelAdmin):    
-        
+class UploadModelAdmin(ComicModelAdmin):
+
     list_display = ('title','file','comicsite')
+    _default_manager = UploadModel.objects
+    
                     
 
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 
-class ComicModelAdmin(GuardedModelAdmin):
-    """Base class for ComicModel admin. Handles common functionality like setting permissions"""
-    
-    # if user has this permission, user can access this ComicModel.
-    permission_name = 'comicmodels.change_page'
-
-    def save_model(self, request, obj, form, change):
-        
-        permission_lvl = form.cleaned_data['permission_lvl']
-        obj.setpermissions(permission_lvl)
-    
-    def queryset(self, request):
-        """ overwrite this method to return only pages comicsites to which current user has access """                    
-        user_qs = get_objects_for_user(request.user, self.permission_name)
-        return user_qs
-    
     
     
 
