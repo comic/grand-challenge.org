@@ -27,8 +27,10 @@ def parseKeyValueToken(token):
             visualization key1:value1,key2:value2,...
     \return A dictionary
     """
-    tag, args = token.split_contents()
-    return dict([param.split(":") for param in args.split(",")])
+    split = token.split_contents()
+    tag = split[0]
+    args = split[1:]
+    return dict([param.split(":") for param in args])
 
 # This is needed to use the @register.tag decorator
 register = template.Library()
@@ -163,9 +165,19 @@ class DatasetNode(template.Node):
 
 @register.tag(name = "visualization")
 def render_visualization(parser, token):
-    """ Given a challenge and a dataset name, show all files in this dataset as list"""
+    """ Given a dataset name, show a 2D visualization for that """
 
-    usagestr = "Tag usage: {% visualization dataset:string,width:number,height:number,deferredLoad:0|1,extensionFilter:ext1.ext2.ext3,showBrowser:0|1 %} The only mandatory argument is dataset. Extensions for extensionFilter must be lowercase."
+    usagestr = """Tag usage: {% visualization dataset:string
+                                              width:number
+                                              height:number
+                                              deferredLoad:0|1
+                                              extensionFilter:ext1,ext2,ext3
+                                              showBrowser:0|1 %}
+                  The only mandatory argument is dataset.
+                  width/heigth: Size of the 2D view area.
+                  defferedLoad: If active, user has to click on the area to load the viewer.
+                  extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
+                  showBrowser: If 1, a file browser is rendered"""
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -224,8 +236,6 @@ def render_all_projects(parser, token):
         return TemplateErrorNode(errormsg)
 
     return AllProjectsNode(projects)
-
-
 
 class AllProjectsNode(template.Node):
     """ return html list listing all projects in COMIC 
