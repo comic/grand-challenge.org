@@ -25,8 +25,7 @@ class Migration(DataMigration):
             everyonegroup = orm['auth.Group'].objects.get(name="everyone")
             evg = Group.objects.get(name="everyone")
             # For permissions to work properly after migrating
-            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():
-                pdb.set_trace()
+            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():                
                 assign(permission,evg,uploadmodel)
                 
                 print uploadmodel.file
