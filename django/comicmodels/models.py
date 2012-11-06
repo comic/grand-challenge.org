@@ -176,8 +176,6 @@ class Page(ComicSiteModel):
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
     hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
-    
- 
     html = models.TextField()
     
     
