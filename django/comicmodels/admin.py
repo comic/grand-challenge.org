@@ -18,11 +18,8 @@ class ComicModelAdmin(GuardedModelAdmin):
     # if user has this permission, user can access this ComicModel.
     permission_name = 'view_ComicSiteModel'
     
-
-    def save_model(self, request, obj, form, change):
-        
-        permission_lvl = form.cleaned_data['permission_lvl']
-        obj.setpermissions(permission_lvl)
+    def save_model(self, request, obj, form, change):        
+        obj.save()
     
     def queryset(self, request): 
         """ overwrite this method to return only pages comicsites to which current user has access 
@@ -81,11 +78,15 @@ class FileSystemDatasetInitialForm(forms.ModelForm):
         model = FileSystemDataset        
 
 
-class FileSystemDatasetAdmin(GuardedModelAdmin):    
+class FileSystemDatasetAdmin(ComicModelAdmin):    
     """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
         
     list_display = ('title','description','get_tag','comicsite')
     form = FileSystemDatasetForm
+    
+    # explicitly inherit manager because this is not done by default with non-abstract superclass
+    # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
+    _default_manager = FileSystemDataset.objects
     
     def get_tag(self,obj):
         return obj.get_template_tag()
@@ -108,7 +109,11 @@ class FileSystemDatasetAdmin(GuardedModelAdmin):
 class UploadModelAdmin(ComicModelAdmin):
 
     list_display = ('title','file','comicsite')
+    
+    # explicitly inherit manager because this is not done by default with non-abstract superclass
+    # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
     _default_manager = UploadModel.objects
+      
     
                     
 
