@@ -13,6 +13,8 @@ from django.contrib.admin.options import InlineModelAdmin
 from django.forms import TextInput, Textarea
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.translation import ugettext as _
+from django.utils.encoding import force_unicode
 
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
@@ -42,11 +44,15 @@ class PageAdmin(GuardedModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again. 
-    #change_form_template = None
-    #Show these page params in admin overview list 
-    list_display = ('title','comicsite','order')
+    change_form_template = None
     
-    list_filter = ['comicsite']
+    #Show these page params in admin overview list 
+    list_display = ('title','comicsite','order')    
+    list_filter = ['comicsite']    
+    formfield_overrides = {     
+        models.TextField: {'widget': Textarea(attrs={'rows':40, 'cols':80})},
+    }
+    
     
     
     def save_model(self, request, obj, form, change):
@@ -76,13 +82,69 @@ class PageAdmin(GuardedModelAdmin):
         return user_qs
     
     def response_change(self, request, obj, post_url_continue=None):
-        """This makes the response after adding go to another apps changelist for some model"""        
-        return HttpResponseRedirect(reverse("admin:comicmodels_comicsite_change",args=[obj.comicsite.pk]))
+        """This makes the response after adding go to another apps changelist for some model"""
+     
+        # code below was completely pasted from django.contrib.admin.options I needed to make changes to the
+        # default response at the end, which I could not do without copying                
+            #return super(PageAdmin,self).response_change(request,obj)
+        opts = obj._meta
 
+        # Handle proxy models automatically created by .only() or .defer().
+        # Refs #14529
+        verbose_name = opts.verbose_name
+        module_name = opts.module_name
+        if obj._deferred:
+            opts_ = opts.proxy_for_model._meta
+            verbose_name = opts_.verbose_name
+            module_name = opts_.module_name
+
+        pk_value = obj._get_pk_val()
+
+        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_unicode(verbose_name), 'obj': force_unicode(obj)}
+        if "_continue" in request.POST:
+            self.message_user(request, msg + ' ' + _("You may edit it again below."))
+            if "_popup" in request.REQUEST:
+                return HttpResponseRedirect(request.path + "?_popup=1")
+            else:
+                return HttpResponseRedirect(request.path)
+        elif "_saveasnew" in request.POST:
+            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {'name': force_unicode(verbose_name), 'obj': obj}
+            self.message_user(request, msg)
+            return HttpResponseRedirect(reverse('admin:%s_%s_change' %
+                                        (opts.app_label, module_name),
+                                        args=(pk_value,),
+                                        current_app=self.admin_site.name))
+        elif "_addanother" in request.POST:
+            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_unicode(verbose_name)))
+            return HttpResponseRedirect(reverse('admin:%s_%s_add' %
+                                        (opts.app_label, module_name),
+                                        current_app=self.admin_site.name))
+        #========== elif added by Sjoerd ======== 
+        elif "save_goto_page" in request.POST:
+                        
+            #comicsite.views.page site.short_name page.title
+            return HttpResponseRedirect(reverse("comicsite.views.page",args=[obj.comicsite.short_name,obj.title]))
+        #========== below edited by Sjoerd ========
+        else:
+            self.message_user(request, msg)
+            # Figure out where to redirect. If the user has change permission,
+            # redirect to the change-list page for this object. Otherwise,
+            # redirect to the admin index.
+            
+            if self.has_change_permission(request, None):
+                
+                post_url = reverse('admin:%s_%s_change' %
+                                   (obj.comicsite._meta.app_label, obj.comicsite._meta.module_name),
+                                   args = (obj.comicsite.pk,),
+                                   current_app=self.admin_site.name)
+            else:
+                post_url = reverse('admin:index',
+                                   current_app=self.admin_site.name)
+            return HttpResponseRedirect(post_url)
 
 
     def response_add(self, request, obj, post_url_continue=None):        
-        return self.response_change(request, obj, post_url_continue=None)
+        return self.response_change(request, obj, post_url_continue)
 
 
     

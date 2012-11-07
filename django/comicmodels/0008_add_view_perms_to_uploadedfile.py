@@ -17,15 +17,16 @@ class Migration(DataMigration):
         permission = 'view_ComicSiteModel'
         
                 
-        if not db.dry_run:
+        if not db.dry_run:            
             print "Everyone should be able to see uploaded files by default for now. giving\
-                  '"+permission+"' permission to 'everyone' user for the following UploadModel\
+                 '"+permission+"' permission to 'everyone' user for the following UploadModel\
                   instances: "
             
-            everyonegroup = orm['auth.Group'].objects.get(name="everyone")
+            everyonegroup = orm['auth.Group'].objects.get(name="everyone")            
             evg = Group.objects.get(name="everyone")
             # For permissions to work properly after migrating
-            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():                
+            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():
+                pdb.set_trace()
                 assign(permission,evg,uploadmodel)
                 
                 print uploadmodel.file
@@ -66,7 +67,8 @@ class Migration(DataMigration):
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
             'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
-        }, 'comicmodels.comicsite': {
+        },
+        'comicmodels.comicsite': {
             'Meta': {'object_name': 'ComicSite'},
             'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '1024', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -101,7 +103,6 @@ class Migration(DataMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'permission_lvl': ('django.db.models.fields.CharField', [], {'default': "'ALL'", 'max_length': '3'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '64', 'blank': 'True'})
-        
         },
         'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
