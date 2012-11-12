@@ -38,6 +38,11 @@ class ComicSiteManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
     
+    def get_query_set(self):
+        
+        return super(ComicSiteManager, self).get_query_set()
+    
+    
 
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
