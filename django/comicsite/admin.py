@@ -197,12 +197,22 @@ class ComicSiteAdminForm(forms.ModelForm):
     class Meta:
         model = ComicSite
 
+class ComicSiteManager(models.Manager):
+    """ Some extra table-level methods for getting ComicSites from database"""
+    def non_hidden(self):
+        """ like all(), but only return ComicSites for which hidden=false"""
+        return self.filter(hidden=False)
+
 class ComicSiteAdmin(GuardedModelAdmin):
     
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again.
     change_form_template = None
+    
+    list_display = ('short_name','hidden')    
+    #list_filter = ['comicsite']
+        
     
     form = ComicSiteAdminForm    
     inlines = [PageInline]
