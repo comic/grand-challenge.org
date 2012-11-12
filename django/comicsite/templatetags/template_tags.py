@@ -230,7 +230,7 @@ def render_all_projects(parser, token):
     """ Render an overview of all projects """
 
     try:
-        projects = ComicSite.objects.all()
+        projects = ComicSite.objects.non_hidden()
     except ObjectDoesNotExist as e:
         errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
         return TemplateErrorNode(errormsg)
