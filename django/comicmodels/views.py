@@ -47,11 +47,6 @@ def upload_handler(request,site_short_name):
     #form.fields['comicsite'].widget.attrs['disabled'] = True
         
     
-    
-    
-    
-     
-    
     return direct_to_template(request, 'upload/comicupload.html',
         {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
          'uploads': uploadsforcurrentsite,'site': site,'pages': pages, 

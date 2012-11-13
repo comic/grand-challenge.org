@@ -38,7 +38,7 @@ register = template.Library()
 @register.simple_tag
 def metafooterpages():
     """ Get the metafooter pages. """
-    html_string = "<div class='text'>COMIC:</div>"
+    html_string = "<div class='text'><a href=\"/\">COMIC:</a></div>"
     pages = comicsite.views.getPages('COMIC')
     for p in pages:
         if not p.hidden:
@@ -230,7 +230,7 @@ def render_all_projects(parser, token):
     """ Render an overview of all projects """
 
     try:
-        projects = ComicSite.objects.all()
+        projects = ComicSite.objects.non_hidden()
     except ObjectDoesNotExist as e:
         errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
         return TemplateErrorNode(errormsg)
