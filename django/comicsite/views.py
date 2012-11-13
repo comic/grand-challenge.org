@@ -107,6 +107,18 @@ def renderTags(request, p):
     return pagecontents
 
 
+
+def permissionMessage(request, site, p):
+    if request.user.is_authenticated():
+        msg = "You do not have permission to view page '" + p.title + "'. If you feel this is and error, please contact the project administrators"
+        title = "No permission"
+    else:
+        msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
+        title = "Sign in required"
+    page = ErrorPage(comicsite=site, title=title, html=msg)
+    currentpage = page
+    return currentpage
+
 def getRenderedPageIfAllowed(page_or_page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
@@ -126,20 +138,30 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
         currentpage = p
     else:
          
-        if request.user.is_authenticated():
-            msg = "You do not have permission to view page '"+p.title+"'. If you feel this is and error, please contact the project administrators"
-            title = "No permission"
-        else:
-            msg = "The page '"+p.title+"' can only be viewed by registered users. Sign in to view this page."
-            title = "Sign in required"
-                    
-        page = ErrorPage(comicsite=site,title=title,html=msg)
-        currentpage = page
+        currentpage = permissionMessage(request, site, p)
         
     
     return currentpage
     
+def getPageSourceIfAllowed(page_title,request,site):
+    """ check permissions and render tags in page. If string title is given page is looked for 
+        return nice message if not allowed to view"""
+        
     
+    try:
+        p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
+    except Page.DoesNotExist:
+        raise Http404
+        
+    if p.can_be_viewed_by(request.user):        
+        currentpage = p    
+
+    else:         
+        currentpage = permissionMessage(request, site, p)
+            
+    return currentpage
+
+
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
@@ -150,6 +172,19 @@ def page(request, site_short_name, page_title):
     
     
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+
+def pagesource(request, site_short_name, page_title):
+    """ show the source html + tags of a a single page on a site """
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    
+    currentpage = getPageSourceIfAllowed(page_title,request,site)
+    
+    
+    return render_to_response('pagesource.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
 

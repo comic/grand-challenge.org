@@ -1,0 +1,16 @@
+{% extends "page.html" %}
+
+{% block pageName %}{{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} (Source) {% endblock %}
+{% block pagecontent %}		
+		
+	<h1> Source of page '{% firstof currentpage.display_title currentpage.title "page" %}'</h1>
+	<div><textarea style="width:90%; height:30em">{{currentpage.html}}</textarea></div>
+		
+	<br/>
+
+	
+{% endblock %}
+	
+{% block editlink %}	
+		<a class="editPageLink" href="{% url comicsite.views.page currentpage.comicsite.short_name currentpage.title %}">Back to page</a>
+{% endblock %}
