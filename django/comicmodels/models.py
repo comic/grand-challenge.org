@@ -379,15 +379,14 @@ class DropboxFolder(ComicSiteModel):
         """
     
     
-    def getDropboxDataProvider(self):
+    def get_dropbox_data_provider(self):
         """ Get a data provider for this Dropboxfolder object.
             Data providers allows basic file operations like read and write        
         """
                 
-        dropbox_dp = DropboxDataProvider(settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_KEY_SECRET,
-                                        settings.DROPBOX_ACCESS_TYPE, this.access_token, this.access_token_secret,
+        dropbox_dp = DropboxDataProvider.DropboxDataProvider(settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,
+                                        settings.DROPBOX_ACCESS_TYPE, self.access_token_key, self.access_token_secret,
                                         location='',)
-        
         return dropbox_dp
     
     def get_dropbox_app_keys(self):
