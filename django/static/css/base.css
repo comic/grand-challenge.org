@@ -65,7 +65,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .editPageLink{ clear: both; float: left; text-decoration:none; color:#cccccc; margin-top: 30px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
 
-
+.grayedOut{color: Gray;}
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
