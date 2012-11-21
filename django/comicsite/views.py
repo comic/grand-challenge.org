@@ -302,9 +302,6 @@ def sendEmail(request):
     
     return HttpResponse(text);
         
-    
-    
-    
 
 def createTestPage(title="testPage",html=""):
     """ Create a quick mockup on the ComicSite 'Test'"""
