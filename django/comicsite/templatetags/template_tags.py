@@ -11,13 +11,12 @@ from os import path
 from django import template
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-
 from profiles.forms import SignupFormExtra
-
 from dataproviders import FileSystemDataProvider
-from comicmodels.models import FileSystemDataset, UploadModel #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite, Page
 import comicsite.views
+from dropbox.rest import ErrorResponse
 
 
 def parseKeyValueToken(token):
@@ -222,6 +221,60 @@ class VisualizationNode(template.Node):
                 "extensionFilter": self.args.get("extensionFilter", "''"),
                 "deferredLoad": self.args.get("deferredLoad", "0"),
                 "showBrowser": self.args.get("showBrowser", "1")})
+        return htmlOut
+
+
+@register.tag(name = "dropbox")
+def render_dropbox(parser, token):
+    """ Given a django_dropbox item title, render a file from this dropbox """
+
+    usagestr = """Tag usage: {% dropbox title:string file:filepath %}
+                  title: the title of an autorized django_dropbox item
+                  file: path to a file in your dropbox /apps/COMIC folder                  
+                  """
+    try:
+        args = parseKeyValueToken(token)
+    except ValueError:
+        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        return TemplateErrorNode(errormsg)
+
+    if "title" not in args.keys():
+        errormsg = "Error rendering {% " + token.contents + " %}: title argument is missing." + usagestr
+        return TemplateErrorNode(errormsg)
+    
+    if "file" not in args.keys():
+        errormsg = "Error rendering {% " + token.contents + " %}: file argument is missing." + usagestr
+        return TemplateErrorNode(errormsg)
+
+    try:        
+        df = DropboxFolder.objects.get(title = args['title'])
+    except ObjectDoesNotExist as e:
+        return TemplateErrorNode("could not find dropbox in database")
+    
+    provider = df.get_dropbox_data_provider()
+
+    return DropboxNode(args,df,provider)
+
+
+class DropboxNode(template.Node):
+    def __init__(self, args, df, provider):
+        self.args = args
+        self.df = df
+        self.provider = provider
+
+    def make_dropbox_error_msg(self, msg):
+        errormsg = "Error rendering dropbox '" + str(self.args) + ":" + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+
+        try:            
+            contents = self.provider.read(self.args["file"])
+        except ErrorResponse as e:
+            return self.make_dropbox_error_msg(str(e))
+        
+        htmlOut = contents
+        
         return htmlOut
 
 
