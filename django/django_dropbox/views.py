@@ -14,6 +14,8 @@ def test(request):
     return  HttpResponse("ANYTHING TEST")
 
 
+# these methods are used for asynchronous calls in other parts of the framework
+
 def get_connection_status(request,dropbox_folder_id):
     """Check whether this dropboxfolder can be accessed
     """
