@@ -315,8 +315,7 @@ class FileSystemDataset(Dataset):
 
     
     def save_default(self,firstcreation):
-        pdb.set_trace()
-        
+                
         if firstcreation:
             # initialize data dir 
             data_dir = self.get_default_data_dir()

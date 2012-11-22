@@ -232,31 +232,14 @@ class ComicSiteAdmin(GuardedModelAdmin):
         """ when saving for the first time, set object permissions; give all permissions to creator """
      
         if obj.id is None:      
-            # create admins group
-            admingroup = Group.objects.create(name=obj.admin_group_name())
-                        
-            # create participants group
+            # if saving for the first time, create admin and participants permissions groups that go along with
+            # this comicsite
+            
+            admingroup = Group.objects.create(name=obj.admin_group_name())            
             participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
-            participantsgroup.save()
-                                                        
-            # add regular django class-level permissions so this group can use admin interface
-            can_add = Permission.objects.get(codename="add_comicsite")
-            can_change = Permission.objects.get(codename="change_comicsite")
-            can_delete = Permission.objects.get(codename="delete_comicsite")
-                                                
-            can_add_page = Permission.objects.get(codename="add_page")
-            can_change_page = Permission.objects.get(codename="change_page")
-            can_delete_page = Permission.objects.get(codename="delete_page")
-            
-            admingroup.permissions.add(can_add,can_change,can_delete,can_add_page,
-                                       can_change_page,can_delete_page)
-            
-            add_standard_permissions(admingroup,"filesystemdataset")
-            
-            # add object-level permission to the specific ComicSite so it shows up in admin    
-            #admingroup.save()
-            obj.save()
-            #pdb.set_trace()
+                        
+            # add object-level permission to the specific ComicSite so it shows up in admin                
+            obj.save()            
             assign("change_comicsite",admingroup,obj)
             
             # add current user to admins for this site 
