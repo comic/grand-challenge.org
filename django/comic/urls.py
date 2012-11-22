@@ -35,6 +35,7 @@ urlpatterns = patterns('',
     # keep this url at the bottom of this list, because urls are checked in order 
     url(r'^(?P<page_title>\w+)/$','comicsite.views.comicmain'),
     
+    # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
     url(r'^django_dropbox/',include('django_dropbox.urls')),
     
 )

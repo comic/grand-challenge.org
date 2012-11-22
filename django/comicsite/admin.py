@@ -232,10 +232,10 @@ class ComicSiteAdmin(GuardedModelAdmin):
         """ when saving for the first time, set object permissions; give all permissions to creator """
      
         if obj.id is None:      
-            # create admins group            
+            # create admins group
             admingroup = Group.objects.create(name=obj.admin_group_name())
                         
-            # create participants group                    
+            # create participants group
             participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
             participantsgroup.save()
                                                         
