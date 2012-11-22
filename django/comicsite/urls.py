@@ -13,7 +13,7 @@ urlpatterns = patterns('',
     
     url(r'^(?P<site_short_name>\w+)/_register/$','comicsite.views._register'),
     
-    url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/source/$','comicsite.views.pagesource'),
+    url(r'^(?P<site_short_name>\w+)/source/(?P<page_title>\w+)/$','comicsite.views.pagesource'),
     
     url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
     
