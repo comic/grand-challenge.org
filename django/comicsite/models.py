@@ -1,7 +1,9 @@
 import pdb
-from userena.signals import signup_complete
-from django.contrib.auth.models import Group,Permission
 
+from django.contrib.auth.models import Group,Permission
+from django.db.models import get_app, get_models
+
+from userena.signals import signup_complete
     
 class ComicSiteException(Exception):
     """ any type of exception for which a django or python exception is not defined """
@@ -39,21 +41,25 @@ def get_or_create_projectadmingroup():
     (projectadmins,created) = Group.objects.get_or_create(name='projectadmins')
     
     if created:
-        add_standard_perms(projectadmins,"comicsite")
-        add_standard_perms(projectadmins,"page")
-        add_standard_perms(projectadmins,"dropboxfolder")
+        # if projectadmins group did not exist, add default permissions.
+        # adding permissions to all models in the comicmodels app.
+        appname = 'comicmodels'
+        app = get_app(appname)
+        for model in get_models(app):            
+            classname = model.__name__.lower()            
+            add_standard_perms(projectadmins,classname,appname)
         
     return projectadmins
     
 
-def add_standard_perms(group,classname):
+def add_standard_perms(group,classname,app_label):
     """ convenience function to add add_classname,change_classname,delete_classname
     permissions to permissionsgroup group
     """
     
-    can_add = Permission.objects.get(codename="add_"+classname)
-    can_change = Permission.objects.get(codename="change_"+classname)
-    can_delete = Permission.objects.get(codename="delete_"+classname)
+    can_add = Permission.objects.get(codename="add_"+classname, content_type__app_label=app_label)
+    can_change = Permission.objects.get(codename="change_"+classname, content_type__app_label=app_label)
+    can_delete = Permission.objects.get(codename="delete_"+classname, content_type__app_label=app_label)
     
     group.permissions.add(can_add,can_change,can_delete)
     
