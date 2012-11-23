@@ -249,7 +249,7 @@ def render_dropbox(parser, token):
     try:        
         df = DropboxFolder.objects.get(title = args['title'])
     except ObjectDoesNotExist as e:
-        return TemplateErrorNode("could not find dropbox in database")
+        return TemplateErrorNode("could not find dropbox titled '"+args['title']+"' in database")
     
     provider = df.get_dropbox_data_provider()
 
@@ -263,7 +263,7 @@ class DropboxNode(template.Node):
         self.provider = provider
 
     def make_dropbox_error_msg(self, msg):
-        errormsg = "Error rendering dropbox '" + str(self.args) + ":" + msg
+        errormsg = "Error rendering dropbox '" + str(self.args) + ": " + msg
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
