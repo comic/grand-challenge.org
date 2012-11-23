@@ -6,20 +6,20 @@ Testing views. Each of these views is referenced in urls.py
 @author: Sjoerd
 '''
 import pdb
-
+import mimetypes
 
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse,Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
 
 import comicsite.templatetags.template_tags
-from comicmodels.models	 import ComicSite,Page,ErrorPage
+from comicmodels.models	 import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
 from comicsite.admin import ComicSiteAdmin
 from comicsite.models import ComicSiteException
@@ -192,6 +192,10 @@ def pagesource(request, site_short_name, page_title):
 def dropboxpage(request, site_short_name, page_title,dropboxname, dropboxpath):
     """ show contents of a file from dropbox account as page """
     
+    (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
+    if mimetype.startswith("image"):
+        return dropboximage(request, site_short_name, page_title,dropboxname, dropboxpath)
+        
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
         
     try:
@@ -211,6 +215,23 @@ def dropboxpage(request, site_short_name, page_title,dropboxname, dropboxpath):
                                             context_instance=RequestContext(request))
 
 
+def dropboximage(request, site_short_name, page_title,dropboxname, dropboxpath):
+    """ Get image from dropbox and pipe through django. 
+    Sjoerd: This method is probaly very inefficient, however it works. optimize later > maybe get temp public link
+    from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
+    """
+    
+    df = get_object_or_404(DropboxFolder,title=dropboxname)
+    
+    provider = df.get_dropbox_data_provider()
+    
+    (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
+    
+    response = HttpResponse(provider.read(dropboxpath), content_type=mimetype)
+    
+    return response
+    
+    
 
 
 def comicmain(request, page_title=""):
@@ -266,7 +287,6 @@ def getSite(site_short_name):
     except ComicSite.DoesNotExist:                
         raise Http404   
     return site  
-    
     
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
