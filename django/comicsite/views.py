@@ -110,7 +110,7 @@ def renderTags(request, p):
 
 def permissionMessage(request, site, p):
     if request.user.is_authenticated():
-        msg = "You do not have permission to view page '" + p.title + "'. If you feel this is and error, please contact the project administrators"
+        msg = "You do not have permission to view page '" + p.title + "'. If you feel this is an error, please contact the project administrators"
         title = "No permission"
     else:
         msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
@@ -119,6 +119,8 @@ def permissionMessage(request, site, p):
     currentpage = page
     return currentpage
 
+
+#TODO: could a decorator be better then all these ..IfAllowed pages?
 def getRenderedPageIfAllowed(page_or_page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
@@ -132,21 +134,19 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
     else:
         p = page_or_page_title                
     
-    
     if p.can_be_viewed_by(request.user):
         p.html = renderTags(request, p)
         currentpage = p
     else:
          
         currentpage = permissionMessage(request, site, p)
-        
-    
+            
     return currentpage
+
     
 def getPageSourceIfAllowed(page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
-        
     
     try:
         p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
@@ -187,6 +187,30 @@ def pagesource(request, site_short_name, page_title):
     return render_to_response('pagesource.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
+
+
+def dropboxpage(request, site_short_name, page_title,dropboxname, dropboxpath):
+    """ show contents of a file from dropbox account as page """
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+        
+    try:
+        p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
+    except Page.DoesNotExist:
+        raise Http404
+        
+    
+    msg = "showing dropbox based page. args: " + ",".join((site_short_name, page_title,dropboxname, dropboxpath))
+    p.html = msg + "<br/> {% dropbox title:"+dropboxname+" file:"+dropboxpath+" %}"
+        
+    currentpage = getRenderedPageIfAllowed(p,request,site)    
+
+        
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+
 
 
 def comicmain(request, page_title=""):
