@@ -20,7 +20,6 @@ from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider,DropboxDataProvider
 
 
-
 def giveFileUploadDestinationPath(uploadmodel,filename):
     """ Where should this file go relative to MEDIA_ROOT? """
     
@@ -387,6 +386,7 @@ class DropboxFolder(ComicSiteModel):
                                         settings.DROPBOX_ACCESS_TYPE, self.access_token_key, self.access_token_secret,
                                         location='',)
         return dropbox_dp
+        
     
     def get_dropbox_app_keys(self):
         """ Get dropbox keys unique to COMIC. Throws AttributError if not found
