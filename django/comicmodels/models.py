@@ -433,8 +433,7 @@ class DropboxFolder(ComicSiteModel):
     def get_info(self):    
         """ Get account info for the given DropboxFolder object Throws ErrorResponse if info cannot be got.
         """
-        
-     
+             
         (app_key,app_secret,access_type) = self.get_dropbox_app_keys()             
         sess = session.DropboxSession(app_key, app_secret, access_type)
         sess.set_token(self.access_token_key,self.access_token_secret)
