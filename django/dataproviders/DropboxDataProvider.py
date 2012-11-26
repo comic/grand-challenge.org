@@ -2,7 +2,7 @@ import pdb
 import re
 import os
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 from dropbox import client, rest, session
 from dropbox.session import DropboxSession
