@@ -42,7 +42,6 @@ class ComicModelAdmin(GuardedModelAdmin):
     def defaultQuerySet(self,request):
         """ Overwrite this method in child classes to make sure instance of that class is passed to 
             get_objects_for_users """ 
-                
         
         return get_objects_for_user(request.user, self.permission_name,self)
     
@@ -106,6 +105,8 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
         
         return get_objects_for_user(request.user, self.permission_name,self)
                         
+                        
+                        
     
         
 class UploadModelAdmin(ComicModelAdmin):
@@ -144,9 +145,9 @@ class DropboxFolderAdmin(ComicModelAdmin):
         if obj.title == "":
             return "not available"
         else:
-            return "{% dropbox "+obj.title+" <filepath> %}"
+            return "{% dropbox title:"+obj.title+" file:<filepath> %}"
     
-    
+        
         
     def connection_status(self,obj):
                 
