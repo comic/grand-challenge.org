@@ -1,0 +1,15 @@
+{% extends "page.html" %}
+{% load guardian_tags %}
+{% load template_tags %}
+
+
+
+{% block pagecontent %}		
+		
+	<div>{{currentpage.rawHTML}}</div>
+	{% block editlink %}			
+	{% endblock %}
+		
+{% endblock %}
+
+	

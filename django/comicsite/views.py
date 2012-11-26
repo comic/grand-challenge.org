@@ -17,15 +17,14 @@ from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
-
-import comicsite.templatetags.template_tags
-from comicmodels.models	 import ComicSite,Page,ErrorPage,DropboxFolder
-from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
+from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.admin import ComicSiteAdmin
+from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
+from comicsite.templatetags import template_tags
+
 from dataproviders import FileSystemDataProvider
 
- 
 
 def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
@@ -100,7 +99,7 @@ def renderTags(request, p):
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
     else:
-        
+                
         #pass page to context here to be able to render tags based on which page does the rendering
         pagecontents = t.render(ComicSiteRequestContext(request,p))
         
@@ -189,7 +188,7 @@ def pagesource(request, site_short_name, page_title):
                                             context_instance=RequestContext(request))
 
 
-def dropboxpage(request, site_short_name, page_title,dropboxname, dropboxpath):
+def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
     """ show contents of a file from dropbox account as page """
     
     (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
@@ -198,35 +197,30 @@ def dropboxpage(request, site_short_name, page_title,dropboxname, dropboxpath):
         
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
         
-    try:
-        p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
-    except Page.DoesNotExist:
-        raise Http404
-        
+    p = get_object_or_404(Page,comicsite__short_name=site.short_name, title=page_title)
     
-    msg = "showing dropbox based page. args: " + ",".join((site_short_name, page_title,dropboxname, dropboxpath))
-    p.html = msg + "<br/> {% dropbox title:"+dropboxname+" file:"+dropboxpath+" %}"
-        
-    currentpage = getRenderedPageIfAllowed(p,request,site)    
+    baselink = reverse('comicsite.views.page', kwargs = {'site_short_name':p.comicsite.short_name, 'page_title':p.title})
+    
+    msg = "<div class=\"breadcrumbtrail\"> Displaying '"+dropboxpath+"' from dropboxfolder '"+dropboxname+"', originally linked from\
+           page <a href=\""+baselink+"\">"+p.title+"</a> </div>"
+    p.html = "{% dropbox title:"+dropboxname+" file:"+dropboxpath+" %} <br/><br/>" + msg
+
+    currentpage = getRenderedPageIfAllowed(p,request,site)
 
         
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+    return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
 
 
-def dropboximage(request, site_short_name, page_title,dropboxname, dropboxpath):
+def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""):
     """ Get image from dropbox and pipe through django. 
-    Sjoerd: This method is probaly very inefficient, however it works. optimize later > maybe get temp public link
+    Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
     """
-    
-    df = get_object_or_404(DropboxFolder,title=dropboxname)
-    
-    provider = df.get_dropbox_data_provider()
-    
+    df = get_object_or_404(DropboxFolder,title=dropboxname)    
+    provider = df.get_dropbox_data_provider()    
     (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
-    
     response = HttpResponse(provider.read(dropboxpath), content_type=mimetype)
     
     return response
