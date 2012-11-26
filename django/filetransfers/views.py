@@ -48,8 +48,6 @@ def fileserve_handler(request, pk):
         return HttpResponse("You do not have permission. Bad user!")
     
     
-
-
 def download_handler_filename(request, project_name, dataset_title,filename):    
     """offer file for download based on filename """
     
