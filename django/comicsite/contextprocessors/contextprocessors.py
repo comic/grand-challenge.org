@@ -18,5 +18,7 @@ class ComicSiteRequestContext(RequestContext):
     def __init__(self,request,page=None,*args,**kwargs):
         super(ComicSiteRequestContext, self).__init__(request,*args,**kwargs)
         self.page = page
-        
+        self.fullpath = request.get_full_path() # Not sure about adding vars here
+                                                # there has to be an easier django
+                                                # based solution..  
     
