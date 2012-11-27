@@ -14,15 +14,25 @@
 <h1>Files</h1>
 <ul>
   {% for upload in uploads %}
-  
-    <li>          
-      <a href="{% url filetransfers.views.download_handler pk=upload.pk %}">{% firstof upload.title 'unnamed' %} - {{ upload.filename }} </a>
-      ({{ upload.file.size|filesizeformat }})
-      <form method="post" action="{% url filetransfers.views.delete_handler pk=upload.pk %}" style="display:inline">
-        {% csrf_token %}
-        <input type="submit" value="Delete" />
-      </form>
-    </li>
+    
+  	{% if not upload.localfileexists %}
+  		<li class="filenotfound">
+  			 <span> {% firstof upload.title 'unnamed' %} - {{ upload.filename }} (local file not found, was it moved?)</span>
+  			 <form method="post" action="{% url filetransfers.views.delete_handler pk=upload.pk %}" style="display:inline">
+        		{% csrf_token %}
+        	 	<input type="submit" value="Delete" />
+      		 </form>
+     	</li>
+      
+  	{% else %}
+  		<li>
+  			 <a href="{% url filetransfers.views.download_handler pk=upload.pk %}">{% firstof upload.title 'unnamed' %} - {{ upload.filename }} </a>  			 
+  			 <form method="post" action="{% url filetransfers.views.delete_handler pk=upload.pk %}" style="display:inline">
+        		{% csrf_token %}
+        	 	<input type="submit" value="Delete" />
+      		 </form>
+     	</li>
+     {% endif %}
   {% endfor %}
 </ul>
 {% endblock %}
