@@ -275,6 +275,12 @@ class UploadModel(ComicSiteModel):
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
     
+    @property
+    def localfileexists(self):                     
+        return os.path.exists(self.file.path)
+    
+    
+    
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
         verbose_name_plural = "uploaded files"

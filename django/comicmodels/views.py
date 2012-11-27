@@ -33,7 +33,6 @@ def upload_handler(request,site_short_name):
     upload_url, upload_data = prepare_upload(request, view_url)
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-        
     
     uploadsforcurrentsite = UploadModel.objects.filter(comicsite=site)
     
