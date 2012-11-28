@@ -10,40 +10,41 @@ from django.http import HttpResponseRedirect
 from django.views.generic.simple import direct_to_template
 #
 from comicmodels.models import ComicSite
-from comicmodels.forms import UploadForm
+from comicmodels.forms import UploadForm,UserUploadForm
 from comicmodels.models import UploadModel
-from comicsite.views import site_get_standard_vars,concatdicts
+from comicsite.views import site_get_standard_vars,concatdicts,getSite
 from filetransfers.api import prepare_upload, serve_file
 #
 #from comicmodels.models import FileSystemDataset
 
 
 def upload_handler(request,site_short_name):
-    """ Upload a file to the given comicsite """
+    """ Upload a file to the given comicsite, display files previously uploaded"""
     
     view_url = reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':site_short_name})
+    
     if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)
-                    
+        # set values excluded from form here to make the model validate
+        site = getSite(site_short_name)
+        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ALL)
+        form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)
+               
         if form.is_valid():        
             form.save()
-                    
-        return HttpResponseRedirect(view_url)
+            return HttpResponseRedirect(view_url)
+        else:
+            #continue to showing errors
+            pass 
+    else:
+        form = UserUploadForm()
 
     upload_url, upload_data = prepare_upload(request, view_url)
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     
     uploadsforcurrentsite = UploadModel.objects.filter(comicsite=site)
+                
     
-    # set inital values    
-    form = UploadForm(initial = {'comicsite': site.pk})    
-    # FIXME: I want to make the comicsite field uneditable, but setting
-    # disabled using line below will trigger 'field required" error
-    # How to disable this field but still send it when the form is 
-    # submitted?
-    
-    #form.fields['comicsite'].widget.attrs['disabled'] = True
         
     
     return direct_to_template(request, 'upload/comicupload.html',
