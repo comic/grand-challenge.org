@@ -131,7 +131,7 @@ class ComicSiteModel(models.Model):
             object needs to be saved befor setting perms"""
         
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
-        participantsgroup = Group.objects.get(name=self.comicsite.short_name+"_participants")
+        participantsgroup = Group.objects.get(name=self.comicsite.participants_group_name())
         everyonegroup = Group.objects.get(name="everyone")
         self.persist_if_needed()
         if lvl == self.ALL:
