@@ -131,8 +131,7 @@ class DatasetNode(template.Node):
         if self.project_name == "":
             self.project_name = context.page.comicsite.short_name
 
-        try:
-        #pdb.set_trace()
+        try:        
             dataset = FileSystemDataset.objects.get(comicsite__short_name = self.project_name, title = self.dataset_title)
 
         except ObjectDoesNotExist as e:
@@ -331,7 +330,6 @@ def render_image_url(parser, token):
     imagetitle = args
 
     try:
-        #pdb.set_trace()        
         image = UploadModel.objects.get(title = imagetitle)
 
     except ObjectDoesNotExist as e:

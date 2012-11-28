@@ -56,10 +56,9 @@ class FileSystemDatasetForm(forms.ModelForm):
     tag = forms.CharField(widget=forms.TextInput(attrs={'size': 60, 'readonly':'readonly'}),help_text = "To show all files in this dataset as downloads on a page, copy-paste this tag into the page contents")
     
     def __init__(self, *args, **kwargs):
-        # only change attributes if an instance is passed
-                    
+        # only change attributes if an instance is passed                    
         instance = kwargs.get('instance')
-        #pdb.set_trace()
+        
         if instance:
             self.base_fields['tag'].initial = instance.get_template_tag()
         

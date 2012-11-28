@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group,User,Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -118,7 +118,6 @@ class ComicSiteModel(models.Model):
         # check whether everyone is allowed to view this. Anymous user is the only member of group
         # 'everyone' for which permissions can be set
         anonymousUser = get_anonymous_user()
-        #pdb.set_trace()        
         
         if anonymousUser.has_perm("view_ComicSiteModel",self):
             return True
@@ -136,7 +135,6 @@ class ComicSiteModel(models.Model):
         everyonegroup = Group.objects.get(name="everyone")
         self.persist_if_needed()
         if lvl == self.ALL:
-            #pdb.set_trace()
             assign("view_ComicSiteModel",admingroup,self)
             assign("view_ComicSiteModel",participantsgroup,self)
             assign("view_ComicSiteModel",everyonegroup,self)                    
@@ -280,6 +278,22 @@ class UploadModel(ComicSiteModel):
         return os.path.exists(self.file.path)
     
     
+    def clean(self):
+        
+        # When no title is set, take the filename as title
+        if self.title == "":
+            
+            if self.file.name: #is a                 
+                # autofill title with the name the file is going to have
+                # Some confused code here to get the filename a file is going to get.
+                # We should have a custom storage class For Uploadmodels. The storage
+                # class should know to save objects to their respective project 
+                
+                validFilePath = self.file.storage.get_available_name(self.file.field.generate_filename(self,self.file.name))                 
+                self.title = os.path.basename(validFilePath)
+            else:
+                
+                raise ValidationError("No file given, I don't know what title to give this uploaded file.")                
     
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
