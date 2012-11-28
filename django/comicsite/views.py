@@ -31,10 +31,10 @@ def index(request):
 
 
 def _register(request, site_short_name):
-    """ show a single COMIC site, default start page """
+    """ Register the current user for given comicsite """
    
     #TODO: check whether user is allowed to register, maybe wait for verification,
-    #send email to admins of new registration 
+    #send email to admins of new registration
         
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
