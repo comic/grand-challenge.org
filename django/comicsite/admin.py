@@ -6,13 +6,17 @@ Created on Jun 18, 2012
 import pdb
 from django.contrib import admin
 from django import forms
-from django.db import models 
+from django.conf.urls.defaults import patterns, url
+from django.contrib import messages
 from django.contrib.auth.models import Group,Permission,User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.options import InlineModelAdmin
-from django.forms import TextInput, Textarea
 from django.core.urlresolvers import reverse
+from django.db import models
+from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.utils.encoding import force_unicode
 
@@ -192,13 +196,13 @@ class PageInline(LinkedInline):
 
 
 class ComicSiteAdminForm(forms.ModelForm):
-    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")    
-    admins = forms.CharField(widget=forms.SelectMultiple)
-    
-    
+    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")        
     
     class Meta:
         model = ComicSite
+
+ 
+
 
 class ComicSiteManager(models.Manager):
     """ Some extra table-level methods for getting ComicSites from database"""
@@ -206,7 +210,7 @@ class ComicSiteManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
 
-class ComicSiteAdmin(GuardedModelAdmin):
+class ComicSiteAdmin(admin.ModelAdmin):
     
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
@@ -215,39 +219,141 @@ class ComicSiteAdmin(GuardedModelAdmin):
     
     list_display = ('short_name','hidden')    
     #list_filter = ['comicsite']
-
-    
     form = ComicSiteAdminForm
-    
     inlines = [PageInline]
     
-    def change_view(self,request,form_url='',extra_context=None):
-        """ overwrite default to add non-database content to form 
-        """
-        view = super(ComicSiteAdmin,self).change_view(request,form_url,extra_context)
-        
-        #all non-super users with admin rights to this project
-        admins = User.objects.filter(groups__name='VESSEL12_admins', is_superuser=False)
-        choices = tuple([(user.username,user.username) for user in admins])
-        # FIXME: How to populate comicSiteAdminForm.admins with some data? The line below 
-        # works, but this does not look nice.. 
-        view.context_data['adminform'].form.fields['admins'].widget.choices = choices
-         
-        #pdb.set_trace()
-        return view
-        
+    readonly_fields = ("manage_admin_link",)
     
     
-                    
+    admin_manage_template = \
+        'admin/comicmodels/admin_manage.html'
+    
+    
+    def manage_admin_link(self,instance):
+        return "<a href=\"admins\">View, Add or Remove Administrators for this project</a>"    
+    manage_admin_link.allow_tags=True #allow links 
+    manage_admin_link.short_description="Admins"
+    
+                
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
-        qs = super(admin.ModelAdmin, self).queryset(request)
+        qs = super(ComicSiteAdmin, self).queryset(request)
 
         if request.user.is_superuser:
             return qs
                 
         user_qs = get_objects_for_user(request.user, 'comicmodels.change_comicsite')
         return user_qs
+    
+    def get_urls(self):
+        """
+        Extends standard admin model urls to manage admins and participants:
+        """
+        
+        urls = super(ComicSiteAdmin, self).get_urls()
+        info = self.model._meta.app_label, self.model._meta.module_name
+        myurls = patterns('',
+            url(r'^(?P<object_pk>.+)/admins/$',
+                view=self.admin_site.admin_view(self.admin_add_view),
+                name='%s_%s_admins' % info),
+            #url(r'^(?P<object_pk>.+)/permissions/user-manage/(?P<user_id>\-?\d+)/$',
+            #    view=self.admin_site.admin_view(
+            #       self.obj_perms_manage_user_view),
+            #    name='%s_%s_permissions_manage_user' % info),
+            #url(r'^(?P<object_pk>.+)/permissions/group-manage/(?P<group_id>\-?\d+)/$',
+            #    view=self.admin_site.admin_view(
+            #        self.obj_perms_manage_group_view),
+            #    name='%s_%s_permissions_manage_group' % info),
+        )
+        return myurls + urls
+
+
+    def get_base_context(self, request, obj):
+        """
+        Returns context dictionary with common admin and object permissions
+        related content.
+        """
+        context = {
+            'adminform': {'model_admin': self},
+            'object': obj,
+            'app_label': self.model._meta.app_label,
+            'opts': self.model._meta,
+            'original': hasattr(obj, '__unicode__') and obj.__unicode__() or\
+                str(obj),
+            'has_change_permission': self.has_change_permission(request, obj),
+            #'model_perms': get_perms_for_model(obj),
+            'title': _("Object permissions"),
+        }
+        return context
+    
+    def admin_add_view(self, request, object_pk):
+        """
+        Show all users in admin_group for this comicsite, allow adding users
+        """        
+        comicsite = get_object_or_404(ComicSite,id=object_pk)        
+        admins = User.objects.filter(groups__name='VESSEL12_admins', is_superuser=False)
+        
+        if request.method == 'POST' and 'submit_add_user' in request.POST:
+            
+            user_form = AdminManageForm(request.POST)            
+            
+            if user_form.is_valid():
+                user = user_form.cleaned_data['user']                
+                
+                #add given user to admins group
+                admingroup = Group.objects.get(name=comicsite.admin_group_name())
+                
+                # add current user to admins for this site 
+                user.groups.add(admingroup)                
+                messages.add_message(request, messages.SUCCESS, 'User "'+user.username+'"\
+                                     is now an admin for '+ comicsite.short_name)
+                
+                # send an email to this user?
+        elif request.method == 'POST' and 'submit_delete_user' in request.POST:
+            
+            user_form = AdminManageForm(request.POST)            
+            
+            if user_form.is_valid():
+                
+                #add given user to admins group
+                admingroup = Group.objects.get(name=comicsite.admin_group_name())                
+                usernames_to_remove = request.POST.getlist('admins')
+                removed = []
+                
+                msg2 = ""
+                for username in usernames_to_remove:
+                    if username == request.user.username:
+                        msg2 = "Did not remove "+ username +" because that's you."
+                        
+                    else:                           
+                                    
+                        user = User.objects.get(username=username)                    
+                        user.groups.remove(admingroup)
+                        removed.append(username)
+                
+                msg = "Removed users [" + ", ".join(removed) + "] from "+comicsite.short_name+\
+                      "admin group. " + msg2
+                messages.add_message(request, messages.SUCCESS, msg)
+                
+                # send an email to this user?
+        
+        
+        else:
+            user_form = AdminManageForm()
+        
+        # populate available admins. #FIXME: duplicate code with change_view.
+        # how to fill this amdin list without explicit filling? 
+        choices = tuple([(user.username,user.username) for user in admins])    
+        user_form.fields['admins'].widget.choices = choices            
+
+        context = self.get_base_context(request, comicsite)
+        context['user_form'] = user_form
+        context['test'] = "put someting relevant here"
+        
+
+        return render_to_response(self.admin_manage_template,
+            context, RequestContext(request, current_app=self.admin_site.name))
+    
     
     
     def save_model(self, request, obj, form, change):        
@@ -270,6 +376,32 @@ class ComicSiteAdmin(GuardedModelAdmin):
             #if object already existed just save
             obj.save()
 
+
+
+class AdminManageForm(forms.Form):
+    admins = forms.CharField(required=False,widget=forms.SelectMultiple,help_text = "All admins for this project")            
+
+    user = forms.RegexField(required=False,label=_("Username"), max_length=30,
+        regex=r'^[\w.@+-]+$',
+        error_messages = {
+            'invalid': _("This value may contain only letters, numbers and "
+                         "@/./+/-/_ characters."),
+            'does_not_exist': _("This user does not exist")})
+    
+    def clean_user(self):
+        """
+        Returns ``User`` instance based on the given username.
+        """
+        username = self.cleaned_data['user']
+        if username != "": #pass if no user is given
+            try:
+                user = User.objects.get(username=username)
+                return user
+            except User.DoesNotExist:
+                raise forms.ValidationError(
+                    self.fields['user'].error_messages['does_not_exist'])
+
+
 def add_standard_permissions(group,objname):
     """ Add delete_objname change_objname and add_objname to the given group"""  
     can_add_obj = Permission.objects.get(codename="add_"+objname)
@@ -290,8 +422,6 @@ class PageAdminForm():
                          ('LAST', 'Last'),
                         )
         
-        
-
 
 admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)
