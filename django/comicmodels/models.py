@@ -60,6 +60,16 @@ class ComicSite(models.Model):
     def __unicode__(self):
         """ string representation for this object"""
         return self.short_name
+            
+    def get_fields(self):
+        """ overwrite default so I can add virtual fields which are not saved in database """
+        
+        fakehidden = models.BooleanField(default=False, help_text = "FAKEDo not display this Project in any public overview")
+        
+        fields = [(field, field.value_to_string(self)) for field in ComicSite._meta.fields]
+        fields.append(fakehidden,"zooFake ")
+        return fields
+    
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""

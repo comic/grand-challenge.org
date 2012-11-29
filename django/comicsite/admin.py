@@ -7,7 +7,7 @@ import pdb
 from django.contrib import admin
 from django import forms
 from django.db import models 
-from django.contrib.auth.models import Group,Permission
+from django.contrib.auth.models import Group,Permission,User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.options import InlineModelAdmin
 from django.forms import TextInput, Textarea
@@ -192,7 +192,10 @@ class PageInline(LinkedInline):
 
 
 class ComicSiteAdminForm(forms.ModelForm):
-    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")
+    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")    
+    admins = forms.CharField(widget=forms.SelectMultiple)
+    
+    
     
     class Meta:
         model = ComicSite
@@ -212,10 +215,29 @@ class ComicSiteAdmin(GuardedModelAdmin):
     
     list_display = ('short_name','hidden')    
     #list_filter = ['comicsite']
+
+    
+    form = ComicSiteAdminForm
+    
+    inlines = [PageInline]
+    
+    def change_view(self,request,form_url='',extra_context=None):
+        """ overwrite default to add non-database content to form 
+        """
+        view = super(ComicSiteAdmin,self).change_view(request,form_url,extra_context)
+        
+        #all non-super users with admin rights to this project
+        admins = User.objects.filter(groups__name='VESSEL12_admins', is_superuser=False)
+        choices = tuple([(user.username,user.username) for user in admins])
+        # FIXME: How to populate comicSiteAdminForm.admins with some data? The line below 
+        # works, but this does not look nice.. 
+        view.context_data['adminform'].form.fields['admins'].widget.choices = choices
+         
+        #pdb.set_trace()
+        return view
         
     
-    form = ComicSiteAdminForm    
-    inlines = [PageInline]
+    
                     
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """

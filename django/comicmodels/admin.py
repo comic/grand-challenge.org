@@ -26,6 +26,7 @@ class ComicModelAdmin(GuardedModelAdmin):
     def save_model(self, request, obj, form, change):        
         obj.save()
     
+    
     def queryset(self, request): 
         """ overwrite this method to return only pages comicsites to which current user has access 
             
