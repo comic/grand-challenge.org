@@ -326,10 +326,11 @@ def create_HTML_a_img(link_url,image_url):
     
 # ======================================================  debug and test ==================================================
 
+ 
 def sendEmail(request):
     """Test email sending"""
     
-    adress = 'w.s.kerkstra@gmail.com' 
+    adress = 'sjoerdk@home.nl' 
     title = 'Your email setting are ok for sending'
     message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
     
