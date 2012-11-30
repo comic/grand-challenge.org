@@ -8,9 +8,10 @@ from django.contrib import admin
 from django import forms
 from django.conf.urls.defaults import patterns, url
 from django.contrib import messages
+from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.auth.models import Group,Permission,User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import TextInput, Textarea
@@ -24,6 +25,7 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
 from comicmodels.models import ComicSite,Page
+from comicmodels.signals import new_admin,removed_admin
 
 class PageAdminForm(forms.ModelForm):
     move = forms.CharField(widget=forms.Select)
@@ -308,7 +310,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 messages.add_message(request, messages.SUCCESS, 'User "'+user.username+'"\
                                      is now an admin for '+ comicsite.short_name)
                 
-                # send an email to this user?
+               
+                #send signal to be picked up for example by email notifier
+                new_admin.send(sender=self,adder=request.user,new_admin=user,comicsite=comicsite
+                               ,site=get_current_site(request))
+                
+                
+                
         elif request.method == 'POST' and 'submit_delete_user' in request.POST:
             
             user_form = AdminManageForm(request.POST)            
@@ -334,8 +342,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 msg = "Removed users [" + ", ".join(removed) + "] from "+comicsite.short_name+\
                       "admin group. " + msg2
                 messages.add_message(request, messages.SUCCESS, msg)
+                                
+                #send signal to be picked up for example by email notifier                
+                removed_admin.send(sender=self,adder=request.user,removed_admin=user,comicsite=comicsite
+                                   ,site=get_current_site(request))                
                 
-                # send an email to this user?
         
         
         else:
