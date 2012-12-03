@@ -14,4 +14,4 @@ class UserUploadForm(forms.ModelForm):
              
     class Meta:
         model = UploadModel
-        exclude = ['title','comicsite','permission_lvl']
+        exclude = ['title','comicsite','permission_lvl','user']
