@@ -88,7 +88,7 @@ class ComicSite(models.Model):
         """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
         """
         if user.is_superuser:
-            return true
+            return True
         
         if user.groups.filter(name=self.admin_group_name).count() > 0:
             return True
@@ -99,7 +99,7 @@ class ComicSite(models.Model):
         """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
         """
         if user.is_superuser:
-            return true
+            return True
         
         if user.groups.filter(name=self.participants_group_name).count() > 0:
             return True
