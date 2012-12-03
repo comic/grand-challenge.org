@@ -156,6 +156,9 @@ class ComicSiteModel(models.Model):
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
         participantsgroup = Group.objects.get(name=self.comicsite.participants_group_name())
         everyonegroup = Group.objects.get(name="everyone")
+        
+        
+        
         self.persist_if_needed()
         if lvl == self.ALL:
             assign("view_ComicSiteModel",admingroup,self)
@@ -340,7 +343,7 @@ class Dataset(ComicSiteModel):
     def cleantitle(self):
         return re.sub('[\[\]/{}., ]+', '',self.title)       
                 
-    class Meta:
+    class Meta(ComicSiteModel.Meta):
        abstract = True
          
     
