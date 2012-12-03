@@ -111,12 +111,13 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
         
 class UploadModelAdmin(ComicModelAdmin):
 
-    list_display = ('title','file','comicsite')
+    list_display = ('title','file','comicsite','user','created')
+    list_filter = ['comicsite']
     
     # explicitly inherit manager because this is not done by default with non-abstract superclass
     # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
     _default_manager = UploadModel.objects
-      
+    
 
 class DropboxFolderForm(forms.ModelForm):
 

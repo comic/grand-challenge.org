@@ -26,7 +26,10 @@ def upload_handler(request,site_short_name):
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
         site = getSite(site_short_name)
-        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ALL)
+        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ALL,
+                                   user=request.user)
+        
+        
         form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)
                
         if form.is_valid():        

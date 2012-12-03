@@ -19,12 +19,12 @@ class Migration(SchemaMigration):
 
         # Adding field 'UploadModel.created'
         db.add_column('comicmodels_uploadmodel', 'created',
-                      self.gf('django.db.models.fields.DateField')(default=datetime.date.today, auto_now_add=True, blank=True),
+                      self.gf('django.db.models.fields.DateTimeField')(default=datetime.date.today, auto_now_add=True, blank=True),
                       keep_default=False)
 
         # Adding field 'UploadModel.modified'
         db.add_column('comicmodels_uploadmodel', 'modified',
-                      self.gf('django.db.models.fields.DateField')(default=datetime.date.today, auto_now=True, blank=True),
+                      self.gf('django.db.models.fields.DateTimeField')(default=datetime.date.today, auto_now=True, blank=True),
                       keep_default=False)
 
 
