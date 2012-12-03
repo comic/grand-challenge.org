@@ -270,8 +270,8 @@ class UploadModel(ComicSiteModel):
         
     file = models.FileField(upload_to=giveFileUploadDestinationPath)
     user = models.ForeignKey(User, help_text = "which user uploaded this?")
-    created = models.DateField(auto_now_add=True,default=datetime.date.today) 
-    modified = models.DateField(auto_now=True,default=datetime.date.today)
+    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today) 
+    modified = models.DateTimeField(auto_now=True,default=datetime.date.today)
     
     @property    
     def filename(self):
