@@ -9,8 +9,6 @@
 	<div>{{currentpage.rawHTML}}</div>
 		
 	<br/>
-
-
 	{% get_obj_perms user for site as "site_perms" %}	
 	{% if not currentpage.is_error_page %}		
 		{% block editlink %}	

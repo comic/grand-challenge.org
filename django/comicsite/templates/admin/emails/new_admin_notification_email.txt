@@ -6,7 +6,7 @@ on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.
 <br/>
 <br/>
 When you are logged in to {{ site.name }}, the admin button will now appear in the {{comicsite.short_name}} site menu.
-You can also log in directly using this link: <a href="http://{{ site.domain }}{% url admin:comicmodels_comicsite_change site.pk%}">http://{{ site.domain }}{% url admin:comicmodels_comicsite_change site.pk%}</a>.<br/>
+You can also log in directly using this link: <a href="http://{{ site.domain }}{% url admin:comicmodels_comicsite_change comicsite.pk%}">http://{{ site.domain }}{% url admin:comicmodels_comicsite_change comicsite.pk%}</a>.<br/>
 <br/>
 
 You can now edit this project's pages, amongst other things. See <a href ="http://{{ site.domain }}/support"> support </a> for more information.
