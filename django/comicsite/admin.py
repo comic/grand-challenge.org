@@ -292,8 +292,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
         """
         Show all users in admin_group for this comicsite, allow adding users
         """        
-        comicsite = get_object_or_404(ComicSite,id=object_pk)        
-        admins = User.objects.filter(groups__name='VESSEL12_admins', is_superuser=False)
+        comicsite = get_object_or_404(ComicSite,id=object_pk)
+                
+        admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
         
         if request.method == 'POST' and 'submit_add_user' in request.POST:
             
@@ -335,7 +336,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                         
                     else:                           
                                     
-                        user = User.objects.get(username=username)                    
+                        user = User.objects.get(username=username)                                
                         user.groups.remove(admingroup)
                         removed.append(username)
                 
