@@ -83,7 +83,28 @@ class ComicSite(models.Model):
                 
         groups = Group.objects.filter(Q(name="everyone") | Q(name=self.admin_group_name()) | Q(name=self.participants_group_name()))
         return groups
-    
+  
+    def is_admin(self,user):
+        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        """
+        if user.is_superuser:
+            return true
+        
+        if user.groups.filter(name=self.admin_group_name).count() > 0:
+            return True
+        else:
+            return False
+        
+    def is_participant(self,user):
+        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        """
+        if user.is_superuser:
+            return true
+        
+        if user.groups.filter(name=self.participants_group_name).count() > 0:
+            return True
+        else:
+            return False
   
 
 class ComicSiteModel(models.Model):
@@ -152,6 +173,8 @@ class ComicSiteModel(models.Model):
             remove_perm("view_ComicSiteModel",everyonegroup,self)                    
         else:
             raise ValueError("Unknown permissions level '"+ lvl +"'. I don't know which groups to give permissions to this object")
+    
+
         
     def persist_if_needed(self):
         """ setting permissions needs a persisted object. This method makes sure."""
@@ -183,7 +206,7 @@ class ComicSiteModel(models.Model):
             object is saved after this method so no explicit save needed"""                
         pass
 
-                
+            
     class Meta:
        abstract = True
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)

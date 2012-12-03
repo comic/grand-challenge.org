@@ -12,13 +12,15 @@
 
 
 	{% get_obj_perms user for site as "site_perms" %}	
-	{% if not currentpage.is_error_page %}
-		
+	{% if not currentpage.is_error_page %}		
 		{% block editlink %}	
-			{% if "change_comicsite" in site_perms or request.user.is_superuser %}	   	   
-				   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk %}">Edit this page</a>
-		{% else %}
-			   <a class="editPageLink" href="{% url comicsite.views.pagesource	 currentpage.comicsite.short_name currentpage.title %}">Show page source</a>
+			{% if currentsite.pk %}
+				{% if "change_comicsite" in site_perms or request.user.is_superuser %}					   	  
+					   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk %}">Edit this page</a>
+					 
+				{% else %}
+				   <a class="editPageLink" href="{% url comicsite.views.pagesource currentpage.comicsite.short_name currentpage.title %}">Show page source</a>
+				{% endif %}
 			{% endif %}
 		{% endblock %}	
 	{% endif %}	
