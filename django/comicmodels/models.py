@@ -1,5 +1,6 @@
 import os
 import re
+import datetime
 import pdb
 
 from django import forms
@@ -268,7 +269,9 @@ class ErrorPage(Page):
 class UploadModel(ComicSiteModel):
         
     file = models.FileField(upload_to=giveFileUploadDestinationPath)
-    
+    user = models.ForeignKey(User, help_text = "which user uploaded this?")
+    created = models.DateField(auto_now_add=True,default=datetime.date.today) 
+    modified = models.DateField(auto_now=True,default=datetime.date.today)
     
     @property    
     def filename(self):
@@ -512,9 +515,6 @@ class DropboxFolder(ComicSiteModel):
         
         return "Connection succeeded."
     
+
     
-        
-        
-                    
     
-     

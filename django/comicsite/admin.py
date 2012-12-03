@@ -296,6 +296,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 
         admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
         
+        pdb.set_trace()
+        
         if request.method == 'POST' and 'submit_add_user' in request.POST:
             
             user_form = AdminManageForm(request.POST)            
