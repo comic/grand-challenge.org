@@ -26,6 +26,7 @@ class ComicModelAdmin(GuardedModelAdmin):
     def save_model(self, request, obj, form, change):        
         obj.save()
     
+    
     def queryset(self, request): 
         """ overwrite this method to return only pages comicsites to which current user has access 
             
@@ -56,10 +57,9 @@ class FileSystemDatasetForm(forms.ModelForm):
     tag = forms.CharField(widget=forms.TextInput(attrs={'size': 60, 'readonly':'readonly'}),help_text = "To show all files in this dataset as downloads on a page, copy-paste this tag into the page contents")
     
     def __init__(self, *args, **kwargs):
-        # only change attributes if an instance is passed
-                    
+        # only change attributes if an instance is passed                    
         instance = kwargs.get('instance')
-        #pdb.set_trace()
+        
         if instance:
             self.base_fields['tag'].initial = instance.get_template_tag()
         
@@ -111,12 +111,13 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
         
 class UploadModelAdmin(ComicModelAdmin):
 
-    list_display = ('title','file','comicsite')
+    list_display = ('title','file','comicsite','user','created')
+    list_filter = ['comicsite']
     
     # explicitly inherit manager because this is not done by default with non-abstract superclass
     # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
     _default_manager = UploadModel.objects
-      
+    
 
 class DropboxFolderForm(forms.ModelForm):
 

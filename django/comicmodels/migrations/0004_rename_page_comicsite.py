@@ -8,8 +8,7 @@ import pdb
 
 class Migration(SchemaMigration):
 
-    def forwards(self, orm):
-        #pdb.set_trace()
+    def forwards(self, orm):        
         # Removing unique constraint on 'Page', fields ['ComicSite', 'title']
         #db.delete_unique('comicmodels_page', ['ComicSite_id', 'title'])
         
