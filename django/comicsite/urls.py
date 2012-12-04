@@ -19,10 +19,5 @@ urlpatterns = patterns('',
     
     url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
     
-    
-        
-    
-    
-    
 )
     

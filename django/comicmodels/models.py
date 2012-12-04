@@ -1,12 +1,13 @@
 import os
 import re
+import datetime
 import pdb
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group,User,Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -60,6 +61,7 @@ class ComicSite(models.Model):
     def __unicode__(self):
         """ string representation for this object"""
         return self.short_name
+            
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""
@@ -81,7 +83,28 @@ class ComicSite(models.Model):
                 
         groups = Group.objects.filter(Q(name="everyone") | Q(name=self.admin_group_name()) | Q(name=self.participants_group_name()))
         return groups
-    
+  
+    def is_admin(self,user):
+        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        """
+        if user.is_superuser:
+            return True
+        
+        if user.groups.filter(name=self.admin_group_name).count() > 0:
+            return True
+        else:
+            return False
+        
+    def is_participant(self,user):
+        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        """
+        if user.is_superuser:
+            return True
+        
+        if user.groups.filter(name=self.participants_group_name).count() > 0:
+            return True
+        else:
+            return False
   
 
 class ComicSiteModel(models.Model):
@@ -118,7 +141,6 @@ class ComicSiteModel(models.Model):
         # check whether everyone is allowed to view this. Anymous user is the only member of group
         # 'everyone' for which permissions can be set
         anonymousUser = get_anonymous_user()
-        #pdb.set_trace()        
         
         if anonymousUser.has_perm("view_ComicSiteModel",self):
             return True
@@ -132,11 +154,13 @@ class ComicSiteModel(models.Model):
             object needs to be saved befor setting perms"""
         
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
-        participantsgroup = Group.objects.get(name=self.comicsite.short_name+"_participants")
+        participantsgroup = Group.objects.get(name=self.comicsite.participants_group_name())
         everyonegroup = Group.objects.get(name="everyone")
+        
+        
+        
         self.persist_if_needed()
         if lvl == self.ALL:
-            #pdb.set_trace()
             assign("view_ComicSiteModel",admingroup,self)
             assign("view_ComicSiteModel",participantsgroup,self)
             assign("view_ComicSiteModel",everyonegroup,self)                    
@@ -152,6 +176,8 @@ class ComicSiteModel(models.Model):
             remove_perm("view_ComicSiteModel",everyonegroup,self)                    
         else:
             raise ValueError("Unknown permissions level '"+ lvl +"'. I don't know which groups to give permissions to this object")
+    
+
         
     def persist_if_needed(self):
         """ setting permissions needs a persisted object. This method makes sure."""
@@ -183,7 +209,7 @@ class ComicSiteModel(models.Model):
             object is saved after this method so no explicit save needed"""                
         pass
 
-                
+            
     class Meta:
        abstract = True
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
@@ -269,11 +295,35 @@ class ErrorPage(Page):
 class UploadModel(ComicSiteModel):
         
     file = models.FileField(upload_to=giveFileUploadDestinationPath)
-    
+    user = models.ForeignKey(User, help_text = "which user uploaded this?")
+    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today) 
+    modified = models.DateTimeField(auto_now=True,default=datetime.date.today)
     
     @property    
     def filename(self):
         return self.file.name.rsplit('/', 1)[-1]
+    
+    @property
+    def localfileexists(self):                     
+        return os.path.exists(self.file.path)
+    
+    
+    def clean(self):
+        
+        # When no title is set, take the filename as title
+        if self.title == "":
+            
+            if self.file.name: #is a                 
+                # autofill title with the name the file is going to have
+                # Some confused code here to get the filename a file is going to get.
+                # We should have a custom storage class For Uploadmodels. The storage
+                # class should know to save objects to their respective project 
+                
+                validFilePath = self.file.storage.get_available_name(self.file.field.generate_filename(self,self.file.name))                 
+                self.title = os.path.basename(validFilePath)
+            else:
+                
+                raise ValidationError("No file given, I don't know what title to give this uploaded file.")                
     
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
@@ -293,7 +343,7 @@ class Dataset(ComicSiteModel):
     def cleantitle(self):
         return re.sub('[\[\]/{}., ]+', '',self.title)       
                 
-    class Meta:
+    class Meta(ComicSiteModel.Meta):
        abstract = True
          
     
@@ -491,9 +541,6 @@ class DropboxFolder(ComicSiteModel):
         
         return "Connection succeeded."
     
+
     
-        
-        
-                    
     
-     
