@@ -12,6 +12,7 @@ from os import path
 from django import template
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import Group,User,Permission
 from profiles.forms import SignupFormExtra
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
@@ -131,8 +132,7 @@ class DatasetNode(template.Node):
         if self.project_name == "":
             self.project_name = context.page.comicsite.short_name
 
-        try:
-        #pdb.set_trace()
+        try:        
             dataset = FileSystemDataset.objects.get(comicsite__short_name = self.project_name, title = self.dataset_title)
 
         except ObjectDoesNotExist as e:
@@ -331,7 +331,6 @@ def render_image_url(parser, token):
     imagetitle = args
 
     try:
-        #pdb.set_trace()        
         image = UploadModel.objects.get(title = imagetitle)
 
     except ObjectDoesNotExist as e:
@@ -398,14 +397,19 @@ class RegistrationFormNode(template.Node):
         registerlink = makeHTMLLink(reverse('userena.views.signup',
                                              kwargs = {'signup_form':SignupFormExtra}), "register")
 
-
+        
         if not context['user'].is_authenticated():
             return "To register for " + sitename + ", you need be logged in to COMIC.\
             please " + signuplink + " or " + registerlink
 
         else:
-            register_url = reverse('comicsite.views._register', kwargs = {'site_short_name':sitename})
-            return makeHTMLLink(register_url, "register for " + sitename)
+            participantsgroup = Group.objects.get(name=context.page.comicsite.participants_group_name())
+            if participantsgroup in context['user'].groups.all():
+                msg = "You have already registered for " + sitename
+            else:
+                register_url = reverse('comicsite.views._register', kwargs = {'site_short_name':sitename}) 
+                msg = makeHTMLLink(register_url, "Register for " + sitename)
+            return msg 
 
 
 

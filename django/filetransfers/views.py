@@ -63,9 +63,16 @@ def download_handler_filename(request, project_name, dataset_title,filename):
 def delete_handler(request, pk):
     if request.method == 'POST':
         upload = get_object_or_404(UploadModel, pk=pk)
-        upload.file.delete()
-        upload.delete()
-    return HttpResponseRedirect(reverse('filetransfers.views.upload_handler'))
+        comicsitename = upload.comicsite.short_name
+        try:            
+            upload.file.delete()  #if no file object can be found just continue
+        except:
+            pass
+        finally:
+            pass
+            upload.delete()
+        
+    return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
 
 
     
