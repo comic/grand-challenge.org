@@ -373,8 +373,7 @@ class FileSystemDataset(Dataset):
             # take possibly edited value from form, keep self.folder.
             pass                                          
         self.ensure_dir(self.get_full_folder_path())        
-        
-            
+                    
         
     def get_full_folder_path(self):
         """ Return full path of the folder in which this datasets files reside """
@@ -393,7 +392,8 @@ class FileSystemDataset(Dataset):
         
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
-            os.makedirs(dir)        
+            os.makedirs(dir)
+            os.chmod(dir,0775) #refs #142 
 
 
 class DropboxFolder(ComicSiteModel):
