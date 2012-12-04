@@ -31,10 +31,10 @@ def index(request):
 
 
 def _register(request, site_short_name):
-    """ show a single COMIC site, default start page """
+    """ Register the current user for given comicsite """
    
     #TODO: check whether user is allowed to register, maybe wait for verification,
-    #send email to admins of new registration 
+    #send email to admins of new registration
         
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
@@ -168,8 +168,7 @@ def page(request, site_short_name, page_title):
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
-    
-    
+        
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
@@ -326,10 +325,11 @@ def create_HTML_a_img(link_url,image_url):
     
 # ======================================================  debug and test ==================================================
 
+ 
 def sendEmail(request):
     """Test email sending"""
     
-    adress = 'w.s.kerkstra@gmail.com' 
+    adress = 'sjoerdk@home.nl' 
     title = 'Your email setting are ok for sending'
     message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
     
