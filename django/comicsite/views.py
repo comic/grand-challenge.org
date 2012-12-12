@@ -6,36 +6,35 @@ Testing views. Each of these views is referenced in urls.py
 @author: Sjoerd
 '''
 import pdb
-
+import mimetypes
 
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse,Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 
-
-import comicsite.templatetags.template_tags
-from comicmodels.models	 import ComicSite,Page,ErrorPage
-from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
+from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.admin import ComicSiteAdmin
+from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
+from comicsite.templatetags import template_tags
+
 from dataproviders import FileSystemDataProvider
 
- 
 
 def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
 def _register(request, site_short_name):
-    """ show a single COMIC site, default start page """
+    """ Register the current user for given comicsite """
    
     #TODO: check whether user is allowed to register, maybe wait for verification,
-    #send email to admins of new registration 
+    #send email to admins of new registration
         
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
@@ -100,13 +99,27 @@ def renderTags(request, p):
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
     else:
-        
+                
         #pass page to context here to be able to render tags based on which page does the rendering
         pagecontents = t.render(ComicSiteRequestContext(request,p))
         
     return pagecontents
 
 
+
+def permissionMessage(request, site, p):
+    if request.user.is_authenticated():
+        msg = "You do not have permission to view page '" + p.title + "'. If you feel this is an error, please contact the project administrators"
+        title = "No permission"
+    else:
+        msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
+        title = "Sign in required"
+    page = ErrorPage(comicsite=site, title=title, html=msg)
+    currentpage = page
+    return currentpage
+
+
+#TODO: could a decorator be better then all these ..IfAllowed pages?
 def getRenderedPageIfAllowed(page_or_page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
@@ -120,26 +133,34 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
     else:
         p = page_or_page_title                
     
-    
     if p.can_be_viewed_by(request.user):
         p.html = renderTags(request, p)
         currentpage = p
     else:
          
-        if request.user.is_authenticated():
-            msg = "You do not have permission to view page '"+p.title+"'. If you feel this is and error, please contact the project administrators"
-            title = "No permission"
-        else:
-            msg = "The page '"+p.title+"' can only be viewed by registered users. Sign in to view this page."
-            title = "Sign in required"
-                    
-        page = ErrorPage(comicsite=site,title=title,html=msg)
-        currentpage = page
-        
-    
+        currentpage = permissionMessage(request, site, p)
+            
     return currentpage
+
     
+def getPageSourceIfAllowed(page_title,request,site):
+    """ check permissions and render tags in page. If string title is given page is looked for 
+        return nice message if not allowed to view"""
     
+    try:
+        p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
+    except Page.DoesNotExist:
+        raise Http404
+        
+    if p.can_be_viewed_by(request.user):        
+        currentpage = p    
+
+    else:         
+        currentpage = permissionMessage(request, site, p)
+            
+    return currentpage
+
+
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
@@ -147,11 +168,63 @@ def page(request, site_short_name, page_title):
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
-    
-    
+        
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
+
+
+def pagesource(request, site_short_name, page_title):
+    """ show the source html + tags of a a single page on a site """
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    
+    currentpage = getPageSourceIfAllowed(page_title,request,site)
+    
+    
+    return render_to_response('pagesource.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+
+def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
+    """ show contents of a file from dropbox account as page """
+    
+    (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
+    if mimetype.startswith("image"):
+        return dropboximage(request, site_short_name, page_title,dropboxname, dropboxpath)
+        
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+        
+    p = get_object_or_404(Page,comicsite__short_name=site.short_name, title=page_title)
+    
+    baselink = reverse('comicsite.views.page', kwargs = {'site_short_name':p.comicsite.short_name, 'page_title':p.title})
+    
+    msg = "<div class=\"breadcrumbtrail\"> Displaying '"+dropboxpath+"' from dropboxfolder '"+dropboxname+"', originally linked from\
+           page <a href=\""+baselink+"\">"+p.title+"</a> </div>"
+    p.html = "{% dropbox title:"+dropboxname+" file:"+dropboxpath+" %} <br/><br/>" + msg
+
+    currentpage = getRenderedPageIfAllowed(p,request,site)
+
+        
+    return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+
+def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""):
+    """ Get image from dropbox and pipe through django. 
+    Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
+    from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
+    """
+    df = get_object_or_404(DropboxFolder,title=dropboxname)    
+    provider = df.get_dropbox_data_provider()    
+    (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
+    response = HttpResponse(provider.read(dropboxpath), content_type=mimetype)
+    
+    return response
+    
+    
 
 
 def comicmain(request, page_title=""):
@@ -208,7 +281,6 @@ def getSite(site_short_name):
         raise Http404   
     return site  
     
-    
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
@@ -253,10 +325,11 @@ def create_HTML_a_img(link_url,image_url):
     
 # ======================================================  debug and test ==================================================
 
+ 
 def sendEmail(request):
     """Test email sending"""
     
-    adress = 'w.s.kerkstra@gmail.com' 
+    adress = 'sjoerdk@home.nl' 
     title = 'Your email setting are ok for sending'
     message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
     
@@ -267,9 +340,6 @@ def sendEmail(request):
     
     return HttpResponse(text);
         
-    
-    
-    
 
 def createTestPage(title="testPage",html=""):
     """ Create a quick mockup on the ComicSite 'Test'"""

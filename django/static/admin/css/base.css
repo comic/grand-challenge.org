@@ -2,6 +2,12 @@
     DJANGO Admin styles
 */
 
+
+.grayedOut{color: Gray;}
+#connection_status{height:30px;}
+#dropbox_connection_area{float: left; height: 60px;}
+
+
 body {
     margin: 0;
     padding: 0;

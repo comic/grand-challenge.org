@@ -24,6 +24,7 @@ urlpatterns = patterns('',
 
     # requirement for social_auth
     url(r'',include('social_auth.urls')),
+    
     # all normal accounts stuff is redirected to accounts
     url(r'^accounts/',include('profiles.urls')),
     
@@ -33,6 +34,9 @@ urlpatterns = patterns('',
     # when all other urls have been checked, try to load page from 'comic' project
     # keep this url at the bottom of this list, because urls are checked in order 
     url(r'^(?P<page_title>\w+)/$','comicsite.views.comicmain'),
+    
+    # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
+    url(r'^django_dropbox/',include('django_dropbox.urls')),
     
 )
     
