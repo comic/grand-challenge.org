@@ -1,0 +1,62 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+{% load adminmedia %}
+
+{% block extrahead %}{{ block.super }}
+<style type="text/css">
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo; 
+     {% if has_change_permission %}<a href="../../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo; 
+     {% if has_change_permission %}<a href="../">{{ original|truncatewords:"18" }}</a>{% else %}{{ original|truncatewords:"18" }}{% endif %} &rsaquo;
+     {% trans "Add Admin" %}
+</div>
+{% endif %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+
+
+    {% if user_form.errors %}
+    <div>
+        <p class="errornote">{% trans "Please correct the errors below." %}</p>
+    </div>
+    {% endif %}
+	    
+    <fieldset class="module aligned">
+    	<form action="." method="post">
+    	{% csrf_token %}
+        <h2>{% trans "Users" %}</h2>
+                
+        {% with user_form.admins as field %}
+        	<div class="form-row{% if field.errors %} errors{% endif %}">
+            	{% include "admin/comicmodels/admin_manage_field.html" %}
+            
+            <input name="submit_delete_user" type="submit" value="{% trans "Remove selected users" %}"/>
+            </div>
+        {% endwith %}
+       </form>
+        <form action="." method="post">
+        {% csrf_token %}
+        {% with user_form.user as field %}
+        	<div class="form-row{% if field.errors %} errors{% endif %}">
+            	{% include "admin/comicmodels/admin_manage_field.html" %}
+            
+                <input name="submit_add_user" type="submit" value="{% trans "Add user" %}"/>
+            </div>
+            
+        
+        {% endwith %}
+        </form>
+    </fieldset>
+    
+
+
+</div>
+{% endblock %}
+

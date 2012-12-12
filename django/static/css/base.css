@@ -20,7 +20,7 @@ ul#box-nav li.selected { background-color:#fff; border-style:solid solid none so
 ul#box-nav li:hover { background-color:#fff; border-style:solid solid none solid; border-width:2px; border-color:#eee;}
 ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decoration:none;}
 .white-box { padding: 12px 0; overflow: auto; }
-.white-box img { float:left; margin: 0 10px; margin-bottom:250px; border-radius:5px; }
+.white-box img { float:left; margin: 0 10px; margin-bottom:130px; border-radius:5px; }
 .white-box dl { margin-bottom:50px; }
 .white-box dl dt { background:#eee; width:100px; float:left; font-weight:bold; margin-right:10px; padding:5px; }
 .white-box dl dd { margin:2px 0; padding:5px 0; }
@@ -36,7 +36,7 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
 #metafooter div a {text-decoration:none;}
-#metaFooterMenu .text{ float:left; color:#666666; }
+#metaFooterMenu .text a{ float:left; color:#666666; }
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem{ color:#fff; font-weight:bold; }
@@ -50,6 +50,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
 #headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
+#headerTitle a { text-decoration: none; color:inherit; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
 #copyrightNotice{ width:370px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
@@ -61,10 +62,13 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .comicSiteSummary { padding-bottom: 10px; }
 .createNewComicSiteLink{ font-size:larger;  }
 .createNewComicSiteLink:link, .createNewComicSiteLink:visited{ text-decoration:none; color:#6F91AB }
-.editPageLink{ clear: both; float: left; width: 100%; text-decoration:none; color:#cccccc; margin-top: 30px; }
+.editPageLink{ clear: both; float: left; text-decoration:none; color:#cccccc; margin-top: 30px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
 
-
+.grayedOut{color: Gray;}
+.breadcrumbtrail{font-size: x-small; color:#CCCCCC;}
+.breadcrumbtrail a {text-decoration:none; color:#999999;}
+.errorlist {color: red;}
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 

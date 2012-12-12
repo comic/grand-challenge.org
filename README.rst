@@ -23,10 +23,11 @@ Package Requirements.
 - Django Userena
 - Django Social Auth
 - PIL
+- beautifulsoup4
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth pil 
+    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 
 
 
 Configuration.
