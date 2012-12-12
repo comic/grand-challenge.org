@@ -95,7 +95,7 @@ function ComicViewer2D(domElementId, options) {
       self._readyCallback();
     }
     ctrl = $(self._elementSelector + " .MLABRemoteRenderingControl")[0]
-    ctrl.mlabControl.resizeViewport(self._options['width'], self._options['height']);
+    //ctrl.mlabControl.resizeViewport(self._options['width'], self._options['height']);
     if (self._options['extensionFilter']) {
         self.setExtensionFilter(self._options['extensionFilter']);
     }
