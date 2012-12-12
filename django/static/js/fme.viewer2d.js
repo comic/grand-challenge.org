@@ -5,10 +5,10 @@ function ComicViewer2D(domElementId, options) {
   // May contain:
   // host: MeVisLab WorkerService IP
   // port: websocket port
-  this._options = options || {'host': "134.102.230.19", 'port': 4114};
+  this._options = options || {'host': "134.102.230.19", 'port': 4115};
   this._elementId = domElementId;
   this._elementSelector = "#"+domElementId;
-  this._mlabModuleName = "Comic_View2D"
+  this._mlabModuleName = "DIAGRemoteViewport"
   this._isInit = false;
     
   this._readyCallback = null;
