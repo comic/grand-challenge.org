@@ -186,6 +186,7 @@ def render_visualization(parser, token):
     except ValueError:
         errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
         return TemplateErrorNode(errormsg)
+    
 
     if "dataset" not in args.keys():
         errormsg = "Error rendering {% " + token.contents + " %}: dataset argument is missing." + usagestr
@@ -212,7 +213,7 @@ class VisualizationNode(template.Node):
             var fmeViewer%(id)d = null;
                 
             $(document).ready(function (){
-              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':%(extensionFilter)s, 'showBrowser':%(showBrowser)s});
+              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':'%(extensionFilter)s', 'showBrowser':%(showBrowser)s});
               fmeViewer%(id)d.init(function() {
                 fmeViewer%(id)d.setDataRoot('%(path)s');
               });
