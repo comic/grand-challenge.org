@@ -393,7 +393,7 @@ class FileSystemDataset(Dataset):
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
-            os.chmod(dir,0775) #refs #142 
+            os.chmod(dir,0775) #refs #142
 
 
 class DropboxFolder(ComicSiteModel):
@@ -401,8 +401,7 @@ class DropboxFolder(ComicSiteModel):
     Information to link with a single dropbox folder 
     """        
     access_token_key = models.CharField(max_length = 255, default="", blank=True)
-    access_token_secret = models.CharField(max_length = 255, default="", blank=True)
-    
+    access_token_secret = models.CharField(max_length = 255, default="", blank=True)    
     last_status_msg = models.CharField(max_length = 1023, default="", blank=True)
         
     # status of this object, used for communicating with admin, which buttons to show 
