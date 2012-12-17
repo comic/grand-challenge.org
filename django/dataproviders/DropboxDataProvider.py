@@ -2,6 +2,8 @@ import pdb
 import re
 import os
 
+from django.core.files.storage import FileSystemStorage
+
 from bs4 import BeautifulSoup
 
 from dropbox import client, rest, session
@@ -14,7 +16,7 @@ from dropbox.rest import ErrorResponse
 
 class DropboxDataProvider():
     """
-    read and write files in a dropbox location
+    read and write files in a remote dropbox uing the dropbox API 
     """
 
     def __init__(self, app_key, app_secret, access_type, access_token, access_token_secret,
@@ -114,4 +116,7 @@ class HtmlLinkReplacer():
               
         
         
-        
+def LocalDropboxDataProvider(FileSystemStorage):
+    """ For storing files in local folder which is synched with comicsiteframework dropbox account    
+    """
+    pass
