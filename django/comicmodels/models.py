@@ -107,13 +107,22 @@ class ComicSite(models.Model):
             return False
   
 
-class ComicSiteModel(models.Model):
+class ComicSiteBasicModel(models.Model):
+    """
+    An object which belongs to some ComicSite 
+    """
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong?")    
+    
+    class Meta:
+       abstract = True
+              
+
+class ComicSiteModel(ComicSiteBasicModel):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions
      such as authorization.
     """
     #user = models.ManyToManyField()
-    title = models.CharField(max_length=64, blank=True)
-    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong? Used to determine permissions")
+    title = models.CharField(max_length=64, blank=True)    
     
     ALL = 'ALL'
     REGISTERED_ONLY = 'REG'
