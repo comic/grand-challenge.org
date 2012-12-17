@@ -26,9 +26,9 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
 /* header navigation menu */
-#navMenuContainer { padding-left:0.8ex; height:43px; }
+#navMenuContainer { padding-left:0.8ex; height:24px; }
 #navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
-#navMenuContainer ul { padding-left:0px;}
+#navMenuContainer ul { padding-left:0px; margin:0px;}
 #navMenu { float:left; vertical-align:baseline; }
 #additionalNavigation {	float:right; vertical-align:baseline; }
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
@@ -49,7 +49,8 @@ li.menuBullet{ padding:0px;	margin:0px; }
 /* main page, base.html */
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
-#headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
+#headerTitle .noimage{ font-size: 48px; padding-left:12px; padding-top:10px; padding-bottom: 14px;}
+#headerTitle img { vertical-align:bottom;}
 #headerTitle a { text-decoration: none; color:inherit; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
