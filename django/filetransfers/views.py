@@ -37,7 +37,7 @@ def download_handler(request, pk):
     return serve_file(request, upload.file, save_as=True)
 
 
-def fileserve_handler(request, pk):
+def uploadedfileserve_handler(request, pk):
     """ Serve a file through django, for displaying images etc. """
     upload = get_object_or_404(UploadModel, pk=pk)
     
@@ -45,7 +45,7 @@ def fileserve_handler(request, pk):
     if upload.can_be_viewed_by(request.user):
         return serve_file(request, upload.file, save_as=False)
     else:
-        return HttpResponse("You do not have permission. Bad user!")
+        return HttpResponse("You do not have permission to view this.")
     
     
 def download_handler_filename(request, project_name, dataset_title,filename):    

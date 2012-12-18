@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.utils.importlib import import_module
 import mimetypes
+import pdb
 
 PREPARE_UPLOAD_BACKEND = getattr(settings,
     'PREPARE_UPLOAD_BACKEND',
@@ -24,10 +25,13 @@ def serve_file(request, file, backend=None, save_as=False, content_type=None):
     handler = _load_backend(backend, SERVE_FILE_BACKEND)
     filename = file.name.rsplit('/')[-1]
     filename = filename.rsplit('\\')[-1]
+    
     if save_as is True:
         save_as = filename
     if not content_type:
         content_type = mimetypes.guess_type(filename)[0]
+        
+    
     return handler(request, file, save_as=save_as, content_type=content_type)
 
 def public_download_url(file, backend=None):
