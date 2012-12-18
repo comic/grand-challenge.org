@@ -8,8 +8,10 @@ Custom tags to use in templates or code to render file lists etc.
 import pdb
 import datetime
 import ntpath
+from exceptions import Exception
 from os import path
 from django import template
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group,User,Permission
@@ -98,7 +100,6 @@ def render_dataset(parser, token):
                     argument. " + usagestr
         #raise template.TemplateSyntaxError(errormsg)        
         return TemplateErrorNode(errormsg)
-
 
     if args.count(",") == 0:
         dataset_title = args
@@ -223,7 +224,7 @@ class VisualizationNode(template.Node):
                 "path": self.args.get("dataset"),
                 "w": self.args.get("width", "300"),
                 "h": self.args.get("height", "300"),
-                "extensionFilter": self.args.get("extensionFilter", "''"),
+                "extensionFilter": self.args.get("extensionFilter", ""),
                 "deferredLoad": self.args.get("deferredLoad", "0"),
                 "showBrowser": self.args.get("showBrowser", "1")})
         return htmlOut
@@ -297,6 +298,71 @@ class DropboxNode(template.Node):
         
         return htmlOut
 
+#{% insertfile results/test.txt %}
+@register.tag(name = "insert_file")
+def insert_file(parser, token):    
+    """ Render a file from the local dropbox folder of the current project"""
+
+    usagestr = """Tag usage: {% insertfile <file> %} 
+                  <file>: filepath relative to project dropboxfolder.
+                  Example: {% insertfile results/test.txt %}                                    
+                  """
+    
+    split = token.split_contents()
+    tag = split[0]
+    all_args = split[1:]
+    
+    if len(all_args) != 1:
+        error_message = "Expected 1 argument, found " + str(len(all_args))
+        return TemplateErrorNode(error_message)
+    else:        
+        args = {}
+        args["file"] = all_args[0]
+
+    replacer = HtmlLinkReplacer()
+    
+    return InsertFileNode(args,replacer)
+
+
+class InsertFileNode(template.Node):
+    def __init__(self, args,replacer):
+        self.args = args
+        self.replacer = replacer
+
+    def make_error_msg(self, msg):
+        errormsg = "Error including file '" + ",".join(self.args) + "': " + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+                
+        project_name = context.page.comicsite.short_name
+        filename = path.join(settings.DROPBOX_ROOT,project_name,self.args['file'])                    
+        
+        try:            
+            contents = open(filename,"r").read()
+        except Exception as e:
+            return self.make_error_msg(str(e))
+        
+        #check content safety
+        
+        # any relative link inside included file has to be replaced to make it work within the COMIC
+        # context.
+        base_url = reverse('comicsite.views.insertedpage',kwargs={'site_short_name':context.page.comicsite.short_name,
+                                                                'page_title':context.page.title,
+                                                                'dropboxpath':"remove"})
+        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
+        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
+        # nice.        
+        base_url = base_url[:-7] #remove "remove/" from baseURL
+        current_path =  ntpath.dirname(self.args['file']) + "/"  # path of currently inserted file 
+                                                
+        replaced = self.replacer.replace_links(contents,base_url,current_path)          
+        html_out = replaced
+        
+        #rewrite relative links
+        
+        return html_out
+    
 
 @register.tag(name = "all_projects")
 def render_all_projects(parser, token):

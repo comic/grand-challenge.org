@@ -94,15 +94,15 @@ class HtmlLinkReplacer():
             if currentpath.endswith("/"):
                 currentpath = currentpath[:-1] #remove trailing slash to make first path.dirname actually go
                                                #up one dir 
-            while re.match('\.\.',url):
+            #while re.match('\.\.',url):
                 # remove "../"                
-                url = url[3:]
+             #   url = url[3:]
                 # go up one in currentpath                
-                if currentpath == "":
-                    pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
+              #  if currentpath == "":
+               #     pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
                          # throw some kind of outsidescope error?
-                else:    
-                    currentpath = os.path.dirname(currentpath)
+                #else:    
+                 #   currentpath = os.path.dirname(currentpath)
                             
             if currentpath.endswith("/") :
                 pass
