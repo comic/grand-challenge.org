@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group,User,Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -24,7 +25,13 @@ from dataproviders import FileSystemDataProvider,DropboxDataProvider
 def giveFileUploadDestinationPath(uploadmodel,filename):
     """ Where should this file go relative to MEDIA_ROOT? """
     
-    path = os.path.join(uploadmodel.comicsite.short_name,"uploads",filename)    
+    #uploadmodel can be either a ComicSiteModel, or a ComicSite
+    if hasattr(uploadmodel,'short_name'):
+        comicsitename = uploadmodel.short_name  # is a ComicSite
+    else:
+        comicsitename = uploadmodel.comicsite.short_name # is a ComicSiteModel
+         
+    path = os.path.join(comicsitename,"uploads",filename)    
     return path
 
 
@@ -54,6 +61,8 @@ class ComicSite(models.Model):
     skin = models.CharField(max_length = 225, blank=True, help_text = "additional css to use for this comic site. Not required")    
     description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
     logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="http://www.grand-challenge.org/images/a/a7/Grey.png")
+    header_image = models.ImageField(upload_to=giveFileUploadDestinationPath,default="", help_text = "Header which will appear on top of each project page")
+    
     hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")
     
     objects = ComicSiteManager()
@@ -106,14 +115,15 @@ class ComicSite(models.Model):
         else:
             return False
   
+              
 
 class ComicSiteModel(models.Model):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions
      such as authorization.
     """
-    #user = models.ManyToManyField()
-    title = models.CharField(max_length=64, blank=True)
-    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong? Used to determine permissions")
+    #user = models.ManyToManyField()    
+    title = models.CharField(max_length=64, blank=True)    
+    comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong?")
     
     ALL = 'ALL'
     REGISTERED_ONLY = 'REG'
@@ -290,7 +300,7 @@ class ErrorPage(Page):
     class Meta:
        abstract = True  #error pages should only be generated on the fly currently. 
        
-    
+
 
 class UploadModel(ComicSiteModel):
         
@@ -393,7 +403,7 @@ class FileSystemDataset(Dataset):
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
-            os.chmod(dir,0775) #refs #142 
+            os.chmod(dir,0775) #refs #142
 
 
 class DropboxFolder(ComicSiteModel):
@@ -401,8 +411,7 @@ class DropboxFolder(ComicSiteModel):
     Information to link with a single dropbox folder 
     """        
     access_token_key = models.CharField(max_length = 255, default="", blank=True)
-    access_token_secret = models.CharField(max_length = 255, default="", blank=True)
-    
+    access_token_secret = models.CharField(max_length = 255, default="", blank=True)    
     last_status_msg = models.CharField(max_length = 1023, default="", blank=True)
         
     # status of this object, used for communicating with admin, which buttons to show 
@@ -542,5 +551,15 @@ class DropboxFolder(ComicSiteModel):
         return "Connection succeeded."
     
 
+    
+class ComicSiteFile(File):
+    """
+    A file which belongs to a certain ComicSite
+    """
+    
+    def __init__(self,comicsite):
+        self.comicsite = comicsite
+    
+        
     
     

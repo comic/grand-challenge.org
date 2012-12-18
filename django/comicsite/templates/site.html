@@ -6,7 +6,18 @@
 
 {% block pageName %} {{site.short_name}} {% endblock %}
 
-{% block headerTitle %} <a href="{%url comicsite.views.site site.short_name %}">{{site.short_name}}</a>  {% endblock %}
+{% block headerTitle %}
+	{%if site.header_image.name == "" %} 
+		<div class="noimage">
+			<a href="{%url comicsite.views.site site.short_name %}">{{site.short_name}}</a>
+		</div>  		
+	{% else %}
+		<div class="image">
+			<a href="{%url comicsite.views.site site.short_name %}"><img src="{{site.header_image.url}}"/></a>
+		</div>	
+	{% endif %}
+
+{% endblock %}
 
 	
 
