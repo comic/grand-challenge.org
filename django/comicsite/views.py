@@ -291,7 +291,7 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the 'comic' project """
     
-    site_short_name = "comic"
+    site_short_name = "comic" #TODO: put this in template tags
     
     pages = getPages(site_short_name)
     
