@@ -15,6 +15,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group,User,Permission
+from django.template import RequestContext
 from profiles.forms import SignupFormExtra
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
@@ -363,6 +364,53 @@ class InsertFileNode(template.Node):
         
         return html_out
     
+
+@register.tag(name = "url_parameter")
+def url_parameter(parser, token):    
+    """ Try to read given variable from given url. """
+
+    usagestr = """Tag usage: {% url_parameter <param_name> %} 
+                  <param_name>: The parameter to read from the requested url.
+                  Example: {% url_parameter name %} will write "John" when the
+                  requested url included ?name=John.                                    
+                  """
+    
+    split = token.split_contents()
+    tag = split[0]
+    all_args = split[1:]
+    
+    if len(all_args) != 1:
+        error_message = "Expected 1 argument, found " + str(len(all_args))
+        return TemplateErrorNode(error_message)
+    else:        
+        args = {}
+        args["url_parameter"] = all_args[0]
+    
+    args["token"] = token
+
+    return UrlParameterNode(args)
+
+
+class UrlParameterNode(template.Node):
+    
+    def __init__(self, args):
+        self.args = args
+    
+    def make_error_msg(self, msg):
+        errormsg = "Error including file '" + ",".join(self.args) + "': " + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):  
+             
+        #request= context["request"].GET[]
+        if context['request'].GET.has_key(self.args['url_parameter']): 
+            return context['request'].GET[self.args['url_parameter']] # FIXME style: is this too much in one line?
+        else:
+            error_message = "Error rendering %s: Parameter '%s' not found in request URL" % ("{%  "+self.args['token'].contents +"%}",
+                                                                                             self.args['url_parameter'])
+            return makeErrorMsgHtml(error_message)
+        
+
 
 @register.tag(name = "all_projects")
 def render_all_projects(parser, token):
