@@ -5,11 +5,12 @@ function ComicViewer2D(domElementId, options) {
   // May contain:
   // host: MeVisLab WorkerService IP
   // port: websocket port
-  this._options = {'host': "134.102.230.19", 'port': 4114, 'width': 400, 'height': 300, 'deferredLoad':false, 'extensionFilter':"", 'showBrowser':1};
+
+  this._options = {'host': "134.102.230.19", 'port': 4115, 'width': 400, 'height': 300, 'deferredLoad':false, 'extensionFilter':"", 'showBrowser':1};
   jQuery.extend(this._options, options);
   this._elementId = domElementId;
   this._elementSelector = "#"+domElementId;
-  this._mlabModuleName = "Comic_View2D"
+  this._mlabModuleName = "DIAGRemoteViewport"
   this._isInit = false;
     
   this._readyCallback = null;
@@ -94,7 +95,7 @@ function ComicViewer2D(domElementId, options) {
       self._readyCallback();
     }
     ctrl = $(self._elementSelector + " .MLABRemoteRenderingControl")[0]
-    ctrl.mlabControl.resizeViewport(self._options['width'], self._options['height']);
+    //ctrl.mlabControl.resizeViewport(self._options['width'], self._options['height']);
     if (self._options['extensionFilter']) {
         self.setExtensionFilter(self._options['extensionFilter']);
     }
