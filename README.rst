@@ -27,7 +27,7 @@ Package Requirements.
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 
+    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox
 
 
 Configuration.
