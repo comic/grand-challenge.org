@@ -17,6 +17,8 @@ urlpatterns = patterns('',
     
     url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/db/(?P<dropboxname>\w+)/(?P<dropboxpath>.+)/$','comicsite.views.dropboxpage'),
     
+    url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/insert/(?P<dropboxpath>.+)/$','comicsite.views.insertedpage'),
+    
     url(r'^(?P<site_short_name>\w+)/(?P<page_title>\w+)/$','comicsite.views.page'),
     
 )
