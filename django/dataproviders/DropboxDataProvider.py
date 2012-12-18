@@ -2,6 +2,8 @@ import pdb
 import re
 import os
 
+from django.core.files.storage import FileSystemStorage
+
 from bs4 import BeautifulSoup
 
 from dropbox import client, rest, session
@@ -14,7 +16,7 @@ from dropbox.rest import ErrorResponse
 
 class DropboxDataProvider():
     """
-    read and write files in a dropbox location
+    read and write files in a remote dropbox uing the dropbox API 
     """
 
     def __init__(self, app_key, app_secret, access_type, access_token, access_token_secret,
@@ -92,15 +94,15 @@ class HtmlLinkReplacer():
             if currentpath.endswith("/"):
                 currentpath = currentpath[:-1] #remove trailing slash to make first path.dirname actually go
                                                #up one dir 
-            while re.match('\.\.',url):
+            #while re.match('\.\.',url):
                 # remove "../"                
-                url = url[3:]
+             #   url = url[3:]
                 # go up one in currentpath                
-                if currentpath == "":
-                    pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
+              #  if currentpath == "":
+               #     pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
                          # throw some kind of outsidescope error?
-                else:    
-                    currentpath = os.path.dirname(currentpath)
+                #else:    
+                 #   currentpath = os.path.dirname(currentpath)
                             
             if currentpath.endswith("/") :
                 pass
@@ -114,4 +116,7 @@ class HtmlLinkReplacer():
               
         
         
-        
+def LocalDropboxDataProvider(FileSystemStorage):
+    """ For storing files in local folder which is synched with comicsiteframework dropbox account    
+    """
+    pass

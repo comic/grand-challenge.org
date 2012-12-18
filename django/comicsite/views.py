@@ -7,11 +7,13 @@ Testing views. Each of these views is referenced in urls.py
 '''
 import pdb
 import mimetypes
-
+from os import path
+from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
-from django.core.urlresolvers import reverse
+from django.core.files import File
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse,Http404
 from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
@@ -23,6 +25,7 @@ from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContex
 from comicsite.models import ComicSiteException
 from comicsite.templatetags import template_tags
 
+from filetransfers.api import serve_file
 from dataproviders import FileSystemDataProvider
 
 
@@ -62,8 +65,7 @@ def site(request, site_short_name):
         currentpage = page    
     else:
         currentpage = pages[0]
-        
-    
+            
     currentpage = getRenderedPageIfAllowed(currentpage,request,site)
  
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
@@ -187,6 +189,64 @@ def pagesource(request, site_short_name, page_title):
                                             context_instance=RequestContext(request))
 
 
+def errorpage(request,site_short_name,page_title,message):
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
+    page = ErrorPage(comicsite=site, title=page_title, html=message)
+    return render_to_response('page.html', {'site': site, 'currentpage': page, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+
+
+def insertedpage(request, site_short_name, page_title, dropboxpath):
+    """ show contents of a file from the local dropbox folder for this project 
+    """
+    
+    (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
+            
+
+    if mimetype == None:
+        mimetype = "NoneType"  #make the next statement not crash on non-existant mimetype
+        
+    if mimetype.startswith("image"):
+        return insertedimage(request, site_short_name, page_title, dropboxpath)
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+        
+    p = get_object_or_404(Page,comicsite__short_name=site.short_name, title=page_title)
+    
+    baselink = reverse('comicsite.views.page', kwargs = {'site_short_name':p.comicsite.short_name, 'page_title':p.title})
+    
+    msg = "<div class=\"breadcrumbtrail\"> Displaying '"+dropboxpath+"' from local dropboxfolder, originally linked from\
+           page <a href=\""+baselink+"\">"+p.title+"</a> </div>"
+    p.html = "{% insert_file "+dropboxpath+" %} <br/><br/>" + msg
+
+    currentpage = getRenderedPageIfAllowed(p,request,site)
+    
+    return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+                                            "metafooterpages":metafooterpages},
+                                            context_instance=RequestContext(request))
+
+    
+    
+
+def insertedimage(request, site_short_name, page_title,dropboxpath=""):
+    """ Get image from local dropbox and pipe through django. 
+    Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
+    from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
+    """
+    filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
+    
+    try:            
+        file = open(filename,"rb")
+    except ErrorResponse as e:
+        return self.make_dropbox_error_msg(str(e))
+    
+    django_file = File(file)
+    return serve_file(request,django_file)
+    #return response
+
+
 def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
     """ show contents of a file from dropbox account as page """
     
@@ -218,7 +278,8 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
     """
     df = get_object_or_404(DropboxFolder,title=dropboxname)    
-    provider = df.get_dropbox_data_provider()    
+    provider = df.get_dropbox_data_provider()
+    
     (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
     response = HttpResponse(provider.read(dropboxpath), content_type=mimetype)
     
