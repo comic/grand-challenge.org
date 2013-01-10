@@ -306,7 +306,10 @@ def insert_file(parser, token):
 
     usagestr = """Tag usage: {% insertfile <file> %} 
                   <file>: filepath relative to project dropboxfolder.
-                  Example: {% insertfile results/test.txt %}                                    
+                  Example: {% insertfile results/test.txt %}
+                  You can overwrite the value of <file> by adding a url param named <file> to the url call.
+                  Example: {% insterfile var1 %} called with ?var1=file1.txt appended to the url will show
+                  the contents of "file1.txt"                                                     
                   """
     
     split = token.split_contents()
@@ -335,16 +338,29 @@ class InsertFileNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-                
+        
+        # allow url parameter file=<filename> to overwrite any filename given as arg
+        # TODO: in effect any file can now be included by anyone using a url addition.
+        # This feels quite powerful but also messy. Is this proper? Redeeming fact: One can only access files
+        # inside DROPBOX_ROOT.. 
+        # TODO: does accessing a file "..\..\..\..\allyoursecrets.txt" work?
+        # TODO: designate variables more clearly. having any string possibly be a var seems messy
+        
+        filename_or_var = self.args['file']
+        if context['request'].GET.has_key(filename_or_var):  # filename_or_var was given as url param so it was a var
+            filename = context['request'].GET[filename_or_var] # use url param value as the file to load 
+        else:
+            filename = filename_or_var  
+                        
         project_name = context.page.comicsite.short_name
-        filename = path.join(settings.DROPBOX_ROOT,project_name,self.args['file'])                    
+        filename = path.join(settings.DROPBOX_ROOT,project_name,filename)                    
         
         try:            
             contents = open(filename,"r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
         
-        #check content safety
+        #TODO check content safety
         
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
