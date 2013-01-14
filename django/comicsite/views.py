@@ -86,11 +86,14 @@ def concatdicts(d1,d2):
     return dict(d1, **d2)
     
 
-def renderTags(request, p):
+def renderTags(request, p, recursecount=0):
     """ render page contents using django template system
-    This makes it possible to use tags like '{% dataset %}' in page 
-    """
+    This makes it possible to use tags like '{% dataset %}' in page content.
+    If a rendered tag results in another tag, this can be rendered recursively
+    as long as recurse limit is not exceeded.
     
+    """
+    recurselimit = 2
     rendererror = ""
     try:
         t = Template("{% load template_tags %}" + p.html)
@@ -103,7 +106,20 @@ def renderTags(request, p):
     else:
                 
         #pass page to context here to be able to render tags based on which page does the rendering
+        
         pagecontents = t.render(ComicSiteRequestContext(request,p))
+        
+        if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
+            if recursecount <= recurselimit :
+                # second round of rendering.. where is this going to stop?        
+                p2 = copy_page(p) 
+                p2.html = pagecontents
+                return renderTags(request,p2,recursecount+1)
+            else:
+                # when page contents cannot be rendered, just display raw contents and include error message on page
+                errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(recurselimit) + " </span>"
+                pagecontents = p.html + errormsg
+         
         
     return pagecontents
 
@@ -383,6 +399,9 @@ def create_HTML_a_img(link_url,image_url):
     img = "<img src=\"" + image_url + "\">"
     linked_image = create_HTML_a(link_url,img)    
     return linked_image
+
+def copy_page(page):
+    return Page(comicsite=page.comicsite,title=page.title,html=page.html)
     
 # ======================================================  debug and test ==================================================
 
@@ -416,6 +435,8 @@ def createTestPage(title="testPage",html=""):
     site.skin = ""
         
     return Page(comicsite=site,title=title,html=html)
+
+
     
 
 def givePageHTML(page):

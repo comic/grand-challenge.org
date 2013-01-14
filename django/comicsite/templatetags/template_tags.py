@@ -8,6 +8,7 @@ Custom tags to use in templates or code to render file lists etc.
 import pdb
 import datetime
 import ntpath
+import re
 from exceptions import Exception
 from os import path
 from django import template
@@ -336,6 +337,23 @@ class InsertFileNode(template.Node):
     def make_error_msg(self, msg):
         errormsg = "Error including file '" + ",".join(self.args) + "': " + msg
         return makeErrorMsgHtml(errormsg)
+    
+    def substitute(self,string,substitutions):
+        """
+        Take each key in the substitutions dict. See if this key exists
+        between double curly braces in string. If so replace with value.   
+        
+        Example: 
+        substitute("my name is {{name}}.",{version:1,name=John})
+        > "my name is John"
+        """
+        
+        for key,value in substitutions:
+            string = re.sub("{{"+key+"}}",value,string)
+            
+        return string
+        
+        
 
     def render(self, context):
         
@@ -346,14 +364,13 @@ class InsertFileNode(template.Node):
         # TODO: does accessing a file "..\..\..\..\allyoursecrets.txt" work?
         # TODO: designate variables more clearly. having any string possibly be a var seems messy
         
-        filename_or_var = self.args['file']
-        if context['request'].GET.has_key(filename_or_var):  # filename_or_var was given as url param so it was a var
-            filename = context['request'].GET[filename_or_var] # use url param value as the file to load 
-        else:
-            filename = filename_or_var  
-                        
+        # context["request"].GET contains a queryDict of all url parameters.
+        
+        filename_raw = self.args['file']        
+        filename_clean = self.substitute(filename_raw,context["request"].GET.items())
+                 
         project_name = context.page.comicsite.short_name
-        filename = path.join(settings.DROPBOX_ROOT,project_name,filename)                    
+        filename = path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
         
         try:            
             contents = open(filename,"r").read()
@@ -371,8 +388,9 @@ class InsertFileNode(template.Node):
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
         # nice.        
         base_url = base_url[:-7] #remove "remove/" from baseURL
-        current_path =  ntpath.dirname(self.args['file']) + "/"  # path of currently inserted file 
-                                                
+        current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
+                      
+                                  
         replaced = self.replacer.replace_links(contents,base_url,current_path)          
         html_out = replaced
         
