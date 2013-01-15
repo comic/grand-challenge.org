@@ -26,6 +26,7 @@ from comicsite.models import ComicSiteException
 from comicsite.templatetags import template_tags
 
 from filetransfers.api import serve_file
+from filetransfers.views import download_handler_file
 from dataproviders import FileSystemDataProvider
 
 
@@ -108,9 +109,9 @@ def renderTags(request, p, recursecount=0):
         #pass page to context here to be able to render tags based on which page does the rendering
         
         pagecontents = t.render(ComicSiteRequestContext(request,p))
-        
+                
         if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
-            if recursecount <= recurselimit :
+            if recursecount < recurselimit :
                 # second round of rendering.. where is this going to stop?        
                 p2 = copy_page(p) 
                 p2.html = pagecontents
@@ -225,7 +226,15 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
         mimetype = "NoneType"  #make the next statement not crash on non-existant mimetype
         
     if mimetype.startswith("image"):
-        return insertedimage(request, site_short_name, page_title, dropboxpath)
+        return inserted_file(request, site_short_name, page_title, dropboxpath)
+    
+    if mimetype == "application/pdf" or mimetype == "application/zip":
+        return inserted_file(request, site_short_name, page_title, dropboxpath)
+        
+        #filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
+        #return download_handler_file(request,filename)        
+        #return offerdownload
+    
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
         
@@ -246,7 +255,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     
     
 
-def insertedimage(request, site_short_name, page_title,dropboxpath=""):
+def inserted_file(request, site_short_name, page_title,dropboxpath=""):
     """ Get image from local dropbox and pipe through django. 
     Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
