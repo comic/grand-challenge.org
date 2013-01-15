@@ -13,10 +13,6 @@ label { display:block; float:left; width:180px; }
 span.required:after { content: " *"; color: #f00; }
 span.help_text { font-size:8pt; color:#666; }
 
-/* Formatting for tables*/
-#mainContent table{border-collapse: collapse; border: 1px solid black; margin-top:2em;}
-#mainContent table td{border: 1px solid black;}
-*/
 
 /* profile navigation menu */
 ul#box-nav { height:50px; list-style-type:none; }

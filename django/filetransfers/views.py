@@ -48,8 +48,8 @@ def uploadedfileserve_handler(request, pk):
         return HttpResponse("You do not have permission to view this.")
     
     
-def download_handler_filename(request, project_name, dataset_title,filename):    
-    """offer file for download based on filename """
+def download_handler_dataset_file(request, project_name, dataset_title,filename):    
+    """offer file for download based on filename and dataset"""
     
     dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
     filefolder = dataset.get_full_folder_path()
@@ -58,6 +58,16 @@ def download_handler_filename(request, project_name, dataset_title,filename):
     file = File(f) # create django file object
             
     return serve_file(request, file, save_as=True)
+
+def download_handler_file(request, filepath):    
+    """offer file for download based on filepath relative to django root"""
+                    
+    f = open(filepath, 'r')
+    file = File(f) # create django file object
+            
+    return serve_file(request, file, save_as=True)
+
+
 
 
 def delete_handler(request, pk):

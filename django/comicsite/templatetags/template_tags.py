@@ -17,6 +17,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group,User,Permission
 from django.template import RequestContext
+from django.utils.html import escape
 from profiles.forms import SignupFormExtra
 from dataproviders import FileSystemDataProvider
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
@@ -157,10 +158,10 @@ class DatasetNode(template.Node):
         links = []
         for filename in filenames:
 
-            downloadlink = reverse('filetransfers.views.download_handler_filename', kwargs = {'project_name':dataset.comicsite.short_name,
+            downloadlink = reverse('filetransfers.views.download_handler_dataset_file', kwargs = {'project_name':dataset.comicsite.short_name,
                                                                                             'dataset_title':dataset.title,
                                                                                             'filename':filename})
-            #<a href="{% url filetransfers.views.download_handler_filename project_name='VESSEL12' dataset_title='vessel12' filename='test.png' %}">test </a>
+            #<a href="{% url filetransfers.views.download_handler_dataset_file project_name='VESSEL12' dataset_title='vessel12' filename='test.png' %}">test </a>
             links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
 
         description = dataset.description
@@ -308,9 +309,9 @@ def insert_file(parser, token):
     usagestr = """Tag usage: {% insertfile <file> %} 
                   <file>: filepath relative to project dropboxfolder.
                   Example: {% insertfile results/test.txt %}
-                  You can overwrite the value of <file> by adding a url param named <file> to the url call.
-                  Example: {% insterfile var1 %} called with ?var1=file1.txt appended to the url will show
-                  the contents of "file1.txt"                                                     
+                  You can use url parameters in <file> by using {{curly braces}}.
+                  Example: {% insterfile {{id}}/result.txt %} called with ?id=1234 
+                  appended to the url will show the contents of "1234/result.txt".                                                                       
                   """
     
     split = token.split_contents()
@@ -334,14 +335,14 @@ class InsertFileNode(template.Node):
         self.args = args
         self.replacer = replacer
 
-    def make_error_msg(self, msg):
-        errormsg = "Error including file '" + ",".join(self.args) + "': " + msg
+    def make_error_msg(self, msg):        
+        errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
         return makeErrorMsgHtml(errormsg)
     
     def substitute(self,string,substitutions):
         """
         Take each key in the substitutions dict. See if this key exists
-        between double curly braces in string. If so replace with value.   
+        between double curly braces in string. If so replace with value.        
         
         Example: 
         substitute("my name is {{name}}.",{version:1,name=John})
@@ -350,7 +351,7 @@ class InsertFileNode(template.Node):
         
         for key,value in substitutions:
             string = re.sub("{{"+key+"}}",value,string)
-            
+        
         return string
         
         
@@ -366,8 +367,21 @@ class InsertFileNode(template.Node):
         
         # context["request"].GET contains a queryDict of all url parameters.
         
-        filename_raw = self.args['file']        
+        filename_raw = self.args['file']                
         filename_clean = self.substitute(filename_raw,context["request"].GET.items())
+        
+        # If any url parameters are still in filename they were not replaced. This filename
+        # is missing information..
+        if re.search("{{\w+}}",filename_clean):
+            
+            missed_parameters = re.findall("{{\w+}}",filename_clean)
+            found_parameters = context["request"].GET.items()
+                    
+            if found_parameters == []:
+                found_parameters = "None"
+            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
+                        "" % (missed_parameters, found_parameters)             
+            return self.make_error_msg(error_msg)
                  
         project_name = context.page.comicsite.short_name
         filename = path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
@@ -568,11 +582,19 @@ class TemplateErrorNode(template.Node):
     """Render error message in place of this template tag. This makes it directly obvious where the error occured
     """
     def __init__(self, errormsg):
-        self.msg = errormsg
+        self.msg = HTML_encode_django_chars(errormsg)
 
     def render(self, context):
         return makeErrorMsgHtml(self.msg)
 
+
+def HTML_encode_django_chars(string):
+    """replace curly braces and percent signs by their html encoded equivolents    
+    """ 
+    string = string.replace("{","&#123;")
+    string = string.replace("}","&#125;")
+    string = string.replace("%","&#37;")    
+    return string
 
 def makeHTMLLink(url, linktext):
     return "<a href=\"" + url + "\">" + linktext + "</a>"
@@ -588,5 +610,5 @@ def hasImgExtension(filename):
 
 
 def makeErrorMsgHtml(text):
-     errorMsgHTML = "<p><span class=\"pageError\"> " + text + " </span></p>"
+     errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(text) + " </span></p>"
      return errorMsgHTML;
