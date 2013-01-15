@@ -26,6 +26,7 @@ from comicsite.models import ComicSiteException
 from comicsite.templatetags import template_tags
 
 from filetransfers.api import serve_file
+from filetransfers.views import download_handler_file
 from dataproviders import FileSystemDataProvider
 
 
@@ -86,11 +87,14 @@ def concatdicts(d1,d2):
     return dict(d1, **d2)
     
 
-def renderTags(request, p):
+def renderTags(request, p, recursecount=0):
     """ render page contents using django template system
-    This makes it possible to use tags like '{% dataset %}' in page 
-    """
+    This makes it possible to use tags like '{% dataset %}' in page content.
+    If a rendered tag results in another tag, this can be rendered recursively
+    as long as recurse limit is not exceeded.
     
+    """
+    recurselimit = 2
     rendererror = ""
     try:
         t = Template("{% load template_tags %}" + p.html)
@@ -103,7 +107,20 @@ def renderTags(request, p):
     else:
                 
         #pass page to context here to be able to render tags based on which page does the rendering
+        
         pagecontents = t.render(ComicSiteRequestContext(request,p))
+                
+        if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
+            if recursecount < recurselimit :
+                # second round of rendering.. where is this going to stop?        
+                p2 = copy_page(p) 
+                p2.html = pagecontents
+                return renderTags(request,p2,recursecount+1)
+            else:
+                # when page contents cannot be rendered, just display raw contents and include error message on page
+                errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(recurselimit) + " </span>"
+                pagecontents = p.html + errormsg
+         
         
     return pagecontents
 
@@ -209,7 +226,15 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
         mimetype = "NoneType"  #make the next statement not crash on non-existant mimetype
         
     if mimetype.startswith("image"):
-        return insertedimage(request, site_short_name, page_title, dropboxpath)
+        return inserted_file(request, site_short_name, page_title, dropboxpath)
+    
+    if mimetype == "application/pdf" or mimetype == "application/zip":
+        return inserted_file(request, site_short_name, page_title, dropboxpath)
+        
+        #filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
+        #return download_handler_file(request,filename)        
+        #return offerdownload
+    
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
         
@@ -230,7 +255,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     
     
 
-def insertedimage(request, site_short_name, page_title,dropboxpath=""):
+def inserted_file(request, site_short_name, page_title,dropboxpath=""):
     """ Get image from local dropbox and pipe through django. 
     Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
@@ -291,7 +316,7 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the 'comic' project """
     
-    site_short_name = "comic"
+    site_short_name = "comic" #TODO: put this in template tags
     
     pages = getPages(site_short_name)
     
@@ -383,6 +408,9 @@ def create_HTML_a_img(link_url,image_url):
     img = "<img src=\"" + image_url + "\">"
     linked_image = create_HTML_a(link_url,img)    
     return linked_image
+
+def copy_page(page):
+    return Page(comicsite=page.comicsite,title=page.title,html=page.html)
     
 # ======================================================  debug and test ==================================================
 
@@ -416,6 +444,8 @@ def createTestPage(title="testPage",html=""):
     site.skin = ""
         
     return Page(comicsite=site,title=title,html=html)
+
+
     
 
 def givePageHTML(page):
