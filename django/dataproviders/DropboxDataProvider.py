@@ -77,6 +77,8 @@ class HtmlLinkReplacer():
         handles root-relative url (e.g "/admin/index.html") and regular relative url
         (e.g. "images/test.png") correctly   
         """
+        
+        
         # leave absolute links alone
         if re.match('http://',url) or re.match('https://',url):
               pass
@@ -110,6 +112,8 @@ class HtmlLinkReplacer():
                 if not currentpath == "":
                     currentpath = currentpath + "/"
             url =  baseURL + currentpath + url
+                    
+        url = url.replace("//","/") # remove double slashes because this can mess up django's url system 
         
         return url
               

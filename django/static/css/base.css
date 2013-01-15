@@ -13,6 +13,7 @@ label { display:block; float:left; width:180px; }
 span.required:after { content: " *"; color: #f00; }
 span.help_text { font-size:8pt; color:#666; }
 
+
 /* profile navigation menu */
 ul#box-nav { height:50px; list-style-type:none; }
 ul#box-nav li { float:left; margin-right:2px; padding:10px; position:relative; background-color:#eee; border-style:solid solid none solid; border-width:2px; border-color:#eee; }
@@ -70,6 +71,8 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .breadcrumbtrail{font-size: x-small; color:#CCCCCC;}
 .breadcrumbtrail a {text-decoration:none; color:#999999;}
 .errorlist {color: red;}
+
+
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
