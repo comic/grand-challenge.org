@@ -28,7 +28,8 @@ function ComicViewer2D(domElementId, options) {
         $(self._elementSelector + " .MLABMLItemModelViewControl").hide();
       }
       if (self._options['deferredLoad']) {
-        $(self._elementSelector).html("<br><br>Please click me to load");
+        $(self._elementSelector).html("<br/><br/>Click to load image viewer");
+        $(self._elementSelector).css("text-align", "center");
         $(self._elementSelector).css("background", "nil");
         $(self._elementSelector).css("background-color", "#333");
         $(self._elementSelector).css("color", "white");
