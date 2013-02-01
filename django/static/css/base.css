@@ -47,6 +47,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
 
+
 /* main page, base.html */
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
