@@ -226,7 +226,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
         mimetype = "NoneType"  #make the next statement not crash on non-existant mimetype
         
     if mimetype.startswith("image"):
-        return inserted_file(request, site_short_name, page_title, dropboxpath)
+        return inserted_file(request, site_short_name, dropboxpath)
     
     if mimetype == "application/pdf" or mimetype == "application/zip":
         return inserted_file(request, site_short_name, page_title, dropboxpath)
@@ -253,19 +253,17 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
                                             context_instance=RequestContext(request))
 
     
-    
-
-def inserted_file(request, site_short_name, page_title,dropboxpath=""):
+def inserted_file(request, site_short_name, filepath=""):
     """ Get image from local dropbox and pipe through django. 
     Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
-    """
-    filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
+    """    
+    filename = path.join(settings.DROPBOX_ROOT,site_short_name,filepath)
     
     try:            
         file = open(filename,"rb")
-    except ErrorResponse as e:
-        return self.make_dropbox_error_msg(str(e))
+    except Exception:
+        raise Http404
     
     django_file = File(file)
     return serve_file(request,django_file)

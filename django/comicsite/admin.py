@@ -26,6 +26,7 @@ from guardian.shortcuts import get_objects_for_user,assign
 
 from comicmodels.models import ComicSite,Page
 from comicmodels.signals import new_admin,removed_admin
+from comicmodels.admin import ComicModelAdmin
 
 class PageAdminForm(forms.ModelForm):
     move = forms.CharField(widget=forms.Select)
@@ -37,12 +38,11 @@ class PageAdminForm(forms.ModelForm):
                          ('DOWN', 'Down'),
                          ('LAST', 'Last'),
                         )
-        
     
     class Meta:
         model = Page
 
-class PageAdmin(GuardedModelAdmin):
+class PageAdmin(ComicModelAdmin):
     """Define the admin interface for pages"""
     
     form = PageAdminForm
@@ -149,8 +149,34 @@ class PageAdmin(GuardedModelAdmin):
             return HttpResponseRedirect(post_url)
 
 
-    def response_add(self, request, obj, post_url_continue=None):        
-        return self.response_change(request, obj, post_url_continue)
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        """So I have a jquery WYSIWYG editor (ckedit) on the page source (field Html). This editor can also do
+           'upload image' and I want the upload to go to a different folder based on the comicsite you are editing.
+           This proved esceedingly and exasperatingly difficult. 
+           Solution now: just add the comicsite as attribute to each **** field.widget in the form. if possible
+           TODO: can this be different? This solution makes me cry but I see no other at the moment.  
+           """
+        
+        for field in context['adminform'].form.fields.values():
+                                    
+            if hasattr(field.widget,"config"):
+                
+                if hasattr(obj,"comicsite"):
+                    # editing a page, get comicsite from the object you're editing
+                    field.widget.config['comicsite'] = obj.comicsite.short_name
+                    
+                elif request.GET.has_key("comicsite"):
+                    # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages                    
+                    comicsite_short_name = ComicSite.objects.get(pk=request.GET["comicsite"]).short_name
+                    field.widget.config['comicsite'] = comicsite_short_name
+                else:
+                    #what is going on here
+                    raise KeyError("Cannot determine to which project this page belongs. I don't know where to upload images which might be uploaded.")
+                
+                
+            
+        template_response = super(ComicModelAdmin, self).render_change_form(request, context, add, change, form_url, obj)            
+        return template_response
 
 
     

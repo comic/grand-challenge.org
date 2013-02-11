@@ -15,9 +15,10 @@ from django.db.models import Max
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 
-from guardian.shortcuts import assign,remove_perm
+from ckeditor.fields import RichTextField
 from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
+from guardian.shortcuts import assign,remove_perm
 
 from dataproviders import FileSystemDataProvider,DropboxDataProvider
 
@@ -70,12 +71,17 @@ class ComicSite(models.Model):
     def __unicode__(self):
         """ string representation for this object"""
         return self.short_name
-            
+       
     
     def clean(self):
         """ clean method is called automatically for each save in admin"""
         pass
         #TODO check whether short name is really clean and short!        
+    
+    def upload_dir(self):
+        """Where to get and put uploaded files? """
+        return os.path.join(settings.MEDIA_ROOT,self.short_name,"uploads")
+         
             
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
@@ -114,6 +120,7 @@ class ComicSite(models.Model):
             return True
         else:
             return False
+     
   
               
 
@@ -231,7 +238,7 @@ class Page(ComicSiteModel):
     order = models.IntegerField(editable=False, default=1, help_text = "Determines order in which page appear in site menu")        
     display_title = models.CharField(max_length = 255, default="", blank=True, help_text = "On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used")
     hidden = models.BooleanField(default=False, help_text = "Do not display this page in site menu")
-    html = models.TextField()
+    html = RichTextField()
     
     
     def clean(self):
@@ -329,7 +336,7 @@ class UploadModel(ComicSiteModel):
                 # We should have a custom storage class For Uploadmodels. The storage
                 # class should know to save objects to their respective project 
                 
-                validFilePath = self.file.storage.get_available_name(self.file.field.generate_filename(self,self.file.name))                 
+                validFilePath = self.file.storage.get_available_name(self.file.field.generate_filename(self,self.file.name))                               
                 self.title = os.path.basename(validFilePath)
             else:
                 
