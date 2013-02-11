@@ -48,8 +48,7 @@ class CKEditorWidget(forms.Textarea):
         self.config = DEFAULT_CONFIG.copy()
 
         # Try to get valid config from settings.
-        configs = getattr(settings, 'CKEDITOR_CONFIGS', None)
-        pdb.set_trace()
+        configs = getattr(settings, 'CKEDITOR_CONFIGS', None)        
         if configs != None:
             if isinstance(configs, dict):
                 # Make sure the config_name exists.
@@ -61,8 +60,7 @@ class CKEditorWidget(forms.Textarea):
                                 setting must be a dictionary type.' % \
                                 config_name)
                     # Override defaults with settings config.
-                    self.config.update(config)
-                    pdb.set_trace()
+                    self.config.update(config)                    
                     
                 else:
                     raise ImproperlyConfigured("No configuration named '%s' \

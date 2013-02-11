@@ -56,7 +56,7 @@ def _register(request, site_short_name):
     
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
-def site(request, site_short_name):
+def site(request, site_short_name):    
     """ Register the current user for the given comicsite """
    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    

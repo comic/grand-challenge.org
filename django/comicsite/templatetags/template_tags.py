@@ -28,6 +28,20 @@ from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider,HtmlLinkReplacer  #TODO: move HtmlLinkReplacer to better location..
 
 
+def getinfo(module):
+    """
+        
+        get usage and info for all tags, would be handy to show list of available tags to user in editor.
+        Searches all classes in module for a variable "info" and adds this to list if possible.  
+    """
+    infos = []    
+    for object in vars(module).values():   
+             
+        if hasattr(object,"info"):
+            infos.append(object.info)
+    
+    return infos        
+    
 
 def parseKeyValueToken(token):
     """
@@ -121,6 +135,9 @@ def render_dataset(parser, token):
 class DatasetNode(template.Node):
     """ Show list of linked files for given dataset 
     """
+    
+    info = {"tag":"{% dataset %}",
+            "description":"Render a dataset"};
 
     def __init__(self, dataset_title, project_name):
         self.dataset_title = dataset_title
