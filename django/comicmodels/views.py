@@ -33,7 +33,8 @@ def upload_handler(request,site_short_name):
         
         
         form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)
-               
+        
+        pdb.set_trace()
         if form.is_valid():        
             form.save()
             return HttpResponseRedirect(view_url)
@@ -69,4 +70,5 @@ def upload_handler(request,site_short_name):
         {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
          'uploads': uploadsforcurrentsite,'site': site,'pages': pages, 
          'metafooterpages' : metafooterpages})
+
 

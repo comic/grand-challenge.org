@@ -5,8 +5,10 @@ from exceptions import AttributeError,Exception
 from django import forms
 from django.db import models
 from django.conf import settings
+from django.contrib.admin.util import unquote
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
+
 
 from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
@@ -45,9 +47,8 @@ class ComicModelAdmin(GuardedModelAdmin):
             get_objects_for_users """ 
         
         return get_objects_for_user(request.user, self.permission_name,self)
-    
-    
-
+        
+        
 class FileSystemDatasetForm(forms.ModelForm):
                 
     folder = forms.CharField(widget=forms.TextInput(attrs={'size': 60}),help_text = "All files for this dataset are stored in this folder on disk")
@@ -104,9 +105,6 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
             get_objects_for_users """ 
         
         return get_objects_for_user(request.user, self.permission_name,self)
-                        
-                        
-                        
     
         
 class UploadModelAdmin(ComicModelAdmin):

@@ -40,6 +40,9 @@ urlpatterns = patterns('',
     # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
     url(r'^django_dropbox/',include('django_dropbox.urls')),
     
+    # WYSIWYG editor for HTML
+    (r'^ckeditor/', include('ckeditor.urls')),
+    
 )
 
 if settings.DEBUG:
