@@ -4,16 +4,21 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 if 'ckeditor' in settings.INSTALLED_APPS:
+    
+    # Sjoerd 02/2013: Disabled this check as we use dynamic upload path based
+    #                 on MEDIA_ROOT
+    
     # Confirm CKEDITOR_UPLOAD_PATH setting has been specified.
-    try:
-        settings.CKEDITOR_UPLOAD_PATH
-    except AttributeError:
-        raise ImproperlyConfigured("django-ckeditor requires \
-                CKEDITOR_UPLOAD_PATH setting. This setting specifies an \
-                absolute path to your ckeditor media upload directory. Make \
-                sure you have write permissions for the path, i.e.: \
-                CKEDITOR_UPLOAD_PATH = '/home/media/media.lawrence.com/\
-                uploads'")
+    #try:
+    #    settings.CKEDITOR_UPLOAD_PATH
+    #except AttributeError:
+    #    
+    #    raise ImproperlyConfigured("django-ckeditor requires \
+    #            CKEDITOR_UPLOAD_PATH setting. This setting specifies an \
+    #            absolute path to your ckeditor media upload directory. Make \
+    #            sure you have write permissions for the path, i.e.: \
+    #            CKEDITOR_UPLOAD_PATH = '/home/media/media.lawrence.com/\
+    #            uploads'")
 
     # If a CKEDITOR_UPLOAD_PATH settings has been specified, confirm it exists.
     if getattr(settings, 'CKEDITOR_UPLOAD_PATH', None):
