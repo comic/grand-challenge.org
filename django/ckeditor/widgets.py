@@ -23,6 +23,7 @@ DEFAULT_CONFIG = {
 }
 
 
+
 class CKEditorWidget(forms.Textarea):
     """
     Widget providing CKEditor for Rich Text Editing.
@@ -48,6 +49,7 @@ class CKEditorWidget(forms.Textarea):
 
         # Try to get valid config from settings.
         configs = getattr(settings, 'CKEDITOR_CONFIGS', None)
+        pdb.set_trace()
         if configs != None:
             if isinstance(configs, dict):
                 # Make sure the config_name exists.
@@ -60,6 +62,8 @@ class CKEditorWidget(forms.Textarea):
                                 config_name)
                     # Override defaults with settings config.
                     self.config.update(config)
+                    pdb.set_trace()
+                    
                 else:
                     raise ImproperlyConfigured("No configuration named '%s' \
                             found in your CKEDITOR_CONFIGS setting." % \
