@@ -245,17 +245,25 @@ class ComicSiteAdmin(admin.ModelAdmin):
     # will be heeded again.
     change_form_template = None
     
-    list_display = ('short_name','hidden')    
+    list_display = ('short_name','link','hidden')    
     #list_filter = ['comicsite']
     form = ComicSiteAdminForm
     inlines = [PageInline]
     
-    readonly_fields = ("manage_admin_link",)
+    readonly_fields = ("manage_admin_link",'link')
     
     
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'
     
+    
+    def link(self,obj):    
+        link_url = reverse('comicsite.views.site', args=[obj.short_name])
+        link_text = "view "+obj.short_name
+        link_html = "<a href=\"" + link_url + "\">" +  link_text + "</a>"
+        return link_html
+    link.allow_tags = True
+        
     
     def manage_admin_link(self,instance):
         return "<a href=\"admins\">View, Add or Remove Administrators for this project</a>"    
