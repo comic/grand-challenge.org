@@ -213,14 +213,26 @@ class PageInline(LinkedInline):
     model = Page
     extra = 0    
     
-    fields = ('title','html_trunc','hidden','order')
+    fields = ('title','html_trunc','link','hidden','order')
     # make sure page is only displayed, not edited
     #readonly_fields=("title","html")
-    readonly_fields=('title','html_trunc','hidden','order')
+    readonly_fields=('title','html_trunc','link','hidden','order')
         
     
     def html_trunc(self,obj):
         return obj.html[:300]
+    
+    def link(self,obj):
+        
+        #def page(request, site_short_name, page_title):
+        
+        """ Link to page directly so you can view it as regular user"""    
+        link_url = reverse('comicsite.views.page', kwargs={"site_short_name":obj.comicsite.short_name, "page_title":obj.title})
+        link_text = "view "+obj.title
+        link_html = "<a href=\"" + link_url + "\">" +  link_text + "</a>"
+        
+        return link_html
+    link.allow_tags = True
 
 
 class ComicSiteAdminForm(forms.ModelForm):
@@ -257,7 +269,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
         'admin/comicmodels/admin_manage.html'
     
     
-    def link(self,obj):    
+    def link(self,obj):
+        """ link to current project, so you can easily view project """
         link_url = reverse('comicsite.views.site', args=[obj.short_name])
         link_text = "view "+obj.short_name
         link_html = "<a href=\"" + link_url + "\">" +  link_text + "</a>"
