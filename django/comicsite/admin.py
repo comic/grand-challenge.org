@@ -126,10 +126,10 @@ class PageAdmin(ComicModelAdmin):
                                         (opts.app_label, module_name),
                                         current_app=self.admin_site.name))
         #========== elif added by Sjoerd ======== 
-        elif "save_goto_page" in request.POST:
-                        
+        elif "save_goto_page" in request.POST:                        
             #comicsite.views.page site.short_name page.title
             return HttpResponseRedirect(reverse("comicsite.views.page",args=[obj.comicsite.short_name,obj.title]))
+                
         #========== below edited by Sjoerd ========
         else:
             self.message_user(request, msg)

@@ -4,8 +4,8 @@
 {% block after_related_objects %}
   {% if original.pk %}
     <div class="submit-row">
-      <p class="deletelink-box"></p>
-      
+      <p class="deletelink-box"></p>      
+      <a class="editPageLink" href="{% url comicsite.views.page original.comicsite.short_name original.title %}">Cancel and return to page</a>      
       <input type="submit" value="Save and return to page" name="save_goto_page">
       
       
