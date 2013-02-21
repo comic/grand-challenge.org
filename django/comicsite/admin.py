@@ -28,6 +28,76 @@ from comicmodels.models import ComicSite,Page
 from comicmodels.signals import new_admin,removed_admin
 from comicmodels.admin import ComicModelAdmin
 
+
+# ======================= testing creating of custom admin
+# Almost same import as in django.contrib.admin
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.contrib.admin.options import ModelAdmin, HORIZONTAL, VERTICAL
+from django.contrib.admin.options import StackedInline, TabularInline
+# NOTICE: that we are not importing site here!
+# basically this is the only one import you'll need
+# other imports required if you want easy replace standard admin package with yours
+from django.contrib.admin.sites import AdminSite
+from django.contrib.admin.filters import (ListFilter, SimpleListFilter,
+    FieldListFilter, BooleanFieldListFilter, RelatedFieldListFilter,
+    ChoicesFieldListFilter, DateFieldListFilter, AllValuesFieldListFilter)
+
+class ProjectAdminSite(AdminSite):
+    """ """
+    pass
+
+    def get_urls(self):
+        from django.conf.urls import patterns, url, include
+        from django.conf import settings
+        from functools import update_wrapper
+        from django.contrib.contenttypes import views as contenttype_views
+        
+        pdb.set_trace()
+        if settings.DEBUG:
+            self.check_dependencies()
+
+        def wrap(view, cacheable=False):
+            def wrapper(*args, **kwargs):
+                return self.admin_view(view, cacheable)(*args, **kwargs)
+            return update_wrapper(wrapper, view)
+
+        # Admin-site-wide views.
+        urlpatterns = patterns('',
+            url(r'^$',
+                wrap(self.index),
+                name='index'),
+            url(r'^logout/$',
+                wrap(self.logout),
+                name='logout'),
+            url(r'^password_change/$',
+                wrap(self.password_change, cacheable=True),
+                name='password_change'),
+            url(r'^password_change/done/$',
+                wrap(self.password_change_done, cacheable=True),
+                name='password_change_done'),
+            url(r'^jsi18n/$',
+                wrap(self.i18n_javascript, cacheable=True),
+                name='jsi18n'),
+            url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
+                wrap(contenttype_views.shortcut)),
+            url(r'^(?P<app_label>\w+)/$',
+                wrap(self.app_index),
+                name='app_list')
+        )
+
+        # Add in each model's views.
+        for model, model_admin in self._registry.iteritems():
+            urlpatterns += patterns('',
+                url(r'^%s/%s/' % (model._meta.app_label, model._meta.module_name),
+                    include(model_admin.urls))
+            )
+        return urlpatterns
+
+
+projectadminsite =  ProjectAdminSite(name="projectadmin",app_name="projectadmin")
+
+# ======================= end testing creating of custom admin
+
 class PageAdminForm(forms.ModelForm):
     move = forms.CharField(widget=forms.Select)
     move.required = False
@@ -487,5 +557,12 @@ admin.site.register(Page,PageAdmin)
 
 
     
+# DEBUG ==================================
+# Let's create AdminSite instance
+# NOTICE: here you can ovverride admin class and create your own AdminSite implementation
+
+
+projectadminsite.register(Page,PageAdmin)
+
 
     
