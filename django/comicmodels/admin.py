@@ -236,10 +236,3 @@ class DropboxFolderAdmin(ComicModelAdmin):
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 admin.site.register(DropboxFolder,DropboxFolderAdmin)
-
-    
-    
-
-
-
- 
