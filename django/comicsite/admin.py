@@ -44,23 +44,30 @@ from django.contrib.admin.filters import (ListFilter, SimpleListFilter,
 from django.views.decorators.cache import never_cache
 from django.utils.text import capfirst
 from django.template.response import TemplateResponse
+from django.views.decorators.csrf import csrf_protect
+from functools import update_wrapper
+from django.core.urlresolvers import reverse, NoReverseMatch
 
 
 class ProjectAdminSite(AdminSite):
-    """ """
-    pass
+    """Admin for a specific project. Only shows and allows access to object associated with that project"""
+    
+    site_short_name = ""
+    #def __init__(self, name='admin', app_name='admin'):
+     #   self.site_short_name 
+      #  super(ProjectAdminSite,self).__init__(name,app_name)
 
     def get_urls(self):
         from django.conf.urls import patterns, url, include
         from django.conf import settings
-        from functools import update_wrapper
+        
         from django.contrib.contenttypes import views as contenttype_views
             
         if settings.DEBUG:
             self.check_dependencies()
 
         def wrap(view, cacheable=False):
-            def wrapper(*args, **kwargs):
+            def wrapper(*args, **kwargs):                
                 return self.admin_view(view, cacheable)(*args, **kwargs)
             return update_wrapper(wrapper, view)
 
@@ -96,6 +103,28 @@ class ProjectAdminSite(AdminSite):
             )
         return urlpatterns
 
+    def admin_view(self, view, cacheable=False):
+        """
+        Changes to original admin view: this one passes kwargs to the view as 'extra_context'. This way the 
+        url argument site_short_name gets passed to all the admin functions so they can do project specific
+        stuff.
+        """
+        def inner(request, *args, **kwargs):            
+            if not self.has_permission(request):
+                if request.path == reverse('admin:logout',
+                                           current_app=self.name):
+                    index_path = reverse('admin:index', current_app=self.name)
+                    return HttpResponseRedirect(index_path)
+                return self.login(request)
+            return view(request,*args,extra_context=kwargs)
+        if not cacheable:
+            inner = never_cache(inner)
+        # We add csrf_protect here so this function can be used as a utility
+        # function for any view, without having to repeat 'csrf_protect'.
+        if not getattr(view, 'csrf_exempt', False):
+            inner = csrf_protect(inner)
+        return update_wrapper(inner, view)
+    
     @never_cache
     def index(self, request, extra_context=None):
         """                 
@@ -108,7 +137,7 @@ class ProjectAdminSite(AdminSite):
         they should be "reverse('projectadmin". Just copying the whole thing seems a bad solution but I see 
         no other way to overwrite. Why is the reverse not based on app_name property? Done that here. 
         """
-        
+        pdb.set_trace
         app_dict = {}
         user = request.user
         for model, model_admin in self._registry.items():
@@ -125,15 +154,18 @@ class ProjectAdminSite(AdminSite):
                     model_dict = {
                         'name': capfirst(model._meta.verbose_name_plural),
                         'perms': perms,
-                    }
+                    }                    
+                    
+                    site_short_name = extra_context['site_short_name']
+                    print "site_short_name was " + site_short_name    
                     if perms.get('change', False):
                         try:
-                            model_dict['admin_url'] = reverse(self.app_name+':%s_%s_changelist' % info, current_app=self.name)
+                            model_dict['admin_url'] = reverse(self.app_name+':%s_%s_changelist' % info, current_app=self.name,kwargs={'site_short_name':site_short_name})
                         except NoReverseMatch:
                             pass
                     if perms.get('add', False):
                         try:
-                            model_dict['add_url'] = reverse(self.app_name+':%s_%s_add' % info, current_app=self.name)
+                            model_dict['add_url'] = reverse(self.app_name+':%s_%s_add' % info, current_app=self.name,kwargs={'site_short_name':site_short_name})
                         except NoReverseMatch:
                             pass
                     if app_label in app_dict:
@@ -141,7 +173,7 @@ class ProjectAdminSite(AdminSite):
                     else:
                         app_dict[app_label] = {
                             'name': app_label.title(),
-                            'app_url': reverse(self.app_name+':app_list', kwargs={'app_label': app_label}, current_app=self.name),
+                            'app_url': reverse(self.app_name+':app_list', kwargs={'app_label': app_label,'site_short_name':site_short_name}, current_app=self.name),
                             'has_module_perms': has_module_perms,
                             'models': [model_dict],
                         }

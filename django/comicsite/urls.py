@@ -8,9 +8,11 @@ urlpatterns = patterns('',
     
     url(r'^test/sendEmail/$','comicsite.views.sendEmail'),
     
-    url(r'^admin/', include(projectadminsite.urls)),
-                            
+    #url(r'^admin/', include(projectadminsite.urls)),
+                             
     url(r'^(?P<site_short_name>\w+)/$','comicsite.views.site'),
+    
+    url(r'^(?P<site_short_name>\w+)/admin/', include(projectadminsite.urls)),
     
     url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),
     
