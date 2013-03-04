@@ -46,8 +46,6 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .metaFooterMenuItem {color:#cccccc; float:left; margin-left:10px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
-
-
 /* main page, base.html */
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
@@ -58,7 +56,6 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
 #copyrightNotice{ width:370px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
-
 
 .comicSiteSummary .thumb { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
