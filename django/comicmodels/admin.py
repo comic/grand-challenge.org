@@ -47,6 +47,7 @@ class ComicModelAdmin(GuardedModelAdmin):
             get_objects_for_users """ 
         
         return get_objects_for_user(request.user, self.permission_name,self)
+    
         
         
 class FileSystemDatasetForm(forms.ModelForm):

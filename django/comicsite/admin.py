@@ -20,7 +20,6 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.utils.encoding import force_unicode
-
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
@@ -29,8 +28,10 @@ from comicmodels.signals import new_admin,removed_admin
 from comicmodels.admin import ComicModelAdmin
 
 
+
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin
+import re
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.options import ModelAdmin, HORIZONTAL, VERTICAL
 from django.contrib.admin.options import StackedInline, TabularInline
@@ -47,6 +48,7 @@ from django.template.response import TemplateResponse
 from django.views.decorators.csrf import csrf_protect
 from functools import update_wrapper
 from django.core.urlresolvers import reverse, NoReverseMatch
+
 
 
 class ProjectAdminSite(AdminSite):
@@ -76,6 +78,9 @@ class ProjectAdminSite(AdminSite):
             url(r'^$',
                 wrap(self.index),
                 name='index'),
+            url(r'^all/',
+                wrap(self.show_all_objects),
+                name='show_all_objects'),
             url(r'^logout/$',
                 wrap(self.logout),
                 name='logout'),
@@ -87,7 +92,23 @@ class ProjectAdminSite(AdminSite):
                 name='password_change_done'),
             url(r'^jsi18n/$',
                 wrap(self.i18n_javascript, cacheable=True),
-                name='jsi18n'),
+                name='jsi18n')
+            
+        )
+
+        # Add in each model's views.
+        # COMIC edit: We want comicmodels/comicsite to be the base of all admin, because admin is only for a single project
+        # This means that index show comicmodels/comicsite/change view directly instead of overview of all installed apps.
+        # Also I want for example pages to be displayed at <projectname>/admin/page/<id> and not at 
+        # <projectname>/admin/comicmodels/page/<id>.
+                
+        for model, model_admin in self._registry.iteritems():                
+            urlpatterns += patterns('',
+                url(r'^%s/' % (model._meta.module_name),                    
+                    include(model_admin.urls))
+            )        
+        
+        urlpatterns += patterns(
             url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
                 wrap(contenttype_views.shortcut)),
             url(r'^(?P<app_label>\w+)/$',
@@ -95,20 +116,16 @@ class ProjectAdminSite(AdminSite):
                 name='app_list')
         )
 
-        # Add in each model's views.
-        for model, model_admin in self._registry.iteritems():
-            urlpatterns += patterns('',
-                url(r'^%s/%s/' % (model._meta.app_label, model._meta.module_name),
-                    include(model_admin.urls))
-            )
+        
         return urlpatterns
+
 
     def admin_view(self, view, cacheable=False):
         """
         Changes to original admin view: this one passes kwargs to the view as 'extra_context'. This way the 
         url argument site_short_name gets passed to all the admin functions so they can do project specific
         stuff.
-        """
+        """        
         def inner(request, *args, **kwargs):            
             if not self.has_permission(request):
                 if request.path == reverse('admin:logout',
@@ -116,7 +133,12 @@ class ProjectAdminSite(AdminSite):
                     index_path = reverse('admin:index', current_app=self.name)
                     return HttpResponseRedirect(index_path)
                 return self.login(request)
-            return view(request,*args,extra_context=kwargs)
+            
+            if "site_short_name" in kwargs.keys():
+                extra_context = {"site_short_name":kwargs["site_short_name"]}
+                print "site_short_name was ====================" + kwargs["site_short_name"]
+                del kwargs["site_short_name"]                        
+            return view(request,extra_context=kwargs,*args,**kwargs)
         if not cacheable:
             inner = never_cache(inner)
         # We add csrf_protect here so this function can be used as a utility
@@ -125,8 +147,23 @@ class ProjectAdminSite(AdminSite):
             inner = csrf_protect(inner)
         return update_wrapper(inner, view)
     
+    
     @never_cache
     def index(self, request, extra_context=None):
+        """Show the edit page of the current project. This is the main source of information for any project so
+           this should be shown by default, instead of list of all objects"""
+           
+        #def change_view(self, request, object_id, form_url='', extra_context=None):
+        
+        comicsiteadmin = self._registry[ComicSite]
+        
+        return comicsiteadmin.change_view(request,"1","",extra_context)
+    
+        #return self.show_all_objects(request, extra_context)
+    
+    
+    @never_cache
+    def show_all_objects(self, request, extra_context=None):
         """                 
         Displays the main admin index page, which lists all of the installed
         apps that have been registered in this site.
@@ -137,7 +174,7 @@ class ProjectAdminSite(AdminSite):
         they should be "reverse('projectadmin". Just copying the whole thing seems a bad solution but I see 
         no other way to overwrite. Why is the reverse not based on app_name property? Done that here. 
         """
-        pdb.set_trace
+        print "site_short_name was =====++===============" + extra_context["site_short_name"]
         app_dict = {}
         user = request.user
         for model, model_admin in self._registry.items():
@@ -156,8 +193,7 @@ class ProjectAdminSite(AdminSite):
                         'perms': perms,
                     }                    
                     
-                    site_short_name = extra_context['site_short_name']
-                    print "site_short_name was " + site_short_name    
+                    site_short_name = extra_context['site_short_name']                    
                     if perms.get('change', False):
                         try:
                             model_dict['admin_url'] = reverse(self.app_name+':%s_%s_changelist' % info, current_app=self.name,kwargs={'site_short_name':site_short_name})
@@ -226,12 +262,10 @@ class PageAdmin(ComicModelAdmin):
     
     #Show these page params in admin overview list 
     list_display = ('title','comicsite','order')    
-    list_filter = ['comicsite']    
+    list_filter = ['comicsite']
     formfield_overrides = {     
         models.TextField: {'widget': Textarea(attrs={'rows':40, 'cols':80})},
     }
-    
-    
     
     def save_model(self, request, obj, form, change):
         
@@ -243,9 +277,8 @@ class PageAdmin(ComicModelAdmin):
                     
             # add change_page permission to the current page
             obj.save()                    
-            assign("change_page",admingroup,obj)
-                    
-            # FIXME: is this double save really needed?        
+            assign("change_page",admingroup,obj)            
+            # FIXME: is this double save really needed?
             
         obj.save()
         move = form.cleaned_data['move']
@@ -328,24 +361,32 @@ class PageAdmin(ComicModelAdmin):
            Solution now: just add the comicsite as attribute to each **** field.widget in the form. if possible
            TODO: can this be different? This solution makes me cry but I see no other at the moment.  
            """
+
+        # find out in which project you are currently working/
+        if hasattr(obj,"comicsite"):
+            # editing a page, get comicsite from the object you're editing
+            site_short_name = obj.comicsite.short_name
+                                 
+        elif request.GET.has_key("comicsite"):
+            # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages                    
+            site_short_name = ComicSite.objects.get(pk=request.GET["comicsite"]).short_name                                    
+        else:
+            # try to get current project by url TODO: This solution is too specific for page. Should be  a general
+            # property of the admin site. But I can't get this right at projectadmin.                    
+         
+            match = re.match(r"^/site/(?P<site_short_name>\w+)/admin/.*",request.path)
+            if match:
+                site_short_name = match.group("site_short_name")                        
+            else:
+                raise KeyError("Cannot determine to which project this page belongs. I don't know where to upload images which might be uploaded.")
         
-        for field in context['adminform'].form.fields.values():
-                                    
-            if hasattr(field.widget,"config"):
-                
-                if hasattr(obj,"comicsite"):
-                    # editing a page, get comicsite from the object you're editing
-                    field.widget.config['comicsite'] = obj.comicsite.short_name
-                    
-                elif request.GET.has_key("comicsite"):
-                    # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages                    
-                    comicsite_short_name = ComicSite.objects.get(pk=request.GET["comicsite"]).short_name
-                    field.widget.config['comicsite'] = comicsite_short_name
-                else:
-                    #what is going on here
-                    raise KeyError("Cannot determine to which project this page belongs. I don't know where to upload images which might be uploaded.")
-                
-                
+        # if current project was found, set appropriate things in the form:
+        # make sure ckedit knows where to upload if upload in editor is used
+        
+        fields = context['adminform'].form.fields 
+        if 'html' in fields:
+            fields['html'].widget.config['comicsite'] = site_short_name
+        
             
         template_response = super(ComicModelAdmin, self).render_change_form(request, context, add, change, form_url, obj)            
         return template_response
@@ -389,15 +430,12 @@ class PageInline(LinkedInline):
     # make sure page is only displayed, not edited
     #readonly_fields=("title","html")
     readonly_fields=('title','html_trunc','link','hidden','order')
-        
-    
+            
     def html_trunc(self,obj):
         return obj.html[:300]
     
-    def link(self,obj):
-        
-        #def page(request, site_short_name, page_title):
-        
+    def link(self,obj):        
+        #def page(request, site_short_name, page_title):                
         """ Link to page directly so you can view it as regular user"""    
         link_url = reverse('comicsite.views.page', kwargs={"site_short_name":obj.comicsite.short_name, "page_title":obj.title})
         link_text = "view "+obj.title
@@ -422,8 +460,8 @@ class ComicSiteManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
 
-class ComicSiteAdmin(admin.ModelAdmin):
-    
+
+class ComicSiteAdmin(admin.ModelAdmin):    
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again.
@@ -494,6 +532,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         Returns context dictionary with common admin and object permissions
         related content.
         """
+        
         context = {
             'adminform': {'model_admin': self},
             'object': obj,
@@ -511,34 +550,27 @@ class ComicSiteAdmin(admin.ModelAdmin):
         """
         Show all users in admin_group for this comicsite, allow adding users
         """        
-        comicsite = get_object_or_404(ComicSite,id=object_pk)
-                
+        comicsite = get_object_or_404(ComicSite,id=object_pk)                
         admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
         
-        if request.method == 'POST' and 'submit_add_user' in request.POST:
-            
-            user_form = AdminManageForm(request.POST)            
-            
+        if request.method == 'POST' and 'submit_add_user' in request.POST:            
+            user_form = AdminManageForm(request.POST)                        
             if user_form.is_valid():
-                user = user_form.cleaned_data['user']                
-                
+                user = user_form.cleaned_data['user']                                
                 #add given user to admins group
-                admingroup = Group.objects.get(name=comicsite.admin_group_name())
-                
+                admingroup = Group.objects.get(name=comicsite.admin_group_name())                
                 # add current user to admins for this site 
                 user.groups.add(admingroup)                
                 messages.add_message(request, messages.SUCCESS, 'User "'+user.username+'"\
                                      is now an admin for '+ comicsite.short_name)
-                
-               
+                               
                 #send signal to be picked up for example by email notifier
                 new_admin.send(sender=self,adder=request.user,new_admin=user,comicsite=comicsite
                                ,site=get_current_site(request))
                 
                 
                 
-        elif request.method == 'POST' and 'submit_delete_user' in request.POST:
-            
+        elif request.method == 'POST' and 'submit_delete_user' in request.POST:            
             user_form = AdminManageForm(request.POST)            
             
             if user_form.is_valid():
@@ -665,6 +697,7 @@ admin.site.register(Page,PageAdmin)
 
 
 projectadminsite.register(Page,PageAdmin)
+projectadminsite.register(ComicSite,ComicSiteAdmin)
 
 
     
