@@ -47,6 +47,7 @@ class ComicModelAdmin(GuardedModelAdmin):
             get_objects_for_users """ 
         
         return get_objects_for_user(request.user, self.permission_name,self)
+    
         
         
 class FileSystemDatasetForm(forms.ModelForm):
@@ -236,10 +237,3 @@ class DropboxFolderAdmin(ComicModelAdmin):
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 admin.site.register(DropboxFolder,DropboxFolderAdmin)
-
-    
-    
-
-
-
- 
