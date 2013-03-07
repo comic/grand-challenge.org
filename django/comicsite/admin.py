@@ -638,6 +638,15 @@ class ComicSiteAdmin(admin.ModelAdmin):
         else:
             #if object already existed just save
             obj.save()
+            
+            
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        """ overwrite this to inject some useful info message at first creation """        
+        if obj == None:
+            messages.info(request, 'Please fill out the form to create a new project. <b>Required fields are bold.</b> Please save your project before adding pages or admins.',extra_tags='safe')
+        
+        return super(ComicSiteAdmin,self).render_change_form(request, context, add, change, form_url, obj)
+        
 
 
 
