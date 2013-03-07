@@ -229,7 +229,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
         return inserted_file(request, site_short_name, dropboxpath)
     
     if mimetype == "application/pdf" or mimetype == "application/zip":
-        return inserted_file(request, site_short_name, page_title, dropboxpath)
+        return inserted_file(request, site_short_name, dropboxpath)
         
         #filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
         #return download_handler_file(request,filename)        
