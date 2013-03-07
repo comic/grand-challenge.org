@@ -211,7 +211,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
         url = sess.build_authorize_url(request_token)
         
         #    except Exception as e:
-        #       return "An error occured while autorizing with dropbox: " + str(e)
+        #    return "An error occured while autorizing with dropbox: " + str(e)
                 
         link = "<a href =\""+ url + "\"> Allow access to your dropbox folder</a>"
         
