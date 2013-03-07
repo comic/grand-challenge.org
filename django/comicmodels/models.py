@@ -58,7 +58,7 @@ class ComicSiteManager(models.Manager):
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
-    short_name = models.CharField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
+    short_name = models.SlugField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
     skin = models.CharField(max_length = 225, blank=True, help_text = "additional css to use for this comic site. Not required")    
     description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
     logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="http://www.grand-challenge.org/images/a/a7/Grey.png")
@@ -129,7 +129,7 @@ class ComicSiteModel(models.Model):
      such as authorization.
     """
     #user = models.ManyToManyField()    
-    title = models.CharField(max_length=64, blank=True)    
+    title = models.SlugField(max_length=64, blank=True)    
     comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong?")
     
     ALL = 'ALL'
@@ -147,6 +147,8 @@ class ComicSiteModel(models.Model):
     
     # = models.CharField(max_length=64, blank=True)
         
+    
+    
     
     def __unicode__(self):
        """ string representation for this object"""
