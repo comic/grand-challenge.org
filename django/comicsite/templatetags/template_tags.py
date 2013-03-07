@@ -213,15 +213,15 @@ class ListDirNode(template.Node):
     """ Show list of linked files for given directory 
     """
     
-    info = {"tag":"{% dataset %}",
-            "description":"Render a dataset"};
-
+   
     def __init__(self, args):
-        self.path = args['path']        
+        self.path = args['path']
+        self.args = args            
+         
 
 
     def make_dataset_error_msg(self, msg):
-        errormsg = "Error rendering DataSet '" + self.dataset_title + "' for project '" + self.project_name + "': " + msg
+        errormsg = "Error listing folder '" + self.path + "': " + msg
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -237,6 +237,15 @@ class ListDirNode(template.Node):
 
           return self.make_dataset_error_msg(str(e))
 
+        # if extensionsFilter is given,  show only filenames with those extensions 
+        if 'extensionFilter' in self.args.keys():
+            extensions = self.args['extensionFilter'].split(",")
+            filtered = []    
+            for extension in extensions:
+                
+                filtered = filtered + [f for f in filenames if f.endswith(extension)]                
+            filenames = filtered
+        
         links = []
         for filename in filenames:            
             downloadlink = reverse('comicsite.views.inserted_file', kwargs = {'site_short_name':project_name,
