@@ -186,6 +186,77 @@ class DatasetNode(template.Node):
 
         return htmlOut
 
+@register.tag(name = "listdir")
+def listdir(parser, token):
+    """ show all files in dir as a downloadable list"""
+
+    usagestr = """Tag usage: {% listdir path:string
+                                        extensionFilter:ext1,ext2,ext3}                
+                  path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.                  
+                  extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
+                  """
+    try:
+        args = parseKeyValueToken(token)
+    except ValueError:
+        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        return TemplateErrorNode(errormsg)
+    
+
+    if "path" not in args.keys():
+        errormsg = "Error rendering {% " + token.contents + " %}: dataset argument is missing." + usagestr
+        return TemplateErrorNode(errormsg)
+    
+    return ListDirNode(args)
+    
+
+class ListDirNode(template.Node):
+    """ Show list of linked files for given directory 
+    """
+    
+   
+    def __init__(self, args):
+        self.path = args['path']
+        self.args = args            
+         
+
+
+    def make_dataset_error_msg(self, msg):
+        errormsg = "Error listing folder '" + self.path + "': " + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+
+        project_name = context.page.comicsite.short_name
+        folder = path.join(settings.DROPBOX_ROOT,project_name,self.path)
+                       
+        dp = FileSystemDataProvider.FileSystemDataProvider(folder)
+
+        try:
+              filenames = dp.getAllFileNames()
+        except (OSError) as e:
+
+          return self.make_dataset_error_msg(str(e))
+
+        # if extensionsFilter is given,  show only filenames with those extensions 
+        if 'extensionFilter' in self.args.keys():
+            extensions = self.args['extensionFilter'].split(",")
+            filtered = []    
+            for extension in extensions:
+                
+                filtered = filtered + [f for f in filenames if f.endswith(extension)]                
+            filenames = filtered
+        
+        links = []
+        for filename in filenames:            
+            downloadlink = reverse('comicsite.views.inserted_file', kwargs = {'site_short_name':project_name,
+                                                                              'filepath':path.join(folder,filename)})            
+            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
+
+        
+        htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
+
+        return htmlOut
+    
 
 @register.tag(name = "visualization")
 def render_visualization(parser, token):
@@ -417,7 +488,7 @@ class InsertFileNode(template.Node):
                                                                 'dropboxpath':"remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
-        # nice.        
+        # nice.
         base_url = base_url[:-7] #remove "remove/" from baseURL
         current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
                       
