@@ -10,7 +10,8 @@
 			
 		<script type="text/javascript" src="{% get_static_prefix %}js/jquery-1.7.2.min.js"></script>
 		<script type="text/javascript" src="{% get_static_prefix %}js/jquery-ui-1.8.21.custom.min.js"></script>
-		<!--For displaying jquery UI widgets -->
+		<script type="text/javascript" src="{% get_static_prefix %}js/fme.viewer2d.js"></script>
+        <!--For displaying jquery UI widgets -->
 		<link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
 		<!--Put any site or page specific css here -->
 		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
@@ -23,7 +24,7 @@
 		<div id="page">
 			<div id="header">				
 				<div id="headerTitle">
-                    {% block headerTitle %} COMIC {% endblock %}
+                    {% block headerTitle %} <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
 				</div>
                 <div id="navMenuContainer">
                     <div id="navMenu">
@@ -65,7 +66,7 @@
             		</div>
             	            	
 	            	<div id="copyrightNotice">
-	                	COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2012, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
+	                	COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2013, <a href="{% url comicsite.views.page site_short_name='COMIC' page_title='People' %}">Consortium for Open Medical Image Computing</a>
 	                </div>
 	
 	            </div>

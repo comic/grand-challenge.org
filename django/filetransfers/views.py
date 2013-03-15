@@ -37,7 +37,7 @@ def download_handler(request, pk):
     return serve_file(request, upload.file, save_as=True)
 
 
-def fileserve_handler(request, pk):
+def uploadedfileserve_handler(request, pk):
     """ Serve a file through django, for displaying images etc. """
     upload = get_object_or_404(UploadModel, pk=pk)
     
@@ -45,13 +45,11 @@ def fileserve_handler(request, pk):
     if upload.can_be_viewed_by(request.user):
         return serve_file(request, upload.file, save_as=False)
     else:
-        return HttpResponse("You do not have permission. Bad user!")
+        return HttpResponse("You do not have permission to view this.")
     
     
-
-
-def download_handler_filename(request, project_name, dataset_title,filename):    
-    """offer file for download based on filename """
+def download_handler_dataset_file(request, project_name, dataset_title,filename):    
+    """offer file for download based on filename and dataset"""
     
     dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)        
     filefolder = dataset.get_full_folder_path()
@@ -61,13 +59,30 @@ def download_handler_filename(request, project_name, dataset_title,filename):
             
     return serve_file(request, file, save_as=True)
 
+def download_handler_file(request, filepath):    
+    """offer file for download based on filepath relative to django root"""
+                    
+    f = open(filepath, 'r')
+    file = File(f) # create django file object
+            
+    return serve_file(request, file, save_as=True)
+
+
+
 
 def delete_handler(request, pk):
     if request.method == 'POST':
         upload = get_object_or_404(UploadModel, pk=pk)
-        upload.file.delete()
-        upload.delete()
-    return HttpResponseRedirect(reverse('filetransfers.views.upload_handler'))
+        comicsitename = upload.comicsite.short_name
+        try:            
+            upload.file.delete()  #if no file object can be found just continue
+        except:
+            pass
+        finally:
+            pass
+            upload.delete()
+        
+    return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
 
 
     

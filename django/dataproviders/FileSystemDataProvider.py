@@ -6,7 +6,7 @@
 """
 import os
 import glob
-
+import pdb
 
 import comicmodels.models
 
@@ -33,7 +33,7 @@ class FileSystemDataProvider:
         
         os.chdir(self.dataDir)
         filenames = glob.glob("*.*")
-        
+        filenames.sort()        
         return filenames
     
     

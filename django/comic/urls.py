@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.views.generic import ListView
 from django.contrib import admin
 from comicmodels.models	 import ComicSite
+
  
 admin.autodiscover()
 
@@ -17,13 +19,14 @@ urlpatterns = patterns('',
      
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
-    
+      
     url(r'^site/',include('comicsite.urls'),name='site'),
 
     url(r'^filetransfers/',include('filetransfers.urls')),
 
     # requirement for social_auth
     url(r'',include('social_auth.urls')),
+    
     # all normal accounts stuff is redirected to accounts
     url(r'^accounts/',include('profiles.urls')),
     
@@ -34,5 +37,16 @@ urlpatterns = patterns('',
     # keep this url at the bottom of this list, because urls are checked in order 
     url(r'^(?P<page_title>\w+)/$','comicsite.views.comicmain'),
     
-)
+    # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
+    url(r'^django_dropbox/',include('django_dropbox.urls')),
     
+    # WYSIWYG editor for HTML
+    (r'^ckeditor/', include('ckeditor.urls')),
+    
+)
+
+if settings.DEBUG:
+    # static files (images, css, javascript, etc.)
+    urlpatterns += patterns('',
+        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {
+        'document_root': settings.MEDIA_ROOT}))

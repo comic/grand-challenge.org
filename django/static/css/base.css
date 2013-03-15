@@ -13,6 +13,7 @@ label { display:block; float:left; width:180px; }
 span.required:after { content: " *"; color: #f00; }
 span.help_text { font-size:8pt; color:#666; }
 
+
 /* profile navigation menu */
 ul#box-nav { height:50px; list-style-type:none; }
 ul#box-nav li { float:left; margin-right:2px; padding:10px; position:relative; background-color:#eee; border-style:solid solid none solid; border-width:2px; border-color:#eee; }
@@ -20,15 +21,15 @@ ul#box-nav li.selected { background-color:#fff; border-style:solid solid none so
 ul#box-nav li:hover { background-color:#fff; border-style:solid solid none solid; border-width:2px; border-color:#eee;}
 ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decoration:none;}
 .white-box { padding: 12px 0; overflow: auto; }
-.white-box img { float:left; margin: 0 10px; margin-bottom:250px; border-radius:5px; }
+.white-box img { float:left; margin: 0 10px; margin-bottom:130px; border-radius:5px; }
 .white-box dl { margin-bottom:50px; }
 .white-box dl dt { background:#eee; width:100px; float:left; font-weight:bold; margin-right:10px; padding:5px; }
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
 /* header navigation menu */
-#navMenuContainer { padding-left:0.8ex; height:43px; }
+#navMenuContainer { padding-left:0.8ex; height:24px; }
 #navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
-#navMenuContainer ul { padding-left:0px;}
+#navMenuContainer ul { padding-left:0px; margin:0px;}
 #navMenu { float:left; vertical-align:baseline; }
 #additionalNavigation {	float:right; vertical-align:baseline; }
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
@@ -36,7 +37,7 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
 #metafooter div a {text-decoration:none;}
-#metaFooterMenu .text{ float:left; color:#666666; }
+#metaFooterMenu .text a{ float:left; color:#666666; }
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem{ color:#fff; font-weight:bold; }
@@ -45,24 +46,29 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .metaFooterMenuItem {color:#cccccc; float:left; margin-left:10px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
-
 /* main page, base.html */
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
-#headerTitle{ font-size: 48px; padding-left:12px; padding-top:10px; }
+#headerTitle .noimage{ font-size: 48px; padding-left:12px; padding-top:10px; padding-bottom: 14px;}
+#headerTitle img { vertical-align:bottom;}
+#headerTitle a { text-decoration: none; color:inherit; }
 #loginInfo{ float:right; }
 #mainContent{ padding-left: 8px; padding-bottom: 12px; padding-top: 12px; }
 #copyrightNotice{ width:370px; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
-
 
 .comicSiteSummary .thumb { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
 .comicSiteSummary { padding-bottom: 10px; }
 .createNewComicSiteLink{ font-size:larger;  }
 .createNewComicSiteLink:link, .createNewComicSiteLink:visited{ text-decoration:none; color:#6F91AB }
-.editPageLink{ clear: both; float: left; width: 100%; text-decoration:none; color:#cccccc; margin-top: 30px; }
+.editPageLink{ clear: both; float: left; text-decoration:none; color:#cccccc; margin-top: 30px; }
 .pageError { color:#FF0000; font-size:small; background-color:#FFDDDD;}
+
+.grayedOut{color: Gray;}
+.breadcrumbtrail{font-size: x-small; color:#CCCCCC;}
+.breadcrumbtrail a {text-decoration:none; color:#999999;}
+.errorlist {color: red;}
 
 
 
