@@ -7,16 +7,21 @@
 {% block pagecontent %}		
 		
 	<div>{{currentpage.rawHTML}}</div>
-	
-	
+		
 	<br/>
-
-{% get_obj_perms user for site as "site_perms" %}
-{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	   {% if not currentpage.is_error_page %}
-	   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk%}">Edit this page</a>
-	   {% endif %}	          
-{% endif %}	
-
+	{% get_obj_perms user for site as "site_perms" %}	
+	{% if not currentpage.is_error_page %}		
+		{% block editlink %}	
+			{% if currentpage.pk %}
+				{% if "change_comicsite" in site_perms or request.user.is_superuser %}					   	  
+					   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk %}">Edit this page</a>
+					 
+				{% else %}
+								   
+				{% endif %}
+			{% endif %}
+		{% endblock %}	
+	{% endif %}	
 {% endblock %}
+
 	
