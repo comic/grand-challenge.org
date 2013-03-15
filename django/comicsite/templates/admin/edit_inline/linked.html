@@ -37,10 +37,8 @@
         
         {% for fieldset in inline_admin_form %}
           {% for line in fieldset %}
-            {% for field in line %}
-                     	
-              <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
-              
+            {% for field in line %}                     
+              <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>        		    
               	<a href="/admin/{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">              	
               {% if field.is_readonly %}
                   <p>{{ field.contents }}</p>
@@ -92,7 +90,7 @@
         
      {% endfor %}
      <tr>
-        	<td><a class="menuItem" href="{% url admin:comicmodels_page_add %}?ComicSite={{object_id}}">Add a new page</a></td>
+        	<td><a class="menuItem" href="{% url admin:comicmodels_page_add %}?comicsite={{object_id}}{{obj}}">Add a new page</a></td>
         	
         </tr>
      </tbody>
