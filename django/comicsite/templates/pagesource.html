@@ -12,5 +12,5 @@
 {% endblock %}
 	
 {% block editlink %}	
-		<a class="editPageLink" href="{% url comicsite.views.page currentpage.comicsite.short_name currentpage.title %}">Back to page</a>
+		<a class="editPageLink" href="{% url 'comicsite.views.page' currentpage.comicsite.short_name currentpage.title %}">Back to page</a>
 {% endblock %}
