@@ -19,9 +19,8 @@
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
     <ul class="signinlist">
-        <li><a href="{% url socialauth_begin 'google' %}">Google</a></li>
-        <li><a href="{% url socialauth_begin 'yahoo' %}">Yahoo</a></li>
-        <li><a href="{% url socialauth_begin 'myopenid' %}">myOpenID</a></li>
+        <li><a href="{% url 'socialauth_begin' 'google' %}">Google</a></li>
+        <li><a href="{% url 'socialauth_begin' 'yahoo' %}">Yahoo</a></li>
     </ul>
 </div>
 <form action="" method="post">
@@ -45,8 +44,8 @@
     {% endfor %}
   </fieldset>
   <input type="submit" value="{% trans "Signin" %}" />
-  <p class="forgot-password"><a href='{% url userena_password_reset %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-  <p class="signup"><a href="{% url userena_signup %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
+  <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
+  <p class="signup"><a href="{% url 'userena_signup' %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
   {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
 </form>
 {% endblock %}
