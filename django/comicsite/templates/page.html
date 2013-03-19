@@ -14,7 +14,7 @@
 		{% block editlink %}	
 			{% if currentpage.pk %}
 				{% if "change_comicsite" in site_perms or request.user.is_superuser %}					   	  
-					   <a class="editPageLink" href="{% url admin:comicmodels_page_change currentpage.pk %}">Edit this page</a>
+					   <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this page</a>
 					 
 				{% else %}
 								   
