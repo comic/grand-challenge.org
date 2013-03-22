@@ -9,11 +9,11 @@
 {% block headerTitle %}
 	{%if site.header_image.name == "" %} 
 		<div class="noimage">
-			<a href="{%url comicsite.views.site site.short_name %}">{{site.short_name}}</a>
+			<a href="{%url 'comicsite.views.site' site.short_name %}">{{site.short_name}}</a>
 		</div>  		
 	{% else %}
 		<div class="image">
-			<a href="{%url comicsite.views.site site.short_name %}"><img src="{{site.header_image.url}}"/></a>
+			<a href="{%url 'comicsite.views.site' site.short_name %}"><img src="{{site.header_image.url}}"/></a>
 		</div>	
 	{% endif %}
 
@@ -25,7 +25,7 @@
 	{% for page in pages %}
 		{% if not page.hidden %}
 			<li>
-				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url comicsite.views.page site.short_name page.title %}">				
+				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url 'comicsite.views.page' site.short_name page.title %}">				
 					{% if page.display_title == "" %}
 						{{page.title}}
 					{% else %}
@@ -48,13 +48,13 @@
 	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
 	      	   
 	
-	   <li> <a class="menuItem" href="{% url admin:comicmodels_comicsite_change site.pk%}">Admin</a></li>
+	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>
 	   <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>	   
     
 	{% endif %}
 	
 		
-	<li><a class="menuItem" href="{% url home %}">COMIC main portal</a></li>
+	<li><a class="menuItem" href="{% url 'home' %}">COMIC main portal</a></li>
 	
 {% endblock %}
 
