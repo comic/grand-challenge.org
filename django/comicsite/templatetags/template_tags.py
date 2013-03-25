@@ -61,7 +61,7 @@ register = template.Library()
 @register.simple_tag
 def metafooterpages():
     """ Get the metafooter pages. """
-    html_string = "<div class='text'><a href=\"/\">COMIC:</a></div>"
+    html_string = "<div class='text'><span>COMIC:</span></div>"
     pages = comicsite.views.getPages('COMIC')
     for p in pages:
         if not p.hidden:

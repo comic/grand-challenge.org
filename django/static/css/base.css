@@ -37,7 +37,7 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
 #metafooter div a {text-decoration:none;}
-#metaFooterMenu .text a{ float:left; color:#666666; }
+#metaFooterMenu .text { float:left; color:#666666; }
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 .menuItem{ color:#fff; font-weight:bold; }
