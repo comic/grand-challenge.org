@@ -11,6 +11,7 @@ from os import path
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -39,7 +40,7 @@ def _register(request, site_short_name):
    
     #TODO: check whether user is allowed to register, maybe wait for verification,
     #send email to admins of new registration
-        
+    
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     title = "registration successful"
@@ -258,7 +259,21 @@ def inserted_file(request, site_short_name, filepath=""):
     Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
     from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
     """    
+    
+     
+    if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
+        raise ImproperlyConfigured("Don't know from which folder serving files is allowed. Please add a setting \
+                                    'COMIC_PUBLIC_FOLDER_NAME = \"public_html\" to your .conf file." )
+ 
+    if not filepath.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
+        #FIXME:  throw 403 or proper permission denied here
+        raise Http404("Permission Denied. Only objects in folder named '%s' can be served without credentials\
+                       FIXME: throw proper 403 or permission denied here." % settings.COMIC_PUBLIC_FOLDER_NAME )        
+    else:
+        pass
+        
     filename = path.join(settings.DROPBOX_ROOT,site_short_name,filepath)
+    
     
     try:            
         file = open(filename,"rb")
