@@ -21,8 +21,23 @@
 		<title> {% block pageName %} COMIC main portal {% endblock %} </title>
 	</head>
 	<body>
-		<div id="page">
-			<div id="header">				
+		<div id="messagescontainer">
+			{% block messages %}
+				{% if messages %}
+					<ul class="messagelist">{% for message in messages %}
+						<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+						{% if 'safe' in message.tags %}
+							 {{ message | safe }}
+						{% else %}
+							{{ message }}
+						{% endif %}
+						</li>
+						{% endfor %}</ul>
+				{% endif %}
+			{% endblock messages %}
+    	</div>
+		<div id="page">			
+			<div id="header">							
 				<div id="headerTitle">
                     {% block headerTitle %} <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
 				</div>

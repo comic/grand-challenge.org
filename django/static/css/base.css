@@ -33,6 +33,7 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #navMenu { float:left; vertical-align:baseline; }
 #additionalNavigation {	float:right; vertical-align:baseline; }
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
+#messagescontainer{ position: fixed;width: 100%;}
 #metafooter {float:left; width:100%; border-top:1px solid #cccccc; font-size:smaller; margin-top: 47px; }
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
@@ -40,6 +41,10 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #metaFooterMenu .text { float:left; color:#666666; }
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
+
+.messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; width: 1000px;}
+.messagelist .warning{color:orange;}
+.messagelist .error{color:red;}
 .menuItem{ color:#fff; font-weight:bold; }
 .menuItem:link, .menuItem:visited { color:#fff; text-decoration:none; }
 .menuItem:hover { color:#fff; text-decoration:underline; }

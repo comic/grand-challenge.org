@@ -1,9 +1,11 @@
 # Create your views here.
 import pdb
 from os import path
+import ntpath
 
 #from django.core.files import File
 #
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 #from django.shortcuts import get_object_or_404
@@ -28,14 +30,20 @@ def upload_handler(request,site_short_name):
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
         site = getSite(site_short_name)
-        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ALL,
+        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ADMIN_ONLY,
                                    user=request.user)
-
+        #ADMIN_ONLY
 
         form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)
 
         if form.is_valid():
-            form.save()
+            form.save()            
+            filename = ntpath.basename(form.instance.file.file.name)
+            messages.success(request, "File '%s' sucessfully uploaded. An email has been sent to this\
+                                       projects organizers." % filename)
+            
+            #TODO: send email!
+
             return HttpResponseRedirect(view_url)
         else:
             #continue to showing errors
