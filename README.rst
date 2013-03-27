@@ -8,7 +8,7 @@ This repository contains the Django-based web frontend for the COMIC project.  "
 Installation.
 -------------
 
-Before installing make sure you have a copy of `Django <http://www.djangoproject.com/>`_1.4 or 
+Before installing make sure you have a copy of `Django <http://www.djangoproject.com/>`_1.5 or 
 newer installed.
 
 You can fetch a copy by cloning the git repository::
