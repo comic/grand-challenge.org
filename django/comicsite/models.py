@@ -2,7 +2,7 @@ import pdb
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.contrib.auth.models import Group,Permission
+from django.contrib.auth.models import Group,Permission,User
 from django.core.mail import send_mail
 from django.db.models import get_app, get_models
 from django.template import loader, Context
@@ -14,7 +14,7 @@ from django.utils.html import strip_tags
 
 
 from userena.signals import signup_complete
-from comicmodels.signals import new_admin
+from comicmodels.signals import new_admin,file_uploaded
 
     
 class ComicSiteException(Exception):
@@ -85,6 +85,7 @@ signup_complete.connect(set_project_admin_permissions,dispatch_uid="set_project_
 
 
 # ======================================= sending notification emails ====================
+
 def send_new_admin_notification_email(sender,**kwargs):
     
     comicsite = kwargs['comicsite']
@@ -92,10 +93,6 @@ def send_new_admin_notification_email(sender,**kwargs):
     site = kwargs['site']
     title = 'You are now admin for '+comicsite.short_name
     
-    # maybe put this in try catch later. Leaving for now
-    
-    #template = get_template("admin/emails/new_admin_notification_email.txt")
-    #message = template.render(Context(kwargs))
         
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     send_templated_email(title, "admin/emails/new_admin_notification_email.txt",kwargs,[new_admin.email]
@@ -103,6 +100,39 @@ def send_new_admin_notification_email(sender,**kwargs):
     
 # connect to signal 
 new_admin.connect(send_new_admin_notification_email,dispatch_uid='send_new_admin_notification_email')
+
+
+def send_file_uploaded_notification_email(sender,**kwargs):
+    
+    uploader = kwargs['uploader']
+    comicsite = kwargs['comicsite']    
+    site = kwargs['site']
+    title = "New upload for %s: '%s' " % (comicsite.short_name,kwargs["filename"])
+    admins = User.objects.filter(groups__name=comicsite.admin_group_name(), 
+                                 is_superuser=False)
+        
+    if not admins:
+        admin_email_adresses = [x[1] for x in settings.ADMINS]
+        kwargs['additional_message'] = '<i> Message from COMIC: I could not\
+        find any administrator for '+comicsite.short_name+'. Somebody needs to\
+        know about this new upload, so I am Sending this email to everyone set\
+        as general COMIC admin (ADMINS in the /comic/settings/ conf file). To\
+        stop getting these messages, set an admin for\
+        '+comicsite.short_name+'.</i> <br/><br/>'
+    else:
+        kwargs['additional_message'] = ''        
+        admin_email_adresses = [x.email for x in admins]
+        
+    send_templated_email(title, "admin/emails/file_uploaded_email.txt",kwargs,
+                         admin_email_adresses ,"noreply@"+site.domain,
+                         fail_silently=False)        
+            
+    
+    
+# connect to signal 
+file_uploaded.connect(send_file_uploaded_notification_email,
+                      dispatch_uid='send_file_uploaded_notification_email')
+
 
 
 def send_templated_email(subject, email_template_name, email_context, recipients, 
