@@ -120,6 +120,12 @@ class ComicSite(models.Model):
             return True
         else:
             return False
+    
+    def get_admins(self):
+        """ Return array of all users that are in this comicsites admin group, including superusers
+        """ 
+        #admins = User.objects.filter(groups__name=self.admin_group_name(), is_superuser=False)        
+        admins = User.objects.filter(groups__name=self.admin_group_name())
      
   
               
