@@ -5,12 +5,15 @@ Custom tags to use in templates or code to render file lists etc.
  03/09/2012    -     Sjoerd    -    Created this file
 
 """
+
 import pdb
 import datetime
 import ntpath
 import re
 from exceptions import Exception
 from os import path
+import matplotlib
+
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -20,6 +23,7 @@ from django.template import RequestContext
 from django.utils.html import escape
 from profiles.forms import SignupFormExtra
 from dataproviders import FileSystemDataProvider
+
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder #FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite, Page
 import comicsite.views
@@ -500,6 +504,178 @@ class InsertFileNode(template.Node):
         
         return html_out
     
+
+
+#---------#---------#---------#---------#---------#---------#---------#---------#---------
+# FIXME: move this code to seperate location. Spike solution right now
+import pdb
+import csv, numpy
+from matplotlib import pyplot
+import StringIO
+
+#table = numpy.genfromtxt("froc_data/anode_5_transposed.csv", skip_header=2)
+
+def readCSV(filename, hasHeader = True, returnHeader = False):
+  table = []
+  f = open(filename,'r')
+  csvreader = csv.reader(f)
+  i = 0
+  headers = [] 
+  for row in csvreader:
+    if not hasHeader or i > 1:
+      for j,cell in enumerate(row):
+        row[j] = float(cell) 
+      table.append(row)  
+    elif hasHeader:
+      headers = row
+      #nonFloatColumns = [x % len(headers) for x in nonFloatColumns]  
+      #print nonFloatColumns   
+    i = i + 1  
+  f.close()
+  if not returnHeader:
+    return table
+  else:
+    return (table, headers)
+
+
+def get_graph_svg(csvfile):
+    """ return svg instructions as string to plot an froc curce of csvfile 
+    """
+    table,headers = readCSV(csvfile, True, True)
+    #del table[-1]
+
+    print table[0], headers
+
+    columns = zip(*table)
+
+    for i in range(1,len(columns)):
+      pyplot.plot(columns[0], columns[i],label=headers[i])
+    pyplot.xlim([10**-2, 10**2])
+    pyplot.ylim([0,1])
+    pyplot.legend(loc='best')
+    pyplot.grid()
+    pyplot.grid(which='minor')
+    pyplot.xlabel('False positives/image')
+    pyplot.ylabel('Sensitivity')
+
+    pyplot.xscale("log")
+    pyplot.gcf().set_size_inches(8,6)
+    #pyplot.savefig("froc.png")
+    #pyplot.savefig("froc.svg")
+
+    imgdata = StringIO.StringIO()
+    pyplot.savefig(imgdata, format='svg')
+    imgdata.seek(0)  # rewind the data
+
+    svg_data = imgdata.buf  # this is svg data
+    imgdata.close()
+    return svg_data
+
+#---------#---------#---------#---------#---------#---------#---------#---------
+
+
+
+@register.tag(name = "insert_graph")
+def insert_graph(parser, token):    
+    """ Render a csv file from the local dropbox to a graph """
+
+    usagestr = """Tag usage: {% insert_graph <file> %} 
+                  <file>: filepath relative to project dropboxfolder.
+                  Example: {% insert_graph results/test.txt %}
+                  You can use url parameters in <file> by using {{curly braces}}.
+                  Example: {% inster_graphfile {{id}}/result.txt %} called with ?id=1234 
+                  appended to the url will show the contents of "1234/result.txt".                                                                       
+                  """
+    
+    split = token.split_contents()
+    tag = split[0]
+    all_args = split[1:]
+    
+    if len(all_args) != 1:
+        error_message = "Expected 1 argument, found " + str(len(all_args))
+        return TemplateErrorNode(error_message)
+    else:        
+        args = {}
+        args["file"] = all_args[0]
+
+    replacer = HtmlLinkReplacer()
+    
+    return InsertGraphNode(args,replacer)
+
+
+class InsertGraphNode(template.Node):
+    def __init__(self, args,replacer):
+        self.args = args
+        self.replacer = replacer
+
+    def make_error_msg(self, msg):        
+        errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
+        return makeErrorMsgHtml(errormsg)
+    
+    def substitute(self,string,substitutions):
+        """
+        Take each key in the substitutions dict. See if this key exists
+        between double curly braces in string. If so replace with value.        
+        
+        Example: 
+        substitute("my name is {{name}}.",{version:1,name=John})
+        > "my name is John"
+        """
+        
+        for key,value in substitutions:
+            string = re.sub("{{"+key+"}}",value,string)
+        
+        return string
+        
+        
+
+    def render(self, context):
+        
+                
+        filename_raw = self.args['file']                
+        filename_clean = self.substitute(filename_raw,context["request"].GET.items())
+        
+        # If any url parameters are still in filename they were not replaced. This filename
+        # is missing information..
+        if re.search("{{\w+}}",filename_clean):
+            
+            missed_parameters = re.findall("{{\w+}}",filename_clean)
+            found_parameters = context["request"].GET.items()
+                    
+            if found_parameters == []:
+                found_parameters = "None"
+            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
+                        "" % (missed_parameters, found_parameters)             
+            return self.make_error_msg(error_msg)
+                 
+        project_name = context.page.comicsite.short_name
+        filename = path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
+        
+        try:            
+            contents = open(filename,"r").read()
+        except Exception as e:
+            return self.make_error_msg(str(e))
+        
+        #TODO check content safety
+        
+        # any relative link inside included file has to be replaced to make it work within the COMIC
+        # context.
+        base_url = reverse('comicsite.views.insertedpage',kwargs={'site_short_name':context.page.comicsite.short_name,
+                                                                'page_title':context.page.title,
+                                                                'dropboxpath':"remove"})
+        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
+        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
+        # nice.
+        base_url = base_url[:-7] #remove "remove/" from baseURL
+        current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
+                      
+        svg_data = get_graph_svg(filename)
+                                                    
+        html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
+        
+        #rewrite relative links
+        
+        return html_out
 
 @register.tag(name = "url_parameter")
 def url_parameter(parser, token):    
