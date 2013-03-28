@@ -512,6 +512,7 @@ import pdb
 import csv, numpy
 from matplotlib import pyplot
 import StringIO
+import os
 
 #table = numpy.genfromtxt("froc_data/anode_5_transposed.csv", skip_header=2)
 
@@ -547,6 +548,9 @@ def get_graph_svg(csvfile):
     print table[0], headers
 
     columns = zip(*table)
+    
+    print "table length: %s" %len(table)
+    print "COLUMNS length: %s" %len(columns)
 
     for i in range(1,len(columns)):
       pyplot.plot(columns[0], columns[i],label=headers[i])
@@ -564,10 +568,13 @@ def get_graph_svg(csvfile):
     #pyplot.savefig("froc.svg")
 
     imgdata = StringIO.StringIO()
+    imgdata.seek(0, os.SEEK_END)
+    print ("StringIO size was $s",imgdata.tell())
     pyplot.savefig(imgdata, format='svg')
-    imgdata.seek(0)  # rewind the data
-
-    svg_data = imgdata.buf  # this is svg data
+    
+    #pdb.set_trace()    
+    svg_data = imgdata.getvalue()
+    pyplot.close()
     imgdata.close()
     return svg_data
 
@@ -630,7 +637,6 @@ class InsertGraphNode(template.Node):
         
 
     def render(self, context):
-        
                 
         filename_raw = self.args['file']                
         filename_clean = self.substitute(filename_raw,context["request"].GET.items())
