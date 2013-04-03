@@ -348,7 +348,7 @@ class VisualizationNode(template.Node):
             var fmeViewer%(id)d = null;
                 
             $(document).ready(function (){
-              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s,\
+              fmeViewer%(id)d = new ComicWorkstation("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s,\
                                                    'extensionFilter':'%(extensionFilter)s', \
                                                    'showBrowser':%(showBrowser)s});
               fmeViewer%(id)d.init(function() {
