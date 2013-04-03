@@ -7,12 +7,15 @@ Custom tags to use in templates or code to render file lists etc.
 """
 
 import pdb
+import csv, numpy
 import datetime
 import ntpath
+import os
 import re
+import StringIO
 from exceptions import Exception
-from os import path
-import matplotlib
+from matplotlib import pyplot
+
 
 from django import template
 from django.conf import settings
@@ -504,90 +507,16 @@ class InsertFileNode(template.Node):
         
         return html_out
     
-
-
-#---------#---------#---------#---------#---------#---------#---------#---------#---------
-# FIXME: move this code to seperate location. Spike solution right now
-import pdb
-import csv, numpy
-from matplotlib import pyplot
-import StringIO
-import os
-
-#table = numpy.genfromtxt("froc_data/anode_5_transposed.csv", skip_header=2)
-
-def readCSV(filename, hasHeader = True, returnHeader = False):
-  table = []
-  f = open(filename,'r')
-  csvreader = csv.reader(f)
-  i = 0
-  headers = [] 
-  for row in csvreader:
-    if not hasHeader or i > 1:
-      for j,cell in enumerate(row):
-        row[j] = float(cell) 
-      table.append(row)  
-    elif hasHeader:
-      headers = row
-      #nonFloatColumns = [x % len(headers) for x in nonFloatColumns]  
-      #print nonFloatColumns   
-    i = i + 1  
-  f.close()
-  if not returnHeader:
-    return table
-  else:
-    return (table, headers)
-
-
-def get_graph_svg(csvfile):
-    """ return svg instructions as string to plot an froc curce of csvfile 
-    """
-    table,headers = readCSV(csvfile, True, True)
-    #del table[-1]
-
-    print table[0], headers
-
-    columns = zip(*table)
-    
-    print "table length: %s" %len(table)
-    print "COLUMNS length: %s" %len(columns)
-
-    for i in range(1,len(columns)):
-      pyplot.plot(columns[0], columns[i],label=headers[i])
-    pyplot.xlim([10**-2, 10**2])
-    pyplot.ylim([0,1])
-    pyplot.legend(loc='best')
-    pyplot.grid()
-    pyplot.grid(which='minor')
-    pyplot.xlabel('False positives/image')
-    pyplot.ylabel('Sensitivity')
-
-    pyplot.xscale("log")
-    pyplot.gcf().set_size_inches(8,6)
-    #pyplot.savefig("froc.png")
-    #pyplot.savefig("froc.svg")
-
-    imgdata = StringIO.StringIO()
-    imgdata.seek(0, os.SEEK_END)
-    print ("StringIO size was $s",imgdata.tell())
-    pyplot.savefig(imgdata, format='svg')
-    
-    #pdb.set_trace()    
-    svg_data = imgdata.getvalue()
-    pyplot.close()
-    imgdata.close()
-    return svg_data
-
-#---------#---------#---------#---------#---------#---------#---------#---------
-
-
-
 @register.tag(name = "insert_graph")
 def insert_graph(parser, token):    
     """ Render a csv file from the local dropbox to a graph """
 
-    usagestr = """Tag usage: {% insert_graph <file> %} 
+    usagestr = """Tag usage: {% insert_graph <file> fileformat:<fileformat>%} 
                   <file>: filepath relative to project dropboxfolder.
+                  <fileformat>: how should the file be parsed? default is csv
+                      with first column for x and subsequent columns for y,
+                      first row for short var names, second row for verbose
+                      names                                
                   Example: {% insert_graph results/test.txt %}
                   You can use url parameters in <file> by using {{curly braces}}.
                   Example: {% inster_graphfile {{id}}/result.txt %} called with ?id=1234 
@@ -598,12 +527,19 @@ def insert_graph(parser, token):
     tag = split[0]
     all_args = split[1:]
     
-    if len(all_args) != 1:
-        error_message = "Expected 1 argument, found " + str(len(all_args))
-        return TemplateErrorNode(error_message)
+    if len(all_args) > 2:
+        error_message = "Expected no more than 2 arguments, found " + str(len(all_args))
+        return TemplateErrorNode(error_message + "usage: \n" + usagestr)
+             
     else:        
         args = {}
         args["file"] = all_args[0]
+        if len(all_args) == 2:            
+            args["fileformat"] = all_args[1].split(":")[1]
+        else:
+            args["fileformat"] = "csv" # default
+        
+        
 
     replacer = HtmlLinkReplacer()
     
@@ -655,7 +591,7 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(error_msg)
                  
         project_name = context.page.comicsite.short_name
-        filename = path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
+        filename = os.path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
         
         try:            
             contents = open(filename,"r").read()
@@ -674,14 +610,167 @@ class InsertGraphNode(template.Node):
         # nice.
         base_url = base_url[:-7] #remove "remove/" from baseURL
         current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
-                      
-        svg_data = get_graph_svg(filename)
+        
+        
+        try:                
+            read_function = getreader(self.args["fileformat"])
+            (table,headers) = read_function(filename)            
+        except Exception as e:            
+            return self.make_error_msg(str("getreader:"+e.message))
+        
+        
+        try:                
+            (table,headers) = readCSV(filename, True)            
+        except Exception as e:
+            return self.make_error_msg(str(e))
+        
+        svg_data = self.get_graph_svg(table,headers)
                                                     
         html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
         
         #rewrite relative links
         
         return html_out
+    
+    def get_graph_svg(self,table,headers):
+        """ return svg instructions as string to plot a froc curve of csvfile
+         
+        """        
+        
+        #del table[-1]
+    
+        columns = zip(*table)
+                
+        for i in range(1,len(columns)):
+          pyplot.plot(columns[0], columns[i],label=headers[i])
+        pyplot.xlim([10**-2, 10**2])
+        pyplot.ylim([0,1])
+        pyplot.legend(loc='best')
+        pyplot.grid()
+        pyplot.grid(which='minor')
+        pyplot.xlabel('False positives/image')
+        pyplot.ylabel('Sensitivity')
+    
+        pyplot.xscale("log")
+        pyplot.gcf().set_size_inches(8,6)
+        #pyplot.savefig("froc.png")
+        #pyplot.savefig("froc.svg")
+    
+        imgdata = StringIO.StringIO()
+        imgdata.seek(0, os.SEEK_END)
+        
+        pyplot.savefig(imgdata, format='svg')
+        
+            
+        svg_data = imgdata.getvalue()
+        pyplot.close()
+        imgdata.close()
+        return svg_data
+
+#---------#---------#---------#---------#---------#---------#---------#---------
+
+def getreader(format):
+    readers = {"csv":readCSV,
+               "anode09":read_anode09_result}
+        
+    if not readers.has_key(format):
+        raise Exception("reader for format '%s' not found. Available formats: %s" %(format, \
+                        ",".join(readers.keys())))
+    
+    return readers[format]
+      
+
+
+# readers for graph data. 
+def readCSV(filename):
+    """ Read in csv file with the following format:        
+        x_value,        all nodules,    peri-fissural nodules, ...N
+        0.02,           0.31401,        0.0169492,             ...N
+        
+        First column must be x values, subsequent columns can be any number of y
+        values, one for each line to plot.
+        First column should be header names to return with each column.
+        
+        Returns: tuple(headers,table), headers is a string listm table a
+        2D list of of size <number of lines read> x <number of headers>  
+    """    
+    has_header=True
+    table = []
+    f = open(filename, 'r')
+    csvreader = csv.reader(f)
+    i = 0
+    headers = []
+    for row in csvreader:
+      if not has_header or i > 1:
+        for j, cell in enumerate(row):
+          row[j] = float(cell)
+        table.append(row)
+      elif has_header:
+        headers = row
+        #nonFloatColumns = [x % len(headers) for x in nonFloatColumns]  
+        #print nonFloatColumns   
+      i = i + 1
+    f.close()   
+    return (table, headers)
+
+
+def read_anode09_result(filename):
+    """ Read in a file with the anode09 result format, to be able to read this without changing
+    the evaluation executable. anode09 results have the following format:        
+    
+    <?php
+        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
+        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.0144928,0.0144928,0.0193237,0.0241546,0.0289855,0.02 etc..
+        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,0.26087,0.26087,0.21187);
+        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0169492,0.0169492,0.0169492,0.016 etc..
+        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,0.135593,0.152542,0.152542,0.104116);
+        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,0.0571429,0.0571429,0.0571429,0.0571429 etc..
+        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,0.314286,0.314286,0.269388);
+        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0. etc..
+        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,0.244186,0.244186,0.194352);
+        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,0.0238095,0.047619,0.0714286,0.0714286,0 etc..
+        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,0.380952,0.380952,0.380952,0.333333);
+        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0222222,0.0222222,0.022 etc..
+        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,0.188889,0.188889,0.15873);
+        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,0.025641,0.034188,0.034188,0.034188, etc..
+        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.299145,0.316239,0.316239,0.252747);
+    ?>
+        
+        
+        First row are x values, followed by alternating rows of FROC scores for each x value and 
+        xxxscore variables which contain FROC scores at 
+        [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be 
+        plotted in a table            
+        
+        Returns: triple(headers,FROC_table,summary_table)
+        headers       : fixed list of size 7: ["small","large","isolated","vascular","pleural","peri-fissural","all"]
+        FROC_table    : list of size 7 x <numer of y values>
+        summary_table : list of size 7 x 8
+          
+    """
+    has_header=True
+    return_header=False
+    table = []
+    f = open(filename, 'r')
+    csvreader = csv.reader(f)
+    i = 0
+    headers = []    
+    for row in csvreader:
+      if not has_header or i > 1:
+        for j, cell in enumerate(row):
+          row[j] = float(cell)
+        table.append(row)
+      elif has_header:
+        headers = row
+        #nonFloatColumns = [x % len(headers) for x in nonFloatColumns]  
+        #print nonFloatColumns   
+      i = i + 1
+    f.close()
+    if not return_header:
+      return table
+    else:
+      return (table, headers)
+
 
 @register.tag(name = "url_parameter")
 def url_parameter(parser, token):    
