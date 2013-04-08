@@ -552,7 +552,7 @@ class InsertGraphNode(template.Node):
         self.replacer = replacer
 
     def make_error_msg(self, msg):        
-        errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
+        errormsg = "Error rendering graph from file '" + "," + self.args["file"] + "': " + msg
         return makeErrorMsgHtml(errormsg)
     
     def substitute(self,string,substitutions):
@@ -615,7 +615,7 @@ class InsertGraphNode(template.Node):
         try:                
             read_function = getreader(self.args["fileformat"])
             (table,headers) = read_function(filename)            
-        except Exception as e:            
+        except Exception as e:
             return self.make_error_msg(str("getreader:"+e.message))
         
         
@@ -670,6 +670,9 @@ class InsertGraphNode(template.Node):
 #---------#---------#---------#---------#---------#---------#---------#---------
 
 def getreader(format):
+    """Holds all readers that can be used to parse input file. By using this function we can easily list
+    all available readers and provide some safety: only registered functions can be called.
+    """
     readers = {"csv":readCSV,
                "anode09":read_anode09_result}
         
