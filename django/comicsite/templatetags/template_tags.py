@@ -479,7 +479,7 @@ class InsertFileNode(template.Node):
             return self.make_error_msg(error_msg)
                  
         project_name = context.page.comicsite.short_name
-        filename = path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
+        filename = os.path.join(settings.DROPBOX_ROOT,project_name,filename_clean)                    
         
         try:            
             contents = open(filename,"r").read()
@@ -612,20 +612,20 @@ class InsertGraphNode(template.Node):
         current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
         
         
-        try:                
+        try:
             read_function = getreader(self.args["fileformat"])
             (table,headers) = read_function(filename)            
-        except Exception as e:
+        except Exception as e:            
             return self.make_error_msg(str("getreader:"+e.message))
         
         
         try:                
-            (table,headers) = readCSV(filename, True)            
+            (table,headers) = readCSV(filename)
         except Exception as e:
             return self.make_error_msg(str(e))
         
         svg_data = self.get_graph_svg(table,headers)
-                                                    
+        
         html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
         
         #rewrite relative links
@@ -751,6 +751,8 @@ def read_anode09_result(filename):
         summary_table : list of size 7 x 8
           
     """
+    #small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+    
     has_header=True
     return_header=False
     table = []
