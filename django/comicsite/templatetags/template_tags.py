@@ -14,7 +14,8 @@ import os
 import re
 import StringIO
 from exceptions import Exception
-from matplotlib import pyplot
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 
 from django import template
@@ -612,6 +613,7 @@ class InsertGraphNode(template.Node):
         current_path =  ntpath.dirname(filename_clean) + "/"  # path of currently inserted file 
         
         
+        
         try:
             read_function = getreader(self.args["fileformat"])
             (table,headers) = read_function(filename)            
@@ -619,14 +621,11 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(str("getreader:"+e.message))
         
         
-        try:                
-            (table,headers) = readCSV(filename)
-        except Exception as e:
-            return self.make_error_msg(str(e))
-        
         svg_data = self.get_graph_svg(table,headers)
         
-        html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
+        
+        #html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
+        html_out = svg_data
         
         #rewrite relative links
         
@@ -635,37 +634,41 @@ class InsertGraphNode(template.Node):
     def get_graph_svg(self,table,headers):
         """ return svg instructions as string to plot a froc curve of csvfile
          
-        """        
-        
+        """                
         #del table[-1]
-    
+        
         columns = zip(*table)
-                
+        
+        #pdb.set_trace()
+        
+        fig = Figure(facecolor='white')
+        canvas = FigureCanvas(fig)
+                                        
         for i in range(1,len(columns)):
-          pyplot.plot(columns[0], columns[i],label=headers[i])
-        pyplot.xlim([10**-2, 10**2])
-        pyplot.ylim([0,1])
-        pyplot.legend(loc='best')
-        pyplot.grid()
-        pyplot.grid(which='minor')
-        pyplot.xlabel('False positives/image')
-        pyplot.ylabel('Sensitivity')
+          fig.gca().plot(columns[0], columns[i],label=headers[i],gid=headers[i])
+        fig.gca().set_xlim([10**-2, 10**2])
+        fig.gca().set_ylim([0,1])
+        fig.gca().legend(loc='best')
+        fig.gca().grid()
+        fig.gca().grid(which='minor')
+        fig.gca().set_xlabel('False positives/image')
+        fig.gca().set_ylabel('Sensitivity')
     
-        pyplot.xscale("log")
-        pyplot.gcf().set_size_inches(8,6)
-        #pyplot.savefig("froc.png")
-        #pyplot.savefig("froc.svg")
-    
+        fig.gca().set_xscale("log")
+        fig.set_size_inches(8,6)
+        
         imgdata = StringIO.StringIO()
         imgdata.seek(0, os.SEEK_END)
         
-        pyplot.savefig(imgdata, format='svg')
+        canvas.print_svg(imgdata, format='svg')
         
             
-        svg_data = imgdata.getvalue()
-        pyplot.close()
+        svg_data = imgdata.getvalue()        
         imgdata.close()
+        
+        
         return svg_data
+                
 
 #---------#---------#---------#---------#---------#---------#---------#---------
 
@@ -694,7 +697,7 @@ def readCSV(filename):
         values, one for each line to plot.
         First column should be header names to return with each column.
         
-        Returns: tuple(headers,table), headers is a string listm table a
+        Returns: tuple(headers,table), headers is a string list table a
         2D list of of size <number of lines read> x <number of headers>  
     """    
     has_header=True
@@ -718,8 +721,8 @@ def readCSV(filename):
 
 
 def read_anode09_result(filename):
-    """ Read in a file with the anode09 result format, to be able to read this without changing
-    the evaluation executable. anode09 results have the following format:        
+    """ Read in a file with the anode09 result format, to be able to read this without
+        changing the evaluation executable. anode09 results have the following format:        
     
     <?php
         $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
@@ -745,36 +748,82 @@ def read_anode09_result(filename):
         [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be 
         plotted in a table            
         
-        Returns: triple(headers,FROC_table,summary_table)
-        headers       : fixed list of size 7: ["small","large","isolated","vascular","pleural","peri-fissural","all"]
-        FROC_table    : list of size 7 x <numer of y values>
-        summary_table : list of size 7 x 8
-          
-    """
-    #small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+        Returns: tuple(headers,table), 
+        headers is a string list 
+        table is a 2D list of of size <number of lines read> x <number of headers>, where table[][0] contains the
+        x values and table[][1..n] contain y values
+        
+    """    
     
-    has_header=True
-    return_header=False
-    table = []
-    f = open(filename, 'r')
-    csvreader = csv.reader(f)
-    i = 0
-    headers = []    
-    for row in csvreader:
-      if not has_header or i > 1:
-        for j, cell in enumerate(row):
-          row[j] = float(cell)
-        table.append(row)
-      elif has_header:
-        headers = row
-        #nonFloatColumns = [x % len(headers) for x in nonFloatColumns]  
-        #print nonFloatColumns   
-      i = i + 1
-    f.close()
-    if not return_header:
-      return table
-    else:
-      return (table, headers)
+    #small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+
+    vars = parse_php_arrays(filename)
+    assert vars != {}, "parsed result of '%s' was emtpy. I cannot plot anything" %filename
+    
+    verbose_var_=["small nodules","large nodules","isolated nodules","vascular nodules","pleural nodules","peri-fissural nodules","all nodules"]
+    
+    # split arrays into the part which should be rendered as graph, and the part which should go into a table.
+    varnames_graph = ["frocy","pleuraly","fissurey","vasculary","isolatedy","largey","smally"]
+    varnames_table = ["frocscore","pleuralscore","fissurescore","vascularscore","isolatedscore",
+                      "largescore","smallscore",]
+    
+    #for (var,header) in table,header 
+    #table_graph = []
+    table = [vars["x"]]
+    headers = ["x"]
+    
+    for varname,datapoints in vars.items():
+        if varname in varnames_graph:
+            table = table + [datapoints]
+            headers.append(varname)
+    
+    table = zip(*table)
+    
+    return (table, headers)
+
+def parse_php_arrays(filename):
+    """ Parse a php page containing only php arrays like $x=(1,2,3). Created to parse anode09 eval results.
+    
+    Returns: dict{"varname1",array1,....}, 
+    array1 is a float array 
+    
+    """
+    verbose = False
+    
+    output = {}
+        
+    with open(filename, 'r') as f:        
+        content = f.read()
+        content = content.replace("\n","")
+        php = re.compile("\<\?php(.*?)\?\>")
+        phpcontent = php.search(content).group(1)
+        assert phpcontent != "" , "could not find anything like <?php ?> in '%s'" %filename
+        
+        phpvars = phpcontent.split("$")
+        phpvars = [x for x in phpvars if x != ''] #remove empty
+        if verbose:
+            print "found %d php variables in %s. " %(len(phpvars),filename)
+            print "parsing %s into int arrays.. " %(filename) 
+
+        #check wheteher this looks like a php var
+        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);")
+        for var in phpvars:
+           result = phpvar.search(var)
+           
+           assert result != None , "Could not match regex pattern '%s' to '%s'\
+                                    " %(phpvar.pattern,var)
+           assert len(result.groups()) == 2, "Expected to find  varname and content,\
+               but regex '%s' found %d items:%s " %(phpvar.pattern, len(result.groups()),
+               "["+",".join(result.groups())+"]")
+                                                    
+           (varname,varcontent) = result.groups()
+
+           output[varname] = [float(x) for x in varcontent.split(",")]            
+    
+    return output
+   
+       
+           
 
 
 @register.tag(name = "url_parameter")
