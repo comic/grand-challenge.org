@@ -13,6 +13,9 @@ import ntpath
 import os
 import re
 import StringIO
+import sys
+import traceback
+
 from exceptions import Exception
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -512,12 +515,12 @@ class InsertFileNode(template.Node):
 def insert_graph(parser, token):    
     """ Render a csv file from the local dropbox to a graph """
 
-    usagestr = """Tag usage: {% insert_graph <file> fileformat:<fileformat>%} 
+    usagestr = """Tag usage: {% insert_graph <file> type:<type>%} 
                   <file>: filepath relative to project dropboxfolder.
-                  <fileformat>: how should the file be parsed? default is csv
-                      with first column for x and subsequent columns for y,
-                      first row for short var names, second row for verbose
-                      names                                
+                  <type>: how should the file be parsed and rendered? default 
+                      is to render an FROC curve for a an csv with first column
+                      for x and subsequent columns for y, first row for short 
+                      var names, second row for verbose names.                                
                   Example: {% insert_graph results/test.txt %}
                   You can use url parameters in <file> by using {{curly braces}}.
                   Example: {% inster_graphfile {{id}}/result.txt %} called with ?id=1234 
@@ -536,9 +539,9 @@ def insert_graph(parser, token):
         args = {}
         args["file"] = all_args[0]
         if len(all_args) == 2:            
-            args["fileformat"] = all_args[1].split(":")[1]
+            args["type"] = all_args[1].split(":")[1]
         else:
-            args["fileformat"] = "csv" # default
+            args["type"] = "csv" # default
         
         
 
@@ -615,13 +618,21 @@ class InsertGraphNode(template.Node):
         
         
         try:
-            read_function = getreader(self.args["fileformat"])
-            (table,headers) = read_function(filename)            
+            render_function = getrenderer(self.args["type"])            
+            #(table,headers) = read_function(filename)            
         except Exception as e:            
-            return self.make_error_msg(str("getreader:"+e.message))
+            return self.make_error_msg(str("getrenderer:"+e.message))
         
+
+        try:
+            svg_data = render_function(filename)                                            
+        except Exception as e:           
+                                 
+            return self.make_error_msg(str("Error calling render funtion '%s()' : %s" %(render_function.__name__,
+                                                                                        traceback.format_exc(0))))
         
-        svg_data = self.get_graph_svg(table,headers)
+ 
+        #self.get_graph_svg(table,headers)
         
         
         #html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
@@ -631,15 +642,33 @@ class InsertGraphNode(template.Node):
         
         return html_out
     
-    def get_graph_svg(self,table,headers):
+    
+                
+
+#---------#---------#---------#---------#---------#---------#---------#---------
+
+def getrenderer(format):
+    """Holds list of functions which can take in a filepath and return html to show a graph.
+    By using this function we can easily list all available renderers and provide some safety:
+    only functions listed here can be called from the template tag render_graph.
+    """
+    renderers = {"csv":render_FROC,
+               "anode09":render_anode09_result}
+        
+    if not renderers.has_key(format):
+        raise Exception("reader for format '%s' not found. Available formats: %s" %(format, \
+                        ",".join(renderers.keys())))
+    
+    return renderers[format]
+
+      
+def get_graph_svg(table,headers):
         """ return svg instructions as string to plot a froc curve of csvfile
          
         """                
         #del table[-1]
         
         columns = zip(*table)
-        
-        #pdb.set_trace()
         
         fig = Figure(facecolor='white')
         canvas = FigureCanvas(fig)
@@ -657,38 +686,28 @@ class InsertGraphNode(template.Node):
         fig.gca().set_xscale("log")
         fig.set_size_inches(8,6)
         
-        imgdata = StringIO.StringIO()
-        imgdata.seek(0, os.SEEK_END)
-        
-        canvas.print_svg(imgdata, format='svg')
-        
-            
-        svg_data = imgdata.getvalue()        
-        imgdata.close()
-        
-        
-        return svg_data
-                
+        return canvas_to_svg(canvas)
 
-#---------#---------#---------#---------#---------#---------#---------#---------
 
-def getreader(format):
-    """Holds all readers that can be used to parse input file. By using this function we can easily list
-    all available readers and provide some safety: only registered functions can be called.
-    """
-    readers = {"csv":readCSV,
-               "anode09":read_anode09_result}
-        
-    if not readers.has_key(format):
-        raise Exception("reader for format '%s' not found. Available formats: %s" %(format, \
-                        ",".join(readers.keys())))
+def canvas_to_svg(canvas):
+    """ Render matplotlib canvas as string containing html/svg instructions. These instructions can be
+    pasted into any html page and will be rendered as graph by any modern browser.
     
-    return readers[format]
-      
-
+    """
+    imgdata = StringIO.StringIO()
+    imgdata.seek(0, os.SEEK_END)
+    
+    canvas.print_svg(imgdata, format='svg')
+        
+    svg_data = imgdata.getvalue()        
+    imgdata.close()
+    
+    return svg_data
+    
+    
 
 # readers for graph data. 
-def readCSV(filename):
+def render_FROC(filename):
     """ Read in csv file with the following format:        
         x_value,        all nodules,    peri-fissural nodules, ...N
         0.02,           0.31401,        0.0169492,             ...N
@@ -697,9 +716,10 @@ def readCSV(filename):
         values, one for each line to plot.
         First column should be header names to return with each column.
         
-        Returns: tuple(headers,table), headers is a string list table a
-        2D list of of size <number of lines read> x <number of headers>  
-    """    
+        Returns: string containing html/svg instruction to render an FROC curve
+        of all the variables found in file   
+    """
+        
     has_header=True
     table = []
     f = open(filename, 'r')
@@ -717,10 +737,30 @@ def readCSV(filename):
         #print nonFloatColumns   
       i = i + 1
     f.close()   
-    return (table, headers)
+    
+    columns = zip(*table)
+        
+    fig = Figure(facecolor='white')
+    canvas = FigureCanvas(fig)
+                                    
+    for i in range(1,len(columns)):
+      fig.gca().plot(columns[0], columns[i],label=headers[i],gid=headers[i])
+    fig.gca().set_xlim([10**-2, 10**2])
+    fig.gca().set_ylim([0,1])
+    fig.gca().legend(loc='best')
+    fig.gca().grid()
+    fig.gca().grid(which='minor')
+    fig.gca().set_xlabel('False positives/image')
+    fig.gca().set_ylabel('Sensitivity')
+
+    fig.gca().set_xscale("log")
+    fig.set_size_inches(8,6)
+
+    return canvas_to_svg(canvas)    
+    
 
 
-def read_anode09_result(filename):
+def render_anode09_result(filename):
     """ Read in a file with the anode09 result format, to be able to read this without
         changing the evaluation executable. anode09 results have the following format:        
     
@@ -748,10 +788,8 @@ def read_anode09_result(filename):
         [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be 
         plotted in a table            
         
-        Returns: tuple(headers,table), 
-        headers is a string list 
-        table is a 2D list of of size <number of lines read> x <number of headers>, where table[][0] contains the
-        x values and table[][1..n] contain y values
+        Returns: string containing html/svg instruction to render an anode09 FROC curve
+        of all the variables found in file 
         
     """    
     
@@ -759,27 +797,37 @@ def read_anode09_result(filename):
 
     vars = parse_php_arrays(filename)
     assert vars != {}, "parsed result of '%s' was emtpy. I cannot plot anything" %filename
+            
+    fig = Figure(facecolor='white')
+    canvas = FigureCanvas(fig)
     
-    verbose_var_=["small nodules","large nodules","isolated nodules","vascular nodules","pleural nodules","peri-fissural nodules","all nodules"]
+    fig.gca().plot(vars["x"], vars["smally"],label="nodules < 5mm",gid="small")
+    fig.gca().plot(vars["x"], vars["largey"],label="nodules > 5mm",gid="large")      
+    fig.gca().plot(vars["x"], vars["isolatedy"],label="isolated nodules",gid="isolated")
+    fig.gca().plot(vars["x"], vars["vasculary"],label="vascular nodules",gid="vascular")
+    fig.gca().plot(vars["x"], vars["pleuraly"],label="pleural nodules",gid="pleural")
+    fig.gca().plot(vars["x"], vars["fissurey"],label="peri-fissural nodules",gid="fissure")
+    fig.gca().plot(vars["x"], vars["frocy"],label="all nodules",gid="frocy")
+  
+      
+    fig.gca().set_xlim([10**-2, 10**2])
+    fig.gca().set_ylim([0,1])
+    fig.gca().legend(loc='best')
+    fig.gca().grid()
+    fig.gca().grid(which='minor')
+    fig.gca().set_xlabel('False positives/image')
+    fig.gca().set_ylabel('Sensitivity')
+
+    fig.gca().set_xscale("log")
+    fig.set_size_inches(8,6)
     
-    # split arrays into the part which should be rendered as graph, and the part which should go into a table.
-    varnames_graph = ["frocy","pleuraly","fissurey","vasculary","isolatedy","largey","smally"]
-    varnames_table = ["frocscore","pleuralscore","fissurescore","vascularscore","isolatedscore",
-                      "largescore","smallscore",]
+    return canvas_to_svg(canvas)
+
     
-    #for (var,header) in table,header 
-    #table_graph = []
-    table = [vars["x"]]
-    headers = ["x"]
     
-    for varname,datapoints in vars.items():
-        if varname in varnames_graph:
-            table = table + [datapoints]
-            headers.append(varname)
     
-    table = zip(*table)
+    return get_graph_svg(table,headers)
     
-    return (table, headers)
 
 def parse_php_arrays(filename):
     """ Parse a php page containing only php arrays like $x=(1,2,3). Created to parse anode09 eval results.
