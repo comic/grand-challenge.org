@@ -238,8 +238,8 @@ class ListDirNode(template.Node):
     def render(self, context):
 
         project_name = context.page.comicsite.short_name
-        folder = path.join(settings.DROPBOX_ROOT,project_name,self.path)
-                       
+        
+        folder = os.path.join(settings.DROPBOX_ROOT,project_name,self.path)                       
         dp = FileSystemDataProvider.FileSystemDataProvider(folder)
 
         try:
@@ -260,7 +260,7 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:            
             downloadlink = reverse('comicsite.views.inserted_file', kwargs = {'site_short_name':project_name,
-                                                                              'filepath':path.join(folder,filename)})            
+                                                                              'filepath':os.path.join(folder,filename)})            
             links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
 
         
