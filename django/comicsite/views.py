@@ -110,10 +110,10 @@ def renderTags(request, p, recursecount=0):
         #pass page to context here to be able to render tags based on which page does the rendering
         
         pagecontents = t.render(ComicSiteRequestContext(request,p))
+        pdb.set_trace()
                 
         if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
-            if recursecount < recurselimit :
-                # second round of rendering.. where is this going to stop?        
+            if recursecount < recurselimit :                
                 p2 = copy_page(p) 
                 p2.html = pagecontents
                 return renderTags(request,p2,recursecount+1)
@@ -138,7 +138,7 @@ def permissionMessage(request, site, p):
     currentpage = page
     return currentpage
 
-
+    
 #TODO: could a decorator be better then all these ..IfAllowed pages?
 def getRenderedPageIfAllowed(page_or_page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
