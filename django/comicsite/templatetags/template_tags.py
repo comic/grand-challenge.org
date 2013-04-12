@@ -1018,8 +1018,10 @@ class RegistrationFormNode(template.Node):
         signup_url = reverse('userena_signin') + "?next=" \
                      + reverse('comicsite.views.page', kwargs = {'site_short_name':sitename, 'page_title':pagetitle})
         signuplink = makeHTMLLink(signup_url, "sign in")
-        registerlink = makeHTMLLink(reverse('userena.views.signup',
-                                             kwargs = {'signup_form':SignupFormExtra}), "register")
+        
+        
+        
+        registerlink = makeHTMLLink(reverse('userena.views.signup'), "register")
 
         
         if not context['user'].is_authenticated():

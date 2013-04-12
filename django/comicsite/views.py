@@ -109,8 +109,7 @@ def renderTags(request, p, recursecount=0):
                 
         #pass page to context here to be able to render tags based on which page does the rendering
         
-        pagecontents = t.render(ComicSiteRequestContext(request,p))
-        pdb.set_trace()
+        pagecontents = t.render(ComicSiteRequestContext(request,p))        
                 
         if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
             if recursecount < recurselimit :                
