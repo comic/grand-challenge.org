@@ -25,4 +25,10 @@ class ComicSiteRequestContext(RequestContext):
         self.fullpath = request.get_full_path() # Not sure about adding vars here
                                                 # there has to be an easier django
                                                 # based solution..  
+        
+        #add context url parameters (?var1=value) to context to be able to render 
+        #them in template
+        self.update(request.GET) 
+        
+        
     
