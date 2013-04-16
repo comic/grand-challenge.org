@@ -1,5 +1,7 @@
-#header { background-color: #4ba3d0; color:white;}}
-.menuItem, .menuItem:link, .menuItem:visited { color: Black;}
+#header { background-color:white;}
+#header #navMenu { color:#0099cc;}
+.menuItem, .menuItem:link, .menuItem:visited { color:#0099cc;}
+#mainContent h1{ color:#0099cc;}
 
 #mainContent .editPageLink:link, #mainContent .editPageLink:visited{
     clear: both;
