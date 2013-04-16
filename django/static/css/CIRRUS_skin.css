@@ -1,0 +1,14 @@
+#header { background-color: #4ba3d0; color:white;}}
+.menuItem, .menuItem:link, .menuItem:visited { color: Black;}
+
+#mainContent .editPageLink:link, #mainContent .editPageLink:visited{
+    clear: both;
+    color: #CCCCCC;
+    float: left;
+    margin-top: 30px;
+    text-decoration: none;
+}
+#mainContent a, #mainContent a:visited, #mainContent a:link{
+	color: #139acc;
+}
+ 
