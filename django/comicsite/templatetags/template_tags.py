@@ -278,12 +278,14 @@ def render_visualization(parser, token):
                                               height:number
                                               deferredLoad:0|1
                                               extensionFilter:ext1,ext2,ext3
-                                              showBrowser:0|1 %}
+                                              showBrowser:0|1 
+                                              comicWorkstation:0:1%}
                   The only mandatory argument is dataset.
                   width/heigth: Size of the 2D view area.
                   defferedLoad: If active, user has to click on the area to load the viewer.
                   extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-                  showBrowser: If 1, a file browser is rendered"""
+                  showBrowser: If 1, a file browser is rendered
+                  comicWorkstation: If 1, use newer version of visualisation"""
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -297,6 +299,8 @@ def render_visualization(parser, token):
 
     return VisualizationNode(args)
 
+
+
 class VisualizationNode(template.Node):
     """ 
     Renders a MeVisLab 2D Viewer.
@@ -309,7 +313,7 @@ class VisualizationNode(template.Node):
         errormsg = "Error rendering Visualization '" + str(self.args) + ":" + msg
         return makeErrorMsgHtml(errormsg)
 
-    def render(self, context):
+    def render_comic_viewer(self,context):
         htmlOut = """
           <div id="comicViewer%(id)d" style="width:%(w)spx; height:%(h)spx"></div>
           <script type="text/javascript">
@@ -330,6 +334,49 @@ class VisualizationNode(template.Node):
                 "deferredLoad": self.args.get("deferredLoad", "0"),
                 "showBrowser": self.args.get("showBrowser", "1")})
         return htmlOut
+        
+
+    def render(self, context):
+        if self.safe_check("1","comicWorkstation",self.args):
+            return self.render_comic_workstation(context)
+        else:
+            return self.render_comic_viewer(context) 
+    
+    def safe_check(self,value,key,list):
+        """Is there a cleaner way to do this? """        
+        if key in list:
+            if list[key] == value:
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+    def render_comic_workstation(self,context):
+        htmlOut = """
+          <div id="comicViewer%(id)d" style="width:%(w)spx; height:%(h)spx"></div>
+          <script type="text/javascript">
+            var fmeViewer%(id)d = null;
+                
+            $(document).ready(function (){
+              fmeViewer%(id)d = new ComicWorkstation("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s,\
+                                                   'extensionFilter':'%(extensionFilter)s', \
+                                                   'showBrowser':%(showBrowser)s});
+              fmeViewer%(id)d.init(function() {
+                fmeViewer%(id)d.setDataRoot('%(path)s');
+              });
+            });
+          </script>
+        """ % ({"id": id(self),
+                "path": self.args.get("dataset"),
+                "w": self.args.get("width", "300"),
+                "h": self.args.get("height", "300"),
+                "extensionFilter": self.args.get("extensionFilter", ""),
+                "deferredLoad": self.args.get("deferredLoad", "0"),
+                "showBrowser": self.args.get("showBrowser", "1")})
+        return htmlOut + "WORKSTATION"
+        
+        
 
 
 @register.tag(name = "dropbox")
