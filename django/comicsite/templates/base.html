@@ -16,7 +16,19 @@
 		<!--Put any site or page specific css here -->
 		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
 		
-		
+		<script>
+        $(document).ready(function() {
+            // messages timeout for 10 sec 
+            setTimeout(function() {
+                $('.messagelist').fadeOut('slow');
+            }, 5000); // <-- time in milliseconds, 1000 =  1 sec
+    
+            // delete message
+            $('.del-msg').live('click',function(){
+                $('.del-msg').parent().attr('style', 'display:none;');
+            })
+        });
+        </script>
 
 		<title> {% block pageName %} COMIC main portal {% endblock %} </title>
 	</head>
@@ -31,8 +43,10 @@
 						{% else %}
 							{{ message }}
 						{% endif %}
+						<div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
 						</li>
-						{% endfor %}</ul>
+						{% endfor %}
+					</ul>
 				{% endif %}
 			{% endblock messages %}
     	</div>
@@ -54,9 +68,11 @@
                             {% if user.is_authenticated %}
 	                            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a></li>
 	                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}">Signout</a> </li>
+	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof "/" %}">Signout</a> </li>
                             {% else %}
-                            	<li><a class="menuItem" href="{% url 'userena_signin' %}">Sign in / Register</a></li>
+                            	{% block loginbutton %}
+                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+                                {% endblock %}
                             {% endif %}
                             
                             {% block adminbutton %} {% endblock %}                            
@@ -75,6 +91,7 @@
             
         </div>		
         <!-- page -->
+        {% block footer %}
                	<div id="metafooter">
                		<div id="metaFooterMenu">
             			{% metafooterpages %}
@@ -85,6 +102,6 @@
 	                </div>
 	
 	            </div>
-
+        {% endblock %}
 	</body>
 </html>
