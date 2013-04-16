@@ -65,6 +65,8 @@ class ComicSite(models.Model):
     header_image = models.ImageField(default="", blank=True, upload_to=giveFileUploadDestinationPath, help_text = "Header which will appear on top of each project page")
     
     hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")
+    hide_signin = models.BooleanField(default=False, help_text = "Do no show the Sign in / Register link on any page")
+    hide_footer = models.BooleanField(default=False, help_text = "Do not show the general links or the grey divider line in page footers")
     
     objects = ComicSiteManager()
     

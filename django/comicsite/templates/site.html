@@ -24,6 +24,9 @@
 {% block topmenu %}
 	{% for page in pages %}
 		{% if not page.hidden %}
+			{% if not forloop.first %}				
+				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+			{% endif %}
 			<li>
 				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url 'comicsite.views.page' site.short_name page.title %}">				
 					{% if page.display_title == "" %}
@@ -33,23 +36,25 @@
 					{% endif %}
 				</a>			
 			</li>
-			{% if not forloop.last %}
-				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-			{% endif %}
+			
 		{% endif %}
 	{% endfor %}
 {% endblock %}
 
-{% block adminbutton %}
 
-	{% get_obj_perms user for site as "site_perms" %}	
-	
+{% block loginbutton %}
+	{% if  site.hide_signin %}
+				
+		{% else %}
+			{{ block.super }}
+	{% endif %}
+{% endblock %}
+
+{% block adminbutton %}
+	{% get_obj_perms user for site as "site_perms" %}		
 	<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
 	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	      	   
-	
-	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>
-	   <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>	   
+	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>	   	  
     
 	{% endif %}
 	
@@ -66,5 +71,11 @@
 	
 {% endblock %}
 
-
+{% block footer %}
+	{% if site.hide_footer %}
+			<div style="height: 30px; width: 100%; float:left;"></div>	
+		{% else %}
+			{{ block.super }}
+	{% endif %}
+{% endblock %}
 
