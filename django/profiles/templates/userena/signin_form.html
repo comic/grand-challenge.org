@@ -19,8 +19,8 @@
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
     <ul class="signinlist">
-        <li><a href="{% url 'socialauth_begin' 'google' %}">Google</a></li>
-        <li><a href="{% url 'socialauth_begin' 'yahoo' %}">Yahoo</a></li>
+        <li><a href="{% url 'socialauth_begin' 'google' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Google</a></li>
+        <li><a href="{% url 'socialauth_begin' 'yahoo' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Yahoo</a></li>
     </ul>
 </div>
 <form action="" method="post">
