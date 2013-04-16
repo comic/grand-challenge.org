@@ -24,10 +24,11 @@ Package Requirements.
 - Django Social Auth
 - PIL
 - beautifulsoup4
+- MatPlotLib
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox
+    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox matplotlib
 
 
 Configuration.
