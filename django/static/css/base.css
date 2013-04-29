@@ -1,7 +1,6 @@
 body {background-color: #F9F9F9;font-family: sans-serif;padding-top: 1px;}
 
 
-
 #page { margin-left:auto; margin-right:auto; width: 1000px; font-family : Verdana,helvetica,sans-serif; font-size: 10pt; }
 
 /* Formatting for forms (at the moment only tested on /accounts/signup */
@@ -70,6 +69,16 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .breadcrumbtrail{font-size: x-small; color:#CCCCCC;}
 .breadcrumbtrail a {text-decoration:none; color:#999999;}
 .errorlist {color: red;}
+
+
+.comictable td{border:none; text-align: center; vertical-align: middle;}
+.comictable td.firstcol {text-align:justify;}	
+.comictable tr.firstcol {text-align:justify;}
+.comictable {border:none; width:100%;}
+.comictable td.notfirstcol {width: 10ex;}
+.css_right {float:right}
+.comictablecontainer {width:80%;}
+
 
 
 
