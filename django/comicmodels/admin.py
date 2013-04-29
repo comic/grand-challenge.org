@@ -102,10 +102,12 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
             return FileSystemDatasetInitialForm
     
     def defaultQuerySet(self,request):
-        """ Overwrite this method in child classes to make sure instance of that class is passed to 
-            get_objects_for_users """ 
-        
-        return get_objects_for_user(request.user, self.permission_name,self)
+       """ Overwrite this method in child classes to make sure instance of that class is passed to 
+       get_objects_for_users """         
+       
+       #pdb.set_trace()
+       return get_objects_for_user(request.user, self.permission_name, klass=FileSystemDataset.objects)
+    
     
         
 class UploadModelAdmin(ComicModelAdmin):
@@ -227,6 +229,13 @@ class DropboxFolderAdmin(ComicModelAdmin):
     # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
     _default_manager = DropboxFolder.objects    
     form = DropboxFolderForm
+    
+    def defaultQuerySet(self,request):
+       """ Overwrite this method in child classes to make sure instance of that class is passed to 
+       get_objects_for_users """         
+       
+       #pdb.set_trace()
+       return get_objects_for_user(request.user, self.permission_name, klass=DropboxFolder.objects)
     
     class Media:
         js = ("js/django_dropbox/admin_add_callback.js",)
