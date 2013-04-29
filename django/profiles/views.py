@@ -1,4 +1,5 @@
 from django.shortcuts import redirect
+from django.contrib import messages
 
 import pdb
 import userena.views as userena_views
@@ -11,6 +12,7 @@ def profile(request):
     """
     if request.user.is_authenticated():
         print "username: ", request.user.username
+        print "redirect to profile"
         return redirect('/accounts/'+request.user.username)
     else:
         return redirect('/accounts/signin')
@@ -21,6 +23,8 @@ def profile_edit(request):
     """
     if request.user.is_authenticated():
         print "username: ", request.user.username
+        print "redirect to profile edit"
+        messages.add_message(request, messages.INFO, "Please fill-in the missing information in the form form below.")
         return redirect('/accounts/'+request.user.username+'/edit')
     else:
         return redirect('accounts/signin')
