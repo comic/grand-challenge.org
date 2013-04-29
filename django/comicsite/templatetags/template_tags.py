@@ -11,7 +11,9 @@ import csv, numpy
 import datetime
 import ntpath
 import os
+import random
 import re
+import string
 import StringIO
 import sys
 import traceback
@@ -227,8 +229,9 @@ class ListDirNode(template.Node):
    
     def __init__(self, args):
         self.path = args['path']
-        self.args = args            
-         
+        self.args = args
+                    
+        
 
 
     def make_dataset_error_msg(self, msg):
@@ -236,9 +239,8 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-
-        project_name = context.page.comicsite.short_name
         
+        project_name = context.page.comicsite.short_name
         folder = os.path.join(settings.DROPBOX_ROOT,project_name,self.path)                       
         dp = FileSystemDataProvider.FileSystemDataProvider(folder)
 
@@ -672,13 +674,12 @@ class InsertGraphNode(template.Node):
         
 
         try:
-            svg_data = render_function(filename)                                            
-        except Exception as e:           
-                                 
-            return self.make_error_msg(str("Error calling render funtion '%s()' : %s" %(render_function.__name__,
-                                                                                        traceback.format_exc(0))))
-        
- 
+            svg_data = render_function(filename)                                           
+        #except Exception as e:           
+        except:
+            raise                        
+            #return self.make_error_msg(str("Error calling render funtion '%s()' : %s" %(render_function.__name__,
+             #                                                                           traceback.format_exc(0))))     
         #self.get_graph_svg(table,headers)
         
         
@@ -700,7 +701,8 @@ def getrenderer(format):
     only functions listed here can be called from the template tag render_graph.
     """
     renderers = {"csv":render_FROC,
-               "anode09":render_anode09_result}
+               "anode09":render_anode09_result,
+               "anode09_table":render_anode09_table,}
         
     if not renderers.has_key(format):
         raise Exception("reader for format '%s' not found. Available formats: %s" %(format, \
@@ -724,10 +726,10 @@ def get_graph_svg(table,headers):
           fig.gca().plot(columns[0], columns[i],label=headers[i],gid=headers[i])
         fig.gca().set_xlim([10**-2, 10**2])
         fig.gca().set_ylim([0,1])
-        fig.gca().legend(loc='best')
+        fig.gca().legend(loc='best',prop={'size':10})
         fig.gca().grid()
         fig.gca().grid(which='minor')
-        fig.gca().set_xlabel('False positives/image')
+        fig.gca().set_xlabel('False positives/scan')
         fig.gca().set_ylabel('Sensitivity')
     
         fig.gca().set_xscale("log")
@@ -794,7 +796,7 @@ def render_FROC(filename):
       fig.gca().plot(columns[0], columns[i],label=headers[i],gid=headers[i])
     fig.gca().set_xlim([10**-2, 10**2])
     fig.gca().set_ylim([0,1])
-    fig.gca().legend(loc='best')
+    fig.gca().legend(loc='best',prop={'size':10})
     fig.gca().grid()
     fig.gca().grid(which='minor')
     fig.gca().set_xlabel('False positives/image')
@@ -859,22 +861,116 @@ def render_anode09_result(filename):
       
     fig.gca().set_xlim([10**-2, 10**2])
     fig.gca().set_ylim([0,1])
-    fig.gca().legend(loc='best')
+    fig.gca().legend(loc='best',prop={'size':10})
     fig.gca().grid()
     fig.gca().grid(which='minor')
-    fig.gca().set_xlabel('False positives/image')
+    fig.gca().set_xlabel('Average FPs per scan')
     fig.gca().set_ylabel('Sensitivity')
 
     fig.gca().set_xscale("log")
     fig.set_size_inches(8,6)
     
     return canvas_to_svg(canvas)
+        
+    
+#=========#=========#=========#=========#=========#=========#=========#=========#=========    
+def render_anode09_table(filename):
+    """ Read in a file with the anode09 result format and output html for an anode09 table 
+    anode09 results have the following format:        
+    
+    <?php
+        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
+        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.0144928,0.0144928,0.0193237,0.0241546,0.0289855,0.02 etc..
+        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,0.26087,0.26087,0.21187);
+        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0169492,0.0169492,0.0169492,0.016 etc..
+        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,0.135593,0.152542,0.152542,0.104116);
+        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,0.0571429,0.0571429,0.0571429,0.0571429 etc..
+        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,0.314286,0.314286,0.269388);
+        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0. etc..
+        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,0.244186,0.244186,0.194352);
+        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,0.0238095,0.047619,0.0714286,0.0714286,0 etc..
+        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,0.380952,0.380952,0.380952,0.333333);
+        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0222222,0.0222222,0.022 etc..
+        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,0.188889,0.188889,0.15873);
+        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,0.025641,0.034188,0.034188,0.034188, etc..
+        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.299145,0.316239,0.316239,0.252747);
+    ?>
+        
+        
+        First row are x values, followed by alternating rows of FROC scores for each x value and 
+        xxxscore variables which contain FROC scores at 
+        [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be 
+        plotted in a table            
+        
+        Returns: string containing html/svg instruction to render an anode09 FROC curve
+        of all the variables found in file 
+        
+    """    
+    
+    #small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
 
+    vars = parse_php_arrays(filename)
+    assert vars != {}, "parsed result of '%s' was emtpy. I cannot create table" %filename
+    
+    table_id = id_generator()
+  
+    tableHTML = """<table border=1 class = "comictable" id="%s">
+        <thead><tr>
+            <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+            <td align=center width='54'>1/4</td>
+            <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+            <td align=center width='54'>2</td><td align=center width='54'>4</td>
+            <td align=center width='54'>8</td><td align=center width='54'>average</td>
+        </tr></thead>""" % table_id
+    
+    tableHTML = tableHTML + "<tbody>"
+    tableHTML = tableHTML + array_to_table_row(["small nodules"]+vars["smallscore"],"even") 
+    tableHTML = tableHTML + array_to_table_row(["large nodules"]+vars["largescore"],"odd")
+    tableHTML = tableHTML + array_to_table_row(["isolated nodules"]+vars["isolatedscore"],"even")
+    tableHTML = tableHTML + array_to_table_row(["vascular nodules"]+vars["vascularscore"],"odd")
+    tableHTML = tableHTML + array_to_table_row(["pleural nodules"]+vars["pleuralscore"],"even")
+    tableHTML = tableHTML + array_to_table_row(["peri-fissural nodules"]+vars["fissurescore"],"odd")
+    tableHTML = tableHTML + array_to_table_row(["all nodules"]+vars["frocscore"],"even")
+    tableHTML = tableHTML + "</tbody>"
+    tableHTML = tableHTML + "</table>"
+    
+    # FIXME: create a temporary solution to including javascript and css with template tags
+     
+    script = """<script type="text/javascript">
+                    $(document).ready(function() {
+                        $('#%s').dataTable({
+                            "bJQueryUI": true,
+                            "sPaginationType": "full_numbers",
+                            "bPaginate": false,
+                            "bLengthChange": false,
+        "bFilter": false,        
+        "bInfo": false,
+        "bAutoWidth": false
+                        });
+                    } );
+            </script>""" % table_id
     
     
-    
-    return get_graph_svg(table,headers)
-    
+    return script+"<div class=\"comictablecontainer\">"+tableHTML+"</div>"
+
+
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    """ thanks to Ignacio Vazquez-Abrams on stackoverflow"""
+    return ''.join(random.choice(chars) for x in range(size))
+  
+
+def array_to_table_row(rowvalues,trclass=""):    
+    output = "<tr class = \"%s\">" % trclass
+    tdclass = "firstcol"    
+    for value in rowvalues:            
+        if type(value) is float:
+            output = output + "<td class = '%s'>%.3f</td>" % (tdclass,value)
+        else:
+            output = output + "<td class = '%s'>%s</td>" % (tdclass,str(value))
+        tdclass = "notfirstcol"        
+    output = output + "</tr>"
+    return output
 
 def parse_php_arrays(filename):
     """ Parse a php page containing only php arrays like $x=(1,2,3). Created to parse anode09 eval results.
