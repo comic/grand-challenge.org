@@ -104,8 +104,7 @@ class FileSystemDatasetAdmin(ComicModelAdmin):
     def defaultQuerySet(self,request):
        """ Overwrite this method in child classes to make sure instance of that class is passed to 
        get_objects_for_users """         
-       
-       #pdb.set_trace()
+              
        return get_objects_for_user(request.user, self.permission_name, klass=FileSystemDataset.objects)
     
     
@@ -118,6 +117,13 @@ class UploadModelAdmin(ComicModelAdmin):
     # explicitly inherit manager because this is not done by default with non-abstract superclass
     # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
     _default_manager = UploadModel.objects
+    
+    def defaultQuerySet(self,request):
+       """ Overwrite this method in child classes to make sure instance of that class is passed to 
+       get_objects_for_users """         
+       
+       #pdb.set_trace()
+       return get_objects_for_user(request.user, self.permission_name, klass=UploadModel.objects)
     
 
 class DropboxFolderForm(forms.ModelForm):
