@@ -71,12 +71,28 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .errorlist {color: red;}
 
 
-.comictable td{border:none; text-align: center; vertical-align: middle;}
-.comictable td.firstcol {text-align:justify;}	
-.comictable tr.firstcol {text-align:justify;}
-.comictable {border:none; width:100%;}
+/* shared features of any general table within comic */
+.comictable .odd{}
+.comictable .even{background-color:#EEEEEE;}
+
+/* extra features for specific tables */
+/* table for displaying numbers and short values from csv*/
+.csvtable td{border:none; text-align: center; vertical-align: middle;}
+.csvtable td.firstcol {text-align:justify;}	
+.csvtable tr.firstcol {text-align:justify;}
+.csvtable {border:none; width:100%;}
+.csvtable td.notfirstcol {width: 10ex;}
 .comictable td.notfirstcol {width: 10ex;}
+
 .css_right {float:right}
+.comictablecontainer {width:80%;}
+
+/* For showing a list of tag names and usage descriptions */
+.taglist {border:none; width:100%; border-spacing:0px; border-collapse:collapse}
+.taglist td{border:1px solid black;  vertical-align: middle;}
+
+
+
 .comictablecontainer {width:80%;}
 
 
