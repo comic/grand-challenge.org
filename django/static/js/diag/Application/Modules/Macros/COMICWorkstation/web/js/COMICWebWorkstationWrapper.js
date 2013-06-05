@@ -11,8 +11,10 @@ function COMICWebWorkstationWrapper(domElementId) {
   
   this._elementId = domElementId;
   this._elementSelector = "#"+domElementId;
-  this._mlabModuleName = "COMICWebWorkstation"
-  this._module = null
+  this._mlabModuleName = "COMICWebWorkstation";
+  this._module = null;
+  this._isInFullscreen = false;
+  this._nonFullscreenSize = {"width":null,"height":null};
 
   // Callback executed when loading is complete
   this.comicLoadingFinishedCB = function () {
@@ -66,6 +68,17 @@ function COMICWebWorkstationWrapper(domElementId) {
     
 	MLABApp.initialize(function() { self._mlabApploaded() } ,self._options);
 	
+	$(window).resize(function() {
+		if(self._isInFullscreen){
+			self._resizeWindowTo(window.innerWidth,window.innerHeight);
+		};		
+	});	
+	
+	$(window).keyup(function(event) {
+		if(event.which == 27){ //27 == escape key
+			self.leaveFullscreen();
+		}		
+	});
   };
   
   this._mlabApploaded = function(){
@@ -109,7 +122,49 @@ function COMICWebWorkstationWrapper(domElementId) {
 	  viewerControl.resizeViewport(self._options.width, self._options.height);
 	})
 	MLAB.GUI.Application.createModule(self._mlabModuleName);
-  }  
+  }
+  
+  this.gotoFullscreen = function(){
+  	if(!this._isInFullscreen){
+	  	this._isInFullscreen = true;
+	  	var container = $(self._elementSelector);
+	  	this._nonFullscreenSize.width = container.width();
+	  	this._nonFullscreenSize.height = container.height();  	
+	  	this._resizeWindowTo(window.innerWidth,window.innerHeight);
+	  	container.css("position", "fixed");	  	
+	  	container.css("top","0");
+  		container.css("left","0");
+  		$("html").css("overflow","hidden");
+  		
+  		$("#messagescontainer").hide()
+  							   .css("z-index",1000)
+  							   .html("<div class = 'messagelist'>Entering fullscreen mode. Press escape to exit</div>")
+  							   .fadeIn(400,function(){
+  							   		setTimeout(function(){
+  							   			$("#messagescontainer").fadeOut()
+  							   		},4000)
+  							   	})	  	
+	}	
+  }
+  
+  this.leaveFullscreen = function(){
+  	if(this._isInFullscreen){  		
+  		this._isInFullscreen = false;  		
+  	    this._resizeWindowTo(this._nonFullscreenSize.width,this._nonFullscreenSize.height);
+  	    var container = $(self._elementSelector);
+  	    container.css("position", "");
+  	    $("html").css("overflow","");
+  	}  	
+  }
+  
+  this._resizeWindowTo = function(width,height){  	
+  	var container = $(self._elementSelector)  	  	  	
+  	container.css("width",width);
+  	container.css("height",height);  	  
+  	var viewerControl = self._module.control("viewer")
+	viewerControl.resizeViewport(width,height);
+  }; 
+  
   //== convenience functions for calling methods on the MLab module itself ============
   
   this.setDataRoot = function(rootPath) {
