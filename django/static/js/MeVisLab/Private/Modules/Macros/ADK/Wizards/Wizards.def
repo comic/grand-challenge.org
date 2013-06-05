@@ -1,0 +1,36 @@
+/*
+// -----------------------------------------------------------------------
+// 
+// Copyright (c) 2001-2013, MeVis Medical Solutions AG, Bremen, Germany
+// ALL RIGHTS RESERVED
+// 
+// THIS FILE CONTAINS CONFIDENTIAL AND PROPRIETARY INFORMATION OF MEVIS 
+// MEDICAL SOLUTIONS AG. ANY DUPLICATION, MODIFICATION, DISTRIBUTION, OR 
+// DISCLOSURE IN ANY FORM, IN WHOLE, OR IN PART, IS STRICTLY PROHIBITED 
+// WITHOUT THE PRIOR EXPRESS WRITTEN PERMISSION OF MEVIS MEDICAL SOLUTIONS 
+// AG.
+// 
+*/
+//-----------------------------------------------------------------------------
+//! Module defintion for Wizards.def
+/*!
+// \file    Wizarads.def
+// \author  Florian Link
+// \date    02/2005
+*/
+//-----------------------------------------------------------------------------
+
+ModuleWizard StandaloneAppWizard {
+  author = "Florian Link"
+  externalDefinition = $(LOCAL)/StandaloneInstaller/StandaloneInstallerWizard.script
+  templateList = $(LOCAL)/StandaloneInstaller/StandaloneInstallerWizard.lst
+  title = "Installer/Standalone Application"
+  comment = "Creates an application from a macro module"
+}
+
+//# MeVis signature v1
+//# key: MFowDQYJKoZIhvcNAQEBBQADSQAwRgJBANEfsmYse2e1dRhkQ9AQbreCq9uxwzWLoGom13MNYmyfwoJqQOEXljLFAgw2eEjaT12G4CdqKWhRxh9ANP6n7GMCARE=:VI/mB8bT4u+mRtf/ru8yUQi8BzpaS3UeL2x62YxsUYnVqCWuLrVNLiukIIjnJMKQXlc8ezmgOIcVAV7pgvgKpQ==
+//# owner: MeVis
+//# date: 2013-04-10T22:33:03
+//# hash: u0VPqHRPxNWjRJDlH8XegyEcnMQvdjdvDbGK55ta1bPjGVpBJqL5tYvbpGEFnrKRR7dDJcqGaBp/7Ua0s3onzw==
+//# MeVis end

@@ -1,0 +1,410 @@
+/*-----------------------------------------------------------------------------*/
+
+.MLAB-GUI-DisabledDOMElement {
+  color: rgb(138,138,138);
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+button.MLAB-GUI-Button {
+  white-space:nowrap;
+}
+
+label.MLAB-GUI-Button {
+
+  white-space:nowrap;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select:none;
+  
+  border: solid 1px rgb(158,158,158);
+  
+	background: -moz-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* FF3.6+ */
+	background: -webkit-linear-gradient(top, rgb(237,237,237) 0%,rgb(208,208,208) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* IE10+ */
+	background: linear-gradient(to bottom, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='rgb(237,237,237)', endColorstr='rgb(208,208,208)',GradientType=0 ); /* IE6-9 */
+
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+
+  text-align: center;
+  padding: 2px;
+  
+  font: -moz-button;
+}
+
+label.MLAB-GUI-Button-Checked.MLAB-GUI-DisabledDOMElement {
+  color: rgb(158,158,158);
+  background: rgb(208,208,208);
+}
+
+label.MLAB-GUI-Button:hover.MLAB-GUI-DisabledDOMElement, 
+label.MLAB-GUI-Button:focus.MLAB-GUI-DisabledDOMElement {
+  border: solid 1px rgb(158,158,158);
+  
+  background: -moz-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* FF3.6+ */
+  background: -webkit-linear-gradient(top, rgb(237,237,237) 0%,rgb(208,208,208) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* IE10+ */
+  background: linear-gradient(to bottom, rgb(237,237,237) 0%, rgb(208,208,208) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='rgb(237,237,237)', endColorstr='rgb(208,208,208)',GradientType=0 ); /* IE6-9 */
+}
+
+label.MLAB-GUI-Button-Checked {
+  color: rgb(0,0,0);
+}
+
+label.MLAB-GUI-Button img {
+	display: inline;
+	vertical-align: middle;
+	margin-right: 2px;
+}
+
+label.MLAB-GUI-Button:hover, label.MLAB-GUI-Button:focus {
+  border: solid 1px rgb(108,108,108);
+}
+
+label.MLAB-GUI-Button-Checked,
+label.MLAB-GUI-Button:active {
+	background: -moz-linear-gradient(top, rgb(208,208,208) 0%, rgb(179,179,179) 100%); /* FF3.6+ */
+  background: -webkit-linear-gradient(top, rgb(208,208,208) 0%, rgb(179,179,179) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgb(208,208,208) 0%, rgb(179,179,179) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgb(208,208,208) 0%, rgb(179,179,179) 100%); /* IE10+ */
+  background: linear-gradient(to bottom, rgb(208,208,208) 0%, rgb(179,179,179) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='rgb(208,208,208)', endColorstr='rgb(179,179,179)',GradientType=0 ); /* IE6-9 */
+}
+
+
+label.MLAB-GUI-Button-Checked.MLAB-GUI-DisabledDOMElement:hover, 
+label.MLAB-GUI-Button-Checked.MLAB-GUI-DisabledDOMElement:focus {
+	color: rgb(158,158,158);
+  background: rgb(208,208,208);
+}
+
+label.MLAB-GUI-Button-Checked:hover, 
+label.MLAB-GUI-Button-Checked:focus {
+	border: solid 1px rgb(108,108,108);
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * MLAB.GUI.CommonButtonGroupControl style
+ */
+div.MLAB-GUI-HorizontalButtonGroup > table,
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody,
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody > tr > td > button,
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody > tr > td > label {
+  width: 100%;
+}
+
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody > tr > td > label {
+	display: block;
+}
+
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody > tr > td {
+	padding-left: 0px;
+	padding-right: 8px;
+}
+
+div.MLAB-GUI-HorizontalButtonGroup > table > tbody > tr > td:last-child {
+	padding-right: 0px;
+}
+
+div.MLAB-GUI-VerticalButtonGroup > table,
+div.MLAB-GUI-VerticalButtonGroup > table > tbody,
+div.MLAB-GUI-VerticalButtonGroup > table > tbody > tr > td > button,
+div.MLAB-GUI-VerticalButtonGroup > table > tbody > tr > td > label {
+  width: 100%;
+}
+
+div.MLAB-GUI-VerticalButtonGroup > table > tbody > tr > td > label {
+  display: block;
+}
+
+div.MLAB-GUI-VerticalButtonGroup > table > tbody > tr > td {
+  padding-left: 0px;
+  padding-right: 8px;
+}
+
+div.MLAB-GUI-VerticalButtonGroup > table > tbody > tr > td:last-child {
+  padding-right: 0px;
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * MLItemModuleViewControl style classes
+ */
+div.MLAB-GUI-MLItemModelViewControl table {
+  overflow: hidden;
+  display: block;
+}
+
+div.MLAB-GUI-MLItemModelViewControl tbody {
+  display: block;
+  max-height: 250px;
+  overflow: auto;
+}
+
+div.MLAB-GUI-MLItemModelViewControl thead {
+  display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+th.MLAB-GUI-MLItemModelViewControl_AscendingOrder {
+  background: url(arrowDown.png) no-repeat right;
+}
+
+th.MLAB-GUI-MLItemModelViewControl_DescendingOrder {
+  background: url(arrowUp.png) no-repeat right;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_HeaderRow th {
+  font-size: 120%;
+  padding-left: 4px;
+  padding-right: 4px;
+  background-color: rgba(192, 192, 192, 1.0);
+  border-left: 1px solid white;
+  border-right: 1px solid white;
+  text-align: left;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+div.MLAB-GUI-MLItemModelViewControl_HeaderLabel {
+  margin-right: 12px;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_TableRow {
+  white-space: nowrap;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_TableRow td {
+  vertical-align: middle;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_TableRow:hover {
+  background-color: rgb(224, 224, 224);
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_SelectedRow td {
+  background: rgba(128, 128, 255, 1.0);
+}
+
+div.MLAB-GUI-MLItemModelViewControl tr {
+  cursor: pointer;
+}
+
+div.MLAB-GUI-MLItemModelViewControl table {
+  border-spacing: 0px;
+}
+
+div.MLAB-GUI-MLItemModelViewControl_EmptyHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+}
+
+div.MLAB-GUI-MLItemModelViewControl_CollapsedHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+  background: url(expand.gif) 0 2px no-repeat;
+}
+
+div.MLAB-GUI-MLItemModelViewControl_ExpandedHandle {
+  height: 2ex;
+  width: 2ex;
+  display: inline-block;
+  background: url(collapse.gif) 0 2px no-repeat;
+}
+
+div.MLAB-GUI-MLItemModelViewControl_CellContent {
+  display: inline-block;
+}
+
+/*-----------------------------------------------------------------------------*/
+
+div.VerticalSplitterChild, div.HorizontalSplitterChild {
+  overflow: hidden;
+}
+
+div.MLABDialog {
+	position: absolute;
+	z-index: 2;
+	visibility: hidden;
+}
+
+input.MLAB-GUI-InvalidNumberEditValue {
+	color: rgb(232, 0, 0);
+}
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * MLAB.GUI.TabViewControl style
+ */
+table.MLAB-GUI-TabBarTable {
+	border-style: none;
+}
+
+table.MLAB-GUI-TabBarTable > tbody > tr > td {
+	padding: 0px;
+}
+
+span.MLAB-GUI-TabBarItem  {
+	background-color: rgb(235,235,235);
+  padding: 2px;
+  
+  border: 2px outset rgb(125,125,125);
+  -webkit-border-top-left-radius: 5px;
+  -moz-border-top-left-radius: 5px;
+  border-top-left-radius: 5px;
+  -webkit-border-top-radius: 5px;
+  -moz-border-top-right-radius: 5px;
+  border-top-right-radius: 5px;
+  
+  position: relative;
+  top: 2px;
+  z-index: 1;
+}
+
+span.MLAB-GUI-ActiveTabBarItem  {
+	border-bottom: 0px;
+	background-color: white;
+	position: relative;
+	z-index: 3;
+}
+
+div.MLAB-GUI-TabViewStack {
+	background-color: white;
+  position: relative; /* position is required for z-index */
+  z-index: 2;
+}
+
+div.MLAB-GUI-TabViewItemControl > table {
+	border: 2px outset rgb(125,125,125);
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  -webkit-border-top-left-radius: 0px;
+  -moz-border-top-left-radius: 0px;
+  border-top-left-radius: 0px;
+
+  padding: 4px;
+  /* we want to expand horizontally inside the parent element: */
+  width: 100%;
+}
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * Other styles
+ */
+
+.MLAB-GUI-HiddenDOMElement {
+  visibility: hidden;
+}
+
+.MLAB-GUI-ConcealedDOMElement {
+  display: none !important;
+}
+
+div.MLAB-GUI-PanelControl {
+	/* The panel should not expand as much as possible by default, which 
+	   it would if display has the default value 'block'. */
+  display: inline-block;
+  text-align: left;
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * MLAB.GUI.BoxControl style
+ */
+div.MLAB-GUI-BoxControl {
+	border: 1px solid lightblue;
+	margin-top: 4pt;
+	padding-left: 2pt;
+	padding-right: 2pt;
+	padding-bottom: 2pt; 
+}
+span.MLAB-GUI-BoxTitleLabel {
+	background: white;
+  position: relative;
+  left: 2pt;
+  top: -7pt; 
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+/*
+ * MLAB.GUI.HyperTextControl style
+ */
+div.MLAB-GUI-HyperTextControl {
+	border: 1px inset rgb(195,195,195);
+	padding-top: 2pt;
+	padding-left: 5pt;
+	overflow: auto;
+}
+
+div.MLAB-GUI-HyperTextContent {
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+div.MLAB-GUI-VerticalControl > table > tbody > tr > td {
+  padding-bottom: 2px;
+  padding-top: 0px;
+}
+
+div.MLAB-GUI-VerticalControl > table > tbody > tr > td:last-child {
+  padding-bottom: 0px;
+}
+
+div.MLAB-GUI-HorizontalControl > table > tbody > tr > td {
+  padding-right: 2px;
+  padding-left: 0px;
+}
+
+div.MLAB-GUI-HorizontalControl > table > tbody > tr > td:last-child {
+  padding-right: 0px;
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+div.MLAB-GUI-TableControl > table > tbody > tr > td.MLAB-GUI-LastColumn {
+	width: 100%;
+}
+
+div.MLAB-GUI-HorizontalControl > table,
+div.MLAB-GUI-HorizontalControl > table > tbody {
+  width: 100%;
+}
+
+/*-----------------------------------------------------------------------------*/
+
+span.MLAB-GUI-FieldControlLabel {
+  white-space: nowrap;
+}
+
+/*-----------------------------------------------------------------------------*/
+
+.MLAB-GUI-DisableEventHandling {
+  pointer-events:none;
+}

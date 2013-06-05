@@ -1,0 +1,16 @@
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+.ui-dialog.hidden-overflow .ui-dialog-content{
+  overflow: hidden;
+}
+
+div.ui-widget-overlay {
+  opacity: 0.8;
+  background: #aaa;
+}
+
+.ui-dialog .ui-dialog-content {
+  padding: 0px;
+}

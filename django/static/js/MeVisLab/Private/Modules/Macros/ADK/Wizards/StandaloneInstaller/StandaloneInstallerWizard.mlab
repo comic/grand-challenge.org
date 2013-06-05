@@ -1,0 +1,38 @@
+// MDL v1 utf8
+network  {
+  watchlist = ""
+}
+module ModuleWizardPackageSelector {
+  internal  {
+    frame = "469 373 200 56"
+    moduleGroupName = ""
+    windows  {
+      window _default {
+        geometry = "2271 560 473 69"
+        sizeHint = "473 69"
+        wasOpen = no
+        wasActive = no
+      }
+      window _automatic {
+        geometry = "2291 521 225 228"
+        sizeHint = "225 228"
+        wasOpen = no
+        wasActive = no
+      }
+    }
+  }
+  fields  {
+    instanceName = ModuleWizardPackageSelector
+    packageIdentifier = ""
+  }
+  internalFields = ""
+}
+connections = ""
+networkModel = ""
+
+//# MeVis signature v1
+//# key: MFowDQYJKoZIhvcNAQEBBQADSQAwRgJBANEfsmYse2e1dRhkQ9AQbreCq9uxwzWLoGom13MNYmyfwoJqQOEXljLFAgw2eEjaT12G4CdqKWhRxh9ANP6n7GMCARE=:VI/mB8bT4u+mRtf/ru8yUQi8BzpaS3UeL2x62YxsUYnVqCWuLrVNLiukIIjnJMKQXlc8ezmgOIcVAV7pgvgKpQ==
+//# owner: MeVis
+//# date: 2013-04-10T22:33:03
+//# hash: my3LjUjdryvEv/DqOeJZZav06trZlPr/8GioXNm07MyOn14ynxnaLhwzEioH/xhMvI3Bpu1ZSGP389O7Mw/JBA==
+//# MeVis end

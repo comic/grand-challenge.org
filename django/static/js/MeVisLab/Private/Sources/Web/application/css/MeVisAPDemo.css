@@ -1,0 +1,354 @@
+body {
+  background-color: rgb(25,25,25);
+  color: rgb(149,149,149);
+}
+
+div.yui-panel-container input, .yui-skin-sam .yui-panel .bd, .yui-skin-sam .yui-dialog .ft {
+  background-color: rgb(49,49,49);
+}
+
+div.yui-panel-container input {
+  border-color: rgb(49,49,49);
+  color: rgb(202,202,202);
+}
+
+.yui-skin-sam .yui-panel .hd {
+  background: rgb(101,101,101);
+  color: rgb(202,202,202);
+  border-bottom-color: rgb(101,101,101);
+}
+
+.yui-skin-sam .yui-panel {
+  border-color: rgb(101,101,101);
+}
+
+button {
+  background: rgb(49,49,49);
+  color: rgb(202,202,202);
+  border-color: rgb(49,49,49);
+}
+
+div.MeVisAPLogoTable {
+  width: 100%;
+}
+
+div.MeVisAPLogoTable td:first-child + td, div.MeVisAPLogoTable td:last-child {
+  width: 40px;
+  background-color: rgb(152,0,0);
+}
+
+div.MeVisAPLogoTable td:first-child {
+  width: 80%;
+}
+
+div.MeVisAPLogoTable td:first-child + td + td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+div.MeVisAPLogoTable table {
+  font-size: 300%;
+  font-weight: bold;
+  color: rgb(152,0,0);
+}
+
+div.MeVisAPDemoWebApp td {
+  vertical-align: top;
+}
+
+table.bodyTable {
+  width: 100%;
+}
+
+td.bodyTable {
+  vertical-align: top;
+}
+
+tr.logo {
+  text-align: right;
+}
+
+td.mainTable {
+  text-align: center;
+}
+
+div.captionDiv {
+  font-weight: bold;
+  font-size: 145%;
+  margin-bottom: 10px;
+  text-align:center;
+  padding: 2px;
+  
+  background-color: rgb(83,83,83);
+  
+  -moz-box-shadow: rgba(80, 80, 120, 0.65) 1px 2px 2px 2px;
+  -moz-border-radius-topright: 4px;
+  -moz-border-radius-topleft: 4px;
+  -moz-border-radius-bottomright: 4px;
+  -moz-border-radius-bottomleft: 4px;
+
+  -webkit-box-shadow: 1px 2px 2px 2px rgba(80, 80, 120, 0.65);
+  -webkit-border-top-right-radius: 4px;
+  -webkit-border-top-left-radius: 4px;
+  -webkit-border-bottom-right-radius: 4px;
+  -webkit-border-bottom-left-radius: 4px;
+}
+
+div.titleDiv {
+  font-weight: bold;
+  font-size: 125%;
+  margin-bottom: 10px;
+}
+
+div.panelDiv {
+  padding: 10px;
+  padding-left: 25px;  
+  margin-bottom: 10px;
+}
+
+div.mainCaptionDiv {
+  font-size: 200%;
+  font-weight: bold;
+  padding-left: 20px;
+}
+
+div.commonDescriptionDiv {
+  text-align: justify;
+  line-height: 1.5em;
+  font-size: 110%;
+}
+
+div.mainDescriptionDiv {
+  margin-top: 25px;
+  margin-left: 50px;
+  margin-bottom: 50px;
+  width: 35em;
+}
+
+div.descriptionDiv {
+  margin-left: -150px;
+  padding-top: 100px;
+  width: 35em;
+}
+
+div.diagnosisContentDiv {
+  height: 20em;
+  overflow: scroll;
+  background-color: rgb(83,83,83);
+}
+
+div.diagnosisDiv {
+  padding: 3px;
+  background-color: rgb(83,83,83);
+  
+  -moz-box-shadow: rgba(80, 80, 120, 0.65) 1px 2px 2px 2px inset;
+  -moz-border-radius-topright: 4px;
+  -moz-border-radius-topleft: 4px;
+  -moz-border-radius-bottomright: 4px;
+  -moz-border-radius-bottomleft: 4px;
+
+  -webkit-box-shadow: 1px 2px 2px 2px rgba(80, 80, 120, 0.65) inset;
+  -webkit-border-top-right-radius: 4px;
+  -webkit-border-top-left-radius: 4px;
+  -webkit-border-bottom-right-radius: 4px;
+  -webkit-border-bottom-left-radius: 4px;
+}
+
+table.diagnosisTable {
+  margin-top: 50px;
+  width: 100%;
+}
+
+div.demoDataTitleDiv {
+  font-size: 110%;
+  margin-bottom: 5px;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_HeaderRow th {
+  font-size: 12%;
+  padding-left: 4px;
+  padding-right: 4px;
+  background: rgba(76, 76, 76, 1.0); /* fallback */
+  background: -moz-linear-gradient(rgba(132, 132, 132, 1.0) 0%, rgba(32, 32, 32, 1.0) 100%);  
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgba(132, 132, 132, 1.0)), to(rgba(32, 32, 32, 1.0)));
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_TableRow {
+  font-size: 10pt;
+  width: 200px;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_TableRow:hover {
+  background: none;
+}
+
+tr.MLAB-GUI-MLItemModelViewControl_SelectedRow td {
+  background: none;
+}
+
+div.studiesItemModel tr.MLAB-GUI-MLItemModelViewControl_TableRow:hover {
+  background-color: rgb(79, 79, 79);
+}
+
+div.studiesItemModel tr.MLAB-GUI-MLItemModelViewControl_SelectedRow td {
+  background-color: rgb(68, 68, 68);
+  border-top: 1px solid rgb(149,149,149);
+  border-bottom: 1px solid rgb(149,149,149);
+}
+
+div.studiesItemModel tr.MLAB-GUI-MLItemModelViewControl_SelectedRow td:last-child {
+  border-right: 1px solid rgb(149,149,149);
+}
+
+div.studiesItemModel tr.MLAB-GUI-MLItemModelViewControl_SelectedRow td:first-child {
+  border-left: 1px solid rgb(149,149,149);
+}
+
+
+div.MLAB-GUI-MLItemModelViewControl tr {
+  cursor: default;
+}
+
+div.MLAB-GUI-MLItemModelViewControl td:nth-child(4) input[type=checkbox] {
+  -moz-appearance: radio;
+  -webkit-appearance: radio;
+}
+
+div.studiesItemModel tr {
+  cursor: pointer;
+}
+
+div.MLAB-GUI-MLItemModelViewControl table {
+  border-spacing: 0px;
+  min-width: 380px;
+  width: 380px;
+}
+
+div.MLAB-GUI-MLItemModelViewControl {
+  height: auto;
+  overflow: visible;
+  min-width: 400px;
+}
+
+div.Sidepanel {
+  height: 820px;
+  overflow: auto;
+  -moz-box-shadow: rgb(102, 102, 102) 1px 2px 2px 2px;
+  -moz-border-radius-topright: 4px;
+  -moz-border-radius-topleft: 4px;
+  -moz-border-radius-bottomright: 4px;
+  -moz-border-radius-bottomleft: 4px;
+
+  -webkit-box-shadow: 1px 2px 2px 2px rgb(102, 102, 102);
+  -webkit-border-top-right-radius: 4px;
+  -webkit-border-top-left-radius: 4px;
+  -webkit-border-bottom-right-radius: 4px;
+  -webkit-border-bottom-left-radius: 4px;
+}
+
+div.sidePanelSplitter {
+  height: 800px;
+}
+
+div.VerticalSplitterChild {
+  height: auto;
+  overflow: auto;
+}
+
+div.MLAB-GUI-MLItemModelViewControl td:first-child {
+  width: 250px;
+  min-width: 250px;
+}
+
+div.MLAB-GUI-MLItemModelViewControl td:nth-child(2) {
+  width: 48px;
+  max-width: 48px;
+}
+
+div.MLAB-GUI-MLItemModelViewControl td:nth-child(3), td:nth-child(4), td:nth-child(5) {
+  width: 24px;
+  min-width: 24px;
+  max-width: 24px;
+}
+
+div.studiesLabel {
+  font-weight: bold;
+  color: white;
+  font-size: 14pt;
+  width: 390px;
+  margin-left: -10px;
+}
+
+div.studiesLabel {
+  /* Mozilla: */
+  background: -moz-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+  /* Chrome, Safari:*/
+  background: -webkit-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+}
+
+div.studiesItemModel {
+  font-size: 12pt;
+  padding-bottom: 20px;
+}
+
+div.fMRIImagesItemModel {
+  padding-bottom: 20px;
+}
+
+div.studiesItemModel td:first-child {
+  width: 360px;
+  min-width: 360px;
+}
+
+div.imagesLabel, div.otherImagesLabel { 
+  font-weight: bold;
+  color: white;
+  font-size: 14pt;
+  width: 390px;
+  margin-left: -10px;
+}
+
+div.imagesLabel {
+  /* Mozilla: */
+  background: -moz-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+  /* Chrome, Safari:*/
+  background: -webkit-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+}
+
+div.otherImagesLabel {
+  /* Mozilla: */
+  background: -moz-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+  /* Chrome, Safari:*/
+  background: -webkit-linear-gradient(bottom, rgb(35,35,35) 15%, rgb(83,83,83));
+}
+
+div.diffusionImagesLabel, div.fMRIImagesLabel, div.anatomicalImagesLabel { 
+  width: 380px;
+  font-size: 12pt;
+  border-bottom: 1px solid rgb(149,149,149);
+}
+
+div.helpDiv {
+	text-align: right;
+}
+
+.helpLink {
+	cursor: pointer;
+}
+
+.helpLink:hover {
+	text-decoration: underline;
+  font-weight: bold;
+}
+
+#helpDialogDiv {
+	text-align: justify;
+}
+
+div.helpSection {
+	padding-bottom: 10px;
+}
+
+div.helpSection:last-child {
+	padding-bottom: 0px;
+}

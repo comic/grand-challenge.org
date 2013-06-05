@@ -1,0 +1,265 @@
+/*
+// -----------------------------------------------------------------------
+// 
+// Copyright (c) 2001-2013, MeVis Medical Solutions AG, Bremen, Germany
+// ALL RIGHTS RESERVED
+// 
+// THIS FILE CONTAINS CONFIDENTIAL AND PROPRIETARY INFORMATION OF MEVIS 
+// MEDICAL SOLUTIONS AG. ANY DUPLICATION, MODIFICATION, DISTRIBUTION, OR 
+// DISCLOSURE IN ANY FORM, IN WHOLE, OR IN PART, IS STRICTLY PROHIBITED 
+// WITHOUT THE PRIOR EXPRESS WRITTEN PERMISSION OF MEVIS MEDICAL SOLUTIONS 
+// AG.
+// 
+*/
+//----------------------------------------------------------------------------------
+//! Standalone Installer wizard
+/*!
+// \file    StandaloneInstallerWizard.script
+// \author  Florian Link
+// \date    02/2005
+*/
+//----------------------------------------------------------------------------------
+
+Interface {
+  Parameters {
+    // General module parameters
+    Field moduleName { type = string value = "" }
+    Field productName { type = string value = "" }
+    Field debugFlag { type = int value = "0" }
+    Field releaseFlag { type = int value = "1" }
+    Field createPackagesZip { type = bool value = False }
+    Field precompilePythonFiles { type = bool value = false }
+    Field excludeOriginalPythonFiles { type = bool value = false }
+    Field diagnosisFlag { type = int value = "0" }
+    Field version { type = string value = "1" }
+    Field licensePath { type = string }
+
+    Field assembleInstallerScript { type = string }
+    Field splashScreenImage { type = string value = "" }
+
+    // advanced section
+    Field headerImageWin32 { type = string }
+    Field iconFileWin32    { type = string }
+    Field dsstoreFileMac   { type = string }
+    Field headerImageMac   { type = string }
+    Field iconFileMac      { type = string }
+    Field windowMode { type = enum value = MAXIMIZED
+      items {
+        item MAXIMIZED { title = "Show maximized" }
+        item NORMAL { title = "Show normal" }
+        item FULLSCREEN { title = "Show fullscreen" }
+      }
+    }
+    Field enableFinishPage { type = bool value = false }
+    
+    // helper at
+    Field at { type = string value = "@" persistent = no }
+
+    // derived fields
+    Field targetDir { type = string value = "" persistent = no }
+    Field userFileSection { type = string  persistent = no }
+    Field copiedHeaderImageWin32 { type = string persistent = no }
+    Field copiedHeaderImageMac { type = string persistent = no }
+    Field copiedDSStoreFileMac { type = string persistent = no }
+    Field copiedIconFile { type = string persistent = no }
+    Field copiedSplashScreenImage { type = string persistent = no }
+    Field createCodeDialogText { type = string persistent = no }
+    Field status { type = string persistent = no value = "ready." }
+    Field cmdLineArgs { type = string persistent = no }
+    Field availableMacros { type = string value = "" persistent = no }
+
+    // Code creation, wizard menu interface
+    Field templateListPath { type = string value = "" persistent = no }
+    Field createCode { type = trigger }
+    Field createEnable { type = bool value = false }
+    Field exitWindow { type = trigger }
+    Field nextEnable { type = bool value = false persistent = no }
+    Field nextStep { type = trigger }
+    Field prevStep { type = trigger }
+    Field stepTitle { type = string persistent = no }
+    Field stepInfo { type = string persistent = no }
+
+    // Package Selector
+    Field packageIdentifier { internalName = ModuleWizardPackageSelector.packageIdentifier }
+
+    // Things that differ between internal/external usage
+    Field licenseFileNeeded { type = bool value = true  persistent = no }
+    Field defaultStandaloneSetupInclude { type = string persistent = no } 
+  }
+}
+
+
+Commands {
+  source = $(MLAB_MeVisLab_Standard)/Modules/Macros/Wizards/CodeTemplate.py
+  source = $(LOCAL)/StandaloneInstallerWizard.py
+  
+  wakeupCommand = InitModule
+  
+  FieldListener nextStep { command = NextStep }
+  FieldListener prevStep { command = PrevStep }
+  FieldListener createEnable { command = UpdateNextEnable }
+
+  FieldListener createCode { command = CreateCode }
+  FieldListener {
+    listenField = moduleName
+    listenField = ModuleWizardPackageSelector.valid
+    command = UpdateCreateEnable
+  }
+  FieldListener moduleName {
+    command = CheckModuleName
+  }
+  FieldListener packageIdentifier {
+    command = packageIdentifierChanged
+  }
+}
+
+Window {
+  Vertical { expandY = yes
+    TabView {
+      expandY = yes
+      mode = invisible
+      name = tab
+
+      // general
+      TabViewItem {
+        Box "Standalone Application" { layout = Vertical margin = 4
+          Label = "Enter the name of the macro module representing the application"
+          Field moduleName {
+            title = "Macro Module: *"
+            comboBox = yes
+            comboField = availableMacros
+            comboCompletes = Yes
+          } 
+        }
+        Panel {
+          module = ModuleWizardPackageSelector
+        }
+        Box "Info" { margin = 4
+          HyperLabel {
+            title = "This wizard allows to create a <b>standalone application</b> out of a MeVisLab <b>Macro Module</b>.
+            It requires that you have a MeVisLab <b>ADK license</b> which will be used for signing the files and for
+            creating license files for your standalone application.<br><br>
+            Depending on your operating system, a number of tools are required to build the installer. Please check
+            their availability before."
+          }
+          Button { title = "Check if required tools are installed" command = checkExternalTools }
+        }
+        Label = " * : Required fields"
+      }
+      TabViewItem {
+        Box "Installer Settings" { layout = Vertical
+          Field productName {
+            title = "Product Name:"
+            tooltip = "This name is used for the installer and file links. The default is the macro module's name."
+          }
+          Field version {
+            title = "Version:"
+          }
+          Label = "Select whether your installer contains a release and/or debug version.<br>Make sure that all your C++ DLLs are compiled as release/debug accordingly."
+          Horizontal {
+            CheckBox releaseFlag { title = Release }
+            CheckBox debugFlag { title = Debug }
+            expandX = Maximum
+          }
+        }
+        Box {
+          title = "Runtime Optimizations"
+          CheckBox precompilePythonFiles { title = "Precompile Python files" }
+          CheckBox excludeOriginalPythonFiles { 
+            dependsOn = precompilePythonFiles
+            title = "Exclude original Python files (*.py)" 
+          }
+          Label = "Choose whether a zip file will be created that contains all *.(py|pyc|script|def|mlab|js|txt|png) files as file I/O optimization."
+          CheckBox createPackagesZip { title = "Create Packages.zip" }
+        }
+        Box "License for Signing the Files" { visibleOn = licenseFileNeeded
+          Field licensePath {
+            title = "License: *"
+            browseButton = yes
+            tooltip = "Specify the license that is used for signing the application files."
+          }
+          #ifset MeVisInternal {
+          Button { title = "Use MeVis Standalone License" command = setMeVisStandaloneLicenseDefault }
+          }
+        }
+      }
+
+      TabViewItem { expandY = yes
+        TextView assembleInstallerScript { edit = yes autoApply = yes title = "Additional Commands/Files" h = 50 }
+      }
+      TabViewItem {
+        Field windowMode { labelAlignGroup = a1 }
+        Table {
+          Row {
+            Field splashScreenImage { minLength = 20 labelAlignGroup = a1
+              browseButton = yes
+              browseFilter = "**.jpg *.png *.xpm *.tif *.bmp*"
+            }
+            Label = "*PNG is preferred (e.g. 580x369 pixels)*"
+          }
+          Row {
+            Field iconFileWin32 { title = "Icon File Windows:" browseButton = yes minLength = 20 labelAlignGroup = a1
+              tooltip = "This file is used as the windows icon of your application"
+              browseFilter = "**.ico *.jpg *.png *.xpm *.tif *.bmp*"
+            }
+            Label = "*ICO file is preferred (e.g. 32x32 pixels)*"
+          }
+          Row {
+            Field iconFileMac { title = "Icon File OS X:" browseButton = yes minLength = 20 labelAlignGroup = a1
+              tooltip = "This file is used as the icon of your application on OS X"
+              browseFilter = "**.icns *.iconset *.pdf *.png *.jpeg *.jpg *.tiff *.tif*"
+            }
+            Label = "ICNS, ICONSET, PDF, or image file (1024px)"
+          }
+        }
+        CheckBox diagnosisFlag {
+          title = "Create application with diagnosis console (for debugging only)" 
+        }
+      }
+      TabViewItem { expandY = no 
+        Box "Windows Installer Customization" {
+          CheckBox enableFinishPage {
+            tooltip = "Enable the installer finish page on Windows, which allows to start the application after it was installed and to show additional information"
+          }
+          Field headerImageWin32 { title = "Header Image:" browseButton = yes 
+            tooltip = "The file should be of the size 150x57 pixels, otherwise it will be resized"
+          }
+        }
+        Box "OS X Installer Customization" {
+          Label { textWrap = WordBreak title = "This section enables custom settings for the Finder view of the installer disk image (dmg), such as a custom background image. The Finder view settings must be provided in form of a Desktop Services Store file (.DS_Store)." }
+          Field dsstoreFileMac { title = "Finder View Settings File:" browseButton = yes
+            tooltip = "This file stores custom settings of the Finder view of the disk image root folder (.DS_Store)"
+          }
+          Field headerImageMac { title = "Finder View Background Image:" browseButton = yes 
+            tooltip = "The image file must be referenced by the .DS_Store file provided above as folder background"
+            dependsOn = dsstoreFileMac
+          }
+        }
+      }
+    }
+  }
+  
+  FieldListener exitWindow { command = ExitWindow }
+  Execute = InitWindow
+}
+
+Window CreateCodeDialog { 
+  title = "Generated Installer Files"
+  Vertical { expandY = yes margin = 4
+    HyperLabel {
+      titleField = createCodeDialogText
+    }
+    Horizontal { margin = 4
+      Button { title = "Create Installer" command = createInstaller }
+      Button { title = "Browse Output Directory" command = browseOutputDirectory }
+      Button { title = "Create Application License" command = createApplicationLicense }
+      Button { title = "Close" command = "py: ctx.closeWindow()" }
+    }
+  }
+}
+//# MeVis signature v1
+//# key: MFowDQYJKoZIhvcNAQEBBQADSQAwRgJBANEfsmYse2e1dRhkQ9AQbreCq9uxwzWLoGom13MNYmyfwoJqQOEXljLFAgw2eEjaT12G4CdqKWhRxh9ANP6n7GMCARE=:VI/mB8bT4u+mRtf/ru8yUQi8BzpaS3UeL2x62YxsUYnVqCWuLrVNLiukIIjnJMKQXlc8ezmgOIcVAV7pgvgKpQ==
+//# owner: MeVis
+//# date: 2013-04-10T22:33:03
+//# hash: TVffOj67cXLXKSX2cLmfAqwT1soFAyU2GtBEHN9F5owmEUHk9Zq8o4PX6Nb20zaLnFtbMaBgcJsiD6eQ3PT86Q==
+//# MeVis end

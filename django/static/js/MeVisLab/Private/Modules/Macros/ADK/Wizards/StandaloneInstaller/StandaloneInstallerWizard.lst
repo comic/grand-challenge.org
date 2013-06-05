@@ -1,0 +1,5 @@
+# StandaloneInstallerWizard template files
+
+$(LOCAL)/installer.bat -> ${vars.targetDir}/${vars.productName}.bat
+$(LOCAL)/installer.sh  -> ${vars.targetDir}/${vars.productName}.sh
+$(LOCAL)/installer.mli -> ${vars.targetDir}/${vars.productName}.mlinstall

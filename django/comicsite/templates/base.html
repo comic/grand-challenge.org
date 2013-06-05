@@ -8,9 +8,11 @@
 		<meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
 		<link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
 			
-		<script type="text/javascript" src="{% get_static_prefix %}js/jquery-1.7.2.min.js"></script>
-		<script type="text/javascript" src="{% get_static_prefix %}js/jquery-ui-1.8.21.custom.min.js"></script>
-		<script type="text/javascript" src="{% get_static_prefix %}js/fme.viewer2d.js"></script>
+					
+		<script type="text/javascript" src="{% get_static_prefix %}js/jquery/jquery-1.9.1.min.js"></script>		
+		<script type="text/javascript" src="{% get_static_prefix %}js/jqueryui/js/jquery-ui-1.10.1.custom.min.js"></script>
+		<script type="text/javascript" src="{% get_static_prefix %}js/MeVisLab/Private/Sources/Web/application/js/gui/Application.js"></script>
+		<script type="text/javascript" src="{% get_static_prefix %}js/DIAG/Application/Modules/Macros/COMICWorkstation/web/js/COMICWebWorkstationWrapper.js"></script>
         <!--For displaying jquery UI widgets -->
 		<link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
 		<!--Adds sorting and other features to html tables -->
@@ -19,9 +21,13 @@
 		
 		<!--Put any site or page specific css here -->
 		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
-		
+		<style>
+  			.ui-resizable-helper { border: 2px dotted #00F; }
+  		</style>
+  
 		<script>
         $(document).ready(function() {
+        	console.log('works')
             // messages timeout for 10 sec 
             setTimeout(function() {
                 $('.messagelist').fadeOut('slow');
