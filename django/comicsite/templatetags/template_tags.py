@@ -377,6 +377,8 @@ class VisualizationNode(template.Node):
 
     def render(self, context):
         htmlOut = """
+         <button id="comicViewerFullscreenToggle%(id)d"> fullscreen </button>
+         
           <div id="comicViewer%(id)d" style="width: %(width)spx; height:%(height)spx"></div>
           <script type="text/javascript">
             var fmeViewer%(id)d = null;
@@ -392,6 +394,10 @@ class VisualizationNode(template.Node):
                              'urlToMLABRoot': "/static/js" };
               fmeViewer%(id)d.init(options);
             //});
+            $("#comicViewerFullscreenToggle%(id)d").click(function(){
+                fmeViewer%(id)d.gotoFullscreen()            
+            })
+            
           </script>
         """ % ({"id": id(self),
                 "width": self.args.get("width", "600"),
