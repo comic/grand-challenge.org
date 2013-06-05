@@ -337,7 +337,7 @@ class ListDirNode(template.Node):
         return htmlOut
 
 
-@register.tag(name="visualization")
+@register.tag(name = "visualization")
 def render_visualization(parser, token):
     """ Given a dataset name, show a 2D visualization for that """
 
@@ -345,22 +345,17 @@ def render_visualization(parser, token):
                                               width:number
                                               height:number
                                               deferredLoad:0|1
-                                              extensionFilter:ext1,ext2,ext3
-                                              showBrowser:0|1
-                                              comicWorkstation:0:1%}
+                                              extensionFilter:ext1,ext2,ext3%}
                   The only mandatory argument is dataset.
                   width/heigth: Size of the 2D view area.
                   defferedLoad: If active, user has to click on the area to load the viewer.
                   extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-                  showBrowser: If 1, a file browser is rendered
-                  comicWorkstation: If 1, use newer version of visualisation"""
-                  
+                  """
     try:
         args = parseKeyValueToken(token)
     except ValueError:
         errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
         return TemplateErrorNode(errormsg)
-
 
     if "dataset" not in args.keys():
         errormsg = "Error rendering {% " + token.contents + " %}: dataset argument is missing." + usagestr
@@ -368,13 +363,11 @@ def render_visualization(parser, token):
 
     return VisualizationNode(args)
 
-
-
 class VisualizationNode(template.Node):
+    """ 
+    Renders the ComicWebWorkstation using MeVisLab
     """
-    Renders a MeVisLab 2D Viewer.
-    """
-    
+
     def __init__(self, args):
         self.args = args
 
@@ -382,69 +375,31 @@ class VisualizationNode(template.Node):
         errormsg = "Error rendering Visualization '" + str(self.args) + ":" + msg
         return makeErrorMsgHtml(errormsg)
 
-    def render_comic_viewer(self, context):
-        htmlOut = """
-          <div id="comicViewer%(id)d" style="width:%(w)spx; height:%(h)spx"></div>
-          <script type="text/javascript">
-            var fmeViewer%(id)d = null;
-
-            $(document).ready(function (){
-              fmeViewer%(id)d = new ComicViewer2D("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s, 'extensionFilter':'%(extensionFilter)s', 'showBrowser':%(showBrowser)s});
-              fmeViewer%(id)d.init(function() {
-                fmeViewer%(id)d.setDataRoot('%(path)s');
-              });
-            });
-          </script>
-        """ % ({"id": id(self),
-                "path": self.args.get("dataset"),
-                "w": self.args.get("width", "300"),
-                "h": self.args.get("height", "300"),
-                "extensionFilter": self.args.get("extensionFilter", ""),
-                "deferredLoad": self.args.get("deferredLoad", "0"),
-                "showBrowser": self.args.get("showBrowser", "1")})
-        return htmlOut
-
-
     def render(self, context):
-        if self.safe_check("1", "comicWorkstation", self.args):
-            return self.render_comic_workstation(context)
-        else:
-            return self.render_comic_viewer(context)
-
-    def safe_check(self, value, key, list):
-        """Is there a cleaner way to do this? """
-        if key in list:
-            if list[key] == value:
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def render_comic_workstation(self, context):
         htmlOut = """
-          <div id="comicViewer%(id)d" style="width:%(w)spx; height:%(h)spx"></div>
+          <div id="comicViewer%(id)d" style="width: %(width)spx; height:%(height)spx"></div>
           <script type="text/javascript">
             var fmeViewer%(id)d = null;
-
-            $(document).ready(function (){
-              fmeViewer%(id)d = new ComicWorkstation("comicViewer%(id)d", {'deferredLoad':%(deferredLoad)s,\
-                                                   'extensionFilter':'%(extensionFilter)s', \
-                                                   'showBrowser':%(showBrowser)s});
-              fmeViewer%(id)d.init(function() {
-                fmeViewer%(id)d.setDataRoot('%(path)s');
-              });
-            });
+            //$(document).ready(function() {
+              console.log('fmeviewee')
+              fmeViewer%(id)d = new COMICWebWorkstationWrapper("comicViewer%(id)d");
+              var options = {'path':'%(path)s',
+                             'deferredLoad':%(deferredLoad)s,
+                             'extensionFilter':'%(extensionFilter)s',
+                             'width':%(width)s,
+                             'height':%(height)s,
+                             'application': "COMICWebWorkstation_1.1",
+                             'urlToMLABRoot': "/static/js" };
+              fmeViewer%(id)d.init(options);
+            //});
           </script>
         """ % ({"id": id(self),
+                "width": self.args.get("width", "600"),
+                "height": self.args.get("height", "400"),
                 "path": self.args.get("dataset"),
-                "w": self.args.get("width", "300"),
-                "h": self.args.get("height", "300"),
                 "extensionFilter": self.args.get("extensionFilter", ""),
-                "deferredLoad": self.args.get("deferredLoad", "0"),
-                "showBrowser": self.args.get("showBrowser", "1")})
-        return htmlOut + "WORKSTATION"
-
+                "deferredLoad": self.args.get("deferredLoad", "0")})
+        return htmlOut
 
 
 

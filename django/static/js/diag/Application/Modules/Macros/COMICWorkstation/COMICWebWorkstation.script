@@ -1,0 +1,189 @@
+//----------------------------------------------------------------------------------
+//! Macro module WebWorkstation
+/*!
+// \file    COMICWebWorkstation.script
+// \author  Sven Lafebre
+// \date    2012-09-07
+//
+// 
+*/
+//----------------------------------------------------------------------------------
+
+
+Web {
+  Deployment {
+    directory = $(MLAB_DIAG_Application)/Modules/Macros/COMICWorkstation/web/js
+    directory = $(MLAB_MeVisLab_Private)/Modules
+    directory = $(MLAB_MeVisLab_Private)/Sources
+  }
+}
+
+Deployment {
+  // quick fix, this should only need to be in web/deployment but the tool runner won't read it
+  directory = $(MLAB_MeVisLab_Private)/Modules
+  directory = $(MLAB_MeVisLab_Private)/Sources
+  
+  
+  //Stuff to include when creating a standalone installer
+  //#include $(MLAB_FMEwork_MAF)/Configuration/Installers/Deployments/fmeModels.deployment
+  // pasted contents of fmeModels.deployment here to be able to edit
+  // I/O
+  module = ImageLoad
+  module = ImgLoadU
+  module = ImageSave
+  module = MLImageFormatLoad
+  module = MLImageFormatSave
+
+  module = LoadBase
+  module = SaveBase
+
+  module = CSOLoad
+  module = CSOSave
+  module = WEMLoad
+  module = WEMSave
+
+  module = MLBaseInspector
+  module = DirectDicomImport
+  module = DirectDicomImportOutput
+  module = DirectDicomImportImageOutput
+  module = DirectDicomImportIteratorOutput
+  module = DirectDicomImportWaveformOutput
+
+  #ifnset EXLUDE_DICOM_RT{
+    module = DirectDicomImportPROutput
+    module = DirectDicomImportRTOutput
+    module = DirectDicomImportSROutput      
+    //file = "$(MLAB_FMEwork_Release)/Modules/ML/MLDirectDicomImportDcmtkOutputs/MLDirectDicomImportDcmtkOutputs.def"
+  }
+
+  module = AccessDirectDicomImportCache
+
+  //commented until it is moved to release. see bug #5944
+  //module = SaveDicomFrameList
+
+  #ifnset EXLUDE_APPFRAME_SUPPORT{
+    module = ObjLoaderDump
+    module = ObjLoader
+    module = ObjMgr
+  }
+
+  //Graph
+  module = GraphContainer
+  module = SoVascularSystem
+
+  //MAFImage, GVR
+  module = OrthoReformat3
+  module = SoGVRVolumeRenderer
+  module = GVRImageToVolume
+
+  //Caching
+  module = MLImageFormatFileCache
+  module = MemoryCache
+  module = ImageFileCache
+
+  // Bypass
+  module = BaseBypass
+
+  //Entities
+  module = Histogram
+  module = HistogramParameters
+
+  //Converters
+  module = IntervalMap
+
+  //CSOs
+  module = CSOManager     
+  //module = CSOToolBox  cbr: removed as currently in Personal package
+  module = CSOManualCorrectionProcessor
+  module = CSOConvertToImage
+  module = CSOIsoGenerator
+
+  
+  //Wrappers
+  directory = $(MLAB_MeVisLab_Standard)/Modules/Wrappers
+  directory = $(MLAB_FMEwork_ReleaseMeVis)/Modules/Wrappers
+  file      = "$(MLAB_MeVisLab_Standard)/Modules/ML/MLPythonImageProcessing/MLPythonImageProcessing.def"
+  
+  //SaveDicomFrameList wrappers, commented until it is moved to release. see bug #5944
+  //directory = $(MLAB_FMEwork_Personal)/Modules/Wrappers
+
+  // --------------- end fmeModels.deployment ----------------------
+  
+  //To load DiagApplication and the like.
+  directory = $(MLAB_DIAG_ApplicationBase)/Modules
+  directory = $(MLAB_DIAG_ApplicationBase)/Sources
+  directory = $(MLAB_DIAG_ApplicationBase)/Configuration
+  directory = $(MLAB_DIAG_Libraries)/lib
+  
+  #include $(MLAB_FMEwork_MAF)/Configuration/Installers/Deployments/maf.core.deployment
+  module = BrowserPlugin
+  module = DisplayPlugin
+  module = ImageInfoPlugin
+  module = PluginManager
+  module = ImageManager
+  module = DiagViewport
+  
+  //left over includes found by trial and error
+  module = SoGroup
+  module = ScrollTool
+  module = PanTool
+  module = SwivelTool
+  module = WindowLevelTool
+  module = ZoomTool
+  module = DistanceTool
+  module = SoMouseGrabber
+  module = SoDecorations
+  module = SoPlaneIndicator
+  module = DiagMPR
+  module = TimeLineControl
+  module = SoView2D
+  module = SoFieldOfView
+  module = progressString
+  module = SoView2DSliceShift
+  module = DiagKeyBindingManager  
+  
+  directory = $(MLAB_DIAG_ApplicationBase)/Modules/Scripts/python
+  directory = $(MLAB_DIAG_Libraries)/lib
+  
+  /*
+  SWITCH_PACKAGE MeVisLab/Standard
+  + Modules/Controls
+  + lib/MLItemModel.dll
+  + lib/MLItemModel.lib
+  + Modules/ML/MLPythonImageProcessing
+  */
+
+}
+
+Interface {
+  Outputs {
+    Field outPanel { internalName = RemotePanelRendering.outBase }
+  }
+
+  Parameters {
+ //   Field user { type = String }
+ //   Field password { type = String }
+ //  Field userAuthenticated { type = Bool persistent = No }
+  }
+}
+
+Commands {
+  //In future versions (2.5 and up) allowedRemoteCalls will not be needed. By default all python functions will be accessible.
+  allowedRemoteCalls = handleRemoteError,handleRemoteInfo,handleRemoteMDLRequest,handleWidgetControlNamesRequest,setExtensionFilter,setDataRoot
+  source = $(LOCAL)/COMICWebWorkstation.py
+  //FieldListener user { command = authenticateUser }
+  //FieldListener password { command = authenticateUser }
+  //initCommand = authenticateUser
+
+}
+
+Window {
+  RemoteRendering outPanel {
+    w       = 800
+    h       = 600    
+    stretchX = 1
+    stretchY = 1
+  }
+}
+
+
