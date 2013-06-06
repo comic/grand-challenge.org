@@ -376,9 +376,13 @@ class VisualizationNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        htmlOut = """
-         <button id="comicViewerFullscreenToggle%(id)d"> fullscreen </button>
-         
+        htmlOut = """         
+          
+          <div class="COMICWebWorkstationButtons">
+              <button id="comicViewerSetSmallSize%(id)d"> small </button>
+              <button id="comicViewerSetLargeSize%(id)d"> large </button>
+              <button id="comicViewerFullscreenToggle%(id)d"> fullscreen </button>
+          </div>
           <div id="comicViewer%(id)d" style="width: %(width)spx; height:%(height)spx"></div>
           <script type="text/javascript">
             var fmeViewer%(id)d = null;
@@ -394,6 +398,13 @@ class VisualizationNode(template.Node):
                              'urlToMLABRoot': "/static/js" };
               fmeViewer%(id)d.init(options);
             //});
+            
+            $("#comicViewerSetSmallSize%(id)d").click(function(){
+                fmeViewer%(id)d.setSmallSize()            
+            })
+            $("#comicViewerSetLargeSize%(id)d").click(function(){
+                fmeViewer%(id)d.setLargeSize()            
+            })
             $("#comicViewerFullscreenToggle%(id)d").click(function(){
                 fmeViewer%(id)d.gotoFullscreen()            
             })
