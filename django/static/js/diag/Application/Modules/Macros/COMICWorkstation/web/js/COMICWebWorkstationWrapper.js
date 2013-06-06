@@ -55,7 +55,7 @@ function COMICWebWorkstationWrapper(domElementId) {
       "ComicView2D_errorCallback": this.comicErrorLoggingCB,              // Callback for error logging. Will also contain server error info.
       "ComicView2D_viewerContainerId": this._elementId,               // id of the root HTML div element
       'path': 'C:/DemoData',
-      'width': 400,
+      'width': 600,
       'height': 300,
       'deferredLoad': false,
       'extensionFilter':"",
@@ -70,7 +70,7 @@ function COMICWebWorkstationWrapper(domElementId) {
 	
 	$(window).resize(function() {
 		if(self._isInFullscreen){
-			self._resizeWindowTo(window.innerWidth,window.innerHeight);
+			self._matchScreensize();	
 		};		
 	});	
 	
@@ -81,6 +81,10 @@ function COMICWebWorkstationWrapper(domElementId) {
 	});
   };
   
+  this._matchScreensize = function(){
+  	self._resizeWindowTo(window.innerWidth,window.innerHeight);
+  }
+  
   this._mlabApploaded = function(){
 	var container = $(this._elementSelector)
 	container.resizable({ ghost: true, helper: "ui-resizable-helper" })
@@ -90,6 +94,11 @@ function COMICWebWorkstationWrapper(domElementId) {
 				    viewerControl.resizeViewport(ui.size.width, ui.size.height);
 	         	}
 	         });
+	container.css("background-color","#DDDDDD");
+	var loadingGifURL = this._options['urlToMLABRoot']+"/MeVisLab/Private/Sources/Web/application/css/loading.gif";
+	container.css('background-repeat',"no-repeat");
+	container.css('background-position',"center");
+	container.css('background-image',"url("+loadingGifURL+")");	
 	// does not work atm because the MWT does not allow lazy module creation
     if (false){//this._options['deferredLoad']) {
       container.html("<br/><br/>Click to load image viewer");
@@ -115,13 +124,36 @@ function COMICWebWorkstationWrapper(domElementId) {
   this._createModule = function() {
     MLAB.GUI.Application.connectCallback("modulesAreReady", function(){
   	  var container = $(self._elementSelector)
-	  self._module = MLAB.GUI.Application.module(self._mlabModuleName);
+  	  
+	  self._module = MLAB.GUI.Application.module(self._mlabModuleName);	  
 	  self._module.showPanel(null, container[0]);
 	  self.setDataRoot(self._options["path"])
 	  var viewerControl = self._module.control("viewer")
-	  viewerControl.resizeViewport(self._options.width, self._options.height);
+	  if(self._isInFullscreen){
+	  	self._matchScreensize();
+	  }else{
+	  	viewerControl.resizeViewport(self._options.width, self._options.height);
+	  }	  
+	  container.css('background-image',"");
 	})
 	MLAB.GUI.Application.createModule(self._mlabModuleName);
+  }
+  
+  this.setSmallSize = function(){
+  	if(this._isInFullscreen){
+  		this.leaveFullscreen()
+  	}
+  	this._resizeWindowTo(600,300);
+  
+  }
+  
+  this.setLargeSize = function(){
+  	
+  	if(this._isInFullscreen){
+  		this.leaveFullscreen()
+  	}
+  	this._resizeWindowTo(890,512);
+  
   }
   
   this.gotoFullscreen = function(){
@@ -157,12 +189,15 @@ function COMICWebWorkstationWrapper(domElementId) {
   	}  	
   }
   
-  this._resizeWindowTo = function(width,height){  	
+  this._resizeWindowTo = function(width,height){
   	var container = $(self._elementSelector)  	  	  	
-  	container.css("width",width);
-  	container.css("height",height);  	  
-  	var viewerControl = self._module.control("viewer")
-	viewerControl.resizeViewport(width,height);
+	container.css("width",width);
+	container.css("height",height);
+	  	
+  	if(self._module){  	  		  	
+	  	var viewerControl = self._module.control("viewer")
+		viewerControl.resizeViewport(width,height);
+	}
   }; 
   
   //== convenience functions for calling methods on the MLab module itself ============

@@ -37,7 +37,7 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 
-.messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; width: 1000px;}
+.messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; padding-left: 3px; width: 1000px;}
 .messagelist .warning{color:orange;}
 .messagelist .error{color:red;}
 .menuItem{ color:#fff; font-weight:bold; }
@@ -98,7 +98,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
  */
 .ui-resizable-helper { border: 2px dotted #00F; }
 body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
-
+.COMICWebWorkstationButtons {padding-top:4px;  padding-bottom: 4px;}
 
 
 
