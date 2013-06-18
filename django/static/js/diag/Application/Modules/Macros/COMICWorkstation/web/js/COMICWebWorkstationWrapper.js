@@ -46,14 +46,18 @@ function COMICWebWorkstationWrapper(domElementId) {
     
     this._options = {
       "moduleName": this._elementId,
+      // UMCN local test server 
       "webSocketHostName": "ANKH",
-      "webSocketPort": 4114,     
+      "webSocketPort": 4114,
+      // superbus
+      //"webSocketHostName": "134.102.230.19",
+      //"webSocketPort": 5678,
       "debugRemoteMessages" : "", 
       "diagnosis" : "",                                                   // Will enable the MeVisLab output in the browser console. Cannot be set to "urlToMLABRoot" : urlToMLABRoot,
       "ComicView2D_loadingFinishedCallback": this.comicLoadingFinishedCB, // Callback executed when the viewer is fully loaded 
       "ComicView2D_loggingCallback": this.comicLoggingCB,                 // Callback for info logging. Will only include processing server logging when 'diagnosis' is enabled.
       "ComicView2D_errorCallback": this.comicErrorLoggingCB,              // Callback for error logging. Will also contain server error info.
-      "ComicView2D_viewerContainerId": this._elementId,               // id of the root HTML div element
+      "ComicView2D_viewerContainerId": this._elementId,                   // id of the root HTML div element
       'path': 'C:/DemoData',
       'width': 600,
       'height': 300,
