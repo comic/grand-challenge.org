@@ -29,13 +29,17 @@ class Migration(SchemaMigration):
 
 
         if not db.dry_run:
-            print "Setting user for any existing uploaded files to 'root' user"
-            
-            rootuser =  orm['auth.user'].objects.get(username='root')
-           
-            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():                            
-                uploadmodel.user = rootuser                
-                uploadmodel.save()
+                        
+            if(orm['auth.user'].objects.filter(username='root').count() > 0):
+                print "Setting user for any existing uploaded files to 'root' user"                
+                rootuser =  orm['auth.user'].objects.get(username='root')
+               
+                for uploadmodel in orm['comicmodels.UploadModel'].objects.all():                            
+                    uploadmodel.user = rootuser                
+                    uploadmodel.save()
+            else:
+                pass
+                print "No user 'root' found. Not changing any uploaded files"
 
 
     def backwards(self, orm):
