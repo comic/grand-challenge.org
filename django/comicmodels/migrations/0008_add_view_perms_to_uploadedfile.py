@@ -7,6 +7,7 @@ from south.v2 import DataMigration
 from django.db import models
 from guardian.shortcuts import assign
 from django.contrib.auth.models import Group
+from django.core.management import call_command
 
 
 class Migration(DataMigration):
@@ -21,7 +22,10 @@ class Migration(DataMigration):
             print "Everyone should be able to see uploaded files by default for now. giving\
                   '"+permission+"' permission to 'everyone' user for the following UploadModel\
                   instances: "
-            
+                  
+            #create the 'everyone' user in database                  
+            call_command("loaddata", "../fixtures/user_everyone.json")
+                        
             everyonegroup = orm['auth.Group'].objects.get(name="everyone")
             evg = Group.objects.get(name="everyone")
             # For permissions to work properly after migrating
