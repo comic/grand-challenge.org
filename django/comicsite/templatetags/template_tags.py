@@ -129,7 +129,7 @@ def sanitize_django_items(string):
 def metafooterpages():
     """ Get the metafooter pages. """
     html_string = "<div class='text'><span>COMIC:</span></div>"
-    pages = comicsite.views.getPages('COMIC')
+    pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
             url = reverse('comicsite.views.comicmain', kwargs={'page_title':p.title})
