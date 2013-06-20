@@ -80,7 +80,7 @@ def site_get_standard_vars(site_short_name):
     """
     site = getSite(site_short_name)                    
     pages = getPages(site_short_name)        
-    metafooterpages = getPages("COMIC")        
+    metafooterpages = getPages(settings.MAIN_PROJECT_NAME)        
                 
     return [site, pages, metafooterpages]
         
@@ -326,9 +326,9 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
 
 
 def comicmain(request, page_title=""):
-    """ show content as main page item. Loads pages from the 'comic' project """
-    
-    site_short_name = "comic" #TODO: put this in template tags    
+    """ show content as main page item. Loads pages from the main project """
+        
+    site_short_name = settings.MAIN_PROJECT_NAME     
     pages = getPages(site_short_name)
     
     if pages.count() == 0:
@@ -343,9 +343,9 @@ def comicmain(request, page_title=""):
             p = pages[0]
             p.html = renderTags(request, p)        
                     
-    else:    
-        try:
-            p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
+    else:     
+        try:            
+            p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)            
         except Page.DoesNotExist:                
             raise Http404
     
@@ -355,8 +355,9 @@ def comicmain(request, page_title=""):
     # render page contents using django template system
     # This makes it possible to use tags like '{% dataset %}' in page
     
-    #to display pages from 'comic' project at the very bottom of the site
-    metafooterpages = getPages("COMIC")
+    # to display pages from main project at the very bottom of the site as
+    # general links
+    metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     
     return render_to_response('mainpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
 

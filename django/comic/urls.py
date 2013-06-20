@@ -33,7 +33,7 @@ urlpatterns = patterns('',
     #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
     url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
     
-    # when all other urls have been checked, try to load page from 'comic' project
+    # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in order 
     url(r'^(?P<page_title>\w+)/$','comicsite.views.comicmain'),
     
