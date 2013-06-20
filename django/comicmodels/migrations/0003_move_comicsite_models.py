@@ -8,7 +8,7 @@ from django.db import models
 class Migration(SchemaMigration):
 
     depends_on = (
-             ("comicsite", "0001_initial"),
+             ("comicsite", "0006_auto__add_field_comicsite_logo"),
     )
 
     def forwards(self, orm):
