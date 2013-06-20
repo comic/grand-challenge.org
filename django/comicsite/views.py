@@ -328,15 +328,41 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the main project """
         
-    site_short_name = settings.MAIN_PROJECT_NAME     
+    site_short_name = settings.MAIN_PROJECT_NAME
+    
+    if ComicSite.objects.filter(short_name=site_short_name).count() == 0:
+        link = reverse('admin:comicmodels_comicsite_add')
+        link = link + "?short_name=%s" % site_short_name
+        link_html = create_HTML_a(link,"Create project '%s'" % site_short_name)
+        html = """I'm trying to show the first page for main project '%s' here,
+        but '%s' does not exist. %s.""" % (site_short_name,
+              site_short_name,
+              link_html)
+        p = create_temp_page(title="no_pages_found",html=html)
+        return render_to_response('temppage.html',
+                                  {'site': p.comicsite,
+                                   'currentpage': p},
+                                  context_instance=RequestContext(request))
+
+            
     pages = getPages(site_short_name)
     
     if pages.count() == 0:
+                
+        link = reverse('admin:comicmodels_comicsite_changelist')
+        link_html = create_HTML_a(link,"admin interface")
+        
         html = """I'm trying to show the first page for main project '%s' here,
-        but '%s' contains no pages. Please add some.""" % (site_short_name,\
-                                                          site_short_name)
+        but '%s' contains no pages. Please add
+        some in the %s.""" % (site_short_name,
+                              site_short_name,
+                              link_html)
                                
         p = create_temp_page(title="no_pages_found",html=html)
+        return render_to_response('temppage.html',
+                                  {'site': p.comicsite,
+                                   'currentpage': p},                                                                    
+                                  context_instance=RequestContext(request))
         
     elif page_title=="":
         #if no page title is given, just use the first page found            
@@ -359,15 +385,22 @@ def comicmain(request, page_title=""):
     # general links
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     
-    return render_to_response('mainpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
+    return render_to_response('mainpage.html',
+                              {'site': p.comicsite,
+                               'currentpage': p,
+                               "pages":pages,
+                               "metafooterpages":metafooterpages},
+                              context_instance=RequestContext(request))
 
                 
     
 def dataPage(request):
-    """ test function for data provider. Just get some files from provider and show them as list"""
-    #= r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic-django\django\static\files"
+    """ test function for data provider. Just get some files from provider and
+    show them as list
     
-    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django\django\static\files"
+    """    
+    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django"\
+             "\django\static\files"
     dp = FileSystemDataProvider.FileSystemDataProvider(path)
     images = dp.getImages()
     
@@ -377,7 +410,11 @@ def dataPage(request):
     
     pages = [p]
     
-    return render_to_response('testpage.html', {'site': p.comicsite, 'currentpage': p, "pages":pages },context_instance=RequestContext(request))
+    return render_to_response('testpage.html',
+                              {'site': p.comicsite,
+                               'currentpage': p,
+                               "pages":pages }
+                              ,context_instance=RequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
