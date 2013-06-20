@@ -328,14 +328,21 @@ def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the 'comic' project """
     
-    site_short_name = "comic" #TODO: put this in template tags
-    
+    site_short_name = "comic" #TODO: put this in template tags    
     pages = getPages(site_short_name)
     
-    #if no page title is given, just use the first page found 
-    if page_title=="":        
-        p = pages[0]    
-        p.html = renderTags(request, p)
+    if pages.count() == 0:
+        html = """I'm trying to show the first page for main project '%s' here,
+        but '%s' contains no pages. Please add some.""" % (site_short_name,\
+                                                          site_short_name)
+                               
+        p = create_temp_page(title="no_pages_found",html=html)
+        
+    elif page_title=="":
+        #if no page title is given, just use the first page found            
+            p = pages[0]
+            p.html = renderTags(request, p)        
+                    
     else:    
         try:
             p = Page.objects.get(comicsite__short_name=site_short_name, title=page_title)
@@ -364,7 +371,8 @@ def dataPage(request):
     images = dp.getImages()
     
     htmlOut = "available files:"+", ".join(images)
-    p = createTestPage(html=htmlOut)
+    #p = createTestPage(html=htmlOut)
+    p = create_temp_page(html=htmlOut)
     
     pages = [p]
     
@@ -423,6 +431,19 @@ def create_HTML_a_img(link_url,image_url):
 
 def copy_page(page):
     return Page(comicsite=page.comicsite,title=page.title,html=page.html)
+
+#=========#=========#=========#=========#=========#=========#=========#=========
+def create_temp_page(title="temp_page",html=""):
+    """ Create a quick mockup page which you can show, without needing to read 
+    anything from database
+    
+    """        
+    site = ComicSite() #any page requires a site, create on the fly here.
+    site.short_name = "Temp"
+    site.name = "Temporary page"
+    site.skin = ""
+        
+    return Page(comicsite=site,title=title,html=html)
     
 # ======================================================  debug and test ==================================================
 
@@ -442,20 +463,6 @@ def sendEmail(request):
     return HttpResponse(text);
         
 
-def createTestPage(title="testPage",html=""):
-    """ Create a quick mockup on the ComicSite 'Test'"""
-    
-    if site_exists("test"):
-        #TODO log a warning here, no exception.
-        raise ComicSiteException("I am creating a spoof ComicSite called 'test' on the fly, by a project called 'test' was already defined in DB. This message should be a warning instead of an exception")                
-    
-    # if no site exists by that name, create it on the fly.
-    site = ComicSite()
-    site.short_name = "test"
-    site.name = "Test Page"
-    site.skin = ""
-        
-    return Page(comicsite=site,title=title,html=html)
 
 
     
