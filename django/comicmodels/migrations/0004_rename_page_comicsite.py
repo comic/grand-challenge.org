@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from thirdparty import dingus
 import pdb
 
 
@@ -15,8 +16,12 @@ class Migration(SchemaMigration):
          
         db.rename_column('comicmodels_page', 'ComicSite_id', 'comicsite_id')
 
-        # Adding unique constraint on 'Page', fields ['comicsite', 'title']
-        #db.create_unique('comicmodels_page', ['comicsite_id', 'title'])
+        
+        # Load initial data, so when setting up for the first time there is at
+        # least a single project and a page. This command should be in 
+        # 0001_initial but was added after
+        # why the dingus.loaddata? See http://stackoverflow.com/questions/5472925/django-loading-data-from-fixture-after-backward-migration-loaddata-is-using-mo/5906258#5906258
+        dingus.loaddata(orm,"comic_initial_project.json")        
 
 
     def backwards(self, orm):
