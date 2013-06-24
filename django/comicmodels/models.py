@@ -42,15 +42,6 @@ def get_anonymous_user():
     return User.objects.get(username = "anonymousUser")
 
 
-def add_standard_permissions(group,objname):
-    """ Add delete_objname change_objname and add_objname to the given group"""  
-    can_add_obj = Permission.objects.get(codename="add_"+objname)
-    can_change_obj = Permission.objects.get(codename="change_"+objname)
-    can_delete_obj = Permission.objects.get(codename="delete_"+objname)
-    group.permissions.add(can_add_obj,can_change_obj,can_delete_obj)
-
-
-
 class ComicSiteManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """ 
     
@@ -88,36 +79,6 @@ class ComicSite(models.Model):
         """ clean method is called automatically for each save in admin"""
         pass
         #TODO check whether short name is really clean and short!        
-    
-    def save(self, user=None,*args, **kwargs):
-        """ Save is called any time this object is created. Added user param
-        """ 
-                       
-        if self.id is None:      
-            # if saving for the first time, create admin and participants permissions groups that go along with
-            # this comicsite
-            
-            admingroup = Group.objects.create(name=self.admin_group_name())            
-            participantsgroup = Group.objects.create(name=self.short_name+"_participants")
-                        
-            # add object-level permission to the specific ComicSite so it shows up in admin                
-            super(ComicSite, self).save(*args, **kwargs)
-                        
-            assign("change_comicsite",admingroup,self)
-            # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
-            add_standard_permissions(admingroup,"comicsite")
-            add_standard_permissions(admingroup,"page")
-            add_standard_permissions(admingroup,"filesystemdataset")
-                        
-            # add current user to admins for this site             
-            user.groups.add(admingroup)
-            
-            
-        else:
-            #if object already existed just save
-            super(ComicSite, self).save(*args, **kwargs)
-        
-        
     
     def upload_dir(self):
         """Where to get and put uploaded files? """
@@ -250,7 +211,7 @@ class ComicSiteModel(models.Model):
         if not self.id:
             super(ComicSiteModel,self).save()
 
-    def save(self, *args, **kwargs):
+    def save(self):
         """ split save into common base part for all ComicSiteModels and default which can be overwritten """        
         
         if self.id:
@@ -261,7 +222,7 @@ class ComicSiteModel(models.Model):
         #common save functionality for all models
         self._save_base()                
         self.save_default(firstcreation)
-        super(ComicSiteModel,self).save(*args, **kwargs)
+        super(ComicSiteModel,self).save()
     
     
     def _save_base(self):
