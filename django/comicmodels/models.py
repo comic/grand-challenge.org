@@ -211,7 +211,7 @@ class ComicSiteModel(models.Model):
         if not self.id:
             super(ComicSiteModel,self).save()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """ split save into common base part for all ComicSiteModels and default which can be overwritten """        
         
         if self.id:
