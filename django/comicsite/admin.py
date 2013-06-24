@@ -23,10 +23,9 @@ from django.utils.encoding import force_unicode
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
-from comicmodels.models import ComicSite,Page
+from comicmodels.models import ComicSite,Page,add_standard_permissions
 from comicmodels.signals import new_admin,removed_admin
 from comicmodels.admin import ComicModelAdmin
-
 
 
 # ======================= testing creating of custom admin
@@ -620,33 +619,10 @@ class ComicSiteAdmin(admin.ModelAdmin):
     
     
     def save_model(self, request, obj, form, change):        
-        """ when saving for the first time, set object permissions; give all permissions to creator """
-     
-        if obj.id is None:      
-            # if saving for the first time, create admin and participants permissions groups that go along with
-            # this comicsite
-            
-            admingroup = Group.objects.create(name=obj.admin_group_name())            
-            participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
-                        
-            # add object-level permission to the specific ComicSite so it shows up in admin                
-            obj.save()            
-            assign("change_comicsite",admingroup,obj)
-            # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
-            add_standard_permissions(admingroup,"comicsite")
-            add_standard_permissions(admingroup,"page")
-            add_standard_permissions(admingroup,"filesystemdataset")
-            
-            
-            
-            # add current user to admins for this site 
-            request.user.groups.add(admingroup)
-            
-        else:
-            #if object already existed just save
-            obj.save()
-            
-            
+        """ saving logic is handled in comicmodels.models.ComicSite.Save() """
+        obj.save(request.user)
+        
+        
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """        
         if obj == None:
@@ -680,14 +656,6 @@ class AdminManageForm(forms.Form):
                 raise forms.ValidationError(
                     self.fields['user'].error_messages['does_not_exist'])
 
-
-def add_standard_permissions(group,objname):
-    """ Add delete_objname change_objname and add_objname to the given group"""  
-    can_add_obj = Permission.objects.get(codename="add_"+objname)
-    can_change_obj = Permission.objects.get(codename="change_"+objname)
-    can_delete_obj = Permission.objects.get(codename="delete_"+objname)
-    group.permissions.add(can_add_obj,can_change_obj,can_delete_obj)
-    
       
 
 class PageAdminForm():
