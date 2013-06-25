@@ -267,18 +267,11 @@ class PageAdmin(ComicModelAdmin):
         models.TextField: {'widget': Textarea(attrs={'rows':40, 'cols':80})},
     }
     
+
     def save_model(self, request, obj, form, change):
         
         if obj.id is None:
-            #at page creation, set the correct object permissions            
-            # get admin group for the comicsite of this page                        
-            agn = obj.comicsite.admin_group_name()            
-            admingroup = Group.objects.get(name=agn)
-                    
-            # add change_page permission to the current page
-            obj.save()                    
-            assign("change_page",admingroup,obj)            
-            # FIXME: is this double save really needed?
+            self.first_save(obj)
             
         obj.save()
         move = form.cleaned_data['move']
@@ -286,6 +279,16 @@ class PageAdmin(ComicModelAdmin):
         
         permission_lvl = form.cleaned_data['permission_lvl']
         obj.setpermissions(permission_lvl)
+    
+    def first_save(self, obj):
+        #at page creation, set the correct object permissions
+        # get admin group for the comicsite of this page
+        agn = obj.comicsite.admin_group_name()
+        admingroup = Group.objects.get(name=agn)
+        # add change_page permission to the current page
+        obj.save()
+        assign("change_page", admingroup, obj)
+    
     
     def queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access """                    
@@ -622,30 +625,35 @@ class ComicSiteAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):        
         """ when saving for the first time, set object permissions; give all permissions to creator """
      
-        if obj.id is None:      
-            # if saving for the first time, create admin and participants permissions groups that go along with
-            # this comicsite
-            
-            admingroup = Group.objects.create(name=obj.admin_group_name())            
-            participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
-                        
-            # add object-level permission to the specific ComicSite so it shows up in admin                
-            obj.save()            
-            assign("change_comicsite",admingroup,obj)
-            # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
-            add_standard_permissions(admingroup,"comicsite")
-            add_standard_permissions(admingroup,"page")
-            add_standard_permissions(admingroup,"filesystemdataset")
-            
-            
-            
-            # add current user to admins for this site 
-            request.user.groups.add(admingroup)
+        if obj.id is None:
+            self.set_base_permissions(request,obj)      
             
         else:
             #if object already existed just save
             obj.save()
-            
+    
+    def set_base_permissions(self,request,obj):
+        """ if saving for the first time, create admin and participants permissions groups that go along with
+        this comicsite
+        
+        """        
+        admingroup = Group.objects.create(name=obj.admin_group_name())            
+        participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
+                    
+        # add object-level permission to the specific ComicSite so it shows up in admin                
+        obj.save()            
+        assign("change_comicsite",admingroup,obj)
+        # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
+        add_standard_permissions(admingroup,"comicsite")
+        add_standard_permissions(admingroup,"page")
+        add_standard_permissions(admingroup,"filesystemdataset")
+        
+        
+        
+        # add current user to admins for this site 
+        request.user.groups.add(admingroup)
+
+          
             
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """        
