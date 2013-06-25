@@ -67,6 +67,7 @@ def get_or_create_projectadmingroup():
 def add_standard_perms(group,classname,app_label):
     """ convenience function to add add_classname,change_classname,delete_classname
     permissions to permissionsgroup group
+    
     """
     
     can_add = Permission.objects.get(codename="add_"+classname, content_type__app_label=app_label)
