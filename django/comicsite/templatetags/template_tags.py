@@ -394,7 +394,9 @@ class VisualizationNode(template.Node):
                              'extensionFilter':'%(extensionFilter)s',
                              'width':%(width)s,
                              'height':%(height)s,
-                             'application': "COMICWebWorkstation_1.2",
+                             'application': 'COMICWebWorkstation_1.2',
+                             'webSocketHostName':%(webSocketHostName)s,
+                             'webSocketPort':%(webSocketPort)s,                             
                              'urlToMLABRoot': "/static/js" };
               fmeViewer%(id)d.init(options);
             //});
@@ -415,7 +417,10 @@ class VisualizationNode(template.Node):
                 "height": self.args.get("height", "400"),
                 "path": self.args.get("dataset"),
                 "extensionFilter": self.args.get("extensionFilter", ""),
-                "deferredLoad": self.args.get("deferredLoad", "0")})
+                "deferredLoad": self.args.get("deferredLoad", "0"),
+                "webSocketHostName": self.args.get("webSocketHostName",
+                                                    "undefined"),
+                "webSocketPort": self.args.get("webSocketPort", "undefined")})
         return htmlOut
 
 
