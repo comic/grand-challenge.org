@@ -394,7 +394,7 @@ class VisualizationNode(template.Node):
                              'extensionFilter':'%(extensionFilter)s',
                              'width':%(width)s,
                              'height':%(height)s,
-                             'application': "COMICWebWorkstation_1.1",
+                             'application': "COMICWebWorkstation_1.2",
                              'urlToMLABRoot': "/static/js" };
               fmeViewer%(id)d.init(options);
             //});
