@@ -18,7 +18,7 @@ from comicmodels.models import Page,ComicSite
 from comicsite.admin import ComicSiteAdmin,PageAdmin
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
-
+from profiles.forms import SignupFormExtra
 
 
 
@@ -68,6 +68,36 @@ def create_page_in_admin(comicsite,title,content="testcontent"):
     return page
     
 
+def signup_user(overwrite_data={}):
+    """ Create a user in the same way as a new user is signed up on the site.
+    any key specified in data overwrites default key passed to form.
+    For example, signup_user({'username':'user1'}) to creates a user called 
+    'user1' and fills the rest with default data.  
+    
+    
+    """    
+    data = {'first_name':'test',
+            'last_name':'test',
+            'username':'test',            
+            'email':'test@test.com',
+            'password1':'test',
+            'password2':'test',
+            'institution':'test',
+            'department':'test', 
+            'country':'NL',
+            'website':'testwebsite',
+            'comicsite':'testcomicwebsite'}
+    
+    data.update(overwrite_data) #overwrite any key in default if in data    
+    form = SignupFormExtra(data)
+    if form.is_valid():
+        form.save()
+    
+    return form
+        
+             
+    
+
  
 class SimpleTest(TestCase):
     def test_basic_addition(self):
@@ -81,8 +111,14 @@ class ViewsTest(TestCase):
     
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.'
                                      'EmailBackend')
+    
+    #use fast, non-safe password hashing to speed up testing
+    @override_settings(PASSWORD_HASHERS=('django.contrib.auth.hashers.'
+                                        'SHA1PasswordHasher',))
+    
     def setUp(self):
-        """ Create some objects to work with
+        """ Create some objects to work with, In part this is done through
+        admin views, meaning admin views are also tested here.
         """
         # Create three types of users that exist: Root, can do anything, 
         # Siteadmin, cam do things to a site he or she owns. And logged in
@@ -97,9 +133,9 @@ class ViewsTest(TestCase):
         
         # non-root users are created as if they signed up through the site,
         # to maximize test coverage.        
-        profile_admin = UserProfileAdmin(UserProfile,admin.site)
+        user1 = self._signup_user({"username":"user1"})
         
-        
+        pdb.set_trace()
         siteadmin = User.objects.create_user('siteadmin1',
                                         'w.s.kerkstra@gmail.com',
                                         'password1')        
@@ -112,7 +148,18 @@ class ViewsTest(TestCase):
         create_page_in_admin(testsite,"testpage1")
         create_page_in_admin(testsite,"testpage2")
         
-         
+
+    def _signup_user(self,data):
+        """ Just pass through the request to ouside this TestCase, but does
+        some checking and error throwing if needed.
+        
+        """
+        form = signup_user(data)
+        self.assertTrue(form.is_valid(), "could not create user 1. reason: %s"
+                        % form.errors)
+        query_result = User.objects.filter(username=form.data['username'])        
+        return query_result[0] 
+        
 
 
     def _login_as_root_user(self):
@@ -135,6 +182,8 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 200, "loading %s as root "
                         "failed, full response was %s" % (url,response.content))
                         
+    
+    
         
     def test_page_permissions_view(self):
         """ Test that the permissions page does not crash:
