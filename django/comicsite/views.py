@@ -24,7 +24,6 @@ from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.admin import ComicSiteAdmin
 from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
-from comicsite.templatetags import template_tags
 
 from filetransfers.api import serve_file
 from filetransfers.views import download_handler_file
