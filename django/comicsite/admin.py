@@ -52,7 +52,8 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 
 
 class ProjectAdminSite(AdminSite):
-    """Admin for a specific project. Only shows and allows access to object associated with that project"""
+    """Admin for a specific project. Only shows and allows access to object 
+    associated with that project"""
     
     site_short_name = ""
     #def __init__(self, name='admin', app_name='admin'):
