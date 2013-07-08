@@ -5,11 +5,13 @@ when you run "manage.py test.
 
 """
 import pdb
+import re
 
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
+from django.core import mail
 from django.contrib import admin
 from django.contrib.auth.models import User
 
@@ -67,38 +69,8 @@ def create_page_in_admin(comicsite,title,content="testcontent"):
     page_admin.first_save(page)
     return page
     
-
-def signup_user(overwrite_data={}):
-    """ Create a user in the same way as a new user is signed up on the site.
-    any key specified in data overwrites default key passed to form.
-    For example, signup_user({'username':'user1'}) to creates a user called 
-    'user1' and fills the rest with default data.  
-    
-    
-    """    
-    data = {'first_name':'test',
-            'last_name':'test',
-            'username':'test',            
-            'email':'test@test.com',
-            'password1':'test',
-            'password2':'test',
-            'institution':'test',
-            'department':'test', 
-            'country':'NL',
-            'website':'testwebsite',
-            'comicsite':'testcomicwebsite'}
-    
-    data.update(overwrite_data) #overwrite any key in default if in data    
-    form = SignupFormExtra(data)
-    if form.is_valid():
-        form.save()
-    
-    return form
         
-             
-    
 
- 
 class SimpleTest(TestCase):
     def test_basic_addition(self):
         """ Tests that 1 + 1 always equals 2.
@@ -109,7 +81,7 @@ class SimpleTest(TestCase):
 
 class ViewsTest(TestCase):
     
-    @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.'
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.'
                                      'EmailBackend')
     
     #use fast, non-safe password hashing to speed up testing
@@ -133,31 +105,93 @@ class ViewsTest(TestCase):
         
         # non-root users are created as if they signed up through the site,
         # to maximize test coverage.        
-        user1 = self._signup_user({"username":"user1"})
-        
-        pdb.set_trace()
+        user1 = self._create_user({"username":"user1"})
+                        
         siteadmin = User.objects.create_user('siteadmin1',
                                         'w.s.kerkstra@gmail.com',
-                                        'password1')        
+                                        'password1')
+                
         siteadmin.is_staff = True        
         siteadmin.save()
-        
-        
-        
+                    
         testsite = create_comicsite_in_admin(root,"viewtest")                
         create_page_in_admin(testsite,"testpage1")
         create_page_in_admin(testsite,"testpage2")
         
-
-    def _signup_user(self,data):
-        """ Just pass through the request to ouside this TestCase, but does
-        some checking and error throwing if needed.
         
-        """
-        form = signup_user(data)
-        self.assertTrue(form.is_valid(), "could not create user 1. reason: %s"
-                        % form.errors)
-        query_result = User.objects.filter(username=form.data['username'])        
+    def _signup_user(self,overwrite_data={}):
+        """ Create a user in the same way as a new user is signed up on the site.
+        any key specified in data overwrites default key passed to form.
+        For example, signup_user({'username':'user1'}) to creates a user called 
+        'user1' and fills the rest with default data.  
+        
+        
+        """    
+        data = {'first_name':'test',
+                'last_name':'test',
+                'username':'test',            
+                'email':'test@test.com',
+                'password1':'test',
+                'password2':'test',
+                'institution':'test',
+                'department':'test', 
+                'country':'NL',
+                'website':'testwebsite',
+                'comicsite':'testcomicwebsite'}
+        
+        data.update(overwrite_data) #overwrite any key in default if in data
+        
+        
+        signin_page = self.client.post(reverse("userena.views.signup"),data)
+                
+        # check whether signin succeeded. If succeeded the response will be a
+        # httpResponseRedirect object, which has a 'Location' key in its
+        # items(). Don't know how to better check for type here.
+        list = [x[0] for x in signin_page.items()]
+        
+        self.assertTrue('Location' in list, "could not create user. dumping"
+                        " page:\n %s"
+                        % signin_page.content)
+        
+
+    def _create_user(self,data):
+        """ Sign up user in a way as close to production as possible. Check a 
+        lot of stuff
+        
+        """        
+        
+        self._signup_user(data)
+        
+        
+        validation_mail = mail.outbox[-1]        
+        self.assertTrue("signup" in validation_mail.subject,"There was no email"
+                        " sent which had 'signup' in the subject line")
+        
+                    
+        self.assertEqual(self.client.get('/accounts/user1/').status_code,403,
+                         "Could access user account without using validation" 
+                         "link!")
+        
+        # validate the user with the link that was emailed
+        validationlink_result = re.search('/example.com(.*)\n',
+                                          validation_mail.body,
+                                          re.IGNORECASE)
+        
+        self.assertTrue(validationlink_result, "could not find any link in" 
+                        "registration email")
+        
+        validationlink = validationlink_result.group(1)        
+        response = self.client.get(validationlink)
+        
+        self.assertEqual(self.client.get('/accounts/user1/').status_code,200,
+                         "Could not access user account after using validation" 
+                         "link!")
+            
+        welcome_mail = mail.outbox[-1]
+        #TODO check welcome mail
+        
+        
+        query_result = User.objects.filter(username=data['username'])        
         return query_result[0] 
         
 
