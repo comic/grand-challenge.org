@@ -8,16 +8,17 @@ import pdb
 import re
 from random import choice
 
+from django.contrib import admin
+from django.contrib.auth.models import User
+from django.core import mail
+from django.core.files.uploadedfile import UploadedFile
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
-from django.core.urlresolvers import reverse
-from django.core import mail
-from django.contrib import admin
-from django.contrib.auth.models import User
-
 
 from comicmodels.models import Page,ComicSite
+from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
@@ -317,6 +318,7 @@ class UploadTest(ComicframeworkTestCase):
         # non-root users are created as if they signed up through the site,
         # to maximize test coverage.        
         self.registered_user = self._create_user({"username":"registered_user"})
+        
                                         
         self.siteadmin = self._create_user({"username":"siteadmin",
                                             "email":"df@rt.com"}) 
@@ -326,16 +328,47 @@ class UploadTest(ComicframeworkTestCase):
             
     
     def test_file_upload_page_shows(self):
-        """
+        """ The /files page should show to admin, signedin and root, but not
+        to others
         """
         url = reverse("comicmodels.views.upload_handler",
                       kwargs={"site_short_name":self.testsite.short_name})
-        self._test_url_can_be_viewed(self.root,url)        
+        self._test_url_can_be_viewed(self.root,url)                    
         #self._test_url_can_be_viewed(self.root.username,url)
         
         
         
     def test_file_can_be_uploaded(self):
+        """ Upload a fake file, see if correct users can see this file
+        """
+        
+        #TODO: make this work. I cannot get this to work right now. fakefile
+        #is actually written to to disk, and no Uploadedfile object is created
+        #in database. It shoudld be the other way around
+        
+        #url = reverse("comicmodels.views.upload_handler",
+        #              kwargs={"site_short_name":self.testsite.short_name})
+        #factory = RequestFactory()
+        #request = factory.get(url)
+        #request.user = self.root
+        
+        #import StringIO
+        #fakefile = StringIO.StringIO()
+        #fakefile.write("some uploaded content")
+        #request.FILES['file'] = UploadedFile(file = fakefile,name="testfile",size=100)        
+        #request.method = "POST"
+        
+        
+        #from django.contrib.messages.storage.fallback import FallbackStorage
+        #setattr(request, 'session', 'session')
+        #messages = FallbackStorage(request)
+        #setattr(request, '_messages', messages)
+        
+        #pdb.set_trace()
+        #response = upload_handler(request,self.testsite.short_name)
+        
+        
+        
         pass
     
     def test_anonymous_and_non_member_user_cannot_see_files(self):
