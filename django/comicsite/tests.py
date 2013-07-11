@@ -11,15 +11,16 @@ from random import choice
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
-from django.core.files.uploadedfile import UploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
-from comicmodels.models import Page,ComicSite
+from comicmodels.models import Page,ComicSite,UploadModel,ComicSiteModel
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
+from comicsite.views import _register
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
 from profiles.forms import SignupFormExtra
@@ -37,23 +38,23 @@ def get_or_create_user(username,password):
         
 
 def create_comicsite_in_admin(user,short_name,description="test project"):
-    """ Create a ComicSite object as if created through django admin interface.
+    """ Create a comicsite object as if created through django admin interface.
     
     """
-    site = ComicSite.objects.create(short_name=short_name,
+    project = ComicSite.objects.create(short_name=short_name,
                              description=description)
-    site.save()
+    project.save()
     
-    # because we are creating a ComicSite directly, some methods from admin
+    # because we are creating a comicsite directly, some methods from admin
     # are not being called as they should. Do this manually
-    ad = ComicSiteAdmin(ComicSite,admin.site)        
+    ad = ComicSiteAdmin(project,admin.site)        
     url = reverse("admin:comicmodels_comicsite_add")                
     factory = RequestFactory()
     request = factory.get(url)
     request.user = user            
-    ad.set_base_permissions(request,site)
+    ad.set_base_permissions(request,project)
     
-    return site
+    return project
     
 
                   
@@ -108,7 +109,7 @@ class ComicframeworkTestCase(TestCase):
                                                                 user.username))
        
     def _signup_user(self,overwrite_data={}):
-        """Create a user in the same way as a new user is signed up on the site.
+        """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called 
         'user1' and fills the rest with default data.  
@@ -124,8 +125,8 @@ class ComicframeworkTestCase(TestCase):
                 'institution':'test',
                 'department':'test', 
                 'country':'NL',
-                'website':'testwebsite',
-                'comicsite':'testcomicwebsite'}
+                'webproject':'testwebproject',
+                'comicsite':'testcomicwebproject'}
         
         data.update(overwrite_data) #overwrite any key in default if in data
         
@@ -223,7 +224,7 @@ class ViewsTest(ComicframeworkTestCase):
         admin views, meaning admin views are also tested here.
         """
         # Create three types of users that exist: Root, can do anything, 
-        # Siteadmin, cam do things to a site he or she owns. And logged in
+        # projectadmin, cam do things to a project he or she owns. And logged in
         # user 
         
         self.root = User.objects.create_user('root',
@@ -233,28 +234,28 @@ class ViewsTest(ComicframeworkTestCase):
         self.root.is_superuser = True
         self.root.save()
         
-        # non-root users are created as if they signed up through the site,
+        # non-root users are created as if they signed up through the project,
         # to maximize test coverage.        
-        self.registered_user = self._create_user({"username":"registered_user"})
+        
+        self.registered_user = self._create_random_user()
                                         
-        self.siteadmin = self._create_user({"username":"siteadmin",
-                                            "email":"df@rt.com"}) 
+        self.projectadmin = self._create_random_user()
                     
-        self.testsite = create_comicsite_in_admin(self.siteadmin,"viewtest")                
-        create_page_in_admin(self.testsite,"testpage1")
-        create_page_in_admin(self.testsite,"testpage2")
+        self.testproject = create_comicsite_in_admin(self.projectadmin,"viewtest")                
+        create_page_in_admin(self.testproject,"testpage1")
+        create_page_in_admin(self.testproject,"testpage2")
                 
         
     
     def test_registered_user_can_create_project(self):
-        """ A user freshly registered through the site can immediately create
+        """ A user freshly registered through the project can immediately create
         a project
         
         """
         user = self._create_user({"username":"user2","email":"ab@cd.com"})
-        testsite = create_comicsite_in_admin(user,"user1project")                
-        testpage1 = create_page_in_admin(testsite,"testpage1")
-        testpage2 = create_page_in_admin(testsite,"testpage2")
+        testproject = create_comicsite_in_admin(user,"user1project")                
+        testpage1 = create_page_in_admin(testproject,"testpage1")
+        testpage2 = create_page_in_admin(testproject,"testpage2")
                 
         self._test_page_can_be_viewed(user,testpage1)
         self._test_page_can_be_viewed(self.root,testpage1)
@@ -284,9 +285,9 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username":"user3","email":"de@cd.com"})
-        testsite = create_comicsite_in_admin(user,"user3project")                
-        testpage1 = create_page_in_admin(testsite,"testpage1")
-        testpage2 = create_page_in_admin(testsite,"testpage2")                         
+        testproject = create_comicsite_in_admin(user,"user3project")                
+        testpage1 = create_page_in_admin(testproject,"testpage1")
+        testpage2 = create_page_in_admin(testproject,"testpage2")                         
         url = reverse("admin:comicmodels_page_change",
                       args=[testpage1.pk])
         
@@ -303,9 +304,10 @@ class UploadTest(ComicframeworkTestCase):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
-        # Create three types of users that exist: Root, can do anything, 
-        # Siteadmin, cam do things to a site he or she owns. And logged in
-        # user 
+        # Create four types of users that exist: Root, can do anything, 
+        # projectadmin, cam do things to a project he or she owns. Participant can
+        # show some restricted content for a project and upload files,
+        # signup_user can see some pages but not others.
         
         self.root = User.objects.create_user('root',
                                       'w.s.kerkstra@gmail.com',
@@ -315,16 +317,30 @@ class UploadTest(ComicframeworkTestCase):
         self.root.save()
         
         
-        # non-root users are created as if they signed up through the site,
-        # to maximize test coverage.        
-        self.registered_user = self._create_user({"username":"registered_user"})
+        # non-root users are created as if they signed up through the project,
+        # to maximize test coverage. 
+               
+        # Creator of a project.                                        
+        self.projectadmin = self._create_random_user()
         
-                                        
-        self.siteadmin = self._create_user({"username":"siteadmin",
-                                            "email":"df@rt.com"}) 
+        # The project created by projectadmin 
+        self.testproject = create_comicsite_in_admin(self.projectadmin,"testproject")                
+        create_page_in_admin(self.testproject,"testpage1")
         
-        self.testsite = create_comicsite_in_admin(self.siteadmin,"testsite")                
-        create_page_in_admin(self.testsite,"testpage1")
+        # user which has pressed the register link for the project, so is 
+        # part of testproject_participants group
+        self.participant = self._create_random_user()
+        self._test_register(self.participant,self.testproject)
+        
+        # user which has only registered at comicframework but has not 
+        # registered for any project
+        self.signedup_user = self._create_random_user()
+        
+        
+        
+         
+        
+        
             
     
     def test_file_upload_page_shows(self):
@@ -332,49 +348,97 @@ class UploadTest(ComicframeworkTestCase):
         to others
         """
         url = reverse("comicmodels.views.upload_handler",
-                      kwargs={"site_short_name":self.testsite.short_name})
+                      kwargs={"site_short_name":self.testproject.short_name})
         self._test_url_can_be_viewed(self.root,url)                    
         #self._test_url_can_be_viewed(self.root.username,url)
         
         
+    def _test_register(self,user,project):
+        """ Register user for the given project, follow actual signup as
+        closely as possible.
+        """
+        url = reverse("comicsite.views._register", 
+            kwargs={"site_short_name":self.testproject.short_name})
+        factory = RequestFactory()
+        request = factory.get(url)
+        request.user = user
+                
+        response = _register(request,project.short_name)
         
+        self.assertEqual(response.status_code,
+                         200,
+                         "After registering as user %s at '%s', page did not"
+                         " load properly" % (user.username,url))
+                         
+        self.assertTrue(project.is_participant(user),
+                        "After registering as user %s at '%s', user does not "
+                        " appear to be registered." % (user.username,url))
+        
+
+    def _upload_test_file(self, user, project):
+        """ Upload a very small text file as user to project
+        """
+        
+        testfilename = user.username + "_testfile.txt"
+        url = reverse("comicmodels.views.upload_handler", 
+            kwargs={"site_short_name":self.testproject.short_name})
+        factory = RequestFactory()
+        request = factory.get(url)
+        request.user = user
+        
+        import StringIO
+        fakefile = StringIO.StringIO()
+        fakefile.write("some uploaded content" + testfilename)
+        
+        request.FILES['file'] = SimpleUploadedFile(name=testfilename,
+                                                   content=fakefile.read())
+        
+        request.method = "POST"
+        
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+        response = upload_handler(request, project.short_name)
+        
+        #pdb.set_trace()
+        
+        self.assertEqual(response.status_code, 200, "Uploading file %s as user %s"
+            " to project %s did not load a regular page afterwords"
+            % (testfilename, user.username, project.short_name))
+        
+        return response
+
+
     def test_file_can_be_uploaded(self):
         """ Upload a fake file, see if correct users can see this file
         """
         
-        #TODO: make this work. I cannot get this to work right now. fakefile
-        #is actually written to to disk, and no Uploadedfile object is created
-        #in database. It shoudld be the other way around
-        
-        #url = reverse("comicmodels.views.upload_handler",
-        #              kwargs={"site_short_name":self.testsite.short_name})
-        #factory = RequestFactory()
-        #request = factory.get(url)
-        #request.user = self.root
-        
-        #import StringIO
-        #fakefile = StringIO.StringIO()
-        #fakefile.write("some uploaded content")
-        #request.FILES['file'] = UploadedFile(file = fakefile,name="testfile",size=100)        
-        #request.method = "POST"
+        project = self.testproject
         
         
-        #from django.contrib.messages.storage.fallback import FallbackStorage
-        #setattr(request, 'session', 'session')
-        #messages = FallbackStorage(request)
-        #setattr(request, '_messages', messages)
-        
-        #pdb.set_trace()
-        #response = upload_handler(request,self.testsite.short_name)
+        self._upload_test_file(self.root,self.testproject)
+        self._upload_test_file(self.projectadmin,self.testproject)
+        self._upload_test_file(self.participant,self.testproject)
         
         
         
-        pass
+    
+    def _upload_file(self):
+        
+        model = UploadModel.objects.create(file=None,
+                                           user=self.root,
+                                           title="upload1",
+                                           comicsite=self.testproject,
+                                           permission_lvl=comicSiteModel.ALL)
+        
+        
+        
     
     def test_anonymous_and_non_member_user_cannot_see_files(self):
         pass
     
-    def test_site_admin_and_root_can_see_all_files(self):
+    def test_project_admin_and_root_can_see_all_files(self):
         pass
         
     def test_registered_user_can_see_only_owned_files(self):
