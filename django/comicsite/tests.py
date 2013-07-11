@@ -85,25 +85,26 @@ class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """ 
         
-    def _test_page_can_be_viewed(self,username,page):
+    def _test_page_can_be_viewed(self,user,page):
         page_url = reverse('comicsite.views.page',
                            kwargs={"site_short_name":page.comicsite.short_name,
                                    "page_title":page.title})
         
-        self._test_url_can_be_viewed(username,page_url)
+        self._test_url_can_be_viewed(user,page_url)
         
                          
-    def _test_url_can_be_viewed(self,username,url):
-        self._login(username)
+    def _test_url_can_be_viewed(self,user,url):
+        self._login(user)
         response = self.client.get(url)        
         self.assertEqual(response.status_code, 200, "could not load page"
-                         "'%s' logged in as user '%s'"% (url,username))
+                         "'%s' logged in as user '%s'"% (url,user))
     
-    def _test_url_cannot_be_viewed(self,username,url):
-        self._login(username)
+    def _test_url_cannot_be_viewed(self,user,url):
+        self._login(user)
         response = self.client.get(url)        
         self.assertNotEqual(response.status_code, 200, "could load restricted " 
-                            "page'%s' logged in as user '%s'"% (url,username))
+                            "page'%s' logged in as user '%s'"% (url,
+                                                                user.username))
        
     def _signup_user(self,overwrite_data={}):
         """Create a user in the same way as a new user is signed up on the site.
@@ -155,7 +156,8 @@ class ComicframeworkTestCase(TestCase):
 
     def _create_user(self,data):
         """ Sign up user in a way as close to production as possible. Check a 
-        lot of stuff
+        lot of stuff. Data is a dictionary form_field:for_value pairs. Any
+        unspecified values are given default values
         
         """        
         username = data['username']
@@ -191,14 +193,14 @@ class ComicframeworkTestCase(TestCase):
         return query_result[0] 
      
 
-    def _login(self,username,password="testpassword"):
+    def _login(self,user,password="testpassword"):
         """ convenience function. log in user an assert whether it worked
         
         """
         self.client.logout()
-        success = self.client.login(username=username,password=password)
+        success = self.client.login(username=user.username,password=password)
         self.assertTrue(success, "could not log in as user %s using password %s"
-                        % (username,password))        
+                        % (user.username,password))        
 
 
 # Decorators applied to the entire class: see 
@@ -253,8 +255,8 @@ class ViewsTest(ComicframeworkTestCase):
         testpage1 = create_page_in_admin(testsite,"testpage1")
         testpage2 = create_page_in_admin(testsite,"testpage2")
                 
-        self._test_page_can_be_viewed(user.username,testpage1)
-        self._test_page_can_be_viewed(self.root.username,testpage1)
+        self._test_page_can_be_viewed(user,testpage1)
+        self._test_page_can_be_viewed(self.root,testpage1)
         
         
     
@@ -269,10 +271,10 @@ class ViewsTest(ComicframeworkTestCase):
         url = reverse("admin:comicmodels_page_permissions",
                       args=[testpage1[0].pk])
         
-        self._test_url_can_be_viewed(self.root.username,url)
+        self._test_url_can_be_viewed(self.root,url)
         
         otheruser = self._create_random_user()
-        self._test_url_cannot_be_viewed(otheruser.username,url)
+        self._test_url_cannot_be_viewed(otheruser,url)
         
         
     
@@ -287,8 +289,8 @@ class ViewsTest(ComicframeworkTestCase):
         url = reverse("admin:comicmodels_page_change",
                       args=[testpage1.pk])
         
-        self._test_url_can_be_viewed(user.username,url)        
-        self._test_url_can_be_viewed(self.root.username,url)
+        self._test_url_can_be_viewed(user,url)        
+        self._test_url_can_be_viewed(self.root,url)
         
                 
     
@@ -304,7 +306,7 @@ class UploadTest(ComicframeworkTestCase):
         # Siteadmin, cam do things to a site he or she owns. And logged in
         # user 
         
-        self.root = self._create_user('root',
+        self.root = User.objects.create_user('root',
                                       'w.s.kerkstra@gmail.com',
                                       'testpassword')        
         self.root.is_staff = True
@@ -318,12 +320,38 @@ class UploadTest(ComicframeworkTestCase):
                                         
         self.siteadmin = self._create_user({"username":"siteadmin",
                                             "email":"df@rt.com"}) 
-                    
-        self.testsite = create_comicsite_in_admin(self.siteadmin,"viewtest")                
+        
+        self.testsite = create_comicsite_in_admin(self.siteadmin,"testsite")                
         create_page_in_admin(self.testsite,"testpage1")
-        create_page_in_admin(self.testsite,"testpage2")
+            
+    
+    def test_file_upload_page_shows(self):
+        """
+        """
+        url = reverse("comicmodels.views.upload_handler",
+                      kwargs={"site_short_name":self.testsite.short_name})
+        self._test_url_can_be_viewed(self.root,url)        
+        #self._test_url_can_be_viewed(self.root.username,url)
+        
+        
+        
+    def test_file_can_be_uploaded(self):
+        pass
+    
+    def test_anonymous_and_non_member_user_cannot_see_files(self):
+        pass
+    
+    def test_site_admin_and_root_can_see_all_files(self):
+        pass
+        
+    def test_registered_user_can_see_only_owned_files(self):
+        pass
+     
     
     
+    
+    
+        
     
 
     
