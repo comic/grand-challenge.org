@@ -61,9 +61,15 @@ def upload_handler(request,site_short_name):
         p = Page(comicsite=site,title="files")
         currentpage = permissionMessage(request,site,p)
 
-        return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages,
-                                            "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+        response = render_to_response('page.html',
+                                       {'site': site,
+                                        'currentpage': currentpage, 
+                                        "pages":pages,                                            
+                                        "metafooterpages":metafooterpages},
+                                       context_instance=RequestContext(request))
+        
+        response.status_code = 403
+        return response
 
 
 
