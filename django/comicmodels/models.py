@@ -335,8 +335,7 @@ class UploadModel(ComicSiteModel):
         return os.path.exists(self.file.path)
     
     
-    def clean(self):
-        
+    def clean(self):        
         # When no title is set, take the filename as title
         if self.title == "":
             

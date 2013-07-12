@@ -11,6 +11,7 @@ from random import choice
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
+from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -205,17 +206,27 @@ class ComicframeworkTestCase(TestCase):
                         % (user.username,password))        
 
 
-# Decorators applied to the entire class: see 
+# =============================================================================
+# Decorators applied to the ComicframeworkTestCase class: see 
 # https://docs.djangoproject.com/en/1.4/topics/testing/#django.test.utils.override_settings
 
 #don't send real emails, keep them in memory
 ComicframeworkTestCase = override_settings(EMAIL_BACKEND='django.core.mail.'
-                                         'backends.locmem.EmailBackend')(ComicframeworkTestCase)
+                                         'backends.locmem.EmailBackend'
+                                         )(ComicframeworkTestCase)
                                         
 #use fast, non-safe password hashing to speed up testing
 ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
-                                           'auth.hashers.SHA1PasswordHasher',))(ComicframeworkTestCase)
+                                           'auth.hashers.SHA1PasswordHasher',)
+                                           )(ComicframeworkTestCase)
                                           
+#Use a fake storage provider which does not save anything to disk.
+#ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE = 
+#                                           "comicsite.storage.MockStorage"
+#                                           )(ComicframeworkTestCase)
+
+
+
 
 class ViewsTest(ComicframeworkTestCase):
         
@@ -337,11 +348,7 @@ class UploadTest(ComicframeworkTestCase):
         self.signedup_user = self._create_random_user()
         
         
-        
-         
-        
-        
-            
+           
     
     def test_file_upload_page_shows(self):
         """ The /files page should show to admin, signedin and root, but not
@@ -377,9 +384,10 @@ class UploadTest(ComicframeworkTestCase):
 
     def _upload_test_file(self, user, project):
         """ Upload a very small text file as user to project
-        """
         
-        testfilename = user.username + "_testfile.txt"
+        """        
+        
+        testfilename = user.username.encode("ascii","ignore") + "_testfile.txt"
         url = reverse("comicmodels.views.upload_handler", 
             kwargs={"site_short_name":self.testproject.short_name})
         factory = RequestFactory()
@@ -387,25 +395,36 @@ class UploadTest(ComicframeworkTestCase):
         request.user = user
         
         import StringIO
-        fakefile = StringIO.StringIO()
-        fakefile.write("some uploaded content" + testfilename)
+        fakefile = File(StringIO.StringIO("some uploaded content for" + testfilename))
         
+        fakecontent = "some uploaded content for" + testfilename
         request.FILES['file'] = SimpleUploadedFile(name=testfilename,
-                                                   content=fakefile.read())
+                                                   content=fakecontent)
         
         request.method = "POST"
         
+        # Some magic code to fix a bug with middleware not being found,
+        # don't know what this does but if fixes the bug.
         from django.contrib.messages.storage.fallback import FallbackStorage
         setattr(request, 'session', 'session')
         messages = FallbackStorage(request)
         setattr(request, '_messages', messages)
-        response = upload_handler(request, project.short_name)
         
-        #pdb.set_trace()
+        response = upload_handler(request, project.short_name)        
         
-        self.assertEqual(response.status_code, 200, "Uploading file %s as user %s"
-            " to project %s did not load a regular page afterwords"
+        self.assertEqual(response.status_code, 302, "Uploading file %s as "
+            "user %s to project %s did not load to expected 302 "
             % (testfilename, user.username, project.short_name))
+        
+        # see if there are any errors rendered in the reponse
+        errors = re.search('<ul class="errorlist">(.*)</ul>',
+                            response.content,
+                             re.IGNORECASE)
+        if errors:
+            self.assertFalse(errors,"Error uploading file '%s':\n %s"
+                           %(testfilename, errors.group(1))
+                           )
+        
         
         return response
 
@@ -414,14 +433,12 @@ class UploadTest(ComicframeworkTestCase):
         """ Upload a fake file, see if correct users can see this file
         """
         
-        project = self.testproject
+        project = self.testproject        
         
-        
-        self._upload_test_file(self.root,self.testproject)
-        self._upload_test_file(self.projectadmin,self.testproject)
-        self._upload_test_file(self.participant,self.testproject)
-        
-        
+        resp1 = self._upload_test_file(self.root,self.testproject)
+        resp2 = self._upload_test_file(self.projectadmin,self.testproject)
+        resp3 = self._upload_test_file(self.participant,self.testproject)
+                
         
     
     def _upload_file(self):

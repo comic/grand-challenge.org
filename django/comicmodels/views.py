@@ -26,14 +26,12 @@ def upload_handler(request,site_short_name):
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
         site = getSite(site_short_name)
-        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ADMIN_ONLY,
-                                   user=request.user)
+        uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ADMIN_ONLY,user=request.user)
         #ADMIN_ONLY
 
-        form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)
-
+        form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)        
         if form.is_valid():
-            form.save()            
+            form.save()
             filename = ntpath.basename(form.instance.file.file.name)
             messages.success(request, "File '%s' sucessfully uploaded. An email has been sent to this\
                                        projects organizers." % filename)
