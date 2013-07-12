@@ -221,9 +221,9 @@ ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
                                            )(ComicframeworkTestCase)
                                           
 #Use a fake storage provider which does not save anything to disk.
-#ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE = 
-#                                           "comicsite.storage.MockStorage"
-#                                           )(ComicframeworkTestCase)
+ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE = 
+                                           "comicsite.storage.MockStorage"
+                                           )(ComicframeworkTestCase)
 
 
 
