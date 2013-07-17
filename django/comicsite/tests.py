@@ -146,11 +146,14 @@ class ComicframeworkTestCase(TestCase):
                         
         
         
-    def _create_random_user(self):
-        """ Sign up a user, saves me having to think of a unique name each time 
+    def _create_random_user(self,startname=""):
+        """ Sign up a user, saves me having to think of a unique name each time
+        predend startname if given
         """
         
-        username = "".join([choice('AEOUY')+choice('QWRTPSDFGHHKLMNB') for x in range(3)])
+        username = startname + "".join([choice('AEOUY')+
+                                        choice('QWRTPSDFGHHKLMNB')
+                                        for x in range(3)])
         
         data = {'username':username,
                 'email':username+"@test.com"}
@@ -248,9 +251,9 @@ class ViewsTest(ComicframeworkTestCase):
         # non-root users are created as if they signed up through the project,
         # to maximize test coverage.        
         
-        self.registered_user = self._create_random_user()
+        self.registered_user = self._create_random_user("registered_")
                                         
-        self.projectadmin = self._create_random_user()
+        self.projectadmin = self._create_random_user("projectadmin_")
                     
         self.testproject = create_comicsite_in_admin(self.projectadmin,"viewtest")                
         create_page_in_admin(self.testproject,"testpage1")
@@ -286,7 +289,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         self._test_url_can_be_viewed(self.root,url)
         
-        otheruser = self._create_random_user()
+        otheruser = self._create_random_user("other_")
         self._test_url_cannot_be_viewed(otheruser,url)
         
         
@@ -332,7 +335,7 @@ class UploadTest(ComicframeworkTestCase):
         # to maximize test coverage. 
                
         # Creator of a project.                                        
-        self.projectadmin = self._create_random_user()
+        self.projectadmin = self._create_random_user("projectadmin_")
         
         # The project created by projectadmin 
         self.testproject = create_comicsite_in_admin(self.projectadmin,"testproject")                
@@ -340,12 +343,16 @@ class UploadTest(ComicframeworkTestCase):
         
         # user which has pressed the register link for the project, so is 
         # part of testproject_participants group
-        self.participant = self._create_random_user()
+        self.participant = self._create_random_user("participant_")
         self._test_register(self.participant,self.testproject)
         
+        self.participant2 = self._create_random_user("participant2_")
+        self._test_register(self.participant2,self.testproject)
+                
         # user which has only registered at comicframework but has not 
         # registered for any project
-        self.signedup_user = self._create_random_user()
+        self.signedup_user = self._create_random_user("signedup_user_")
+        
         
         
            
@@ -382,12 +389,14 @@ class UploadTest(ComicframeworkTestCase):
                         " appear to be registered." % (user.username,url))
         
 
-    def _upload_test_file(self, user, project):
+    def _upload_test_file(self, user, project,testfilename=""):
         """ Upload a very small text file as user to project
         
         """        
         
-        testfilename = user.username.encode("ascii","ignore") + "_testfile.txt"
+        if testfilename == "":
+            testfilename = self.givefilename(user)
+            
         url = reverse("comicmodels.views.upload_handler", 
             kwargs={"site_short_name":self.testproject.short_name})
         factory = RequestFactory()
@@ -429,16 +438,80 @@ class UploadTest(ComicframeworkTestCase):
         return response
 
 
-    def test_file_can_be_uploaded(self):
+    def get_uploadpage_response(self, user, project):        
+        url = reverse("comicmodels.views.upload_handler", 
+            kwargs={"site_short_name":project.short_name})
+        factory = RequestFactory()
+        request = factory.get(url)
+        request.user = user
+        response = upload_handler(request, project.short_name)
+        return response
+    
+    def uploaded_files_are_all_shown_on_uploadpage(self,filenames,user):
+        """ Assert that all filenames in string array filenames are shown
+        on the testproject upload page, when viewed by user
+        
+        """
+                
+        response = self.get_uploadpage_response(user,self.testproject)
+        
+        for filename in filenames:
+            self.assertTrue(filename in response.content,"File '%s' was not "
+                            "visible on download page when viewed by user %s"
+                            % (filename,user.username))
+    
+
+    def uploaded_files_are_not_shown_on_uploadpage(self,filenames,user):
+        """ Assert that none of the names in string array filenames are shown
+        on the testproject upload page, when viewed by user
+        
+        """
+                
+        response = self.get_uploadpage_response(user,self.testproject)
+                
+        for filename in filenames:
+            self.assertTrue(filename not in response.content,"Restricted file"
+                            " '%s' was visible on download page when viewed"
+                            " by user %s"
+                            % (filename,user.username))
+    
+              
+    def givefilename(self,user):
+        return user.username.encode("ascii","ignore") + "_testfile.txt"
+        
+        
+
+    def test_file_can_be_uploaded_and_viewed_by_correct_users(self):
         """ Upload a fake file, see if correct users can see this file
         """
         
         project = self.testproject        
         
-        resp1 = self._upload_test_file(self.root,self.testproject)
-        resp2 = self._upload_test_file(self.projectadmin,self.testproject)
-        resp3 = self._upload_test_file(self.participant,self.testproject)
-                
+        name1 = self.givefilename(self.root)
+        name2 = self.givefilename(self.projectadmin)
+        name3 = self.givefilename(self.participant)
+        name4 = self.givefilename(self.participant2)
+                    
+        resp1 = self._upload_test_file(self.root,self.testproject,name1)
+        resp2 = self._upload_test_file(self.projectadmin,self.testproject,name2)
+        resp3 = self._upload_test_file(self.participant,self.testproject,name3)
+        resp4 = self._upload_test_file(self.participant,self.testproject,name4)
+        
+        # root and projectadmin should see all files
+        self.uploaded_files_are_all_shown_on_uploadpage([name1,name2,name3,name4],self.root)
+        self.uploaded_files_are_all_shown_on_uploadpage([name1,name2,name3,name4],self.projectadmin)
+        
+        # participant1 sees only his or her own file
+        self.uploaded_files_are_all_shown_on_uploadpage([name3],self.participant)
+        self.uploaded_files_are_not_shown_on_uploadpage([name1,name2,name4],self.participant)
+        
+        # participant2 also sees only his or her own file
+        self.uploaded_files_are_all_shown_on_uploadpage([name4],self.participant2)
+        self.uploaded_files_are_not_shown_on_uploadpage([name1,name2,name3],self.participant)
+        
+        
+        pdb.set_trace()
+        
         
     
     def _upload_file(self):
