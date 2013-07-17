@@ -22,21 +22,21 @@
   			 <span> {% firstof upload.title 'unnamed' %} (local file not found, was it moved?)</span>
   			 <form method="post" action="{% url 'filetransfers.views.delete_handler' pk=upload.pk %}" style="display:inline">
         		{% csrf_token %}
-        	 	<input type="submit" value="Delete" />
+        	 	<input type="submit" value="Delete from this list" />
       		 </form>
      	</li>
       
   	{% else %}
   		<li>
-  			 <a href="{% url 'filetransfers.views.download_handler' pk=upload.pk %}">{% firstof upload.title 'unnamed' %}
+  			 <a href="{% url 'filetransfers.views.download_handler' pk=upload.pk %}">{% firstof upload.title 'unnamed' %}  			 	 
   			 	 {% if upload.filename != upload.title %}
   			 	 	- {{ upload.filename }} 
   			 	 {% endif %} 
   			 </a>
-  			 - uploaded {{ upload.created|date:"D d M Y" }}
+  			 - uploaded {{ upload.created|date:"D d M Y H:m" }} by user "{{ upload.user.username}}"
   			 <form method="post" action="{% url 'filetransfers.views.delete_handler' pk=upload.pk %}" style="display:inline">
         		{% csrf_token %}
-        	 	<input type="submit" value="Delete" />
+        	 	<!--<input type="submit" value="Delete" />-->
       		 </form>
      	</li>
      {% endif %}
