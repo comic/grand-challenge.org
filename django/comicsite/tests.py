@@ -495,8 +495,8 @@ class UploadTest(ComicframeworkTestCase):
         resp1 = self._upload_test_file(self.root,self.testproject,name1)
         resp2 = self._upload_test_file(self.projectadmin,self.testproject,name2)
         resp3 = self._upload_test_file(self.participant,self.testproject,name3)
-        resp4 = self._upload_test_file(self.participant,self.testproject,name4)
-        
+        resp4 = self._upload_test_file(self.participant2,self.testproject,name4)
+            
         # root and projectadmin should see all files
         self.uploaded_files_are_all_shown_on_uploadpage([name1,name2,name3,name4],self.root)
         self.uploaded_files_are_all_shown_on_uploadpage([name1,name2,name3,name4],self.projectadmin)
@@ -507,11 +507,7 @@ class UploadTest(ComicframeworkTestCase):
         
         # participant2 also sees only his or her own file
         self.uploaded_files_are_all_shown_on_uploadpage([name4],self.participant2)
-        self.uploaded_files_are_not_shown_on_uploadpage([name1,name2,name3],self.participant)
-        
-        
-        pdb.set_trace()
-        
+        self.uploaded_files_are_not_shown_on_uploadpage([name1,name2,name3],self.participant2)
         
     
     def _upload_file(self):
