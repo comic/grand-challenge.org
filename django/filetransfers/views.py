@@ -1,8 +1,14 @@
 import pdb
-from os import path
+import posixpath
+import re
+import os
+try:
+    from urllib.parse import unquote
+except ImportError:     # Python 2
+    from urllib import unquote
+
 
 from django.core.files import File
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -12,11 +18,9 @@ from django.shortcuts import get_object_or_404, render
 from filetransfers.forms import UploadForm
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
-from comicmodels.models import UploadModel
 from filetransfers.api import prepare_upload, serve_file
-
 from comicmodels.models import FileSystemDataset
-
+from comicmodels.models import UploadModel
 
 def upload_handler(request):
     view_url = reverse('filetransfers.views.upload_handler')
@@ -55,7 +59,7 @@ def download_handler_dataset_file(request, project_name, dataset_title,filename)
 
     dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name,title=dataset_title)
     filefolder = dataset.get_full_folder_path()
-    filepath = path.join(filefolder,filename)
+    filepath = os.path.join(filefolder,filename)
     f = open(filepath, 'r')
     file = File(f) # create django file object
 
@@ -68,8 +72,6 @@ def download_handler_file(request, filepath):
     file = File(f) # create django file object
 
     return serve_file(request, file, save_as=True)
-
-
 
 
 def delete_handler(request, pk):
@@ -85,6 +87,42 @@ def delete_handler(request, pk):
             upload.delete()
 
     return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
+
+def serve(request, path, document_root=None):
+    """
+    Serve static files below a given point in the directory structure.
+    
+    This is meant as a replacement for the inefficient debug only 
+    'django.views.static.serve' way of serving files. 
+    """
+    
+    path = posixpath.normpath(unquote(path))
+    path = path.lstrip('/')
+    newpath = ''
+    for part in path.split('/'):
+        if not part:
+            # Strip empty path components.
+            continue
+        drive, part = os.path.splitdrive(part)
+        head, part = os.path.split(part)
+        if part in (os.curdir, os.pardir):
+            # Strip '.' and '..' in path.
+            continue
+        newpath = os.path.join(newpath, part).replace('\\', '/')
+    if newpath and path != newpath:
+        return HttpResponseRedirect(newpath)    
+    fullpath = os.path.join(document_root, newpath)
+        
+    if not os.path.exists(fullpath):
+        raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
+    
+    f = open(fullpath, 'r')
+    file = File(f) # create django file object
+
+    return serve_file(request, file, save_as=True)
+
+    
+    
 
 
 
