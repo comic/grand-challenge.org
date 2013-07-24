@@ -12,6 +12,8 @@ from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
+from django.http import Http404
+from django.utils.translation import ugettext as _, ugettext_noop
 #from django.views.generic.simple import direct_to_template
 
 
