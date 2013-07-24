@@ -10,10 +10,11 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-
+from comic import settings
 from comicsite.views import getSite
 from comicmodels.forms import UploadForm,UserUploadForm
 from comicmodels.models import UploadModel,Page
+
 
 try:
     from PIL import Image, ImageOps
@@ -182,8 +183,13 @@ def upload_to_project(request,site_short_name):
     
 
 def get_media_url_project(projectname,filename):
-    return reverse("comicsite.views.inserted_file",kwargs={"site_short_name":projectname,\
-                                                           "filepath":os.path.join("uploads",filename)})
+    """ By which URL can the file in the given project be loaded? 
+    
+    """
+    # upload files to project folder which is open to all by default     
+    return reverse("filetransfers.views.serve"\
+                   ,kwargs={"project_name":projectname,\
+                            "path":os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME,filename)})
                                                
 
 def get_image_files(user=None):
@@ -249,6 +255,7 @@ def get_image_browse_urls_project(site_short_name,user=None):
     done below is more intueitive and less error prone. Losing context
     context (who uploaded, which rights?) is an exceptable sacrifice.
     """
+    
     images = []
     #get all uploadmodels for this user and site,
     site = getSite(site_short_name)
