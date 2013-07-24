@@ -10,7 +10,7 @@ except ImportError:     # Python 2
 
 from django.core.files import File
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 #from django.views.generic.simple import direct_to_template
 
@@ -21,6 +21,7 @@ from filetransfers.forms import UploadForm
 from filetransfers.api import prepare_upload, serve_file
 from comicmodels.models import FileSystemDataset
 from comicmodels.models import UploadModel
+from comic import settings
 
 def upload_handler(request):
     view_url = reverse('filetransfers.views.upload_handler')
@@ -88,14 +89,14 @@ def delete_handler(request, pk):
 
     return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
 
-def serve(request, path, document_root=None):
+def serve(request, project_name, path, document_root=None):
     """
-    Serve static files below a given point in the directory structure.
+    Serve static file for a given project. 
     
     This is meant as a replacement for the inefficient debug only 
-    'django.views.static.serve' way of serving files. 
-    """
-    
+    'django.views.static.serve' way of serving files under /media urls.
+     
+    """        
     path = posixpath.normpath(unquote(path))
     path = path.lstrip('/')
     newpath = ''
@@ -111,15 +112,34 @@ def serve(request, path, document_root=None):
         newpath = os.path.join(newpath, part).replace('\\', '/')
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)    
-    fullpath = os.path.join(document_root, newpath)
+    fullpath = os.path.join(document_root,project_name, newpath)
         
     if not os.path.exists(fullpath):
         raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
     
-    f = open(fullpath, 'r')
-    file = File(f) # create django file object
+    
+    if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
+        raise ImproperlyConfigured("Don't know from which folder serving files"
+                                   "is allowed. Please add a setting "
+                                   "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
+                                   " to your .conf file." )        
+     
+    if not path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):        
+        return HttpResponseForbidden("This file is not available without "
+                                    "credentials")        
+    else:
+        f = open(fullpath, 'r')
+        file = File(f) # create django file object
 
-    return serve_file(request, file, save_as=True)
+        return serve_file(request, file, save_as=True)
+        
+        
+    
+    
+    
+    
+    
+    
 
     
     

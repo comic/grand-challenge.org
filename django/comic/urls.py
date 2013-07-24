@@ -45,12 +45,12 @@ urlpatterns = patterns('',
     
 )
 
-if settings.DEBUG:
+if not settings.DEBUG:
     # static files (images, css, javascript, etc.)
     urlpatterns += patterns('',
         (r'^media/(?P<path>.*)$', 'django.views.static.serve', {
         'document_root': settings.MEDIA_ROOT}))
 else:
     urlpatterns += patterns('',
-        (r'^media/(?P<path>.*)$', 'filetransfers.views.serve', {
+        (r'^media/(?P<project_name>\w+)/(?P<path>.*)$', 'filetransfers.views.serve', {
         'document_root': settings.MEDIA_ROOT}))
