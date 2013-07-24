@@ -16,7 +16,7 @@ urlpatterns = patterns('',
     
     url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),
     
-    url(r'^(?P<site_short_name>\w+)/serve/(?P<filepath>.+)/$','comicsite.views.inserted_file'),
+    url(r'^(?P<project_name>\w+)/serve/(?P<path>.+)/$','filetransfers.views.serve'),
     
     url(r'^(?P<site_short_name>\w+)/_register/$','comicsite.views._register'),
     
