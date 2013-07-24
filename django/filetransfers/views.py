@@ -96,7 +96,10 @@ def serve(request, project_name, path, document_root=None):
     This is meant as a replacement for the inefficient debug only 
     'django.views.static.serve' way of serving files under /media urls.
      
-    """        
+    """
+    if document_root == None:
+        document_root = settings.MEDIA_ROOT
+                
     path = posixpath.normpath(unquote(path))
     path = path.lstrip('/')
     newpath = ''

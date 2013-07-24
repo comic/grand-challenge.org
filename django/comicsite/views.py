@@ -253,9 +253,8 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
 
     
 def inserted_file(request, site_short_name, filepath=""):
-    """ Get image from local dropbox and pipe through django. 
-    Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
-    from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
+    """ Get image from local dropbox and serve pipe through django. 
+    
     """    
     
      
