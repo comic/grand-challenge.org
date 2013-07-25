@@ -573,11 +573,16 @@ class UploadTest(ComicframeworkTestCase):
         
     
     
-    def test_uploaded_files_are_not_publically_served(self):
-        """ If you upload you result to the site, someone else cannot guess the
-        url and get this. Instead the user is barred from this.
+    def test_uploaded_files_from_editor(self):
+        """ You can also upload files in ckeditor, while editing a page. See
+        whether this works correctly. 
         
-        """        
+        """
+        # TODO: If you upload you result to the site, someone else cannot guess the
+        # url and get this. Instead the user is barred from this.
+        
+        project = self.testproject 
+        
         name1 = self.giverandomfilename(self.root)
         name2 = self.giverandomfilename(self.projectadmin)
         name3 = self.giverandomfilename(self.participant)
@@ -586,9 +591,23 @@ class UploadTest(ComicframeworkTestCase):
         resp2 = self._upload_test_file_ckeditor(self.projectadmin,self.testproject,name2)
         resp3 = self._upload_test_file_ckeditor(self.participant,self.testproject,name3)
         
+        
+        # TODO: verify that files uploaded in editor can be served directly.
+        # This is not possible now because no files get saved, returning 
+        # HttpResponseNotFound for any url get.. Can we fake this somehow?
+        url = reverse("project_serve_file",
+                       kwargs={"project_name":project.short_name,
+                               "path":project.public_upload_dir_rel()+"/"+name1})
+        
+        
+        
              
         
-    
+    def get_public_url(self,project,filename):
+        """ Get a url where filename can be downloaded without credentials
+         
+        """
+        pass
     
     def _upload_file(self):
         
