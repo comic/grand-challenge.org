@@ -24,15 +24,29 @@ from dataproviders import FileSystemDataProvider,DropboxDataProvider
 
 
 def giveFileUploadDestinationPath(uploadmodel,filename):
-    """ Where should this file go relative to MEDIA_ROOT? """
+    """ Where should this file go relative to MEDIA_ROOT?
+    Determines location based on permission level of the uploaded model. 
     
+    """
+    
+    #pdb.set_trace()
     #uploadmodel can be either a ComicSiteModel, or a ComicSite
     if hasattr(uploadmodel,'short_name'):
-        comicsitename = uploadmodel.short_name  # is a ComicSite
+        comicsite = uploadmodel  # is a ComicSite
     else:
-        comicsitename = uploadmodel.comicsite.short_name # is a ComicSiteModel
-         
-    path = os.path.join(comicsitename,"uploads",filename)    
+        comicsite = uploadmodel.comicsite # is a ComicSiteModel
+    
+    # If permission is ALL, upload this file to the public_html folder
+    if uploadmodel.permission_lvl == ComicSiteModel.ALL:
+        path = os.path.join(comicsite.short_name,
+                            comicsite.public_upload_dir(),
+                            filename)
+    else:
+        path = os.path.join(comicsite.short_name,
+                            comicsite.upload_dir(),
+                            filename)    
+
+    path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
     return path
 
 
