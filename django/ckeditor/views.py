@@ -183,13 +183,20 @@ def upload_to_project(request,site_short_name):
     
 
 def get_media_url_project(projectname,filename):
-    """ By which URL can the file in the given project be loaded? 
+    """ By which URL can the file in the given project be loaded?
+    
+    filename should be relative to projectfolder/public_html/ 
     
     """
+    filepath = os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME,filename)
+    filepath = filepath.replace('\\', '/') # double backslash here somehow causes an 
+                                           # infinite loop /filename/filename/filename..
+     
     # upload files to project folder which is open to all by default     
-    return reverse("filetransfers.views.serve"\
-                   ,kwargs={"project_name":projectname,\
-                            "path":os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME,filename)})
+    url =  reverse("project_serve_file",
+                   kwargs={"project_name":projectname,
+                           "path":filepath})        
+    return url
                                                
 
 def get_image_files(user=None):
@@ -244,32 +251,24 @@ def get_image_browse_urls(user=None):
     return images
 
 def get_image_browse_urls_project(site_short_name,user=None):
-    """
-    Recursively walks all dirs under upload dir and generates a list of
-    thumbnail and full image URL's for each file found.
-    
-    FIXME: Sjoerd: getting files by walking a dir is a major design decision.
-    Alternative is to have file objects in db and list those. Problem there
-    is that it is almost impossible to keep db file object up to date if we
-    allow dropbox interaction for example. Reflecting file dir directly as 
-    done below is more intueitive and less error prone. Losing context
-    context (who uploaded, which rights?) is an exceptable sacrifice.
+    """ Return a url for each file in a project public folder 
+        
     """
     
     images = []
     #get all uploadmodels for this user and site,
     site = getSite(site_short_name)
-    
-    
-    for root, dirs, files in os.walk(site.upload_dir()):
-        for filename in [os.path.join(root, x) for x in files]:
-            # bypass for thumbs
-            if os.path.splitext(filename)[0].endswith('_thumb'):
-                continue
-            images.append({
-                'thumb': get_media_url_project(site_short_name,filename),
-                'src': get_media_url_project(site_short_name,filename)
-            })
+        
+    files = os.listdir(site.public_upload_dir())    
+    for filename in files:                        
+        # bypass for thumbs
+        if os.path.splitext(filename)[0].endswith('_thumb'):
+            continue
+                    
+        images.append({
+            'thumb': get_media_url_project(site_short_name,filename),
+            'src': get_media_url_project(site_short_name,filename)
+        })
         
     return images
 
