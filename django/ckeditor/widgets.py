@@ -77,7 +77,8 @@ class CKEditorWidget(forms.Textarea):
         final_attrs = self.build_attrs(attrs, name=name)        
         # self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload')
         
-        # self.config['comicsite'] is set in comicmodel.PageAdmin, ckeditor knows where to put uploads per project 
+        # self.config['comicsite'] is set in comicmodel.PageAdmin, ckeditor 
+        # knows where to put uploads per project 
         self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload_to_project',kwargs={"site_short_name":self.config['comicsite']})
         self.config['filebrowserBrowseUrl'] = reverse('ckeditor_browse_project',kwargs={"site_short_name":self.config['comicsite']})        
         return mark_safe(render_to_string('ckeditor/widget.html', {
