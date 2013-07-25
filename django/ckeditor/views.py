@@ -150,7 +150,7 @@ def upload(request):
 def upload_to_project(request,site_short_name):
     """
     Uploads a file and send back its URL to CKEditor.
-    Uploads to a project directory
+    Uploads to a public project directory   
     """
     
     # set values excluded from form here to make the model validate
