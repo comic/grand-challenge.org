@@ -10,7 +10,7 @@ class MockStorage(FileSystemStorage):
     """
 
     def _save(self, name, content):
-        # dp NOTHING
+        # do NOTHING
         return name
     
     def _open(self, name, mode='rb'):

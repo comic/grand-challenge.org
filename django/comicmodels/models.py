@@ -95,18 +95,26 @@ class ComicSite(models.Model):
         #TODO check whether short name is really clean and short!        
     
     def upload_dir(self):
-        """Where to get and put secure uploaded files? Files here cannot be
+        """Full path to get and put secure uploaded files. Files here cannot be
         viewed directly by url
         """
         return os.path.join(settings.MEDIA_ROOT,self.short_name,"uploads")
     
     def public_upload_dir(self):
-        """Where to get and put uploaded files? """
+        """Full path to get and put uploaded files. These files can be served 
+        to anyone without checking
+        
+         """
         return os.path.join(settings.MEDIA_ROOT,
                             self.short_name,
-                            settings.COMIC_PUBLIC_FOLDER_NAME)
+                            self.public_upload_dir_rel())
          
-            
+    def public_upload_dir_rel(self):
+        """ Path to public uploaded files, relative to MEDIA_ROOT/projectname/
+         
+        """
+        return os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME)
+    
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
         return self.short_name+"_admins"
