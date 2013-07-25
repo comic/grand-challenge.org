@@ -160,9 +160,7 @@ def upload_to_project(request,site_short_name):
     form = UserUploadForm(request.POST, request.FILES, instance=uploadedfile)
     
     if form.is_valid():
-        form.save()
-        
-        
+        form.save()            
         # Respond with Javascript sending ckeditor upload url.
         # reverhttp://localhost:8000/site/vessel12/serve/uploads/vesselScreenshot_2.PNG/
         url = get_media_url_project(site_short_name,uploadedfile.title)        

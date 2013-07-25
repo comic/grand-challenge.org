@@ -44,7 +44,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     else:
         path = os.path.join(comicsite.short_name,
                             comicsite.upload_dir(),
-                            filename)    
+                            filename)
 
     path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
     return path
@@ -343,7 +343,7 @@ class ErrorPage(Page):
 
 class UploadModel(ComicSiteModel):
         
-    file = models.FileField(upload_to=giveFileUploadDestinationPath)
+    file = models.FileField(max_length=255,upload_to=giveFileUploadDestinationPath)
     user = models.ForeignKey(User, help_text = "which user uploaded this?")
     created = models.DateTimeField(auto_now_add=True,default=datetime.date.today) 
     modified = models.DateTimeField(auto_now=True,default=datetime.date.today)
@@ -359,8 +359,9 @@ class UploadModel(ComicSiteModel):
     
     def clean(self):        
         # When no title is set, take the filename as title
+                
         if self.title == "":
-            
+                        
             if self.file.name: #is a                 
                 # autofill title with the name the file is going to have
                 # Some confused code here to get the filename a file is going to get.
