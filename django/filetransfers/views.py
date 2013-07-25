@@ -98,10 +98,10 @@ def serve(request, project_name, path, document_root=None):
     This is meant as a replacement for the inefficient debug only 
     'django.views.static.serve' way of serving files under /media urls.
      
-    """
+    """        
     if document_root == None:
         document_root = settings.MEDIA_ROOT
-                
+    
     path = posixpath.normpath(unquote(path))
     path = path.lstrip('/')
     newpath = ''
@@ -128,12 +128,12 @@ def serve(request, project_name, path, document_root=None):
                                    "is allowed. Please add a setting "
                                    "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
                                    " to your .conf file." )        
-     
+    
     if not path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):        
         return HttpResponseForbidden("This file is not available without "
                                     "credentials")        
     else:
-        f = open(fullpath, 'r')
+        f = open(fullpath, 'rb')
         file = File(f) # create django file object
 
         return serve_file(request, file, save_as=True)
