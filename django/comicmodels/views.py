@@ -28,7 +28,7 @@ def upload_handler(request,site_short_name):
         site = getSite(site_short_name)
         uploadedFile = UploadModel(comicsite=site,permission_lvl = UploadModel.ADMIN_ONLY,user=request.user)
         #ADMIN_ONLY
-
+                
         form = UserUploadForm(request.POST, request.FILES, instance=uploadedFile)        
         if form.is_valid():
             form.save()

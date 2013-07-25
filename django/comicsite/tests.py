@@ -6,7 +6,7 @@ when you run "manage.py test.
 """
 import pdb
 import re
-from random import choice
+from random import choice,randint
 
 from django.contrib import admin
 from django.contrib.auth.models import User
@@ -18,6 +18,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
+from ckeditor.views import upload_to_project 
 from comicmodels.models import Page,ComicSite,UploadModel,ComicSiteModel
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
@@ -390,15 +391,17 @@ class UploadTest(ComicframeworkTestCase):
         
 
     def _upload_test_file(self, user, project,testfilename=""):
-        """ Upload a very small text file as user to project
+        """ Upload a very small text file as user to project, through standard
+        upload view at /files 
         
         """        
         
         if testfilename == "":
-            testfilename = self.givefilename(user)
+            testfilename = self.giverandomfilename(user)
             
         url = reverse("comicmodels.views.upload_handler", 
             kwargs={"site_short_name":self.testproject.short_name})
+        
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
@@ -432,11 +435,65 @@ class UploadTest(ComicframeworkTestCase):
         if errors:
             self.assertFalse(errors,"Error uploading file '%s':\n %s"
                            %(testfilename, errors.group(1))
-                           )
+                           )            
+        return response
+
+
+    def _upload_test_file_ckeditor(self, user, project,testfilename=""):
+        """ Upload a very small test file in the html page editor. This is
+        mainly used for uploading images while creating a page 
+        
+        """        
+        
+        if testfilename == "":
+            testfilename = self.giverandomfilename(user)
+         
+        url = reverse("ckeditor_upload_to_project", 
+            kwargs={"site_short_name":self.testproject.short_name})
+        
+        factory = RequestFactory()
+        request = factory.get(url,
+                              {"CKEditorFuncNum":"1234"}) # CKEditorFuncNum is 
+                                                          # used by ckeditor, 
+                                                          # normally filled by 
+                                                          # js but faked here.
+         
+        request.user = user
+        
+        import StringIO
+        fakefile = File(StringIO.StringIO("some uploaded content for" + testfilename))
+        
+        fakecontent = "some uploaded content for" + testfilename
+        request.FILES['upload'] = SimpleUploadedFile(name=testfilename,
+                                                   content=fakecontent)
+        
+        request.method = "POST"
+        
+        # Some magic code to fix a bug with middleware not being found,
+        # don't know what this does but if fixes the bug.
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+        
+        response = upload_to_project(request, project.short_name)        
+                
+        self.assertEqual(response.status_code, 200, "Uploading file %s as "
+            "user %s to project %s in ckeditor did not return expected result"
+            % (testfilename, user.username, project.short_name))
+        
+        errors = re.search('<ul class="errorlist">(.*)</ul>',
+                            response.content,
+                             re.IGNORECASE)
+        
+        self.assertFalse("Uploading failed" in response.content,
+                         "Uploading file %s as user %s to project %s in "
+                         "ckeditor return javascript containing 'uploading failed'"
+                         % (testfilename, user.username, project.short_name))
         
         
         return response
-
+    
 
     def get_uploadpage_response(self, user, project):        
         url = reverse("comicmodels.views.upload_handler", 
@@ -476,8 +533,13 @@ class UploadTest(ComicframeworkTestCase):
                             % (filename,user.username))
     
               
-    def givefilename(self,user):
-        return user.username.encode("ascii","ignore") + "_testfile.txt"
+    def giverandomfilename(self,user):
+        """ Create a filename where you can see from which user is came, but 
+        you don't get any nameclashes when creating a few
+        """
+        return "%s_%s_%s" % (user.username.encode("ascii","ignore"),
+                             str(randint(10000,99999)),
+                             "testfile.txt")
         
         
 
@@ -487,10 +549,10 @@ class UploadTest(ComicframeworkTestCase):
         
         project = self.testproject        
         
-        name1 = self.givefilename(self.root)
-        name2 = self.givefilename(self.projectadmin)
-        name3 = self.givefilename(self.participant)
-        name4 = self.givefilename(self.participant2)
+        name1 = self.giverandomfilename(self.root)
+        name2 = self.giverandomfilename(self.projectadmin)
+        name3 = self.giverandomfilename(self.participant)
+        name4 = self.giverandomfilename(self.participant2)
                     
         resp1 = self._upload_test_file(self.root,self.testproject,name1)
         resp2 = self._upload_test_file(self.projectadmin,self.testproject,name2)
@@ -510,6 +572,24 @@ class UploadTest(ComicframeworkTestCase):
         self.uploaded_files_are_not_shown_on_uploadpage([name1,name2,name3],self.participant2)
         
     
+    
+    def test_uploaded_files_are_not_publically_served(self):
+        """ If you upload you result to the site, someone else cannot guess the
+        url and get this. Instead the user is barred from this.
+        
+        """        
+        name1 = self.giverandomfilename(self.root)
+        name2 = self.giverandomfilename(self.projectadmin)
+        name3 = self.giverandomfilename(self.participant)
+                        
+        resp1 = self._upload_test_file_ckeditor(self.root,self.testproject,name1)
+        resp2 = self._upload_test_file_ckeditor(self.projectadmin,self.testproject,name2)
+        resp3 = self._upload_test_file_ckeditor(self.participant,self.testproject,name3)
+        
+             
+        
+    
+    
     def _upload_file(self):
         
         model = UploadModel.objects.create(file=None,
@@ -519,18 +599,6 @@ class UploadTest(ComicframeworkTestCase):
                                            permission_lvl=comicSiteModel.ALL)
         
         
-        
-    
-    def test_anonymous_and_non_member_user_cannot_see_files(self):
-        pass
-    
-    def test_project_admin_and_root_can_see_all_files(self):
-        pass
-        
-    def test_registered_user_can_see_only_owned_files(self):
-        pass
-     
-    
     
     
     
