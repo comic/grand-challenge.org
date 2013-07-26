@@ -31,7 +31,6 @@ from django.contrib.auth.models import Group, User, Permission
 from django.template import RequestContext
 from django.utils.html import escape
 from profiles.forms import SignupFormExtra
-from dataproviders import FileSystemDataProvider
 
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite, Page
@@ -305,7 +304,7 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-
+        pdb.set_trace()
         project_name = context.page.comicsite.short_name
         folder = os.path.join(settings.DROPBOX_ROOT, project_name, self.path)
         dp = FileSystemDataProvider.FileSystemDataProvider(folder)
