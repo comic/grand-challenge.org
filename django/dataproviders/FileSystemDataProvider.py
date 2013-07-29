@@ -2,6 +2,9 @@
 
  History 
  20/06/2012    -     Sjoerd    -    Created this file
+ 
+ TODO: Remove all of this and replace with standard django file storage classes
+ This do-it-yourself solution is hard to test and unneeded
 
 """
 import os

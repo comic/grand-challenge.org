@@ -22,6 +22,7 @@ from ckeditor.views import upload_to_project
 from comicmodels.models import Page,ComicSite,UploadModel,ComicSiteModel
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
+from comicsite.storage import MockStorage
 from comicsite.views import _register
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
@@ -88,7 +89,30 @@ def extract_form_errors(html):
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """ 
+    
+    
+    def _register(self,user,project):
+        """ Register user for the given project, follow actual signup as
+        closely as possible.
+        """
+        url = reverse("comicsite.views._register", 
+            kwargs={"site_short_name":self.testproject.short_name})
+        factory = RequestFactory()
+        request = factory.get(url)
+        request.user = user
+                
+        response = _register(request,project.short_name)
         
+        self.assertEqual(response.status_code,
+                         200,
+                         "After registering as user %s at '%s', page did not"
+                         " load properly" % (user.username,url))
+                         
+        self.assertTrue(project.is_participant(user),
+                        "After registering as user %s at '%s', user does not "
+                        " appear to be registered." % (user.username,url))
+        
+    
     def _test_page_can_be_viewed(self,user,page):
         page_url = reverse('comicsite.views.page',
                            kwargs={"site_short_name":page.comicsite.short_name,
@@ -345,10 +369,10 @@ class UploadTest(ComicframeworkTestCase):
         # user which has pressed the register link for the project, so is 
         # part of testproject_participants group
         self.participant = self._create_random_user("participant_")
-        self._test_register(self.participant,self.testproject)
+        self._register(self.participant,self.testproject)
         
         self.participant2 = self._create_random_user("participant2_")
-        self._test_register(self.participant2,self.testproject)
+        self._register(self.participant2,self.testproject)
                 
         # user which has only registered at comicframework but has not 
         # registered for any project
@@ -368,26 +392,7 @@ class UploadTest(ComicframeworkTestCase):
         #self._test_url_can_be_viewed(self.root.username,url)
         
         
-    def _test_register(self,user,project):
-        """ Register user for the given project, follow actual signup as
-        closely as possible.
-        """
-        url = reverse("comicsite.views._register", 
-            kwargs={"site_short_name":self.testproject.short_name})
-        factory = RequestFactory()
-        request = factory.get(url)
-        request.user = user
-                
-        response = _register(request,project.short_name)
-        
-        self.assertEqual(response.status_code,
-                         200,
-                         "After registering as user %s at '%s', page did not"
-                         " load properly" % (user.username,url))
-                         
-        self.assertTrue(project.is_participant(user),
-                        "After registering as user %s at '%s', user does not "
-                        " appear to be registered." % (user.username,url))
+    
         
 
     def _upload_test_file(self, user, project,testfilename=""):
@@ -616,6 +621,76 @@ class UploadTest(ComicframeworkTestCase):
                                            title="upload1",
                                            comicsite=self.testproject,
                                            permission_lvl=comicSiteModel.ALL)
+        
+class TemplateTagsTest(ComicframeworkTestCase):
+    """ See if using template tags like {% include file.txt %} inside page html
+    will crash anything
+    
+    """
+    
+    
+    def setUp(self):
+        """ Create some objects to work with, In part this is done through
+        admin views, meaning admin views are also tested here.
+        """
+        # Create four types of users that exist: Root, can do anything, 
+        # projectadmin, cam do things to a project he or she owns. Participant can
+        # show some restricted content for a project and upload files,
+        # signup_user can see some pages but not others.
+        
+        self.root = User.objects.create_user('root',
+                                      'w.s.kerkstra@gmail.com',
+                                      'testpassword')        
+        self.root.is_staff = True
+        self.root.is_superuser = True
+        self.root.save()
+        
+        
+        # non-root users are created as if they signed up through the project,
+        # to maximize test coverage. 
+               
+        # Creator of a project.                                        
+        self.projectadmin = self._create_random_user("projectadmin_")
+        
+        # The project created by projectadmin 
+        self.testproject = create_comicsite_in_admin(self.projectadmin,"testproject")                
+        create_page_in_admin(self.testproject,"testpage1")
+        
+        # user which has pressed the register link for the project, so is 
+        # part of testproject_participants group
+        self.participant = self._create_random_user("participant_")
+        self._register(self.participant,self.testproject)
+        
+        self.participant2 = self._create_random_user("participant2_")
+        self._register(self.participant2,self.testproject)
+                
+        # user which has only registered at comicframework but has not 
+        # registered for any project
+        self.signedup_user = self._create_random_user("signedup_user_")
+    
+    def test_listdir(self):
+        """ For comcisite.templatetags.templatetags.listdir
+        
+        """
+        # create a page containing the listdir tag.
+        # Path to browse is a special path for which Mockstorage will return some
+        # file list even if it does not exist 
+        content = "Here are all the files in dir: {% listdir path:/"+ MockStorage.FAKE_DIR+" extensionFilter:.mhd %} text after "        
+        page1 = create_page_in_admin(self.testproject,"listdirpage",content)
+        
+        # can I now view this?           
+        self._test_page_can_be_viewed(self.root,page1)                
+        self._test_page_can_be_viewed(self.signedup_user,page1)
+        
+        content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "
+                
+        #are there gracefull errors for non existsing dirs?
+        page2 = create_page_in_admin(self.testproject,"list_non_exisiting_dir_page",content)
+        pdb.set_trace()        
+        self._test_page_can_be_viewed(self.root,page2)                
+        self._test_page_can_be_viewed(self.signedup_user,page2)
+        
+        
         
         
     
