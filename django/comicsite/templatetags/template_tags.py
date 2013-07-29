@@ -66,8 +66,7 @@ def get_usagestr(function_name):
     """
     Return usage string for a registered template tag function. For displaying
     this info in errors or tag overviews  
-    """
-    #pdb.set_trace()
+    """    
     if register.usagestrings.has_key(function_name):
         usagestr = register.usagestrings["dataset"]
     else:
@@ -311,10 +310,12 @@ class ListDirNode(template.Node):
         project_name = context.page.comicsite.short_name
                 
         storage = DefaultStorage()
-        filenames = storage.listdir(self.path)[1]        
+        try:
+            filenames = storage.listdir(self.path)[1]        
         
-        if not storage.exists(self.path):
-            return self.make_dataset_error_msg("%s does not exist" % self.path)
+        except OSError as e:
+            return self.make_dataset_error_msg(str(e))
+        
 
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():

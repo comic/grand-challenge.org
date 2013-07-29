@@ -685,8 +685,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "
                 
         #are there gracefull errors for non existsing dirs?
-        page2 = create_page_in_admin(self.testproject,"list_non_exisiting_dir_page",content)
-        pdb.set_trace()        
+        page2 = create_page_in_admin(self.testproject,"list_non_exisiting_dir_page",content)    
         self._test_page_can_be_viewed(self.root,page2)                
         self._test_page_can_be_viewed(self.signedup_user,page2)
         
