@@ -297,21 +297,18 @@ class ListDirNode(template.Node):
         self.args = args
 
 
-
-
     def make_dataset_error_msg(self, msg):
         errormsg = "Error listing folder '" + self.path + "': " + msg
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
         
-        from django.core.files.storage import default_storage
-        
         project_name = context.page.comicsite.short_name
+        projectpath = project_name + "/" + self.path  
                 
         storage = DefaultStorage()
         try:
-            filenames = storage.listdir(self.path)[1]        
+            filenames = storage.listdir(projectpath)[1]        
         
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
@@ -337,7 +334,7 @@ class ListDirNode(template.Node):
 
 
         htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-
+        
         return htmlOut
 
 
