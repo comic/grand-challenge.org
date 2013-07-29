@@ -121,8 +121,7 @@ class UploadModelAdmin(ComicModelAdmin):
     def defaultQuerySet(self,request):
        """ Overwrite this method in child classes to make sure instance of that class is passed to 
        get_objects_for_users """         
-       
-       #pdb.set_trace()
+              
        return get_objects_for_user(request.user, self.permission_name, klass=UploadModel.objects)
     
 
@@ -239,8 +238,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
     def defaultQuerySet(self,request):
        """ Overwrite this method in child classes to make sure instance of that class is passed to 
        get_objects_for_users """         
-       
-       #pdb.set_trace()
+              
        return get_objects_for_user(request.user, self.permission_name, klass=DropboxFolder.objects)
     
     class Media:

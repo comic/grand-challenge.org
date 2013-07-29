@@ -28,8 +28,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     Determines location based on permission level of the uploaded model. 
     
     """
-    
-    #pdb.set_trace()
+        
     #uploadmodel can be either a ComicSiteModel, or a ComicSite
     if hasattr(uploadmodel,'short_name'):
         comicsite = uploadmodel  # is a ComicSite
