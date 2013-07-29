@@ -44,8 +44,7 @@ class MockStorage(FileSystemStorage):
         return self.is_in_fake_test_dir(name)
         
 
-    def listdir(self, path):
-        pdb.set_trace()    
+    def listdir(self, path):        
         if self.is_in_fake_test_dir(path):
             directories = []
             files = self.FAKE_FILES        
