@@ -182,14 +182,20 @@ def getPageSourceIfAllowed(page_title,request,site):
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
-    
+        
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
         
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
+    response =  render_to_response('page.html',
+                                           {'site': site,
+                                            'currentpage': currentpage,
+                                            "pages":pages,
                                             "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+                                           context_instance=RequestContext(request))
+    
+    return response
+
 
 
 def pagesource(request, site_short_name, page_title):

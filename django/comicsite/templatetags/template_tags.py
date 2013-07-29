@@ -28,6 +28,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, User, Permission
+from django.core.files.storage import DefaultStorage
 from django.template import RequestContext
 from django.utils.html import escape
 from profiles.forms import SignupFormExtra
@@ -161,10 +162,10 @@ class FileListNode(template.Node):
         self.filefolder = filefolder
 
 
-    def render(self, context):
+    def render(self, context):            
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
-
         images = dp.getImages()
+                        
         htmlOut = "available files:" + ", ".join(images)
         return htmlOut
 
@@ -304,16 +305,16 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        pdb.set_trace()
+        
+        from django.core.files.storage import default_storage
+        
         project_name = context.page.comicsite.short_name
-        folder = os.path.join(settings.DROPBOX_ROOT, project_name, self.path)
-        dp = FileSystemDataProvider.FileSystemDataProvider(folder)
-
-        try:
-              filenames = dp.getAllFileNames()
-        except (OSError) as e:
-
-          return self.make_dataset_error_msg(str(e))
+                
+        storage = DefaultStorage()
+        filenames = storage.listdir(self.path)[1]        
+        
+        if not storage.exists(self.path):
+            return self.make_dataset_error_msg("%s does not exist" % self.path)
 
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():
@@ -326,8 +327,11 @@ class ListDirNode(template.Node):
 
         links = []
         for filename in filenames:
-            downloadlink = reverse('comicsite.views.inserted_file', kwargs={'site_short_name':project_name,
-                                                                              'filepath':os.path.join(folder, filename)})
+            
+            downloadlink = reverse('project_serve_file',
+                                    kwargs={'project_name':project_name,
+                                            'path':self.path+"/"+filename})
+                                 
             links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
 
 
