@@ -25,7 +25,7 @@ class MockStorage(FileSystemStorage):
     FAKE_FILES = ["fakefile1.txt",
                   "fakefile2.jpg",
                   "fakefile3.exe",
-                  "fakesfile4.mhd"]
+                  "fakefile4.mhd"]
 
     def _save(self, name, content):
         # do NOTHING
@@ -45,8 +45,9 @@ class MockStorage(FileSystemStorage):
     def exists(self, name):
         """ Any file in FAKE_FILES exists if one of the FAKE_DIRS are in its 
         path. A path exists any of FAKE_DIRS is in its path          
-        """
-        
+        """                
+        if name.endswith("/"):
+            name = name[:-1]
         dir,file_or_folder = os.path.split(name)
         if "." in file_or_folder: #input was a file path
              return self.is_in_fake_test_dir(dir) and (file_or_folder in self.FAKE_FILES)

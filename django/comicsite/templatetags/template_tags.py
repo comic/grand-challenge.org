@@ -305,8 +305,8 @@ class ListDirNode(template.Node):
         
         project_name = context.page.comicsite.short_name
         projectpath = project_name + "/" + self.path  
-                
         storage = DefaultStorage()
+            
         try:
             filenames = storage.listdir(projectpath)[1]        
         

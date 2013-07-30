@@ -9,6 +9,7 @@ except ImportError:     # Python 2
 
 
 from django.core.files import File
+from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
@@ -21,9 +22,8 @@ from filetransfers.forms import UploadForm
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
 from filetransfers.api import prepare_upload, serve_file
-from comicmodels.models import FileSystemDataset
-from comicmodels.models import UploadModel
-from comic import settings
+from comicmodels.models import FileSystemDataset,ComicSite,UploadModel
+from django.conf import settings
 
 def upload_handler(request):
     view_url = reverse('filetransfers.views.upload_handler')
@@ -91,6 +91,38 @@ def delete_handler(request, pk):
 
     return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
 
+
+def _can_access(user,path,project_name):
+    """ Does this user have permission to access folder path which is part of
+    project named project_name?
+         
+    """
+    if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
+        raise ImproperlyConfigured("Don't know from which folder serving publiv files"
+                                   "is allowed. Please add a setting like "
+                                   "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
+                                   " to your .conf file." )
+    
+    if not hasattr(settings,"COMIC_REGISTERED_ONLY_FOLDER_NAME"):
+        raise ImproperlyConfigured("Don't know from which folder serving protected files"
+                                   "is allowed. Please add a setting like "
+                                   "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
+                                   " to your .conf file." )
+    
+    
+    if path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
+        return True
+    
+    elif path.startswith(settings.COMIC_REGISTERED_ONLY_FOLDER_NAME):
+        project = ComicSite.objects.get(short_name=project_name)        
+        if project.is_participant(request.user):
+            return True
+        else:
+            return False
+    else:
+        return False
+    
+
 def serve(request, project_name, path, document_root=None):
     """
     Serve static file for a given project. 
@@ -99,6 +131,7 @@ def serve(request, project_name, path, document_root=None):
     'django.views.static.serve' way of serving files under /media urls.
      
     """        
+    
     if document_root == None:
         document_root = settings.MEDIA_ROOT
     
@@ -118,35 +151,28 @@ def serve(request, project_name, path, document_root=None):
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)    
     fullpath = os.path.join(document_root,project_name, newpath)
-        
-    if not os.path.exists(fullpath):
+    
+    
+    storage = DefaultStorage()
+    if not storage.exists(fullpath):
         raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
     
     
-    if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
-        raise ImproperlyConfigured("Don't know from which folder serving files"
-                                   "is allowed. Please add a setting "
-                                   "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
-                                   " to your .conf file." )        
-    
-    if not path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):        
+    if _can_access(request.user,path,project_name):    
+        f = storage.open(fullpath, 'rb')
+        file = File(f) # create django file object
+        return serve_file(request, file, save_as=True)
+    else:        
         return HttpResponseForbidden("This file is not available without "
                                     "credentials")        
-    else:
-        f = open(fullpath, 'rb')
-        file = File(f) # create django file object
-
-        return serve_file(request, file, save_as=True)
         
+    
+        
+       
         
     
     
-    
-    
-    
-    
 
-    
     
 
 
