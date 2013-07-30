@@ -75,7 +75,7 @@ def upload_handler(request,site_short_name):
         uploadsforcurrentsite = UploadModel.objects.filter(comicsite=site).\
                                 order_by('modified').reverse()
     else:
-        uploadsforcurrentsite = UploadModel.objects.filter(user=request.user).\
+        uploadsforcurrentsite = UploadModel.objects.filter(user=request.user,comicsite=site).\
                                 order_by('modified').reverse()
 
     #return direct_to_template(request, 'upload/comicupload.html',
