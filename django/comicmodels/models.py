@@ -9,6 +9,7 @@ from django.contrib.auth.models import Group,User,Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
+from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -132,6 +133,7 @@ class ComicSite(models.Model):
   
     def is_admin(self,user):
         """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        
         """
         if user.is_superuser:
             return True
@@ -142,11 +144,12 @@ class ComicSite(models.Model):
             return False
         
     def is_participant(self,user):
-        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes        
+        """ is user in the participants group for the comicsite to which this object belongs? superuser always passes        
+        
         """
         if user.is_superuser:
             return True
-        
+            
         if user.groups.filter(name=self.participants_group_name).count() > 0:
             return True
         else:
@@ -360,8 +363,9 @@ class UploadModel(ComicSiteModel):
         return self.file.name.rsplit('/', 1)[-1]
     
     @property
-    def localfileexists(self):                     
-        return os.path.exists(self.file.path)
+    def localfileexists(self):
+        storage = DefaultStorage()                     
+        return storage.exists(self.file.path)
     
     
     def clean(self):        

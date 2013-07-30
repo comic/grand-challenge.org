@@ -14,6 +14,7 @@ from django.core import mail
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
@@ -27,6 +28,7 @@ from comicsite.views import _register
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
 from profiles.forms import SignupFormExtra
+
 
 
 
@@ -118,7 +120,8 @@ class ComicframeworkTestCase(TestCase):
                            kwargs={"site_short_name":page.comicsite.short_name,
                                    "page_title":page.title})
         
-        self._test_url_can_be_viewed(user,page_url)
+        return self._test_url_can_be_viewed(user,page_url)
+        
         
                          
     def _test_url_can_be_viewed(self,user,url):
@@ -126,6 +129,7 @@ class ComicframeworkTestCase(TestCase):
         response = self.client.get(url)        
         self.assertEqual(response.status_code, 200, "could not load page"
                          "'%s' logged in as user '%s'"% (url,user))
+        return response
     
     def _test_url_cannot_be_viewed(self,user,url):
         self._login(user)
@@ -133,6 +137,7 @@ class ComicframeworkTestCase(TestCase):
         self.assertNotEqual(response.status_code, 200, "could load restricted " 
                             "page'%s' logged in as user '%s'"% (url,
                                                                 user.username))
+        return response
        
     def _signup_user(self,overwrite_data={}):
         """Create a user in the same way as a new user is signed up on the project.
@@ -440,7 +445,7 @@ class UploadTest(ComicframeworkTestCase):
         if errors:
             self.assertFalse(errors,"Error uploading file '%s':\n %s"
                            %(testfilename, errors.group(1))
-                           )            
+                           )
         return response
 
 
@@ -668,31 +673,82 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # registered for any project
         self.signedup_user = self._create_random_user("signedup_user_")
     
-    def test_listdir(self):
-        """ For comcisite.templatetags.templatetags.listdir
+        
+
+    def _extract_download_link(self, response1):
+        """ From a page rendering a listfile template tag, return the first
+        download link
         
         """
-        # create a page containing the listdir tag.
+        
+        found = re.search('<ul class="dataset">(.*)</ul>', response1.content, re.IGNORECASE)
+        link = ""
+        if found:
+            filelist_HTML = found.group(0)
+            found_link = re.search('href="(.*)">', found.group(0), re.IGNORECASE)
+            if found_link:
+                link = found_link.group(1)
+        
+        self.assertTrue(link!="","Could not find any list of files after rendering html '%s'" % response1.content)
+        return link                
+                                
+
+    def test_listdir(self):
+        """ Does the template tag for listing and downloading files in a dir work
+        correctly? 
+        
+        test for comcisite.templatetags.templatetags.listdir
+        
+        """
+        # create a page containing the listdir tag on the public folder.
         # Path to browse is a special path for which Mockstorage will return some
-        # file list even if it does not exist 
-        content = "Here are all the files in dir: {% listdir path:/"+ MockStorage.FAKE_DIR+" extensionFilter:.mhd %} text after "        
+        # file list even if it does not exist                     
+        content = "Here are all the files in dir: {% listdir path:"+ settings.COMIC_PUBLIC_FOLDER_NAME+ " extensionFilter:.mhd %} text after "        
         page1 = create_page_in_admin(self.testproject,"listdirpage",content)
-        
-        # can I now view this?           
-        self._test_page_can_be_viewed(self.root,page1)                
-        self._test_page_can_be_viewed(self.signedup_user,page1)
-        
-        content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "
                 
-        #are there gracefull errors for non existsing dirs?
+        # can everyone now view this?           
+        response1 = self._test_page_can_be_viewed(self.root,page1)                
+        response2 = self._test_page_can_be_viewed(self.signedup_user,page1)
+        
+        
+        # open one of the download links from the file list
+        # see if there are any errors rendered in the reponse                        
+        link = self._extract_download_link(response1)                
+        self._test_url_can_be_viewed(self.root, link)
+        self._test_url_can_be_viewed(self.signedup_user, link)
+        
+        # Now check files listed in a restricted area. These should only be 
+        # accessible tp registered users                              
+        content = "Here are all the files in dir: {% listdir path:"+ settings.COMIC_REGISTERED_ONLY_FOLDER_NAME+ " extensionFilter:.mhd %} text after "        
+        page2 = create_page_in_admin(self.testproject,"restrictedlistdirpage",content)
+                
+        # can everyone now view this page?           
+        response5 = self._test_page_can_be_viewed(self.root,page2)                
+        response6 = self._test_page_can_be_viewed(self.signedup_user,page2)
+        
+        # A download link from a restricted path should only be loadable by
+        # registered users                        
+        link = self._extract_download_link(response5)                
+        self._test_url_can_be_viewed(self.root, link)
+        self._test_url_can_be_viewed(self.signedup_user, link)
+        self._test_url_cannot_be_viewed(self.signedup_user, link)
+                        
+        
+        #are there gracefull errors for non existsing dirs?        
+        content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "                    
         page2 = create_page_in_admin(self.testproject,"list_non_exisiting_dir_page",content)    
         self._test_page_can_be_viewed(self.root,page2)                
         self._test_page_can_be_viewed(self.signedup_user,page2)
+            
+        
+                
         
         
         
         
-    
+        
+        
+
     
     
         
