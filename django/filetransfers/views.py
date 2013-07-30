@@ -17,7 +17,6 @@ from django.http import Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 #from django.views.generic.simple import direct_to_template
 
-
 from filetransfers.forms import UploadForm
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
@@ -115,7 +114,7 @@ def _can_access(user,path,project_name):
     
     elif path.startswith(settings.COMIC_REGISTERED_ONLY_FOLDER_NAME):
         project = ComicSite.objects.get(short_name=project_name)        
-        if project.is_participant(request.user):
+        if project.is_participant(user):
             return True
         else:
             return False
