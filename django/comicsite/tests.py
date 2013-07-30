@@ -125,20 +125,30 @@ class ComicframeworkTestCase(TestCase):
         
                          
     def _test_url_can_be_viewed(self,user,url):
-        self._login(user)
-        response = self.client.get(url)        
+        response,username = self._view_url(user,url)                    
         self.assertEqual(response.status_code, 200, "could not load page"
                          "'%s' logged in as user '%s'"% (url,user))
         return response
     
-    def _test_url_cannot_be_viewed(self,user,url):
-        self._login(user)
-        response = self.client.get(url)        
+    def _test_url_cannot_be_viewed(self,user,url):        
+        response,username = self._view_url(user,url)
         self.assertNotEqual(response.status_code, 200, "could load restricted " 
                             "page'%s' logged in as user '%s'"% (url,
-                                                                user.username))
+                                                                username))
         return response
-       
+    
+    def _view_url(self,user,url):
+        self._login(user)
+        response = self.client.get(url)
+        if user is None:
+            username = "anonymous_user"
+        else:
+            username = user.username
+        
+        return response,username
+            
+            
+    
     def _signup_user(self,overwrite_data={}):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
@@ -230,10 +240,13 @@ class ComicframeworkTestCase(TestCase):
      
 
     def _login(self,user,password="testpassword"):
-        """ convenience function. log in user an assert whether it worked
+        """ convenience function. log in user an assert whether it worked.
+        passing None as user will log out
         
         """
         self.client.logout()
+        if user is None:
+            return #just log out
         success = self.client.login(username=user.username,password=password)
         self.assertTrue(success, "could not log in as user %s using password %s"
                         % (user.username,password))        
@@ -727,12 +740,16 @@ class TemplateTagsTest(ComicframeworkTestCase):
         response6 = self._test_page_can_be_viewed(self.signedup_user,page2)
         
         # A download link from a restricted path should only be loadable by
-        # registered users                        
+        # participants that registered with the challenge                        
         link = self._extract_download_link(response5)                
         self._test_url_can_be_viewed(self.root, link)
-        self._test_url_can_be_viewed(self.signedup_user, link)
+        self._test_url_can_be_viewed(self.participant, link)
         self._test_url_cannot_be_viewed(self.signedup_user, link)
-                        
+        self._test_url_cannot_be_viewed(None, link) #not logged in user
+        
+        
+        
+        
         
         #are there gracefull errors for non existsing dirs?        
         content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "                    
