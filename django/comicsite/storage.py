@@ -6,7 +6,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files import File
 
 
-from comic import settings
+from django.conf import settings
 
 
 
@@ -15,8 +15,13 @@ class MockStorage(FileSystemStorage):
     For testing, A storage class which does not write anything to disk.
     """
     
-    # For testing, any dir named FAKE_DIR will exist, and contain FAKE_FILES         
-    FAKE_DIR = "fake_test_dir"
+    # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES         
+    FAKE_DIRS = ["fake_test_dir",
+                 settings.COMIC_PUBLIC_FOLDER_NAME,
+                 settings.COMIC_REGISTERED_ONLY_FOLDER_NAME
+                 ]
+                 
+    
     FAKE_FILES = ["fakefile1.txt",
                   "fakefile2.jpg",
                   "fakefile3.exe",
@@ -38,10 +43,15 @@ class MockStorage(FileSystemStorage):
         pass
 
     def exists(self, name):
-        """ A file or dir exists if there is a folder names FAKE_DIR somewhere 
-        in the path
+        """ Any file in FAKE_FILES exists if one of the FAKE_DIRS are in its 
+        path. A path exists any of FAKE_DIRS is in its path          
         """
-        return self.is_in_fake_test_dir(name)
+        
+        dir,file_or_folder = os.path.split(name)
+        if "." in file_or_folder: #input was a file path
+             return self.is_in_fake_test_dir(dir) and (file_or_folder in self.FAKE_FILES)
+        else: #input was a directory path
+            return self.is_in_fake_test_dir(name) 
         
 
     def listdir(self, path):        
@@ -73,10 +83,11 @@ class MockStorage(FileSystemStorage):
         on disk but returns some values anyway. For testing.
         
         """
-        if self.FAKE_DIR in path: #very rough test. But this is only for testing
-            return True
-        else:
-            return False
+        for dir in self.FAKE_DIRS:
+            if dir in path: #very rough test. But this is only for testing
+                return True
+                    
+        return False
         
         
     
