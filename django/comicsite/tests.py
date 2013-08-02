@@ -24,6 +24,7 @@ from comicmodels.models import Page,ComicSite,UploadModel,ComicSiteModel
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
 from comicsite.storage import MockStorage
+from django.core.files.storage import DefaultStorage
 from comicsite.views import _register
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
@@ -40,28 +41,6 @@ def get_or_create_user(username,password):
     else:
         return 
     
-        
-
-def create_comicsite_in_admin(user,short_name,description="test project"):
-    """ Create a comicsite object as if created through django admin interface.
-    
-    """
-    project = ComicSite.objects.create(short_name=short_name,
-                             description=description)
-    project.save()
-    
-    # because we are creating a comicsite directly, some methods from admin
-    # are not being called as they should. Do this manually
-    ad = ComicSiteAdmin(project,admin.site)        
-    url = reverse("admin:comicmodels_comicsite_add")                
-    factory = RequestFactory()
-    request = factory.get(url)
-    request.user = user            
-    ad.set_base_permissions(request,project)
-    
-    return project
-    
-
                   
 def create_page_in_admin(comicsite,title,content="testcontent"):
     """ Create a Page object as if created through django admin interface.
@@ -136,6 +115,16 @@ class ComicframeworkTestCase(TestCase):
                             "page'%s' logged in as user '%s'"% (url,
                                                                 username))
         return response
+    
+    def _find_errors_in_page(self, response):    
+        """ see if there are any errors rendered in the html of reponse.
+        Used for checking forms 
+        
+        """
+        errors = re.search('<ul class="errorlist">(.*)</ul>', 
+            response.content, 
+            re.IGNORECASE)
+        return errors
     
     def _view_url(self,user,url):
         self._login(user)
@@ -237,7 +226,48 @@ class ComicframeworkTestCase(TestCase):
         
         query_result = User.objects.filter(username=username)        
         return query_result[0] 
-     
+
+    def create_comicsite_in_admin(self,user,short_name,description="test project"):
+        """ Create a comicsite object as if created through django admin interface.
+        
+        """
+        #project = ComicSite.objects.create(short_name=short_name,
+                                # description=description,
+                                # header_image=settings.COMIC_PUBLIC_FOLDER_NAME+"fakefile2.jpg")
+        #project.save()
+        
+        # because we are creating a comicsite directly, some methods from admin
+        # are not being called as they should. Do this manually
+        #ad = ComicSiteAdmin(project,admin.site)        
+        url = reverse("admin:comicmodels_comicsite_add")                
+        factory = RequestFactory()
+        
+        
+        storage = DefaultStorage()
+        header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME+"/fakefile2.jpg") 
+        data = {"short_name":short_name,
+                "description":description,
+                "logo":"fakelogo.jpg",               
+                "header_image": header_image,
+                "prefix":"form",
+                "page_set-TOTAL_FORMS": u"0",
+                "page_set-INITIAL_FORMS": u"0",
+                "page_set-MAX_NUM_FORMS": u""            
+                }
+        
+        
+        success = self._login(user)
+        
+        response = self.client.post(url,data)
+        errors = self._find_errors_in_page(response)        
+        if errors:
+            self.assertFalse(errors, "Error creating project '%s':\n %s" % (short_name, errors.group(0)))
+                
+        #ad.set_base_permissions(request,project)
+        project = ComicSite.objects.get(short_name=short_name)
+        
+        return project
+
 
     def _login(self,user,password="testpassword"):
         """ convenience function. log in user an assert whether it worked.
@@ -298,7 +328,7 @@ class ViewsTest(ComicframeworkTestCase):
                                         
         self.projectadmin = self._create_random_user("projectadmin_")
                     
-        self.testproject = create_comicsite_in_admin(self.projectadmin,"viewtest")                
+        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"viewtest")                
         create_page_in_admin(self.testproject,"testpage1")
         create_page_in_admin(self.testproject,"testpage2")
                 
@@ -310,7 +340,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username":"user2","email":"ab@cd.com"})
-        testproject = create_comicsite_in_admin(user,"user1project")                
+        testproject = self.create_comicsite_in_admin(user,"user1project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")
                 
@@ -342,7 +372,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username":"user3","email":"de@cd.com"})
-        testproject = create_comicsite_in_admin(user,"user3project")                
+        testproject = self.create_comicsite_in_admin(user,"user3project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")                         
         url = reverse("admin:comicmodels_page_change",
@@ -381,7 +411,7 @@ class UploadTest(ComicframeworkTestCase):
         self.projectadmin = self._create_random_user("projectadmin_")
         
         # The project created by projectadmin 
-        self.testproject = create_comicsite_in_admin(self.projectadmin,"testproject")                
+        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
         create_page_in_admin(self.testproject,"testpage1")
         
         # user which has pressed the register link for the project, so is 
@@ -410,6 +440,10 @@ class UploadTest(ComicframeworkTestCase):
         #self._test_url_can_be_viewed(self.root.username,url)
         
         
+    
+        
+
+
     
         
 
@@ -451,14 +485,10 @@ class UploadTest(ComicframeworkTestCase):
             "user %s to project %s did not load to expected 302 "
             % (testfilename, user.username, project.short_name))
         
-        # see if there are any errors rendered in the reponse
-        errors = re.search('<ul class="errorlist">(.*)</ul>',
-                            response.content,
-                             re.IGNORECASE)
+        errors = self._find_errors_in_page(response)        
         if errors:
-            self.assertFalse(errors,"Error uploading file '%s':\n %s"
-                           %(testfilename, errors.group(1))
-                           )
+            self.assertFalse(errors, "Error uploading file '%s':\n %s" % (testfilename, errors.group(1)))
+        
         return response
 
 
@@ -671,7 +701,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.projectadmin = self._create_random_user("projectadmin_")
         
         # The project created by projectadmin 
-        self.testproject = create_comicsite_in_admin(self.projectadmin,"testproject")                
+        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
         create_page_in_admin(self.testproject,"testpage1")
         
         # user which has pressed the register link for the project, so is 
@@ -756,7 +786,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         page2 = create_page_in_admin(self.testproject,"list_non_exisiting_dir_page",content)    
         self._test_page_can_be_viewed(self.root,page2)                
         self._test_page_can_be_viewed(self.signedup_user,page2)
-            
+        
         
                 
         

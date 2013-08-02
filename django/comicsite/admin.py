@@ -625,7 +625,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):        
         """ when saving for the first time, set object permissions; give all permissions to creator """
-     
+            
         if obj.id is None:
             self.set_base_permissions(request,obj)      
             
