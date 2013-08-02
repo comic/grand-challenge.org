@@ -53,12 +53,10 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
         
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-        path = os.path.join(comicsite.short_name,
-                            comicsite.public_upload_dir_rel(),
+        path = os.path.join(comicsite.public_upload_dir_rel(),
                             filename)
     else:
-        path = os.path.join(comicsite.short_name,
-                            comicsite.upload_dir_rel(),
+        path = os.path.join(comicsite.upload_dir_rel(),
                             filename)
 
     path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
