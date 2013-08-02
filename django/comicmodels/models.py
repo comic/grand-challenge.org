@@ -30,7 +30,12 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     
     """
         
-    #uploadmodel can be either a ComicSiteModel, or a ComicSite
+    # uploadmodel can be either a ComicSite, meaning a 
+    # header image or something belonging to a ComicSite is being uploaded, or
+    # a ComicSiteModel, meaning it is some inheriting class 
+    # TODO: This is confused code. Have a single way of handling uploads,
+    # lika a small js browser with upload capability. 
+      
     if hasattr(uploadmodel,'short_name'):
         comicsite = uploadmodel  # is a ComicSite
     else:
