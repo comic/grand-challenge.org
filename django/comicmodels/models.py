@@ -35,20 +35,30 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     # a ComicSiteModel, meaning it is some inheriting class 
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability. 
-      
-    if hasattr(uploadmodel,'short_name'):
-        comicsite = uploadmodel  # is a ComicSite
-    else:
-        comicsite = uploadmodel.comicsite # is a ComicSiteModel
     
+    
+    if hasattr(uploadmodel,'short_name'):
+        is_comicsite = True
+    else:
+        is_comicsite = False
+    
+    if is_comicsite:
+        comicsite = uploadmodel
+        # Any image uploaded as part of a comcisite is public. These images
+        # are only headers and other public things 
+        permission_lvl = ComicSiteModel.ALL             
+    else:
+        comicsite = uploadmodel.comicsite
+        permission_lvl = uploadmodel.permission_lvl
+        
     # If permission is ALL, upload this file to the public_html folder
-    if uploadmodel.permission_lvl == ComicSiteModel.ALL:
+    if permission_lvl == ComicSiteModel.ALL:
         path = os.path.join(comicsite.short_name,
-                            comicsite.public_upload_dir(),
+                            comicsite.public_upload_dir_rel(),
                             filename)
     else:
         path = os.path.join(comicsite.short_name,
-                            comicsite.upload_dir(),
+                            comicsite.upload_dir_rel(),
                             filename)
 
     path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
@@ -103,22 +113,27 @@ class ComicSite(models.Model):
         """Full path to get and put secure uploaded files. Files here cannot be
         viewed directly by url
         """
-        return os.path.join(settings.MEDIA_ROOT,self.short_name,"uploads")
+        return os.path.join(settings.MEDIA_ROOT,self.upload_dir_rel())
+    
+    def upload_dir_rel(self):
+        """Path to get and put secure uploaded files relative to MEDIA_ROOT
+        
+        """
+        return os.path.join(self.short_name,"uploads")
     
     def public_upload_dir(self):
         """Full path to get and put uploaded files. These files can be served 
         to anyone without checking
         
          """
-        return os.path.join(settings.MEDIA_ROOT,
-                            self.short_name,
+        return os.path.join(settings.MEDIA_ROOT,                            
                             self.public_upload_dir_rel())
          
     def public_upload_dir_rel(self):
-        """ Path to public uploaded files, relative to MEDIA_ROOT/projectname/
+        """ Path to public uploaded files, relative to MEDIA_ROOT
          
         """
-        return os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME)
+        return os.path.join(self.short_name,settings.COMIC_PUBLIC_FOLDER_NAME)
     
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
