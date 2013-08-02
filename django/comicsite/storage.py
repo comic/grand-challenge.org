@@ -1,6 +1,9 @@
-import StringIO
-import os
+import Image
 import pdb
+import os
+import StringIO
+from io import BytesIO
+
 
 from django.core.files.storage import FileSystemStorage
 from django.core.files import File
@@ -33,12 +36,25 @@ class MockStorage(FileSystemStorage):
     
     def _open(self, name, mode='rb'):
         """ Return a memory only file which will not be saved to disk
+        If an image is requested, fake image content using PIL
         
-        """
-        mockfile = File(StringIO.StringIO("mock content")) 
-        mockfile.name = "MOCKED_FILE_"+name
-        return mockfile
+        """        
+        if os.path.splitext(name)[1].lower() in [".jpg",".png",".gif",".bmp"]:
+            #1px test image
+            binary_image_data = '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
             
+            img = BytesIO(binary_image_data)
+            mockfile = File(img)
+            mockfile.name = "MOCKED_IMAGE_"+name
+        else:
+            content = "mock content"
+            mockfile = File(StringIO.StringIO(content)) 
+            mockfile.name = "MOCKED_FILE_"+name
+        
+        
+        return mockfile
+    
+    
     def delete(self, name):
         pass
 
@@ -78,6 +94,7 @@ class MockStorage(FileSystemStorage):
             return 10000
         else:
             return 0
+        
     
     def is_in_fake_test_dir(self,path):
         """ Is this file in the special fake directory? This dir does not exist
