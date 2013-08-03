@@ -31,6 +31,10 @@ class ComicSiteException(Exception):
 # TODO: where should this code go? This does not seem like a good place for permissions
 
 def set_project_admin_permissions(sender, **kwargs):
+    """ Set permissions so a user can enter the admin interface and edit a
+    project
+    
+    """
     user = kwargs['user']
     
     # add this user to the projectadminsgroup, which means user can see and edit standard
