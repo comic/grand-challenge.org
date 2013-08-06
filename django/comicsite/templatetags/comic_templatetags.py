@@ -161,7 +161,13 @@ class comic_URLNode(defaulttags.URLNode):
                 
                 path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()            
                 if url.startswith(path_to_site):
-                    return url.replace(path_to_site,"/")                                    
+                    return url.replace(path_to_site,"/")
+                else:
+                    # this url cannot use the domain name shortcut, so it is 
+                    # probably meant as a link the main comicframework site.
+                    # in that case hardcode the domain to make sure the sub-
+                    # domain is gone after following this link
+                    return settings.MAIN_HOST_NAME + url                                    
         else:
             return url
                     
