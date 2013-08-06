@@ -67,8 +67,7 @@ def site(request, site_short_name):
     else:
         currentpage = pages[0]
             
-    currentpage = getRenderedPageIfAllowed(currentpage,request,site)
-    pdb.set_trace()
+    currentpage = getRenderedPageIfAllowed(currentpage,request,site)    
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
 
@@ -97,7 +96,7 @@ def renderTags(request, p, recursecount=0):
     recurselimit = 2
     rendererror = ""
     try:
-        t = Template("{% load template_tags %}" + p.html)
+        t = Template("{% load comic_templatetags %}" + p.html)
     except TemplateSyntaxError as e:
         rendererror = e.message
     if (rendererror):

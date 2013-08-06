@@ -29,7 +29,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, User, Permission
 from django.core.files.storage import DefaultStorage
-from django.template import RequestContext
+from django.template import RequestContext, defaulttags
 from django.utils.html import escape
 from profiles.forms import SignupFormExtra
 
@@ -85,6 +85,52 @@ def get_taglist(parser, token):
     return TagListNode()
 
 #=========#=========#=========#=========#=========#=========#=========#=========#=========
+
+
+
+@register.tag
+def url(parser, token):
+    """ Overwrite built in url tag. It works identicaly, except that where possible
+    it will use subdomains to refer to a project instead of a full url path.
+     
+    For example, if the subdomain is vessel12.domain.com it will refer to a page 
+    'details' as /details/ instead of /site/vessel12/details/
+    
+    This tag expects APACHE rewrite to be in place on your webserver. If
+    this is not the case and you use subdomains anyway this tag might mess up
+    the links. 
+    
+    REQUIREMENTS:  
+    MIDDLEWARE_CLASSES should contain 'comicsite.middleware.subdomain.SubdomainMiddleware'
+    
+    TODO: make this nice: turn on and off in settings, maybe explicitly define
+    base domain to also make it possible to use dots in the base domain.
+          
+    """    
+    orgnode = defaulttags.url(parser,token)
+    return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
+
+class comic_URLNode(defaulttags.URLNode):
+        
+    def render(self, context):
+        url = super(comic_URLNode, self).render(context)
+        url = url.lower()
+                
+        subdomain = context['request'].subdomain
+        if subdomain == "":
+            #we are on the regular domain, do not change any links
+            pass
+        else:
+            # Interpret subdomain as a comicsite. What would normally be the
+            # path to this comicsite?
+            
+            path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()            
+            if url.startswith(path_to_site):
+                url = url.replace(path_to_site,"/")        
+        return url
+
+
+
 class TagListNode(template.Node):
     """ Print available tags as text
     """
