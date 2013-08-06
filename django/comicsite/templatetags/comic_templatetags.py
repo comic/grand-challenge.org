@@ -128,7 +128,11 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
                 
-        subdomain = context['request'].subdomain
+        if hasattr(context['request'],"subdomain"):
+            subdomain = context['request'].subdomain
+        else:
+            subdomain = ""
+
         if subdomain == "":
             #we are on the regular domain, do not change any links
             pass
