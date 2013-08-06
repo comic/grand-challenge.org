@@ -215,7 +215,7 @@ def sanitize_django_items(string):
 
 @register.simple_tag
 def metafooterpages():
-    """ Get the metafooter pages. """
+    """ Get html for links to general pages like 'contact' """
     html_string = "<div class='text'><span>COMIC:</span></div>"
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
