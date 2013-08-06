@@ -95,18 +95,30 @@ def url(parser, token):
      
     For example, if the subdomain is vessel12.domain.com it will refer to a page 
     'details' as /details/ instead of /site/vessel12/details/
-    
-    This tag expects APACHE rewrite to be in place on your webserver. If
-    this is not the case and you use subdomains anyway this tag might mess up
-    the links. 
-    
+
     REQUIREMENTS:  
-    MIDDLEWARE_CLASSES should contain 'comicsite.middleware.subdomain.SubdomainMiddleware'
+    * MIDDLEWARE_CLASSES in settings should contain 
+      'comicsite.middleware.subdomain.SubdomainMiddleware'
     
-    TODO: make this nice: turn on and off in settings, maybe explicitly define
+    * APACHE url rewriting should be in effect to rewrite subdomain to
+      site/project/. To get you started: the following apache config does this
+      for the domain 'devcomicframework.org' 
+      (put this in your apache config file) 
+            
+        RewriteEngine   on
+        RewriteCond $1 .*/$
+        RewriteCond $1 !^/site/.*
+        RewriteCond %{HTTP_HOST} !^devcomicframework\.org$
+        RewriteCond %{HTTP_HOST} !^www.devcomicframework\.org$
+        RewriteCond %{HTTP_HOST} ^([^.]+)\.devcomicframework\.org$
+        RewriteRule (.*) /site/%1$1 [PT]
+
+    
+    TODO: turn on and off this behaviour in settings, maybe explicitly define
     base domain to also make it possible to use dots in the base domain.
           
-    """    
+    """
+    
     orgnode = defaulttags.url(parser,token)
     return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
 
