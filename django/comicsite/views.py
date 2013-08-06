@@ -68,7 +68,7 @@ def site(request, site_short_name):
         currentpage = pages[0]
             
     currentpage = getRenderedPageIfAllowed(currentpage,request,site)
- 
+    pdb.set_trace()
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
 
