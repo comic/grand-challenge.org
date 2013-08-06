@@ -22,11 +22,13 @@ from exceptions import Exception
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+        
+
 
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 from django.contrib.auth.models import Group, User, Permission
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
@@ -100,6 +102,10 @@ def url(parser, token):
     * MIDDLEWARE_CLASSES in settings should contain 
       'comicsite.middleware.subdomain.SubdomainMiddleware'
     
+    * These keys should be in the django settings file: 
+      SUBDOMAIN_IS_PROJECTNAME = True
+      MAIN_HOST_NAME = <your site's hostname>
+    
     * APACHE url rewriting should be in effect to rewrite subdomain to
       site/project/. To get you started: the following apache config does this
       for the domain 'devcomicframework.org' 
@@ -125,26 +131,41 @@ def url(parser, token):
 class comic_URLNode(defaulttags.URLNode):
         
     def render(self, context):
+        
+        # check settings
+        if hasattr(settings,"SUBDOMAIN_IS_PROJECTNAME"):
+            subdomain_is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
+            if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):                         
+                msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
+                 but 'MAIN_HOST_NAME' was not. These belong together. Please
+                 add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
+                raise ImproperlyConfigured(msg)
+        else:
+            subdomain_is_projectname = False
+            
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
                 
-        if hasattr(context['request'],"subdomain"):
-            subdomain = context['request'].subdomain
+        if subdomain_is_projectname:            
+            if hasattr(context['request'],"subdomain"):
+                subdomain = context['request'].subdomain
+            else:
+                subdomain = ""
+    
+            if subdomain == "":
+                #we are on the regular domain, do not change any links
+                return url
+            else:
+                # Interpret subdomain as a comicsite. What would normally be the
+                # path to this comicsite?
+                
+                path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()            
+                if url.startswith(path_to_site):
+                    return url.replace(path_to_site,"/")                                    
         else:
-            subdomain = ""
-
-        if subdomain == "":
-            #we are on the regular domain, do not change any links
-            pass
-        else:
-            # Interpret subdomain as a comicsite. What would normally be the
-            # path to this comicsite?
-            
-            path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()            
-            if url.startswith(path_to_site):
-                url = url.replace(path_to_site,"/")        
-        return url
-
+            return url
+                    
+        
 
 
 class TagListNode(template.Node):
