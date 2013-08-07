@@ -445,9 +445,12 @@ def site_exists(site_short_name):
         return False
 
 
-def comic_site_to_html(comic_site):
+def comic_site_to_html(comic_site,link=""):
      """ Return an html overview of the given ComicSite """
-     link = reverse('comicsite.views.site', args=[comic_site.short_name])
+     
+     if link == "":
+         link = reverse('comicsite.views.site', args=[comic_site.short_name])
+     
      html = create_HTML_a(link,comic_site.short_name)
      
      if comic_site.description !="":

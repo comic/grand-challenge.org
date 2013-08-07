@@ -1230,8 +1230,18 @@ class AllProjectsNode(template.Node):
     def render(self, context):
         html = ""
         for project in self.projects:
-            html += comicsite.views.comic_site_to_html(project)
+            html += self.project_summary_html(project)
         return html
+    
+    def project_summary_html(self,project):        
+        if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+            protocol,domainname = settings.MAIN_HOST_NAME.split("//")
+            url = protocol + "//" +project.short_name +"."+ domainname
+            return comicsite.views.comic_site_to_html(project,url)
+        else:
+            return comicsite.views.comic_site_to_html(project)
+
+        
 
 
 @register.tag(name="image_url")
