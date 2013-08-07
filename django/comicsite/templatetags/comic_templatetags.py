@@ -89,6 +89,23 @@ def get_taglist(parser, token):
 #=========#=========#=========#=========#=========#=========#=========#=========#=========
 
 
+def subdomain_is_projectname():
+    """ Check whether this setting is true in settings. Return false if not found
+    
+    """
+    if hasattr(settings,"SUBDOMAIN_IS_PROJECTNAME"):
+        subdomain_is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
+        if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):                         
+            msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
+             but 'MAIN_HOST_NAME' was not. These belong together. Please
+             add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
+            raise ImproperlyConfigured(msg)
+    else:
+        subdomain_is_projectname = False
+    
+    return subdomain_is_projectname
+
+
 
 @register.tag
 def url(parser, token):
@@ -133,15 +150,8 @@ class comic_URLNode(defaulttags.URLNode):
     def render(self, context):
         
         # check settings
-        if hasattr(settings,"SUBDOMAIN_IS_PROJECTNAME"):
-            subdomain_is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
-            if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):                         
-                msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
-                 but 'MAIN_HOST_NAME' was not. These belong together. Please
-                 add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
-                raise ImproperlyConfigured(msg)
-        else:
-            subdomain_is_projectname = False
+        # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
+        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
             
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
@@ -221,6 +231,8 @@ def metafooterpages():
     for p in pages:
         if not p.hidden:
             url = reverse('comicsite.views.comicmain', kwargs={'page_title':p.title})
+            if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+                url = settings.MAIN_HOST_NAME + url
             html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
             html_string += p.display_title == "" and p.title or p.display_title
             html_string += "</a>"
