@@ -76,8 +76,8 @@
 	                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
 	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof "/" %}">Signout</a> </li>
                             {% else %}
-                            	{% block loginbutton %}
-                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+                            	{% block loginbutton %}                            		
+                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof "http://"|add:request.META.HTTP_HOST ""%}{% firstof request.path "/" %}">Sign in / Register</a></li>
                                 {% endblock %}
                             {% endif %}
                             
