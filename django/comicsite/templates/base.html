@@ -59,6 +59,7 @@
 		<div id="page">			
 			<div id="header">							
 				<div id="headerTitle">
+					
                     {% block headerTitle %} <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
 				</div>
                 <div id="navMenuContainer">
@@ -77,7 +78,7 @@
 	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof "/" %}">Signout</a> </li>
                             {% else %}
                             	{% block loginbutton %}                            		
-                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof "http://"|add:request.META.HTTP_HOST ""%}{% firstof request.path "/" %}">Sign in / Register</a></li>
+                            	   <li><a class="menuItem" href="{% url 'comicsite_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
                                 {% endblock %}
                             {% endif %}
                             

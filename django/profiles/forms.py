@@ -41,7 +41,7 @@ class SignupFormExtra(SignupForm):
         new_order.insert(0, 'first_name')
         new_order.insert(1, 'last_name')
         self.fields.keyOrder = new_order
-        self.base_fields['comicsite'].initial = "je moeder"
+        self.base_fields['comicsite'].initial = ""
 
     def save(self):
         user = super(SignupFormExtra,self).save()

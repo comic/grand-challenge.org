@@ -19,6 +19,7 @@ from django.http import HttpResponse,Http404
 from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
+from userena import views as userena_views
 
 from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.admin import ComicSiteAdmin
@@ -56,6 +57,30 @@ def _register(request, site_short_name):
     
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
+
+def signin(request, site_short_name, extra_context=None):        
+    """ change userena signup so it shows the banner and layout of current
+    project. 
+    
+    Also do not show any pages for main project, because logging
+    in here should feel like a 'general' login and not like logging in to a
+    project 
+         
+    """
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+        
+    if site.short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
+        pages = []
+    
+    extra_context = {'site': site, "pages":pages}
+    
+    # signup_form, template_name, success_url, extra_context    
+    response = userena_views.signin(request=request, extra_context=extra_context)
+    return response
+
+
+
+
 def site(request, site_short_name):    
    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
