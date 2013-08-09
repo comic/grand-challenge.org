@@ -47,7 +47,7 @@
 	{% if  site.hide_signin %}
 				
 		{% else %}
-		<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+		<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Sign in / Register</a></li>
 			
 	{% endif %}
 {% endblock %}
