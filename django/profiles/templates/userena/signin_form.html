@@ -1,52 +1,9 @@
-{% extends 'site.html' %}
+{% extends "site.html" %}
+{% load comic_templatetags %}
+{% load guardian_tags %}
+{% load admin_urls %}
 
-{% load i18n %}
 
-{% block title %}{% trans "Signin" %}{% endblock %}
-
-{% block content %}
-    <!-- BEGIN: Shamelessly copied from stackoverflow.com -->
-    Do you already have an account on one of these sites? Click the logo to <strong>sign in</strong> with it here:
-    <div style="float: right; width: 210px; margin: 10px; padding: 5px; background-color: #DFDFDF;">
-        <strong>Why OpenID?</strong><br>
-        It&rsquo;s a single username and password that allows you to sign in to any
-        OpenID-enabled site. <br><br>
-        It works on thousands of websites.<br><br>
-        It&rsquo;s an open standard.
-        <p style="float: right;">
-        <strong><a href="http://openid.net/what">learn more &raquo;</a></strong>
-        </p>
-    </div>
-    <!-- END: Shamelessly copied from stackoverflow.com -->
-<div class="white-box">
-    <ul class="signinlist">
-        <li><a href="{% url 'socialauth_begin' 'google' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Google</a></li>
-        <li><a href="{% url 'socialauth_begin' 'yahoo' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">Yahoo</a></li>
-    </ul>
-</div>
-<form action="" method="post">
-  {% csrf_token %}
-  <fieldset>
-    <legend>{% trans "Signin" %}</legend>
-    {{ form.non_field_errors }}
-    {% for field in form %}
-    {{ field.errors }}
-    {% comment %} Displaying checkboxes differently {% endcomment %}
-    {% if field.name == 'remember_me' %}
-    <p class="checkbox">
-    <label for="id_{{ field.name }}">{{ field }} {{ field.label }}</label>
-    </p>
-    {% else %}
-    <p>
-    {{ field.label_tag }}
-    {{ field }}
-    </p>
-    {% endif %}
-    {% endfor %}
-  </fieldset>
-  <input type="submit" value="{% trans "Signin" %}" />
-  <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-  <p class="signup"><a href="{% url 'userena_signup' %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
-  {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
-</form>
+{% block loginbutton %}	
 {% endblock %}
+

@@ -29,6 +29,7 @@ from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
+from django.core.urlresolvers import NoReverseMatch
 from django.contrib.auth.models import Group, User, Permission
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
@@ -157,7 +158,14 @@ class comic_URLNode(defaulttags.URLNode):
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
         
         #pdb.set_trace()
-        url = super(comic_URLNode, self).render(context)
+        try:
+            url = super(comic_URLNode, self).render(context)            
+        except NoReverseMatch:
+            #fail siliently, like recomended
+            # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
+            pass 
+            return "/"
+        
         url = url.lower()
         
         if subdomain_is_projectname:            
@@ -173,7 +181,14 @@ class comic_URLNode(defaulttags.URLNode):
                 # Interpret subdomain as a comicsite. What would normally be the
                 # path to this comicsite?
                 
-                path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()            
+                try:
+                    path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()
+                except NoReverseMatch:
+                    #fail siliently, like recomended
+                    # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
+                    pass 
+                return "/"
+                                       
                 if url.startswith(path_to_site):
                     return url.replace(path_to_site,"/")
                 else:
