@@ -11,7 +11,13 @@ from django.core.management import call_command
 
 
 class Migration(DataMigration):
-
+    
+    # run this first because adding user 'anonymousUser' in 
+    # fixtures/user_everyone.json requires it    
+    depends_on = (
+             ("profiles", "0002_auto__add_field_userprofile_country"),
+    )
+    
     def forwards(self, orm):
         "Write your forwards methods here."
         # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
