@@ -64,7 +64,16 @@ def extract_form_errors(html):
                          re.IGNORECASE)
     
     return errors
-    
+
+def find_text_between(start,end,haystack):
+        """ Return text between the first occurence of string start and 
+        string end in haystack. 
+         
+        """
+        found = re.search('-url1-(.*)-endurl1',haystack,re.IGNORECASE)
+        return found.group(1)    
+
+
         
 
 class ComicframeworkTestCase(TestCase):
@@ -788,17 +797,44 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(self.signedup_user,page2)
         
         
-                
+    def test_url_tag(self):
+        """ url tag returns a url to view a given objects. Comicframework uses
+        a custom url tag to be able use subdomain rewriting. 
+        
+        """
+        # Sanity check: do two different pages give different urls?
+        content = "-url1-{%url 'comicsite.views.page' "+self.testproject.short_name+" page1 %}-endurl1-"
+        content += "-url2-{%url 'comicsite.views.page' "+self.testproject.short_name+" page2 %}-endurl2-"            
+        urlpage = create_page_in_admin(self.testproject,"testurltagpage",content)
+        
+        # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
+        with self.settings(SUBDOMAIN_IS_PROJECTNAME = False):
+            response = self._test_page_can_be_viewed(self.signedup_user,urlpage)             
+            url1 = find_text_between('-url1-','-endurl1',response.content)
+            url2 = find_text_between('-url2-','-endurl2',response.content)
+            
+            self.assertTrue(url1 != url2,"With SUBDOMAIN_IS_PROJECTNAME = False"
+                            " URL tag gave the same url for two different "
+                            "pages. Both 'page1' and 'page2' got "
+                            "url '%s'" % url1)
+    
+        
+        with self.settings(SUBDOMAIN_IS_PROJECTNAME = True):
+            response = self._test_page_can_be_viewed(self.signedup_user,urlpage)             
+            url1 = find_text_between('-url1-','-endurl1',response.content)
+            url2 = find_text_between('-url2-','-endurl2',response.content)
+            
+            self.assertTrue(url1 != url2,"With SUBDOMAIN_IS_PROJECTNAME = True"
+                            " URL tag gave the same url for two different "
+                            "pages. Both 'page1' and 'page2' got "
+                            "url '%s'" % url1)
         
         
-        
-        
-        
-        
-
     
     
         
-    
-
-    
+        
+        
+        
+        
+        
