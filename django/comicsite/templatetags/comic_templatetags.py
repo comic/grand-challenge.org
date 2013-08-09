@@ -142,20 +142,24 @@ def url(parser, token):
           
     """
     
-    orgnode = defaulttags.url(parser,token)
+    orgnode = defaulttags.url(parser,token)        
     return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
 
 class comic_URLNode(defaulttags.URLNode):
         
     def render(self, context):
+                
+        #if 'comicsite_signin' in self.view_name.token:
+        #    pdb.set_trace()
         
         # check settings
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
-            
+        
+        #pdb.set_trace()
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
-                
+        
         if subdomain_is_projectname:            
             if hasattr(context['request'],"subdomain"):
                 subdomain = context['request'].subdomain
@@ -1233,7 +1237,7 @@ class AllProjectsNode(template.Node):
             html += self.project_summary_html(project)
         return html
     
-    def project_summary_html(self,project):        
+    def project_summary_html(self,project):
         if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
             protocol,domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" +project.short_name +"."+ domainname
