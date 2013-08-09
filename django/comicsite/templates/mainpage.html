@@ -12,12 +12,17 @@
 {% endblock %}
 
 {% block loginbutton %}
-	{% if  site.hide_signin %}
-				
-		{% else %}
-		<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+{% if site.hide_signin %}
+					
+	{% else %}
+		{% if user.is_authenticated %}                  			                        	                          
+            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a> </li>
+        {% else %}	                                                    	
+        	<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+        {% endif %}		
 			
 	{% endif %}
+	
 {% endblock %}
 
 {% block adminbutton %}
