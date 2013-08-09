@@ -11,6 +11,15 @@
 	
 {% endblock %}
 
+{% block loginbutton %}
+	{% if  site.hide_signin %}
+				
+		{% else %}
+		<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+			
+	{% endif %}
+{% endblock %}
+
 {% block adminbutton %}
 
 	{% get_obj_perms user for site as "site_perms" %}	
