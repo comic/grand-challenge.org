@@ -70,7 +70,7 @@ def find_text_between(start,end,haystack):
         string end in haystack. 
          
         """
-        found = re.search('-url1-(.*)-endurl1',haystack,re.IGNORECASE)
+        found = re.search(start+'(.*)'+end,haystack,re.IGNORECASE)
         return found.group(1)    
 
 
@@ -803,20 +803,19 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         # Sanity check: do two different pages give different urls?
-        content = "-url1-{%url 'comicsite.views.page' "+self.testproject.short_name+" page1 %}-endurl1-"
-        content += "-url2-{%url 'comicsite.views.page' "+self.testproject.short_name+" page2 %}-endurl2-"            
+        content = "-url1-{% url 'comicsite.views.page' '"+self.testproject.short_name+"' 'testurlfakepage1' %}-endurl1-"
+        content += "-url2-{% url 'comicsite.views.page' '"+self.testproject.short_name+"' 'testurlfakepage2' %}-endurl2-"            
         urlpage = create_page_in_admin(self.testproject,"testurltagpage",content)
         
         # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
-        with self.settings(SUBDOMAIN_IS_PROJECTNAME = False):
+        with self.settings(SUBDOMAIN_IS_PROJECTNAME = False):            
             response = self._test_page_can_be_viewed(self.signedup_user,urlpage)             
             url1 = find_text_between('-url1-','-endurl1',response.content)
-            url2 = find_text_between('-url2-','-endurl2',response.content)
-            
+            url2 = find_text_between('-url2-','-endurl2',response.content)            
             self.assertTrue(url1 != url2,"With SUBDOMAIN_IS_PROJECTNAME = False"
                             " URL tag gave the same url for two different "
-                            "pages. Both 'page1' and 'page2' got "
-                            "url '%s'" % url1)
+                            "pages. Both 'testurlfakepage1' and "
+                            "'testurlfakepage1' got url '%s'" % url1)
     
         
         with self.settings(SUBDOMAIN_IS_PROJECTNAME = True):
@@ -826,8 +825,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
             
             self.assertTrue(url1 != url2,"With SUBDOMAIN_IS_PROJECTNAME = True"
                             " URL tag gave the same url for two different "
-                            "pages. Both 'page1' and 'page2' got "
-                            "url '%s'" % url1)
+                            "pages. Both 'testurlfakepage1' and "
+                            "'testurlfakepage1' got url '%s'" % url1)
         
         
     
