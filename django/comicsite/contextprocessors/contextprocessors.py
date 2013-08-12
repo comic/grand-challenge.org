@@ -4,31 +4,25 @@
 """
 
 from django.template import RequestContext
+from django.conf import settings
 
+from comicsite.views import getSite
 
-class ComicSiteRequestContext(RequestContext):
-    """ RequestContext with added comicsite. Could not get comicsite from httprequest so
-        passing it in init()"""
-    # I want to add comicsite instance to current context so that template tags know
-    # which comicsite is rendering them. You can add a custom context processor to 
-    # requestContext but this can only return variables based on the given httpcontext
-    # This does not contain any info on which comicsite is rendering, so I chose to add
-    # comicsite param to init.
+def comic_site(request):
+    """ Find out in which comic site this request is loaded. If you cannot
+    figure it out. Use main project. 
     
-    # FIXME: I think this class should be refactored into something which is listed
-    # in TEMPLATE_CONTEXT_PROCESSORS and adds the current page to the context.
-    # see https://docs.djangoproject.com/en/dev/ref/templates/api/#subclassing-context-requestcontext
+    """
         
-    def __init__(self,request,page=None,*args,**kwargs):
-        super(ComicSiteRequestContext, self).__init__(request,*args,**kwargs)
-        self.page = page
-        self.fullpath = request.get_full_path() # Not sure about adding vars here
-                                                # there has to be an easier django
-                                                # based solution..  
-        
-        #add context url parameters (?var1=value) to context to be able to render 
-        #them in template
-        self.update(request.GET) 
-        
-        
+    from django.core.urlresolvers import resolve
+    resolution = resolve(request.path)
     
+    if resolution.kwargs.has_key("site_short_name"):
+        sitename = resolution.kwargs["site_short_name"]
+    elif resolution.kwargs.has_key("project_name"):
+        sitename = resolution.kwargs["project_name"]
+    else:
+        sitename = settings.MAIN_PROJECT_NAME
+    
+    return {"site":getSite(sitename)}
+        

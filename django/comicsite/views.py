@@ -23,7 +23,7 @@ from userena import views as userena_views
 
 from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
 from comicsite.admin import ComicSiteAdmin
-from comicsite.contextprocessors.contextprocessors import ComicSiteRequestContext
+from comicsite.template.context import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
 
 from filetransfers.api import serve_file
@@ -452,7 +452,7 @@ def getSite(site_short_name):
     return site  
     
 def getPages(site_short_name):
-    """ get all pages of the given site from db"""
+    """ get all pages of the given site from db"""    
     try:
         pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
