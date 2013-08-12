@@ -15,13 +15,13 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse,Http404
+from django.http import HttpResponse,Http404,HttpResponseForbidden
 from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 from userena import views as userena_views
 
-from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder
+from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel
 from comicsite.admin import ComicSiteAdmin
 from comicsite.template.context import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
@@ -243,7 +243,8 @@ def errorpage(request,site_short_name,page_title,message):
 
 
 def insertedpage(request, site_short_name, page_title, dropboxpath):
-    """ show contents of a file from the local dropbox folder for this project 
+    """ show contents of a file from the local dropbox folder for this project
+     
     """
     
     (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
@@ -284,30 +285,30 @@ def inserted_file(request, site_short_name, filepath=""):
     """ Get image from local dropbox and serve pipe through django. 
     
     """    
+    # TODO: Serve this through filetransfers.
     
-     
-    if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
-        raise ImproperlyConfigured("Don't know from which folder serving files is allowed. Please add a setting \
-                                    'COMIC_PUBLIC_FOLDER_NAME = \"public_html\" to your .conf file." )
- 
-    if not filepath.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
-        #FIXME:  throw 403 or proper permission denied here
-        raise Http404("Permission Denied. Only objects in folder named '%s' can be served without credentials\
-                       FIXME: throw proper 403 or permission denied here." % settings.COMIC_PUBLIC_FOLDER_NAME )        
-    else:
-        pass
-        
+    from filetransfers.views import can_access
+    
     filename = path.join(settings.DROPBOX_ROOT,site_short_name,filepath)
     
     
-    try:            
-        file = open(filename,"rb")
-    except Exception:
-        raise Http404
+    if can_access(request.user,          
+                  filename,
+                  site_short_name,          
+                  override_permission=ComicSiteModel.REGISTERED_ONLY):
+        
+        try:            
+            file = open(filename,"rb")        
+        except Exception:
+            raise Http404
     
-    django_file = File(file)
-    return serve_file(request,django_file)
-    #return response
+        django_file = File(file)
+        return serve_file(request,django_file)
+    
+    else:
+        return HttpResponseForbidden("This file is not available without "
+                                    "credentials")
+        
 
 
 def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
