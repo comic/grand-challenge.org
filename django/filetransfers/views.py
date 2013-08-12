@@ -6,7 +6,7 @@ try:
     from urllib.parse import unquote
 except ImportError:     # Python 2
     from urllib import unquote
-
+from exceptions import Exception
 
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
@@ -21,7 +21,7 @@ from filetransfers.forms import UploadForm
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
 from filetransfers.api import prepare_upload, serve_file
-from comicmodels.models import FileSystemDataset,ComicSite,UploadModel
+from comicmodels.models import FileSystemDataset,ComicSite,UploadModel,ComicSiteModel
 from django.conf import settings
 
 def upload_handler(request):
@@ -91,11 +91,67 @@ def delete_handler(request, pk):
     return HttpResponseRedirect(reverse('comicmodels.views.upload_handler',kwargs={'site_short_name':comicsitename}))
 
 
-def _can_access(user,path,project_name):
+def can_access(user,path,project_name,override_permission=""):
     """ Does this user have permission to access folder path which is part of
     project named project_name?
+    Override permission can be used to make certain folders servable through
+    code even though this would not be allowed otherwise
          
     """
+    if override_permission == "":
+        required = _required_permission(user,path,project_name)
+    else:
+        choices = [x[0] for x in ComicSiteModel.PERMISSIONS_CHOICES]
+        if not override_permission in choices:
+            raise Exeption("input parameters should be one of [%s], "
+                           "found '%s' " % (",".join(choices),needed))
+        required = override_permission
+    
+    if required == ComicSiteModel.ALL:
+        return True
+    elif required == ComicSiteModel.REGISTERED_ONLY:
+        project = ComicSite.objects.get(short_name=project_name)        
+        if project.is_participant(user):
+            return True
+        else:
+            return False
+    elif require == ComicSiteModel.ADMIN_ONLY:
+        project = ComicSite.objects.get(short_name=project_name)
+        if project.is_admin(user):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def _sufficient_permission(needed,granted):
+    """ Return true if granted permission is greater than or equal to needed
+    permission. 
+    
+    """
+    choices = [x[0] for x in CoomicSiteModel.PERMISSIONS_CHOICES]        
+    
+    if not needed in choices:
+        raise Exeption("input parameters should be one of [%s], found '%s' " % (",".join(choices),needed))
+    if not granted in choices:
+        raise Exeption("input parameters should be one of [%s], found '%s' " % (",".join(choices),granted))
+    
+    if ComicSiteModel.PERMISSION_WEIGHTS[needed] >= ComicSiteModel.PERMISSION_WEIGHTS[granted]:
+        return True
+    else:
+        return False
+
+
+def _required_permission(user,path,project_name):
+    """ Given a file path on local filesystem, which permission level is needed
+    to view this?
+     
+    """
+    #some config checking. 
+    # TODO : check this once at server start but not every time this method is
+    # called. It is too late to throw this error once a user clicks 
+    # something.
     if not hasattr(settings,"COMIC_PUBLIC_FOLDER_NAME"):
         raise ImproperlyConfigured("Don't know from which folder serving publiv files"
                                    "is allowed. Please add a setting like "
@@ -109,20 +165,17 @@ def _can_access(user,path,project_name):
                                    " to your .conf file." )
     
     
+    
     if path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
-        return True
-    
+        return ComicSiteModel.ALL
     elif path.startswith(settings.COMIC_REGISTERED_ONLY_FOLDER_NAME):
-        project = ComicSite.objects.get(short_name=project_name)        
-        if project.is_participant(user):
-            return True
-        else:
-            return False
+        return ComicSiteModel.REGISTERED_ONLY
     else:
-        return False
-    
+        return ComicSiteModel.ADMIN_ONLY
+ 
 
-def serve(request, project_name, path, document_root=None):
+
+def serve(request, project_name, path, document_root=None,override_permission=""):
     """
     Serve static file for a given project. 
     
@@ -157,7 +210,7 @@ def serve(request, project_name, path, document_root=None):
         raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
     
     
-    if _can_access(request.user,path,project_name):    
+    if can_access(request.user,path,project_name,override_permission):    
         f = storage.open(fullpath, 'rb')
         file = File(f) # create django file object
         return serve_file(request, file, save_as=True)
