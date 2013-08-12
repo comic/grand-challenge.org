@@ -149,18 +149,16 @@ def url(parser, token):
 class comic_URLNode(defaulttags.URLNode):
         
     def render(self, context):
-                
-        #if 'comicsite_signin' in self.view_name.token:
-        #    pdb.set_trace()
-        
-        # check settings
+         
+                        
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
         
-        #pdb.set_trace()
+        
+        #get the url the default django method would give.
         try:
             url = super(comic_URLNode, self).render(context)            
-        except NoReverseMatch:
+        except NoReverseMatch as e:
             #fail siliently, like recomended
             # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
             pass 
@@ -186,8 +184,8 @@ class comic_URLNode(defaulttags.URLNode):
                 except NoReverseMatch:
                     #fail siliently, like recomended
                     # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
-                    pass 
-                return "/"
+                    return "/" 
+                
                                        
                 if url.startswith(path_to_site):
                     return url.replace(path_to_site,"/")

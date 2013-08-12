@@ -29,7 +29,7 @@
 				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
 			{% endif %}
 			<li>
-				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url 'comicsite.views.page' site.short_name page.title %}">				
+				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{% url 'comicsite.views.page' site.short_name page.title %}">				
 					{% if page.display_title == "" %}
 						{{page.title}}
 					{% else %}
