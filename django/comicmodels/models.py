@@ -199,6 +199,13 @@ class ComicSiteModel(models.Model):
         (REGISTERED_ONLY, 'Registered users only'),
         (ADMIN_ONLY, 'Administrators only')        
     )
+    
+    PERMISSION_WEIGHTS = (
+        (ALL,0),
+        (REGISTERED_ONLY,1),
+        (ADMIN_ONLY,2)
+    )
+    
     permission_lvl = models.CharField(max_length=3,
                                       choices=PERMISSIONS_CHOICES,
                                       default=ALL)
