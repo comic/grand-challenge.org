@@ -75,15 +75,12 @@
                             {% if user.is_authenticated %}
 	                            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a></li>
 	                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-	                        {% endif %}
-	                        
-	                        {% block loginbutton %}
-	                        	{% if user.is_authenticated %}	                        			                        	                          
-		                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof "/" %}">Signout</a> </li>
-	                            {% else %}	                                                    	
-	                            	<li><a class="menuItem" href="{% url 'comicsite_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
-                            	{% endif %}
-                            {% endblock %}
+	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a> </li>
+                            {% else %}
+                            	{% block loginbutton %}
+                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
+                                {% endblock %}
+                            {% endif %}
                             
                             {% block adminbutton %} {% endblock %}                            
                             
