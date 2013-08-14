@@ -891,8 +891,12 @@ class ProjectLoginTest(ComicframeworkTestCase):
         comicsite_signup_complete_url = reverse("comicsite_signup_complete", kwargs={"site_short_name":self.testproject.short_name})
         
         self._test_url_can_be_viewed(self.signedup_user,login_url)
+        self._test_url_can_be_viewed(None,login_url)
         self._test_url_can_be_viewed(self.participant,logout_url)
+        self._test_url_can_be_viewed(None,logout_url)
+        
         self._test_url_can_be_viewed(self.signedup_user,comicsite_signup_complete_url)
+        self._test_url_can_be_viewed(None,comicsite_signup_complete_url)
         
         # password reset is in the "forgot password?" link on the project 
         # based login page. Make sure this works right.

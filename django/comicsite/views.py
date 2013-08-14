@@ -534,12 +534,15 @@ def signup(request, site_short_name, extra_context=None,**kwargs):
                                     **kwargs)
     return response
 
-def signup_complete(request, site_short_name,):
-        
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)        
+def signup_complete(request, site_short_name,):        
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    
+    # currentpage needed to make templates not trip
+    currentpage= Page(comicsite=site,title="Signup_almost_complete",html="")        
     response =  render_to_response('userena/signup_complete.html',
                                            {'site': site,                                        
                                             "pages":pages,
+                                            "currentpage":currentpage,
                                             "metafooterpages":metafooterpages},
                                            context_instance=RequestContext(request))
     
