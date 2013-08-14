@@ -145,7 +145,7 @@ class ComicframeworkTestCase(TestCase):
             
             
     
-    def _signup_user(self,overwrite_data={}):
+    def _signup_user(self,overwrite_data={},site=None):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called 
@@ -167,8 +167,13 @@ class ComicframeworkTestCase(TestCase):
         
         data.update(overwrite_data) #overwrite any key in default if in data
         
+        if site == None:
+            sitename = settings.MAIN_PROJECT_NAME
+        else:
+            sitename = site.short_name
         
-        signin_page = self.client.post(reverse("userena.views.signup"),data)
+        signin_page = self.client.post(reverse("comicsite.views.signup",
+                                               kwargs={"site_short_name":sitename}),data)
                 
         # check whether signin succeeded. If succeeded the response will be a
         # httpResponseRedirect object, which has a 'Location' key in its
@@ -182,7 +187,7 @@ class ComicframeworkTestCase(TestCase):
                         
         
         
-    def _create_random_user(self,startname=""):
+    def _create_random_user(self,startname="",site=None):
         """ Sign up a user, saves me having to think of a unique name each time
         predend startname if given
         """
@@ -194,16 +199,16 @@ class ComicframeworkTestCase(TestCase):
         data = {'username':username,
                 'email':username+"@test.com"}
         
-        return self._create_user(data)
+        return self._create_user(data,site)
 
-    def _create_user(self,data):
+    def _create_user(self,data,site=None):
         """ Sign up user in a way as close to production as possible. Check a 
         lot of stuff. Data is a dictionary form_field:for_value pairs. Any
         unspecified values are given default values
         
         """        
         username = data['username']
-        self._signup_user(data)
+        self._signup_user(data,site)
         
         
         validation_mail = mail.outbox[-1]        
@@ -825,6 +830,82 @@ class TemplateTagsTest(ComicframeworkTestCase):
                             " URL tag gave the same url for two different "
                             "pages. Both 'testurlfakepage1' and "
                             "'testurlfakepage1' got url '%s'" % url1)
+            
+            
+class ProjectLoginTest(ComicframeworkTestCase):
+    """ Getting userena login and signup to display inside a project context 
+    (with correct banner and pages, sending project-based email etc..) was quite
+    a hassle, not to mention messy.  Do all the links still work?
+    
+    """
+    
+    
+    def setUp(self):
+        """ Create some objects to work with, In part this is done through
+        admin views, meaning admin views are also tested here.
+        """
+        # Create four types of users that exist: Root, can do anything, 
+        # projectadmin, cam do things to a project he or she owns. Participant can
+        # show some restricted content for a project and upload files,
+        # signup_user can see some pages but not others.
+        
+        self.root = User.objects.create_user('root',
+                                      'w.s.kerkstra@gmail.com',
+                                      'testpassword')        
+        self.root.is_staff = True
+        self.root.is_superuser = True
+        self.root.save()
+        
+        
+        # non-root users are created as if they signed up through the project,
+        # to maximize test coverage. 
+               
+        # Creator of a project.                                        
+        self.projectadmin = self._create_random_user("projectadmin_")
+        
+        # The project created by projectadmin 
+        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
+        create_page_in_admin(self.testproject,"testpage1")
+        
+        # user which has pressed the register link for the project, so is 
+        # part of testproject_participants group
+        self.participant = self._create_random_user("participant_")
+        self._register(self.participant,self.testproject)
+        
+        self.participant2 = self._create_random_user("participant2_")
+        self._register(self.participant2,self.testproject)
+                
+        # user which has only registered at comicframework but has not 
+        # registered for any project
+        self.signedup_user = self._create_random_user("signedup_user_")
+        
+    def test_project_login(self):
+        
+        # see if login for specific project works. This tests the project
+        # centered signup form.         
+        self._create_random_user(site=self.testproject)
+        
+        # see if views work and all urls can be found
+        login_url = reverse("comicsite_signin", kwargs={"site_short_name":self.testproject.short_name}) 
+        logout_url = reverse("userena_signout")
+        comicsite_signup_complete_url = reverse("comicsite_signup_complete", kwargs={"site_short_name":self.testproject.short_name})
+        
+        self._test_url_can_be_viewed(self.signedup_user,login_url)
+        self._test_url_can_be_viewed(self.participant,logout_url)
+        self._test_url_can_be_viewed(self.signedup_user,comicsite_signup_complete_url)
+        
+        # password reset is in the "forgot password?" link on the project 
+        # based login page. Make sure this works right.
+        self._test_url_can_be_viewed(self.participant,reverse("userena_password_reset"))
+        
+        # The other userena urls are not realy tied up with project so I will 
+        # leave to userena to test.
+        
+        
+        
+        
+        
+    
         
         
     
