@@ -1,0 +1,14 @@
+{% extends 'site.html' %}
+{% load comic_templatetags %}
+{% load i18n %}
+
+
+{% block pageName %} {{site.short_name}} - Signup almost done {% endblock %}
+
+{% block pagecontent %}
+<h2>Signup</h2>
+
+<p>Thank you for signing up to {{site.short_name}}.</p> 
+<p>You have been sent an e-mail with an activation link. Please use the link in this email to complete your registration.</p>
+
+{% endblock %}

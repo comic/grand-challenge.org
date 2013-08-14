@@ -149,11 +149,9 @@ def url(parser, token):
 class comic_URLNode(defaulttags.URLNode):
         
     def render(self, context):
-         
-                        
+                                         
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
-        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
-        
+        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()        
         
         #get the url the default django method would give.
         try:
@@ -1329,13 +1327,13 @@ class RegistrationFormNode(template.Node):
     def render(self, context):
         sitename = context.page.comicsite.short_name
         pagetitle = context.page.title
-        signup_url = reverse('userena_signin') + "?next=" \
+        signup_url = reverse('comicsite_signin',args=[context.page.comicsite.short_name]) + "?next=" \
                      + reverse('comicsite.views.page', kwargs={'site_short_name':sitename, 'page_title':pagetitle})
         signuplink = makeHTMLLink(signup_url, "sign in")
 
 
 
-        registerlink = makeHTMLLink(reverse('userena.views.signup'), "register")
+        registerlink = makeHTMLLink(reverse('comicsite_signup',args=[context.page.comicsite.short_name]), "register")
 
 
         if not context['user'].is_authenticated():
@@ -1350,9 +1348,6 @@ class RegistrationFormNode(template.Node):
                 register_url = reverse('comicsite.views._register', kwargs={'site_short_name':sitename})
                 msg = makeHTMLLink(register_url, "Register for " + sitename)
             return msg
-
-
-
 
 
 class TemplateErrorNode(template.Node):

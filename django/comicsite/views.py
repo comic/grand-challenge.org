@@ -58,26 +58,8 @@ def _register(request, site_short_name):
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
 
-def signin(request, site_short_name, extra_context=None):        
-    """ change userena signup so it shows the banner and layout of current
-    project. 
-    
-    Also do not show any pages for main project, because logging
-    in here should feel like a 'general' login and not like logging in to a
-    project 
-         
-    """
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-        
-    if site.short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
-        pages = []
-    
-    extra_context = {'site': site, "pages":pages}
-    
-    # signup_form, template_name, success_url, extra_context    
-    response = userena_views.signin(request=request, extra_context=extra_context)
-    return response
 
+    
 
 
 
@@ -205,7 +187,7 @@ def getPageSourceIfAllowed(page_title,request,site):
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
-    
+            
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)        
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
     response =  render_to_response('page.html',
@@ -500,7 +482,7 @@ def create_HTML_a_img(link_url,image_url):
 def copy_page(page):
     return Page(comicsite=page.comicsite,title=page.title,html=page.html)
 
-#=========#=========#=========#=========#=========#=========#=========#=========
+
 def create_temp_page(title="temp_page",html=""):
     """ Create a quick mockup page which you can show, without needing to read 
     anything from database
@@ -512,6 +494,58 @@ def create_temp_page(title="temp_page",html=""):
     site.skin = ""
         
     return Page(comicsite=site,title=title,html=html)
+
+#====================== Wrapping profiles views ================================
+# Profiles views shoudld be viewable in each project. Each view needs a
+# site_short_name or similar param. Therefore all needed views are wrapped here.
+# TODO: is there no less repetitive way of wrapping?
+
+def get_extra_context(site_short_name):
+    """ reduces duplication in signin signup methods below.
+    
+    """
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    if site.short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
+        pages = []
+    extra_context = {'site':site, "pages":pages}
+    return extra_context
+
+def signin(request, site_short_name, extra_context=None):        
+    """ change userena signup so it shows the banner and layout of current
+    project. 
+    
+    Also do not show any pages for main project, because logging
+    in here should feel like a 'general' login and not like logging in to a
+    project 
+         
+    """
+    extra_context = get_extra_context(site_short_name)    
+    # signup_form, template_name, success_url, extra_context    
+    response = userena_views.signin(request=request, extra_context=extra_context)
+    return response
+
+def signup(request, site_short_name, extra_context=None,**kwargs):            
+    extra_context = get_extra_context(site_short_name)
+    # signup_form, template_name, success_url, extra_context    
+    success = reverse("comicsite_signup_complete",kwargs={"site_short_name":site_short_name})
+    response = userena_views.signup(request=request,
+                                    extra_context=extra_context,
+                                    success_url=success,
+                                    **kwargs)
+    return response
+
+def signup_complete(request, site_short_name,):
+        
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)        
+    response =  render_to_response('userena/signup_complete.html',
+                                           {'site': site,                                        
+                                            "pages":pages,
+                                            "metafooterpages":metafooterpages},
+                                           context_instance=RequestContext(request))
+    
+    return response
+
+
     
 # ======================================================  debug and test ==================================================
 

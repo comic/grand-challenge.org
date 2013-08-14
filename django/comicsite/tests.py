@@ -31,8 +31,6 @@ from profiles.models import UserProfile
 from profiles.forms import SignupFormExtra
 
 
-
-
 def get_or_create_user(username,password):
     query_result = User.objects.filter(username=username)
     if query_result.exists():
