@@ -20,8 +20,8 @@
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
     <ul class="signinlist">
-        <li><a href="{% url 'socialauth_begin' site.short_name 'google' %}?next=/projects/">Google</a></li>
-        <li><a href="{% url 'socialauth_begin' site.short_name 'yahoo' %}?next=/projects/">Yahoo</a></li>
+        <li><a href="{% url 'socialauth_begin' 'google' %}?next=/projects/">Google</a></li>
+        <li><a href="{% url 'socialauth_begin' 'yahoo' %}?next=/projects/">Yahoo</a></li>
     </ul>
 </div>
 <form action="" method="post">

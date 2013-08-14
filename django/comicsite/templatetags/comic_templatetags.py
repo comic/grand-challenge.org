@@ -154,13 +154,8 @@ class comic_URLNode(defaulttags.URLNode):
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()        
         
         #get the url the default django method would give.
-        try:
-            url = super(comic_URLNode, self).render(context)            
-        except NoReverseMatch as e:
-            #fail siliently, like recomended
-            # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
-            pass 
-            return "/"
+        url = super(comic_URLNode, self).render(context)            
+        
         
         url = url.lower()
         
@@ -177,13 +172,8 @@ class comic_URLNode(defaulttags.URLNode):
                 # Interpret subdomain as a comicsite. What would normally be the
                 # path to this comicsite?
                 
-                try:
-                    path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()
-                except NoReverseMatch:
-                    #fail siliently, like recomended
-                    # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#writing-the-renderer
-                    return "/" 
                 
+                path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()
                                        
                 if url.startswith(path_to_site):
                     return url.replace(path_to_site,"/")
