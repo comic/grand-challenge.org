@@ -6,7 +6,7 @@
 
 {% block content %}
     <!-- BEGIN: Shamelessly copied from stackoverflow.com -->
-    Do you already have an account on one of these sites? Click the logo to <strong>sign in</strong> with it here:
+    Do you already have an account on one of these sites? Click the name to <strong>sign in</strong> with it here:
     <div style="float: right; width: 210px; margin: 10px; padding: 5px; background-color: #DFDFDF;">
         <strong>Why OpenID?</strong><br>
         It&rsquo;s a single username and password that allows you to sign in to any
@@ -20,8 +20,8 @@
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
     <ul class="signinlist">
-        <li><a href="{% url 'socialauth_begin' 'google' %}?next=/projects/">Google</a></li>
-        <li><a href="{% url 'socialauth_begin' 'yahoo' %}?next=/projects/">Yahoo</a></li>
+        <li><a href="{% url 'socialauth_begin' site.short_name 'google' %}?next=/projects/">Google</a></li>
+        <li><a href="{% url 'socialauth_begin' site.short_name 'yahoo' %}?next=/projects/">Yahoo</a></li>
     </ul>
 </div>
 <form action="" method="post">
@@ -46,7 +46,7 @@
   </fieldset>
   <input type="submit" value="{% trans "Signin" %}" />
   <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-  <p class="signup"><a href="{% url 'userena_signup' %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
+  <p class="signup"><a href="{% url 'comicsite_signup' site.short_name %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
   {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
 </form>
 {% endblock %}

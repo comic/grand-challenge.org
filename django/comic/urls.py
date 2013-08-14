@@ -23,11 +23,7 @@ urlpatterns = patterns('',
     url(r'^site/',include('comicsite.urls'),name='site'),
 
     url(r'^filetransfers/',include('filetransfers.urls')),
-
-    # requirement for social_auth
-    url(r'',include('social_auth.urls')),
     
-    # all normal accounts stuff is redirected to accounts
     url(r'^accounts/',include('profiles.urls')),
     
     #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
