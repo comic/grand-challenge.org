@@ -20,11 +20,6 @@ urlpatterns = patterns('',
     url(r'^(?P<site_short_name>\w+)/accounts/signup/$','comicsite.views.signup',{'signup_form':SignupFormExtra},name="comicsite_signup"),    
     url(r'^(?P<site_short_name>\w+)/accounts/signup_complete/$','comicsite.views.signup_complete',name="comicsite_signup_complete"),
 #    url(r'^(?P<site_short_name>\w+)/accounts/signup/$','comicsite.views.signup',{'signup_form':SignupFormExtra},name="comicsite_signup"),
-    
-    #url(r'^(?P<site_short_name>\w+)/',include('social_auth.urls')),
-        
-          
-    
             
     url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),
     
