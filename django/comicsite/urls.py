@@ -4,10 +4,11 @@ from profiles.forms import SignupFormExtra
 
 urlpatterns = patterns('',
 
-    url(r'^test/showData/$','comicsite.views.dataPage'),
     
-    url(r'^test/sendEmail/$','comicsite.views.sendEmail'),
-    
+    url(r'^test/send_email/$','comicsite.views.send_email'),
+
+    url(r'^test/throw_exception/$','comicsite.views.throw_exception'),
+        
     #url(r'^admin/', include(projectadminsite.urls)),
                              
     url(r'^(?P<site_short_name>\w+)/$','comicsite.views.site'),
