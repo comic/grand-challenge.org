@@ -622,8 +622,9 @@ def insert_file(parser, token):
         return TemplateErrorNode(error_message)
     else:
         args = {}
-        args["file"] = all_args[0]
+        args["file"] = parser.compile_filter(all_args[0])
 
+    
     replacer = HtmlLinkReplacer()
 
     return InsertFileNode(args, replacer)
@@ -635,7 +636,7 @@ class InsertFileNode(template.Node):
         self.replacer = replacer
 
     def make_error_msg(self, msg):
-        errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
+        errormsg = "Error including file '" + "," + self.args["file"].token + "': " + msg
         return makeErrorMsgHtml(errormsg)
 
     def substitute(self, string, substitutions):
@@ -666,14 +667,18 @@ class InsertFileNode(template.Node):
 
         # context["request"].GET contains a queryDict of all url parameters.
 
-        filename_raw = self.args['file']
-        filename_clean = self.substitute(filename_raw, context["request"].GET.items())
-
+        # the parameter given to this tag can be a raw filename, or a variable
+        # like site.skin. Try to resolve it as a variable. 
+        filename = self.args["file"].resolve(context)
+        #if this fails treat the parameter as a raw filename
+        if filename == '':
+            filename = self.args["file"].token
+    
         # If any url parameters are still in filename they were not replaced. This filename
         # is missing information..
-        if re.search("{{\w+}}", filename_clean):
+        if re.search("{{\w+}}", filename):
 
-            missed_parameters = re.findall("{{\w+}}", filename_clean)
+            missed_parameters = re.findall("{{\w+}}", filename)
             found_parameters = context["request"].GET.items()
 
             if found_parameters == []:
@@ -681,33 +686,37 @@ class InsertFileNode(template.Node):
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
-
-        project_name = context.page.comicsite.short_name
-        filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename_clean)
-
+        
+        project_name = context["site"].short_name
+        filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+                                
         try:
             contents = open(filename, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
-
+        
         # TODO check content safety
-
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name':context.page.comicsite.short_name,
-                                                                'page_title':context.page.title,
-                                                                'dropboxpath':"remove"})
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(filename_clean) + "/"  # path of currently inserted file
-
-
-        replaced = self.replacer.replace_links(contents, base_url, current_path)
-        html_out = replaced
-
-        # rewrite relative links
+        
+        # For some special pages like login and signup, there is no current page
+        # In that case just don't try any link rewriting
+        if context.has_key("currentpage"):        
+            # any relative link inside included file has to be replaced to make it work within the COMIC
+            # context.
+            base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name':context["currentpage"].comicsite.short_name,
+                                                                    'page_title':context["currentpage"].title,
+                                                                    'dropboxpath':"remove"})
+            # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
+            # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
+            # nice.
+            base_url = base_url[:-7]  # remove "remove/" from baseURL
+            current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
+    
+    
+            replaced = self.replacer.replace_links(contents, base_url, current_path)
+            html_out = replaced    
+            # rewrite relative links
+        else:
+            html_out = contents
 
         return html_out
 
