@@ -133,10 +133,10 @@ def renderTags(request, p, recursecount=0):
 def permissionMessage(request, site, p):
     if request.user.is_authenticated():
         msg = "You do not have permission to view page '" + p.title + "'. If you feel this is an error, please contact the project administrators"
-        title = "No permission"
+        title = p.title
     else:
         msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
-        title = "Sign_in_required"
+        title = p.title
     page = ErrorPage(comicsite=site, title=title, html=msg)
     currentpage = page
     return currentpage
