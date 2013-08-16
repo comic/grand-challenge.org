@@ -201,7 +201,7 @@ def page(request, site_short_name, page_title):
     # ok to use a page object for error messages?
     if hasattr(currentpage,"is_error_page"):
         if currentpage.is_error_page == True:
-            response.status_code = "304"
+            response.status_code = "403"
     
     return response
 
