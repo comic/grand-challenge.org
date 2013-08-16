@@ -553,7 +553,7 @@ def signup_complete(request, site_short_name,):
 # ======================================================  debug and test ==================================================
 
  
-def sendEmail(request):
+def send_email(request):
     """Test email sending"""
     
     adress = 'sjoerdk@home.nl' 
@@ -567,7 +567,11 @@ def sendEmail(request):
     
     return HttpResponse(text);
         
-
+def throw_exception(request):
+    """ Test handling of exceptions
+    
+    """
+    raise ComicSiteException("An exception thrown to test exception handling")
 
 
     
