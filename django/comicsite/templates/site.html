@@ -3,7 +3,7 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
+{% block additionalCSS %} {% insert_file site.skin %} {% endblock %}
 
 {% block pageName %} {{site.short_name}} {% endblock %}
 

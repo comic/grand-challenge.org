@@ -16,7 +16,7 @@ def comic_site(request):
         
     from django.core.urlresolvers import resolve
     resolution = resolve(request.path)
-    
+        
     if resolution.kwargs.has_key("site_short_name"):
         sitename = resolution.kwargs["site_short_name"]
     elif resolution.kwargs.has_key("project_name"):
