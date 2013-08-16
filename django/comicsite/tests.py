@@ -434,6 +434,7 @@ class ViewsTest(ComicframeworkTestCase):
         #TODO: these test fail, but are not very important now. fix this later. 
         #self._test_page_can_not_be_viewed(self.participant,adminonlypage)
         #self._test_page_can_not_be_viewed(self.registered_user,adminonlypage)
+        pdb.set_trace()
         self._test_page_can_not_be_viewed(None,adminonlypage) # None = not logged in
         
         self._test_page_can_be_viewed(self.projectadmin,registeredonlypage)
