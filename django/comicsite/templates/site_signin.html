@@ -1,47 +1,7 @@
-{% extends "base.html" %}
+{% extends "site.html" %}
 {% load comic_templatetags %}
 {% load guardian_tags %}
 {% load admin_urls %}
-
-{% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
-
-{% block pageName %} {{site.short_name}} {% endblock %}
-
-{% block headerTitle %}
-	{%if site.header_image.name == "" %} 
-		<div class="noimage">
-			<a href="{%url 'comicsite.views.site' site.short_name %}">{{site.short_name}}</a>
-		</div>  		
-	{% else %}
-		<div class="image">
-			<a href="{%url 'comicsite.views.site' site.short_name %}"><img src="{{site.header_image.url}}"/></a>
-		</div>	
-	{% endif %}
-
-{% endblock %}
-
-	
-
-{% block topmenu %}
-	{% for page in pages %}
-		{% if not page.hidden %}
-			{% if not forloop.first %}				
-				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-			{% endif %}
-			<li>
-				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{%url 'comicsite.views.page' site.short_name page.title %}">				
-					{% if page.display_title == "" %}
-						{{page.title}}
-					{% else %}
-						{{page.display_title}}
-					{% endif %}
-				</a>			
-			</li>
-			
-		{% endif %}
-	{% endfor %}
-{% endblock %}
-
 
 {% block loginbutton %}
 	{% if site.hide_signin %}
@@ -55,34 +15,3 @@
 			
 	{% endif %}
 {% endblock %}
-
-{% block adminbutton %}
-	{% get_obj_perms user for site as "site_perms" %}		
-	
-	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	  <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>	   	  
-    
-	{% endif %}
-	
-		
-{% endblock %}
-
-
-	
-{% block content %}
-	
-	{% block pagecontent %}
-		<p>redirect to first page here.</p>
-	{% endblock %}	
-	
-{% endblock %}
-
-{% block footer %}
-	{% if site.hide_footer %}
-			<div style="height: 30px; width: 100%; float:left;"></div>	
-		{% else %}
-			{{ block.super }}
-	{% endif %}
-{% endblock %}
-
