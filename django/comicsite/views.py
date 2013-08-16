@@ -136,7 +136,7 @@ def permissionMessage(request, site, p):
         title = "No permission"
     else:
         msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
-        title = "Sign in required"
+        title = "Sign_in_required"
     page = ErrorPage(comicsite=site, title=title, html=msg)
     currentpage = page
     return currentpage
