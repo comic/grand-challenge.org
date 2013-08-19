@@ -272,21 +272,27 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
 
     
 def inserted_file(request, site_short_name, filepath=""):
-    """ Get image from local dropbox and serve pipe through django. 
+    """ Get image from local dropbox and serve. 
     
-    """    
-    # TODO: Serve this through filetransfers.
+    
+    """        
     
     from filetransfers.views import can_access
     
     filename = path.join(settings.DROPBOX_ROOT,site_short_name,filepath)
     
+    # can this location be served regularly (e.g. it is in public folder)?
+    serve_allowed = can_access(request.user,filepath,site_short_name)
     
-    if can_access(request.user,          
-                  filename,
+    # if not, linking to anywhere should be possible because it is convenient
+    # and the security risk is not too great. TODO (is it not?)     
+    if not serve_allowed:
+        serve_allowed = can_access(request.user,          
+                  filepath,
                   site_short_name,          
-                  override_permission=ComicSiteModel.REGISTERED_ONLY):
-        
+                  override_permission=ComicSiteModel.REGISTERED_ONLY)
+    
+    if serve_allowed:
         try:            
             file = open(filename,"rb")        
         except Exception:
