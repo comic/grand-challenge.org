@@ -16,7 +16,21 @@
         <!--For displaying jquery UI widgets -->
 		<link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
 		<!--Adds sorting and other features to html tables -->
-		<script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>		
+		<script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>	
+		<script>
+			$(document).ready(function() {
+				$('table.sortable').dataTable({
+                            "bJQueryUI": true,
+                            "sPaginationType": "full_numbers",
+                            "bPaginate": false,
+                            "bLengthChange": false,
+                            "bFilter": false,
+                            "bInfo": false,
+                            "bAutoWidth": false
+                });
+				
+			});
+		</script>	
 		<link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
 		
 		<!--Put any site or page specific css here -->
