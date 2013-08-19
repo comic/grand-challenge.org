@@ -115,7 +115,7 @@ def can_access(user,path,project_name,override_permission=""):
             return True
         else:
             return False
-    elif require == ComicSiteModel.ADMIN_ONLY:
+    elif required == ComicSiteModel.ADMIN_ONLY:
         project = ComicSite.objects.get(short_name=project_name)
         if project.is_admin(user):
             return True
