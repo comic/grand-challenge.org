@@ -1146,7 +1146,7 @@ def render_anode09_table(filename):
 
     table_id = id_generator()
 
-    tableHTML = """<table border=1 class = "comictable csvtable" id="%s">
+    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="%s">
         <thead><tr>
             <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
             <td align=center width='54'>1/4</td>
@@ -1167,23 +1167,22 @@ def render_anode09_table(filename):
     tableHTML = tableHTML + "</table>"
 
     # FIXME: create a temporary solution to including javascript and css with template tags
-
     script = """<script type="text/javascript">
-                    $(document).ready(function() {
+                                            
                         $('#%s').dataTable({
                             "bJQueryUI": true,
                             "sPaginationType": "full_numbers",
                             "bPaginate": false,
                             "bLengthChange": false,
-        "bFilter": false,
-        "bInfo": false,
-        "bAutoWidth": false
+                            "bFilter": false,
+                            "bInfo": false,
+                            "bAutoWidth": false
                         });
-                    } );
+                    
             </script>""" % table_id
 
 
-    return script + "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
+    return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
 
