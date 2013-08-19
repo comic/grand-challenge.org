@@ -101,6 +101,8 @@ def renderTags(request, p, recursecount=0):
     """
     recurselimit = 2
     rendererror = ""
+    
+    
     try:
         t = Template("{% load comic_templatetags %}" + p.html)
     except TemplateSyntaxError as e:
@@ -260,8 +262,9 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     msg = "<div class=\"breadcrumbtrail\"> Displaying '"+dropboxpath+"' from local dropboxfolder, originally linked from\
            page <a href=\""+baselink+"\">"+p.title+"</a> </div>"
     p.html = "{% insert_file "+dropboxpath+" %} <br/><br/>" + msg
-
+    
     currentpage = getRenderedPageIfAllowed(p,request,site)
+    
     
     return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},

@@ -600,6 +600,37 @@ class DropboxNode(template.Node):
 
         return htmlOut
 
+
+def add_quotes(string):
+    """ add quotes to string if not there 
+    """    
+    if string.startswith("'") or string.startswith("'"):
+        return string
+    else:
+        return "'"+ string +"'"
+    
+def strip_quotes(string):
+    """ strip outermost quotes from string if there 
+    """
+    
+    stripped = string
+    if string.startswith("'") or string.startswith("'"):
+        stripped = stripped[1:]
+    if string.endswith("'") or string.endswith("'"):
+        stripped = stripped[:-1]
+    
+    return stripped
+    
+def in_list(needles,haystack):
+    """ return True if any of the strings in string array needles is in haystack
+    
+    """
+    for needle in needles:
+        if needle in haystack:
+            return True
+    return False
+
+
 # {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
@@ -620,23 +651,24 @@ def insert_file(parser, token):
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
-    else:
+    else:                        
         args = {}
-        args["file"] = parser.compile_filter(all_args[0])
+                
+        args["file"] = add_quotes(all_args[0])
 
-    
     replacer = HtmlLinkReplacer()
 
-    return InsertFileNode(args, replacer)
+    return InsertFileNode(args, replacer, parser)
 
 
 class InsertFileNode(template.Node):
-    def __init__(self, args, replacer):
+    def __init__(self, args, replacer,parser):        
         self.args = args
         self.replacer = replacer
+        self.parser = parser
 
     def make_error_msg(self, msg):
-        errormsg = "Error including file '" + "," + self.args["file"].token + "': " + msg
+        errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
         return makeErrorMsgHtml(errormsg)
 
     def substitute(self, string, substitutions):
@@ -660,22 +692,41 @@ class InsertFileNode(template.Node):
 
         # allow url parameter file=<filename> to overwrite any filename given as arg
         # TODO: in effect any file can now be included by anyone using a url addition.
-        # This feels quite powerful but also messy. Is this proper? Redeeming fact: One can only access files
-        # inside DROPBOX_ROOT..
+        # This feels quite powerful but also messy. Is this proper? Redeeming fact:
+        # One can only access files inside DROPBOX_ROOT..
         # TODO: does accessing a file "..\..\..\..\allyoursecrets.txt" work?
-        # TODO: designate variables more clearly. having any string possibly be a var seems messy
-
+            
         # context["request"].GET contains a queryDict of all url parameters.
 
-        # the parameter given to this tag can be a raw filename, or a variable
-        # like site.skin. Try to resolve it as a variable. 
-        filename = self.args["file"].resolve(context)
-        #if this fails treat the parameter as a raw filename
-        if filename == '':
-            filename = self.args["file"].token
-    
-        # If any url parameters are still in filename they were not replaced. This filename
-        # is missing information..
+        # the token (parameter) given to this tag can be one of three types:
+        # * a raw filename like "stuff.html" or "results/table1.txt"        
+        # * a filname containing a variable like "results/{{teamid}}/table1.txt"
+        # * a django template variabel like "site.short_name"
+        # Find out what type it is:
+        token = self.args['file']
+                
+        # If it contains any / or {{ resolving as django var
+        # is going to throw an error. Prevent unneeded exception, just skip
+        # rendering as var in that case.
+        filename_resolved = ""                        
+        if not in_list(["{","}","\\","/"],token):            
+            filter = self.parser.compile_filter(strip_quotes(token))
+            filename_resolved = filter.resolve(context)
+          
+        # if resolved filename is empty, resolution failed, just treat this
+        # param as a filepath
+        if filename_resolved == "":
+            filename = strip_quotes(token)
+        else:
+            filename = filename_resolved
+                
+        # if there are {{}}'s in there, try to substitute this with url 
+        # parameter given in the url
+        
+        filename = self.substitute(filename, context["request"].GET.items())
+                    
+        # If any {{parameters}} are still in filename they were not replaced. 
+        # This filename is missing information, show this as error text.
         if re.search("{{\w+}}", filename):
 
             missed_parameters = re.findall("{{\w+}}", filename)
@@ -688,10 +739,10 @@ class InsertFileNode(template.Node):
             return self.make_error_msg(error_msg)
         
         project_name = context["site"].short_name
-        filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+        filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
                                 
         try:
-            contents = open(filename, "r").read()
+            contents = open(filepath, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
         
@@ -699,20 +750,41 @@ class InsertFileNode(template.Node):
         
         # For some special pages like login and signup, there is no current page
         # In that case just don't try any link rewriting
-        if context.has_key("currentpage"):        
+                
+        # TODO: here confused coding comes to light: I need to have the page
+        # object that this template tag is on in order to process it properly.
+        # I use both the element .page, added by 
+        # ComicSiteRequestContext, and a key 'currentpage' added by the view.
+        # I think both are not ideal, and should be rewritten so all template
+        # tags are implicitly passed page (and project) by default. It think
+        # this needs custom template context processors or custom middleware.
+        # As a workaround, just checking for both conditions.
+        if context.has_key("currentpage"):
+            currentpage = context["currentpage"]
+        elif hasattr(context,"page"):
+            currentpage = context.page
+        else:
+            currentpage = None
+        
+                        
+        if currentpage:        
             # any relative link inside included file has to be replaced to make it work within the COMIC
             # context.
-            base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name':context["currentpage"].comicsite.short_name,
-                                                                    'page_title':context["currentpage"].title,
-                                                                    'dropboxpath':"remove"})
+            base_url = reverse('comicsite.views.insertedpage',
+                                kwargs={'site_short_name':currentpage.comicsite.short_name,
+                                        'page_title':currentpage.title,
+                                        'dropboxpath':"remove"})
             # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-            # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
+            # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
             # nice.
             base_url = base_url[:-7]  # remove "remove/" from baseURL
             current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
     
     
-            replaced = self.replacer.replace_links(contents, base_url, current_path)
+            replaced = self.replacer.replace_links(contents,
+                                                   base_url,
+                                                   current_path)
+            
             html_out = replaced    
             # rewrite relative links
         else:
