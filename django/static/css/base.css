@@ -84,6 +84,9 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .csvtable td.notfirstcol {width: 10ex;}
 .comictable td.notfirstcol {width: 10ex;}
 
+.dataTables_wrapper .ui-widget-header {border: none;}
+
+
 .css_right {float:right}
 .comictablecontainer {width:80%;}
 
