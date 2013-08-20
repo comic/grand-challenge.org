@@ -116,7 +116,7 @@ def renderTags(request, p, recursecount=0):
                 
         #pass page to context here to be able to render tags based on which page does the rendering
         
-        pagecontents = t.render(ComicSiteRequestContext(request,p))        
+        pagecontents = t.render(ComicSiteRequestContext(request,p))            
                 
         if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
             if recursecount < recurselimit :                
@@ -191,7 +191,11 @@ def getPageSourceIfAllowed(page_title,request,site):
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
             
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)        
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    #pdb.set_trace() 
+    request.pages = pages
+    request.site = site
+    
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
     response =  render_to_response('page.html',
                                            {'site': site,
@@ -199,7 +203,7 @@ def page(request, site_short_name, page_title):
                                             "pages":pages,
                                             "metafooterpages":metafooterpages},
                                            context_instance=RequestContext(request))
-        
+    
     # TODO: THis has code smell. If page has to be checked like this, is it 
     # ok to use a page object for error messages?
     if hasattr(currentpage,"is_error_page"):
@@ -211,13 +215,13 @@ def page(request, site_short_name, page_title):
 
 
 def pagesource(request, site_short_name, page_title):
-    """ show the source html + tags of a a single page on a site """
+    """ show the source html + tags of a a single page on a site 
     
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    """
     
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
     currentpage = getPageSourceIfAllowed(page_title,request,site)
-    
-    
+        
     return render_to_response('pagesource.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
                                             context_instance=RequestContext(request))
