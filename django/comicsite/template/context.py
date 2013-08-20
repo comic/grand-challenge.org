@@ -20,13 +20,20 @@ class ComicSiteRequestContext(RequestContext):
         
     def __init__(self,request,page=None,*args,**kwargs):
         super(ComicSiteRequestContext, self).__init__(request,*args,**kwargs)
-        self.page = page
+        self.page = page        
         self.fullpath = request.get_full_path() # Not sure about adding vars here
                                                 # there has to be an easier django
-                                                # based solution..  
+                                                # based solution..
         
+        #TODO: Using request here to transport some variables into context. This
+        # seems quite weird. But how to do it better?
+        if hasattr(request,"pages"):
+            self.pages = request.pages
+        if hasattr(request,"site"):
+            self.site = request.site
+                            
         #add context url parameters (?var1=value) to context to be able to render 
         #them in template
-        self.update(request.GET) 
+        self.update(request.GET)
         
         
