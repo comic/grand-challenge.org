@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load guardian_tags %}
+{% load comic_templatetags %}
+
+{% block pageName %} {{site.short_name}} - All projects {% endblock %}
+
+{% block content %}		
+
+	
+	<div>{% all_projectlinks %}</div>
+		
+	<br/>
+
+<script>
+ $(document).ready(function() { 	
+	$(".externallink").append('<img class="linkoverlay" src="/static/css/lg_exitdisclaimer.gif" height="100" border="0" width="100">');
+	});
+</script>
+	
+{% endblock %}
+
+
+	

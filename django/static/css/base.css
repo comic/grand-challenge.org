@@ -103,6 +103,10 @@ li.menuBullet{ padding:0px;	margin:0px; }
 body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .COMICWebWorkstationButtons {padding-top:4px;  padding-bottom: 4px;}
 
+/* For all projects overview */
+table .externallink{}
+.linkoverlay{height: 30px; margin-left: -100px; margin-top: 70px;
+		  	 position: absolute; width: 30px;}
 
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/

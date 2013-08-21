@@ -1358,6 +1358,72 @@ class AllProjectsNode(template.Node):
         else:
             return comicsite.views.comic_site_to_html(project)
 
+@register.tag(name="all_projectlinks")
+def render_all_projectlinks(parser, token):
+    """ Render an overview of all projects including all links to external 
+    projects and challenges 
+    
+    """
+
+    try:
+        projects = ComicSite.objects.non_hidden()
+    except ObjectDoesNotExist as e:
+        errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
+        return TemplateErrorNode(errormsg)
+
+    return AllProjectLinksNode(projects)
+
+class AllProjectLinksNode(template.Node):
+    """ return html list listing all projects in COMIC
+    """
+
+    def __init__(self, projects):
+        self.projects = projects
+
+    def render(self, context):
+        html = ""
+        for project in self.projects:
+            html += self.project_summary_html(project)
+        
+        mock = self.mock_read_grand_challenge_data()
+        html += mock
+                
+        items = html.split("<table>")[:-1]
+        
+        random.shuffle(items)
+        items = ["<table>"+x for x in items]    
+        html = "".join(items)
+        html = "<ul>" + html + "</ul>"
+                
+        
+        return html
+            
+    def project_summary_html(self,project):
+        
+        if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+            protocol,domainname = settings.MAIN_HOST_NAME.split("//")
+            url = protocol + "//" +project.short_name +"."+ domainname
+            html = comicsite.views.comic_site_to_grand_challenge_html(project,url)
+        else:
+            html = comicsite.views.comic_site_to_grand_challenge_html(project)
+        
+        return html 
+    
+    
+    def mock_read_grand_challenge_data(self):
+        """ Fake the actual reading of data for grand challenge challenges.
+        Maybe read xls or load php in the background. 
+        
+        """
+        html = """
+        
+<table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="VISCERALB1"><a href="http://www.visceral.eu/benchmark-1/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=VISCERALB1.png" height="100" border="0" width="100"></td></a></span><td>VISCERAL Benchmark 1 - Whole body labeling in 3D<br>Website: <a class="external free" title="http://www.visceral.eu/benchmark-1/" href="http://www.visceral.eu/benchmark-1/">http://www.visceral.eu/benchmark-1/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="LASC13"><a href="http://lasc.isd.kcl.ac.uk/home/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=LASC13.png" height="100" border="0" width="100"></td></a></span><td>Left Atrial Segmentation Challenge 2013<br>Website: <a class="external free" title="http://lasc.isd.kcl.ac.uk/home/" href="http://lasc.isd.kcl.ac.uk/home/">http://lasc.isd.kcl.ac.uk/home/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="QCTP13"><a href="http://quantitativectp13.isi.uu.nl/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=QCTP13.png" height="100" border="0" width="100"></td></a></span><td>Quantification in Cerebral CT Perfusion Imaging 2013<br>Website: <a class="external free" title="http://quantitativectp13.isi.uu.nl/" href="http://quantitativectp13.isi.uu.nl/">http://quantitativectp13.isi.uu.nl/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="AMIDA13"><a href="http://amida13.isi.uu.nl/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=AMIDA13.png" height="100" border="0" width="100"></td></a></span><td>Assessment of Mitosis Detection Algorithms 2013<br>Website: <a class="external free" title="http://amida13.isi.uu.nl/" href="http://amida13.isi.uu.nl/">http://amida13.isi.uu.nl/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="BRATS13"><a href="http://martinos.org/qtim/miccai2013/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=BRATS13.png" height="100" border="0" width="100"></td></a></span><td>Multiparametric Brain Tumor Segmentation (BRATS)<br>Website: <a class="external free" title="http://martinos.org/qtim/miccai2013/" href="http://martinos.org/qtim/miccai2013/">http://martinos.org/qtim/miccai2013/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="ASPS13"><a href="https://wiki.cancerimagingarchive.net/display/Public/NCI-MICCAI+2013+Challenge+-+Automated+Segmentation+of+Prostate+Structures"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=ASPS13.png" height="100" border="0" width="100"></td></a></span><td>Automated Segmentation of Prostate Structures (ASPS)<br>Website: <a class="external free" title="https://wiki.cancerimagingarchive.net/display/Public/NCI-MICCAI+2013+Challenge+-+Automated+Segmentation+of+Prostate+Structures" href="https://wiki.cancerimagingarchive.net/display/Public/NCI-MICCAI+2013+Challenge+-+Automated+Segmentation+of+Prostate+Structures">https://wiki.cancerimagingarchive.net/display/Public/NCI-MICCAI+2013+Challenge+-+Automated+Segmentation+of+Prostate+Structures</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="DTITRAC13"><a href="http://dti-challenge.org/"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=DTITRAC13.png" height="100" border="0" width="100"></td></a></span><td>MICCAI 2013 DTI Tractography Challenge<br>Website: <a class="external free" title="http://dti-challenge.org/" href="http://dti-challenge.org/">http://dti-challenge.org/</a><br>Event: <a class="external text" title="MICCAI, September 22, 2013" href="http://www.miccai2013.org/">MICCAI, September 22, 2013</a></td></tr></tbody></table><table><tbody><tr valign="top"><td><span class="plainlinks externallink" id="MBRAINS13"><a href="http://mrbrains13.isi.uu.nl/index.php"><img alt="" src="http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=MBRAINS13.png" height="100" border="0" width="100"></td></a></span><td>MR Brain Image Segmentation 2013<br>Website: <a class="external free" title="http://mrbrains13.isi.uu.nl/index.php" href="http://mrbrains13.isi.uu.nl/index.php">http://mrbrains13.isi.uu.nl/index.php</a><br>Event: <a class="external text" title="MICCAI, September 26, 2013" href="http://www.miccai2013.org/">MICCAI, September 26, 2013</a></td></tr></tbody></table>
+
+        """
+        
+        
+        return html 
+    
         
 
 

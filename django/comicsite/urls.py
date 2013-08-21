@@ -23,7 +23,7 @@ urlpatterns = patterns('',
 #    url(r'^(?P<site_short_name>\w+)/accounts/signup/$','comicsite.views.signup',{'signup_form':SignupFormExtra},name="comicsite_signup"),
             
     url(r'^(?P<site_short_name>\w+)/files/$','comicmodels.views.upload_handler'),
-    
+            
     url(r'^(?P<project_name>\w+)/serve/(?P<path>.+)/$','filetransfers.views.serve',name="project_serve_file"),
     
     url(r'^(?P<site_short_name>\w+)/_register/$','comicsite.views._register'),
