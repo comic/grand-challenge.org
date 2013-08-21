@@ -21,6 +21,8 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
       
     url(r'^site/',include('comicsite.urls'),name='site'),
+    
+    url(r'^projectlinks/$','comicsite.views.projectlinks'),
 
     url(r'^filetransfers/',include('filetransfers.urls')),
     
