@@ -12,6 +12,11 @@ from django.core.files import File
 from django.conf import settings
 
 
+def fake_file(filename,content="mock content"):
+        """ For testing I sometimes want specific file request to return 
+        specific content. This is make creation easier 
+        """
+        return {"filename":filename,"content":content}
 
 class MockStorage(FileSystemStorage):
     """
@@ -25,10 +30,11 @@ class MockStorage(FileSystemStorage):
                  ]
                  
     
-    FAKE_FILES = ["fakefile1.txt",
-                  "fakefile2.jpg",
-                  "fakefile3.exe",
-                  "fakefile4.mhd"]
+    FAKE_FILES = [fake_file("fakefile1.txt"),
+                  fake_file("fakefile2.jpg"),
+                  fake_file("fakefile3.exe"),
+                  fake_file("fakefile4.mhd"),
+                  fake_file("fakecss.css","body {width:300px;}")]
 
     def _save(self, name, content):
         # do NOTHING
@@ -47,7 +53,13 @@ class MockStorage(FileSystemStorage):
             mockfile = File(img)
             mockfile.name = "MOCKED_IMAGE_"+name
         else:
+            
             content = "mock content"
+            # If a predefined fake file is asked for, return predefined content            
+            for filename,mockcontent in self.FAKE_FILES:
+               if name == filename:
+                   content = mockcontent
+                            
             mockfile = File(StringIO.StringIO(content)) 
             mockfile.name = "MOCKED_FILE_"+name
         
@@ -66,7 +78,8 @@ class MockStorage(FileSystemStorage):
             name = name[:-1]
         dir,file_or_folder = os.path.split(name)
         if "." in file_or_folder: #input was a file path
-             return self.is_in_fake_test_dir(dir) and (file_or_folder in self.FAKE_FILES)
+             filenames = [x["filename"] for x in self.FAKE_FILES]
+             return self.is_in_fake_test_dir(dir) and (file_or_folder in filenames)
         else: #input was a directory path
             return self.is_in_fake_test_dir(name) 
         
@@ -74,7 +87,7 @@ class MockStorage(FileSystemStorage):
     def listdir(self, path):        
         if self.is_in_fake_test_dir(path):
             directories = []
-            files = self.FAKE_FILES        
+            files = [x["filename"] for x in self.FAKE_FILES]
         else:
             if self.exists(path):
                 directories, files = [], []
@@ -90,7 +103,8 @@ class MockStorage(FileSystemStorage):
         return name
 
     def size(self, name):
-        if self.is_in_fake_test_dir(name) & (os.path.split(name)[1] in self.FAKE_FILES):
+        filenames = [x["filename"] for x in self.FAKE_FILES]
+        if self.is_in_fake_test_dir(name) & (os.path.split(name)[1] in filenames):
             return 10000
         else:
             return 0
