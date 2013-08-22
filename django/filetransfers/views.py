@@ -207,6 +207,22 @@ def serve(request, project_name, path, document_root=None,override_permission=""
     
     storage = DefaultStorage()
     if not storage.exists(fullpath):
+        
+        # On case sensitive filesystems you can have problems if the project 
+        # nameurl in the url is not exactly the same case as the filepath. 
+        # find the correct case for projectname then.
+        # Also case sensitive file systems are weird.
+        # who would ever want to have a folder 'data' and 'Data' contain 
+        # different files?            
+        
+        projectlist = ComicSite.objects.filter(short_name=project_name)
+        if projectlist == []:
+            raise Http404(_("project '%s' does not exist" % project_name ))
+    
+        project_name = projectlist[0].short_name 
+        fullpath = os.path.join(document_root,project_name, newpath)
+    
+    if not storage.exists(fullpath):
         raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
     
     
