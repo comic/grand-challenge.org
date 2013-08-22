@@ -502,7 +502,7 @@ def comic_site_to_grand_challenge_html(comic_site,link=""):
          
      img_html = create_HTML_a_img(link,comic_site.logo)
      
-     html = "<table><tbody><tr valign=\"top\"><td><span class=\"plainlinks\" id=\""+comic_site.short_name+"\"><a href=\""+link+"\"><img alt=\"\" src=\""+comic_site.logo+"\" height=\"100\" border=\"0\" width=\"100\"></td></a></span><td>"+comic_site.description+"<br>Website: <a class=\"external free\" title=\""+comic_site.short_name+"\"href=\""+link+"\">"+link+"</a><br>Event: <a class=\"external text\" title=\"none\" href=\"\">MICCAI, September 22, 2013</a></td></tr></tbody></table>"
+     html = "<table class=\"upcoming\"><tbody><tr valign=\"top\"><td><span class=\"plainlinks\" id=\""+comic_site.short_name+"\"><a href=\""+link+"\"><img alt=\"\" src=\""+comic_site.logo+"\" height=\"100\" border=\"0\" width=\"100\"></td></a></span><td>"+comic_site.description+"<br>Website: <a class=\"external free\" title=\""+comic_site.short_name+"\"href=\""+link+"\">"+link+"</a><br>Event: <a class=\"external text\" title=\"none\" href=\"\">MICCAI, September 22, 2013</a></td></tr></tbody></table>"
           
           
      return html
