@@ -43,7 +43,8 @@ def _register(request, site_short_name):
     
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    title = "registration successful"
+    title = "registration_successful"
+    display_title = "registration successful"
    
     if request.user.is_authenticated():
         participantsgroup = Group.objects.get(name=site.participants_group_name())
@@ -53,7 +54,7 @@ def _register(request, site_short_name):
     else:
         html = "you need to be logged in to use this url"
         
-    currentpage = Page(comicsite=site,title=title,html=html)
+    currentpage = Page(comicsite=site,title=title,display_title=display_title,html=html)
     
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
