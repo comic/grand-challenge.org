@@ -772,6 +772,7 @@ class InsertFileNode(template.Node):
         if currentpage:        
             # any relative link inside included file has to be replaced to make it work within the COMIC
             # context.
+            set 
             base_url = reverse('comicsite.views.insertedpage',
                                 kwargs={'site_short_name':currentpage.comicsite.short_name,
                                         'page_title':currentpage.title,
