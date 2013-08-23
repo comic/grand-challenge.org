@@ -742,8 +742,7 @@ class InsertFileNode(template.Node):
         project_name = context["site"].short_name
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         
-        storage = DefaultStorage()
-        pdb.set_trace()                    
+        storage = DefaultStorage()                        
         try:            
             contents = storage.open(filepath, "r").read()
         except Exception as e:

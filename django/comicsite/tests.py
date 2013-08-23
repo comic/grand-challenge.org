@@ -95,6 +95,7 @@ class ComicframeworkTestCase(TestCase):
                 
         response = _register(request,project.short_name)
         
+        
         self.assertEqual(response.status_code,
                          200,
                          "After registering as user %s at '%s', page did not"
@@ -271,7 +272,8 @@ class ComicframeworkTestCase(TestCase):
         header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME+"/fakefile2.jpg") 
         data = {"short_name":short_name,
                 "description":description,
-                "logo":"fakelogo.jpg",               
+                "skin":"fake_test_dir/fakecss.css",
+                "logo":"fakelogo.jpg",
                 "header_image": header_image,
                 "prefix":"form",
                 "page_set-TOTAL_FORMS": u"0",
@@ -320,7 +322,8 @@ ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
                                            'auth.hashers.SHA1PasswordHasher',)
                                            )(ComicframeworkTestCase)
                                           
-#Use a fake storage provider which does not save anything to disk.
+# Use a fake storage provider which does not save anything to disk, and can 
+# mock reading files, returning some fake content
 ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE = 
                                            "comicsite.storage.MockStorage"
                                            )(ComicframeworkTestCase)
