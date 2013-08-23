@@ -40,28 +40,29 @@ class MockStorage(FileSystemStorage):
         # do NOTHING
         return name
     
-    def _open(self, name, mode='rb'):
+    def _open(self, path, mode='rb'):
         """ Return a memory only file which will not be saved to disk
         If an image is requested, fake image content using PIL
         
         """        
-        if os.path.splitext(name)[1].lower() in [".jpg",".png",".gif",".bmp"]:
+        if os.path.splitext(path)[1].lower() in [".jpg",".png",".gif",".bmp"]:
             #1px test image
             binary_image_data = '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
             
             img = BytesIO(binary_image_data)
             mockfile = File(img)
-            mockfile.name = "MOCKED_IMAGE_"+name
+            mockfile.name = "MOCKED_IMAGE_"+path
         else:
             
             content = "mock content"
             # If a predefined fake file is asked for, return predefined content            
-            for filename,mockcontent in self.FAKE_FILES:
-               if name == filename:
+            filename = os.path.split(path)[1]            
+            for mockfilename,mockcontent in self.FAKE_FILES:
+               if filename == mockfilename:
                    content = mockcontent
                             
             mockfile = File(StringIO.StringIO(content)) 
-            mockfile.name = "MOCKED_FILE_"+name
+            mockfile.name = "MOCKED_FILE_"+path
         
         
         return mockfile
@@ -76,7 +77,7 @@ class MockStorage(FileSystemStorage):
         """                
         if name.endswith("/"):
             name = name[:-1]
-        dir,file_or_folder = os.path.split(name)
+        dir,file_or_folder = os.path.split(name)        
         if "." in file_or_folder: #input was a file path
              filenames = [x["filename"] for x in self.FAKE_FILES]
              return self.is_in_fake_test_dir(dir) and (file_or_folder in filenames)
