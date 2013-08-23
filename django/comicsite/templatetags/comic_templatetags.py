@@ -704,7 +704,8 @@ class InsertFileNode(template.Node):
         # * a django template variabel like "site.short_name"
         # Find out what type it is:
         token = self.args['file']
-                
+        
+        
         # If it contains any / or {{ resolving as django var
         # is going to throw an error. Prevent unneeded exception, just skip
         # rendering as var in that case.
@@ -740,9 +741,11 @@ class InsertFileNode(template.Node):
         
         project_name = context["site"].short_name
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
-                                
-        try:
-            contents = open(filepath, "r").read()
+        
+        storage = DefaultStorage()
+        pdb.set_trace()                    
+        try:            
+            contents = storage.open(filepath, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
         
@@ -877,9 +880,10 @@ class InsertGraphNode(template.Node):
 
         project_name = context.page.comicsite.short_name
         filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename_clean)
-
+        
+        storage = DefaultStorage()
         try:
-            contents = open(filename, "r").read()
+            contents = storage.open(filename, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
 
@@ -1002,8 +1006,9 @@ def render_FROC(filename):
     """
 
     has_header = True
-    table = []
-    f = open(filename, 'r')
+    table = []    
+    storage = DefaultStorage()
+    f = storage.open(filename, 'r')
     csvreader = csv.reader(f)
     i = 0
     headers = []
@@ -1212,7 +1217,8 @@ def parse_php_arrays(filename):
 
     output = {}
 
-    with open(filename, 'r') as f:
+    storage = DefaultStorage()
+    with storage.open(filename, 'r') as f:
         content = f.read()
         content = content.replace("\n", "")
         php = re.compile("\<\?php(.*?)\?\>")
@@ -1278,7 +1284,7 @@ class UrlParameterNode(template.Node):
         self.args = args
 
     def make_error_msg(self, msg):
-        errormsg = "Error including file '" + ",".join(self.args) + "': " + msg
+        errormsg = "Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
