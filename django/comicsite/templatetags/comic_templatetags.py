@@ -1221,7 +1221,7 @@ def parse_php_arrays(filename):
     with storage.open(filename, 'r') as f:
         content = f.read()
         content = content.replace("\n", "")
-        php = re.compile("\<\?php(.*?)\?\>")
+        php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
         phpcontent = php.search(content).group(1)
         assert phpcontent != "" , "could not find anything like <?php ?> in '%s'" % filename
 
@@ -1232,15 +1232,23 @@ def parse_php_arrays(filename):
             print "parsing %s into int arrays.. " % (filename)
 
         # check wheteher this looks like a php var
-        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);")
+        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",re.DOTALL)
         for var in phpvars:
            result = phpvar.search(var)
 
-           assert result != None , "Could not match regex pattern '%s' to '%s'\
+           #TODO Log these messages as info 
+           if result == None :
+               msg = "Could not match regex pattern '%s' to '%s'\
                                     " % (phpvar.pattern, var)
-           assert len(result.groups()) == 2, "Expected to find  varname and content,\
-               but regex '%s' found %d items:%s " % (phpvar.pattern, len(result.groups()),
-               "[" + ",".join(result.groups()) + "]")
+               continue
+           
+           
+           if len(result.groups()) != 2:
+               msg = "Expected to find  varname and content,\
+                      but regex '%s' found %d items:%s " % (phpvar.pattern, len(result.groups()),
+                                                              "[" + ",".join(result.groups()) + "]")
+               continue
+               
 
            (varname, varcontent) = result.groups()
 
