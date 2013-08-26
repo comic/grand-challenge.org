@@ -285,9 +285,18 @@ class ComicframeworkTestCase(TestCase):
         success = self._login(user)
         
         response = self.client.post(url,data)
-        errors = self._find_errors_in_page(response)        
+        errors = self._find_errors_in_page(response)
+                
         if errors:
-            self.assertFalse(errors, "Error creating project '%s':\n %s" % (short_name, errors.group(0)))
+            #show a little around the actual error to scan for variables that
+            # might have caused it
+            span = errors.span()
+            wide_start = max(span[0]-200,0)
+            wide_end = min(span[1]+200,len(response.content))
+            
+            wide_error = response.content[wide_start:wide_end]
+            
+            self.assertFalse(errors, "Error creating project '%s':\n %s" % (short_name, wide_error))
                 
         #ad.set_base_permissions(request,project)
         project = ComicSite.objects.get(short_name=short_name)

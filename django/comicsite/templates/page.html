@@ -6,6 +6,12 @@
 
 {% block pagecontent %}		
 		
+	{% if site.disclaimer %}
+		<div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
+			{{site.disclaimer}}
+		</div>
+		
+	{% endif %}
 	<div>{{currentpage.rawHTML}}</div>
 		
 	<br/>

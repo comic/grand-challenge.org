@@ -450,7 +450,15 @@ class PageInline(LinkedInline):
 
 
 class ComicSiteAdminForm(forms.ModelForm):
-    description = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':80}),help_text = "Short summary of this project, max 1024 characters.")        
+    description = forms.CharField(widget=forms.Textarea(attrs=
+                                                        {'rows':4, 'cols':80}),
+                                 help_text = "Short summary of this project,"
+                                 " max 1024 characters.")        
+    disclaimer = forms.CharField(required=False,
+                                 widget=forms.Textarea(attrs=
+                                                       {'rows':4, 'cols':120}),
+                                 help_text = "'Under construction'-like "
+                                 "banner to show on each page")
     
     class Meta:
         model = ComicSite
