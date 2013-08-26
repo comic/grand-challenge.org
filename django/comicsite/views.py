@@ -570,17 +570,23 @@ def signup_complete(request, site_short_name,):
  
 def send_email(request):
     """Test email sending"""
-    
-    adress = 'sjoerdk@home.nl' 
+        
+    adress = 'w.s.kerkstra@gmail.com' 
     title = 'Your email setting are ok for sending'
     message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
     
+    password = ""
+    if request.GET.has_key("pass"):
+        password = request.GET['pass']
     
-    send_mail(title, 'Here is the message.', 'from@example.com',
-    [adress], fail_silently=False)
-    text="Sent test email titled '" + title + "' to email adress '"+ adress +"'"
-    
+    #only set password if bots really make this a problem
+    if True: #password == "one0nine":
+        send_mail(title, 'Here is the message.', 'test@comicframework.org',
+                  [adress], fail_silently=False)
+        text="Sent test email titled '" + title + "' to email adress '"+ adress +"'"
+        
     return HttpResponse(text);
+
         
 def throw_exception(request):
     """ Test handling of exceptions
