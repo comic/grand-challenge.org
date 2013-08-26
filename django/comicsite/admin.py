@@ -484,6 +484,20 @@ class ComicSiteAdmin(admin.ModelAdmin):
     form = ComicSiteAdminForm
     inlines = [PageInline]
     
+    fieldsets=(
+        (None, {               
+                'fields': ('short_name', 'description', 'logo')
+        }),
+        ('Layout', {
+                'classes': ('collapse',),
+                'fields': ('header_image', 'skin', 'disclaimer')
+            }),
+        ('Advanced options', {
+                'classes': ('collapse',),
+                'fields': ('hidden','hide_signin', 'hide_footer')
+            }),
+        
+    )
     readonly_fields = ("manage_admin_link",'link')
     
     
