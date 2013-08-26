@@ -6,7 +6,7 @@
 from django.template import RequestContext
 from django.conf import settings
 
-from comicsite.views import getSite
+from comicsite.views import site_get_standard_vars
 
 def comic_site(request):
     """ Find out in which comic site this request is loaded. If you cannot
@@ -24,5 +24,7 @@ def comic_site(request):
     else:
         sitename = settings.MAIN_PROJECT_NAME
     
-    return {"site":getSite(sitename)}
+    [site, pages, metafooterpages] = site_get_standard_vars(sitename)
+    
+    return {"site":site,"pages":pages,"metafooterpages":metafooterpages}
         
