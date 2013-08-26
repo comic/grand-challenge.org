@@ -1221,7 +1221,7 @@ def parse_php_arrays(filename):
     with storage.open(filename, 'r') as f:
         content = f.read()
         content = content.replace("\n", "")
-        php = re.compile("\<\?php(.*?)\?\>")
+        php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
         phpcontent = php.search(content).group(1)
         assert phpcontent != "" , "could not find anything like <?php ?> in '%s'" % filename
 
@@ -1232,7 +1232,7 @@ def parse_php_arrays(filename):
             print "parsing %s into int arrays.. " % (filename)
 
         # check wheteher this looks like a php var
-        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);")
+        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",re.DOTALL)
         for var in phpvars:
            result = phpvar.search(var)
 
