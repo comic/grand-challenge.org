@@ -631,6 +631,18 @@ def in_list(needles,haystack):
     return False
 
 
+def inlist(needles,haystack):
+    """ Return true if any of the items in list needles is in haystack
+     
+    """
+    for needle in needles:
+        if needle in haystack:
+            return True
+    
+    return False
+        
+    
+    
 # {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
@@ -652,13 +664,19 @@ def insert_file(parser, token):
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
     else:                        
-        args = {}
-                
-        args["file"] = add_quotes(all_args[0])
+        args = {}                
+        filename = all_args[0]
+        if inlist(["../","~"],filename):
+             error_message = "filename '%s' contains ../ or ~. Going up the directory tree is not allowed." %filename  
+             return TemplateErrorNode(error_message)
+        
+        args["file"] = add_quotes(filename) 
 
     replacer = HtmlLinkReplacer()
 
     return InsertFileNode(args, replacer, parser)
+
+
 
 
 class InsertFileNode(template.Node):
@@ -704,7 +722,7 @@ class InsertFileNode(template.Node):
         # * a django template variabel like "site.short_name"
         # Find out what type it is:
         token = self.args['file']
-        
+                
         
         # If it contains any / or {{ resolving as django var
         # is going to throw an error. Prevent unneeded exception, just skip
@@ -739,7 +757,7 @@ class InsertFileNode(template.Node):
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
         
-        project_name = context["site"].short_name
+        project_name = context["site"].short_name        
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         
         storage = DefaultStorage()                        
