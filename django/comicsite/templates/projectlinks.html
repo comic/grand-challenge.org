@@ -7,7 +7,7 @@
 {% block content %}		
 
 <style>
-	#projectfilterbuttons{display:none;}
+	
 	#buttonbar {width:100%; height:80px; border-top:1px solid #CCCCCC;}
 	#buttonbar li{list-style: none outside none; width:220px;}
 	#buttonbar ul {float:left}
@@ -16,43 +16,42 @@
 	
 	#projectlinks{border-top:1px solid #CCCCCC;}
 	
-	#projectscontainer{width:80%; border:1px solid #CCCCCC;}
+	#projectscontainer{width:80%;}
 	#projectscontainer .tab{color:#666666; background color:#666666; border:1px solid #CCCCCC;
 			margin-left:20px;border-bottom:none; cursor:pointer;}
 	#projectscontainer .tab.active{color:black;}
+	
+	#projectfilterbuttons label{float:right; width: 194px; }
+	
 </style>
-	<div id="projectscontainer">
-		<span id="allprojectsbutton" class="tab active">All projects</span><span id="filterprojectsbutton" class="tab">Filter projects</span>
+	<div id="projectscontainer">		
 		<div id ="projectfilterbuttons">
 			<div id="buttonbar">
 				<!--<div id="title"><h2>Filter projects</h2></div>-->
 				<ul>
-					<li>
-	                    <input type="checkbox" value="true" id="Upcoming" name="ShowPrivate">
+					<li>	                    
 	                    <label for="private" class="private" title="Challenge projects with a workshop that has not yet been held">Upcoming</label>
+	                    <input type="checkbox" value="true" id="upcoming" name="ShowPrivate">
 	                    
 	                </li>				
-	                <li>
-	                    <input type="checkbox" value="true" id="Active" name="ShowProspect">
+	                <li>	                    
 	                    <label for="prospect" class="prospect" title="Challenge projects that currently accept new submissions">Active</label>
+	                   <input type="checkbox" value="true" id="active" name="ShowProspect">
 	                </li>
-	                <li>
-	                    <input type="checkbox" checked="Inactive" value="true" id="open" name="ShowOpenToAll">
+	                <li>	                    
 	                    <label for="open" class="open">Inactive</label>
+	                    <input type="checkbox" checked="inactive" value="true" id="open" name="ShowOpenToAll">
 	                </li>
 	                                
 	             </ul>
-	             <ul>
-	             	
-	
-	            
+	             <ul>	
 	                <li>
-	                    <input type="checkbox" value="true" id="External" name="ShowPrivate">
-	                    <label for="private" class="private">External</label>
+	                    <label for="private" class="private">External only</label>
+	                    <input type="checkbox" value="true" id="external" name="ShowPrivate">
 	                </li>
 	                <li>
-	                    <input type="checkbox" value="true" id="Offers_data" name="ShowLimited">
-	                    <label for="limited" class="limited">Offers data download</label>
+	                    <label for="limited" class="limited">Offers data download only</label>
+	                    <input type="checkbox" value="true" id="offers_data" name="ShowLimited">
 	                </li>
 	           </ul>			
 			</div>
@@ -68,52 +67,26 @@
 	$(".externallink").append('<img class="linkoverlay" src="/static/css/lg_exitdisclaimer.gif" height="40" border="0" width="40">');
 	});
 	
-	$(document).on('click','#filterprojectsbutton',function(){            	
-                $("#projectfilterbuttons").show(400);
-                $("#allprojectsbutton").removeClass("active")                    
-                $("#filterprojectsbutton").addClass("active")
-            });
-            
-    $(document).on('click','#allprojectsbutton',function(){            	
-                $("#projectfilterbuttons").hide(400);
-                $("#allprojectsbutton").addClass("active")                    
-                $("#filterprojectsbutton").removeClass("active")                
-            });
-	$("input#Active").click(function(){		
-		if( $(this).is(':checked') ){
-			$("table.active").show(400)
-		}
-		else{
-			$("table.active").hide(400)
-		};		
-	});
-		
-	$("input#Upcoming").click(function(){		
-		if( $(this).is(':checked') ){
-			$("table.upcoming").show(400)
-		}
-		else{
-			$("table.upcoming").hide(400)
-		};		
-	});
+	function hookFilter(inputname){
+		// hook up the checkbox with id inputname so that checking it will
+		// hide or show projectlink items with a class by the same name
+		 
+		$("input#"+inputname).click(function(){
+			if( $(this).is(':checked') ){				
+				$("table."+inputname).show(400)
+			}
+			else{
+				$("table."+inputname).hide(400)
+			};
+		});
+	} 
 	
-	$("input#Inactive").click(function(){		
-		if( $(this).is(':checked') ){
-			$("table._inactive").show(400)
-		}
-		else{
-			$("table._inactive").hide(400)
-		};		
-	});
-	
-	$("input#External").click(function(){		
-		if( $(this).is(':checked') ){
-			$("table:has(.externallink)").show(400)
-		}
-		else{
-			$("table:has(.externallink)").hide(400)
-		};		
-	});
+	// hook up each inputbox to filter items by the same name when 
+	// checked or unchecked
+	$("#projectfilterbuttons input").each(function(i,d){		
+		hookFilter(d.id);
+	})
+	   	
 	
 </script>
 	
