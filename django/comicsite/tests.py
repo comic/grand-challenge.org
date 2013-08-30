@@ -514,15 +514,8 @@ class UploadTest(ComicframeworkTestCase):
                       kwargs={"site_short_name":self.testproject.short_name})
         self._test_url_can_be_viewed(self.root,url)                    
         #self._test_url_can_be_viewed(self.root.username,url)
-        
-        
     
-        
-
-
     
-        
-
     def _upload_test_file(self, user, project,testfilename=""):
         """ Upload a very small text file as user to project, through standard
         upload view at /files 
@@ -662,13 +655,13 @@ class UploadTest(ComicframeworkTestCase):
                             % (filename,user.username))
     
               
-    def giverandomfilename(self,user):
+    def giverandomfilename(self,user,postfix=""):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
         """
         return "%s_%s_%s" % (user.username.encode("ascii","ignore"),
                              str(randint(10000,99999)),
-                             "testfile.txt")
+                             "testfile%s.txt" % postfix)
         
         
 

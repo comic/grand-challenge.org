@@ -42,9 +42,18 @@ class MockStorage(FileSystemStorage):
                     "non-existant include: <nonexistant>{% insert_file /nothing/nonexistant.txt %}</nonexistant> Also"
                     " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")
                   ]
+        
+    def __init__(self):
+        super(FileSystemStorage,self).__init__()
+        self.saved_files = {}
 
     def _save(self, name, content):
-        # do NOTHING
+        
+        mockfile = File(StringIO.StringIO(content)) 
+        mockfile.name = name
+                
+        self.saved_files[name] = mockfile
+        
         return name
     
     def _open(self, path, mode='rb'):
@@ -54,7 +63,10 @@ class MockStorage(FileSystemStorage):
         """
         if not self.exists(path):
             raise OSError("Mockstorage: '%s' No such file or directory." % path)
-          
+        
+        if path in self.saved_files.keys():
+            return self.saved_files[path]
+                      
         if os.path.splitext(path)[1].lower() in [".jpg",".png",".gif",".bmp"]:
             #1px test image
             binary_image_data = '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
@@ -89,6 +101,9 @@ class MockStorage(FileSystemStorage):
         path. And its name is one of FAKE_FILES         
         """                                    
             
+        if name in self.saved_files.keys():
+            return True        
+        
         if name.endswith("/"):
             name = name[:-1]
         dir,file_or_folder = os.path.split(name)        
