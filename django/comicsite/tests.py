@@ -891,6 +891,41 @@ class TemplateTagsTest(ComicframeworkTestCase):
                             " URL tag gave the same url for two different "
                             "pages. Both 'testurlfakepage1' and "
                             "'testurlfakepage1' got url '%s'" % url1)
+        
+        
+    def test_insert_file_tag(self):
+        """ Can directly include the contents of a file. Contents can again 
+        include files.  
+        
+        """
+        # Sanity check: do two different pages give different urls?
+        content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeinclude.html %}</toplevelcontent>"                
+        insertfiletagpage = create_page_in_admin(self.testproject,"testincludefiletagpage",content)
+                    
+        response = self._test_page_can_be_viewed(self.signedup_user,insertfiletagpage)
+            
+                
+        # Extract rendered content from included file, see if it has been rendered
+        # In the correct way
+        somecss = find_text_between('<somecss>','</somecss>',response.content)
+        nonexistant = find_text_between('<nonexistant>','</nonexistant>',response.content)
+        scary = find_text_between('<scary>','</scary>',response.content)
+        
+        self.assertTrue(somecss != "","Nothing was rendered when including an existing file. Some css should be here")
+        self.assertTrue(nonexistant != "","Nothing was rendered when including an existing file. Some css should be here")
+        self.assertTrue(scary != "","Nothing was rendered when trying to go up the directory tree with ../ At least some error should be printed")
+        
+        self.assertTrue("body {width:300px;}" in somecss,"Did not find expected"
+                        " content 'body {width:300px;}' when including a test"
+                        " css file. Instead found '%s'" % somecss)
+        self.assertTrue("No such file or directory" in nonexistant,"Expected a"
+                        " message 'No such file or directory' when including "
+                        "non-existant file. Instead found '%s'" % nonexistant)
+        self.assertTrue("Going up the directory tree is not allowed" in scary ,
+                        "Expected a message 'Going up the directory tree is "
+                        "not allowed' when trying to include filepath with ../"
+                        " in it. Instead found '%s'" %scary)
+
             
             
 class ProjectLoginTest(ComicframeworkTestCase):
@@ -965,19 +1000,4 @@ class ProjectLoginTest(ComicframeworkTestCase):
         
         # The other userena urls are not realy tied up with project so I will 
         # leave to userena to test.
-        
-        
-        
-        
-        
-    
-        
-        
-    
-    
-        
-        
-        
-        
-        
         
