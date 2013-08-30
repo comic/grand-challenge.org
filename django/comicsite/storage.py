@@ -3,6 +3,7 @@ import pdb
 import os
 import StringIO
 from io import BytesIO
+from exceptions import OSError
 
 
 from django.core.files.storage import FileSystemStorage
@@ -29,12 +30,18 @@ class MockStorage(FileSystemStorage):
                  settings.COMIC_REGISTERED_ONLY_FOLDER_NAME
                  ]
                  
-    
+    # 
     FAKE_FILES = [fake_file("fakefile1.txt"),
                   fake_file("fakefile2.jpg"),
                   fake_file("fakefile3.exe"),
                   fake_file("fakefile4.mhd"),
-                  fake_file("fakecss.css","body {width:300px;}")]
+                  fake_file("fakecss.css","body {width:300px;}"),
+                  fake_file("fakeinclude.html","This is some fake include content:" 
+                    "here is the content of fakecss" 
+                    "<somecss>{% insert_file "+FAKE_DIRS[1]+"/fakecss.css %} </somecss>and a "
+                    "non-existant include: <nonexistant>{% insert_file /nothing/nonexistant.txt %}</nonexistant> Also"
+                    " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")
+                  ]
 
     def _save(self, name, content):
         # do NOTHING
@@ -44,7 +51,10 @@ class MockStorage(FileSystemStorage):
         """ Return a memory only file which will not be saved to disk
         If an image is requested, fake image content using PIL
         
-        """        
+        """
+        if not self.exists(path):
+            raise OSError("Mockstorage: '%s' No such file or directory." % path)
+          
         if os.path.splitext(path)[1].lower() in [".jpg",".png",".gif",".bmp"]:
             #1px test image
             binary_image_data = '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
@@ -57,7 +67,10 @@ class MockStorage(FileSystemStorage):
             content = "mock content"
             # If a predefined fake file is asked for, return predefined content            
             filename = os.path.split(path)[1]            
-            for mockfilename,mockcontent in self.FAKE_FILES:
+            for content_name in self.FAKE_FILES:
+               mockfilename = content_name['filename']
+               mockcontent = content_name['content']
+                           
                if filename == mockfilename:
                    content = mockcontent
                             
@@ -72,9 +85,10 @@ class MockStorage(FileSystemStorage):
         pass
 
     def exists(self, name):
-        """ Any file in FAKE_FILES exists if one of the FAKE_DIRS are in its 
-        path. A path exists any of FAKE_DIRS is in its path          
-        """                
+        """ Any file exists if one of the FAKE_DIRS are in its 
+        path. And its name is one of FAKE_FILES         
+        """                                    
+            
         if name.endswith("/"):
             name = name[:-1]
         dir,file_or_folder = os.path.split(name)        
@@ -82,7 +96,7 @@ class MockStorage(FileSystemStorage):
              filenames = [x["filename"] for x in self.FAKE_FILES]
              return self.is_in_fake_test_dir(dir) and (file_or_folder in filenames)
         else: #input was a directory path
-            return self.is_in_fake_test_dir(name) 
+            return self.is_in_fake_test_dir(dir) 
         
 
     def listdir(self, path):        
@@ -115,7 +129,7 @@ class MockStorage(FileSystemStorage):
         """ Is this file in the special fake directory? This dir does not exist
         on disk but returns some values anyway. For testing.
         
-        """
+        """        
         for dir in self.FAKE_DIRS:
             if dir in path: #very rough test. But this is only for testing
                 return True
