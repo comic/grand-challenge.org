@@ -192,32 +192,18 @@ def projectlinks(request):
     """ Show an overview of all projects registered at comic or listed at
     grand-challenge.org 
     
-    """
-    site_short_name = settings.MAIN_PROJECT_NAME
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    response =  render_to_response('projectlinks.html',
-                                           {'site': site,                                            
-                                            "pages":pages,
-                                            "metafooterpages":metafooterpages},
-                                           context_instance=RequestContext(request))
+    """    
+    response =  render_to_response('projectlinks.html', context_instance=RequestContext(request))
     return response
     
 
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
-            
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    #pdb.set_trace() 
-    request.pages = pages
-    request.site = site
-    
+                
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
     response =  render_to_response('page.html',
-                                           {'site': site,
-                                            'currentpage': currentpage,
-                                            "pages":pages,
-                                            "metafooterpages":metafooterpages},
+                                           {'currentpage': currentpage},
                                            context_instance=RequestContext(request))
     
     # TODO: THis has code smell. If page has to be checked like this, is it 

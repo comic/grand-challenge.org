@@ -61,7 +61,7 @@ When you start the server you should have a running copy of the COMIC web framew
 
     python manage.py runserver
 
-Finally login to the admin on ``localhost:8000`` and go to ``Sites``. Change ``example.com`` in::
+Finally login to the admin on ``localhost:8000`` and go to ``Sites``. Change ``example.com`` into::
 
     Domain name: localhost:8000
     Display name: localhost
