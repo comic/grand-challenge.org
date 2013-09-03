@@ -10,6 +10,7 @@
 	
 	#buttonbar {width:100%; height:80px; border-top:1px solid #CCCCCC;}
 	#buttonbar li{list-style: none outside none; width:220px;}
+	#buttonbar li label, #buttonbar li input{cursor: pointer;}
 	#buttonbar ul {float:left}
 	#buttonbar label {width:135px;}
 	#buttonbar #title {float:left; width:100px;}
@@ -30,28 +31,28 @@
 				<!--<div id="title"><h2>Filter projects</h2></div>-->
 				<ul>
 					<li>	                    
-	                    <label for="private" class="private" title="Challenge projects with a workshop that has not yet been held">Upcoming</label>
-	                    <input type="checkbox" value="true" id="upcoming" name="ShowPrivate">
+	                    <label id="upcoming"  title="Challenge projects with a workshop that has not yet been held">Upcoming</label>
+	                    <input type="checkbox" class="include" value="true" id="upcoming" name="ShowPrivate">
 	                    
 	                </li>				
 	                <li>	                    
-	                    <label for="prospect" class="prospect" title="Challenge projects that currently accept new submissions">Active</label>
-	                   <input type="checkbox" value="true" id="active" name="ShowProspect">
+	                    <label id="active" title="Challenge projects that currently accept new submissions">Active</label>
+	                   <input type="checkbox" class="include" value="true" id="active" name="ShowProspect">
 	                </li>
 	                <li>	                    
-	                    <label for="open" class="open">Inactive</label>
-	                    <input type="checkbox" id="inactive" value="true" id="open" name="ShowOpenToAll">
+	                    <label id="inactive">Inactive</label>
+	                    <input type="checkbox" class="include" id="inactive" value="true" name="ShowOpenToAll">
 	                </li>
 	                                
 	             </ul>
-	             <ul>	
+	             <ul id="filters">	
 	                <li>
-	                    <label for="private" class="private">External only</label>
-	                    <input type="checkbox" value="true" id="external" name="ShowPrivate">
+	                    <label id="comic">Hosted on comic only</label>
+	                    <input type="checkbox" class="filter" value="true" id="comic" name="ShowPrivate">
 	                </li>
 	                <li>
-	                    <label for="limited" class="limited">Offers data download only</label>
-	                    <input type="checkbox" value="true" id="offers_data" name="ShowLimited">
+	                    <label id="offers_data">Offers data download only</label>
+	                    <input type="checkbox"  class="filter" value="true" id="offers_data" name="ShowLimited">
 	                </li>
 	           </ul>			
 			</div>
@@ -68,15 +69,19 @@
 	// use this to no use any fancy effects no first load of page.
 	// hide fancy effect because this looks stupid
 	var FIRST_LOAD = true;
-	log("start: first load is now " + FIRST_LOAD)
-	
+		
 	function hookFilter(inputname){
 		// hook up the checkbox with id inputname so that checking it will
-		// hide or show projectlink items with a class by the same name
-		
+		// hide or show projectlink items with a class by the same name		
 		$("input#"+inputname).click(function(){			
 			updateAll();
 		});
+		$("label#"+inputname).click(function(){			
+			$("input#"+inputname).click();
+			
+		});
+		
+		
 	};
 	
 
@@ -86,8 +91,22 @@
 		// fancy fading 
 		if(typeof(fadetime) == "undefined"){
 			fadetime = 400;
-		} 
-		if(checkbox.is(':checked') ){				
+		}
+		
+		if(checkbox.attr("class") == "filter"){
+			//filter checkbox will remove all others when checked
+			if(checkbox.is(':checked') ){				
+				log("hiding all non	'." + name+"'");
+				$("table:not(."+name+")").hide(fadetime);				
+			}
+			else{
+				log("filter on '." + name+"' released. doing nothing.");
+			};
+			
+		}else if(checkbox.attr("class") == "include"){
+			// include checkbox will include or exclude only the items with
+			// the same name
+			if(checkbox.is(':checked') ){				
 				log("showing ''." + name+"'");
 				$("table."+name).show(fadetime);
 				
@@ -96,9 +115,15 @@
 				log("hiding '." + name+"'");
 				$("table."+name).hide(fadetime);
 			};
-		   
+			
 		
+		}else{
+			log("WARNING, checkbox having class "+checkbox.attr("class")+" did not have a known class. I don't know what to do when this box is checked")
+		}
+		
+				   		
 	}
+	
 	
 	// hook up each inputbox to filter items by the same name when 
 	// checked or unchecked
@@ -117,7 +142,7 @@
 		//Make sure items shown correspond to checkboxes
 		log("Refreshing all links");
 		$("#projectfilterbuttons input").each(function(i,d){
-					
+			log("updating according to "+d.id);
 			checkboxUpdate($(d),d.id,fadetime);
 		})
 		// allow fancy effects after this
