@@ -105,7 +105,7 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 
 /* For all projects overview */
 table .externallink{}
-.linkoverlay{height: 30px; margin-left: -100px; margin-top: 70px;
+.linkoverlay{height: 30px; margin-top: -33px;
 		  	 position: absolute; width: 30px;}
 
 

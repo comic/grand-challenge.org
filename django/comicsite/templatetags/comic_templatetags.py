@@ -42,6 +42,7 @@ import comicsite.views
 from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+from dataproviders.ProjectExcelReader import ProjectExcelReader
 
 
 #---------#---------#---------#---------#---------#---------#---------#---------
@@ -673,10 +674,7 @@ def insert_file(parser, token):
         args["file"] = add_quotes(filename) 
 
     replacer = HtmlLinkReplacer()
-
     return InsertFileNode(args, replacer, parser)
-
-
 
 
 class InsertFileNode(template.Node):
@@ -1385,14 +1383,10 @@ class AllProjectLinksNode(template.Node):
         for project in self.projects:
             html += self.project_summary_html(project)
         
-        mock = self.mock_read_grand_challenge_data()
+        #mock = self.mock_read_grand_challenge_data()
+        mock = self.read_grand_challenge_data()        
         html += mock
-                
-        items = html.split("<table>")[:-1]
-        
-        random.shuffle(items)
-        items = ["<table>"+x for x in items]    
-        html = "".join(items)
+                        
         html = "<ul>" + html + "</ul>"
                 
         
@@ -1408,6 +1402,16 @@ class AllProjectLinksNode(template.Node):
             html = comicsite.views.comic_site_to_grand_challenge_html(project)
         
         return html 
+    
+    def read_grand_challenge_data(self):
+        filename = "challengestats.xls"
+        project_name = settings.MAIN_PROJECT_NAME        
+        filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+                
+        reader = ProjectExcelReader(filepath,'Challenges')
+        html = reader.get_project_links()
+        
+        return html
     
     
     def mock_read_grand_challenge_data(self):
