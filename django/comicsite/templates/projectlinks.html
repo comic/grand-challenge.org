@@ -64,40 +64,72 @@
 
 <script>
  $(document).ready(function() { 	
-		
+	
+	// use this to no use any fancy effects no first load of page.
+	// hide fancy effect because this looks stupid
+	var FIRST_LOAD = true;
+	log("start: first load is now " + FIRST_LOAD)
+	
 	function hookFilter(inputname){
 		// hook up the checkbox with id inputname so that checking it will
 		// hide or show projectlink items with a class by the same name
-		 
-		$("input#"+inputname).click(function(){
-			if( $(this).is(':checked') ){				
-				log("showing ''." + inputname+"'");
-				$("table."+inputname).show(400);
-				
-			}
-			else{
-				log("hiding '." + inputname+"'");
-				$("table."+inputname).hide(400);
-			};
+		
+		$("input#"+inputname).click(function(){			
+			updateAll();
 		});
 	};
 	
 
+	function checkboxUpdate(checkbox,name,fadetime){
+		// hide or show all projectlinks which have class 'name'
+		// based on html checkbox. Hide or show with 'fadetime' ms of
+		// fancy fading 
+		if(typeof(fadetime) == "undefined"){
+			fadetime = 400;
+		} 
+		if(checkbox.is(':checked') ){				
+				log("showing ''." + name+"'");
+				$("table."+name).show(fadetime);
+				
+			}
+			else{
+				log("hiding '." + name+"'");
+				$("table."+name).hide(fadetime);
+			};
+		   
+		
+	}
 	
 	// hook up each inputbox to filter items by the same name when 
 	// checked or unchecked
 	$("#projectfilterbuttons input").each(function(i,d){
 		log("hooking ."+d.id);		
 		hookFilter(d.id);
-	})
+	});
 	   	
-	function updateItems(){
+	function updateAll(){
+		log("update: first load is now " + FIRST_LOAD)
+		if(FIRST_LOAD){
+			fadetime = 0;
+		}else{
+			fadetime = 400;
+		}
 		//Make sure items shown correspond to checkboxes
-		var test=1;
+		log("Refreshing all links");
+		$("#projectfilterbuttons input").each(function(i,d){
+					
+			checkboxUpdate($(d),d.id,fadetime);
+		})
+		// allow fancy effects after this
+		FIRST_LOAD = false;
 	};
+	
+	
 	function log(msg){
 		console.log("* "+msg)
 	}
+	
+	updateAll()
 });
 	
 </script>
