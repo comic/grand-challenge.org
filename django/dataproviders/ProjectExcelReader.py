@@ -51,6 +51,7 @@ class ProjectExcelReader(object):
     def format_project_link(self,item):
 
         thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
+        external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>" 
     
         HTML = """
         <table>
@@ -61,6 +62,7 @@ class ProjectExcelReader(object):
                             <a href="%(url)s">
                                 <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
                             </a>
+                           %(external_thumb_html)s 
                         </span>
                     </td>
                     <td>
@@ -78,6 +80,7 @@ class ProjectExcelReader(object):
         """ % ({"abreviation" : item["abreviation"],
                 "url" : item["URL"],
                 "thumb_image_url" : thumb_image_url,
+                "external_thumb_html":external_thumb_html,
                 "description" : item["description"],
                 "event_name" : item["event name"],
                 "event_url" : item["event URL"]
