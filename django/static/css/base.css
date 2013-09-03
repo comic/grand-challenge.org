@@ -104,10 +104,12 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .COMICWebWorkstationButtons {padding-top:4px;  padding-bottom: 4px;}
 
 /* For all projects overview */
-table .externallink{}
-.linkoverlay{height: 30px; margin-top: -33px;
-		  	 position: absolute; width: 30px;}
+.projectlink .externallink{}
+.linkoverlay{height: 30px; margin-top: 71px; position: absolute; width: 30px;
+		  	 margin-left: -100px;}
 
+.projectlink{width:640px;}
+.project_thumb{width:113px;}
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 

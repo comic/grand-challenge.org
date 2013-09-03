@@ -40,7 +40,7 @@
 	                </li>
 	                <li>	                    
 	                    <label for="open" class="open">Inactive</label>
-	                    <input type="checkbox" checked="inactive" value="true" id="open" name="ShowOpenToAll">
+	                    <input type="checkbox" id="inactive" value="true" id="open" name="ShowOpenToAll">
 	                </li>
 	                                
 	             </ul>
@@ -71,20 +71,34 @@
 		 
 		$("input#"+inputname).click(function(){
 			if( $(this).is(':checked') ){				
-				$("table."+inputname).show(400)
+				log("showing ''." + inputname+"'");
+				$("table."+inputname).show(400);
+				
 			}
 			else{
-				$("table."+inputname).hide(400)
+				log("hiding '." + inputname+"'");
+				$("table."+inputname).hide(400);
 			};
 		});
-	} 
+	};
+	
+
 	
 	// hook up each inputbox to filter items by the same name when 
 	// checked or unchecked
-	$("#projectfilterbuttons input").each(function(i,d){		
+	$("#projectfilterbuttons input").each(function(i,d){
+		log("hooking ."+d.id);		
 		hookFilter(d.id);
 	})
 	   	
+	function updateItems(){
+		//Make sure items shown correspond to checkboxes
+		var test=1;
+	};
+	function log(msg){
+		console.log("* "+msg)
+	}
+});
 	
 </script>
 	
