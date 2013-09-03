@@ -52,17 +52,38 @@ class ProjectExcelReader(object):
 
         thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
         external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>" 
+        
+        overview_article_html = ""
+        if item["overview article url"] != "":
+            overview_article_html = '<br>Overview article: <a class="external free" href="%(url)s">%(url)s</a>' % ({"url" : item["overview article url"]})
+            
+        
+        classes = []        
+        section = item["website section"].lower()
+        if section == "upcoming challenges":
+            classes.append("upcoming")
+        elif section == "active challenges":
+            classes.append("active")
+        elif section == "past challenges":
+            classes.append("inactive")
+        
     
         HTML = """
-        <table>
+        <table class="%(classes)s">
             <tbody>
-                <tr valign="top">
-                    <td>
+                <tr >
+                    <td class="project_thumb">
                         <span class="plainlinks externallink" id="%(abreviation)s">
+                            
+                            
                             <a href="%(url)s">
                                 <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
+                                %(external_thumb_html)s
+                                
                             </a>
-                           %(external_thumb_html)s 
+                            
+                            
+                            
                         </span>
                     </td>
                     <td>
@@ -73,17 +94,20 @@ class ProjectExcelReader(object):
                         <a class="external text" title="%(event_name)s"
                             href="%(event_url)s">%(event_name)s
                         </a>
+                        %(overview_article_html)s
                     </td>
                 </tr>
             </tbody>
         </table>
-        """ % ({"abreviation" : item["abreviation"],
+        """ % ({"classes": "projectlink " + " ".join(classes), 
+                "abreviation" : item["abreviation"],
                 "url" : item["URL"],
                 "thumb_image_url" : thumb_image_url,
                 "external_thumb_html":external_thumb_html,
                 "description" : item["description"],
                 "event_name" : item["event name"],
-                "event_url" : item["event URL"]
+                "event_url" : item["event URL"],
+                "overview_article_html" : overview_article_html
                })
 
         return HTML
