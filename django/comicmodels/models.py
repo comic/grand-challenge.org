@@ -95,7 +95,7 @@ class ComicSite(models.Model):
     hide_signin = models.BooleanField(default=False, help_text = "Do no show the Sign in / Register link on any page")
     hide_footer = models.BooleanField(default=False, help_text = "Do not show the general links or the grey divider line in page footers")
     
-    disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True)
+    disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
     
     objects = ComicSiteManager()
     

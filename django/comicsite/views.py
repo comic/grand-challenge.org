@@ -200,7 +200,8 @@ def projectlinks(request):
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
-                
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
     response =  render_to_response('page.html',
                                            {'currentpage': currentpage},

@@ -26,10 +26,5 @@ class ProjectMiddleware:
         
         request.projectname = projectname
         
-    
-    #def process_response(self, request, response):
-        
-    #    import pdb
-    #    pdb.set_trace()
-        
+
         
