@@ -74,7 +74,7 @@
 		// hook up the checkbox with id inputname so that checking it will
 		// hide or show projectlink items with a class by the same name		
 		$("input#"+inputname).click(function(){			
-			updateAll();
+			updateAll2();
 		});
 		$("label#"+inputname).click(function(){			
 			$("input#"+inputname).click();
@@ -124,6 +124,58 @@
 				   		
 	}
 	
+	function modifyCollection(checkbox,collection){
+		// Make sure the collection of link items in table is consistent with
+		// the value of checkbox. This means add or remove items with same id
+		// as checkbox based on it being checked or not
+		
+		show = collection["show"];
+		hide = collection["hide"];
+		if (show == undefined || hide == undefined){
+				log("WARNING: input collections needs to be a dict with two elements, 'show' and 'hide', one of these was not found. Returning input collection unchanged");
+		};
+		
+		
+		name = checkbox.attr("id");
+		if(name == ""){
+			log("WARNING: checkbox " + checkbox + " did not have an id, I need this to do filtering. Return input collection unchanged.");
+			return collection;
+		} 
+		
+		if(checkbox.attr("class") == "filter"){
+			//filter checkbox will remove all others when checked
+			if(checkbox.is(':checked') ){				
+				log("hiding all non	'." + name+"'");
+				hide = hide.add("table:not(."+name+")");								
+			}
+			else{
+				log("filter on '." + name+"' released. doing nothing.");
+			};
+			
+		}else if(checkbox.attr("class") == "include"){
+			// include checkbox will include or exclude only the items with
+			// the same name
+			if(checkbox.is(':checked') ){				
+				log("showing ''." + name+"'");
+				show = show.add("table."+name);				
+				
+			}
+			else{
+				log("hiding '." + name+"'");
+				hide = hide.add("table."+name);				
+			};
+			
+		
+		}else{
+			log("WARNING, checkbox having class "+checkbox.attr("class")+" did not have a known class. I don't know what to do when this box is checked")
+		}
+		
+		collection = {"show":show, "hide":hide};
+		return collection;
+		
+				   		
+	}
+	
 	
 	// hook up each inputbox to filter items by the same name when 
 	// checked or unchecked
@@ -147,6 +199,50 @@
 		})
 		// allow fancy effects after this
 		FIRST_LOAD = false;
+	};
+	
+	function updateAll2(){
+		log("update: first load is now " + FIRST_LOAD)
+		if(FIRST_LOAD){
+			fadetime = 0;
+		}else{
+			fadetime = 400;
+		}
+		//Make sure items shown correspond to checkboxes
+		log("Refreshing all links");
+		var projectlinks = {"show" :$(),"hide":$()};
+		$("#projectfilterbuttons input").each(function(i,d){
+			log("updating according to "+d.id);			
+			projectlinks = modifyCollection($(d),projectlinks)
+			
+		})
+		
+		//after collection all modifications, apply these
+		show = projectlinks["show"];
+		hide = projectlinks["hide"];		
+		show = removeDuplicates(show,hide);
+		
+		//log("showing " + show.length );
+		show.show(fadetime);
+		//log("hiding " + hide.length );
+		hide.hide(fadetime);
+						
+		// allow fancy effects after this
+		FIRST_LOAD = false;
+	};
+	
+	function removeDuplicates(collection1,collection2){
+		if(collection2 == undefined){log("WARNING: input Collection2 was not given");};
+				
+		var filtered = $();
+		//remove any element from collection1 which is also in collection2
+		collection1.each(function(i,d){						
+			if(collection2.index(d) == -1){				
+				filtered = filtered.add(d);
+			};
+			
+		});					
+		return filtered;	    
 	};
 	
 	
