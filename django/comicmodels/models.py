@@ -97,6 +97,13 @@ class ComicSite(models.Model):
     
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
     
+    created_at = models.DateTimeField(auto_now_add = True, default=datetime.datetime.now)
+    
+    workshop_date = models.DateField(null=True,help_text = "Date on which the workshop belonging to this project will be held")
+    event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
+    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")
+    offers_data_download = models.BooleanField(default=False, help_text = "Can any data be downloaded from this project? Affects project overview listing.")
+    
     objects = ComicSiteManager()
     
     def __unicode__(self):
