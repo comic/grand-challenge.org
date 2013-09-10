@@ -24,11 +24,12 @@ Package Requirements.
 - Django Social Auth
 - PIL
 - beautifulsoup4
-- MatPlotLib
+- MatPlotLib (for rendering graphs)
+- xlrd (for reading xls files)
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox matplotlib
+    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox matplotlib xlrd
 
 
 Configuration.
