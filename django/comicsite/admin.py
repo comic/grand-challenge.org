@@ -492,6 +492,10 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 'classes': ('collapse',),
                 'fields': ('header_image', 'skin', 'disclaimer')
             }),
+        ('Metadata', {
+                'classes': ('collapse',),
+                'fields': ('workshop_date','event_name', 'event_url','offers_data_download')
+            }),                                 
         ('Advanced options', {
                 'classes': ('collapse',),
                 'fields': ('hidden','hide_signin', 'hide_footer')
