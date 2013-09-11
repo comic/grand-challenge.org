@@ -17,6 +17,7 @@ import string
 import StringIO
 import sys
 import traceback
+import logging
 
 from exceptions import Exception
 from matplotlib.figure import Figure
@@ -50,6 +51,9 @@ from dataproviders.ProjectExcelReader import ProjectExcelReader
 #register = template.Library()
 from comicsite.templatetags import library_plus 
 register = library_plus.LibraryPlus()
+
+logger = logging.getLogger("django")
+
 
 def parseKeyValueToken(token):
     """
@@ -1382,7 +1386,7 @@ class AllProjectLinksNode(template.Node):
         html = ""
         for project in self.projects:
             html += self.project_summary_html(project)
-        
+        traceback.format_exc
         #mock = self.mock_read_grand_challenge_data()
         mock = self.read_grand_challenge_data()        
         html += mock
@@ -1405,12 +1409,16 @@ class AllProjectLinksNode(template.Node):
     
     def read_grand_challenge_data(self):
         filename = "challengestats.xls"
-        project_name = settings.MAIN_PROJECT_NAME        
+        project_name = settings.MAIN_PROJECT_NAME
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
-                
         reader = ProjectExcelReader(filepath,'Challenges')
-        html = reader.get_project_links()
-        
+        try:
+            html = reader.get_project_links()
+        except IOError as e:
+            
+            logger.warning("Could not read any projectlink information from"
+                           " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
+            html = ""
         return html
     
         
