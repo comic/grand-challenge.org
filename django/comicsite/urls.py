@@ -8,6 +8,8 @@ urlpatterns = patterns('',
     url(r'^test/send_email/$','comicsite.views.send_email'),
 
     url(r'^test/throw_exception/$','comicsite.views.throw_exception'),
+    
+    url(r'^test/test_logging/$','comicsite.views.test_logging'),
         
     #url(r'^admin/', include(projectadminsite.urls)),
                              
