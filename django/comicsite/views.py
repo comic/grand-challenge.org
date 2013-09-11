@@ -7,6 +7,10 @@ Testing views. Each of these views is referenced in urls.py
 '''
 import pdb
 import mimetypes
+import logging
+ 
+
+
 from os import path
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
@@ -617,7 +621,17 @@ def send_email(request):
         
     return HttpResponse(text);
 
-        
+def test_logging(request):    
+    logger = logging.getLogger("django")
+    
+    logger.critical("This is critical")
+    logger.error("This is error")
+    logger.warning("This is warning")
+    logger.info("This is info")
+    logger.debug("This is debug")
+
+    return HttpResponse("logged")
+
 def throw_exception(request):
     """ Test handling of exceptions
     
