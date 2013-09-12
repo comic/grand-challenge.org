@@ -3,6 +3,7 @@ import re
 import datetime
 import pdb
 import logging
+import copy
 
 from django import forms
 from django.conf import settings
@@ -83,7 +84,151 @@ class ComicSiteManager(models.Manager):
         
         return super(ComicSiteManager, self).get_query_set()
     
+class ProjectLink(object):
+    """ Metadata about a single project: url, event etc. Used as the shared class
+    for both external challenges and projects hosted on comic so they can be 
+    shown on the projectlinks overview page
     
+    """
+    
+    # Using dict instead of giving a lot of fields to this object because the former
+    # is easier to work with 
+    defaults = {"abreviation":"",
+                "description":"",
+                "URL":"",
+                "event name":"",
+                "year":"",
+                "event URL":"",
+                "image URL":"",
+                "website section":"",
+                "overview article url":"",
+                "overview article citations":"",
+                "overview article date":"",
+                "submission deadline":"",
+                "workshop date":"",
+                "open for submission":"",
+                "dataset downloads":"",
+                "registered teams":"",
+                "submitted results":"",
+                "last submission date":"",                
+                "hosted on comic":False,
+                }
+    
+    
+    
+    def __init__(self,params,date=""):
+        
+        self.params = copy.deepcopy(self.defaults)                        
+        self.params.update(params)
+        
+        # add date in addition to datestring already in dict, to make sorting
+        # easier.
+        if date == "":
+            self.date = self.parse_date()                                
+        else:
+            self.date = date
+    
+    
+    def parse_date(self):
+        """ Try to read the workshop date in the format YYYYMMDD. Return default
+        date if nothing can be parsed.
+        
+        """
+        
+        datestr = self.params["workshop date"]
+        
+        # this happens when excel says its a number. I dont want to force the
+        # excel file to be clean, so deal with it here. 
+        if type(datestr) == float:
+            datestr = str(datestr)[0:8]
+        
+        try:                        
+            date = datetime.datetime.strptime(datestr,"%Y%m%d")
+        except ValueError as e:            
+            logger.warn("could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %(datestr,self.params["abreviation"]))
+            date = ""
+        
+        if date == "":
+            # If you cannot find the exact date, try to get at least the year right.
+            # again do not throw errors, excel can be dirty                 
+            year = int(self.params["year"])
+            try:
+                date = datetime.datetime(year,01,01)
+            except ValueError:
+                logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
+                date = datetime.datetime(2013,01,01)
+        
+        return date
+    
+    
+    def render_to_HTML(self):                    
+        item = self.params
+        
+        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
+        #external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>"
+        external_thumb_html = "" 
+        
+        overview_article_html = ""
+        if item["overview article url"] != "":
+            overview_article_html = '<br>Overview article: <a class="external free" href="%(url)s">%(url)s</a>' % ({"url" : item["overview article url"]})
+
+        
+        # classes are mainly used for jquery filtering on projectlinks page
+        classes = ["projectlink"]        
+        section = item["website section"].lower()
+        if section == "upcoming challenges":
+            classes.append("upcoming")
+        elif section == "active challenges":
+            classes.append("active")
+        elif section == "past challenges":
+            classes.append("inactive")
+                
+        if item["hosted on comic"]:
+            classes.append("comic")
+        
+    
+        HTML = """
+        <table class="%(classes)s">
+            <tbody>
+                <tr >
+                    <td class="project_thumb">
+                        <span class="plainlinks externallink" id="%(abreviation)s">
+                            <div class ="thumbcontainer">
+                                <a href="%(url)s">
+                                    <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
+                                    %(external_thumb_html)s
+                                    
+                                </a>
+                            </div>                                                       
+                        </span>
+                    </td>
+                    <td>
+                        %(description)s<br>Website: <a class="external free" title="%(url)s" href="%(url)s">
+                            %(url)s
+                        </a>
+                        <br>Event:
+                        <a class="external text" title="%(event_name)s"
+                            href="%(event_url)s">%(event_name)s
+                        </a>
+                        %(overview_article_html)s
+                        %(year)s
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        """ % ({"classes": " ".join(classes), 
+                "abreviation" : item["abreviation"],
+                "url" : item["URL"],
+                "thumb_image_url" : thumb_image_url,
+                "external_thumb_html":external_thumb_html,
+                "description" : item["description"],
+                "event_name" : item["event name"],
+                "event_url" : item["event URL"],
+                "overview_article_html" : overview_article_html,
+                "year" : str(self.date)
+               })
+
+        return HTML    
 
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
@@ -190,7 +335,36 @@ class ComicSite(models.Model):
         """ 
         #admins = User.objects.filter(groups__name=self.admin_group_name(), is_superuser=False)        
         admins = User.objects.filter(groups__name=self.admin_group_name())
-     
+        
+    def to_projectlink(self):
+        """ Return a ProjectLink representation of this comicsite, to show in an
+        overview page listing all projects
+        
+        """
+        
+        args = {"abreviation":self.short_name,
+                "description":self.description,
+                "URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "event name":self.event_name,
+                "year":self.created_at,
+                "event URL":self.event_url,
+                "image URL":self.logo,
+                "section":"active challenges",
+                "overview article url":"",
+                "overview article citations":"",
+                "overview article date":"",
+                "submission deadline":"",
+                "workshop date":"",
+                "open for submission":"",
+                "dataset downloads":"",
+                "registered teams":"",
+                "submitted results":"",
+                "last submission date":"",
+                "hosted on comic":True                
+                }
+        
+        projectlink = ProjectLink(args,self.created_at)
+        return projectlink.render_to_HTML()
   
               
 
@@ -648,145 +822,6 @@ class ComicSiteFile(File):
         self.comicsite = comicsite
     
 
-class ProjectLink(object):
-    """ Metadata about a single project: url, event etc. Used as the shared class
-    for both external challenges and projects hosted on comic so they can be 
-    shown on the projectlinks overview page
-    
-    """
-    
-    # Using dict instead of giving a lot of fields to this object because the former
-    # is easier to work with 
-    defaults = {"abreviation":"",
-                "description":"",
-                "URL":"",
-                "event name":"",
-                "year":"",
-                "event URL":"",
-                "image URL":"",
-                "website section":"",
-                "overview article url":"",
-                "overview article citations":"",
-                "overview article date":"",
-                "submission deadline":"",
-                "workshop date":"",
-                "open for submission":"",
-                "dataset downloads":"",
-                "registered teams":"",
-                "submitted results":"",
-                "last submission date":"",
-                "comic member":"",
-                }
-    
-    params = defaults
-    
-    def __init__(self,params,date=""):
-        
-        self.params.update(params)
-        
-        # add date in addition to datestring already in dict, to make sorting
-        # easier.
-        if date == "":
-            self.date = self.parse_date()                                
-        else:
-            self.date = date
-    
-    
-    def parse_date(self):
-        """ Try to read the workshop date in the format YYYYMMDD. Return default
-        date if nothing can be parsed.
-        
-        """
-        
-        datestr = self.params["workshop date"]
-        
-        
-        
-        # this happens when excel says its a number. I dont want to force the
-        # excel file to be clean, so deal with it here. 
-        if type(datestr) == float:
-            datestr = str(datestr)[0:8]
-        
-        try:                        
-            date = datetime.datetime.strptime(datestr,"%Y%m%d")
-        except ValueError as e:            
-            logger.warn("could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %(datestr,self.params["abreviation"]))
-            date = ""
-        
-        if date == "":    
-            # If you cannot find the exact date, try to get at least the year right.
-            # again do not throw errors, excel can be dirty                 
-            year = int(self.params["year"])
-            try:
-                date = datetime.datetime(year,01,01)
-            except ValueError:
-                logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
-                date = datetime.datetime(2013,01,01)
-        
-        return date
-    
-    
-    def render_to_HTML(self):                    
-        item = self.params
-        
-        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
-        external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>" 
-        
-        overview_article_html = ""
-        if item["overview article url"] != "":
-            overview_article_html = '<br>Overview article: <a class="external free" href="%(url)s">%(url)s</a>' % ({"url" : item["overview article url"]})
-
-        
-        classes = []        
-        section = item["website section"].lower()
-        if section == "upcoming challenges":
-            classes.append("upcoming")
-        elif section == "active challenges":
-            classes.append("active")
-        elif section == "past challenges":
-            classes.append("inactive")
-        
-    
-        HTML = """
-        <table class="%(classes)s">
-            <tbody>
-                <tr >
-                    <td class="project_thumb">
-                        <span class="plainlinks externallink" id="%(abreviation)s">                                                    
-                            <a href="%(url)s">
-                                <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
-                                %(external_thumb_html)s
-                                
-                            </a>                                                                            
-                        </span>
-                    </td>
-                    <td>
-                        %(description)s<br>Website: <a class="external free" title="%(url)s" href="%(url)s">
-                            %(url)s
-                        </a>
-                        <br>Event:
-                        <a class="external text" title="%(event_name)s"
-                            href="%(event_url)s">%(event_name)s
-                        </a>
-                        %(overview_article_html)s
-                        %(year)s
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """ % ({"classes": "projectlink " + " ".join(classes), 
-                "abreviation" : item["abreviation"],
-                "url" : item["URL"],
-                "thumb_image_url" : thumb_image_url,
-                "external_thumb_html":external_thumb_html,
-                "description" : item["description"],
-                "event_name" : item["event name"],
-                "event_url" : item["event URL"],
-                "overview_article_html" : overview_article_html,
-                "year" : str(self.date)
-               })
-
-        return HTML
         
         
     

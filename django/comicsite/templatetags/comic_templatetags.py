@@ -1385,15 +1385,18 @@ class AllProjectLinksNode(template.Node):
     def render(self, context):
         html = ""
         for project in self.projects:
-            html += self.project_summary_html(project)
+            html += project.to_projectlink()
+            
+            #html += self.project_summary_html(project)
+        
         
         #mock = self.mock_read_grand_challenge_data()
         challenge_data = self.read_grand_challenge_data()        
-        html += challenge_data
-                        
+        html += challenge_data                        
         html = "<ul>" + html + "</ul>"                
         
         return html
+    
             
     def project_summary_html(self,project):
         
