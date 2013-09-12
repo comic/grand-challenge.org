@@ -1386,13 +1386,12 @@ class AllProjectLinksNode(template.Node):
         html = ""
         for project in self.projects:
             html += self.project_summary_html(project)
-        traceback.format_exc
+        
         #mock = self.mock_read_grand_challenge_data()
-        mock = self.read_grand_challenge_data()        
-        html += mock
+        challenge_data = self.read_grand_challenge_data()        
+        html += challenge_data
                         
-        html = "<ul>" + html + "</ul>"
-                
+        html = "<ul>" + html + "</ul>"                
         
         return html
             
@@ -1422,6 +1421,7 @@ class AllProjectLinksNode(template.Node):
         return html
     
         
+
 
 
 @register.tag(name="image_url")

@@ -2,6 +2,8 @@ from xlrd import open_workbook
 from xlrd import sheet
 import os
 
+from comicmodels.models import ProjectLink
+
 
     
 class ProjectExcelReader(object):
@@ -43,76 +45,13 @@ class ProjectExcelReader(object):
         
         for item in items:
             if item["abreviation"] != "":
-                html += self.format_project_link(item)        
+                projectlink = ProjectLink(item)        
+                html += projectlink.render_to_HTML()
 
         book.unload_sheet(self.sheetname)    
         return html
 
-    def format_project_link(self,item):
-
-        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
-        external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>" 
-        
-        overview_article_html = ""
-        if item["overview article url"] != "":
-            overview_article_html = '<br>Overview article: <a class="external free" href="%(url)s">%(url)s</a>' % ({"url" : item["overview article url"]})
-            
-        
-        classes = []        
-        section = item["website section"].lower()
-        if section == "upcoming challenges":
-            classes.append("upcoming")
-        elif section == "active challenges":
-            classes.append("active")
-        elif section == "past challenges":
-            classes.append("inactive")
-        
     
-        HTML = """
-        <table class="%(classes)s">
-            <tbody>
-                <tr >
-                    <td class="project_thumb">
-                        <span class="plainlinks externallink" id="%(abreviation)s">
-                            
-                            
-                            <a href="%(url)s">
-                                <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
-                                %(external_thumb_html)s
-                                
-                            </a>
-                            
-                            
-                            
-                        </span>
-                    </td>
-                    <td>
-                        %(description)s<br>Website: <a class="external free" title="%(url)s" href="%(url)s">
-                            %(url)s
-                        </a>
-                        <br>Event:
-                        <a class="external text" title="%(event_name)s"
-                            href="%(event_url)s">%(event_name)s
-                        </a>
-                        %(overview_article_html)s
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """ % ({"classes": "projectlink " + " ".join(classes), 
-                "abreviation" : item["abreviation"],
-                "url" : item["URL"],
-                "thumb_image_url" : thumb_image_url,
-                "external_thumb_html":external_thumb_html,
-                "description" : item["description"],
-                "event_name" : item["event name"],
-                "event_url" : item["event URL"],
-                "overview_article_html" : overview_article_html
-               })
-
-        return HTML
-
-
     def get_excel_items(self,sheet):
         """ Treat each row in excel sheet as an item. First row in sheet should
         contain column headers. Each item returned is an object that has a field
