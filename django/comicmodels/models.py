@@ -17,6 +17,8 @@ from django.db import models
 from django.db.models import Max
 from django.db.models import Q
 from django.utils.safestring import mark_safe
+from django.utils import timezone
+
 
 from ckeditor.fields import RichTextField
 from dropbox import client, rest, session
@@ -130,38 +132,89 @@ class ProjectLink(object):
     
     
     def parse_date(self):
-        """ Try to read the workshop date in the format YYYYMMDD. Return default
+        """ Try to find the date for this project. Return default
         date if nothing can be parsed.
         
         """
         
-        datestr = self.params["workshop date"]
-        
-        # this happens when excel says its a number. I dont want to force the
-        # excel file to be clean, so deal with it here. 
-        if type(datestr) == float:
-            datestr = str(datestr)[0:8]
-        
-        try:                        
-            date = datetime.datetime.strptime(datestr,"%Y%m%d")
-        except ValueError as e:            
-            logger.warn("could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %(datestr,self.params["abreviation"]))
-            date = ""
-        
+        if self.params["hosted on comic"]:
+            
+            if self.params["workshop date"]:
+                date = self.params["workshop date"]
+            else:
+                date = ""            
+        else:
+            datestr = self.params["workshop date"]        
+            # this happens when excel says its a number. I dont want to force the
+            # excel file to be clean, so deal with it here. 
+            if type(datestr) == float:
+                datestr = str(datestr)[0:8]
+            
+            try:                        
+                date = timezone.make_aware(datetime.datetime.strptime(datestr,"%Y%m%d"),
+                                           timezone.get_default_timezone())
+            except ValueError as e:            
+                logger.warn("could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %(datestr,self.params["abreviation"]))
+                date = ""
+                        
+                 
         if date == "":
+            # If you cannot find the exact date for a project created in comic,
+            # use date created 
+            if self.params["hosted on comic"]:
+                return self.params["created at"]
             # If you cannot find the exact date, try to get at least the year right.
-            # again do not throw errors, excel can be dirty                 
+            # again do not throw errors, excel can be dirty
+            
             year = int(self.params["year"])
+            
             try:
-                date = datetime.datetime(year,01,01)
+                date = timezone.make_aware(datetime.datetime(year,01,01),
+                                           timezone.get_default_timezone())
             except ValueError:
                 logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
-                date = datetime.datetime(2013,01,01)
+                date = timezone.make_aware(datetime.datetime(2013,01,01),
+                                           timezone.get_default_timezone())                
         
         return date
     
     
-    def render_to_HTML(self):                    
+    def find_link_class(self):
+        """ For filtering and sorting project links, we discern upcoming, active
+        and inactive projects. Determiniation of upcoming/active/inactive is
+        described in column 'website section' in grand-challenges xls.         
+        For projects hosted on comic, determine this automatically based on 
+        associated workshop date. If a comicsite has an associated workshop 
+        which is in the future, make it upcoming, otherwise active
+                
+        """
+        
+        linkclass = "active"
+        
+        # for project hosted on comic, try to find upcoming/active automatically
+                    
+        if self.params["hosted on comic"]:                        
+            if self.parse_date() > timezone.now(): 
+                linkclass = "upcoming"
+            else:
+                linkclass = "active"
+        else:
+            # else use the explicit setting in xls            
+            
+            section = self.params["website section"].lower()
+            if section == "upcoming challenges":
+                linkclass = "upcoming"
+            elif section == "active challenges":
+                linkclass = "active"
+            elif section == "past challenges":
+                linkclass = "inactive"
+        
+        
+                    
+        return linkclass
+     
+    
+    def render_to_html(self):
         item = self.params
         
         thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
@@ -170,23 +223,30 @@ class ProjectLink(object):
         
         overview_article_html = ""
         if item["overview article url"] != "":
-            overview_article_html = '<br>Overview article: <a class="external free" href="%(url)s">%(url)s</a>' % ({"url" : item["overview article url"]})
+            overview_article_html = '<br><a class="external free" href="%(url)s">View overview article</a>' % ({"url" : item["overview article url"]})
 
         
         # classes are mainly used for jquery filtering on projectlinks page
-        classes = ["projectlink"]        
-        section = item["website section"].lower()
-        if section == "upcoming challenges":
-            classes.append("upcoming")
-        elif section == "active challenges":
-            classes.append("active")
-        elif section == "past challenges":
-            classes.append("inactive")
-                
+        classes = ["projectlink"]
+        classes.append(self.find_link_class())
+        
+        
         if item["hosted on comic"]:
             classes.append("comic")
+            
         
-    
+                
+        if item["event URL"] == "" or item["event URL"] == None:
+            event_url = ""
+        else:
+            event_url = """<br>Event:
+                            <a class="external text" title="%(event_name)s"
+                                href="%(event_url)s">%(event_name)s
+                            </a>
+                        """ % ({"event_name" : item["event name"],
+                                "event_url" : item["event URL"]
+                                })
+                        
         HTML = """
         <table class="%(classes)s">
             <tbody>
@@ -203,13 +263,10 @@ class ProjectLink(object):
                         </span>
                     </td>
                     <td>
-                        %(description)s<br>Website: <a class="external free" title="%(url)s" href="%(url)s">
-                            %(url)s
+                        %(description)s<br><a class="external free" title="%(url)s" href="%(url)s">
+                            Visit website
                         </a>
-                        <br>Event:
-                        <a class="external text" title="%(event_name)s"
-                            href="%(event_url)s">%(event_name)s
-                        </a>
+                        %(event_HTML)s
                         %(overview_article_html)s
                         %(year)s
                     </td>
@@ -223,7 +280,7 @@ class ProjectLink(object):
                 "external_thumb_html":external_thumb_html,
                 "description" : item["description"],
                 "event_name" : item["event name"],
-                "event_url" : item["event URL"],
+                "event_HTML" : event_url,
                 "overview_article_html" : overview_article_html,
                 "year" : str(self.date)
                })
@@ -245,7 +302,7 @@ class ComicSite(models.Model):
     
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
     
-    created_at = models.DateTimeField(auto_now_add = True, default=datetime.datetime.now)
+    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
     
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
@@ -340,31 +397,33 @@ class ComicSite(models.Model):
         """ Return a ProjectLink representation of this comicsite, to show in an
         overview page listing all projects
         
-        """
+        """        
         
         args = {"abreviation":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
                 "event name":self.event_name,
-                "year":self.created_at,
-                "event URL":self.event_url,
+                "year":"",
+                "event URL":self.event_url,                
                 "image URL":self.logo,
-                "section":"active challenges",
+                "website section":"active challenges",
                 "overview article url":"",
                 "overview article citations":"",
                 "overview article date":"",
                 "submission deadline":"",
-                "workshop date":"",
+                "workshop date":self.workshop_date,
                 "open for submission":"",
                 "dataset downloads":"",
                 "registered teams":"",
                 "submitted results":"",
                 "last submission date":"",
-                "hosted on comic":True                
+                "hosted on comic":True,
+                "created at":self.created_at
                 }
         
-        projectlink = ProjectLink(args,self.created_at)
-        return projectlink.render_to_HTML()
+        
+        projectlink = ProjectLink(args)
+        return projectlink
   
               
 

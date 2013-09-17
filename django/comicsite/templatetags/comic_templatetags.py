@@ -1383,16 +1383,20 @@ class AllProjectLinksNode(template.Node):
         self.projects = projects
 
     def render(self, context):
-        html = ""
+        projectlinks = []
+        
         for project in self.projects:
-            html += project.to_projectlink()
-            
-            #html += self.project_summary_html(project)
+            projectlinks.append(project.to_projectlink())            
+                                
+        projectlinks += self.read_grand_challenge_projectlinks()            
+        projectlinks = sorted(projectlinks,
+                              key=lambda projectlink: projectlink.date,
+                              reverse=True)
         
-        
-        #mock = self.mock_read_grand_challenge_data()
-        challenge_data = self.read_grand_challenge_data()        
-        html += challenge_data                        
+        html = ""
+        for projectlink in projectlinks:
+            html += projectlink.render_to_html()
+                                        
         html = "<ul>" + html + "</ul>"                
         
         return html
@@ -1409,19 +1413,19 @@ class AllProjectLinksNode(template.Node):
         
         return html 
     
-    def read_grand_challenge_data(self):
+    def read_grand_challenge_projectlinks(self):
         filename = "challengestats.xls"
         project_name = settings.MAIN_PROJECT_NAME
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         reader = ProjectExcelReader(filepath,'Challenges')
         try:
-            html = reader.get_project_links()
+            projectlinks = reader.get_project_links()
         except IOError as e:
             
             logger.warning("Could not read any projectlink information from"
                            " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
-            html = ""
-        return html
+            projectlinks = []
+        return projectlinks
     
         
 
