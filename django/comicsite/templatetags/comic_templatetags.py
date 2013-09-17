@@ -1389,18 +1389,47 @@ class AllProjectLinksNode(template.Node):
             projectlinks.append(project.to_projectlink())            
                                 
         projectlinks += self.read_grand_challenge_projectlinks()            
-        projectlinks = sorted(projectlinks,
-                              key=lambda projectlink: projectlink.date,
-                              reverse=True)
         
-        html = ""
-        for projectlink in projectlinks:
-            html += projectlink.render_to_html()
+        
+        html = self.project_links_per_year(projectlinks)
+        
+        #html = ""
+        #for projectlink in projectlinks:
+        #    html += projectlink.render_to_html()
+        
                                         
         html = "<ul>" + html + "</ul>"                
         
         return html
     
+    def project_links_per_year(self,projectlinks):
+        """ Create html to show each projectlink with subheadings per year sorted
+        by diminishing year
+    
+        """
+        #go throught all projectlinks and bin per year
+        
+        years = {}
+        
+        for projectlink in projectlinks:
+            year = projectlink.date.year
+            if years.has_key(year):
+                years[year].append(projectlink)
+            else:
+                years[year] = [projectlink]
+            
+        
+        years = years.items()
+        years = sorted(years,key=lambda x: x[0],reverse=True)
+        
+        html = ""
+        for year in years:            
+            html += "<h2>%i</h2>" % year[0]
+            html += "\n".join([link.render_to_html() for link in year[1]])
+            
+        return html
+        
+        
             
     def project_summary_html(self,project):
         
