@@ -282,7 +282,7 @@ class ProjectLink(object):
                 "event_name" : item["event name"],
                 "event_HTML" : event_url,
                 "overview_article_html" : overview_article_html,
-                "year" : str(self.date)
+                "year" : ""
                })
 
         return HTML    
