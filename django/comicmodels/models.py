@@ -229,12 +229,12 @@ class ProjectLink(object):
         # classes are mainly used for jquery filtering on projectlinks page
         classes = ["projectlink"]
         classes.append(self.find_link_class())
-        
-        
+                
         if item["hosted on comic"]:
             classes.append("comic")
-            
         
+        # For counting in jquery later
+        classes.append(str(self.date.year))
                 
         if item["event URL"] == "" or item["event URL"] == None:
             event_url = ""

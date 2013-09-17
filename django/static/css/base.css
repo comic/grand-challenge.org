@@ -114,7 +114,8 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 /*very long urls were disturbing the table layout, making the external link icon appear in a weird place*/
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
-				
+
+h2.yearHeader{color:#666666; border-bottom: solid 1px #EEEEEE;}				
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
