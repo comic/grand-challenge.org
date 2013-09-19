@@ -457,7 +457,25 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(self.participant,publicpage)
         self._test_page_can_be_viewed(self.registered_user,publicpage)
         self._test_page_can_be_viewed(None,publicpage) # None = not logged in
+    
+    def test_robots_txt_can_be_loaded(self):
+        """ Just check there are no errors in finding robots.txt. Only testing
+        for non-logged in users because I would hope bots are never logged in 
         
+        """            
+        # main domain robots.txt
+        robots_url = url = "/robots.txt"
+        
+        # robots.txt for each project, which by bots can be seen as seperate
+        # domain beacuse we use dubdomains to designate projects
+        robots_url_project = reverse("comicsite_robots_txt",
+                                     kwargs={"site_short_name":self.testproject.short_name})
+        
+        response1 = self._test_url_can_be_viewed(None,robots_url) # None = not logged in
+        response2 = self._test_url_can_be_viewed(None,robots_url_project) # None = not logged in
+        
+            
+    
     
     
 class UploadTest(ComicframeworkTestCase):
