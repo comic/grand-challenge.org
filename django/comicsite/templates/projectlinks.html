@@ -236,7 +236,7 @@
 	
 	function hideEmptyYears(){
 		// hide year headings without any items in them
-		$("#projectlinks .yearHeaderAnchor").each(function(i,d){
+		$("#projectlinks .yearHeader").each(function(i,d){
 			var count = $("table."+d.id+":visible").length;
 			if (count == 0){
 				log("hiding "+ d.id);
