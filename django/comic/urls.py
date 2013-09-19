@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-from django.views.generic import ListView
+from django.views.generic import ListView,TemplateView
 from django.contrib import admin
 from comicmodels.models	 import ComicSite
 
@@ -16,7 +16,11 @@ urlpatterns = patterns('',
     # main page 
     url(r'^$','comicsite.views.comicmain',name = 'home'),
     #url(r'^Comic/$',ListView.as_view(model=ComicSite, template_name='index.html'),name = 'home'),
-     
+    
+    # tell nice bots what to do. TODO: using 'robots.txt' as a template name will
+    # give a 404.  WHY?
+    url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.html')),
+    
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
       
