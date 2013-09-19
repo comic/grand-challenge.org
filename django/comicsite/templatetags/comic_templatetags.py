@@ -1424,7 +1424,7 @@ class AllProjectLinksNode(template.Node):
         
         html = ""
         for year in years:            
-            html += "<h2 class ='yearHeader'><a class ='yearHeaderAnchor' id = '%i'>%i</a></h2>" % (year[0],year[0])
+            html += "<h2 class ='yearHeader' id = '%i'><a class ='yearHeaderAnchor'>%i</a></h2>" % (year[0],year[0])
             html += "\n".join([link.render_to_html() for link in year[1]])
             
         return html
