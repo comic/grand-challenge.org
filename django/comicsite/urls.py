@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     url(r'^test/send_email/$','comicsite.views.send_email'),
 
     url(r'^test/throw_exception/$','comicsite.views.throw_exception'),
+    url(r'^test/throw_http404/$','comicsite.views.throw_http404'),
     
     url(r'^test/test_logging/$','comicsite.views.test_logging'),
         

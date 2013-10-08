@@ -457,7 +457,7 @@ def getSite(site_short_name):
     try:
         site = ComicSite.objects.get(short_name=site_short_name)
     except ComicSite.DoesNotExist:                
-        raise Http404   
+        raise Http404("Project '%s' not found")   
     return site  
     
 def getPages(site_short_name):
@@ -465,7 +465,7 @@ def getPages(site_short_name):
     try:
         pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
-        raise Http404
+        raise Http404("Project '%s' not found")
     return pages
 
 # trying to follow pep 0008 here, finally.
@@ -637,6 +637,13 @@ def throw_exception(request):
     
     """
     raise ComicSiteException("An exception thrown to test exception handling")
+
+def throw_http404(request):
+    """ Test handling of exceptions
+    
+    """
+    raise Http404("A Http404 to test exception handling")
+
 
 
     
