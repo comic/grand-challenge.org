@@ -7,6 +7,10 @@ Testing views. Each of these views is referenced in urls.py
 '''
 import pdb
 import mimetypes
+import logging
+ 
+
+
 from os import path
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
@@ -453,7 +457,7 @@ def getSite(site_short_name):
     try:
         site = ComicSite.objects.get(short_name=site_short_name)
     except ComicSite.DoesNotExist:                
-        raise Http404   
+        raise Http404("Project '%s' not found")   
     return site  
     
 def getPages(site_short_name):
@@ -461,7 +465,7 @@ def getPages(site_short_name):
     try:
         pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
-        raise Http404
+        raise Http404("Project '%s' not found")
     return pages
 
 # trying to follow pep 0008 here, finally.
@@ -617,12 +621,29 @@ def send_email(request):
         
     return HttpResponse(text);
 
-        
+def test_logging(request):    
+    logger = logging.getLogger("django")
+    
+    logger.critical("This is critical")
+    logger.error("This is error")
+    logger.warning("This is warning")
+    logger.info("This is info")
+    logger.debug("This is debug")
+
+    return HttpResponse("logged")
+
 def throw_exception(request):
     """ Test handling of exceptions
     
     """
     raise ComicSiteException("An exception thrown to test exception handling")
+
+def throw_http404(request):
+    """ Test handling of exceptions
+    
+    """
+    raise Http404("A Http404 to test exception handling")
+
 
 
     

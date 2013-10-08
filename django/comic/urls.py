@@ -47,6 +47,7 @@ urlpatterns = patterns('',
     
     # WYSIWYG editor for HTML
     (r'^ckeditor/', include('ckeditor.urls')),
+            
     
 )
 
