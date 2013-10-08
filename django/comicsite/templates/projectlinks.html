@@ -74,12 +74,15 @@
 		// hook up the checkbox with id inputname so that checking it will
 		// hide or show projectlink items with a class by the same name		
 		$("input#"+inputname).click(function(){			
-			updateAll2();
+			updateAll();
 		});
 		$("label#"+inputname).click(function(){			
 			$("input#"+inputname).click();
 			
 		});
+		
+		//add a counter to show number of elements displayed next to label
+		$("label#"+inputname).append("<span class ='itemCount' id = '"+inputname+"'></span>")
 		
 		
 	};
@@ -184,24 +187,8 @@
 		hookFilter(d.id);
 	});
 	   	
-	function updateAll(){
-		log("update: first load is now " + FIRST_LOAD)
-		if(FIRST_LOAD){
-			fadetime = 0;
-		}else{
-			fadetime = 400;
-		}
-		//Make sure items shown correspond to checkboxes
-		log("Refreshing all links");
-		$("#projectfilterbuttons input").each(function(i,d){
-			log("updating according to "+d.id);
-			checkboxUpdate($(d),d.id,fadetime);
-		})
-		// allow fancy effects after this
-		FIRST_LOAD = false;
-	};
 	
-	function updateAll2(){
+	function updateAll(){
 		log("update: first load is now " + FIRST_LOAD)
 		if(FIRST_LOAD){
 			fadetime = 0;
@@ -213,8 +200,7 @@
 		var projectlinks = {"show" :$(),"hide":$()};
 		$("#projectfilterbuttons input").each(function(i,d){
 			log("updating according to "+d.id);			
-			projectlinks = modifyCollection($(d),projectlinks)
-			
+			projectlinks = modifyCollection($(d),projectlinks)						
 		})
 		
 		//after collection all modifications, apply these
@@ -222,14 +208,48 @@
 		hide = projectlinks["hide"];		
 		show = removeDuplicates(show,hide);
 		
-		//log("showing " + show.length );
-		show.show(fadetime);
-		//log("hiding " + hide.length );
-		hide.hide(fadetime);
+		//after fading or hiding, update counters. 	
+		show.show(fadetime,function(){updateCounters();
+									  hideEmptyYears();});		
+		hide.hide(fadetime,function(){updateCounters();
+									  hideEmptyYears();});
+
+		//hideEmptyYears()
+		
+		
 						
 		// allow fancy effects after this
 		FIRST_LOAD = false;
 	};
+	
+	function updateCounters(){
+		// update counters showing how many projectlinks are currently shown 
+		// for each category
+		
+		$("#projectfilterbuttons input").each(function(i,d){
+			log("updating counters for "+d.id);
+			var inputname = d.id;
+			count = $("table."+inputname+":visible").length;
+			$("span#"+inputname).html(" ("+count+")")															
+		})
+	}
+	
+	function hideEmptyYears(){
+		// hide year headings without any items in them
+		$("#projectlinks .yearHeader").each(function(i,d){
+			var count = $("table."+d.id+":visible").length;
+			if (count == 0){
+				log("hiding "+ d.id);
+				$(this).hide();
+			}
+			else{
+				log("showing "+ d.id + "count was " + count);
+				$(this).show();
+			}
+		});		
+	}
+		
+	
 	
 	function removeDuplicates(collection1,collection2){
 		if(collection2 == undefined){log("WARNING: input Collection2 was not given");};
@@ -247,7 +267,11 @@
 	
 	
 	function log(msg){
-		console.log("* "+msg)
+	var logging = false;
+	
+		if(logging){
+			console.log("* "+msg)
+		}
 	}
 	
 	updateAll()

@@ -2,6 +2,8 @@ import os
 import re
 import datetime
 import pdb
+import logging
+import copy
 
 from django import forms
 from django.conf import settings
@@ -15,6 +17,8 @@ from django.db import models
 from django.db.models import Max
 from django.db.models import Q
 from django.utils.safestring import mark_safe
+from django.utils import timezone
+
 
 from ckeditor.fields import RichTextField
 from dropbox import client, rest, session
@@ -23,6 +27,8 @@ from guardian.shortcuts import assign,remove_perm
 
 from dataproviders import FileSystemDataProvider,DropboxDataProvider
 
+
+logger = logging.getLogger("django")
 
 def giveFileUploadDestinationPath(uploadmodel,filename):
     """ Where should this file go relative to MEDIA_ROOT?
@@ -80,7 +86,206 @@ class ComicSiteManager(models.Manager):
         
         return super(ComicSiteManager, self).get_query_set()
     
+class ProjectLink(object):
+    """ Metadata about a single project: url, event etc. Used as the shared class
+    for both external challenges and projects hosted on comic so they can be 
+    shown on the projectlinks overview page
     
+    """
+    
+    # Using dict instead of giving a lot of fields to this object because the former
+    # is easier to work with 
+    defaults = {"abreviation":"",
+                "description":"",
+                "URL":"",
+                "event name":"",
+                "year":"",
+                "event URL":"",
+                "image URL":"",
+                "website section":"",
+                "overview article url":"",
+                "overview article citations":"",
+                "overview article date":"",
+                "submission deadline":"",
+                "workshop date":"",
+                "open for submission":"",
+                "dataset downloads":"",
+                "registered teams":"",
+                "submitted results":"",
+                "last submission date":"",                
+                "hosted on comic":False,
+                }
+    
+    
+    
+    def __init__(self,params,date=""):
+        
+        self.params = copy.deepcopy(self.defaults)                        
+        self.params.update(params)
+        
+        # add date in addition to datestring already in dict, to make sorting
+        # easier.
+        if date == "":
+            self.date = self.parse_date()                                
+        else:
+            self.date = date
+    
+    
+    def parse_date(self):
+        """ Try to find the date for this project. Return default
+        date if nothing can be parsed.
+        
+        """
+        
+        if self.params["hosted on comic"]:
+            
+            if self.params["workshop date"]:
+                date = self.params["workshop date"]
+            else:
+                date = ""            
+        else:
+            datestr = self.params["workshop date"]        
+            # this happens when excel says its a number. I dont want to force the
+            # excel file to be clean, so deal with it here. 
+            if type(datestr) == float:
+                datestr = str(datestr)[0:8]
+            
+            try:                        
+                date = timezone.make_aware(datetime.datetime.strptime(datestr,"%Y%m%d"),
+                                           timezone.get_default_timezone())
+            except ValueError as e:            
+                logger.warn("could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %(datestr,self.params["abreviation"]))
+                date = ""
+                        
+                 
+        if date == "":
+            # If you cannot find the exact date for a project created in comic,
+            # use date created 
+            if self.params["hosted on comic"]:
+                return self.params["created at"]
+            # If you cannot find the exact date, try to get at least the year right.
+            # again do not throw errors, excel can be dirty
+            
+            year = int(self.params["year"])
+            
+            try:
+                date = timezone.make_aware(datetime.datetime(year,01,01),
+                                           timezone.get_default_timezone())
+            except ValueError:
+                logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
+                date = timezone.make_aware(datetime.datetime(2013,01,01),
+                                           timezone.get_default_timezone())                
+        
+        return date
+    
+    
+    def find_link_class(self):
+        """ For filtering and sorting project links, we discern upcoming, active
+        and inactive projects. Determiniation of upcoming/active/inactive is
+        described in column 'website section' in grand-challenges xls.         
+        For projects hosted on comic, determine this automatically based on 
+        associated workshop date. If a comicsite has an associated workshop 
+        which is in the future, make it upcoming, otherwise active
+                
+        """
+        
+        linkclass = "active"
+        
+        # for project hosted on comic, try to find upcoming/active automatically
+                    
+        if self.params["hosted on comic"]:                        
+            if self.parse_date() > timezone.now(): 
+                linkclass = "upcoming"
+            else:
+                linkclass = "active"
+        else:
+            # else use the explicit setting in xls            
+            
+            section = self.params["website section"].lower()
+            if section == "upcoming challenges":
+                linkclass = "upcoming"
+            elif section == "active challenges":
+                linkclass = "active"
+            elif section == "past challenges":
+                linkclass = "inactive"
+        
+        
+                    
+        return linkclass
+     
+    
+    def render_to_html(self):
+        item = self.params
+        
+        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
+        #external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>"
+        external_thumb_html = "" 
+        
+        overview_article_html = ""
+        if item["overview article url"] != "":
+            overview_article_html = '<br><a class="external free" href="%(url)s">View overview article</a>' % ({"url" : item["overview article url"]})
+
+        
+        # classes are mainly used for jquery filtering on projectlinks page
+        classes = ["projectlink"]
+        classes.append(self.find_link_class())
+                
+        if item["hosted on comic"]:
+            classes.append("comic")
+        
+        # For counting in jquery later
+        classes.append(str(self.date.year))
+                
+        if item["event URL"] == "" or item["event URL"] == None:
+            event_url = ""
+        else:
+            event_url = """<br>Event:
+                            <a class="external text" title="%(event_name)s"
+                                href="%(event_url)s">%(event_name)s
+                            </a>
+                        """ % ({"event_name" : item["event name"],
+                                "event_url" : item["event URL"]
+                                })
+                        
+        HTML = """
+        <table class="%(classes)s">
+            <tbody>
+                <tr >
+                    <td class="project_thumb">
+                        <span class="plainlinks externallink" id="%(abreviation)s">
+                            <div class ="thumbcontainer">
+                                <a href="%(url)s">
+                                    <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
+                                    %(external_thumb_html)s
+                                    
+                                </a>
+                            </div>                                                       
+                        </span>
+                    </td>
+                    <td>
+                        %(description)s<br><a class="external free" title="%(url)s" href="%(url)s">
+                            Visit website
+                        </a>
+                        %(event_HTML)s
+                        %(overview_article_html)s
+                        %(year)s
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        """ % ({"classes": " ".join(classes), 
+                "abreviation" : item["abreviation"],
+                "url" : item["URL"],
+                "thumb_image_url" : thumb_image_url,
+                "external_thumb_html":external_thumb_html,
+                "description" : item["description"],
+                "event_name" : item["event name"],
+                "event_HTML" : event_url,
+                "overview_article_html" : overview_article_html,
+                "year" : ""
+               })
+
+        return HTML    
 
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
@@ -97,7 +302,7 @@ class ComicSite(models.Model):
     
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
     
-    created_at = models.DateTimeField(auto_now_add = True, default=datetime.datetime.now)
+    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
     
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
@@ -187,7 +392,38 @@ class ComicSite(models.Model):
         """ 
         #admins = User.objects.filter(groups__name=self.admin_group_name(), is_superuser=False)        
         admins = User.objects.filter(groups__name=self.admin_group_name())
-     
+        
+    def to_projectlink(self):
+        """ Return a ProjectLink representation of this comicsite, to show in an
+        overview page listing all projects
+        
+        """        
+        
+        args = {"abreviation":self.short_name,
+                "description":self.description,
+                "URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "event name":self.event_name,
+                "year":"",
+                "event URL":self.event_url,                
+                "image URL":self.logo,
+                "website section":"active challenges",
+                "overview article url":"",
+                "overview article citations":"",
+                "overview article date":"",
+                "submission deadline":"",
+                "workshop date":self.workshop_date,
+                "open for submission":"",
+                "dataset downloads":"",
+                "registered teams":"",
+                "submitted results":"",
+                "last submission date":"",
+                "hosted on comic":True,
+                "created at":self.created_at
+                }
+        
+        
+        projectlink = ProjectLink(args)
+        return projectlink
   
               
 
@@ -644,6 +880,8 @@ class ComicSiteFile(File):
     def __init__(self,comicsite):
         self.comicsite = comicsite
     
+
+        
         
     
     

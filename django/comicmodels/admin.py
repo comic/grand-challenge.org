@@ -219,7 +219,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
         
         #    except Exception as e:
         #    return "An error occured while autorizing with dropbox: " + str(e)
-                
+
         link = "<a href =\""+ url + "\"> Allow access to your dropbox folder</a>"
         
         return link

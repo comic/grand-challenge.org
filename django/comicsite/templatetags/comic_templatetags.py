@@ -17,6 +17,7 @@ import string
 import StringIO
 import sys
 import traceback
+import logging
 
 from exceptions import Exception
 from matplotlib.figure import Figure
@@ -50,6 +51,9 @@ from dataproviders.ProjectExcelReader import ProjectExcelReader
 #register = template.Library()
 from comicsite.templatetags import library_plus 
 register = library_plus.LibraryPlus()
+
+logger = logging.getLogger("django")
+
 
 def parseKeyValueToken(token):
     """
@@ -1379,18 +1383,53 @@ class AllProjectLinksNode(template.Node):
         self.projects = projects
 
     def render(self, context):
-        html = ""
-        for project in self.projects:
-            html += self.project_summary_html(project)
+        projectlinks = []
         
-        #mock = self.mock_read_grand_challenge_data()
-        mock = self.read_grand_challenge_data()        
-        html += mock
-                        
-        html = "<ul>" + html + "</ul>"
-                
+        for project in self.projects:
+            projectlinks.append(project.to_projectlink())            
+                                
+        projectlinks += self.read_grand_challenge_projectlinks()            
+        
+        
+        html = self.project_links_per_year(projectlinks)
+        
+        #html = ""
+        #for projectlink in projectlinks:
+        #    html += projectlink.render_to_html()
+        
+                                        
+        html = "<ul>" + html + "</ul>"                
         
         return html
+    
+    def project_links_per_year(self,projectlinks):
+        """ Create html to show each projectlink with subheadings per year sorted
+        by diminishing year
+    
+        """
+        #go throught all projectlinks and bin per year
+        
+        years = {}
+        
+        for projectlink in projectlinks:
+            year = projectlink.date.year
+            if years.has_key(year):
+                years[year].append(projectlink)
+            else:
+                years[year] = [projectlink]
+            
+        
+        years = years.items()
+        years = sorted(years,key=lambda x: x[0],reverse=True)
+        
+        html = ""
+        for year in years:            
+            html += "<h2 class ='yearHeader' id = '%i'><a class ='yearHeaderAnchor'>%i</a></h2>" % (year[0],year[0])
+            html += "\n".join([link.render_to_html() for link in year[1]])
+            
+        return html
+        
+        
             
     def project_summary_html(self,project):
         
@@ -1403,17 +1442,22 @@ class AllProjectLinksNode(template.Node):
         
         return html 
     
-    def read_grand_challenge_data(self):
+    def read_grand_challenge_projectlinks(self):
         filename = "challengestats.xls"
-        project_name = settings.MAIN_PROJECT_NAME        
+        project_name = settings.MAIN_PROJECT_NAME
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
-                
         reader = ProjectExcelReader(filepath,'Challenges')
-        html = reader.get_project_links()
-        
-        return html
+        try:
+            projectlinks = reader.get_project_links()
+        except IOError as e:
+            
+            logger.warning("Could not read any projectlink information from"
+                           " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
+            projectlinks = []
+        return projectlinks
     
         
+
 
 
 @register.tag(name="image_url")
