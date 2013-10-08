@@ -474,6 +474,19 @@ class ViewsTest(ComicframeworkTestCase):
         response1 = self._test_url_can_be_viewed(None,robots_url) # None = not logged in
         response2 = self._test_url_can_be_viewed(None,robots_url_project) # None = not logged in
         
+        
+    def test_non_exitant_page_gives_404(self):
+        """ reproduces issue #219
+        https://github.com/comic/comic-django/issues/219
+        
+        """            
+        
+        # main domain robots.txt
+        non_existant_url = "site/sitename/nonexistantpage"            
+        
+        response,username = self._view_url(None,non_existant_url)                        
+        self.assertEqual(response.status_code, 404, "Expected non existing url"
+        "'%s' to give 404, instead found %s"%(non_existant_url,response.status_code))
             
     
     
