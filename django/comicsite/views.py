@@ -86,11 +86,19 @@ def site_get_standard_vars(site_short_name):
     """ When rendering a site you need to pass the current site, all pages for this site, and footer pages.
     Get all this info and return a dictionary ready to pass to render_to_response. Convenience method
     to save typing.
-    """
-    site = getSite(site_short_name)                    
-    pages = getPages(site_short_name)        
-    metafooterpages = getPages(settings.MAIN_PROJECT_NAME)        
-                
+ 
+    """    
+
+    
+    try:
+        site = getSite(site_short_name)                  
+        pages = getPages(site_short_name)
+        metafooterpages = getPages(settings.MAIN_PROJECT_NAME)    
+    
+    #TODO: recursive call upon error. Is this horrible coding?
+    except ComicSite.DoesNotExist:        
+        [site, pages, metafooterpages] = site_get_standard_vars(settings.MAIN_PROJECT_NAME)
+            
     return [site, pages, metafooterpages]
         
 def concatdicts(d1,d2):
@@ -204,6 +212,7 @@ def projectlinks(request):
 
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
+    
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
@@ -454,18 +463,15 @@ def dataPage(request):
 # ======================================== not called directly from urls.py =========================================
 
 def getSite(site_short_name):
-    try:
-        site = ComicSite.objects.get(short_name=site_short_name)
-    except ComicSite.DoesNotExist:                
-        raise Http404("Project '%s' not found")   
-    return site  
+    project = ComicSite.objects.get(short_name=site_short_name)                       
+    return project
     
 def getPages(site_short_name):
     """ get all pages of the given site from db"""    
     try:
         pages = Page.objects.filter(comicsite__short_name=site_short_name)
     except Page.DoesNotExist:                
-        raise Http404("Project '%s' not found")
+        raise Http404("Page '%s' not found" %site_short_name)
     return pages
 
 # trying to follow pep 0008 here, finally.
