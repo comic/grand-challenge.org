@@ -357,7 +357,7 @@ class ViewsTest(ComicframeworkTestCase):
         self.root.is_superuser = True
         self.root.save()
         
-        # non-root users are created as if they signed up through the project,
+        # non-root users are created as if they signed up through the project,    
         # to maximize test coverage.        
         
         # A user who has created a project
@@ -475,16 +475,16 @@ class ViewsTest(ComicframeworkTestCase):
         response2 = self._test_url_can_be_viewed(None,robots_url_project) # None = not logged in
         
         
-    def test_non_exitant_page_gives_404(self):
+    def test_non_exitant_project_gives_404(self):
         """ reproduces issue #219
         https://github.com/comic/comic-django/issues/219
         
         """            
-        
+                
         # main domain robots.txt
-        non_existant_url = "site/sitename/nonexistantpage"            
+        non_existant_url = "site/sitename/nonexistantpage"
         
-        response,username = self._view_url(None,non_existant_url)                        
+        response,username = self._view_url(None,non_existant_url)
         self.assertEqual(response.status_code, 404, "Expected non existing url"
         "'%s' to give 404, instead found %s"%(non_existant_url,response.status_code))
             
