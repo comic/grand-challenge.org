@@ -70,6 +70,17 @@ def _register(request, site_short_name):
 
 def site(request, site_short_name):    
    
+    #TODO: Doing two calls to getSite here. (second one in site_get_standard_vars)
+    # How to handle not found nicely? Throwing exception in site_get_standard_vars
+    # seems like a nice start, but this function is called throughout the code
+    # also outside views (in contextprocessor). Throwing Http404 there will 
+    # result in server error.. 
+    try:
+        site = getSite(site_short_name)
+    except ComicSite.DoesNotExist:
+        raise Http404("Project %s does not exist" % site_short_name)     
+        
+    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)    
     
     if len(pages) == 0:
@@ -78,7 +89,7 @@ def site(request, site_short_name):
     else:
         currentpage = pages[0]
             
-    currentpage = getRenderedPageIfAllowed(currentpage,request,site)    
+    currentpage = getRenderedPageIfAllowed(currentpage,request,site)
     #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
 
@@ -88,16 +99,18 @@ def site_get_standard_vars(site_short_name):
     to save typing.
  
     """    
-
     
     try:
         site = getSite(site_short_name)                  
         pages = getPages(site_short_name)
         metafooterpages = getPages(settings.MAIN_PROJECT_NAME)    
     
-    #TODO: recursive call upon error. Is this horrible coding?
-    except ComicSite.DoesNotExist:        
-        [site, pages, metafooterpages] = site_get_standard_vars(settings.MAIN_PROJECT_NAME)
+    
+    except ComicSite.DoesNotExist:
+        # Site is not known, default to main project.      
+        site = getSite(settings.MAIN_PROJECT_NAME)
+        metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
+        pages = [] #don't show any pages here
             
     return [site, pages, metafooterpages]
         
