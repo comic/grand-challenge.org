@@ -23,9 +23,7 @@ def comic_site(request):
         #fail silently beacuse any exeception here will cause a 500 server error
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
-        
-    
-        
+                    
     if resolution.kwargs.has_key("site_short_name"):
         sitename = resolution.kwargs["site_short_name"]
     elif resolution.kwargs.has_key("project_name"):
