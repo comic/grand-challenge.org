@@ -103,7 +103,7 @@ class ComicframeworkTestCase(TestCase):
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin_")
                     
-        testproject = self.create_comicsite_in_admin(projectadmin,projectname)                
+        testproject = self._create_comicsite_in_admin(projectadmin,projectname)                
         create_page_in_admin(testproject,"testpage1")
         create_page_in_admin(testproject,"testpage2")
         
@@ -289,7 +289,31 @@ class ComicframeworkTestCase(TestCase):
         query_result = User.objects.filter(username=username)        
         return query_result[0] 
 
-    def create_comicsite_in_admin(self,user,short_name,description="test project"):
+    
+    def _try_create_comicsite(self, user, short_name, description="test project"):
+        """ split this off from create_comicsite because sometimes you just
+        want to assert that creation fails
+        """
+        url = reverse("admin:comicmodels_comicsite_add")
+        factory = RequestFactory()
+        storage = DefaultStorage()
+        header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg")
+        data = {"short_name":short_name, 
+            "description":description, 
+            "skin":"fake_test_dir/fakecss.css", 
+            "logo":"fakelogo.jpg", 
+            "header_image":header_image, 
+            "prefix":"form", 
+            "page_set-TOTAL_FORMS":u"0", 
+            "page_set-INITIAL_FORMS":u"0", 
+            "page_set-MAX_NUM_FORMS":u""}
+        success = self._login(user)
+        
+        response = self.client.post(url, data)
+        return response
+    
+
+    def _create_comicsite_in_admin(self,user,short_name,description="test project"):
         """ Create a comicsite object as if created through django admin interface.
         
         """
@@ -301,27 +325,7 @@ class ComicframeworkTestCase(TestCase):
         # because we are creating a comicsite directly, some methods from admin
         # are not being called as they should. Do this manually
         #ad = ComicSiteAdmin(project,admin.site)        
-        url = reverse("admin:comicmodels_comicsite_add")                
-        factory = RequestFactory()
-        
-        
-        storage = DefaultStorage()
-        header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME+"/fakefile2.jpg") 
-        data = {"short_name":short_name,
-                "description":description,
-                "skin":"fake_test_dir/fakecss.css",
-                "logo":"fakelogo.jpg",
-                "header_image": header_image,
-                "prefix":"form",
-                "page_set-TOTAL_FORMS": u"0",
-                "page_set-INITIAL_FORMS": u"0",
-                "page_set-MAX_NUM_FORMS": u""            
-                }
-        
-        
-        success = self._login(user)
-        
-        response = self.client.post(url,data)
+        response = self._try_create_comicsite(user, short_name, description)
         errors = self._find_errors_in_page(response)
                 
         if errors:
@@ -351,7 +355,8 @@ class ComicframeworkTestCase(TestCase):
             return #just log out
         success = self.client.login(username=user.username,password=password)
         self.assertTrue(success, "could not log in as user %s using password %s"
-                        % (user.username,password))        
+                        % (user.username,password))   
+        return success     
 
 
 # =============================================================================
@@ -384,17 +389,6 @@ class CreateProjectTest(ComicframeworkTestCase):
         These cannot be created 
         
         """
-        pass
-        
-    
-    def setUp(self):
-        """ Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
-        """
-        # Create three types of users that exist: Root, can do anything, 
-        # projectadmin, cam do things to a project he or she owns. And logged in
-        # user 
-        
         self.root = User.objects.create_user('root',
                                         'w.s.kerkstra@gmail.com',
                                         'testpassword')        
@@ -408,17 +402,18 @@ class CreateProjectTest(ComicframeworkTestCase):
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin_")
                     
-        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"viewtest")                
-        create_page_in_admin(self.testproject,"testpage1")
-        create_page_in_admin(self.testproject,"testpage2")
+        #self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
+        project_name = "under_score"  
+        response = self._try_create_comicsite(self.projectadmin, 
+                                              project_name)
+    
+            
+        errors = self._find_errors_in_page(response)
         
-        # a user who explicitly signed up to testproject
-        self.participant = self._create_random_user("participant_")
-        self._register(self.participant,self.testproject)
+        self.assertTrue(errors,u"Creating a project called {0} should not be \
+            possible. But is seems to have been created anyway.".format(project_name))
+                
         
-        # a user who only signed up but did not register to any project
-        self.registered_user = self._create_random_user("comicregistered_")
-
 class ViewsTest(ComicframeworkTestCase):
         
     def setUp(self):
@@ -440,7 +435,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username":"user2","email":"ab@cd.com"})
-        testproject = self.create_comicsite_in_admin(user,"user1project")                
+        testproject = self._create_comicsite_in_admin(user,"user1project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")
                 
@@ -474,7 +469,7 @@ class ViewsTest(ComicframeworkTestCase):
         """
         user = self._create_user({"username":"user3","email":"de@cd.com"})
         anotheruser = self._create_random_user(startname="another_user_")
-        testproject = self.create_comicsite_in_admin(user,"user3project")                
+        testproject = self._create_comicsite_in_admin(user,"user3project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")                         
         url = reverse("admin:comicmodels_page_change",
