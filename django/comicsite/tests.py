@@ -82,13 +82,50 @@ class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """ 
     
+    def _create_dummy_project(self,projectname="testproject"):
+        """ Create a project with some pages and users. In part this is 
+        one through admin views, meaning admin views are also tested here.
+        """
+        # Create three types of users that exist: Root, can do anything, 
+        # projectadmin, cam do things to a project he or she owns. And logged in
+        # user 
+        
+        root = User.objects.create_user('root',
+                                        'w.s.kerkstra@gmail.com',
+                                        'testpassword')        
+        root.is_staff = True
+        root.is_superuser = True
+        root.save()
+        
+        # non-root users are created as if they signed up through the project,    
+        # to maximize test coverage.        
+        
+        # A user who has created a project
+        projectadmin = self._create_random_user("projectadmin_")
+                    
+        testproject = self._create_comicsite_in_admin(projectadmin,projectname)                
+        create_page_in_admin(testproject,"testpage1")
+        create_page_in_admin(testproject,"testpage2")
+        
+        # a user who explicitly signed up to testproject
+        participant = self._create_random_user("participant_")
+        self._register(participant,testproject)
+        
+        # a user who only signed up but did not register to any project
+        registered_user = self._create_random_user("comicregistered_")
+        
+        #TODO: How to do this gracefully? 
+        return [testproject,root,projectadmin,participant,registered_user]
+        
+                
+    
     
     def _register(self,user,project):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
         url = reverse("comicsite.views._register", 
-            kwargs={"site_short_name":self.testproject.short_name})
+            kwargs={"site_short_name":project.short_name})
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
@@ -252,7 +289,31 @@ class ComicframeworkTestCase(TestCase):
         query_result = User.objects.filter(username=username)        
         return query_result[0] 
 
-    def create_comicsite_in_admin(self,user,short_name,description="test project"):
+    
+    def _try_create_comicsite(self, user, short_name, description="test project"):
+        """ split this off from create_comicsite because sometimes you just
+        want to assert that creation fails
+        """
+        url = reverse("admin:comicmodels_comicsite_add")
+        factory = RequestFactory()
+        storage = DefaultStorage()
+        header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg")
+        data = {"short_name":short_name, 
+            "description":description, 
+            "skin":"fake_test_dir/fakecss.css", 
+            "logo":"fakelogo.jpg", 
+            "header_image":header_image, 
+            "prefix":"form", 
+            "page_set-TOTAL_FORMS":u"0", 
+            "page_set-INITIAL_FORMS":u"0", 
+            "page_set-MAX_NUM_FORMS":u""}
+        success = self._login(user)
+        
+        response = self.client.post(url, data)
+        return response
+    
+
+    def _create_comicsite_in_admin(self,user,short_name,description="test project"):
         """ Create a comicsite object as if created through django admin interface.
         
         """
@@ -264,27 +325,7 @@ class ComicframeworkTestCase(TestCase):
         # because we are creating a comicsite directly, some methods from admin
         # are not being called as they should. Do this manually
         #ad = ComicSiteAdmin(project,admin.site)        
-        url = reverse("admin:comicmodels_comicsite_add")                
-        factory = RequestFactory()
-        
-        
-        storage = DefaultStorage()
-        header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME+"/fakefile2.jpg") 
-        data = {"short_name":short_name,
-                "description":description,
-                "skin":"fake_test_dir/fakecss.css",
-                "logo":"fakelogo.jpg",
-                "header_image": header_image,
-                "prefix":"form",
-                "page_set-TOTAL_FORMS": u"0",
-                "page_set-INITIAL_FORMS": u"0",
-                "page_set-MAX_NUM_FORMS": u""            
-                }
-        
-        
-        success = self._login(user)
-        
-        response = self.client.post(url,data)
+        response = self._try_create_comicsite(user, short_name, description)
         errors = self._find_errors_in_page(response)
                 
         if errors:
@@ -314,7 +355,8 @@ class ComicframeworkTestCase(TestCase):
             return #just log out
         success = self.client.login(username=user.username,password=password)
         self.assertTrue(success, "could not log in as user %s using password %s"
-                        % (user.username,password))        
+                        % (user.username,password))   
+        return success     
 
 
 # =============================================================================
@@ -339,17 +381,14 @@ ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE =
 
 
 
-
-class ViewsTest(ComicframeworkTestCase):
+class CreateProjectTest(ComicframeworkTestCase):
+    
+    def test_cannot_create_project_with_weird_name(self):
+        """ Expose issue #222 : projects can be created with names which are
+        not valid as hostname, for instance containing underscores. Make sure
+        These cannot be created 
         
-    def setUp(self):
-        """ Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
         """
-        # Create three types of users that exist: Root, can do anything, 
-        # projectadmin, cam do things to a project he or she owns. And logged in
-        # user 
-        
         self.root = User.objects.create_user('root',
                                         'w.s.kerkstra@gmail.com',
                                         'testpassword')        
@@ -363,20 +402,32 @@ class ViewsTest(ComicframeworkTestCase):
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin_")
                     
-        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"viewtest")                
-        create_page_in_admin(self.testproject,"testpage1")
-        create_page_in_admin(self.testproject,"testpage2")
+        #self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
+        project_name = "under_score"  
+        response = self._try_create_comicsite(self.projectadmin, 
+                                              project_name)
+    
+            
+        errors = self._find_errors_in_page(response)
         
-        # a user who explicitly signed up to testproject
-        self.participant = self._create_random_user("participant_")
-        self._register(self.participant,self.testproject)
-        
-        # a user who only signed up but did not register to any project
-        self.registered_user = self._create_random_user("comicregistered_")
-                                        
-        
+        self.assertTrue(errors,u"Creating a project called {0} should not be \
+            possible. But is seems to have been created anyway.".format(project_name))
                 
         
+class ViewsTest(ComicframeworkTestCase):
+        
+    def setUp(self):
+        """ Create some objects to work with, In part this is done through
+        admin views, meaning admin views are also tested here.
+        """
+        #todo: is this ugly? At least there is explicit assignment of vars.
+        # How to do this better? 
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.registered_user] = self._create_dummy_project("viewtest")
+                    
     
     def test_registered_user_can_create_project(self):
         """ A user freshly registered through the project can immediately create
@@ -384,7 +435,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username":"user2","email":"ab@cd.com"})
-        testproject = self.create_comicsite_in_admin(user,"user1project")                
+        testproject = self._create_comicsite_in_admin(user,"user1project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")
                 
@@ -418,7 +469,7 @@ class ViewsTest(ComicframeworkTestCase):
         """
         user = self._create_user({"username":"user3","email":"de@cd.com"})
         anotheruser = self._create_random_user(startname="another_user_")
-        testproject = self.create_comicsite_in_admin(user,"user3project")                
+        testproject = self._create_comicsite_in_admin(user,"user3project")                
         testpage1 = create_page_in_admin(testproject,"testpage1")
         testpage2 = create_page_in_admin(testproject,"testpage2")                         
         url = reverse("admin:comicmodels_page_change",
@@ -514,45 +565,17 @@ class UploadTest(ComicframeworkTestCase):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
-        # Create four types of users that exist: Root, can do anything, 
-        # projectadmin, cam do things to a project he or she owns. Participant can
-        # show some restricted content for a project and upload files,
-        # signup_user can see some pages but not others.
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.signedup_user] = self._create_dummy_project("testproject")
         
-        self.root = User.objects.create_user('root',
-                                      'w.s.kerkstra@gmail.com',
-                                      'testpassword')        
-        self.root.is_staff = True
-        self.root.is_superuser = True
-        self.root.save()
-        
-        
-        # non-root users are created as if they signed up through the project,
-        # to maximize test coverage. 
-               
-        # Creator of a project.                                        
-        self.projectadmin = self._create_random_user("projectadmin_")
-        
-        # The project created by projectadmin 
-        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
-        create_page_in_admin(self.testproject,"testpage1")
-        
-        # user which has pressed the register link for the project, so is 
-        # part of testproject_participants group
-        self.participant = self._create_random_user("participant_")
-        self._register(self.participant,self.testproject)
-        
+         
         self.participant2 = self._create_random_user("participant2_")
         self._register(self.participant2,self.testproject)
                 
-        # user which has only registered at comicframework but has not 
-        # registered for any project
-        self.signedup_user = self._create_random_user("signedup_user_")
-        
-        
-        
-           
-    
+             
     def test_file_upload_page_shows(self):
         """ The /files page should show to admin, signedin and root, but not
         to others
@@ -797,42 +820,15 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
-        # Create four types of users that exist: Root, can do anything, 
-        # projectadmin, cam do things to a project he or she owns. Participant can
-        # show some restricted content for a project and upload files,
-        # signup_user can see some pages but not others.
-        
-        self.root = User.objects.create_user('root',
-                                      'w.s.kerkstra@gmail.com',
-                                      'testpassword')        
-        self.root.is_staff = True
-        self.root.is_superuser = True
-        self.root.save()
-        
-        
-        # non-root users are created as if they signed up through the project,
-        # to maximize test coverage. 
-               
-        # Creator of a project.                                        
-        self.projectadmin = self._create_random_user("projectadmin_")
-        
-        # The project created by projectadmin 
-        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
-        create_page_in_admin(self.testproject,"testpage1")
-        
-        # user which has pressed the register link for the project, so is 
-        # part of testproject_participants group
-        self.participant = self._create_random_user("participant_")
-        self._register(self.participant,self.testproject)
-        
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.signedup_user] = self._create_dummy_project("testproject")
+                 
         self.participant2 = self._create_random_user("participant2_")
         self._register(self.participant2,self.testproject)
-                
-        # user which has only registered at comicframework but has not 
-        # registered for any project
-        self.signedup_user = self._create_random_user("signedup_user_")
-    
-        
+                       
 
     def _extract_download_link(self, response1):
         """ From a page rendering a listfile template tag, return the first
@@ -980,41 +976,16 @@ class ProjectLoginTest(ComicframeworkTestCase):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
-        # Create four types of users that exist: Root, can do anything, 
-        # projectadmin, cam do things to a project he or she owns. Participant can
-        # show some restricted content for a project and upload files,
-        # signup_user can see some pages but not others.
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.signedup_user] = self._create_dummy_project("testproject")
         
-        self.root = User.objects.create_user('root',
-                                      'w.s.kerkstra@gmail.com',
-                                      'testpassword')        
-        self.root.is_staff = True
-        self.root.is_superuser = True
-        self.root.save()
-        
-        
-        # non-root users are created as if they signed up through the project,
-        # to maximize test coverage. 
-               
-        # Creator of a project.                                        
-        self.projectadmin = self._create_random_user("projectadmin_")
-        
-        # The project created by projectadmin 
-        self.testproject = self.create_comicsite_in_admin(self.projectadmin,"testproject")                
-        create_page_in_admin(self.testproject,"testpage1")
-        
-        # user which has pressed the register link for the project, so is 
-        # part of testproject_participants group
-        self.participant = self._create_random_user("participant_")
-        self._register(self.participant,self.testproject)
-        
+         
         self.participant2 = self._create_random_user("participant2_")
         self._register(self.participant2,self.testproject)
                 
-        # user which has only registered at comicframework but has not 
-        # registered for any project
-        self.signedup_user = self._create_random_user("signedup_user_")
-        
     def test_project_login(self):
         
         # see if login for specific project works. This tests the project

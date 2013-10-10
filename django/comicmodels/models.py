@@ -287,14 +287,32 @@ class ProjectLink(object):
 
         return HTML    
 
+
+def validate_nounderscores(value):
+    if "_" in value:
+        raise ValidationError(u"underscores not allowed. The url \
+            '{0}.comicframework.org' would not be valid, please use hyphens (-).".format(value))
+
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
-    short_name = models.SlugField(max_length = 50, default="", help_text = "short name used in url, specific css, files etc. No spaces allowed")
-    skin = models.CharField(max_length = 225, blank=True, help_text = "css file to include throughout this project. relative to project data folder")    
-    description = models.CharField(max_length = 1024, default="", blank=True,help_text = "Short summary of this project, max 1024 characters.")
-    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo for this comicsite in overviews",default="http://www.grand-challenge.org/images/a/a7/Grey.png")
-    header_image = models.ImageField(default="", blank=True, upload_to=giveFileUploadDestinationPath, help_text = "Header which will appear on top of each project page")
+    short_name = models.SlugField(max_length = 50, default="", 
+                                  help_text = "short name used in url, specific"
+                                  " css, files etc. No spaces allowed",
+                                  validators=[validate_nounderscores])
+    skin = models.CharField(max_length = 225, blank=True, 
+                            help_text = "css file to include throughout this"
+                            " project. relative to project data folder")    
+    description = models.CharField(max_length = 1024, default="",
+                                   blank=True,help_text = "Short summary of "
+                                   "this project, max 1024 characters.")
+    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo"
+                           " for this comicsite in overviews"
+                           ,default="http://www.grand-challenge.org/images/a/a7/Grey.png")
+    header_image = models.ImageField(default="", blank=True, 
+                                     upload_to=giveFileUploadDestinationPath,
+                                    help_text = "Header which will appear on"
+                                    " top of each project page")
     
     hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")
     hide_signin = models.BooleanField(default=False, help_text = "Do no show the Sign in / Register link on any page")
