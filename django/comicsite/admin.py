@@ -112,7 +112,7 @@ class ProjectAdminSite(AdminSite):
         urlpatterns += patterns(
             url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
                 wrap(contenttype_views.shortcut)),
-            url(r'^(?P<app_label>\w+)/$',
+            url(r'^(?P<app_label>[\w-]+/$',
                 wrap(self.app_index),
                 name='app_list')
         )
@@ -378,7 +378,7 @@ class PageAdmin(ComicModelAdmin):
             # try to get current project by url TODO: This solution is too specific for page. Should be  a general
             # property of the admin site. But I can't get this right at projectadmin.                    
          
-            match = re.match(r"^/site/(?P<site_short_name>\w+)/admin/.*",request.path)
+            match = re.match(r"^/site/(?P<site_short_name>[\w-]+/admin/.*",request.path)
             if match:
                 site_short_name = match.group("site_short_name")                        
             else:

@@ -426,7 +426,7 @@ class ViewsTest(ComicframeworkTestCase):
          self.root,
          self.projectadmin,
          self.participant,
-         self.registered_user] = self._create_dummy_project("viewtest")
+         self.registered_user] = self._create_dummy_project("view-test")
                     
     
     def test_registered_user_can_create_project(self):
@@ -569,7 +569,7 @@ class UploadTest(ComicframeworkTestCase):
          self.root,
          self.projectadmin,
          self.participant,
-         self.signedup_user] = self._create_dummy_project("testproject")
+         self.signedup_user] = self._create_dummy_project("test-project")
         
          
         self.participant2 = self._create_random_user("participant2_")
@@ -824,7 +824,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
          self.root,
          self.projectadmin,
          self.participant,
-         self.signedup_user] = self._create_dummy_project("testproject")
+         self.signedup_user] = self._create_dummy_project("test-project")
                  
         self.participant2 = self._create_random_user("participant2_")
         self._register(self.participant2,self.testproject)
@@ -980,7 +980,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
          self.root,
          self.projectadmin,
          self.participant,
-         self.signedup_user] = self._create_dummy_project("testproject")
+         self.signedup_user] = self._create_dummy_project("test-project")
         
          
         self.participant2 = self._create_random_user("participant2_")
