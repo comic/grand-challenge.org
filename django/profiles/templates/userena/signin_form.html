@@ -1,4 +1,5 @@
 {% extends 'site_signin.html' %}
+{% load staticfiles %}
 {% load comic_templatetags %}
 {% load i18n %}
 
@@ -19,34 +20,80 @@
     </div>
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
-    <ul class="signinlist">
-        <li><a href="{% url 'socialauth_begin' 'google' %}?next=/projects/">Google</a></li>
-        <li><a href="{% url 'socialauth_begin' 'yahoo' %}?next=/projects/">Yahoo</a></li>
-    </ul>
+    <div id="signincontainer">
+        <ul id="signinlist">
+            <li>
+                <a href="#" id="comicsignin">
+                    <p>Signin using</p>
+                    <img src="{% static "img/openid-logo-comic.png" %}" alt="Signin using COMIC"/>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'socialauth_begin' 'google' %}?next=/projects/">
+                    <p>Signin using</p>
+                    <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'socialauth_begin' 'yahoo' %}?next=/projects/">
+                    <p>Signin using</p>
+                    <img src="{% static "img/openid-logo-yahoo.png" %}" alt="Signin using Yahoo"/>
+                </a>
+            </li>
+        </ul>
+        <div id="signinformcontainer" style="display: none;" >
+            <form action="" method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {{ form.identification.errors }}
+                <input class="required" id="id_{{ form.identification.name }}" maxlength="75" name="{{ form.identification.name }}" type="text" value="{{ form.identification.label }}" />
+                <input class="required" id="id_fakepassword" name="fakepassword" type="text" value="{{ form.password.label }}"/>
+                <input style="display: none;" class="required" id="id_{{ form.password.name }}" name="{{ form.password.name }}" type="password" />
+                <input type="submit" value="{% trans "Signin" %}" />
+                {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
+                <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
+                <p class="signup"><a href="{% url 'comicsite_signup' site.short_name %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
+            </form>
+        </div>
+    </div>
 </div>
-<form action="" method="post">
-  {% csrf_token %}
-  <fieldset>
-    <legend>{% trans "Signin" %}</legend>
-    {{ form.non_field_errors }}
-    {% for field in form %}
-    {{ field.errors }}
-    {% comment %} Displaying checkboxes differently {% endcomment %}
-    {% if field.name == 'remember_me' %}
-    <p class="checkbox">
-    <label for="id_{{ field.name }}">{{ field }} {{ field.label }}</label>
-    </p>
-    {% else %}
-    <p>
-    {{ field.label_tag }}
-    {{ field }}
-    </p>
-    {% endif %}
-    {% endfor %}
-  </fieldset>
-  <input type="submit" value="{% trans "Signin" %}" />
-  <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-  <p class="signup"><a href="{% url 'comicsite_signup' site.short_name %}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
-  {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
-</form>
+<script>
+$("#comicsignin").click(function() {
+    $("#signinformcontainer").slideDown(500);
+});
+
+// Clear the default value of text inputs onFocus
+$("#id_{{ form.identification.name }}").each(function() {
+    $(this).blur(function() {
+        // if input is empty, reset value to default
+        if (this.value.length == 0) {
+            this.value = this.defaultValue;
+            $(this).css("color", "lightgrey");
+        }
+    }).focus(function() {
+        // when input is focussed, clear its contents
+        if (this.value == this.defaultValue) {
+            this.value = "";
+            $(this).css("color", "black");
+        }
+    }).css("color", "lightgrey");
+});
+
+// Swap fakepassword field with the
+$("#id_fakepassword").each(function() {
+    $(this).focus(function() {
+        $(this).hide();
+        $("#id_{{ form.password.name }}").show().focus();
+    });
+}).css("color", "lightgrey");
+
+$("#id_{{ form.password.name }}").each(function() {
+    $(this).blur(function() {
+       if (this.value.length == 0) {
+           $(this).hide();
+           $("#id_fakepassword").show()
+       }
+    });
+});
+</script>
 {% endblock %}

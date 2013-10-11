@@ -21,6 +21,54 @@ ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decor
 .white-box dl dt { background:#eee; width:100px; float:left; font-weight:bold; margin-right:10px; padding:5px; }
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
+/* style for the signin list */
+#signincontainer {
+    margin: 0;
+    padding: 0 0 0 2em;
+}
+ul#signinlist {
+    list-style-type: none;
+    margin: 2px;
+    padding: 0;
+    overflow: hidden;
+}
+ul#signinlist li {
+    display: block;
+    float: left;
+    margin: 2px;
+}
+ul#signinlist li a {
+    display: block;
+    width: 110px;
+    height: 60px;
+    text-decoration: none;
+    color: black;
+    border-style: solid;
+    border-width: 2px;
+    border-color: lightgrey;
+}
+ul#signinlist li a:hover a:active {
+    background-color: black;
+}
+ul#signinlist li a p {
+    margin: 0;
+    padding: 0;
+    color: darkgrey;
+}
+
+p.forgot-password { margin-top: 0.5em; }
+p.forgot-password a {
+    text-decoration: none;
+    font-size: small;
+    color: grey;
+}
+p.signup a {
+    font-weight: bolder;
+    text-decoration: none;
+    font-size: x-large;
+    color: rgb(111, 145, 171);
+}
+
 /* header navigation menu */
 #navMenuContainer { padding-left:0.8ex; height:24px; }
 #navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
@@ -78,7 +126,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 /* extra features for specific tables */
 /* table for displaying numbers and short values from csv*/
 .csvtable td{border:none; text-align: center; vertical-align: middle;}
-.csvtable td.firstcol {text-align:justify;}	
+.csvtable td.firstcol {text-align:justify;}
 .csvtable tr.firstcol {text-align:justify;}
 .csvtable {border:none; width:100%;}
 .csvtable td.notfirstcol {width: 10ex;}
@@ -97,7 +145,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .comictablecontainer {width:80%;}
 
 /* For COMICWebWorkstaion, line style when resizing, and
- prevent MeVis Webtoolkit from hiding all divs 
+ prevent MeVis Webtoolkit from hiding all divs
  */
 .ui-resizable-helper { border: 2px dotted #00F; }
 body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
@@ -115,7 +163,7 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
 
-h2.yearHeader{color:#666666; border-bottom: solid 1px #CCCCCC;}				
+h2.yearHeader{color:#666666; border-bottom: solid 1px #CCCCCC;}
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
@@ -141,32 +189,32 @@ h3{
 }
 
 #header {
-   width: 100%;   
+   width: 100%;
    float: left;
    background-color:#6f91ab;
-   
+
 }
 
 
 #header-content {
-   width: 100%;   
+   width: 100%;
    border:3px solid #dfdfdf;
    border-bottom-style:none;
-   
+
 }
 
 #container {
    width: 100%;
    background-color: #ffffff;
    float: left;
-   
+
 }
 
-/*Extra div to do padding without messing up div container*/  
+/*Extra div to do padding without messing up div container*/
 
 
 #main-content {
-   width: 95ex; /*For better readbility*/   
+   width: 95ex; /*For better readbility*/
    float: left;
 }
 
@@ -179,27 +227,27 @@ h3{
 
 #footer {
    background-color: White;
-   width: 100%;   
-   float: left;   
-   font-size:smaller;   
+   width: 100%;
+   float: left;
+   font-size:smaller;
    margin-top: 1px;
    color: #666666;
    padding-bottom: 2px;
-   
+
 }
-#footer-content {      
+#footer-content {
 
 }
 #footer div
 {
     margin-right:1em;
-    float:left;    
+    float:left;
 }
 
 #footer a
-{    
-    text-decoration:none;  
-    color:inherit;    
+{
+    text-decoration:none;
+    color:inherit;
 }
 
 /*============================= Einde Extra CSS om 2 page layout te testen  ============================================*/
@@ -209,7 +257,7 @@ h3{
 
 
 li.selectedMenuItem
-{    
+{
     /*background-color:White;*/
 }
 
@@ -221,8 +269,8 @@ li.selectedMenuItem
 
 
 #login
-{    
-    float:right;        
+{
+    float:right;
     font-size:small;
     background-color:White;
     padding:0.5ex;
@@ -233,62 +281,62 @@ li.selectedMenuItem
 }
 #headerText
 {
-    margin-left:1em; 
+    margin-left:1em;
     float:left;
 }
 
 .fileCollectionContainer th /*Used in download file menu*/
-{   
+{
     text-align:left;
     padding-right:4em;
 }
 
 .fileCollectionContainer td
-{    
+{
     padding-right:4em;
 }
 
 .editButtonContainer
 {
     height:1px;
-    width:100%;    
+    width:100%;
 }
 
 .editButtonDiv /*Edit this page button */
 {
     font-size:x-small;
     float:right
-    
-                  
+
+
 }
 
 .grayBar
 {
-    background-color: #dfdfdf;          
+    background-color: #dfdfdf;
 }
 .grayBar a
 {
-    text-decoration:none; /*stop menu links going purple underlined*/ 
+    text-decoration:none; /*stop menu links going purple underlined*/
     color:inherit;
 }
 
 .validation-summary-errors
 {
     color:Red;
-      
+
 }
 
 .editor-field
 {
-    
-    
-    
+
+
+
 }
- 
+
  .editor-label
 {
-        
-}    
+
+}
 
 .sideInfo
 {
@@ -298,7 +346,7 @@ li.selectedMenuItem
 #RegistrationForm
 {
     padding-left:2ex; /*align form with text */
-        
+
 }
 
 #TeamUrl, #Email, #ContactPerson, #Affiliation
@@ -310,27 +358,27 @@ li.selectedMenuItem
 {
     color:Red;
     background-color:#ffdfdf;
-    
-    
+
+
 }
 
 .fileCollectionContainer
 {
     margin-bottom:4ex;
-    
-    
+
+
 }
 
 .fileCollectionContainer table
 {
     padding-left: 1ex;
-            
+
 }
 
 .fileCollectionContainer table
 {
     padding-left: 1ex;
-       
+
 }
 .greyedOutText
 {
@@ -340,20 +388,20 @@ li.selectedMenuItem
 .resultsTable
 {
 	width: 100%;
-	
+
 }
 
 .resultsTable th
 {
 	border-bottom: 2px solid #dfdfdf;
 	border-right: 2px solid #dfdfdf;
-	
+
 }
 .resultsTable td
 {
 	border-right: 2px solid #dfdfdf;
-	
-	
+
+
 }
 
 .Score td
@@ -384,7 +432,7 @@ li.selectedMenuItem
 .ResultsOverviewTable .trOdd
 {
 	background-color: #dfdfdf;
-	
+
 
 }
 
@@ -393,7 +441,7 @@ li.selectedMenuItem
 {
     color:Red;
     background-color:#ffdfdf;
-    
+
 }
 
 /*07/10/2011 - used for displaying result screenshots*/
@@ -420,5 +468,5 @@ li.selectedMenuItem
 /*10/10/2011 - So not pad last column because it eats up space*/
 .resultviewerControlsLastColumn
 {
-    
+
 }
