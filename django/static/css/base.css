@@ -69,6 +69,22 @@ p.signup a {
     color: rgb(111, 145, 171);
 }
 
+div.statistics {
+    float: right;
+    background-color: lightgrey;
+    width: 250px;
+    padding: 5px;
+    margin: 10px;
+}
+.statistics h1 {
+    margin:0; padding: 0;
+    font-weight: bold;
+    font-size: large;
+}
+.statistics p {
+    margin: 5px;
+}
+
 /* header navigation menu */
 #navMenuContainer { padding-left:0.8ex; height:24px; }
 #navMenuContainer li { float:left; list-style-type:none; padding:0.5ex 0.5ex; vertical-align:baseline; }
