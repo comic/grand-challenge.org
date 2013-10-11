@@ -16,7 +16,7 @@ from django.utils.html import strip_tags
 from userena.signals import signup_complete
 from comicmodels.signals import new_admin,file_uploaded
 
-    
+
 class ComicSiteException(Exception):
     """ any type of exception for which a django or python exception is not defined """
     def __init__(self, value):
@@ -33,89 +33,89 @@ class ComicSiteException(Exception):
 def set_project_admin_permissions(sender, **kwargs):
     """ Set permissions so a user can enter the admin interface and edit a
     project
-    
+
     """
     user = kwargs['user']
-    
+
     # add this user to the projectadminsgroup, which means user can see and edit standard
     # objects types in admin.
     projectadmingroup = get_or_create_projectadmingroup()
     user.groups.add(projectadmingroup)
-    
-    # set staff status so user can access admin interface. User will still have to 
+
+    # set staff status so user can access admin interface. User will still have to
     # activate through email link before being able to log in at all.
     user.is_staff = True
     user.save()
-                
-    
+
+
 
 def get_or_create_projectadmingroup():
-    """ create the group 'projectadmin' which should have class-level permissions for all 
-    models a project admin can edit. E.g. add/change/delete comicsite, page, 
+    """ create the group 'projectadmin' which should have class-level permissions for all
+    models a project admin can edit. E.g. add/change/delete comicsite, page,
     dropboxfolder. If group does not exists, recreate with default permissions.
     """
     (projectadmins,created) = Group.objects.get_or_create(name='projectadmins')
-    
+
     if created:
         # if projectadmins group did not exist, add default permissions.
         # adding permissions to all models in the comicmodels app.
         appname = 'comicmodels'
         app = get_app(appname)
-        for model in get_models(app):            
-            classname = model.__name__.lower()            
+        for model in get_models(app):
+            classname = model.__name__.lower()
             add_standard_perms(projectadmins,classname,appname)
-        
+
     return projectadmins
-    
+
 
 def add_standard_perms(group,classname,app_label):
     """ convenience function to add add_classname,change_classname,delete_classname
     permissions to permissionsgroup group
-    
+
     """
-    
+
     can_add = Permission.objects.get(codename="add_"+classname, content_type__app_label=app_label)
-    can_change = Permission.objects.get(codename="change_"+classname, 
+    can_change = Permission.objects.get(codename="change_"+classname,
                                         content_type__app_label=app_label)
-    can_delete = Permission.objects.get(codename="delete_"+classname, 
+    can_delete = Permission.objects.get(codename="delete_"+classname,
                                         content_type__app_label=app_label)
-    
+
     group.permissions.add(can_add,can_change,can_delete)
-    
+
 
 # when a user activates account, set permissions. dispatch_uid makes sure the receiver is only
-# registered once.  see https://docs.djangoproject.com/en/dev/topics/signals/ 
+# registered once.  see https://docs.djangoproject.com/en/dev/topics/signals/
 signup_complete.connect(set_project_admin_permissions,dispatch_uid="set_project_\
-                            admin_permissions_reveiver") 
+                            admin_permissions_reveiver")
 
 
 # ======================================= sending notification emails ====================
 
 def send_new_admin_notification_email(sender,**kwargs):
-    
+
     comicsite = kwargs['comicsite']
     new_admin = kwargs['new_admin']
     site = kwargs['site']
     title = 'You are now admin for '+comicsite.short_name
-    
-        
+
+
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     send_templated_email(title, "admin/emails/new_admin_notification_email.txt",kwargs,[new_admin.email]
                         ,"noreply@"+site.domain, fail_silently=False)
-    
-# connect to signal 
+
+# connect to signal
 new_admin.connect(send_new_admin_notification_email,dispatch_uid='send_new_admin_notification_email')
 
 
 def send_file_uploaded_notification_email(sender,**kwargs):
-    
+
     uploader = kwargs['uploader']
-    comicsite = kwargs['comicsite']    
+    comicsite = kwargs['comicsite']
     site = kwargs['site']
     title = "New upload for %s: '%s' " % (comicsite.short_name,kwargs["filename"])
-    admins = User.objects.filter(groups__name=comicsite.admin_group_name(), 
+    admins = User.objects.filter(groups__name=comicsite.admin_group_name(),
                                  is_superuser=False)
-        
+
     if not admins:
         admin_email_adresses = [x[1] for x in settings.ADMINS]
         kwargs['additional_message'] = '<i> Message from COMIC: I could not\
@@ -125,24 +125,24 @@ def send_file_uploaded_notification_email(sender,**kwargs):
         stop getting these messages, set an admin for\
         '+comicsite.short_name+'.</i> <br/><br/>'
     else:
-        kwargs['additional_message'] = ''        
+        kwargs['additional_message'] = ''
         admin_email_adresses = [x.email for x in admins]
-        
+
     send_templated_email(title, "admin/emails/file_uploaded_email.txt",kwargs,
                          admin_email_adresses ,"noreply@"+site.domain,
-                         fail_silently=False)        
-            
-    
-    
-# connect to signal 
+                         fail_silently=False)
+
+
+
+# connect to signal
 file_uploaded.connect(send_file_uploaded_notification_email,
                       dispatch_uid='send_file_uploaded_notification_email')
 
 
 
-def send_templated_email(subject, email_template_name, email_context, recipients, 
+def send_templated_email(subject, email_template_name, email_context, recipients,
                         sender=None,bcc=None, fail_silently=True, files=None):
-    
+
     """
     send_templated_mail() is a wrapper around Django's e-mail routines that
     allows us to easily send multipart (text/plain & text/html) e-mails using
@@ -155,7 +155,7 @@ def send_templated_email(subject, email_template_name, email_context, recipients
     email_context is a dictionary to be used when rendering the template
 
     recipients can be either a string, eg 'a@b.com', or a list of strings.
-    
+
     sender should contain a string, eg 'My Site <me@z.com>'. If you leave it
         blank, it'll use settings.DEFAULT_FROM_EMAIL as a fallback.
 
@@ -169,22 +169,22 @@ def send_templated_email(subject, email_template_name, email_context, recipients
         eg ('/tmp/file1.txt', '/tmp/image.png')
 
     """
-   
+
     c = Context(email_context)
     if not sender:
         sender = settings.DEFAULT_FROM_EMAIL
 
     template = loader.get_template(email_template_name)
-    
+
     text_part = strip_tags(template.render(c))
     html_part = template.render(c)
-    
+
     if type(recipients) == str:
         if recipients.find(','):
             recipients = recipients.split(',')
     elif type(recipients) != list:
         recipients = [recipients,]
-        
+
     msg = EmailMultiAlternatives(subject,
                                 text_part,
                                 sender,
