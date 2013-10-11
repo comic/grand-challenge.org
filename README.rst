@@ -77,3 +77,6 @@ Here is a short list of urls which are useful to know:
 - /accounts/signup # Register an account
 - /accounts/singout # Signout the current user
 
+Troubleshooting.
+-----------------
+- Pip does not install matplotlib correctly -> You can try an installer from the matplotlib website: http://matplotlib.org/downloads.html
