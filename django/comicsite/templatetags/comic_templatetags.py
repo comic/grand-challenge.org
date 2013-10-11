@@ -18,12 +18,13 @@ import StringIO
 import sys
 import traceback
 import logging
+from collections import Counter
 
 from exceptions import Exception
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-        
+
 
 
 from django import template
@@ -32,6 +33,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 from django.core.urlresolvers import NoReverseMatch
 from django.contrib.auth.models import Group, User, Permission
+from profiles.models import UserProfile
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
 from django.utils.html import escape
@@ -49,7 +51,7 @@ from dataproviders.ProjectExcelReader import ProjectExcelReader
 #---------#---------#---------#---------#---------#---------#---------#---------
 # This is needed to use the @register.tag decorator
 #register = template.Library()
-from comicsite.templatetags import library_plus 
+from comicsite.templatetags import library_plus
 register = library_plus.LibraryPlus()
 
 logger = logging.getLogger("django")
@@ -73,20 +75,20 @@ def parseKeyValueToken(token):
 def get_usagestr(function_name):
     """
     Return usage string for a registered template tag function. For displaying
-    this info in errors or tag overviews  
-    """    
+    this info in errors or tag overviews
+    """
     if register.usagestrings.has_key(function_name):
         usagestr = register.usagestrings["dataset"]
     else:
         usagestr = ""
-    
+
     return sanitize_django_items(usagestr)
 
 
 @register.tag(name="taglist",
-              usagestr="""              
+              usagestr="""
               <% taglist %> :
-              show all available tags 
+              show all available tags
                        """
               )
 def get_taglist(parser, token):
@@ -97,18 +99,18 @@ def get_taglist(parser, token):
 
 def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
-    
+
     """
     if hasattr(settings,"SUBDOMAIN_IS_PROJECTNAME"):
         subdomain_is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
-        if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):                         
+        if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):
             msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
              but 'MAIN_HOST_NAME' was not. These belong together. Please
              add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
             raise ImproperlyConfigured(msg)
     else:
         subdomain_is_projectname = False
-    
+
     return subdomain_is_projectname
 
 
@@ -117,23 +119,23 @@ def subdomain_is_projectname():
 def url(parser, token):
     """ Overwrite built in url tag. It works identicaly, except that where possible
     it will use subdomains to refer to a project instead of a full url path.
-     
-    For example, if the subdomain is vessel12.domain.com it will refer to a page 
+
+    For example, if the subdomain is vessel12.domain.com it will refer to a page
     'details' as /details/ instead of /site/vessel12/details/
 
-    REQUIREMENTS:  
-    * MIDDLEWARE_CLASSES in settings should contain 
+    REQUIREMENTS:
+    * MIDDLEWARE_CLASSES in settings should contain
       'comicsite.middleware.subdomain.SubdomainMiddleware'
-    
-    * These keys should be in the django settings file: 
+
+    * These keys should be in the django settings file:
       SUBDOMAIN_IS_PROJECTNAME = True
       MAIN_HOST_NAME = <your site's hostname>
-    
+
     * APACHE url rewriting should be in effect to rewrite subdomain to
       site/project/. To get you started: the following apache config does this
-      for the domain 'devcomicframework.org' 
-      (put this in your apache config file) 
-            
+      for the domain 'devcomicframework.org'
+      (put this in your apache config file)
+
         RewriteEngine   on
         RewriteCond $1 .*/$
         RewriteCond $1 !^/site/.*
@@ -142,56 +144,56 @@ def url(parser, token):
         RewriteCond %{HTTP_HOST} ^([^.]+)\.devcomicframework\.org$
         RewriteRule (.*) /site/%1$1 [PT]
 
-    
+
     TODO: turn on and off this behaviour in settings, maybe explicitly define
     base domain to also make it possible to use dots in the base domain.
-          
+
     """
-    
-    orgnode = defaulttags.url(parser,token)        
+
+    orgnode = defaulttags.url(parser,token)
     return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
 
 class comic_URLNode(defaulttags.URLNode):
-        
+
     def render(self, context):
-                                         
+
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
-        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()        
-        
+        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
+
         #get the url the default django method would give.
-        url = super(comic_URLNode, self).render(context)            
-        
-        
+        url = super(comic_URLNode, self).render(context)
+
+
         url = url.lower()
-        
-        if subdomain_is_projectname:            
+
+        if subdomain_is_projectname:
             if hasattr(context['request'],"subdomain"):
                 subdomain = context['request'].subdomain
             else:
                 subdomain = ""
-    
+
             if subdomain == "":
                 #we are on the regular domain, do not change any links
                 return url
             else:
                 # Interpret subdomain as a comicsite. What would normally be the
                 # path to this comicsite?
-                
-                
+
+
                 path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()
-                                       
+
                 if url.startswith(path_to_site):
                     return url.replace(path_to_site,"/")
                 else:
-                    # this url cannot use the domain name shortcut, so it is 
+                    # this url cannot use the domain name shortcut, so it is
                     # probably meant as a link the main comicframework site.
                     # in that case hardcode the domain to make sure the sub-
                     # domain is gone after following this link
-                    return settings.MAIN_HOST_NAME + url                                    
+                    return settings.MAIN_HOST_NAME + url
         else:
             return url
-                    
-        
+
+
 
 
 class TagListNode(template.Node):
@@ -203,25 +205,25 @@ class TagListNode(template.Node):
 
     def render(self, context):
         html_out = "<table class =\"comictable taglist\">"
-                
+
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
-        for key,val in register.usagestrings.iteritems():                        
+        for key,val in register.usagestrings.iteritems():
             html_out = html_out + "<tr class=\"%s\"><td>%s</td><td>%s</td></tr>\
                     " %(rowclass, key, sanitize_django_items(val))
             if rowclass == "odd":
                 rowclass = "even"
-            else: 
+            else:
                 rowclass = "odd"
-                
-        html_out = html_out + "</table>"    
-        
+
+        html_out = html_out + "</table>"
+
         return html_out
 
 def sanitize_django_items(string):
     """
     remove {{,{% and other items which would be rendered as tags by django
-    """    
+    """
     out = string
     out = out.replace("{{","&#123;&#123;")
     out = out.replace("}}","&#125;&#125;")
@@ -229,7 +231,7 @@ def sanitize_django_items(string):
     out = out.replace("%}","&#37;&#125;")
     out = out.replace(">","&#62;")
     out = out.replace("<","&#60;")
-    out = out.replace("\n","<br/>")    
+    out = out.replace("\n","<br/>")
     return out
 
 
@@ -272,10 +274,10 @@ class FileListNode(template.Node):
         self.filefolder = filefolder
 
 
-    def render(self, context):            
+    def render(self, context):
         dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
         images = dp.getImages()
-                        
+
         htmlOut = "available files:" + ", ".join(images)
         return htmlOut
 
@@ -318,11 +320,11 @@ def render_dataset(parser, token):
 class DatasetNode(template.Node):
     """ Show list of linked files for given dataset
     """
-    
+
     usagestr = """{% dataset <datasetname>,<comicsitename> %}
                   Tag usage: {% dataset <datasetname>,<comicsitename> %}. <comicsitename> can be\
                   omitted, defaults to current site"""
-    
+
     def __init__(self, dataset_title, project_name):
         self.dataset_title = dataset_title
         self.project_name = project_name
@@ -373,7 +375,7 @@ class DatasetNode(template.Node):
 
 @register.tag(name="listdir",
               usagestr= """Tag usage: {% listdir path:string  extensionFilter:ext1,ext2,ext3 %}
-              
+
               path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.
               extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
               """
@@ -382,7 +384,7 @@ def listdir(parser, token):
     """ show all files in dir as a downloadable list"""
 
     usagestr = get_usagestr("listdir")
-    
+
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -413,17 +415,17 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        
+
         project_name = context.page.comicsite.short_name
-        projectpath = project_name + "/" + self.path  
+        projectpath = project_name + "/" + self.path
         storage = DefaultStorage()
-            
+
         try:
-            filenames = storage.listdir(projectpath)[1]        
-        
+            filenames = storage.listdir(projectpath)[1]
+
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
-        
+
 
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():
@@ -436,16 +438,16 @@ class ListDirNode(template.Node):
 
         links = []
         for filename in filenames:
-            
+
             downloadlink = reverse('project_serve_file',
                                     kwargs={'project_name':project_name,
                                             'path':self.path+"/"+filename})
-                                 
+
             links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
 
 
         htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-        
+
         return htmlOut
 
 
@@ -476,7 +478,7 @@ def render_visualization(parser, token):
     return VisualizationNode(args)
 
 class VisualizationNode(template.Node):
-    """ 
+    """
     Renders the ComicWebWorkstation using MeVisLab
     """
 
@@ -488,8 +490,8 @@ class VisualizationNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        htmlOut = """         
-          
+        htmlOut = """
+
           <div class="COMICWebWorkstationButtons">
               <button id="comicViewerSetSmallSize%(id)d"> small </button>
               <button id="comicViewerSetLargeSize%(id)d"> large </button>
@@ -508,21 +510,21 @@ class VisualizationNode(template.Node):
                              'height':%(height)s,
                              'application': 'COMICWebWorkstation_1.2',
                              'webSocketHostName':%(webSocketHostName)s,
-                             'webSocketPort':%(webSocketPort)s,                             
+                             'webSocketPort':%(webSocketPort)s,
                              'urlToMLABRoot': "/static/js" };
               fmeViewer%(id)d.init(options);
             //});
-            
+
             $("#comicViewerSetSmallSize%(id)d").click(function(){
-                fmeViewer%(id)d.setSmallSize()            
+                fmeViewer%(id)d.setSmallSize()
             })
             $("#comicViewerSetLargeSize%(id)d").click(function(){
-                fmeViewer%(id)d.setLargeSize()            
+                fmeViewer%(id)d.setLargeSize()
             })
             $("#comicViewerFullscreenToggle%(id)d").click(function(){
-                fmeViewer%(id)d.gotoFullscreen()            
+                fmeViewer%(id)d.gotoFullscreen()
             })
-            
+
           </script>
         """ % ({"id": id(self),
                 "width": self.args.get("width", "600"),
@@ -607,28 +609,28 @@ class DropboxNode(template.Node):
 
 
 def add_quotes(string):
-    """ add quotes to string if not there 
-    """    
+    """ add quotes to string if not there
+    """
     if string.startswith("'") or string.startswith("'"):
         return string
     else:
         return "'"+ string +"'"
-    
+
 def strip_quotes(string):
-    """ strip outermost quotes from string if there 
+    """ strip outermost quotes from string if there
     """
-    
+
     stripped = string
     if string.startswith("'") or string.startswith("'"):
         stripped = stripped[1:]
     if string.endswith("'") or string.endswith("'"):
         stripped = stripped[:-1]
-    
+
     return stripped
-    
+
 def in_list(needles,haystack):
     """ return True if any of the strings in string array needles is in haystack
-    
+
     """
     for needle in needles:
         if needle in haystack:
@@ -638,16 +640,16 @@ def in_list(needles,haystack):
 
 def inlist(needles,haystack):
     """ Return true if any of the items in list needles is in haystack
-     
+
     """
     for needle in needles:
         if needle in haystack:
             return True
-    
+
     return False
-        
-    
-    
+
+
+
 # {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
@@ -668,21 +670,21 @@ def insert_file(parser, token):
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
-    else:                        
-        args = {}                
+    else:
+        args = {}
         filename = all_args[0]
         if inlist(["../","~"],filename):
-             error_message = "filename '%s' contains ../ or ~. Going up the directory tree is not allowed." %filename  
+             error_message = "filename '%s' contains ../ or ~. Going up the directory tree is not allowed." %filename
              return TemplateErrorNode(error_message)
-        
-        args["file"] = add_quotes(filename) 
+
+        args["file"] = add_quotes(filename)
 
     replacer = HtmlLinkReplacer()
     return InsertFileNode(args, replacer, parser)
 
 
 class InsertFileNode(template.Node):
-    def __init__(self, args, replacer,parser):        
+    def __init__(self, args, replacer,parser):
         self.args = args
         self.replacer = replacer
         self.parser = parser
@@ -715,38 +717,38 @@ class InsertFileNode(template.Node):
         # This feels quite powerful but also messy. Is this proper? Redeeming fact:
         # One can only access files inside DROPBOX_ROOT..
         # TODO: does accessing a file "..\..\..\..\allyoursecrets.txt" work?
-            
+
         # context["request"].GET contains a queryDict of all url parameters.
 
         # the token (parameter) given to this tag can be one of three types:
-        # * a raw filename like "stuff.html" or "results/table1.txt"        
+        # * a raw filename like "stuff.html" or "results/table1.txt"
         # * a filname containing a variable like "results/{{teamid}}/table1.txt"
         # * a django template variabel like "site.short_name"
         # Find out what type it is:
         token = self.args['file']
-                
-        
+
+
         # If it contains any / or {{ resolving as django var
         # is going to throw an error. Prevent unneeded exception, just skip
         # rendering as var in that case.
-        filename_resolved = ""                        
-        if not in_list(["{","}","\\","/"],token):            
+        filename_resolved = ""
+        if not in_list(["{","}","\\","/"],token):
             filter = self.parser.compile_filter(strip_quotes(token))
             filename_resolved = filter.resolve(context)
-          
+
         # if resolved filename is empty, resolution failed, just treat this
         # param as a filepath
         if filename_resolved == "":
             filename = strip_quotes(token)
         else:
             filename = filename_resolved
-                
-        # if there are {{}}'s in there, try to substitute this with url 
+
+        # if there are {{}}'s in there, try to substitute this with url
         # parameter given in the url
-        
+
         filename = self.substitute(filename, context["request"].GET.items())
-                    
-        # If any {{parameters}} are still in filename they were not replaced. 
+
+        # If any {{parameters}} are still in filename they were not replaced.
         # This filename is missing information, show this as error text.
         if re.search("{{\w+}}", filename):
 
@@ -758,24 +760,24 @@ class InsertFileNode(template.Node):
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
-        
-        project_name = context["site"].short_name        
+
+        project_name = context["site"].short_name
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
-        
-        storage = DefaultStorage()                        
-        try:            
+
+        storage = DefaultStorage()
+        try:
             contents = storage.open(filepath, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
-        
+
         # TODO check content safety
-        
+
         # For some special pages like login and signup, there is no current page
         # In that case just don't try any link rewriting
-                
+
         # TODO: here confused coding comes to light: I need to have the page
         # object that this template tag is on in order to process it properly.
-        # I use both the element .page, added by 
+        # I use both the element .page, added by
         # ComicSiteRequestContext, and a key 'currentpage' added by the view.
         # I think both are not ideal, and should be rewritten so all template
         # tags are implicitly passed page (and project) by default. It think
@@ -787,12 +789,12 @@ class InsertFileNode(template.Node):
             currentpage = context.page
         else:
             currentpage = None
-        
-                        
-        if currentpage:        
+
+
+        if currentpage:
             # any relative link inside included file has to be replaced to make it work within the COMIC
             # context.
-            set 
+            set
             base_url = reverse('comicsite.views.insertedpage',
                                 kwargs={'site_short_name':currentpage.comicsite.short_name,
                                         'page_title':currentpage.title,
@@ -802,13 +804,13 @@ class InsertFileNode(template.Node):
             # nice.
             base_url = base_url[:-7]  # remove "remove/" from baseURL
             current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
-    
-    
+
+
             replaced = self.replacer.replace_links(contents,
                                                    base_url,
                                                    current_path)
-            
-            html_out = replaced    
+
+            html_out = replaced
             # rewrite relative links
         else:
             html_out = contents
@@ -900,7 +902,7 @@ class InsertGraphNode(template.Node):
 
         project_name = context.page.comicsite.short_name
         filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename_clean)
-        
+
         storage = DefaultStorage()
         try:
             contents = storage.open(filename, "r").read()
@@ -1026,7 +1028,7 @@ def render_FROC(filename):
     """
 
     has_header = True
-    table = []    
+    table = []
     storage = DefaultStorage()
     f = storage.open(filename, 'r')
     csvreader = csv.reader(f)
@@ -1193,7 +1195,7 @@ def render_anode09_table(filename):
 
     # FIXME: create a temporary solution to including javascript and css with template tags
     script = """<script type="text/javascript">
-                                            
+
                         $('#%s').dataTable({
                             "bJQueryUI": true,
                             "sPaginationType": "full_numbers",
@@ -1203,7 +1205,7 @@ def render_anode09_table(filename):
                             "bInfo": false,
                             "bAutoWidth": false
                         });
-                    
+
             </script>""" % table_id
 
 
@@ -1222,7 +1224,7 @@ def array_to_table_row(rowvalues, trclass=""):
         if type(value) is float:
             output = output + "<td>%.3f</td>" % (value)
         else:
-            output = output + "<td>%s</td>" % (str(value))        
+            output = output + "<td>%s</td>" % (str(value))
     output = output + "</tr>"
     return output
 
@@ -1256,19 +1258,19 @@ def parse_php_arrays(filename):
         for var in phpvars:
            result = phpvar.search(var)
 
-           #TODO Log these messages as info 
+           #TODO Log these messages as info
            if result == None :
                msg = "Could not match regex pattern '%s' to '%s'\
                                     " % (phpvar.pattern, var)
                continue
-           
-           
+
+
            if len(result.groups()) != 2:
                msg = "Expected to find  varname and content,\
                       but regex '%s' found %d items:%s " % (phpvar.pattern, len(result.groups()),
                                                               "[" + ",".join(result.groups()) + "]")
                continue
-               
+
 
            (varname, varcontent) = result.groups()
 
@@ -1351,7 +1353,7 @@ class AllProjectsNode(template.Node):
         for project in self.projects:
             html += self.project_summary_html(project)
         return html
-    
+
     def project_summary_html(self,project):
         if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
             protocol,domainname = settings.MAIN_HOST_NAME.split("//")
@@ -1362,9 +1364,9 @@ class AllProjectsNode(template.Node):
 
 @register.tag(name="all_projectlinks")
 def render_all_projectlinks(parser, token):
-    """ Render an overview of all projects including all links to external 
-    projects and challenges 
-    
+    """ Render an overview of all projects including all links to external
+    projects and challenges
+
     """
 
     try:
@@ -1384,64 +1386,64 @@ class AllProjectLinksNode(template.Node):
 
     def render(self, context):
         projectlinks = []
-        
+
         for project in self.projects:
-            projectlinks.append(project.to_projectlink())            
-                                
-        projectlinks += self.read_grand_challenge_projectlinks()            
-        
-        
+            projectlinks.append(project.to_projectlink())
+
+        projectlinks += self.read_grand_challenge_projectlinks()
+
+
         html = self.project_links_per_year(projectlinks)
-        
+
         #html = ""
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
-        
-                                        
-        html = "<ul>" + html + "</ul>"                
-        
+
+
+        html = "<ul>" + html + "</ul>"
+
         return html
-    
+
     def project_links_per_year(self,projectlinks):
         """ Create html to show each projectlink with subheadings per year sorted
         by diminishing year
-    
+
         """
         #go throught all projectlinks and bin per year
-        
+
         years = {}
-        
+
         for projectlink in projectlinks:
             year = projectlink.date.year
             if years.has_key(year):
                 years[year].append(projectlink)
             else:
                 years[year] = [projectlink]
-            
-        
+
+
         years = years.items()
         years = sorted(years,key=lambda x: x[0],reverse=True)
-        
+
         html = ""
-        for year in years:            
+        for year in years:
             html += "<h2 class ='yearHeader' id = '%i'><a class ='yearHeaderAnchor'>%i</a></h2>" % (year[0],year[0])
             html += "\n".join([link.render_to_html() for link in year[1]])
-            
+
         return html
-        
-        
-            
+
+
+
     def project_summary_html(self,project):
-        
+
         if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
             protocol,domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" +project.short_name +"."+ domainname
             html = comicsite.views.comic_site_to_grand_challenge_html(project,url)
         else:
             html = comicsite.views.comic_site_to_grand_challenge_html(project)
-        
-        return html 
-    
+
+        return html
+
     def read_grand_challenge_projectlinks(self):
         filename = "challengestats.xls"
         project_name = settings.MAIN_PROJECT_NAME
@@ -1450,13 +1452,13 @@ class AllProjectLinksNode(template.Node):
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:
-            
+
             logger.warning("Could not read any projectlink information from"
                            " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
         return projectlinks
-    
-        
+
+
 
 
 
@@ -1585,3 +1587,58 @@ def hasImgExtension(filename):
 def makeErrorMsgHtml(text):
      errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(text) + " </span></p>"
      return errorMsgHTML;
+
+
+@register.tag(name="project_statistics")
+def display_project_statistics(parser, token):
+    """ Parser for the project statistics tag.
+    """
+    return ProjectStatisticsNode()
+
+
+class ProjectStatisticsNode(template.Node):
+    def __init__(self):
+        pass
+
+    def render(self, context):
+        project_name = context.page.comicsite.short_name
+
+        snippet_header = "<div class='statistics'>"
+        snippet_footer = "</div>"
+
+        # Get the users belonging to this project
+        perm = Group.objects.get(name='{}_participants'.format(project_name))
+        users = User.objects.filter(groups=perm).distinct()
+        countries = [u.get_profile().get_country_display() for u in users]
+        hist_countries = Counter(countries)
+        chart_data = [['Country', '#Participants']]
+        for key, val in hist_countries.iteritems():
+            chart_data.append([str(key), val])
+
+        snippet_geochart = """
+        <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+        <script type='text/javascript'>
+            google.load('visualization', '1', {{'packages': ['geochart']}});
+            google.setOnLoadCallback(drawRegionsMap);
+            function drawRegionsMap() {{
+                var data = google.visualization.arrayToDataTable(
+                {data}
+                );
+                var options = {{}};
+                var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+                chart.draw(data, options);
+            }};
+        </script>
+        <div id="chart_div" style="width: 100%; height: 170px;"></div>
+        """.format(data=chart_data)
+
+        snippet = """
+        <h1>Statistics</h1><br>
+
+        <p># of users: {num_users}</p>
+
+        {geochart}
+
+        """.format(num_users=len(users), geochart=snippet_geochart)
+
+        return snippet_header + snippet + snippet_footer
