@@ -10,6 +10,7 @@ REDIRECT_FIELD_NAME = 'next'
 
 #FIXME: quick-n-dirty implementation to make things work for social-auth login redirect handling.
 
+
 def profile(request):
     """
     Redirect to the profile page of the currently signed in user.
@@ -20,6 +21,7 @@ def profile(request):
         return redirect('/accounts/'+request.user.username)
     else:
         return redirect('/accounts/signin')
+
 
 def profile_edit(request):
     """
@@ -32,4 +34,3 @@ def profile_edit(request):
         return redirect('/accounts/'+request.user.username+'/edit')
     else:
         return redirect('accounts/signin')
-    
