@@ -38,13 +38,13 @@ urlpatterns = patterns('',
             
     url(r'^(?P<site_short_name>[\w-]+)/files/$','comicmodels.views.upload_handler'),
             
-    url(r'^(?P<project_name>\w+)/serve/(?P<path>.+)/$','filetransfers.views.serve',name="project_serve_file"),
+    url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$','filetransfers.views.serve',name="project_serve_file"),
     
     url(r'^(?P<site_short_name>[\w-]+)/_register/$','comicsite.views._register'),
     
     url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$','comicsite.views.pagesource'),
     
-    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/db/(?P<dropboxname>\w+)/(?P<dropboxpath>.+)/$','comicsite.views.dropboxpage'),
+    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/db/(?P<dropboxname>[\w-]+)/(?P<dropboxpath>.+)/$','comicsite.views.dropboxpage'),
     
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/(?P<dropboxpath>.+)/$','comicsite.views.insertedpage'),
     
