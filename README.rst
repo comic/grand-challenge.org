@@ -79,4 +79,5 @@ Here is a short list of urls which are useful to know:
 
 Troubleshooting.
 -----------------
-- Pip does not install matplotlib correctly -> You can try an installer from the matplotlib website: http://matplotlib.org/downloads.html
+- Pip does not install matplotlib correctly -> You can try an installer from the matplotlib website: http://matplotlib.org/downloads.html. After running the installer, you need to install the pyparsing module using
+		pip install pyparsing 
