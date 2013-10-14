@@ -46,6 +46,7 @@
                 {% csrf_token %}
                 {{ form.non_field_errors }}
                 {{ form.identification.errors }}
+                {{ form.password.errors }}
                 <input class="required" id="id_{{ form.identification.name }}" maxlength="75" name="{{ form.identification.name }}" type="text" value="{{ form.identification.label }}" />
                 <input class="required" id="id_fakepassword" name="fakepassword" type="text" value="{{ form.password.label }}"/>
                 <input style="display: none;" class="required" id="id_{{ form.password.name }}" name="{{ form.password.name }}" type="password" />
@@ -61,6 +62,10 @@
 $("#comicsignin").click(function() {
     $("#signinformcontainer").slideDown(500);
 });
+
+if ('{{ form.non_field_errors }}' != '') {
+    $("#signinformcontainer").show();
+}
 
 // Clear the default value of text inputs onFocus
 $("#id_{{ form.identification.name }}").each(function() {
@@ -95,5 +100,6 @@ $("#id_{{ form.password.name }}").each(function() {
        }
     });
 });
+
 </script>
 {% endblock %}
