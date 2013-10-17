@@ -40,7 +40,7 @@ class MockStorage(FileSystemStorage):
                     "here is the content of fakecss" 
                     "<somecss>{% insert_file "+FAKE_DIRS[1]+"/fakecss.css %} </somecss>and a "
                     "non-existant include: <nonexistant>{% insert_file /nothing/nonexistant.txt %}</nonexistant> Also"
-                    " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")
+                    " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")                  
                   ]
         
     def __init__(self):
@@ -92,6 +92,13 @@ class MockStorage(FileSystemStorage):
         
         return mockfile
     
+    def add_fake_file(self,filename,content):
+        """ This will appear to exist in folder /public_html. Content will be 
+        returned when opening this file.
+        
+        """
+        self.FAKE_FILES.append(fake_file(filename,content))
+        
     
     def delete(self, name):
         pass
