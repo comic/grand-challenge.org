@@ -29,6 +29,7 @@ from comicsite.views import _register
 from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
 from profiles.forms import SignupFormExtra
+from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
 
 
 def get_or_create_user(username,password):
@@ -73,8 +74,12 @@ def find_text_between(start,end,haystack):
          
         """
         found = re.search(start+'(.*)'+end,haystack,re.IGNORECASE)
-        return found.group(1)    
-
+                
+        if found:
+            return found.group(1)
+        else:
+            raise Exception("There is no substring starting with '{}', ending"
+                            " with '{}' in content '{}' ".format(start,end,haystack))
 
         
 
@@ -556,7 +561,68 @@ class ViewsTest(ComicframeworkTestCase):
         "'%s' to give 404, instead found %s"%(non_existant_url,response.status_code))
             
     
+class LinkReplacerTest(ComicframeworkTestCase):
+    """ Tests module which makes sure relative/absolute links in included files
+    will point to the right places.  
+    """
     
+    def setUp(self):
+        """ Create some objects to work with, In part this is done through
+        admin views, meaning admin views are also tested here.
+        """
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.signedup_user] = self._create_dummy_project("linkreplacer-test")
+
+        self.replacer = HtmlLinkReplacer()
+        
+        
+    
+    def assert_substring_in_string(self,substring,string):
+        self.assertTrue(substring in string,
+                        "expected substring '{}' ,was not found in {}".format(string,string))
+        
+    
+    def test_replace_links(self):
+        
+        from django.core.files.storage import default_storage
+        
+        default_storage.add_fake_file("fakeincludeurls.html","<relativelink><a href = 'relative.html'>link</a><endrelativelink>" 
+                                                             "<pathrelativeink><a href = 'folder1/relative.html'>link</a><endpathrelativelink>"
+                                                             "<moveuplink><a href = '../relative.html'>link</a><endmoveuplink>"
+                                                             "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>")
+                            
+        content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"                
+        insertfiletagpage = create_page_in_admin(self.testproject,"testincludefiletagpage",content)
+                    
+        response = self._test_page_can_be_viewed(self.signedup_user,insertfiletagpage)
+            
+        
+        
+        # Extract rendered content from included file, see if it has been rendered
+        # In the correct way
+        
+                                                   
+        relative = find_text_between("<relativelink>","<endrelativelink>",response.content)
+        pathrelativelink = find_text_between("<pathrelativeink>","<endpathrelativelink>",response.content)
+        moveuplink = find_text_between("<moveuplink>","<endmoveuplink>",response.content)
+        absolute = find_text_between("<absolute>","<endabsolute>",response.content)
+        
+        pdb.set_trace()
+        
+        relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
+        pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
+        moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/relative.html'
+        absolute_expected = 'href="http://www.hostname.com/somelink.html'
+        
+        self.assert_substring_in_string(relative_expected,relative)
+        self.assert_substring_in_string(pathrelativelink_expected,pathrelativelink)
+        self.assert_substring_in_string(moveuplink_expected,moveuplink)
+        self.assert_substring_in_string(absolute_expected,absolute)
+            
+
     
 class UploadTest(ComicframeworkTestCase):
     
