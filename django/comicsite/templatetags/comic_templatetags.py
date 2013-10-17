@@ -794,7 +794,7 @@ class InsertFileNode(template.Node):
         if currentpage:
             # any relative link inside included file has to be replaced to make it work within the COMIC
             # context.
-            set
+            
             base_url = reverse('comicsite.views.insertedpage',
                                 kwargs={'site_short_name':currentpage.comicsite.short_name,
                                         'page_title':currentpage.title,
@@ -804,8 +804,7 @@ class InsertFileNode(template.Node):
             # nice.
             base_url = base_url[:-7]  # remove "remove/" from baseURL
             current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
-
-
+            
             replaced = self.replacer.replace_links(contents,
                                                    base_url,
                                                    current_path)

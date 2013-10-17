@@ -582,7 +582,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
     
     def assert_substring_in_string(self,substring,string):
         self.assertTrue(substring in string,
-                        "expected substring '{}' ,was not found in {}".format(string,string))
+                        "expected substring '{}' ,was not found in {}".format(substring,string))
         
     
     def test_replace_links(self):
@@ -591,7 +591,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
         
         default_storage.add_fake_file("fakeincludeurls.html","<relativelink><a href = 'relative.html'>link</a><endrelativelink>" 
                                                              "<pathrelativeink><a href = 'folder1/relative.html'>link</a><endpathrelativelink>"
-                                                             "<moveuplink><a href = '../relative.html'>link</a><endmoveuplink>"
+                                                             "<moveuplink><a href = '../moveup.html'>link</a><endmoveuplink>"
                                                              "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>")
                             
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"                
@@ -609,12 +609,11 @@ class LinkReplacerTest(ComicframeworkTestCase):
         pathrelativelink = find_text_between("<pathrelativeink>","<endpathrelativelink>",response.content)
         moveuplink = find_text_between("<moveuplink>","<endmoveuplink>",response.content)
         absolute = find_text_between("<absolute>","<endabsolute>",response.content)
-        
-        pdb.set_trace()
+                
         
         relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
         pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-        moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/relative.html'
+        moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
         
         self.assert_substring_in_string(relative_expected,relative)
