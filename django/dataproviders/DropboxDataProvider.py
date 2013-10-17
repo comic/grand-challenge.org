@@ -91,8 +91,10 @@ class HtmlLinkReplacer():
         elif re.match('\w',url): # match matches start of string, \w = any alphanumeric
               url = baseURL + currentpath + url
         
+        
+            
         # go up path if ../ are in link
-        else:
+        else:            
             if currentpath.endswith("/"):
                 currentpath = currentpath[:-1] #remove trailing slash to make first path.dirname actually go
                                                #up one dir 
@@ -112,8 +114,12 @@ class HtmlLinkReplacer():
                 if not currentpath == "":
                     currentpath = currentpath + "/"
             url =  baseURL + currentpath + url
-                    
-        url = url.replace("//","/") # remove double slashes because this can mess up django's url system 
+        
+        
+         
+        url = url.replace("//","/") # remove double slashes because this can mess up django's url system
+        url = re.sub("http:/(?=\w)","http://",url) # but this also removes double slashes in http://.  Reverse this.
+                
         
         return url
               
