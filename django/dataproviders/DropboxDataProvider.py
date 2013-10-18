@@ -50,9 +50,11 @@ class HtmlLinkReplacer():
         currentpath          -- path to prepend, this can be traversed up by links using ../
         """
         soup = BeautifulSoup(html)
-        soup = self.replace_a(soup,baseURL,currentpath)
-        soup = self.replace_img(soup,baseURL,currentpath)
-              
+        #soup = self.replace_a(soup,baseURL,currentpath)
+        #soup = self.replace_img(soup,baseURL,currentpath)
+        
+        
+        
         return soup.renderContents()
     
     def replace_a(self,soup,baseURL,currentpath):                

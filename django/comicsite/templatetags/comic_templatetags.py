@@ -708,25 +708,41 @@ class InsertFileNode(template.Node):
 
         return string
 
-
+    def replace_links(self, filename, contents, currentpage):
+        """Relative urls which work on disk might not
+        work properly when used in included file. Make sure any links in contents
+        still point to the right place 
+        
+        """
+        
+        # any relative link inside included file has to be replaced to make it work within the COMIC
+        # context.
+        base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name':currentpage.comicsite.short_name, 
+                                                                   'page_title':currentpage.title, 
+                                                                   'dropboxpath':"remove"})
+        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
+        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
+        # nice.
+        base_url = base_url[:-7] # remove "remove/" from baseURL
+        current_path = ntpath.dirname(filename) + "/" # path of currently inserted file
+        replaced = self.replacer.replace_links(contents, 
+            base_url, 
+            current_path)
+        html_out = replaced
+        return html_out
 
     def render(self, context):
 
-        # allow url parameter file=<filename> to overwrite any filename given as arg
-        # TODO: in effect any file can now be included by anyone using a url addition.
-        # This feels quite powerful but also messy. Is this proper? Redeeming fact:
-        # One can only access files inside DROPBOX_ROOT..
-        # TODO: does accessing a file "..\..\..\..\allyoursecrets.txt" work?
-
-        # context["request"].GET contains a queryDict of all url parameters.
-
+        #text typed in the tag 
+        token = self.args['file']
+        
         # the token (parameter) given to this tag can be one of three types:
         # * a raw filename like "stuff.html" or "results/table1.txt"
         # * a filname containing a variable like "results/{{teamid}}/table1.txt"
-        # * a django template variabel like "site.short_name"
+        # * a django template variable like "site.short_name"
+        
         # Find out what type it is:
-        token = self.args['file']
-
+        
 
         # If it contains any / or {{ resolving as django var
         # is going to throw an error. Prevent unneeded exception, just skip
@@ -745,7 +761,6 @@ class InsertFileNode(template.Node):
 
         # if there are {{}}'s in there, try to substitute this with url
         # parameter given in the url
-
         filename = self.substitute(filename, context["request"].GET.items())
 
         # If any {{parameters}} are still in filename they were not replaced.
@@ -760,6 +775,7 @@ class InsertFileNode(template.Node):
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
+
 
         project_name = context["site"].short_name
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
@@ -789,32 +805,20 @@ class InsertFileNode(template.Node):
             currentpage = context.page
         else:
             currentpage = None
+        
+        
 
-
-        if currentpage:
-            # any relative link inside included file has to be replaced to make it work within the COMIC
-            # context.
-            
-            base_url = reverse('comicsite.views.insertedpage',
-                                kwargs={'site_short_name':currentpage.comicsite.short_name,
-                                        'page_title':currentpage.title,
-                                        'dropboxpath':"remove"})
-            # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-            # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
-            # nice.
-            base_url = base_url[:-7]  # remove "remove/" from baseURL
-            current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
-            
-            replaced = self.replacer.replace_links(contents,
-                                                   base_url,
-                                                   current_path)
-
-            html_out = replaced
+        if currentpage and os.path.splitext(filename)[1] != ".css":
+            html_out = self.replace_links(filename, contents, currentpage)
             # rewrite relative links
         else:
             html_out = contents
 
+        
         return html_out
+    
+    
+    
 
 @register.tag(name="insert_graph")
 def insert_graph(parser, token):
