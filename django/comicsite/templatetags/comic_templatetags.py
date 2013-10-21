@@ -729,6 +729,8 @@ class InsertFileNode(template.Node):
             base_url, 
             current_path)
         html_out = replaced
+                
+        
         return html_out
 
     def render(self, context):
