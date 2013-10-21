@@ -563,7 +563,8 @@ class ViewsTest(ComicframeworkTestCase):
     
 class LinkReplacerTest(ComicframeworkTestCase):
     """ Tests module which makes sure relative/absolute links in included files
-    will point to the right places.  
+    will point to the right places.
+      
     """
     
     def setUp(self):
@@ -592,7 +593,11 @@ class LinkReplacerTest(ComicframeworkTestCase):
         default_storage.add_fake_file("fakeincludeurls.html","<relativelink><a href = 'relative.html'>link</a><endrelativelink>" 
                                                              "<pathrelativeink><a href = 'folder1/relative.html'>link</a><endpathrelativelink>"
                                                              "<moveuplink><a href = '../moveup.html'>link</a><endmoveuplink>"
-                                                             "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>")
+                                                             "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>"
+                                                             "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>"
+                                                             "<notafile><a href = '/faq'>link</a><endnotafile>"
+                                                             "<notafile_slash><a href = '/faq/'>link</a><endnotafile_slash>")
+        
                             
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"                
         insertfiletagpage = create_page_in_admin(self.testproject,"testincludefiletagpage",content)
@@ -609,17 +614,25 @@ class LinkReplacerTest(ComicframeworkTestCase):
         pathrelativelink = find_text_between("<pathrelativeink>","<endpathrelativelink>",response.content)
         moveuplink = find_text_between("<moveuplink>","<endmoveuplink>",response.content)
         absolute = find_text_between("<absolute>","<endabsolute>",response.content)
+        notafile = find_text_between("<notafile>","<endnotafile>",response.content)
+        notafile_slash = find_text_between("<notafile_slash>","<endnotafile_slash>",response.content)
+        
                 
         
         relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
         pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
         moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
+        notafile_expected = 'href="/faq"'
+        notafile_slash_expected = 'href="/faq/"' 
         
         self.assert_substring_in_string(relative_expected,relative)
         self.assert_substring_in_string(pathrelativelink_expected,pathrelativelink)
         self.assert_substring_in_string(moveuplink_expected,moveuplink)
         self.assert_substring_in_string(absolute_expected,absolute)
+        self.assert_substring_in_string(notafile_expected,notafile)
+        self.assert_substring_in_string(notafile_slash_expected,notafile_slash)
+        
             
 
     
