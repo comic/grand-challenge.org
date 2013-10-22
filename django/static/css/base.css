@@ -181,6 +181,10 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 
 h2.yearHeader{color:#666666; border-bottom: solid 1px #CCCCCC;}
 
+
+/* svg graph plots*/
+svg {margin-bottom:10px;}
+
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
 
