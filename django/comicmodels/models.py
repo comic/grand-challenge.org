@@ -300,7 +300,7 @@ class ComicSite(models.Model):
                                   help_text = "short name used in url, specific"
                                   " css, files etc. No spaces allowed",
                                   validators=[validate_nounderscores])
-    skin = models.CharField(max_length = 225, blank=True, 
+    skin = models.CharField(max_length = 225, default="project.css", 
                             help_text = "css file to include throughout this"
                             " project. relative to project data folder")    
     description = models.CharField(max_length = 1024, default="",
