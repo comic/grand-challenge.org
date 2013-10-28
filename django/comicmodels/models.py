@@ -339,6 +339,12 @@ class ComicSite(models.Model):
         pass
         #TODO check whether short name is really clean and short!        
     
+    
+    def get_project_data_folder(self):
+        """ Full path to root folder for all data belonging to this project
+        """
+        return os.path.join(settings.MEDIA_ROOT,self.short_name)
+            
     def upload_dir(self):
         """Full path to get and put secure uploaded files. Files here cannot be
         viewed directly by url
