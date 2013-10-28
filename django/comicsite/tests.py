@@ -590,6 +590,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
         
         from django.core.files.storage import default_storage
         
+        #this fake file is included on test pa
         default_storage.add_fake_file("fakeincludeurls.html","<relativelink><a href = 'relative.html'>link</a><endrelativelink>" 
                                                              "<pathrelativeink><a href = 'folder1/relative.html'>link</a><endpathrelativelink>"
                                                              "<moveuplink><a href = '../moveup.html'>link</a><endmoveuplink>"
@@ -906,6 +907,17 @@ class TemplateTagsTest(ComicframeworkTestCase):
                  
         self.participant2 = self._create_random_user("participant2_")
         self._register(self.participant2,self.testproject)
+        
+        
+        from django.core.files.storage import default_storage
+        #this fake file is included on test pages later to test rendering
+        default_storage.add_fake_file("fakeinclude.html","This is some fake include content:" 
+                    "here is the content of fakecss" 
+                    "<somecss>{% insert_file "+default_storage.FAKE_DIRS[1]+"/fakecss.css %} </somecss>and a "
+                    "non-existant include: <nonexistant>{% insert_file nothing/nonexistant.txt %}</nonexistant> Also"
+                    " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")
+
+        
                        
 
     def _extract_download_link(self, response1):
@@ -1035,9 +1047,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.assertTrue("No such file or directory" in nonexistant,"Expected a"
                         " message 'No such file or directory' when including "
                         "non-existant file. Instead found '%s'" % nonexistant)
-        self.assertTrue("Going up the directory tree is not allowed" in scary ,
-                        "Expected a message 'Going up the directory tree is "
-                        "not allowed' when trying to include filepath with ../"
+        self.assertTrue("cannot be opened because it is outside the current project" in scary ,
+                        "Expected a message 'cannot be opened because it is "
+                        "outside the current project' when trying to include filepath with ../"
                         " in it. Instead found '%s'" %scary)
 
             

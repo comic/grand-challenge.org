@@ -35,12 +35,7 @@ class MockStorage(FileSystemStorage):
                   fake_file("fakefile2.jpg"),
                   fake_file("fakefile3.exe"),
                   fake_file("fakefile4.mhd"),
-                  fake_file("fakecss.css","body {width:300px;}"),
-                  fake_file("fakeinclude.html","This is some fake include content:" 
-                    "here is the content of fakecss" 
-                    "<somecss>{% insert_file "+FAKE_DIRS[1]+"/fakecss.css %} </somecss>and a "
-                    "non-existant include: <nonexistant>{% insert_file /nothing/nonexistant.txt %}</nonexistant> Also"
-                    " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>")                  
+                  fake_file("fakecss.css","body {width:300px;}")                                    
                   ]
         
     def __init__(self):

@@ -674,10 +674,7 @@ def insert_file(parser, token):
     else:
         args = {}
         filename = all_args[0]
-        if inlist(["../","~"],filename):
-             error_message = "filename '%s' contains ../ or ~. Going up the directory tree is not allowed." %filename
-             return TemplateErrorNode(error_message)
-
+        
         args["file"] = add_quotes(filename)
 
     replacer = HtmlLinkReplacer()
