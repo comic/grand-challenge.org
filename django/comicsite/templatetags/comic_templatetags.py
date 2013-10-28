@@ -666,6 +666,7 @@ def insert_file(parser, token):
     split = token.split_contents()
     tag = split[0]
     all_args = split[1:]
+    
 
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
@@ -692,6 +693,30 @@ class InsertFileNode(template.Node):
     def make_error_msg(self, msg):
         errormsg = "Error including file '" + "," + self.args["file"] + "': " + msg
         return makeErrorMsgHtml(errormsg)
+
+          
+    
+    def is_inside_project_data_folder(self,folder,project):
+        """ For making sure nosey people do not use too many ../../../ in paths
+        to snoop around in the filesystem.
+        
+        folder: string containing a filepath
+        project: a comicsite object
+        """        
+        data_folder = project.get_project_data_folder()      
+        if folder.startswith(data_folder):
+            return True
+        else:
+            return False
+        
+    def make_canonical_path(self,path):
+        """ Make this a nice path, with / separators
+        
+        """
+        path = path.replace("\\\\","/")
+        return path.replace("\\","/")
+    
+    
 
     def substitute(self, string, substitutions):
         """
@@ -777,10 +802,19 @@ class InsertFileNode(template.Node):
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
-
+                    
 
         project_name = context["site"].short_name
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+        filepath = os.path.abspath(filepath)
+        filepath = self.make_canonical_path(filepath)
+                
+        # when all rendering is done, check if the final path is still not getting
+        # into places it should not go.
+        if not self.is_inside_project_data_folder(filepath,context["site"]):
+            error_msg = "'{}' cannot be opened because it is outside the current project.".format(filepath)                        
+            return self.make_error_msg(error_msg)
+        
 
         storage = DefaultStorage()
         try:
