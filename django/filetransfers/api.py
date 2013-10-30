@@ -15,7 +15,10 @@ if settings.DEBUG:
 else: 
     SERVE_FILE_BACKEND = getattr(settings,
         'SERVE_FILE_BACKEND',
-        'filetransfers.backends.xsendfile.serve_file')
+        'filetransfers.backends.default.serve_file')
+    #SERVE_FILE_BACKEND = getattr(settings,
+    #    'SERVE_FILE_BACKEND',
+    #    'filetransfers.backends.xsendfile.serve_file')
     
 PUBLIC_DOWNLOAD_URL_BACKEND = getattr(settings,
     'PUBLIC_DOWNLOAD_URL_BACKEND',
