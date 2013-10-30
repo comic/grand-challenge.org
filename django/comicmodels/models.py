@@ -40,7 +40,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     # header image or something belonging to a ComicSite is being uploaded, or
     # a ComicSiteModel, meaning it is some inheriting class 
     # TODO: This is confused code. Have a single way of handling uploads,
-    # lika a small js browser with upload capability. 
+    # lika a small js browser with upload capability.
     
     
     if hasattr(uploadmodel,'short_name'):
@@ -311,11 +311,11 @@ class ComicSite(models.Model):
     logo = models.CharField(max_length = 255, default = public_folder+"/logo.png",
                             help_text = "200x200 pixel image file to use as logo" 
                             " in projects overview. Relative to project datafolder")
-    header_image = models.CharField(max_length = 255, default = public_folder+"/header.png",
-                            help_text = "658 pixel wide Header image which will "
+    header_image = models.CharField(max_length = 255, blank = True,
+                            help_text = "optional 658 pixel wide Header image which will "
                             "appear on top of each project page top of each "
-                            "project page200x200px image file to use as logo." 
-                            "Relative to project datafolder")
+                            "project. " 
+                            "Relative to project datafolder. Suggested default:"+public_folder+"/header.png")
         
     
     hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")

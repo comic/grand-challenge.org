@@ -238,7 +238,7 @@ def page(request, site_short_name, page_title):
     if hasattr(currentpage,"is_error_page"):
         if currentpage.is_error_page == True:
             response.status_code = "403"
-    
+             
     return response
 
 
@@ -528,8 +528,11 @@ def comic_site_to_html(comic_site,link=""):
      
      if comic_site.description !="":
          html += " - " + comic_site.description
-         
-     img_html = create_HTML_a_img(link,comic_site.logo)
+     
+     
+     image_link = reverse('project_serve_file', args=[comic_site.short_name,comic_site.logo])     
+    
+     img_html = create_HTML_a_img(link,image_link)
      
      html = "<table><tr valign=\"top\" ><td class = \"thumb\">" + img_html +"</td><td class = \"description\">"+ html + "</td></tr></table>"
      

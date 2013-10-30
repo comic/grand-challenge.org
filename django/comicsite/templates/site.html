@@ -15,13 +15,13 @@
 {% block pageName %} {{site.short_name}} {% endblock %}
 
 {% block headerTitle %}
-	{%if site.header_image.name == "" %} 
+	{%if site.header_image == "" %} 
 		<div class="noimage">
 			<a href="{%url 'comicsite.views.site' site.short_name %}">{{site.short_name}}</a>
 		</div>  		
 	{% else %}
 		<div class="image">
-			<a href="{%url 'comicsite.views.site' site.short_name %}"><img src="{{site.header_image.url}}"/></a>
+			<a href="{%url 'comicsite.views.site' site.short_name %}"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/img></a>
 		</div>	
 	{% endif %}
 
