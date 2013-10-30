@@ -817,7 +817,7 @@ class InsertFileNode(template.Node):
         try:
             contents = storage.open(filepath, "r").read()
         except Exception as e:
-            return self.make_error_msg(str(e))
+            return self.make_error_msg("error opening file:" + str(e))
 
         # TODO check content safety
 
