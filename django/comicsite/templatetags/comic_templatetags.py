@@ -1396,7 +1396,8 @@ class AllProjectsNode(template.Node):
             url = protocol + "//" +project.short_name +"."+ domainname
             return comicsite.views.comic_site_to_html(project,url)
         else:
-            return comicsite.views.comic_site_to_html(project)
+            return comicsite.views.comic_site_to_html(project)        
+
 
 @register.tag(name="all_projectlinks")
 def render_all_projectlinks(parser, token):
@@ -1493,9 +1494,6 @@ class AllProjectLinksNode(template.Node):
                            " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
         return projectlinks
-
-
-
 
 
 @register.tag(name="image_url")

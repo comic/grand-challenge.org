@@ -26,14 +26,17 @@ class Migration(SchemaMigration):
             for project in orm['comicmodels.Comicsite'].objects.all():
                                    
                 project.logo = default_logo
-                project.header_image = default_header
+                
+                if project.header_image != "":
+                    project.header_image = default_header
+                    changed_projects.append(project.short_name)
+                
                 project.save()
-                changed_projects.append(project.short_name)
+                
                                         
-            print "changed logo and header to new defaults '{}' and  '{}' for " \
-                   "projects [{}]. This operation can not be reversed. ".format(default_logo,default_header,",".join(changed_projects))
+            print "changed logo to default '{}' for all projects and change header image to default '{}' for project with defined headers:" \
+                   "[{}]. This operation can not be reversed. ".format(default_logo,default_header,",".join(changed_projects))
                    
-
 
 
     def backwards(self, orm):
