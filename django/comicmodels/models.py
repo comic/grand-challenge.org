@@ -296,23 +296,27 @@ def validate_nounderscores(value):
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
     
+    public_folder = "public_html"
+    
     short_name = models.SlugField(max_length = 50, default="", 
                                   help_text = "short name used in url, specific"
                                   " css, files etc. No spaces allowed",
                                   validators=[validate_nounderscores])
-    skin = models.CharField(max_length = 225, default="project.css", 
+    skin = models.CharField(max_length = 225, default= public_folder+"/project.css", 
                             help_text = "css file to include throughout this"
                             " project. relative to project data folder")    
     description = models.CharField(max_length = 1024, default="",
                                    blank=True,help_text = "Short summary of "
                                    "this project, max 1024 characters.")
-    logo = models.URLField(help_text = "URL of a 200x200 image to use as logo"
-                           " for this comicsite in overviews"
-                           ,default="http://www.grand-challenge.org/images/a/a7/Grey.png")
-    header_image = models.ImageField(default="", blank=True, 
-                                     upload_to=giveFileUploadDestinationPath,
-                                    help_text = "Header which will appear on"
-                                    " top of each project page")
+    logo = models.CharField(max_length = 255, default = public_folder+"/logo.png",
+                            help_text = "200x200 pixel image file to use as logo" 
+                            " in projects overview. Relative to project datafolder")
+    header_image = models.CharField(max_length = 255, default = public_folder+"/header.png",
+                            help_text = "658 pixel wide Header image which will "
+                            "appear on top of each project page top of each "
+                            "project page200x200px image file to use as logo." 
+                            "Relative to project datafolder")
+        
     
     hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")
     hide_signin = models.BooleanField(default=False, help_text = "Do no show the Sign in / Register link on any page")
