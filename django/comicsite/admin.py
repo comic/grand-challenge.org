@@ -459,6 +459,12 @@ class ComicSiteAdminForm(forms.ModelForm):
                                                        {'rows':4, 'cols':120}),
                                  help_text = "'Under construction'-like "
                                  "banner to show on each page")
+
+    short_name = forms.CharField(required=False,
+                                 widget=forms.TextInput(attrs=
+                                                       {'size':30,})
+                           )
+    
     
     class Meta:
         model = ComicSite
@@ -478,6 +484,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
     # With change_form_template = None templates in templates/admin/comicsite/page
     # will be heeded again.
     change_form_template = None
+    
+    # make all textboxes wider because having them too small is stupid
+    formfield_overrides = {models.CharField: {'widget': TextInput(attrs={'size':'100%'})}, }
     
     list_display = ('short_name','link','hidden')    
     #list_filter = ['comicsite']
