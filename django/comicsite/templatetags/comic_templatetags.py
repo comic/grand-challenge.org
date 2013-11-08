@@ -24,24 +24,22 @@ from exceptions import Exception
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-
-
-
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 from django.core.urlresolvers import NoReverseMatch
 from django.contrib.auth.models import Group, User, Permission
-from profiles.models import UserProfile
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
 from django.utils.html import escape
 from profiles.forms import SignupFormExtra
+from profiles.models import UserProfile
 
 from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite, Page
 import comicsite.views
+from comicsite.utils.html import escape_for_html_id
 from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
@@ -976,7 +974,6 @@ class InsertGraphNode(template.Node):
              #                                                                           traceback.format_exc(0))))
         # self.get_graph_svg(table,headers)
 
-
         # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
         html_out = svg_data
 
@@ -986,8 +983,6 @@ class InsertGraphNode(template.Node):
 
 
 
-
-#---------#---------#---------#---------#---------#---------#---------#---------
 
 def getrenderer(format):
     """Holds list of functions which can take in a filepath and return html to show a graph.
@@ -1061,8 +1056,7 @@ def render_FROC(filename):
 
         Returns: string containing html/svg instruction to render an FROC curve
         of all the variables found in file
-    """
-
+    """    
     has_header = True
     table = []
     storage = DefaultStorage()
@@ -1070,8 +1064,8 @@ def render_FROC(filename):
     csvreader = csv.reader(f)
     i = 0
     headers = []
-    for row in csvreader:
-      if not has_header or i > 1:
+    for row in csvreader:      
+      if not has_header or i > 0:
         for j, cell in enumerate(row):
           row[j] = float(cell)
         table.append(row)
@@ -1080,15 +1074,18 @@ def render_FROC(filename):
         # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
         # print nonFloatColumns
       i = i + 1
+        
     f.close()
-
+    
     columns = zip(*table)
+    escaped_headers = [escape_for_html_id(x) for x in headers] 
+
 
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
 
     for i in range(1, len(columns)):
-      fig.gca().plot(columns[0], columns[i], label=headers[i], gid=headers[i])
+      fig.gca().plot(columns[0], columns[i], label=headers[i], gid=escaped_headers[i])
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
     fig.gca().legend(loc='best', prop={'size':10})
@@ -1168,7 +1165,7 @@ def render_anode09_result(filename):
     return canvas_to_svg(canvas)
 
 
-#=========#=========#=========#=========#=========#=========#=========#=========#=========
+
 def render_anode09_table(filename):
     """ Read in a file with the anode09 result format and output html for an anode09 table
     anode09 results have the following format:
@@ -1397,6 +1394,7 @@ class AllProjectsNode(template.Node):
             return comicsite.views.comic_site_to_html(project,url)
         else:
             return comicsite.views.comic_site_to_html(project)        
+
 
 
 @register.tag(name="all_projectlinks")
