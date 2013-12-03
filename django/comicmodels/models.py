@@ -909,7 +909,59 @@ class ComicSiteFile(File):
         self.comicsite = comicsite
     
 
-        
+
+class RegistrationRequest(models.Model):
+    """ When a user wants to join a project, admins have the option of reviewing
+        each user before allowing or denying them. This class records the needed
+        info for that. 
+    """
+    
+    user = models.ForeignKey(User, help_text = "which user requested to participate?")
+    comicsite = models.ForeignKey(ComicSite, 
+                                  help_text = "To which comicsite does the user want to register?")
+    
+    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
+    accepted = models.DateTimeField(blank=True,null=True)
+    rejected = models.DateTimeField(blank=True,null=True)
+    
+    PENDING = 'PEND'
+    ACCEPTED = 'ACPT'
+    REJECTED = 'RJCT'
+    
+    REGISTRATION_CHOICES = (
+        (PENDING, 'Pending'),
+        (ACCEPTED, 'Accepted'),
+        (REJECTED, 'Rejected')        
+    )
+    
+    status = models.CharField(max_length=4,
+                              choices=REGISTRATION_CHOICES,
+                              default=PENDING) 
+    
+    
+    #question: where to send email to admin? probably not here? 
+    
+    def accept(self):
+        # add user to participants group
+        # write current datetim in accepted        
+        # set status        
+        # save?
+        # send email to user
+                
+        raise NotImplemented("make this")
+    
+    def accept(self):        
+        # write current datetim in rejected
+        # set status
+        # save?
+        # send email to user                
+        raise NotImplemented("make this")
+    
+    
+
+    
+    
+    
         
     
     
