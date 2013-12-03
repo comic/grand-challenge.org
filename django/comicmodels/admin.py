@@ -1,20 +1,20 @@
-import pdb
-
 from exceptions import AttributeError,Exception
 
 from django import forms
 from django.db import models
 from django.conf import settings
-from django.contrib.admin.util import unquote
 from django.contrib import admin
+from django.contrib.admin.util import unquote
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 from django.core.exceptions import ObjectDoesNotExist
-
 
 from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
-from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder
+from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest
+from comicmodels.utils import get_profile_model, get_user_model
 from comicsite.models import ComicSiteException
 
 
@@ -244,9 +244,20 @@ class DropboxFolderAdmin(ComicModelAdmin):
     class Media:
         js = ("js/django_dropbox/admin_add_callback.js",)
             
-        
-                        
 
+
+class RegistrationRequestsInline(admin.StackedInline):
+    model = RegistrationRequest
+
+
+class RegistrationRequestsAdmin(GuardedModelAdmin):
+    inlines = [RegistrationRequestsInline, ]
+    list_display = ('comicsite', 'created', 'accepted', 'rejected',
+                    'status')
+    #list_display = ('email', 'first_name', 'last_name')
+    #list_filter = ('is_staff', 'is_superuser', 'is_active')
+
+admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 admin.site.register(DropboxFolder,DropboxFolderAdmin)
