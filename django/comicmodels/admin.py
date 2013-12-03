@@ -14,7 +14,6 @@ from dropbox.rest import ErrorResponse
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest
-from comicmodels.utils import get_profile_model, get_user_model
 from comicsite.models import ComicSiteException
 
 
