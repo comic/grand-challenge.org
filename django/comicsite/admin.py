@@ -657,12 +657,14 @@ class ComicSiteAdmin(admin.ModelAdmin):
         user_form.fields['admins'].widget.choices = choices            
 
         context = self.get_base_context(request, comicsite)
-        context['user_form'] = user_form
-        context['test'] = "put someting relevant here"
+        context['user_form'] = user_form        
         
 
         return render_to_response(self.admin_manage_template,
             context, RequestContext(request, current_app=self.admin_site.name))
+    
+    
+    
     
     
     
@@ -692,8 +694,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         add_standard_permissions(admingroup,"page")
         add_standard_permissions(admingroup,"filesystemdataset")
         
-        
-        
         # add current user to admins for this site 
         request.user.groups.add(admingroup)
 
@@ -710,26 +710,19 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
 class AdminManageForm(forms.Form):
     admins = forms.CharField(required=False,widget=forms.SelectMultiple,help_text = "All admins for this project")            
-
-    user = forms.RegexField(required=False,label=_("Username"), max_length=30,
-        regex=r'^[\w.@+-]+$',
-        error_messages = {
-            'invalid': _("This value may contain only letters, numbers and "
-                         "@/./+/-/_ characters."),
-            'does_not_exist': _("This user does not exist")})
     
-    def clean_user(self):
-        """
-        Returns ``User`` instance based on the given username.
-        """
-        username = self.cleaned_data['user']
-        if username != "": #pass if no user is given
-            try:
-                user = User.objects.get(username=username)
-                return user
-            except User.DoesNotExist:
-                raise forms.ValidationError(
-                    self.fields['user'].error_messages['does_not_exist'])
+    
+    
+    #user = forms.RegexField(required=False,label=_("Username"), max_length=30,
+     #   regex=r'^[\w.@+-]+$',
+     #   error_messages = {
+     #       'invalid': _("This value may contain only letters, numbers and "
+     #                    "@/./+/-/_ characters."),
+     #       'does_not_exist': _("This user does not exist")})
+    
+    user = forms.ModelChoiceField(queryset=User.objects.all(),empty_label="<user to add>",required=False)
+    
+        
 
 
 def add_standard_permissions(group,objname):
