@@ -23,9 +23,10 @@ from django.utils.encoding import force_unicode
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user,assign
 
-from comicmodels.models import ComicSite,Page
+from comicmodels.models import ComicSite,Page,RegistrationRequest
 from comicmodels.signals import new_admin,removed_admin
 from comicmodels.admin import ComicModelAdmin
+
 
 
 
@@ -447,6 +448,9 @@ class PageInline(LinkedInline):
         
         return link_html
     link.allow_tags = True
+    
+class RegistrationRequestInline(admin.StackedInline):
+    model = RegistrationRequest
 
 
 class ComicSiteAdminForm(forms.ModelForm):
@@ -491,7 +495,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
     list_display = ('short_name','link','hidden')    
     #list_filter = ['comicsite']
     form = ComicSiteAdminForm
-    inlines = [PageInline]
+    inlines = [PageInline,RegistrationRequestInline]
     
     fieldsets=(
         (None, {               
@@ -702,7 +706,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         
         return super(ComicSiteAdmin,self).render_change_form(request, context, add, change, form_url, obj)
         
-
 
 
 class AdminManageForm(forms.Form):
