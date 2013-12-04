@@ -1585,6 +1585,9 @@ class RegistrationFormNode(template.Node):
             return msg
 
 
+
+
+
 class TemplateErrorNode(template.Node):
     """Render error message in place of this template tag. This makes it directly obvious where the error occured
     """

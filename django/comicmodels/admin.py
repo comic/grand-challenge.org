@@ -246,21 +246,16 @@ class DropboxFolderAdmin(ComicModelAdmin):
         js = ("js/django_dropbox/admin_add_callback.js",)
             
 
-
-class RegistrationRequestsInline(admin.StackedInline):
-    model = RegistrationRequest
-
-
         
-class RegistrationRequestsAdmin(GuardedModelAdmin):
-    inlines = [RegistrationRequestsInline, ]
-    list_display = ('user','comicsite', 'created', 'accepted', 'rejected',
-                    'status')
+class RegistrationRequestsAdmin(GuardedModelAdmin):    
+    list_display = ('user','comicsite', 'created', 'changed','status')
     #list_display = ('email', 'first_name', 'last_name')
     #list_filter = ('is_staff', 'is_superuser', 'is_active')
+    readonly_fields=("user","comicsite",'created','changed')
+    actions = ['accept','reject']    
     
-    actions = ['accept','reject']
-    
+    from comicmodels.models import RegistrationRequest
+
     def accept(self, request, queryset):
         queryset.update(status=RegistrationRequest.ACCEPTED, 
                         accepted=datetime.datetime.today())
@@ -273,13 +268,6 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
                         rejected=datetime.datetime.today())
             
         # send email to user
-    
-    
-    
-        
-        
-    
-    
     
 
 admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
