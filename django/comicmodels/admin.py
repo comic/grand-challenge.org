@@ -1,3 +1,5 @@
+import datetime
+
 from exceptions import AttributeError,Exception
 
 from django import forms
@@ -249,12 +251,36 @@ class RegistrationRequestsInline(admin.StackedInline):
     model = RegistrationRequest
 
 
+        
 class RegistrationRequestsAdmin(GuardedModelAdmin):
     inlines = [RegistrationRequestsInline, ]
-    list_display = ('comicsite', 'created', 'accepted', 'rejected',
+    list_display = ('user','comicsite', 'created', 'accepted', 'rejected',
                     'status')
     #list_display = ('email', 'first_name', 'last_name')
     #list_filter = ('is_staff', 'is_superuser', 'is_active')
+    
+    actions = ['accept','reject']
+    
+    def accept(self, request, queryset):
+        queryset.update(status=RegistrationRequest.ACCEPTED, 
+                        accepted=datetime.datetime.today())
+        
+        # add user to participants group                    
+        # send email to user
+
+    def reject(self, request, queryset):
+        queryset.update(status=RegistrationRequest.REJECTED, 
+                        rejected=datetime.datetime.today())
+            
+        # send email to user
+    
+    
+    
+        
+        
+    
+    
+    
 
 admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
