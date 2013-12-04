@@ -449,10 +449,6 @@ class PageInline(LinkedInline):
         return link_html
     link.allow_tags = True
     
-class RegistrationRequestInline(admin.StackedInline):
-    model = RegistrationRequest
-
-
 class ComicSiteAdminForm(forms.ModelForm):
     description = forms.CharField(widget=forms.Textarea(attrs=
                                                         {'rows':4, 'cols':80}),
@@ -483,6 +479,10 @@ class ComicSiteManager(models.Manager):
         return self.filter(hidden=False)
 
 
+class RegistrationRequestInline(admin.StackedInline):
+    model = RegistrationRequest
+
+
 class ComicSiteAdmin(admin.ModelAdmin):    
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
@@ -511,7 +511,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             }),
         ('Users', {
                 'classes': ('collapse',),
-                'fields': ('manage_admin_link',)
+                'fields': ('manage_admin_link','manage_participation_request_link')
             }),
         ('Advanced options', {
                 'classes': ('collapse',),
@@ -519,7 +519,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             }),
         
     )
-    readonly_fields = ("manage_admin_link",'link')
+    readonly_fields = ("manage_admin_link","link","manage_participation_request_link")
     
     
     admin_manage_template = \
@@ -539,6 +539,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return "<a href=\"admins\">View, Add or Remove Administrators for this project</a>"    
     manage_admin_link.allow_tags=True #allow links 
     manage_admin_link.short_description="Admins"
+    
+    def manage_participation_request_link(self,instance):
+        return "<a href=\"registration_requests\">Approve or reject participation requests</a>"    
+    manage_participation_request_link.allow_tags=True #allow links 
+    manage_participation_request_link.short_description="Participation Requests"
     
                 
     def queryset(self, request):
@@ -562,6 +567,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
             url(r'^(?P<object_pk>.+)/admins/$',
                 view=self.admin_site.admin_view(self.admin_add_view),
                 name='%s_%s_admins' % info),
+            url(r'^(?P<object_pk>.+)/registration_requests/$',
+                view=self.admin_site.admin_view(self.registration_requests_view),
+                name='%s_%s_participantrequests' % info),
             #url(r'^(?P<object_pk>.+)/permissions/user-manage/(?P<user_id>\-?\d+)/$',
             #    view=self.admin_site.admin_view(
             #       self.obj_perms_manage_user_view),
@@ -645,9 +653,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 #send signal to be picked up for example by email notifier                
                 removed_admin.send(sender=self,adder=request.user,removed_admin=user,comicsite=comicsite
                                    ,site=get_current_site(request))                
-                
-        
-        
+                                
         else:
             user_form = AdminManageForm()
         
@@ -665,65 +671,32 @@ class ComicSiteAdmin(admin.ModelAdmin):
     
     
     
-    
-    
-    
-    def save_model(self, request, obj, form, change):        
-        """ when saving for the first time, set object permissions; give all permissions to creator """
+    def registration_requests_view(self, request, object_pk):
+        """ Used to view requests to participate in admin interface
+        """
             
-        if obj.id is None:
-            self.set_base_permissions(request,obj)      
-            
-        else:
-            #if object already existed just save
-            obj.save()
-    
-    def set_base_permissions(self,request,obj):
-        """ if saving for the first time, create admin and participants permissions groups that go along with
-        this comicsite
+        comicsite = get_object_or_404(ComicSite,id=object_pk)                
+        admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
         
-        """        
-        admingroup = Group.objects.create(name=obj.admin_group_name())            
-        participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
-                    
-        # add object-level permission to the specific ComicSite so it shows up in admin                
-        obj.save()            
-        assign("change_comicsite",admingroup,obj)
-        # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
-        add_standard_permissions(admingroup,"comicsite")
-        add_standard_permissions(admingroup,"page")
-        add_standard_permissions(admingroup,"filesystemdataset")
+        context = self.get_base_context(request, comicsite)
         
-        # add current user to admins for this site 
-        request.user.groups.add(admingroup)
-
-          
-            
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        """ overwrite this to inject some useful info message at first creation """        
-        if obj == None:
-            messages.info(request, 'Please fill out the form to create a new project. <b>Required fields are bold.</b> Please save your project before adding pages or admins.',extra_tags='safe')
+        from comicmodels.admin import RegistrationRequestsAdmin 
+        from comicmodels.models import RegistrationRequest
         
-        return super(ComicSiteAdmin,self).render_change_form(request, context, add, change, form_url, obj)
+        rra = RegistrationRequestsAdmin(RegistrationRequest,admin.site)                
+        return rra.changelist_view(request)
+        # TODO: why is RegistrationRequestsAdmin in a different class. This is
+        # so confusing. Think about class responsibilities and fix this.
         
-
+        
+        #return render_to_response(self.admin_manage_template,
+        #    context, RequestContext(request, current_app=self.admin_site.name))
+        
 
 class AdminManageForm(forms.Form):
     admins = forms.CharField(required=False,widget=forms.SelectMultiple,help_text = "All admins for this project")            
-    
-    
-    
-    #user = forms.RegexField(required=False,label=_("Username"), max_length=30,
-     #   regex=r'^[\w.@+-]+$',
-     #   error_messages = {
-     #       'invalid': _("This value may contain only letters, numbers and "
-     #                    "@/./+/-/_ characters."),
-     #       'does_not_exist': _("This user does not exist")})
-    
     user = forms.ModelChoiceField(queryset=User.objects.all(),empty_label="<user to add>",required=False)
     
-        
-
 
 def add_standard_permissions(group,objname):
     """ Add delete_objname change_objname and add_objname to the given group"""  
