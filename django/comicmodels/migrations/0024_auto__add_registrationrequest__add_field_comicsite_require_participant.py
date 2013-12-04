@@ -14,16 +14,23 @@ class Migration(SchemaMigration):
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('comicsite', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['comicmodels.ComicSite'])),
             ('created', self.gf('django.db.models.fields.DateTimeField')(default=datetime.date.today, auto_now_add=True, blank=True)),
-            ('accepted', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('rejected', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('changed', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('status', self.gf('django.db.models.fields.CharField')(default='PEND', max_length=4)),
         ))
         db.send_create_signal(u'comicmodels', ['RegistrationRequest'])
+
+        # Adding field 'ComicSite.require_participant_review'
+        db.add_column(u'comicmodels_comicsite', 'require_participant_review',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
 
 
     def backwards(self, orm):
         # Deleting model 'RegistrationRequest'
         db.delete_table(u'comicmodels_registrationrequest')
+
+        # Deleting field 'ComicSite.require_participant_review'
+        db.delete_column(u'comicmodels_comicsite', 'require_participant_review')
 
 
     models = {
@@ -70,6 +77,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'logo': ('django.db.models.fields.CharField', [], {'default': "'public_html/logo.png'", 'max_length': '255'}),
             'offers_data_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'require_participant_review': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'short_name': ('django.db.models.fields.SlugField', [], {'default': "''", 'max_length': '50'}),
             'skin': ('django.db.models.fields.CharField', [], {'default': "'public_html/project.css'", 'max_length': '225'}),
             'workshop_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'})
@@ -106,11 +114,10 @@ class Migration(SchemaMigration):
         },
         u'comicmodels.registrationrequest': {
             'Meta': {'object_name': 'RegistrationRequest'},
-            'accepted': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'changed': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'comicsite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['comicmodels.ComicSite']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.date.today', 'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'rejected': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'PEND'", 'max_length': '4'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         },

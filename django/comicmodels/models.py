@@ -331,6 +331,9 @@ class ComicSite(models.Model):
     event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")
     offers_data_download = models.BooleanField(default=False, help_text = "Can any data be downloaded from this project? Affects project overview listing.")
     
+    require_participant_review = models.BooleanField(default=False, help_text = "If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
+    
+    
     objects = ComicSiteManager()
     
     def __unicode__(self):
@@ -921,8 +924,7 @@ class RegistrationRequest(models.Model):
                                   help_text = "To which comicsite does the user want to register?")
     
     created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
-    accepted = models.DateTimeField(blank=True,null=True)
-    rejected = models.DateTimeField(blank=True,null=True)
+    changed = models.DateTimeField(blank=True,null=True)    
     
     PENDING = 'PEND'
     ACCEPTED = 'ACPT'
@@ -957,8 +959,6 @@ class RegistrationRequest(models.Model):
         # send email to user                
         raise NotImplemented("make this")
     
-    
-
     
     
     

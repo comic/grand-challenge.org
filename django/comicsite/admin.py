@@ -433,7 +433,7 @@ class PageInline(LinkedInline):
     
     fields = ('title','html_trunc','link','hidden','order')
     # make sure page is only displayed, not edited
-    #readonly_fields=("title","html")
+    # readonly_fields=("title","html")
     readonly_fields=('title','html_trunc','link','hidden','order')
             
     def html_trunc(self,obj):
@@ -465,7 +465,6 @@ class ComicSiteAdminForm(forms.ModelForm):
                                                        {'size':30,})
                            )
     
-    
     class Meta:
         model = ComicSite
 
@@ -495,7 +494,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
     list_display = ('short_name','link','hidden')    
     #list_filter = ['comicsite']
     form = ComicSiteAdminForm
-    inlines = [PageInline,RegistrationRequestInline]
+    inlines = [PageInline]
     
     fieldsets=(
         (None, {               
@@ -511,7 +510,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             }),
         ('Users', {
                 'classes': ('collapse',),
-                'fields': ('manage_admin_link','manage_participation_request_link')
+                'fields': ('manage_admin_link','manage_participation_request_link','require_participant_review')
             }),
         ('Advanced options', {
                 'classes': ('collapse',),
