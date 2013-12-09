@@ -86,7 +86,7 @@ def _register_after_approval(request, site):
         else:
             participantsgroup = Group.objects.get(name=site.participants_group_name())
             reg_request = RegistrationRequest()
-            reg_request.comicsite = site
+            reg_request.project = site
             reg_request.user = request.user
             reg_request.save()
             #request.user.groups.add(participantsgroup)
@@ -95,7 +95,7 @@ def _register_after_approval(request, site):
     else:
         html = "you need to be logged in to use this url"
     
-    currentpage = Page(comicsite=site, title=title, display_title=display_title, html=html)
+    currentpage = Page(project=site, title=title, display_title=display_title, html=html)
     return currentpage
 
 

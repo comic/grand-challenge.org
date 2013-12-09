@@ -941,8 +941,8 @@ class RegistrationRequest(models.Model):
     objects = RegistrationRequestManager()
     
     user = models.ForeignKey(User, help_text = "which user requested to participate?")
-    comicsite = models.ForeignKey(ComicSite, 
-                                  help_text = "To which comicsite does the user want to register?")
+    project = models.ForeignKey(ComicSite, 
+                                  help_text = "To which project does the user want to register?")
     
     created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
     changed = models.DateTimeField(blank=True,null=True)    
@@ -965,7 +965,7 @@ class RegistrationRequest(models.Model):
     #question: where to send email to admin? probably not here? 
     
     def status_to_string(self):
-        str = "Your registration request for " + self.comicsite.short_name +\
+        str = "Your registration request for " + self.project.short_name +\
                 ", sent " + self.format_date(self.created)
                 
         if self.status == self.PENDING:
