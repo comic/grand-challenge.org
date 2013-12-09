@@ -349,7 +349,7 @@ class ComicSite(models.Model):
     
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
-        """
+        """        
         return os.path.join(settings.MEDIA_ROOT,self.short_name)
             
     def upload_dir(self):
