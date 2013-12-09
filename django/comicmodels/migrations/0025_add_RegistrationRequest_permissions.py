@@ -3,36 +3,38 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-
-
+from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Group,Permission
+ 
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'RegistrationRequest'
-        db.create_table(u'comicmodels_registrationrequest', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('project', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['comicmodels.ComicSite'])),
-            ('created', self.gf('django.db.models.fields.DateTimeField')(default=datetime.date.today, auto_now_add=True, blank=True)),
-            ('changed', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.CharField')(default='PEND', max_length=4)),
-        ))
-        db.send_create_signal(u'comicmodels', ['RegistrationRequest'])
-
-        # Adding field 'ComicSite.require_participant_review'
-        db.add_column(u'comicmodels_comicsite', 'require_participant_review',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
-
+        if not db.dry_run:
+            # some object classes can only be seen by root, like all users for
+            # instance. Add the new object class RegistrationRequest to the group
+            # which all project admins are part of, so they don't get a 403 forbidden
+            # when trying to see requests for their project 
+                                               
+            projectadmins = Group.objects.get(name="projectadmins")
+            
+            # Below is the only way I saw to solve the problem that the permissions
+            # below, which should have been added in migration 24 before, are not
+            # found when this migration is run directly after 25. If you migrate
+            # to 24 using 'migrate comicmodels 0024' and then migrate to 25 everithing
+            # is fine. But I cannot isolate the signal south sends after finishing
+            # a migration. Tried this solution without results:
+            # http://devwithpassion.com/felipe/south-django-permissions/                                     
+            try:
+                assign_perm("comicmodels.add_registrationrequest",projectadmins)
+                assign_perm("comicmodels.change_registrationrequest",projectadmins)
+                assign_perm("comicmodels.delete_registrationrequest",projectadmins)
+            except Permission.DoesNotExist:
+                print "Permissions added in previous migration were not added yet.Please run this migration again to fix this."
+                             
     def backwards(self, orm):
-        # Deleting model 'RegistrationRequest'
-        db.delete_table(u'comicmodels_registrationrequest')
-
-        # Deleting field 'ComicSite.require_participant_review'
-        db.delete_column(u'comicmodels_comicsite', 'require_participant_review')
-
+        pass
 
     models = {
         u'auth.group': {
