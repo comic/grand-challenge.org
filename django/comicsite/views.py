@@ -25,7 +25,7 @@ from django.template import RequestContext,Context,Template,TemplateSyntaxError
 
 from userena import views as userena_views
 
-from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel
+from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest
 from comicsite.admin import ComicSiteAdmin
 from comicsite.template.context import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
@@ -39,33 +39,64 @@ def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
+
+
 def _register(request, site_short_name):
     """ Register the current user for given comicsite """
    
     #TODO: check whether user is allowed to register, maybe wait for verification,
     #send email to admins of new registration
     
-    
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    title = "registration_successful"
-    display_title = "registration successful"
-   
-    if request.user.is_authenticated():
-        participantsgroup = Group.objects.get(name=site.participants_group_name())
-        request.user.groups.add(participantsgroup)
-        html = "<p> You are now registered to "+ site.short_name + "<p>"
-        
+    
+    if site.require_participant_review:
+        currentpage = _register_after_approval(request, site)
     else:
-        html = "you need to be logged in to use this url"
-        
-    currentpage = Page(comicsite=site,title=title,display_title=display_title,html=html)
+        currentpage = _register_directly(request, site)
     
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
 
-
+def _register_directly(request, site):
     
+    title = "registration_successful"
+    display_title = "registration successful"
+    if request.user.is_authenticated():
+        participantsgroup = Group.objects.get(name=site.participants_group_name())
+        request.user.groups.add(participantsgroup)
+        html = "<p> You are now registered to " + site.short_name + "<p>"
+    else:
+        html = "you need to be logged in to use this url"
+    
+    currentpage = Page(comicsite=site, title=title, display_title=display_title, html=html)
+    return currentpage
 
+
+def _register_after_approval(request, site):
+    
+    title = "registration requested"
+    display_title = "registration requested"
+    if request.user.is_authenticated():
+        
+        pending = RegistrationRequest.objects.get_pending_registration_requests(request.user,site)
+                
+        if pending:            
+            html = pending[0].status_to_string()
+            pass #do not add another request
+        else:
+            participantsgroup = Group.objects.get(name=site.participants_group_name())
+            reg_request = RegistrationRequest()
+            reg_request.comicsite = site
+            reg_request.user = request.user
+            reg_request.save()
+            #request.user.groups.add(participantsgroup)
+            html = "<p> A registration request has been sent to the " + site.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
+                
+    else:
+        html = "you need to be logged in to use this url"
+    
+    currentpage = Page(comicsite=site, title=title, display_title=display_title, html=html)
+    return currentpage
 
 
 def site(request, site_short_name):    

@@ -912,12 +912,33 @@ class ComicSiteFile(File):
         self.comicsite = comicsite
     
 
+class RegistrationRequestManager(models.Manager):
+    """ adds some convenient queries to standard .objects()""" 
+    
+    def get_pending_registration_requests(self,user,site):
+        """ So people can be shown that they have already sent a request and to make
+        sure they don't (or some bot doesnt) request a 1000 times
+        
+        Return: RegistrationRequest object if it already exists, empty list if it 
+        does not   
+        """    
+            
+        return self.filter(comicsite=site,
+                           user=user,
+                           status=RegistrationRequest.PENDING)
+
+    
+    def get_query_set(self):
+        
+        return super(RegistrationRequestManager, self).get_query_set()
+
 
 class RegistrationRequest(models.Model):
     """ When a user wants to join a project, admins have the option of reviewing
         each user before allowing or denying them. This class records the needed
         info for that. 
     """
+    objects = RegistrationRequestManager()
     
     user = models.ForeignKey(User, help_text = "which user requested to participate?")
     comicsite = models.ForeignKey(ComicSite, 
@@ -943,6 +964,22 @@ class RegistrationRequest(models.Model):
     
     #question: where to send email to admin? probably not here? 
     
+    def status_to_string(self):
+        str = "Your registration request for " + self.comicsite.short_name +\
+                ", sent " + self.format_date(self.created)
+                
+        if self.status == self.PENDING:
+            str += ", is awaiting review"
+        elif self.status == self.ACCEPTED:
+            str += ", was accepted at " + self.format_date(self.changed)
+        elif self.status == self.REJECTED:
+            str += ", was rejected at " + self.format_date(self.changed)
+        
+        return str
+    
+    def format_date(self,date):
+        return date.strftime('%b %d, %Y at %H:%M')
+    
     def accept(self):
         # add user to participants group
         # write current datetim in accepted        
@@ -958,7 +995,6 @@ class RegistrationRequest(models.Model):
         # save?
         # send email to user                
         raise NotImplemented("make this")
-    
     
     
     
