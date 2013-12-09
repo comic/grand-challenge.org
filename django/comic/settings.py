@@ -20,3 +20,11 @@ conffiles.sort()
 for f in conffiles:
     execfile(os.path.abspath(f))
 
+
+if MEDIA_ROOT[-1] != "/":
+    msg = "MEDIA_ROOT setting should end in a slash. Found '" +MEDIA_ROOT+ "'. Please add a slash"
+    raise ImproperlyConfigured(msg)
+
+if DROPBOX_ROOT[-1] != "/":
+    msg = "DROPBOX_ROOT setting should end in a slash. Found '" +DROPBOX_ROOT+ "'. Please add a slash"
+    raise ImproperlyConfigured(msg)
