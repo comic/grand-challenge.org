@@ -72,30 +72,30 @@ def _register_directly(request, site):
     return currentpage
 
 
-def _register_after_approval(request, site):
+def _register_after_approval(request, project):
     
     title = "registration requested"
     display_title = "registration requested"
     if request.user.is_authenticated():
         
-        pending = RegistrationRequest.objects.get_pending_registration_requests(request.user,site)
+        pending = RegistrationRequest.objects.get_pending_registration_requests(request.user,project)
                 
         if pending:            
             html = pending[0].status_to_string()
             pass #do not add another request
         else:
-            participantsgroup = Group.objects.get(name=site.participants_group_name())
+            participantsgroup = Group.objects.get(name=project.participants_group_name())
             reg_request = RegistrationRequest()
-            reg_request.project = site
+            reg_request.project = project
             reg_request.user = request.user
             reg_request.save()
             #request.user.groups.add(participantsgroup)
-            html = "<p> A registration request has been sent to the " + site.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
+            html = "<p> A registration request has been sent to the " + project.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
                 
     else:
         html = "you need to be logged in to use this url"
     
-    currentpage = Page(project=site, title=title, display_title=display_title, html=html)
+    currentpage = Page(comicsite=project, title=title, display_title=display_title, html=html)
     return currentpage
 
 

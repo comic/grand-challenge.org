@@ -923,7 +923,7 @@ class RegistrationRequestManager(models.Manager):
         does not   
         """    
             
-        return self.filter(comicsite=site,
+        return self.filter(project=site,
                            user=user,
                            status=RegistrationRequest.PENDING)
 
