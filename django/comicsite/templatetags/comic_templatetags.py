@@ -36,7 +36,7 @@ from django.utils.html import escape
 from profiles.forms import SignupFormExtra
 from profiles.models import UserProfile
 
-from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder,RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicmodels.models import ComicSite, Page
 import comicsite.views
 from comicsite.utils.html import escape_for_html_id
@@ -1560,31 +1560,46 @@ class RegistrationFormNode(template.Node):
         self.projects = projects
 
     def render(self, context):
-        sitename = context.page.comicsite.short_name
+        project = context.page.comicsite        
         pagetitle = context.page.title
-        signup_url = reverse('comicsite_signin',args=[context.page.comicsite.short_name]) + "?next=" \
-                     + reverse('comicsite.views.page', kwargs={'site_short_name':sitename, 'page_title':pagetitle})
+        signup_url = reverse('comicsite_signin',args=[project.short_name]) + "?next=" \
+                     + reverse('comicsite.views.page', kwargs={'site_short_name':project.short_name, 'page_title':pagetitle})
         signuplink = makeHTMLLink(signup_url, "sign in")
 
 
 
-        registerlink = makeHTMLLink(reverse('comicsite_signup',args=[context.page.comicsite.short_name]), "register")
+        registerlink = makeHTMLLink(reverse('comicsite_signup',args=[project.short_name]), "register")
 
 
         if not context['user'].is_authenticated():
-            return "To register for " + sitename + ", you need be logged in to COMIC.\
+            return "To register for " + project.short_name + ", you need be logged in to COMIC.\
             please " + signuplink + " or " + registerlink
 
         else:
-            participantsgroup = Group.objects.get(name=context.page.comicsite.participants_group_name())
-            if participantsgroup in context['user'].groups.all():
-                msg = "You have already registered for " + sitename
+            
+            if project.is_participant(context['user']):
+                msg = "You have already registered for " + project.short_name
             else:
-                register_url = reverse('comicsite.views._register', kwargs={'site_short_name':sitename})
-                msg = makeHTMLLink(register_url, "Register for " + sitename)
+                register_url = reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
+                
+                # nested if loops through the roof. What would uncle Bob say? 
+                # "nested if loops are a missed chance for inheritance."
+                # TODO: possible way out: create some kind of registration request 
+                # manager which can be asked these things 
+                if project.require_participant_review:                    
+                    pending = RegistrationRequest.objects.get_pending_registration_requests(context['user'],project)                    
+                    if pending:                        
+                        msg = pending[0].status_to_string()                         
+                    else:
+                        msg = makeHTMLLink(register_url, "Request registration for " + project.short_name)
+                    
+                                    
+                else:
+                    msg = makeHTMLLink(register_url, "Register for " + project.short_name)
+                
             return msg
 
-
+    
 
 
 
