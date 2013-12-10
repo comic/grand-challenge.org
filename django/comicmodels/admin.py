@@ -5,7 +5,7 @@ from exceptions import AttributeError,Exception
 from django import forms
 from django.db import models
 from django.conf import settings
-from django.contrib import admin
+from django.contrib import admin,messages
 from django.contrib.admin.util import unquote
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
@@ -17,6 +17,7 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest
 from comicsite.models import ComicSiteException
+
 
 
 
@@ -252,18 +253,53 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
     #list_display = ('email', 'first_name', 'last_name')
     #list_filter = ('is_staff', 'is_superuser', 'is_active')
     readonly_fields=("user","project",'created','changed')
-    actions = ['accept','reject']    
+    actions = ['accept_action','reject_action']    
     
     from comicmodels.models import RegistrationRequest
+    
 
-    def accept(self, request, queryset):
-        queryset.update(status=RegistrationRequest.ACCEPTED, 
-                        accepted=datetime.datetime.today())
+
+    
+    def save_model(self, request, obj, form, change):
+        """
+        Given a model instance save it to the database.
+        """
         
+        
+        if obj.has_changed('status'):
+            if obj.status == RegistrationRequest.ACCEPTED:
+                self.accept(request,obj)
+            if obj.status == RegistrationRequest.REJECTED:
+                self.reject(request,obj)
+    
+        
+        super(RegistrationRequestsAdmin,self).save_model(request, obj, form, change)
+
+    
+    
+    def accept(self,request,obj):        
+        obj.status = RegistrationRequest.ACCEPTED
+        obj.changed = datetime.datetime.today()
+        obj.save()
+        
+        messages.add_message(request, messages.SUCCESS, 'User "'+obj.user.username+'"\
+                                     is now a participant for '+ obj.project.short_name + 
+                                     ". An email has been sent to notify the user")
+   
+        from comicsite.models import send_participation_request_accepted_email     
+        send_participation_request_accepted_email(request,obj)
+        
+                        
+    
+    def accept_action(self, request, queryset):            
+        
+        for obj in queryset.all():
+            self.accept(request,obj)            
+                
         # add user to participants group                    
         # send email to user
 
-    def reject(self, request, queryset):
+    def reject_action(self, request, queryset):
         queryset.update(status=RegistrationRequest.REJECTED, 
                         rejected=datetime.datetime.today())
             
