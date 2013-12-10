@@ -3,18 +3,17 @@ import pdb
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.models import Group,Permission,User
+from django.contrib.sites.models import get_current_site
 from django.core.mail import send_mail
 from django.db.models import get_app, get_models
 from django.template import loader, Context
 from django.template.loader import get_template
-
+from django.contrib.sites.models import get_current_site
 
 from django.utils.html import strip_tags
-
-
-
 from userena.signals import signup_complete
 from comicmodels.signals import new_admin,file_uploaded
+
 
 
 class ComicSiteException(Exception):
@@ -90,6 +89,31 @@ signup_complete.connect(set_project_admin_permissions,dispatch_uid="set_project_
 
 
 # ======================================= sending notification emails ====================
+
+# TODO: why these confusing signals. These functions are called from comicsite.admin,
+# just import them there and use them. Much less confusing. 
+
+def send_participation_request_accepted_email(request,obj):
+    """ When a user requests to become a participant, let this know to all admins            
+    
+    request:     HTTPRequest containing the current admin posting this
+    obj:         ParticipationRequest object containing info on which user requested
+                 participation for which project
+    
+    """        
+    
+    title = obj.project.short_name + 'participation request accepted'
+    mainportal = get_current_site(request)
+    kwargs={'user':obj.user,
+            'adder':request.user,
+            'site':mainportal,
+            'project':obj.project}
+
+    #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
+    send_templated_email(title, "admin/emails/participation_request_accepted_email.txt",kwargs,[obj.user.email]
+                        ,"noreply@"+mainportal.domain, fail_silently=False)
+
+
 
 def send_new_admin_notification_email(sender,**kwargs):
 

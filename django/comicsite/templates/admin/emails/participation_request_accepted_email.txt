@@ -1,0 +1,14 @@
+{% autoescape off %}
+Dear {{ user.username }},
+<br/>
+{{adder.username}} has just accepted your request to participate in<a href ="http://{{site.domain }}{% url 'comicsite.views.site' project.short_name %}"> {{project.short_name}} </a>
+on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.
+<br/>
+<br/>
+When logged in, you can now view participant-only pages on<a href ="http://{{site.domain }}{% url 'comicsite.views.site' project.short_name %}"> {{project.short_name}} </a>.
+
+<br/>
+<br/>
+Regards,<br/>
+{{ site.name }}
+{% endautoescape %}
