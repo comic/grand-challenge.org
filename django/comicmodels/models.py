@@ -7,6 +7,7 @@ import copy
 
 from django import forms
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.models import Group,User,Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -933,6 +934,10 @@ class RegistrationRequestManager(models.Manager):
         return super(RegistrationRequestManager, self).get_query_set()
 
 
+from comicmodels.template.decorators import track_data
+
+
+@track_data('status')
 class RegistrationRequest(models.Model):
     """ When a user wants to join a project, admins have the option of reviewing
         each user before allowing or denying them. This class records the needed
@@ -980,21 +985,7 @@ class RegistrationRequest(models.Model):
     def format_date(self,date):
         return date.strftime('%b %d, %Y at %H:%M')
     
-    def accept(self):
-        # add user to participants group
-        # write current datetim in accepted        
-        # set status        
-        # save?
-        # send email to user
-                
-        raise NotImplemented("make this")
     
-    def accept(self):        
-        # write current datetim in rejected
-        # set status
-        # save?
-        # send email to user                
-        raise NotImplemented("make this")
     
     
     
