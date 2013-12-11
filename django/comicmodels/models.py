@@ -935,8 +935,19 @@ class RegistrationRequestManager(models.Manager):
         return self.filter(project=site,
                            user=user,
                            status=RegistrationRequest.PENDING)
-
     
+    def get_accepted_registration_requests(self,user,site):
+        """ So people can be shown that they have already sent a request and to make
+        sure they don't (or some bot doesnt) request a 1000 times
+        
+        Return: RegistrationRequest object if it already exists, empty list if it 
+        does not   
+        """
+        return self.filter(project=site,
+                           user=user,
+                           status=RegistrationRequest.ACCEPTED)
+
+        
     def get_query_set(self):
         
         return super(RegistrationRequestManager, self).get_query_set()
