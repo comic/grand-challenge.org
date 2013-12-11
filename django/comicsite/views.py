@@ -53,22 +53,21 @@ def _register(request, site_short_name):
         currentpage = _register_after_approval(request, site)
     else:
         currentpage = _register_directly(request, site)
-    
+        
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
     
 
-def _register_directly(request, site):
+def _register_directly(request, project):
     
     title = "registration_successful"
     display_title = "registration successful"
     if request.user.is_authenticated():
-        participantsgroup = Group.objects.get(name=site.participants_group_name())
-        request.user.groups.add(participantsgroup)
-        html = "<p> You are now registered to " + site.short_name + "<p>"
+        project.add_participant(request.user)        
+        html = "<p> You are now registered to " + project.short_name + "<p>"
     else:
         html = "you need to be logged in to use this url"
     
-    currentpage = Page(comicsite=site, title=title, display_title=display_title, html=html)
+    currentpage = Page(comicsite=project, title=title, display_title=display_title, html=html)
     return currentpage
 
 
@@ -89,7 +88,10 @@ def _register_after_approval(request, project):
             reg_request.project = project
             reg_request.user = request.user
             reg_request.save()
-            #request.user.groups.add(participantsgroup)
+            
+            from comicsite.models import send_participation_request_notification_email
+            send_participation_request_notification_email(request,reg_request)
+            
             html = "<p> A registration request has been sent to the " + project.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
                 
     else:
