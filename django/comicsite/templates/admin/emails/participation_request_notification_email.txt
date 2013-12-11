@@ -1,0 +1,13 @@
+{% autoescape off %}
+Dear {{ admin.username }},<br/>
+<br/>
+user {{user.username}} has just requested to participate in the <a href ="http://{{site.domain }}{% url 'comicsite.views.site' project.short_name %}">{{project.short_name}}</a> project
+on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.<br/>
+<br/>
+You can review, accept or reject this request <a href="http://{{ site.domain}}{% url 'admin:comicmodels_comicsite_change' project.pk%}registration_requests/">here</a>. <br/>
+ Alternatively you can open the. <a href="http://{{ site.domain}}{% url 'admin:comicmodels_comicsite_change' project.pk%}">{{project.short_name}} admin interface</a>, expand the "users" menu and click "Approve or reject participation requests".<br/>
+ <br/>
+
+Regards,<br/>
+{{ site.name }}
+{% endautoescape %}

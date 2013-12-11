@@ -20,14 +20,13 @@ from django.db.models import Q
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 
-
 from ckeditor.fields import RichTextField
 from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
 from guardian.shortcuts import assign,remove_perm
 
 from dataproviders import FileSystemDataProvider,DropboxDataProvider
-
+from comicmodels.template.decorators import track_data
 
 logger = logging.getLogger("django")
 
@@ -421,9 +420,9 @@ class ComicSite(models.Model):
     
     def get_admins(self):
         """ Return array of all users that are in this comicsites admin group, including superusers
-        """ 
-        #admins = User.objects.filter(groups__name=self.admin_group_name(), is_superuser=False)        
+        """             
         admins = User.objects.filter(groups__name=self.admin_group_name())
+        return admins
         
     def to_projectlink(self):
         """ Return a ProjectLink representation of this comicsite, to show in an
@@ -943,7 +942,7 @@ class RegistrationRequestManager(models.Manager):
         return super(RegistrationRequestManager, self).get_query_set()
 
 
-from comicmodels.template.decorators import track_data
+
 
 
 @track_data('status')
