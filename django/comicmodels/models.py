@@ -456,6 +456,11 @@ class ComicSite(models.Model):
         
         projectlink = ProjectLink(args)
         return projectlink
+    
+    def add_participant(self,user):
+        group = Group.objects.get(name=self.participants_group_name())                    
+        user.groups.add(group)
+        
   
               
 
@@ -968,6 +973,12 @@ class RegistrationRequest(models.Model):
     
     
     #question: where to send email to admin? probably not here? 
+    
+    def __unicode__(self):
+        """ describes this object in admin interface etc.
+        """
+        return "{1} registration request by user {0}".format(self.user.username,
+                                                             self.project.short_name)
     
     def status_to_string(self):
         str = "Your registration request for " + self.project.short_name +\
