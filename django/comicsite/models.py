@@ -114,6 +114,27 @@ def send_participation_request_accepted_email(request,obj):
                         ,"noreply@"+mainportal.domain, fail_silently=False)
 
 
+def send_participation_request_rejected_email(request,obj):
+    """ When a user requests to become a participant, let this know to all admins            
+    
+    request:     HTTPRequest containing the current admin posting this
+    obj:         ParticipationRequest object containing info on which user requested
+                 participation for which project
+    
+    """        
+    
+    title = obj.project.short_name + 'participation request rejected'
+    mainportal = get_current_site(request)
+    kwargs={'user':obj.user,
+            'adder':request.user,
+            'site':mainportal,
+            'project':obj.project}
+
+    #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
+    send_templated_email(title, "admin/emails/participation_request_rejected_email.txt",kwargs,[obj.user.email]
+                        ,"noreply@"+mainportal.domain, fail_silently=False)
+
+
 
 def send_new_admin_notification_email(sender,**kwargs):
 
