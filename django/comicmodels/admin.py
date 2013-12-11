@@ -16,9 +16,7 @@ from dropbox.rest import ErrorResponse
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest
-from comicsite.models import ComicSiteException
-
-
+from comicsite.models import ComicSiteException,send_participation_request_rejected_email,send_participation_request_accepted_email
 
 
 class ComicModelAdmin(GuardedModelAdmin):
@@ -255,10 +253,6 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
     readonly_fields=("user","project",'created','changed')
     actions = ['accept','reject']    
     
-    from comicmodels.models import RegistrationRequest
-    
-
-
     
     def save_model(self, request, obj, form, change):
         """ called when directly editing RegistrationRequest 
@@ -289,8 +283,6 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
                                          is now a participant for '+ obj.project.short_name + 
                                          ". An email has been sent to notify the user")
         
-        
-        from comicsite.models import send_participation_request_accepted_email     
         send_participation_request_accepted_email(request,obj)
                
     def process_rejection(self,request,obj):                        
@@ -303,7 +295,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
                                          has been rejected as a participant for '+ obj.project.short_name + 
                                          ". An email has been sent to notify the user")
                 
-        from comicsite.models import send_participation_request_rejected_email     
+         
         send_participation_request_rejected_email(request,obj)
 
     

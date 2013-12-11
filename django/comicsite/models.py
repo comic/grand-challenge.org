@@ -90,11 +90,34 @@ signup_complete.connect(set_project_admin_permissions,dispatch_uid="set_project_
 
 # ======================================= sending notification emails ====================
 
-# TODO: why these confusing signals. These functions are called from comicsite.admin,
-# just import them there and use them. Much less confusing. 
+ 
+
+def send_participation_request_notification_email(request,obj):
+    """ When a user requests to become a participant, let this know to all admins            
+    
+    request:     HTTPRequest containing the current admin posting this
+    obj:         ParticipationRequest object containing info on which user requested
+                 participation for which project
+    
+    """        
+    
+    title = 'New participation request for {0}'.format(obj.project.short_name)
+    mainportal = get_current_site(request)
+    kwargs={'user':obj.user,            
+            'site':mainportal,
+            'project':obj.project}
+    
+    for admin in obj.project.get_admins():
+        kwargs["admin"] = admin 
+        send_templated_email(title, "admin/emails/participation_request_notification_email.txt",kwargs,[obj.user.email]
+                        ,"noreply@"+mainportal.domain, fail_silently=False)
+    #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
+    
+    
+
 
 def send_participation_request_accepted_email(request,obj):
-    """ When a user requests to become a participant, let this know to all admins            
+    """ When a users requests to become a participant is accepted, let the user know            
     
     request:     HTTPRequest containing the current admin posting this
     obj:         ParticipationRequest object containing info on which user requested
@@ -115,7 +138,7 @@ def send_participation_request_accepted_email(request,obj):
 
 
 def send_participation_request_rejected_email(request,obj):
-    """ When a user requests to become a participant, let this know to all admins            
+    """ When a users requests to become a participant is rejected, let the user know            
     
     request:     HTTPRequest containing the current admin posting this
     obj:         ParticipationRequest object containing info on which user requested
@@ -135,6 +158,8 @@ def send_participation_request_rejected_email(request,obj):
                         ,"noreply@"+mainportal.domain, fail_silently=False)
 
 
+# TODO: below: why these confusing signals. These functions are called from comicsite.admin,
+# just import them there and use them. Much less confusing.
 
 def send_new_admin_notification_email(sender,**kwargs):
 
