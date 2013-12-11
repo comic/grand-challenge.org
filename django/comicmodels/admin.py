@@ -274,7 +274,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
             if obj.status == RegistrationRequest.ACCEPTED:
                 self.process_acceptance(request,obj)
             if obj.status == RegistrationRequest.REJECTED:
-                self.reject(request,obj)
+                self.process_rejection(request,obj)
         else:
             messages.add_message(request, messages.INFO, 'Status of {0}\
                                  did not change. No actions taken'.format(str(obj)))
@@ -292,7 +292,20 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         
         from comicsite.models import send_participation_request_accepted_email     
         send_participation_request_accepted_email(request,obj)
-           
+               
+    def process_rejection(self,request,obj):                        
+        obj.status = RegistrationRequest.REJECTED
+        obj.changed = datetime.datetime.today()
+        obj.save()
+        
+        obj.project.remove_participant(obj.user)                
+        messages.add_message(request, messages.WARNING, 'User "'+obj.user.username+'"\
+                                         has been rejected as a participant for '+ obj.project.short_name + 
+                                         ". An email has been sent to notify the user")
+                
+        from comicsite.models import send_participation_request_rejected_email     
+        send_participation_request_rejected_email(request,obj)
+
     
     
     def accept(self, request, queryset):
@@ -308,9 +321,10 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
     def reject(self, request, queryset):
         """ called from admin actions dropdown in RegistrationRequests list 
         
-        """
-        obj.status = RegistrationRequest.REJECTED
-        self.process_status_change(request,obj)
+        """        
+        for obj in queryset.all():
+            obj.status = RegistrationRequest.REJECTED
+            self.process_status_change(request,obj)
             
 
 admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)

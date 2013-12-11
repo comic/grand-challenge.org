@@ -460,6 +460,10 @@ class ComicSite(models.Model):
     def add_participant(self,user):
         group = Group.objects.get(name=self.participants_group_name())                    
         user.groups.add(group)
+    
+    def remove_participant(self,user):
+        group = Group.objects.get(name=self.participants_group_name())                    
+        user.groups.remove(group)
         
   
               
