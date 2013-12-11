@@ -283,7 +283,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
                                          is now a participant for '+ obj.project.short_name + 
                                          ". An email has been sent to notify the user")
         
-        send_participation_request_accepted_email(request,obj)
+        send_participation_request_accepted_email(request,obj)    
                
     def process_rejection(self,request,obj):                        
         obj.status = RegistrationRequest.REJECTED

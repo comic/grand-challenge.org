@@ -10,7 +10,7 @@ import mimetypes
 import logging
  
 
-
+from itertools import chain
 from os import path
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
@@ -22,6 +22,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse,Http404,HttpResponseForbidden
 from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
+
 
 from userena import views as userena_views
 
@@ -48,14 +49,18 @@ def _register(request, site_short_name):
     #send email to admins of new registration
     
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    
-    if site.require_participant_review:
-        currentpage = _register_after_approval(request, site)
+    if request.user.is_authenticated():
+        if site.require_participant_review:
+            currentpage = _register_after_approval(request, site)
+        else:
+            currentpage = _register_directly(request, site)            
+        
     else:
-        currentpage = _register_directly(request, site)
+        html = "you need to be logged in to use this url"
+        currentpage = Page(comicsite=site, title="please_log_in", display_title="Please log in", html=html)
         
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
-    
+
 
 def _register_directly(request, project):
     
@@ -64,9 +69,8 @@ def _register_directly(request, project):
     if request.user.is_authenticated():
         project.add_participant(request.user)        
         html = "<p> You are now registered to " + project.short_name + "<p>"
-    else:
-        html = "you need to be logged in to use this url"
     
+        
     currentpage = Page(comicsite=project, title=title, display_title=display_title, html=html)
     return currentpage
 
@@ -75,27 +79,28 @@ def _register_after_approval(request, project):
     
     title = "registration requested"
     display_title = "registration requested"
-    if request.user.is_authenticated():
-        
-        pending = RegistrationRequest.objects.get_pending_registration_requests(request.user,project)
-                
-        if pending:            
-            html = pending[0].status_to_string()
-            pass #do not add another request
-        else:
-            participantsgroup = Group.objects.get(name=project.participants_group_name())
-            reg_request = RegistrationRequest()
-            reg_request.project = project
-            reg_request.user = request.user
-            reg_request.save()
             
-            from comicsite.models import send_participation_request_notification_email
-            send_participation_request_notification_email(request,reg_request)
-            
-            html = "<p> A registration request has been sent to the " + project.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
-                
+    pending = RegistrationRequest.objects.get_pending_registration_requests(request.user,project)
+    accepted = RegistrationRequest.objects.get_accepted_registration_requests(request.user,project)
+    
+    pending_or_accepted = list(chain(pending,accepted))
+    
+    if pending_or_accepted:            
+        html = pending_or_accepted[0].status_to_string()        
+        pass #do not add another request
     else:
-        html = "you need to be logged in to use this url"
+        participantsgroup = Group.objects.get(name=project.participants_group_name())
+        reg_request = RegistrationRequest()
+        reg_request.project = project
+        reg_request.user = request.user
+        reg_request.save()
+        
+        from comicsite.models import send_participation_request_notification_email
+        send_participation_request_notification_email(request,reg_request)
+        
+        html = "<p> A registration request has been sent to the " + project.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
+            
+
     
     currentpage = Page(comicsite=project, title=title, display_title=display_title, html=html)
     return currentpage

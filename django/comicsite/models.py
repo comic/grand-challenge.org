@@ -125,7 +125,7 @@ def send_participation_request_accepted_email(request,obj):
     
     """        
     
-    title = obj.project.short_name + 'participation request accepted'
+    title = obj.project.short_name + ' participation request accepted'
     mainportal = get_current_site(request)
     kwargs={'user':obj.user,
             'adder':request.user,
