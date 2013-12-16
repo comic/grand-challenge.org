@@ -247,11 +247,12 @@ class DropboxFolderAdmin(ComicModelAdmin):
 
         
 class RegistrationRequestsAdmin(GuardedModelAdmin):    
-    list_display = ('user','project', 'created', 'changed','status')
+    list_display = ('user','user_email','user_real_name','user_affiliation','project', 'created', 'changed','status')
     #list_display = ('email', 'first_name', 'last_name')
     #list_filter = ('is_staff', 'is_superuser', 'is_active')
-    readonly_fields=("user","project",'created','changed')
+    readonly_fields=("user","project",'created','changed','user_email','user_real_name','user_affiliation')
     actions = ['accept','reject']    
+    
     
     
     def save_model(self, request, obj, form, change):
