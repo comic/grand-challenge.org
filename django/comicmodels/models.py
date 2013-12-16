@@ -1010,6 +1010,15 @@ class RegistrationRequest(models.Model):
     def format_date(self,date):
         return date.strftime('%b %d, %Y at %H:%M')
     
+    def user_real_name(self):        
+        return self.user.first_name + " " + self.user.last_name 
+    
+    def user_email(self):        
+        return self.user.email
+    
+    def user_affiliation(self):
+        profile = self.user.user_profile 
+        return profile.institution + " - " + profile.department
     
     
     
