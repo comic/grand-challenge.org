@@ -184,7 +184,6 @@ class ComicframeworkTestCase(TestCase):
         
         Return string error message if anything does not check out, "" if not.         
         """
-        
         if response.status_code == 403:
              return "Could not check for errors, as response was a 403 response\
                      forbidden. User asking for this url did not have permission."
