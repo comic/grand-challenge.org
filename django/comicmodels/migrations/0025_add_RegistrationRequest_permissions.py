@@ -28,10 +28,20 @@ class Migration(SchemaMigration):
             # default permissions for registrationrequest not being found..
             db.send_pending_create_signals()
                         
-            #Group.objects.get(name="projectadmins")                    
-            assign_perm("comicmodels.add_registrationrequest",projectadmins)
-            assign_perm("comicmodels.change_registrationrequest",projectadmins)
-            assign_perm("comicmodels.delete_registrationrequest",projectadmins)
+            # each user in comic is part of this group projectadmins. With the
+            # permission in this group you can determine which types of objects
+            # regular adins can see and edit in the admin interface.
+                    
+            self.add_standard_perms("comicmodels","registrationrequest",projectadmins)
+            self.add_standard_perms("comicmodels","comicsite",projectadmins)
+            self.add_standard_perms("comicmodels","page",projectadmins)                                    
+            
+    
+    def add_standard_perms(self,appname,modelname,group):
+        assign_perm("{0}.add_{1}".format(appname,modelname),group)
+        assign_perm("{0}.change_{1}".format(appname,modelname),group)
+        assign_perm("{0}.delete_{1}".format(appname,modelname),group)
+        
                              
     def backwards(self, orm):
         pass
