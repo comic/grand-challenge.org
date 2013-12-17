@@ -520,7 +520,7 @@ class ComicSiteModel(models.Model):
     
     def setpermissions(self, lvl):
         """ Give the right groups permissions to this object 
-            object needs to be saved befor setting perms"""
+            object needs to be saved before setting perms"""
         
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
         participantsgroup = Group.objects.get(name=self.comicsite.participants_group_name())
