@@ -1023,8 +1023,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """ Can directly include the contents of a file. Contents can again 
         include files.  
         
-        """
-        # Sanity check: do two different pages give different urls?
+        """        
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeinclude.html %}</toplevelcontent>"                
         insertfiletagpage = create_page_in_admin(self.testproject,"testincludefiletagpage",content)
                     
@@ -1051,8 +1050,63 @@ class TemplateTagsTest(ComicframeworkTestCase):
                         "Expected a message 'cannot be opened because it is "
                         "outside the current project' when trying to include filepath with ../"
                         " in it. Instead found '%s'" %scary)
+        
+    def test_registration_request_tag(self):
+        """   Registration tags renders a link to register. Either directly of
+        after being approved by an admin 
+        
+        """
+        pdb.set_trace()
+        
+        content = "register here: <registration> {% registration %} </registration>"                
+        registrationpage = create_page_in_admin(self.testproject,"registrationpage",content)
+        
+        # when you don't have to be approved, just following the link rendered by registration should do
+        # register you
+        self.testproject.require_participant_review = True                             
+        response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)        
+        registrationlink = find_text_between('</registration>','</registration>',response.content)
+        
+        assertExpectedText("registration","register for","registering without review")
+        
+        
+        # Extract rendered content from included file, see if it has been rendered
+        # In the correct way
+        #somecss = find_text_between('<somecss>','</somecss>',response.content)
+        #nonexistant = find_text_between('<nonexistant>','</nonexistant>',response.content)
+        #scary = find_text_between('<scary>','</scary>',response.content)
+        
+        ##self.assertTrue(somecss != "","Nothing was rendered when including an existing file. Some css should be here")
+        ##self.assertTrue(nonexistant != "","Nothing was rendered when including an existing file. Some css should be here")
+        #self.assertTrue(scary != "","Nothing was rendered when trying to go up the directory tree with ../ At least some error should be printed")
+        
+        #self.assertTrue("body {width:300px;}" in somecss,"Did not find expected"
+        #                " content 'body {width:300px;}' when including a test"
+        ##                " css file. Instead found '%s'" % somecss)
+        #self.assertTrue("No such file or directory" in nonexistant,"Expected a"
+        #                " message 'No such file or directory' when including "
+        #                "non-existant file. Instead found '%s'" % nonexistant)
+        #self.assertTrue("cannot be opened because it is outside the current project" in scary ,
+        #                "Expected a message 'cannot be opened because it is "
+        #                "outside the current project' when trying to include filepath with ../"
+        #                " in it. Instead found '%s'" %scary)
+    
+    def assertExpectedText(self,text,tagname,expected_text,description=""):
+        """ Assert whether expected_text was found in between <tagname> and </tagname>
+        in text. On error, will include description of operation, like "trying to render
+        table from csv".
+        
+        """
+        content = find_text_between('<'+tagname +'>','</'+tagname +'>',text)
+        self.assertTrue(content != "","Nothing was rendered between <{0}> </{0}>, attempted action: {1}".format(tagname,description))
+        self.assertTrue(expected_text in text,
+                        "expected to find '{0}' when rendering tag between <{0}> </{0}>, \
+                         but found '{1}' instead. Attemted action: {2}".format(tagname,
+                                                                               expected_text,
+                                                                               description)) 
+        
 
-            
+       
             
 class ProjectLoginTest(ComicframeworkTestCase):
     """ Getting userena login and signup to display inside a project context 
