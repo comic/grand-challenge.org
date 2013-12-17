@@ -600,6 +600,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }
         return context
     
+    
     def admin_add_view(self, request, object_pk):
         """
         Show all users in admin_group for this comicsite, allow adding users
@@ -668,7 +669,44 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return render_to_response(self.admin_manage_template,
             context, RequestContext(request, current_app=self.admin_site.name))
     
+    def save_model(self, request, obj, form, change):        
+        """ when saving for the first time, set object permissions; give all permissions to creator """
+            
+        if obj.id is None:
+            self.set_base_permissions(request,obj)      
+            
+        else:
+            #if object already existed just save
+            obj.save()
     
+    
+    def set_base_permissions(self,request,obj):
+        """ if saving for the first time, create admin and participants permissions groups that go along with
+        this comicsite
+        
+        """        
+        admingroup = Group.objects.create(name=obj.admin_group_name())            
+        participantsgroup = Group.objects.create(name=obj.short_name+"_participants")
+                    
+        # add object-level permission to the specific ComicSite so it shows up in admin                
+        obj.save()            
+        assign("change_comicsite",admingroup,obj)
+        # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
+        add_standard_permissions(admingroup,"comicsite")
+        add_standard_permissions(admingroup,"page")
+        add_standard_permissions(admingroup,"filesystemdataset")
+        
+        # add current user to admins for this site 
+        request.user.groups.add(admingroup)
+
+          
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        """ overwrite this to inject some useful info message at first creation """        
+        if obj == None:
+            messages.info(request, 'Please fill out the form to create a new project. <b>Required fields are bold.</b> Please save your project before adding pages or admins.',extra_tags='safe')
+        
+        return super(ComicSiteAdmin,self).render_change_form(request, context, add, change, form_url, obj)
+        
     
     def registration_requests_view(self, request, object_pk):
         """ Used to view requests to participate in admin interface

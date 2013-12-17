@@ -89,7 +89,7 @@ class ComicframeworkTestCase(TestCase):
     
     def _create_dummy_project(self,projectname="testproject"):
         """ Create a project with some pages and users. In part this is 
-        one through admin views, meaning admin views are also tested here.
+        done through admin views, meaning admin views are also tested here.
         """
         # Create three types of users that exist: Root, can do anything, 
         # projectadmin, cam do things to a project he or she owns. And logged in
@@ -108,9 +108,11 @@ class ComicframeworkTestCase(TestCase):
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin_")
                     
-        testproject = self._create_comicsite_in_admin(projectadmin,projectname)                
+        testproject = self._create_comicsite_in_admin(projectadmin,projectname)
         create_page_in_admin(testproject,"testpage1")
         create_page_in_admin(testproject,"testpage2")
+        
+        
         
         # a user who explicitly signed up to testproject
         participant = self._create_random_user("participant_")
@@ -1065,9 +1067,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """   Registration tags renders a link to register. Either directly of
         after being approved by an admin 
         
-        """
-        pdb.set_trace()
-        
+        """        
         content = "register here: <registration> {% registration %} </registration>"                
         registrationpage = create_page_in_admin(self.testproject,"registrationpage",content)
         
@@ -1075,9 +1075,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # register you
         self.testproject.require_participant_review = True                             
         response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)        
-        registrationlink = find_text_between('</registration>','</registration>',response.content)
-        
-        assertExpectedText("registration","register for","registering without review")
+        self.assertExpectedText(response.content,"registration","Register for","registering without review")
         
         
         # Extract rendered content from included file, see if it has been rendered
@@ -1109,10 +1107,11 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         content = find_text_between('<'+tagname +'>','</'+tagname +'>',text)
         self.assertTrue(content != "","Nothing was rendered between <{0}> </{0}>, attempted action: {1}".format(tagname,description))
-        self.assertTrue(expected_text in text,
-                        "expected to find '{0}' when rendering tag between <{0}> </{0}>, \
-                         but found '{1}' instead. Attemted action: {2}".format(tagname,
-                                                                               expected_text,
+        self.assertTrue(expected_text in content,
+                        "expected to find '{0}' when rendering tag between <{1}> </{1}>, \
+                         but found '{2}' instead. Attemted action: {3}".format(expected_text,
+                                                                               tagname,
+                                                                               content,
                                                                                description)) 
         
 
