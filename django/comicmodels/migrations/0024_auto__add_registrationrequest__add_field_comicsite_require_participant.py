@@ -19,7 +19,7 @@ class Migration(SchemaMigration):
             ('changed', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('status', self.gf('django.db.models.fields.CharField')(default='PEND', max_length=4)),
         ))
-        db.send_create_signal(u'comicmodels', ['RegistrationRequest'])
+        db.send_create_signal(u'comicmodels', ['RegistrationRequest'])        
 
         # Adding field 'ComicSite.require_participant_review'
         db.add_column(u'comicmodels_comicsite', 'require_participant_review',
