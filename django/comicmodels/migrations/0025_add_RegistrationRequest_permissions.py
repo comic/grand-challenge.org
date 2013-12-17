@@ -16,22 +16,22 @@ class Migration(SchemaMigration):
             # instance. Add the new object class RegistrationRequest to the group
             # which all project admins are part of, so they don't get a 403 forbidden
             # when trying to see requests for their project 
-                                               
-            projectadmins = Group.objects.get(name="projectadmins")
             
-            # Below is the only way I saw to solve the problem that the permissions
-            # below, which should have been added in migration 24 before, are not
-            # found when this migration is run directly after 25. If you migrate
-            # to 24 using 'migrate comicmodels 0024' and then migrate to 25 everithing
-            # is fine. But I cannot isolate the signal south sends after finishing
-            # a migration. Tried this solution without results:
-            # http://devwithpassion.com/felipe/south-django-permissions/                                     
-            try:
-                assign_perm("comicmodels.add_registrationrequest",projectadmins)
-                assign_perm("comicmodels.change_registrationrequest",projectadmins)
-                assign_perm("comicmodels.delete_registrationrequest",projectadmins)
-            except Permission.DoesNotExist:
-                print "Permissions added in previous migration were not added yet.Please run this migration again to fix this."
+            try:                                                               
+                projectadmins = orm['auth.Group'].objects.get(name="projectadmins")
+            except orm['auth.Group'].DoesNotExist as e:                            
+                projectadmins = Group(name='projectadmins')
+                #TODO add permissions for all comicmodels and registrationRequest
+                projectadmins.save()
+                 
+            # my god spent 2 hours on this line. But this fixes any issues with
+            # default permissions for registrationrequest not being found..
+            db.send_pending_create_signals()
+                        
+            #Group.objects.get(name="projectadmins")                    
+            assign_perm("comicmodels.add_registrationrequest",projectadmins)
+            assign_perm("comicmodels.change_registrationrequest",projectadmins)
+            assign_perm("comicmodels.delete_registrationrequest",projectadmins)
                              
     def backwards(self, orm):
         pass
