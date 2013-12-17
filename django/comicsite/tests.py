@@ -180,13 +180,31 @@ class ComicframeworkTestCase(TestCase):
     
     def _find_errors_in_page(self, response):    
         """ see if there are any errors rendered in the html of reponse.
-        Used for checking forms 
+        Used for checking forms. Also checks for 403 response forbidden.
         
+        Return string error message if anything does not check out, "" if not.         
         """
+        
+        if response.status_code == 403:
+             return "Could not check for errors, as response was a 403 response\
+                     forbidden. User asking for this url did not have permission."
+        
+        
         errors = re.search('<ul class="errorlist">(.*)</ul>', 
             response.content, 
             re.IGNORECASE)
-        return errors
+
+        if errors:        
+                    #show a little around the actual error to scan for variables that
+            # might have caused it
+            span = errors.span()
+            wide_start = max(span[0]-200,0)
+            wide_end = min(span[1]+200,len(response.content))        
+            wide_error = response.content[wide_start:wide_end]
+            return wide_error
+            
+        return ""
+        
     
     def _view_url(self,user,url):
         self._login(user)
@@ -314,6 +332,7 @@ class ComicframeworkTestCase(TestCase):
             "page_set-MAX_NUM_FORMS":u""}
         success = self._login(user)
         
+        
         response = self.client.post(url, data)
         return response
     
@@ -334,17 +353,9 @@ class ComicframeworkTestCase(TestCase):
         errors = self._find_errors_in_page(response)
                 
         if errors:
-            #show a little around the actual error to scan for variables that
-            # might have caused it
-            span = errors.span()
-            wide_start = max(span[0]-200,0)
-            wide_end = min(span[1]+200,len(response.content))
-            
-            wide_error = response.content[wide_start:wide_end]
-            
-            self.assertFalse(errors, "Error creating project '%s':\n %s" % (short_name, wide_error))
+            self.assertFalse(errors, "Error creating project '%s':\n %s" % (short_name, errors))
                 
-        #ad.set_base_permissions(request,project)
+        #ad.set_base_permissions(request,project)        
         project = ComicSite.objects.get(short_name=short_name)
         
         return project
