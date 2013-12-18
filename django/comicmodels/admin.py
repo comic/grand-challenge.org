@@ -247,12 +247,16 @@ class DropboxFolderAdmin(ComicModelAdmin):
 
         
 class RegistrationRequestsAdmin(GuardedModelAdmin):    
+    # TODO: This class should derive from ComicModelAdmin and not from GuardedModelAdmin
+    
+    # if user has this permission, user can access this ComicModel.
+    permission_name = 'view_ComicSiteModel'
+    
     list_display = ('user','user_email','user_real_name','user_affiliation','project', 'created', 'changed','status')
     #list_display = ('email', 'first_name', 'last_name')
     #list_filter = ('is_staff', 'is_superuser', 'is_active')
     readonly_fields=("user","project",'created','changed','user_email','user_real_name','user_affiliation')
     actions = ['accept','reject']    
-    
     
     
     def save_model(self, request, obj, form, change):
@@ -263,6 +267,34 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         self.process_status_change(request,obj)            
         super(RegistrationRequestsAdmin,self).save_model(request, obj, form, change)
 
+    
+    def queryset(self, request): 
+        """ overwrite this method to return only pages comicsites to which current user has access 
+            
+            note: GuardedModelAdmin can also restrict queryset to owned by user only, but this
+            needs a 'user' field for each model, which I don't want because we use permission
+            groups and do not restrict to user owned only.
+        """
+        
+        # TODO: This way of filtering should be used for all comicobjects, this
+        #       would be a lot of rafactoring.                   
+        qs = super(RegistrationRequestsAdmin, self).queryset(request)
+        
+        if request.project_pk == -1:
+            if request.user.is_superuser:
+                # in general registration_requests overview, show requests for all
+                # projects only to admin
+                return qs
+            else:
+                return RegistrationRequest.objects.none()
+                        
+        else:
+            #show only requests for the current project         
+            qs_out = qs.filter(project__pk=request.project_pk)
+                        
+        return qs_out
+    
+    
     
     def process_status_change(self,request,obj):
                 
@@ -319,7 +351,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         for obj in queryset.all():
             obj.status = RegistrationRequest.REJECTED
             self.process_status_change(request,obj)
-            
+    
 
 admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
