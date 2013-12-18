@@ -109,7 +109,7 @@ def send_participation_request_notification_email(request,obj):
     
     for admin in obj.project.get_admins():
         kwargs["admin"] = admin 
-        send_templated_email(title, "admin/emails/participation_request_notification_email.txt",kwargs,[obj.user.email]
+        send_templated_email(title, "admin/emails/participation_request_notification_email.txt",kwargs,[admin.email]
                         ,"noreply@"+mainportal.domain, fail_silently=False)
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     
@@ -125,7 +125,7 @@ def send_participation_request_accepted_email(request,obj):
     
     """        
     
-    title = obj.project.short_name + ' participation request accepted'
+    title = obj.project.short_name + ' participation request accepted'    
     mainportal = get_current_site(request)
     kwargs={'user':obj.user,
             'adder':request.user,
