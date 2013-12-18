@@ -16,10 +16,10 @@ class Migration(SchemaMigration):
             # instance. Add the new object class RegistrationRequest to the group
             # which all project admins are part of, so they don't get a 403 forbidden
             # when trying to see requests for their project 
-            
+                                    
             try:                                                               
-                projectadmins = orm['auth.Group'].objects.get(name="projectadmins")
-            except orm['auth.Group'].DoesNotExist as e:                            
+                projectadmins = Group.objects.get(name="projectadmins")
+            except Group.DoesNotExist as e:                            
                 projectadmins = Group(name='projectadmins')
                 #TODO add permissions for all comicmodels and registrationRequest
                 projectadmins.save()
@@ -31,7 +31,7 @@ class Migration(SchemaMigration):
             # each user in comic is part of this group projectadmins. With the
             # permission in this group you can determine which types of objects
             # regular adins can see and edit in the admin interface.
-                    
+                
             self.add_standard_perms("comicmodels","registrationrequest",projectadmins)
             self.add_standard_perms("comicmodels","comicsite",projectadmins)
             self.add_standard_perms("comicmodels","page",projectadmins)                                    
