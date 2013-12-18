@@ -20,7 +20,7 @@ from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
 from ckeditor.views import upload_to_project 
-from comicmodels.models import Page,ComicSite,UploadModel,ComicSiteModel
+from comicmodels.models import Page,ComicSite,UploadModel,ComicSite,RegistrationRequest
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
 from comicsite.storage import MockStorage
@@ -81,6 +81,11 @@ def find_text_between(start,end,haystack):
             raise Exception("There is no substring starting with '{}', ending"
                             " with '{}' in content '{}' ".format(start,end,haystack))
 
+def extract_href_from_anchor(anchor):
+    """ For a html link like '<a href="www.some.nl">click here</a>' 
+    return only 'www.some.nl'
+    """
+    return find_text_between('href="','">',anchor)
         
 
 class ComicframeworkTestCase(TestCase):
@@ -111,8 +116,6 @@ class ComicframeworkTestCase(TestCase):
         testproject = self._create_comicsite_in_admin(projectadmin,projectname)
         create_page_in_admin(testproject,"testpage1")
         create_page_in_admin(testproject,"testpage2")
-        
-        
         
         # a user who explicitly signed up to testproject
         participant = self._create_random_user("participant_")
@@ -1063,64 +1066,174 @@ class TemplateTagsTest(ComicframeworkTestCase):
                         "outside the current project' when trying to include filepath with ../"
                         " in it. Instead found '%s'" %scary)
         
+
+    def apply_standard_middleware(self, request):
+        """ Some actions in the admin pages require messages middleware, which is
+        not active for some reason when running tests. Manually Process a request
+        with middleware so it can be used in an admin action writing messages 
+        without crashing
+        
+        """        
+        from django.contrib.sessions.middleware import SessionMiddleware # Some admin actions render messages and will crash without explicit import
+        from django.contrib.messages.middleware import MessageMiddleware
+        sm = SessionMiddleware()
+        mm = MessageMiddleware()
+        sm.process_request(request)
+        mm.process_request(request)
+
+
     def test_registration_request_tag(self):
         """   Registration tags renders a link to register. Either directly of
         after being approved by an admin 
         
         """        
-        content = "register here: <registration> {% registration %} </registration>"                
+        content = "register here: <registration> {% registration %} </registration>"
+        
         registrationpage = create_page_in_admin(self.testproject,"registrationpage",content)
         
         # when you don't have to be approved, just following the link rendered by registration should do
         # register you
-        self.testproject.require_participant_review = True                             
-        response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)        
-        self.assertExpectedText(response.content,"registration","Register for","registering without review")
+        self.testproject.require_participant_review = False
+        self.testproject.save()
+                                     
+        response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)
+        self.assertTextBetweenTags(response.content,"registration","Register for","registering without review")
+            
+                
+        # when participant review is on, all admins will receive an email of a 
+        # new participant request, which they can approve or reject.  
+        self.testproject.require_participant_review = True
+        self.testproject.save()
+        
+        # have a user request registration                             
+        response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)
+        self.assertTextBetweenTags(response.content,
+                                   "registration",
+                                   "Request registration for",
+                                   "registering with participation review")
+        
+        registration_anchor = find_text_between('<registration>','</registration>',response.content)
+        registration_link = extract_href_from_anchor(registration_anchor)
+        
+        response = self._test_url_can_be_viewed(self.signedup_user,registration_link)
+        
+        # user should see some useful info after requestion registration                
+        self.assertText(response.content,
+                        "A registration request has been sent",
+                        "Checking message after user has requested participation")
+        # and admins should receive an email 
+        
+        request_mail = mail.outbox[-1]
+        
+        self.assertEmail(request_mail,{"to":self.testproject.get_admins()[0].email,
+                                       "subject":"New participation request",
+                                       "body":"has just requested to participate"                                       
+                                       })
+                 
+        # link in this email should lead to admin overview of requests
+        link_in_email = find_text_between('href="','">here',self.get_mail_html_part(request_mail))
+        #TODO: create a function to check all links in the email.
+        
+        reg_request = RegistrationRequest.objects.filter(project=self.testproject)
+        self.assertTrue(reg_request != [],
+                        "User {0} clicked registration link, but no registrationRequest\
+                         object seems to have been created for project '{1}'".format(self.signedup_user,
+                                                                                     self.testproject))
         
         
-        # Extract rendered content from included file, see if it has been rendered
-        # In the correct way
-        #somecss = find_text_between('<somecss>','</somecss>',response.content)
-        #nonexistant = find_text_between('<nonexistant>','</nonexistant>',response.content)
-        #scary = find_text_between('<scary>','</scary>',response.content)
+        from comicmodels.admin import RegistrationRequestsAdmin
         
-        ##self.assertTrue(somecss != "","Nothing was rendered when including an existing file. Some css should be here")
-        ##self.assertTrue(nonexistant != "","Nothing was rendered when including an existing file. Some css should be here")
-        #self.assertTrue(scary != "","Nothing was rendered when trying to go up the directory tree with ../ At least some error should be printed")
+                                                                                           
+        factory = RequestFactory()
+        request = factory.get("/") #just fake a request, we only need to add user
+        request.user = self.testproject.get_admins()[0]
         
-        #self.assertTrue("body {width:300px;}" in somecss,"Did not find expected"
-        #                " content 'body {width:300px;}' when including a test"
-        ##                " css file. Instead found '%s'" % somecss)
-        #self.assertTrue("No such file or directory" in nonexistant,"Expected a"
-        #                " message 'No such file or directory' when including "
-        #                "non-existant file. Instead found '%s'" % nonexistant)
-        #self.assertTrue("cannot be opened because it is outside the current project" in scary ,
-        #                "Expected a message 'cannot be opened because it is "
-        #                "outside the current project' when trying to include filepath with ../"
-        #                " in it. Instead found '%s'" %scary)
+        self.apply_standard_middleware(request)
+                
+        modeladmin = RegistrationRequestsAdmin(RegistrationRequest,admin.site)
+        modeladmin.accept(request,reg_request)
+        
+                
+        # request.status = RegistrationRequest.ACCEPTED
+        # request.save()                        
+        # after acceptance, user should receive notification email
+        acceptance_mail = mail.outbox[-1]
+                        
+        self.assertEmail(acceptance_mail,{"to":self.signedup_user.email,
+                                          "subject":"participation request accepted",
+                                          "body":"has just accepted your request"                                       
+                                          })
+                
+        # after acceptance, user should be able to access restricted pages.
+        registeredonlypage =  create_page_in_admin(self.testproject,"registeredonlypage",
+                                                   permission_lvl=Page.REGISTERED_ONLY)
+        
+        self._test_page_can_be_viewed(self.signedup_user,registeredonlypage)
+        
+        # just to test, a random user should not be able to see this page
+        self._test_page_can_not_be_viewed(self._create_random_user("not_registered"),registeredonlypage)
+        
+                    
+    def get_mail_html_part(self,mail):
+        """ Extract html content from email sent with models.comicsite.send_templated_email
+        
+        """
+        return mail.alternatives[0][0]    
+   
+    def assertEmail(self,email,email_expected):
+        """ Convenient way to check subject, content, mailto etc at once for
+        an email 
+        
+        email : django.core.mail.message object
+        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }        
+        """
+        for attr in email_expected.keys():
+            try:
+                found = getattr(email,attr)
+            except AttributeError as e:
+                raise AttributeError("Could not find attribute '{0}' for this email.\
+                                     are you sure it exists? - {1}".format(attr,str(e)))
+                
+            expected = email_expected[attr]
+            self.assertTrue(expected in found,
+                            "Expected to find '{0}' for email attribute \
+                            '{1}' but found '{2}' instead".format(expected,
+                                                                  attr,
+                                                                  found))    
+        
+        
+        
+    def assertText(self,content,expected_text,description=""):
+        """ assert that expected_text can be found in text, 
+        description can describe what this link should do, like 
+        "register user without permission", for better fail messages
+                
+        """ 
+        self.assertTrue(expected_text in content,
+                        "expected to find '{0}' but found '{1}' instead.\
+                         Attemted action: {2}".format(expected_text,                                           
+                                                      content,
+                                                      description)) 
+        
     
-    def assertExpectedText(self,text,tagname,expected_text,description=""):
+    def assertTextBetweenTags(self,text,tagname,expected_text,description=""):
         """ Assert whether expected_text was found in between <tagname> and </tagname>
         in text. On error, will include description of operation, like "trying to render
         table from csv".
         
         """
         content = find_text_between('<'+tagname +'>','</'+tagname +'>',text)
-        self.assertTrue(content != "","Nothing was rendered between <{0}> </{0}>, attempted action: {1}".format(tagname,description))
-        self.assertTrue(expected_text in content,
-                        "expected to find '{0}' when rendering tag between <{1}> </{1}>, \
-                         but found '{2}' instead. Attemted action: {3}".format(expected_text,
-                                                                               tagname,
-                                                                               content,
-                                                                               description)) 
+        self.assertTrue(content != "","Nothing was rendered between <{0}> </{0}>, attempted action: {1}".format(tagname,description))        
+        description = "Rendering tag between <{0}> </{0}>, ".format(tagname) + description
         
+        self.assertText(text,expected_text,description)
 
        
             
 class ProjectLoginTest(ComicframeworkTestCase):
     """ Getting userena login and signup to display inside a project context 
     (with correct banner and pages, sending project-based email etc..) was quite
-    a hassle, not to mention messy.  Do all the links still work?
+    a hassle, not to mention messy. Do all the links still work?
     
     """
     

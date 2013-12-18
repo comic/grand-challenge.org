@@ -1585,7 +1585,9 @@ class RegistrationFormNode(template.Node):
                 # nested if loops through the roof. What would uncle Bob say? 
                 # "nested if loops are a missed chance for inheritance."
                 # TODO: possible way out: create some kind of registration request 
-                # manager which can be asked these things 
+                # manager which can be asked these things
+                
+                 
                 if project.require_participant_review:                    
                     pending = RegistrationRequest.objects.get_pending_registration_requests(context['user'],project)                    
                     if pending:                        

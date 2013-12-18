@@ -265,6 +265,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
 
     
     def process_status_change(self,request,obj):
+                
         if obj.has_changed('status'):
             if obj.status == RegistrationRequest.ACCEPTED:
                 self.process_acceptance(request,obj)
@@ -304,7 +305,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
     def accept(self, request, queryset):
         """ called from admin actions dropdown in RegistrationRequests list 
         
-        """                            
+        """                             
         for obj in queryset.all():
             obj.status = RegistrationRequest.ACCEPTED
             self.process_status_change(request,obj)            
