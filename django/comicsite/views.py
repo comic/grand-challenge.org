@@ -40,8 +40,6 @@ def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
-
-
 def _register(request, site_short_name):
     """ Register the current user for given comicsite """
    
