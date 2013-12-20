@@ -193,8 +193,8 @@ class ProjectLink(object):
         
         # for project hosted on comic, try to find upcoming/active automatically
                     
-        if self.params["hosted on comic"]:                        
-            if self.parse_date() > timezone.now(): 
+        if self.params["hosted on comic"]:            
+            if self.to_datetime(self.parse_date()) > timezone.now(): 
                 linkclass = "upcoming"
             else:
                 linkclass = "active"
@@ -213,6 +213,16 @@ class ProjectLink(object):
                     
         return linkclass
      
+    def to_datetime(self,date):
+        """ add midnight to a date to make it a datetime because I cannot
+        ompare these two types directly. Also add offset awareness to easily
+        compare with other django datetimes.                  
+        """
+        
+        dt = datetime.datetime(date.year,date.month,date.day)
+        return timezone.make_aware(dt, timezone.get_default_timezone())
+        
+        
     
     def render_to_html(self):
         item = self.params
