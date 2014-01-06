@@ -230,7 +230,7 @@ def serve(request, project_name, path, document_root=None,override_permission=""
         f = storage.open(fullpath, 'rb')
         file = File(f) # create django file object
         # Do not offer to save images, but show them directly
-        return serve_file(request, file, save_as=False)
+        return serve_file(request, file, save_as=True)
     else:        
         return HttpResponseForbidden("This file is not available without "
                                     "credentials")        
