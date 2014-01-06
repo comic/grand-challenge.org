@@ -75,8 +75,9 @@ def get_usagestr(function_name):
     Return usage string for a registered template tag function. For displaying
     this info in errors or tag overviews
     """
+    
     if register.usagestrings.has_key(function_name):
-        usagestr = register.usagestrings["dataset"]
+        usagestr = register.usagestrings[function_name]
     else:
         usagestr = ""
 
@@ -354,7 +355,8 @@ class DatasetNode(template.Node):
         except (OSError) as e:
 
           return self.make_dataset_error_msg(str(e))
-
+      
+        filenames.sort()        
 
         links = []
         for filename in filenames:
@@ -382,7 +384,7 @@ def listdir(parser, token):
     """ show all files in dir as a downloadable list"""
 
     usagestr = get_usagestr("listdir")
-
+    
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -424,6 +426,7 @@ class ListDirNode(template.Node):
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
 
+        filenames.sort()
 
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():
