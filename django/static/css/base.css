@@ -117,7 +117,8 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle img { vertical-align:bottom;}
 #headerTitle a { text-decoration: none; color:inherit; }
 #loginInfo{ float:right; }
-#mainContent{ padding-right: 8px; padding-left: 8px; padding-bottom: 12px; padding-top: 12px;}
+#mainContent{}
+#pageContainer {padding-right: 8px; padding-left: 8px; padding-bottom: 12px; padding-top: 12px;}
 #copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
 
@@ -171,7 +172,7 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .linkoverlay{height: 30px; margin-top: 71px; position: absolute; width: 30px;
 		  	 margin-left: -100px;}
 
-.projectlink{width:280px; height:200px; background-color:#777777 ; margin:10px; float:left;}
+.projectlink{width:313px; height:200px; background-color:#777777 ; margin:10px; float:left;}
 
 .project_thumb{width:113px;}
 
