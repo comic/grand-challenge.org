@@ -224,6 +224,14 @@ class ProjectLink(object):
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]    
     
+    def get_thumb_image_url(self):
+        if self.is_hosted_on_comic():
+            thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+        else:
+            thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
+        
+        return thumb_image_url
+    
     def render_to_html(self):
         item = self.params
         
@@ -319,7 +327,7 @@ class ComicSite(models.Model):
                                    blank=True,help_text = "Short summary of "
                                    "this project, max 1024 characters.")
     logo = models.CharField(max_length = 255, default = public_folder+"/logo.png",
-                            help_text = "200x200 pixel image file to use as logo" 
+                            help_text = "100x100 pixel image file to use as logo" 
                             " in projects overview. Relative to project datafolder")
     header_image = models.CharField(max_length = 255, blank = True,
                             help_text = "optional 658 pixel wide Header image which will "
@@ -440,6 +448,8 @@ class ComicSite(models.Model):
         
         """        
         
+        thumb_image_url = reverse('project_serve_file', args=[self.short_name,self.logo])
+        
         args = {"abreviation":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
@@ -447,6 +457,7 @@ class ComicSite(models.Model):
                 "year":"",
                 "event URL":self.event_url,                
                 "image URL":self.logo,
+                "thumb_image_url":thumb_image_url,
                 "website section":"active challenges",
                 "overview article url":"",
                 "overview article citations":"",
@@ -462,6 +473,7 @@ class ComicSite(models.Model):
                 "created at":self.created_at
                 }
         
+         
         
         projectlink = ProjectLink(args)
         return projectlink
