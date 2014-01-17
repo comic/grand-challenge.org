@@ -168,19 +168,20 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .COMICWebWorkstationButtons {padding-top:4px;  padding-bottom: 4px;}
 
 /* For all projects overview */
-.projectlink .externallink{}
 .linkoverlay{height: 30px; margin-top: 71px; position: absolute; width: 30px;
 		  	 margin-left: -100px;}
 
-.projectlink{width:640px;}
+.projectlink{width:280px; height:200px; background-color:#777777 ; margin:10px; float:left;}
+
 .project_thumb{width:113px;}
 
 /*very long urls were disturbing the table layout, making the external link icon appear in a weird place*/
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
+#projectlinks ul {padding-left:0px;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
+#projectlinkscontainer {width: 100%;}
 
 h2.yearHeader{color:#666666; border-bottom: solid 1px #CCCCCC;}
-
 
 /* svg graph plots*/
 svg {margin-bottom:10px;}

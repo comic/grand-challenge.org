@@ -1437,7 +1437,6 @@ class AllProjectLinksNode(template.Node):
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
 
-
         html = "<ul>" + html + "</ul>"
 
         return html
@@ -1448,7 +1447,6 @@ class AllProjectLinksNode(template.Node):
 
         """
         #go throught all projectlinks and bin per year
-
         years = {}
 
         for projectlink in projectlinks:
@@ -1465,10 +1463,51 @@ class AllProjectLinksNode(template.Node):
         html = ""
         for year in years:
             html += "<h2 class ='yearHeader' id = '%i'><a class ='yearHeaderAnchor'>%i</a></h2>" % (year[0],year[0])
-            html += "\n".join([link.render_to_html() for link in year[1]])
+            #html += "\n".join([link.render_to_html() for link in year[1]])
+            projectlinks = "\n".join([self.render_to_html(link) for link in year[1]]) 
+            html += "<div class=projectlinksyearcontainer>" + projectlinks + "<div style='clear:both;'></div></div>"
 
         return html
 
+    
+
+    def render_to_html(self,projectlink):
+        """ return html representation of projectlink """
+        #html = '<div class = "projectlink"></div>'
+        html = """
+               <div class = "projectlink">
+                 <a href="{url}">
+                   <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
+                 </a>
+                                
+               {projectname}
+               {description}
+               </div>
+                
+                """.format(url=projectlink.params["URL"],
+                           thumb_image_url=self.get_thumb_url(projectlink),
+                           projectname=projectlink.params["abreviation"],
+                           description = projectlink.params["description"]                           
+                           )
+                
+        
+        
+        
+        
+        
+        return html
+    
+    def get_thumb_url(self,projectlink):
+        """ For displaying a little thumbnail image for each project, in 
+            project overviews 
+            
+        """
+        if projectlink.is_hosted_on_comic():
+            thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+        else:
+            thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
+            
+        return thumb_image_url
 
 
     def project_summary_html(self,project):

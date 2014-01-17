@@ -208,9 +208,7 @@ class ProjectLink(object):
                 linkclass = "active"
             elif section == "past challenges":
                 linkclass = "inactive"
-        
-        
-                    
+
         return linkclass
      
     def to_datetime(self,date):
@@ -223,6 +221,8 @@ class ProjectLink(object):
         return timezone.make_aware(dt, timezone.get_default_timezone())
         
         
+    def is_hosted_on_comic(self):
+        return self.params["hosted on comic"]    
     
     def render_to_html(self):
         item = self.params
@@ -240,7 +240,7 @@ class ProjectLink(object):
         classes = ["projectlink"]
         classes.append(self.find_link_class())
                 
-        if item["hosted on comic"]:
+        if self.is_hosted_on_comic():
             classes.append("comic")
         
         # For counting in jquery later
