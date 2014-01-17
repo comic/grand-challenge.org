@@ -13,7 +13,7 @@
 		</div>
 		
 	{% endif %}
-	<div>{{currentpage.rawHTML}}</div>
+	<div id=pageContainer>{{currentpage.rawHTML}}</div>
 		
 	<br/>
 	{% get_obj_perms user for site as "site_perms" %}	
