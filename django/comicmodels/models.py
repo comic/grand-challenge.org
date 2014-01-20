@@ -130,6 +130,7 @@ class ProjectLink(object):
         else:
             self.date = date
     
+        
     
     def parse_date(self):
         """ Try to find the date for this project. Return default
