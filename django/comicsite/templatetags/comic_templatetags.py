@@ -1462,13 +1462,43 @@ class AllProjectLinksNode(template.Node):
 
         html = ""
         for year in years:
-            html += "<h2 class ='yearHeader' id = '%i'><a class ='yearHeaderAnchor'>%i</a></h2>" % (year[0],year[0])
+            yearheader = "<div class ='yearHeader' id ='{0}'><a class ='yearHeaderAnchor'>{0}</a></div>".format(year[0])
+            #html += yearheader
             #html += "\n".join([link.render_to_html() for link in year[1]])
             projectlinks = "\n".join([self.render_to_html(link) for link in year[1]]) 
-            html += "<div class=projectlinksyearcontainer>" + projectlinks + "<div style='clear:both;'></div></div>"
+            html += "<div class=projectlinksyearcontainer \
+                    style='background-color:{0}'>{1}{2} <div style='clear:both;'>\
+                    </div></div>".format("none",
+                                          yearheader,
+                                          projectlinks)
 
         return html
 
+    def get_background_color(self,idx=-1):
+        """ Each year has a different background returns color of css format
+        rgb(xxx,xxx,xxx) """
+                
+        colors = [(207,229,222),                  
+                  (240,100,100),
+                  (208,153,131),
+                  (138,148,175),
+                  (186,217,226),
+                  (138,148,175),
+                  (208,153,131),                  
+                  (200,210,230),
+                  (003,100,104),
+                  (100,160,100)
+                 ]
+                  
+        
+        #random.seed(int(seed))
+        #idx = random.randint(0,9)
+        if idx == -1:            
+            idx = idx = random.randint(0,len(colors))                
+        idx = idx % len(colors);                    
+        css_color = "rgb({},{},{})".format(*colors[idx]) 
+        
+        return css_color
     
 
     def render_to_html(self,projectlink):
@@ -1480,22 +1510,57 @@ class AllProjectLinksNode(template.Node):
                    <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
                  </a>
                                 
-               {projectname}
-               {description}
+                 <div class="projectname"> {projectname} </div>
+                 <div class="stats">
+                     {stats}
+                     
+                 </div>
+                 <div class="description"> {description} </div>
+               
                </div>
                 
                 """.format(url=projectlink.params["URL"],
                            thumb_image_url=self.get_thumb_url(projectlink),
                            projectname=projectlink.params["abreviation"],
-                           description = projectlink.params["description"]                           
-                           )
-                
-        
-        
-        
-        
+                           description = projectlink.params["description"],                           
+                           stats = self.get_stats_html(projectlink)                           
+                          )
         
         return html
+    
+    def get_stats_html(self,projectlink):
+        """ Returns html to render number of downloads, participants etc..
+        if a value is not found it is ommitted from the html so there will
+        be no 'participants: <empty>' strings shown """
+        
+        stats = []
+        
+        
+        if projectlink.params["workshop date"]:
+            stats.append("workshop date:" + self.format_date(projectlink.params["workshop date"]))
+            
+        if projectlink.params["registered teams"]:
+            stats.append("registered:" + str(projectlink.params["registered teams"]))
+        
+        
+        if projectlink.params["dataset downloads"]:            
+            stats.append("downloads:" + str(projectlink.params["dataset downloads"]))
+                    
+        if projectlink.params["submitted results"]:
+            stats.append("submitted results:" + str(projectlink.params["submitted results"]))
+        
+        if projectlink.params["last submission date"]:
+            stats.append("last submission:" + self.format_date(projectlink.params["last submission date"]))
+        
+                
+        stats.append("status:" + projectlink.find_link_class())
+        
+        #put divs around each statistic in the stats list
+        stats_html = "".join(["<div>{}</div>".format(stat) for stat in stats]) 
+                        
+        return stats_html
+        
+        
     
     def get_thumb_url(self,projectlink):
         """ For displaying a little thumbnail image for each project, in 
@@ -1503,7 +1568,8 @@ class AllProjectLinksNode(template.Node):
             
         """
         if projectlink.is_hosted_on_comic():
-            thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+            #thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+            thumb_image_url = projectlink.params["thumb_image_url"]
         else:
             thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
             
@@ -1511,7 +1577,8 @@ class AllProjectLinksNode(template.Node):
 
 
     def project_summary_html(self,project):
-
+        """ get a link to this project """
+                
         if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
             protocol,domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" +project.short_name +"."+ domainname
@@ -1521,6 +1588,7 @@ class AllProjectLinksNode(template.Node):
 
         return html
 
+    
     def read_grand_challenge_projectlinks(self):
         filename = "challengestats.xls"
         project_name = settings.MAIN_PROJECT_NAME
@@ -1533,7 +1601,49 @@ class AllProjectLinksNode(template.Node):
             logger.warning("Could not read any projectlink information from"
                            " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
-        return projectlinks
+        
+        projectlinks_clean = []
+        for projectlink in projectlinks:
+            projectlinks_clean.append(self.clean_grand_challenge_projectlink(projectlink))
+        
+        return projectlinks_clean
+    
+    def clean_grand_challenge_projectlink(self,projectlink):
+        """ Specifically for the grand challenges excel file, make everything strings,
+        change weird values, like having more downloads than registered users
+        """
+        
+        # cast all to int as there are no float values in the excel file, I'd
+        # rather do this here than change the way excelreader reads them in
+        for key in projectlink.params.keys():
+            param = projectlink.params[key]
+            if type(param) == float:
+                projectlink.params[key] = int(param)
+            
+        if projectlink.params["last submission date"]:
+            projectlink.params["last submission date"] = self.parse_date(projectlink.params["last submission date"])
+            
+        if projectlink.params["workshop date"]:
+            projectlink.params["workshop date"] = self.parse_date(projectlink.params["workshop date"])
+                    
+        return projectlink
+    
+    def parse_date(self,datefloat):
+        """ Parse float (e.g. 20130425.0) read by excelreader into python date
+        
+        """
+        date = str(datefloat)
+        parsed = datetime.datetime(year=int(date[0:4]),
+                                   month=int(date[4:6]),
+                                   day=int(date[6:8]))
+        
+        return parsed
+        
+    def format_date(self,date):
+        return date.strftime('%b %d, %Y')
+        
+         
+        
 
 
 @register.tag(name="image_url")
