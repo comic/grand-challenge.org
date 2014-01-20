@@ -172,7 +172,12 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .linkoverlay{height: 30px; margin-top: 71px; position: absolute; width: 30px;
 		  	 margin-left: -100px;}
 
-.projectlink{width:313px; height:200px; background-color:#777777 ; margin:10px; float:left;}
+.projectlink{width:313px; height:200px; background-color:#D6D6D6 ; margin:10px; float:left;}
+.projectlink .projectname {float:right; clear:both;}
+.projectlink .description {}
+.projectlink .stats {float:right}
+
+
 
 .project_thumb{width:113px;}
 
