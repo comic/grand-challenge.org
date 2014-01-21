@@ -172,11 +172,19 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .linkoverlay{height: 30px; margin-top: 71px; position: absolute; width: 30px;
 		  	 margin-left: -100px;}
 
-.projectlink{width:313px; height:200px; background-color:#D6D6D6 ; margin:10px; float:left;}
-.projectlink .projectname {float:right; clear:both;}
-.projectlink .description {}
-.projectlink .stats {float:right}
-
+.projectlink {height:255px; background-color:#f1f1f1 ; margin:10px; float:left; position:relative; color:#474747;}
+.projectlink .projectname {clear:both; margin-bottom: 6px; font-size: 22px;}
+.projectlink .description {float:left;}
+.projectlink .stats {float:left; margin-left: 3px;}
+.projectlink .stats div {float:left; clear:both;}
+.projectlink img {float:left;}
+.projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
+.projectlink .bottom{top:104px; left:0; position:absolute; margin-left:3px; overflow: hidden; height:144px;}
+.projectlink .imagefader{width:100px; height:100px; position:absolute; top:0px; left:0px;background-color: rgba(255, 255, 255, 0.5);}
+.projectlink, .projectlink .top, .projectlink .bottom {width:313px;}
+.projectlink.inactive img{filter: alpha(opacity=0.5);opacity: 0.5;}
+.projectlink.inactive .top{background-color:#dddddd;}
+.projectlink.inactive {color:#666666;}
 
 
 .project_thumb{width:113px;}
@@ -187,7 +195,7 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
 #projectlinkscontainer {width: 100%;}
 
-h2.yearHeader{color:#666666; border-bottom: solid 1px #CCCCCC;}
+div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;}
 
 /* svg graph plots*/
 svg {margin-bottom:10px;}
