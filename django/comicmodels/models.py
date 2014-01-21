@@ -117,6 +117,13 @@ class ProjectLink(object):
                 }
     
     
+    # keys used in website section column, these designate the class of the
+    # project. Defining them here makes sure other classes can check this class
+    # using the find_link_class() method          
+    UPCOMING = "upcoming"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    
     
     def __init__(self,params,date=""):
         
@@ -129,6 +136,8 @@ class ProjectLink(object):
             self.date = self.parse_date()                                
         else:
             self.date = date
+        
+        self.params["year"] = self.date.year
     
         
     
@@ -204,11 +213,11 @@ class ProjectLink(object):
             
             section = self.params["website section"].lower()
             if section == "upcoming challenges":
-                linkclass = "upcoming"
+                linkclass = self.UPCOMING
             elif section == "active challenges":
-                linkclass = "active"
+                linkclass = self.ACTIVE
             elif section == "past challenges":
-                linkclass = "inactive"
+                linkclass = self.INACTIVE
 
         return linkclass
      

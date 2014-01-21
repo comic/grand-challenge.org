@@ -9,7 +9,7 @@
 <style>
 	
 	#buttonbar {width:100%; height:80px; border-top:1px solid #CCCCCC;}
-	#buttonbar li{list-style: none outside none; width:220px;}
+	#buttonbar li{list-style: none outside none; width:260px;}
 	#buttonbar li label, #buttonbar li input{cursor: pointer;}
 	#buttonbar ul {float:left}
 	#buttonbar label {width:135px;}
@@ -21,7 +21,7 @@
 			margin-left:20px;border-bottom:none; cursor:pointer;}
 	#projectscontainer .tab.active{color:black;}
 	
-	#projectfilterbuttons label{float:right; width: 194px; }
+	#projectfilterbuttons label{float:right; width: 226px; }
 	
 </style>
 	<div id="projectlinkscontainer">		
@@ -100,7 +100,7 @@
 			//filter checkbox will remove all others when checked
 			if(checkbox.is(':checked') ){				
 				log("hiding all non	'." + name+"'");
-				$("table:not(."+name+")").hide(fadetime);				
+				$("div:not(."+name+")").hide(fadetime);				
 			}
 			else{
 				log("filter on '." + name+"' released. doing nothing.");
@@ -111,12 +111,12 @@
 			// the same name
 			if(checkbox.is(':checked') ){				
 				log("showing ''." + name+"'");
-				$("table."+name).show(fadetime);
+				$("div."+name).show(fadetime);
 				
 			}
 			else{
 				log("hiding '." + name+"'");
-				$("table."+name).hide(fadetime);
+				$("div."+name).hide(fadetime);
 			};
 			
 		
@@ -128,7 +128,7 @@
 	}
 	
 	function modifyCollection(checkbox,collection){
-		// Make sure the collection of link items in table is consistent with
+		// Make sure the collection of link items is consistent with
 		// the value of checkbox. This means add or remove items with same id
 		// as checkbox based on it being checked or not
 		
@@ -149,7 +149,7 @@
 			//filter checkbox will remove all others when checked
 			if(checkbox.is(':checked') ){				
 				log("hiding all non	'." + name+"'");
-				hide = hide.add("table:not(."+name+")");								
+				hide = hide.add(".projectlink:not(."+name+")");								
 			}
 			else{
 				log("filter on '." + name+"' released. doing nothing.");
@@ -160,12 +160,12 @@
 			// the same name
 			if(checkbox.is(':checked') ){				
 				log("showing ''." + name+"'");
-				show = show.add("table."+name);				
+				show = show.add(".projectlink."+name);				
 				
 			}
 			else{
 				log("hiding '." + name+"'");
-				hide = hide.add("table."+name);				
+				hide = hide.add(".projectlink."+name);				
 			};
 			
 		
@@ -208,15 +208,13 @@
 		hide = projectlinks["hide"];		
 		show = removeDuplicates(show,hide);
 		
-		//after fading or hiding, update counters. 	
-		show.show(fadetime,function(){updateCounters();
+		
+		//after fading or hiding, update counters once.
+		$.when(show.show(fadetime)).then(function(){updateCounters();
 									  hideEmptyYears();});		
-		hide.hide(fadetime,function(){updateCounters();
-									  hideEmptyYears();});
-
-		//hideEmptyYears()
 		
-		
+		$.when(hide.hide(fadetime)).then(function(){updateCounters();
+									  hideEmptyYears();});		
 						
 		// allow fancy effects after this
 		FIRST_LOAD = false;
@@ -229,21 +227,22 @@
 		$("#projectfilterbuttons input").each(function(i,d){
 			log("updating counters for "+d.id);
 			var inputname = d.id;
-			count = $("table."+inputname+":visible").length;
+			count = $("div."+inputname+":visible").length;
 			$("span#"+inputname).html(" ("+count+")")															
 		})
 	}
 	
 	function hideEmptyYears(){
 		// hide year headings without any items in them
-		$("#projectlinks .yearHeader").each(function(i,d){
-			var count = $("table."+d.id+":visible").length;
+		$("div.yearHeader").each(function(i,d){
+			var count = $(".projectlink."+d.id+":visible").length;
+			log("finding $('.projectlink."+d.id+":visible'");			
 			if (count == 0){
-				log("hiding "+ d.id);
+				log("hiding year"+ d.id);
 				$(this).hide();
 			}
 			else{
-				log("showing "+ d.id + "count was " + count);
+				log("showing year"+ d.id + "count was " + count);
 				$(this).show();
 			}
 		});		
@@ -267,7 +266,7 @@
 	
 	
 	function log(msg){
-	var logging = false;
+	var logging = true;
 	
 		if(logging){
 			console.log("* "+msg)

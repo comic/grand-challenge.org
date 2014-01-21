@@ -1505,28 +1505,47 @@ class AllProjectLinksNode(template.Node):
         """ return html representation of projectlink """
         #html = '<div class = "projectlink"></div>'
         html = """
-               <div class = "projectlink">
-                 <a href="{url}">
-                   <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
-                 </a>
-                                
-                 <div class="projectname"> {projectname} </div>
-                 <div class="stats">
-                     {stats}
+               <div class = "projectlink {link_class} {year} {comiclabel}">                 
+                 <div class ="top">                     
+                     <a href="{url}">
+                       <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
+                     </a>
+                                    
                      
+                     <div class="stats">{stats} </div>
                  </div>
-                 <div class="description"> {description} </div>
-               
+                 <div class ="bottom">
+                   <div class="projectname"> {projectname} </div>
+                   <div class="description"> {description} </div>
+                 </div>
                </div>
                 
-                """.format(url=projectlink.params["URL"],
+                """.format(link_class = projectlink.find_link_class(),
+                           comiclabel = self.get_comic_label(projectlink),
+                           year = str(projectlink.params["year"]),
+                           url=projectlink.params["URL"],
                            thumb_image_url=self.get_thumb_url(projectlink),
                            projectname=projectlink.params["abreviation"],
                            description = projectlink.params["description"],                           
                            stats = self.get_stats_html(projectlink)                           
-                          )
-        
+                          )        
         return html
+    
+    
+    
+    def capitalize(self,string):
+        return string[0].upper()+string[1:]
+        
+    
+    def get_comic_label(self,projectlink):
+        """ For add this as id, for jquery filtering later on
+         
+        """
+        
+        if projectlink.params["hosted on comic"]:            
+            return "comic"
+        else:
+            return ""
     
     def get_stats_html(self,projectlink):
         """ Returns html to render number of downloads, participants etc..
@@ -1535,9 +1554,10 @@ class AllProjectLinksNode(template.Node):
         
         stats = []
         
+        stats.append("" + projectlink.find_link_class())
         
-        if projectlink.params["workshop date"]:
-            stats.append("workshop date:" + self.format_date(projectlink.params["workshop date"]))
+        if projectlink.params["workshop date"] and projectlink.find_link_class() == projectlink.UPCOMING:
+            stats.append("workshop:" + self.format_date(projectlink.params["workshop date"]))
             
         if projectlink.params["registered teams"]:
             stats.append("registered:" + str(projectlink.params["registered teams"]))
@@ -1547,17 +1567,18 @@ class AllProjectLinksNode(template.Node):
             stats.append("downloads:" + str(projectlink.params["dataset downloads"]))
                     
         if projectlink.params["submitted results"]:
-            stats.append("submitted results:" + str(projectlink.params["submitted results"]))
+            stats.append("submissions:" + str(projectlink.params["submitted results"]))        
         
         if projectlink.params["last submission date"]:
-            stats.append("last submission:" + self.format_date(projectlink.params["last submission date"]))
+            stats.append("last subm.:" + self.format_date(projectlink.params["last submission date"]))
         
-                
-        stats.append("status:" + projectlink.find_link_class())
+        stats_caps = []         
+        for string in stats:
+           stats_caps.append(self.capitalize(string))
         
         #put divs around each statistic in the stats list
-        stats_html = "".join(["<div>{}</div>".format(stat) for stat in stats]) 
-                        
+        stats_html = "".join(["<div>{}</div>".format(stat) for stat in stats_caps])
+               
         return stats_html
         
         
