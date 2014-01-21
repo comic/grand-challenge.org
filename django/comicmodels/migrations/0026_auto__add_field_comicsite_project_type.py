@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'ComicSite.project_type'
         db.add_column(u'comicmodels_comicsite', 'project_type',
-                      self.gf('django.db.models.fields.CharField')(default='CACT', max_length=4),
+                      self.gf('django.db.models.fields.CharField')(default='challenge_active', max_length=18),
                       keep_default=False)
 
 

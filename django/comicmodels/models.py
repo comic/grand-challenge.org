@@ -114,15 +114,13 @@ class ProjectLink(object):
                 "submitted results":"",
                 "last submission date":"",                
                 "hosted on comic":False,
+                "project type":""
                 }
     
     
-    # keys used in website section column, these designate the class of the
-    # project. Defining them here makes sure other classes can check this class
-    # using the find_link_class() method          
-    UPCOMING = "upcoming"
-    ACTIVE = "active"
-    INACTIVE = "inactive"
+    # css selector used to designate a project as still open 
+    UPCOMING = "challenge_upcoming"
+    
     
     
     def __init__(self,params,date=""):
@@ -190,7 +188,8 @@ class ProjectLink(object):
     
     
     def find_link_class(self):
-        """ For filtering and sorting project links, we discern upcoming, active
+        """ Get css classes to give to this projectlink. 
+        For filtering and sorting project links, we discern upcoming, active
         and inactive projects. Determiniation of upcoming/active/inactive is
         described in column 'website section' in grand-challenges xls.         
         For projects hosted on comic, determine this automatically based on 
@@ -199,27 +198,44 @@ class ProjectLink(object):
                 
         """
         
-        linkclass = "active"
+        linkclass = ComicSite.CHALLENGE_ACTIVE
         
         # for project hosted on comic, try to find upcoming/active automatically
                     
         if self.params["hosted on comic"]:            
-            if self.to_datetime(self.parse_date()) > timezone.now(): 
-                linkclass = "upcoming"
-            else:
-                linkclass = "active"
+            linkclass = self.params["project type"]            
         else:
             # else use the explicit setting in xls            
             
             section = self.params["website section"].lower()
             if section == "upcoming challenges":
-                linkclass = self.UPCOMING
+                linkclass = ComicSite.CHALLENGE_ACTIVE +" "+ self.UPCOMING
             elif section == "active challenges":
-                linkclass = self.ACTIVE
+                linkclass = ComicSite.CHALLENGE_ACTIVE
             elif section == "past challenges":
-                linkclass = self.INACTIVE
+                linkclass = ComicSite.CHALLENGE_INACTIVE
+            elif section == "data publication":
+                linkclass = ComicSite.DATA_PUB
 
         return linkclass
+     
+    def get_short_project_type(self):
+        """ Get a single word describing this project link, for use in terse
+        overviews
+        
+        """
+        linkclass = self.find_link_class()
+        type = ""
+        if self.UPCOMING in linkclass:
+            type = "Upcoming"
+        elif ComicSite.CHALLENGE_ACTIVE in linkclass:
+            type = "Active"
+        elif ComicSite.CHALLENGE_INACTIVE in linkclass:
+            type = "Inactive"
+        elif ComicSite.DATA_PUB in linkclass:
+            type = "Data publication"
+        
+        return type
      
     def to_datetime(self,date):
         """ add midnight to a date to make it a datetime because I cannot
@@ -358,15 +374,15 @@ class ComicSite(models.Model):
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
     event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")    
 
-    CHALLENGE_ACTIVE = 'CACT'
-    CHALLENGE_INACTIVE = 'CINA'
-    DATA_PUB = 'DATA'
+    CHALLENGE_ACTIVE = 'challenge_active'
+    CHALLENGE_INACTIVE = 'challenge_inactive'
+    DATA_PUB = 'data_pub'
     
     PROJECT_TYPES = ((CHALLENGE_ACTIVE, 'Active Challenge'),
                      (CHALLENGE_INACTIVE, 'Inactive Challenge'),
                      (DATA_PUB, 'Data Publication')        
                      )        
-    project_type = models.CharField(max_length=4,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
+    project_type = models.CharField(max_length=18,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
     require_participant_review = models.BooleanField(default=False, help_text = "If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
     
@@ -489,7 +505,8 @@ class ComicSite(models.Model):
                 "submitted results":"",
                 "last submission date":"",
                 "hosted on comic":True,
-                "created at":self.created_at
+                "created at":self.created_at,
+                "project type":self.project_type
                 }
         
          
