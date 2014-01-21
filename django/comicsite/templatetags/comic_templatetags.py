@@ -1554,7 +1554,7 @@ class AllProjectLinksNode(template.Node):
         
         stats = []
         
-        stats.append("" + projectlink.find_link_class())
+        stats.append("" + projectlink.get_short_project_type())
         
         if projectlink.params["workshop date"] and projectlink.find_link_class() == projectlink.UPCOMING:
             stats.append("workshop:" + self.format_date(projectlink.params["workshop date"]))
@@ -1581,7 +1581,8 @@ class AllProjectLinksNode(template.Node):
                
         return stats_html
         
-        
+    
+    
     
     def get_thumb_url(self,projectlink):
         """ For displaying a little thumbnail image for each project, in 
@@ -1646,7 +1647,8 @@ class AllProjectLinksNode(template.Node):
             
         if projectlink.params["workshop date"]:
             projectlink.params["workshop date"] = self.parse_date(projectlink.params["workshop date"])
-                    
+            
+                        
         return projectlink
     
     def parse_date(self,datefloat):

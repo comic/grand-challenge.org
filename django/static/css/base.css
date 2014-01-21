@@ -176,24 +176,26 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .projectlink .projectname {clear:both; margin-bottom: 6px; font-size: 22px;}
 .projectlink .description {float:left;}
 .projectlink .stats {float:left; margin-left: 3px;}
-.projectlink .stats div {float:left; clear:both;}
+.projectlink .stats div {float:left; clear:both; width: 210px;}
 .projectlink img {float:left;}
 .projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
 .projectlink .bottom{top:104px; left:0; position:absolute; margin-left:3px; overflow: hidden; height:144px;}
 .projectlink .imagefader{width:100px; height:100px; position:absolute; top:0px; left:0px;background-color: rgba(255, 255, 255, 0.5);}
 .projectlink, .projectlink .top, .projectlink .bottom {width:313px;}
-.projectlink.inactive img{filter: alpha(opacity=0.5);opacity: 0.5;}
-.projectlink.inactive .top{background-color:#dddddd;}
-.projectlink.inactive {color:#666666;}
-
-
+.projectlink.challenge_inactive img{filter: alpha(opacity=0.5);opacity: 0.5;}
+.projectlink.challenge_inactive .top{background-color:#dddddd;}
+.projectlink.challenge_inactive {color:#666666;}
 .project_thumb{width:113px;}
+
+label.greyed_out{color:#666666;}
 
 /*very long urls were disturbing the table layout, making the external link icon appear in a weird place*/
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
 #projectlinks ul {padding-left:0px;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
 #projectlinkscontainer {width: 100%;}
+
+
 
 div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;}
 
