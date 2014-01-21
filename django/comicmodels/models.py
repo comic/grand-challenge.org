@@ -356,8 +356,17 @@ class ComicSite(models.Model):
     
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
-    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")
-    offers_data_download = models.BooleanField(default=False, help_text = "Can any data be downloaded from this project? Affects project overview listing.")
+    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")    
+
+    CHALLENGE_ACTIVE = 'CACT'
+    CHALLENGE_INACTIVE = 'CINA'
+    DATA_PUB = 'DATA'
+    
+    PROJECT_TYPES = ((CHALLENGE_ACTIVE, 'Active Challenge'),
+                     (CHALLENGE_INACTIVE, 'Inactive Challenge'),
+                     (DATA_PUB, 'Data Publication')        
+                     )        
+    project_type = models.CharField(max_length=4,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
     require_participant_review = models.BooleanField(default=False, help_text = "If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
     
