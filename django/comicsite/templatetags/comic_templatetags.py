@@ -1556,22 +1556,27 @@ class AllProjectLinksNode(template.Node):
         
         stats.append("" + projectlink.get_short_project_type())
         
-        if projectlink.params["workshop date"] and projectlink.find_link_class() == projectlink.UPCOMING:
-            stats.append("workshop:" + self.format_date(projectlink.params["workshop date"]))
-            
-        if projectlink.params["registered teams"]:
-            stats.append("registered:" + str(projectlink.params["registered teams"]))
         
+        
+            
+        #if projectlink.params["registered teams"]:
+        #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
         
         if projectlink.params["dataset downloads"]:            
-            stats.append("downloads:" + str(projectlink.params["dataset downloads"]))
+            stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
                     
         if projectlink.params["submitted results"]:
-            stats.append("submissions:" + str(projectlink.params["submitted results"]))        
+            stats.append("submissions: " + str(projectlink.params["submitted results"]))        
+        
+        if projectlink.params["workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():            
+            stats.append("workshop: " + self.format_date(projectlink.params["workshop date"]))
         
         if projectlink.params["last submission date"]:
-            stats.append("last subm.:" + self.format_date(projectlink.params["last submission date"]))
+            stats.append("last subm.: " + self.format_date(projectlink.params["last submission date"]))
         
+        if projectlink.params["event name"]:
+            stats.append("event: " + self.make_event_link(projectlink))
+                
         stats_caps = []         
         for string in stats:
            stats_caps.append(self.capitalize(string))
@@ -1582,7 +1587,13 @@ class AllProjectLinksNode(template.Node):
         return stats_html
         
     
+    def make_event_link(self,projectlink):
+        """ To link to event, like ISBI 2013 in overviews
+        
+        """
     
+        return "<a href='{0}' class='eventlink'>{1}</a>".format(projectlink.params["event URL"],
+                                                                projectlink.params["event name"])
     
     def get_thumb_url(self,projectlink):
         """ For displaying a little thumbnail image for each project, in 
@@ -1643,15 +1654,15 @@ class AllProjectLinksNode(template.Node):
                 projectlink.params[key] = int(param)
             
         if projectlink.params["last submission date"]:
-            projectlink.params["last submission date"] = self.parse_date(projectlink.params["last submission date"])
+            projectlink.params["last submission date"] = self.determine_project_date(projectlink.params["last submission date"])
             
         if projectlink.params["workshop date"]:
-            projectlink.params["workshop date"] = self.parse_date(projectlink.params["workshop date"])
+            projectlink.params["workshop date"] = self.determine_project_date(projectlink.params["workshop date"])
             
                         
         return projectlink
     
-    def parse_date(self,datefloat):
+    def determine_project_date(self,datefloat):
         """ Parse float (e.g. 20130425.0) read by excelreader into python date
         
         """

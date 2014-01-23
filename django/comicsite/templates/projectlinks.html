@@ -241,7 +241,7 @@
 		// Grey out labels for include buttons when not selected, because it 
 		// makes the most sense given their function
 		
-		$("#projectfilterbuttons input.include").each(function(i,d){
+		$("#projectfilterbuttons input").each(function(i,d){
 			log("updating labels for "+d.id);
 			var inputname = d.id;
 			if($(d).is(':checked') ){

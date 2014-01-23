@@ -131,7 +131,7 @@ class ProjectLink(object):
         # add date in addition to datestring already in dict, to make sorting
         # easier.
         if date == "":
-            self.date = self.parse_date()                                
+            self.date = self.determine_project_date()                                
         else:
             self.date = date
         
@@ -139,7 +139,7 @@ class ProjectLink(object):
     
         
     
-    def parse_date(self):
+    def determine_project_date(self):
         """ Try to find the date for this project. Return default
         date if nothing can be parsed.
         
@@ -148,7 +148,7 @@ class ProjectLink(object):
         if self.params["hosted on comic"]:
             
             if self.params["workshop date"]:
-                date = self.params["workshop date"]
+                date = self.to_datetime(self.params["workshop date"])
             else:
                 date = ""            
         else:
@@ -167,7 +167,7 @@ class ProjectLink(object):
                         
                  
         if date == "":
-            # If you cannot find the exact date for a project created in comic,
+            # If you cannot find the exact date for a project,
             # use date created 
             if self.params["hosted on comic"]:
                 return self.params["created at"]
@@ -204,6 +204,10 @@ class ProjectLink(object):
                     
         if self.params["hosted on comic"]:            
             linkclass = self.params["project type"]            
+            
+            if self.date > self.to_datetime(datetime.datetime.today()):
+                linkclass += " "+ self.UPCOMING            
+                
         else:
             # else use the explicit setting in xls            
             
@@ -257,80 +261,7 @@ class ProjectLink(object):
             thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
         
         return thumb_image_url
-    
-    def render_to_html(self):
-        item = self.params
         
-        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
-        #external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>"
-        external_thumb_html = "" 
-        
-        overview_article_html = ""
-        if item["overview article url"] != "":
-            overview_article_html = '<br><a class="external free" href="%(url)s">View overview article</a>' % ({"url" : item["overview article url"]})
-
-        
-        # classes are mainly used for jquery filtering on projectlinks page
-        classes = ["projectlink"]
-        classes.append(self.find_link_class())
-                
-        if self.is_hosted_on_comic():
-            classes.append("comic")
-        
-        # For counting in jquery later
-        classes.append(str(self.date.year))
-                
-        if item["event URL"] == "" or item["event URL"] == None:
-            event_url = ""
-        else:
-            event_url = """<br>Event:
-                            <a class="external text" title="%(event_name)s"
-                                href="%(event_url)s">%(event_name)s
-                            </a>
-                        """ % ({"event_name" : item["event name"],
-                                "event_url" : item["event URL"]
-                                })
-                        
-        HTML = """
-        <table class="%(classes)s">
-            <tbody>
-                <tr >
-                    <td class="project_thumb">
-                        <span class="plainlinks externallink" id="%(abreviation)s">
-                            <div class ="thumbcontainer">
-                                <a href="%(url)s">
-                                    <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
-                                    %(external_thumb_html)s
-                                    
-                                </a>
-                            </div>                                                       
-                        </span>
-                    </td>
-                    <td>
-                        %(description)s<br><a class="external free" title="%(url)s" href="%(url)s">
-                            Visit website
-                        </a>
-                        %(event_HTML)s
-                        %(overview_article_html)s
-                        %(year)s
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """ % ({"classes": " ".join(classes), 
-                "abreviation" : item["abreviation"],
-                "url" : item["URL"],
-                "thumb_image_url" : thumb_image_url,
-                "external_thumb_html":external_thumb_html,
-                "description" : item["description"],
-                "event_name" : item["event name"],
-                "event_HTML" : event_url,
-                "overview_article_html" : overview_article_html,
-                "year" : ""
-               })
-
-        return HTML    
-
 
 def validate_nounderscores(value):
     if "_" in value:
