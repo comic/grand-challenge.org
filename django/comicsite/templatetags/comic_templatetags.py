@@ -90,6 +90,7 @@ def get_usagestr(function_name):
               show all available tags
                        """
               )
+
 def get_taglist(parser, token):
     return TagListNode()
 
@@ -1407,41 +1408,89 @@ def render_all_projectlinks(parser, token):
 
     """
 
+    usagestr = """Tag usage: {% all_projectlinks max_projects:int,comic_only=1|0}
+                  max_projects is an optional parameter.
+                  max_projects: show at most this number of projects.
+                                if set, do not group projects per year but show all
+                                also, show only projects hosted on comic, not
+                                external links                                
+                  """
+    try:
+        args = parseKeyValueToken(token)
+    except ValueError:
+        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        return TemplateErrorNode(errormsg)
+
+    if len(args) > 1:
+        errormsg = "Error rendering {% {0} %}: expected at most one argument, but found [{1}]".format(token.contents,
+                                                                                                 ",".join(args.keys()))
+        return TemplateErrorNode(errormsg)
+    
+    if len(args) == 1:
+        if args.keys()[0] != "max_projects":
+            errormsg = "Error rendering {% {0} %}: expected argument 'max_projects' but found '{1}' instead".format(token.contents,
+                                                                                                             args.keys()[0])            
+            return TemplateErrorNode(errormsg)
+        else:
+            args["max_projects"] = int(args["max_projects"])
+    
     try:
         projects = ComicSite.objects.non_hidden()
     except ObjectDoesNotExist as e:
         errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
         return TemplateErrorNode(errormsg)
 
-    return AllProjectLinksNode(projects)
+    return AllProjectLinksNode(projects,args)
 
 class AllProjectLinksNode(template.Node):
     """ return html list listing all projects in COMIC
     """
 
-    def __init__(self, projects):
+    def __init__(self, projects,args):
         self.projects = projects
+        self.args = args
 
     def render(self, context):
         projectlinks = []
 
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
-
-        projectlinks += self.read_grand_challenge_projectlinks()
-
-
-        html = self.project_links_per_year(projectlinks)
+            
+        if self.args:
+            html = self.render_project_links(projectlinks,self.args["max_projects"])
+        else:
+            projectlinks += self.read_grand_challenge_projectlinks()            
+            html = self.render_project_links_per_year(projectlinks)
+            
 
         #html = ""
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
 
-        html = "<ul>" + html + "</ul>"
+        html = """<div id='projectlinks'>
+                    <ul>{0}
+                        <div style='clear:both'></div>
+                    </ul>
+                  </div> """.format(html)
+                  
 
         return html
 
-    def project_links_per_year(self,projectlinks):
+    def render_project_links(self,projectlinks,max_projects):
+        """ Show all projectlinks in one big list, sorted by date, most recent first
+        
+        @param max_projects: int show only this number   
+        """        
+        projectlinks = sorted(projectlinks,key=lambda x: x.date,reverse=True)
+        if max_projects:
+            projectlinks = projectlinks[0:max_projects]
+    
+        html = "\n".join([self.render_to_html(p) for p in projectlinks])
+        
+        return html
+        
+    
+    def render_project_links_per_year(self,projectlinks):
         """ Create html to show each projectlink with subheadings per year sorted
         by diminishing year
 
@@ -1473,6 +1522,8 @@ class AllProjectLinksNode(template.Node):
                                           projectlinks)
 
         return html
+    
+    
 
     def get_background_color(self,idx=-1):
         """ Each year has a different background returns color of css format
