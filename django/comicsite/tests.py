@@ -325,13 +325,14 @@ class ComicframeworkTestCase(TestCase):
         factory = RequestFactory()
         storage = DefaultStorage()
         header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg")
-        data = {"short_name":short_name, 
-            "description":description, 
-            "skin":"fake_test_dir/fakecss.css", 
-            "logo":"fakelogo.jpg", 
-            "header_image":header_image, 
-            "prefix":"form", 
-            "page_set-TOTAL_FORMS":u"0", 
+        data = {"short_name":short_name,
+            "description":description,
+            "skin":"fake_test_dir/fakecss.css",
+            "logo":"fakelogo.jpg",
+            "header_image":header_image,
+            "project_type":ComicSite.CHALLENGE_ACTIVE,
+            "prefix":"form",
+            "page_set-TOTAL_FORMS":u"0",
             "page_set-INITIAL_FORMS":u"0", 
             "page_set-MAX_NUM_FORMS":u""}
         success = self._login(user)
