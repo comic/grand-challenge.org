@@ -506,7 +506,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             }),
         ('Metadata', {
                 'classes': ('collapse',),
-                'fields': ('workshop_date','event_name', 'event_url','offers_data_download')
+                'fields': ('workshop_date','event_name', 'event_url','project_type')
             }),
         ('Users', {
                 'classes': ('collapse',),
