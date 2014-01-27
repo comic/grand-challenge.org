@@ -1555,6 +1555,14 @@ class AllProjectLinksNode(template.Node):
     def render_to_html(self,projectlink):
         """ return html representation of projectlink """
         #html = '<div class = "projectlink"></div>'
+        
+        stats = ""
+        try:
+            stats = self.get_stats_html(projectlink)
+        except UnicodeEncodeError as e:
+            logger.warning("Encoding error in" + projectlink.params["abreviation"])
+            
+        
         html = """
                <div class = "projectlink {link_class} {year} {comiclabel}">                 
                  <div class ="top">                     
@@ -1679,7 +1687,7 @@ class AllProjectLinksNode(template.Node):
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         reader = ProjectExcelReader(filepath,'Challenges')
         
-        logger.info("Reading projects excel from '%s'" %(filepath))
+        logger.info("Reading projects excel from '%s'" %(filepath))        
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:
