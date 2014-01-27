@@ -114,7 +114,12 @@ class ProjectLink(object):
                 "submitted results":"",
                 "last submission date":"",                
                 "hosted on comic":False,
+                "project type":""
                 }
+    
+    
+    # css selector used to designate a project as still open 
+    UPCOMING = "challenge_upcoming"
     
     
     
@@ -126,12 +131,15 @@ class ProjectLink(object):
         # add date in addition to datestring already in dict, to make sorting
         # easier.
         if date == "":
-            self.date = self.parse_date()                                
+            self.date = self.determine_project_date()                                
         else:
             self.date = date
+        
+        self.params["year"] = self.date.year
     
+        
     
-    def parse_date(self):
+    def determine_project_date(self):
         """ Try to find the date for this project. Return default
         date if nothing can be parsed.
         
@@ -140,7 +148,7 @@ class ProjectLink(object):
         if self.params["hosted on comic"]:
             
             if self.params["workshop date"]:
-                date = self.params["workshop date"]
+                date = self.to_datetime(self.params["workshop date"])
             else:
                 date = ""            
         else:
@@ -159,7 +167,7 @@ class ProjectLink(object):
                         
                  
         if date == "":
-            # If you cannot find the exact date for a project created in comic,
+            # If you cannot find the exact date for a project,
             # use date created 
             if self.params["hosted on comic"]:
                 return self.params["created at"]
@@ -180,7 +188,8 @@ class ProjectLink(object):
     
     
     def find_link_class(self):
-        """ For filtering and sorting project links, we discern upcoming, active
+        """ Get css classes to give to this projectlink. 
+        For filtering and sorting project links, we discern upcoming, active
         and inactive projects. Determiniation of upcoming/active/inactive is
         described in column 'website section' in grand-challenges xls.         
         For projects hosted on comic, determine this automatically based on 
@@ -189,104 +198,70 @@ class ProjectLink(object):
                 
         """
         
-        linkclass = "active"
+        linkclass = ComicSite.CHALLENGE_ACTIVE
         
         # for project hosted on comic, try to find upcoming/active automatically
                     
-        if self.params["hosted on comic"]:                        
-            if self.parse_date() > timezone.now(): 
-                linkclass = "upcoming"
-            else:
-                linkclass = "active"
+        if self.params["hosted on comic"]:            
+            linkclass = self.params["project type"]            
+            
+            if self.date > self.to_datetime(datetime.datetime.today()):
+                linkclass += " "+ self.UPCOMING            
+                
         else:
             # else use the explicit setting in xls            
             
             section = self.params["website section"].lower()
             if section == "upcoming challenges":
-                linkclass = "upcoming"
+                linkclass = ComicSite.CHALLENGE_ACTIVE +" "+ self.UPCOMING
             elif section == "active challenges":
-                linkclass = "active"
+                linkclass = ComicSite.CHALLENGE_ACTIVE
             elif section == "past challenges":
-                linkclass = "inactive"
-        
-        
-                    
+                linkclass = ComicSite.CHALLENGE_INACTIVE
+            elif section == "data publication":
+                linkclass = ComicSite.DATA_PUB
+
         return linkclass
      
+    def get_short_project_type(self):
+        """ Get a single word describing this project link, for use in terse
+        overviews
+        
+        """
+        linkclass = self.find_link_class()
+        type = ""
+        if self.UPCOMING in linkclass:
+            type = "Upcoming"
+        elif ComicSite.CHALLENGE_ACTIVE in linkclass:
+            type = "Active"
+        elif ComicSite.CHALLENGE_INACTIVE in linkclass:
+            type = "Inactive"
+        elif ComicSite.DATA_PUB in linkclass:
+            type = "Data publication"
+        
+        return type
+     
+    def to_datetime(self,date):
+        """ add midnight to a date to make it a datetime because I cannot
+        ompare these two types directly. Also add offset awareness to easily
+        compare with other django datetimes.                  
+        """
+        
+        dt = datetime.datetime(date.year,date.month,date.day)
+        return timezone.make_aware(dt, timezone.get_default_timezone())
+        
+        
+    def is_hosted_on_comic(self):
+        return self.params["hosted on comic"]    
     
-    def render_to_html(self):
-        item = self.params
-        
-        thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+item["abreviation"]+".png"
-        #external_thumb_html = "<img class='linkoverlay' src='/static/css/lg_exitdisclaimer.png' height='40' border='0' width='40'>"
-        external_thumb_html = "" 
-        
-        overview_article_html = ""
-        if item["overview article url"] != "":
-            overview_article_html = '<br><a class="external free" href="%(url)s">View overview article</a>' % ({"url" : item["overview article url"]})
-
-        
-        # classes are mainly used for jquery filtering on projectlinks page
-        classes = ["projectlink"]
-        classes.append(self.find_link_class())
-                
-        if item["hosted on comic"]:
-            classes.append("comic")
-        
-        # For counting in jquery later
-        classes.append(str(self.date.year))
-                
-        if item["event URL"] == "" or item["event URL"] == None:
-            event_url = ""
+    def get_thumb_image_url(self):
+        if self.is_hosted_on_comic():
+            thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
         else:
-            event_url = """<br>Event:
-                            <a class="external text" title="%(event_name)s"
-                                href="%(event_url)s">%(event_name)s
-                            </a>
-                        """ % ({"event_name" : item["event name"],
-                                "event_url" : item["event URL"]
-                                })
-                        
-        HTML = """
-        <table class="%(classes)s">
-            <tbody>
-                <tr >
-                    <td class="project_thumb">
-                        <span class="plainlinks externallink" id="%(abreviation)s">
-                            <div class ="thumbcontainer">
-                                <a href="%(url)s">
-                                    <img alt="" src="%(thumb_image_url)s" height="100" border="0" width="100">
-                                    %(external_thumb_html)s
-                                    
-                                </a>
-                            </div>                                                       
-                        </span>
-                    </td>
-                    <td>
-                        %(description)s<br><a class="external free" title="%(url)s" href="%(url)s">
-                            Visit website
-                        </a>
-                        %(event_HTML)s
-                        %(overview_article_html)s
-                        %(year)s
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """ % ({"classes": " ".join(classes), 
-                "abreviation" : item["abreviation"],
-                "url" : item["URL"],
-                "thumb_image_url" : thumb_image_url,
-                "external_thumb_html":external_thumb_html,
-                "description" : item["description"],
-                "event_name" : item["event name"],
-                "event_HTML" : event_url,
-                "overview_article_html" : overview_article_html,
-                "year" : ""
-               })
-
-        return HTML    
-
+            thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
+        
+        return thumb_image_url
+        
 
 def validate_nounderscores(value):
     if "_" in value:
@@ -309,7 +284,7 @@ class ComicSite(models.Model):
                                    blank=True,help_text = "Short summary of "
                                    "this project, max 1024 characters.")
     logo = models.CharField(max_length = 255, default = public_folder+"/logo.png",
-                            help_text = "200x200 pixel image file to use as logo" 
+                            help_text = "100x100 pixel image file to use as logo" 
                             " in projects overview. Relative to project datafolder")
     header_image = models.CharField(max_length = 255, blank = True,
                             help_text = "optional 658 pixel wide Header image which will "
@@ -328,8 +303,17 @@ class ComicSite(models.Model):
     
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
-    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")
-    offers_data_download = models.BooleanField(default=False, help_text = "Can any data be downloaded from this project? Affects project overview listing.")
+    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")    
+
+    CHALLENGE_ACTIVE = 'challenge_active'
+    CHALLENGE_INACTIVE = 'challenge_inactive'
+    DATA_PUB = 'data_pub'
+    
+    PROJECT_TYPES = ((CHALLENGE_ACTIVE, 'Active Challenge'),
+                     (CHALLENGE_INACTIVE, 'Inactive Challenge'),
+                     (DATA_PUB, 'Data Publication')        
+                     )        
+    project_type = models.CharField(max_length=18,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
     require_participant_review = models.BooleanField(default=False, help_text = "If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
     
@@ -430,6 +414,8 @@ class ComicSite(models.Model):
         
         """        
         
+        thumb_image_url = reverse('project_serve_file', args=[self.short_name,self.logo])
+        
         args = {"abreviation":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
@@ -437,6 +423,7 @@ class ComicSite(models.Model):
                 "year":"",
                 "event URL":self.event_url,                
                 "image URL":self.logo,
+                "thumb_image_url":thumb_image_url,
                 "website section":"active challenges",
                 "overview article url":"",
                 "overview article citations":"",
@@ -449,9 +436,11 @@ class ComicSite(models.Model):
                 "submitted results":"",
                 "last submission date":"",
                 "hosted on comic":True,
-                "created at":self.created_at
+                "created at":self.created_at,
+                "project type":self.project_type
                 }
         
+         
         
         projectlink = ProjectLink(args)
         return projectlink
