@@ -1683,7 +1683,13 @@ class AllProjectLinksNode(template.Node):
         except IOError as e:
 
             logger.warning("Could not read any projectlink information from"
-                           " '%s' returning empty string. trace: %s " %(filepath,traceback.format_exc()))
+                           " '%s' returning empty list. trace: %s " %(filepath,traceback.format_exc()))
+            projectlinks = []
+        
+        except UnicodeEncodeError as e:
+            
+            logger.warning("Encoding error in reading excel from "
+                           " '%s' returning empty list. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
         
         projectlinks_clean = []
