@@ -1555,31 +1555,41 @@ class AllProjectLinksNode(template.Node):
     def render_to_html(self,projectlink):
         """ return html representation of projectlink """
         #html = '<div class = "projectlink"></div>'
-        html = """
-               <div class = "projectlink {link_class} {year} {comiclabel}">                 
-                 <div class ="top">                     
-                     <a href="{url}">
-                       <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
-                     </a>
-                                    
-                     
-                     <div class="stats">{stats} </div>
-                 </div>
-                 <div class ="bottom">
-                   <div class="projectname"> {projectname} </div>
-                   <div class="description"> {description} </div>
-                 </div>
-               </div>
+        
+        html = ""
+        try:
+        
+            
+        
+            html = """
+                   <div class = "projectlink {link_class} {year} {comiclabel}">                 
+                     <div class ="top">                     
+                         <a href="{url}">
+                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
+                         </a>
+                                        
+                         
+                         <div class="stats">{stats} </div>
+                     </div>
+                     <div class ="bottom">
+                       <div class="projectname"> {projectname} </div>
+                       <div class="description"> {description} </div>
+                     </div>
+                   </div>
+                    
+                    """.format(link_class = projectlink.find_link_class(),
+                               comiclabel = self.get_comic_label(projectlink),
+                               year = str(projectlink.params["year"]),
+                               url=projectlink.params["URL"],
+                               thumb_image_url=self.get_thumb_url(projectlink),
+                               projectname=projectlink.params["abreviation"],
+                               description = projectlink.params["description"],                           
+                               stats = self.get_stats_html(projectlink)                           
+                              )
+        
+        except UnicodeEncodeError as e:
+            logger.warning("Encoding error in" + projectlink.params["abreviation"])
                 
-                """.format(link_class = projectlink.find_link_class(),
-                           comiclabel = self.get_comic_label(projectlink),
-                           year = str(projectlink.params["year"]),
-                           url=projectlink.params["URL"],
-                           thumb_image_url=self.get_thumb_url(projectlink),
-                           projectname=projectlink.params["abreviation"],
-                           description = projectlink.params["description"],                           
-                           stats = self.get_stats_html(projectlink)                           
-                          )        
         return html
     
     
@@ -1679,7 +1689,7 @@ class AllProjectLinksNode(template.Node):
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         reader = ProjectExcelReader(filepath,'Challenges')
         
-        logger.info("Reading projects excel from '%s'" %(filepath))
+        logger.info("Reading projects excel from '%s'" %(filepath))        
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:
