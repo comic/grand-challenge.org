@@ -40,8 +40,6 @@ def index(request):
     return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
 
 
-
-
 def _register(request, site_short_name):
     """ Register the current user for given comicsite """
    
@@ -562,18 +560,13 @@ def comic_site_to_html(comic_site,link=""):
      if link == "":
          link = reverse('comicsite.views.site', args=[comic_site.short_name])
      
-     html = create_HTML_a(link,comic_site.short_name)
-     
+     html = create_HTML_a(link,comic_site.short_name)     
      if comic_site.description !="":
          html += " - " + comic_site.description
-     
-     
-     image_link = reverse('project_serve_file', args=[comic_site.short_name,comic_site.logo])     
-    
-     img_html = create_HTML_a_img(link,image_link)
-     
-     html = "<table><tr valign=\"top\" ><td class = \"thumb\">" + img_html +"</td><td class = \"description\">"+ html + "</td></tr></table>"
-     
+          
+     image_link = reverse('project_serve_file', args=[comic_site.short_name,comic_site.logo])         
+     img_html = create_HTML_a_img(link,image_link)     
+     html = "<table><tr valign=\"top\" ><td class = \"thumb\">" + img_html +"</td><td class = \"description\">"+ html + "</td></tr></table>"     
      html = "<div class = \"comicSiteSummary\">" + html + "</div>"
      return html
 
