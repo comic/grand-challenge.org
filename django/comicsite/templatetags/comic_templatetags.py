@@ -1678,6 +1678,8 @@ class AllProjectLinksNode(template.Node):
         project_name = settings.MAIN_PROJECT_NAME
         filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
         reader = ProjectExcelReader(filepath,'Challenges')
+        
+        logger.info("Reading projects excel from '%s'" %(filepath))
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:
@@ -1686,11 +1688,6 @@ class AllProjectLinksNode(template.Node):
                            " '%s' returning empty list. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
         
-        except UnicodeEncodeError as e:
-            
-            logger.warning("Encoding error in reading excel from "
-                           " '%s' returning empty list. trace: %s " %(filepath,traceback.format_exc()))
-            projectlinks = []
         
         projectlinks_clean = []
         for projectlink in projectlinks:
