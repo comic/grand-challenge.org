@@ -1556,6 +1556,7 @@ class AllProjectLinksNode(template.Node):
         """ return html representation of projectlink """
         #html = '<div class = "projectlink"></div>'
         
+
         html = ""
         try:
         
@@ -1589,7 +1590,7 @@ class AllProjectLinksNode(template.Node):
         
         except UnicodeEncodeError as e:
             logger.warning("Encoding error in" + projectlink.params["abreviation"])
-                
+            
         return html
     
     
