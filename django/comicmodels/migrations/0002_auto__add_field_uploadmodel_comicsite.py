@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'UploadModel.comicsite'
         db.add_column('comicmodels_uploadmodel', 'comicsite',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['comicsite.ComicSite']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=None, null=True, to=orm['comicsite.ComicSite']),
                       keep_default=False)
 
 
