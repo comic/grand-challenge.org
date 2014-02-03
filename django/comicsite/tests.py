@@ -1278,4 +1278,5 @@ class ProjectLoginTest(ComicframeworkTestCase):
         
         # The other userena urls are not realy tied up with project so I will 
         # leave to userena to test.
-        
+       
+ 
