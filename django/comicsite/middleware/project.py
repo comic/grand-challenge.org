@@ -1,5 +1,5 @@
 
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve,Resolver404
 from django.conf import settings
     
 class ProjectMiddleware:
@@ -9,16 +9,35 @@ class ProjectMiddleware:
     
     """
     def process_request(self, request):
-        """ Adds current project name to any request.
+        """ Adds current project name to any request so it can be easily used
+        in views.
+                
+        """
+         
+        try:           
+            request = self.add_project_name(request)                        
+        except Resolver404:            
+            request.projectname = settings.MAIN_PROJECT_NAME
+        
+        try:
+            request = self.add_project_pk(request)
+        except Resolver404:
+            request.project_pk = -1
+         
+        
+        
+        
+    def add_project_name(self,request):
+        """ Tries to infer the name of the project this project is regarding        
+        
+        Raises Resolver404
         
         TODO: Geting current project from the name given to it in urls.py is
-        stinky. How to do this so that changing urls will not break this? 
-    
-        """
-                    
-        resolution = resolve(request.path)
+              stinky. How to do this so that changing urls will not break this?
                 
-        request = self.add_project_pk(request)
+        """
+                   
+        resolution = resolve(request.path)
         
         if resolution.kwargs.has_key("site_short_name"):
             projectname = resolution.kwargs["site_short_name"]
@@ -29,16 +48,22 @@ class ProjectMiddleware:
         
         request.projectname = projectname
         
+        
+        return request
 
     def add_project_pk(self,request):
-        # if the requested url is in admin try to infer from url which project
-        # this is regarding. TODO: the best way to fix this is to have seperate
-        # admin sites for each project #181..
-        #         
+        """ if the requested url is in admin try to infer from url which project
+            this is regarding. TODO: the best way to fix this is to have seperate
+            admin sites for each project #181..
+            
+             
+    
+        """
+              
         resolution = resolve(request.path)
         if resolution.url_name == "comicmodels_comicsite_participantrequests":
             project_pk = resolution.kwargs["object_pk"]
         else:
-            project_pk = -1 
+            project_pk = -1
         request.project_pk = project_pk
         return request

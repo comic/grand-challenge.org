@@ -25,6 +25,8 @@ class Migration(SchemaMigration):
         db.add_column(u'comicmodels_comicsite', 'require_participant_review',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
+        
+        db.send_pending_create_signals()
 
     def backwards(self, orm):
         # Deleting model 'RegistrationRequest'

@@ -28,4 +28,24 @@
         "comicsite": 1, 
         "order": 2
     }
-}]
+},
+
+{
+  "pk": 5, 
+  "model": "auth.group", 
+  "fields": {
+    "name": "comic_admins", 
+    "permissions": []
+  }
+},
+
+{
+  "pk": 6, 
+  "model": "auth.group", 
+  "fields": {
+    "name": "comic_participants", 
+    "permissions": []
+  }
+}
+
+]

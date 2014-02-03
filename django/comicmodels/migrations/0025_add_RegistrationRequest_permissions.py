@@ -38,11 +38,41 @@ class Migration(SchemaMigration):
             
     
     def add_standard_perms(self,appname,modelname,group):
-        assign_perm("{0}.add_{1}".format(appname,modelname),group)
-        assign_perm("{0}.change_{1}".format(appname,modelname),group)
-        assign_perm("{0}.delete_{1}".format(appname,modelname),group)
+
+        self.assign_perm_once("{0}.add_{1}".format(appname,modelname),group)
+        self.assign_perm_once("{0}.change_{1}".format(appname,modelname),group)
+        self.assign_perm_once("{0}.delete_{1}".format(appname,modelname),group)
         
-                             
+    
+    def assign_perm_once(self,perm,group):
+        """ Assign perm to group if it did not have it already. This fixes erros
+        with double permissions after migrations
+        
+        """        
+        if not self.has_perm(group,perm):                            
+            assign_perm(perm,group)
+            
+
+    
+    def has_perm(self,group,perm):
+        """ Could not find this function in guardian.shortcuts so making it here
+        Does group have permission perm assigned to it?
+        
+        Raises ValueError if perm is not in 'appname.codename' format 
+        """        
+        try:
+            app_label, codename = perm.split('.', 1)
+        except ValueError:
+            raise ValueError("For global permissions, first argument must be in"
+                " format: 'app_label.codename' (is %r)" % perm)
+        count = group.permissions.filter(content_type__app_label=app_label,codename=codename).count()
+        if count < 0:
+            return True
+        else:
+            return False
+        
+    
+                         
     def backwards(self, orm):
         pass
 

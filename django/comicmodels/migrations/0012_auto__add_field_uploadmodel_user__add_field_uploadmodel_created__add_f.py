@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
         # Adding field 'UploadModel.user'
         
         db.add_column('comicmodels_uploadmodel', 'user',
-                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, to=orm['auth.User']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, null=True, to=orm['auth.User']),
                       keep_default=False)
         
 

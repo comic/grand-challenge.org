@@ -219,7 +219,7 @@ def getRenderedPageIfAllowed(page_or_page_title,request,site):
             raise Http404
     else:
         p = page_or_page_title                
-    
+            
     if p.can_be_viewed_by(request.user):
         p.html = renderTags(request, p)
         currentpage = p

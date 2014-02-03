@@ -72,7 +72,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 def get_anonymous_user():
     """Anymous user is the default user for non logged in users. I is also the only member of group
       'everyone' for which permissions can be set """
-    return User.objects.get(username = "anonymousUser")
+    return User.objects.get(username = "AnonymousUser")
 
 
 class ComicSiteManager(models.Manager):
