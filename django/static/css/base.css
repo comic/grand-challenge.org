@@ -122,7 +122,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
 
-.comicSiteSummary .thumb { width:100px; height:100px; }
+.comicSiteSummary .thumb img { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
 .comicSiteSummary { padding-bottom: 10px; }
 .createNewComicSiteLink{ font-size:larger;  }
