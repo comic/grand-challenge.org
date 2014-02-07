@@ -92,6 +92,33 @@ class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """ 
     
+    def setUp(self):
+        self.setUp_base()        
+        self.setUp_extra()
+    
+    def setUp_base(self):
+        """ This setup should be run for all comic framework testcases
+        """
+        self._create_main_project()
+        
+    def setUp_extra(self):
+        """ Overwrite this method in child classes 
+        """
+        pass
+    
+    def _create_main_project(self):
+        """ Everything in the framework assumes that there is one main project which
+        is always shown in a bar at the very top of the page. Make sure this exists
+         
+        Do not create this project through admin because admin will throw an error 
+        at this point because MAIN_PROJECT can not be found. 
+        """
+        main = ComicSite.objects.create(short_name=settings.MAIN_PROJECT_NAME,
+                                        description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
+                                        skin="fakeskin.css"
+                                        )
+        main.save()
+                     
     def _create_dummy_project(self,projectname="testproject"):
         """ Create a project with some pages and users. In part this is 
         done through admin views, meaning admin views are also tested here.
@@ -409,10 +436,10 @@ class CreateProjectTest(ComicframeworkTestCase):
         not valid as hostname, for instance containing underscores. Make sure
         These cannot be created 
         
-        """
+        """        
         self.root = User.objects.create_user('root',
-                                        'w.s.kerkstra@gmail.com',
-                                        'testpassword')        
+                                             'w.s.kerkstra@gmail.com',
+                                             'testpassword')        
         self.root.is_staff = True
         self.root.is_superuser = True
         self.root.save()
@@ -427,8 +454,6 @@ class CreateProjectTest(ComicframeworkTestCase):
         project_name = "under_score"  
         response = self._try_create_comicsite(self.projectadmin, 
                                               project_name)
-    
-            
         errors = self._find_errors_in_page(response)
         
         self.assertTrue(errors,u"Creating a project called {0} should not be \
@@ -436,8 +461,9 @@ class CreateProjectTest(ComicframeworkTestCase):
                 
         
 class ViewsTest(ComicframeworkTestCase):
+    
         
-    def setUp(self):
+    def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -583,7 +609,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
       
     """
     
-    def setUp(self):
+    def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -656,7 +682,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
 class UploadTest(ComicframeworkTestCase):
     
     
-    def setUp(self):
+    def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -911,7 +937,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
     """
     
     
-    def setUp(self):
+    def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -1239,7 +1265,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
     """
     
     
-    def setUp(self):
+    def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
