@@ -121,11 +121,13 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle .noimage{ font-size: 48px; padding-left:12px; padding-top:10px; padding-bottom: 14px;}
 #headerTitle img { vertical-align:bottom;}
 #headerTitle a { text-decoration: none; color:inherit; }
+
 #loginInfo{ float:right; }
-#mainContent{}
+#mainContent{margin:9px;}
 #pageContainer {padding-right: 8px; padding-left: 8px; padding-bottom: 12px; padding-top: 12px;}
 #copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
+
 
 .comicSiteSummary .thumb img { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
