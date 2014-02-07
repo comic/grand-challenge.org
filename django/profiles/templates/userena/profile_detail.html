@@ -1,4 +1,4 @@
-{% extends 'userena/base_userena.html' %}
+{% extends 'site_signin.html' %}
 {% load i18n %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}{{ username }}'s profile.{% endblocktrans %}{% endblock %}
@@ -22,7 +22,7 @@
 
     <div id="details">    	
       {% block profile_details %}
-        <img class="mugshot" src="{{ profile.get_mugshot_url }}" alt="{% trans "Your mugshot" %}" />
+        <img class="mugshot" src="{{ profile.get_mugshot_url }}" alt="{% trans "Your mugshot" %}" />        
         <dl>
           {% block profile_definition_list %}
             {% if profile.user.get_full_name %}

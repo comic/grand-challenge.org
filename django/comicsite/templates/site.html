@@ -55,9 +55,9 @@
 					
 	{% else %}
 		{% if user.is_authenticated %}                  			                        	                          
-            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Signout</a> </li>
+            <a class="metaFooterItem" href="{% url 'userena_signout' %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Signout</a>
         {% else %}	                                                    	
-        	<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Sign in / Register</a></li>
+        	<a class="metaFooterItem" href="{% url 'comicsite_signin' site.short_name %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Sign in / Register</a>
         {% endif %}		
 			
 	{% endif %}
@@ -66,8 +66,7 @@
 {% block adminbutton %}
 
 	{% get_obj_perms user for site as "site_perms" %}			
-	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	   <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+	{% if "change_comicsite" in site_perms or request.user.is_superuser %}	   
 	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>	   	  
     
 	{% endif %}

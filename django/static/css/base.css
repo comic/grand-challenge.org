@@ -1,7 +1,7 @@
-body {background-color: #F9F9F9;font-family: sans-serif;padding-top: 1px;}
+body {background-color: #F9F9F9;font-family: 'Open Sans', sans-serif;padding-top: 1px;}
 
 
-#page { margin-left:auto; margin-right:auto; width: 1000px; font-family : Verdana,helvetica,sans-serif; font-size: 10pt; }
+#page { margin-left:auto; margin-right:auto; width: 1000px; font-size: 10pt; }
 
 /* Formatting for forms (at the moment only tested on /accounts/signup */
 label { display:block; float:left; width:180px; }
@@ -93,6 +93,7 @@ div.statistics {
 #additionalNavigation {	float:right; vertical-align:baseline; }
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
 #messagescontainer{ position: fixed;width: 100%;}
+#messagescontainer li{list-style: none;}
 #metafooter {float:left; width:100%; border-top:1px solid #cccccc; font-size:smaller; margin-top: 47px; }
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
@@ -111,6 +112,10 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
 /* main page, base.html */
+#topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px;}
+#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited { color:#cccccc; text-decoration:none; }
+#topheader a:hover{ color:#cccccc; text-decoration:underline;}
+#topheader_right {float:right;}
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
 #headerTitle .noimage{ font-size: 48px; padding-left:12px; padding-top:10px; padding-bottom: 14px;}

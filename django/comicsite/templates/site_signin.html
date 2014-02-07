@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "mainpage.html" %}
 {% load comic_templatetags %}
 {% load guardian_tags %}
 {% load admin_urls %}
@@ -8,9 +8,9 @@
 					
 	{% else %}
 		{% if user.is_authenticated %}                  			                        	                          
-            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next=/">Signout</a> </li>
+            <a class="metaFooterItem" href="{% url 'userena_signout' %}?next=/">Signout</a>
         {% else %}	                                                    	
-        	<li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a></li>
+        	<a class="metaFooterItem" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a>
         {% endif %}		
 			
 	{% endif %}
