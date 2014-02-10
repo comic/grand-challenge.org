@@ -96,6 +96,7 @@ class ProjectLink(object):
     # Using dict instead of giving a lot of fields to this object because the former
     # is easier to work with 
     defaults = {"abreviation":"",
+                "title":"",
                 "description":"",
                 "URL":"",
                 "event name":"",
