@@ -1455,8 +1455,8 @@ class AllProjectLinksNode(template.Node):
 
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
-            
-        if self.args:
+        
+        if self.args:            
             html = self.render_project_links(projectlinks,self.args["max_projects"])
         else:
             projectlinks += self.read_grand_challenge_projectlinks()            
@@ -1616,11 +1616,18 @@ class AllProjectLinksNode(template.Node):
         
         stats = []
         
-        stats.append("" + projectlink.get_short_project_type())
+        #stats.append("" + projectlink.get_short_project_type())
         
-        
+        if projectlink.params["open for submission"]:
+            open_for_submissions_HTML = self.make_link(projectlink.params["URL"],
+                                                       "open for submissions",
+                                                       "submissionlink")
+            stats.append(open_for_submissions_HTML)            
+        else:
+            pass
         
             
+        
         #if projectlink.params["registered teams"]:
         #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
         
@@ -1653,9 +1660,18 @@ class AllProjectLinksNode(template.Node):
         """ To link to event, like ISBI 2013 in overviews
         
         """
-    
-        return "<a href='{0}' class='eventlink'>{1}</a>".format(projectlink.params["event URL"],
-                                                                projectlink.params["event name"])
+        return self.make_link(projectlink.params["event URL"],
+                              projectlink.params["event name"],"eventlink")
+        
+        
+    def make_link(self,link_url,link_text,link_class=""):
+        if link_class == "":
+            link_class_HTML = ""
+        else:
+            link_class_HTML = "class="+link_class
+             
+        return "<a href='{0}' {1}>{2}</a>".format(link_url,link_class,link_text)
+                
     
     def get_thumb_url(self,projectlink):
         """ For displaying a little thumbnail image for each project, in 
