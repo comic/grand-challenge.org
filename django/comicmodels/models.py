@@ -419,6 +419,7 @@ class ComicSite(models.Model):
         thumb_image_url = reverse('project_serve_file', args=[self.short_name,self.logo])
         
         args = {"abreviation":self.short_name,
+                "title":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
                 "event name":self.event_name,
