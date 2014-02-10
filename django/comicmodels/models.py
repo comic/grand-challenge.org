@@ -105,6 +105,7 @@ class ProjectLink(object):
                 "image URL":"",
                 "website section":"",
                 "overview article url":"",
+                "overview article journal":"",
                 "overview article citations":"",
                 "overview article date":"",
                 "submission deadline":"",
