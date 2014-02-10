@@ -180,14 +180,14 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 		  	 margin-left: -100px;}
 
 .projectlink {height:255px; background-color:#f1f1f1 ; margin:10px; float:left; position:relative; color:#474747;}
-.projectlink .projectname {clear:both; margin-bottom: 6px; font-size: 22px;}
+.projectlink .projectname {clear:both; margin-bottom: 6px; color: #101010;font-size: 17px;}
 .projectlink .description {float:left;}
 .projectlink .stats {float:left; margin-left: 3px;line-height: 16px;}
 .projectlink .stats div {float:left; clear:both; width: 210px;}
 .projectlink img {float:left;}
 .projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
 .projectlink .bottom{top:100px; left:0; position:absolute; padding-left:3px; overflow: hidden; height:155px;width:310px;}
-.projectlink .bottom.linktarget:hover {background-color: rgba(191, 208, 222, 0.2); cursor:pointer;}
+.projectlink .bottom.linktarget:hover {background-color: rgba(140, 158, 172, 0.3); cursor:pointer;}    
 
 
 .projectlink, .projectlink .top{width:313px;}

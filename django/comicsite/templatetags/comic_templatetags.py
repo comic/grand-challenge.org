@@ -1586,7 +1586,7 @@ class AllProjectLinksNode(template.Node):
                                year = str(projectlink.params["year"]),
                                url=projectlink.params["URL"],
                                thumb_image_url=self.get_thumb_url(projectlink),
-                               projectname=projectlink.params["abreviation"],
+                               projectname=projectlink.params["title"],
                                description = projectlink.params["description"],
                                stats = self.get_stats_html(projectlink)
                               )
@@ -1607,7 +1607,7 @@ class AllProjectLinksNode(template.Node):
          
         """
         
-        if projectlink.params["hosted on comic"]:            
+        if projectlink.params["hosted on comic"]:
             return "comic"
         else:
             return ""
@@ -1682,8 +1682,8 @@ class AllProjectLinksNode(template.Node):
     def get_host_link(self,projectlink):
         """ Try to find out what framework this challenge is hosted on 
         """
-        
-        if "grand-challenge.org" in projectlink.params["URL"]:
+                
+        if "grand-challenge.org" in projectlink.params["URL"] or projectlink.params["hosted on comic"]:
             framework_name = "grand-challenge.org"
             framework_URL = "http://grand-challenge.org"
             return self.make_link(framework_URL,framework_name,
