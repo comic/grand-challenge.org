@@ -189,9 +189,6 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .projectlink .bottom{top:104px; left:0; position:absolute; margin-left:3px; overflow: hidden; height:144px;}
 .projectlink .imagefader{width:100px; height:100px; position:absolute; top:0px; left:0px;background-color: rgba(255, 255, 255, 0.5);}
 .projectlink, .projectlink .top, .projectlink .bottom {width:313px;}
-.projectlink.challenge_inactive img{filter: alpha(opacity=0.5);opacity: 0.5;}
-.projectlink.challenge_inactive .top{background-color:#dddddd;}
-.projectlink.challenge_inactive {color:#666666;}
 .projectlink.data_pub .top{background-color:#cce2d3;}
 
 .project_thumb{width:113px;}
