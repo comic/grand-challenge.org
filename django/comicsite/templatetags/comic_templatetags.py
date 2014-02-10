@@ -1626,8 +1626,6 @@ class AllProjectLinksNode(template.Node):
         else:
             pass
         
-            
-        
         #if projectlink.params["registered teams"]:
         #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
         
