@@ -1,64 +1,37 @@
-{% extends "base.html" %}
-{% load guardian_tags %}
-{% load comic_templatetags %}
-
-{% block pageName %} {{site.short_name}} - All projects {% endblock %}
-
-{% block content %}        
-
 <style>
     
-    #buttonbar {width:100%; height:80px; border-top:1px solid #CCCCCC;}
+    #buttonbar {width:100%; height:80px; border-top:1px solid #CCCCCC;border-bottom: 1px solid #CCCCCC}
     #buttonbar li{list-style: none outside none; width:260px;}
     #buttonbar li label, #buttonbar li input{cursor: pointer;}
     #buttonbar ul {float:left}
     #buttonbar label {width:135px;}
-    #buttonbar #title {float:left; width:100px;}    
-    #projectlinks{border-top:1px solid #CCCCCC;}        
-    #projectscontainer .tab{color:#666666; background-color:#666666; border:1px solid #CCCCCC;
-            margin-left:20px;border-bottom:none; cursor:pointer;}
-    #projectscontainer .tab.active{color:black;}    
+    #buttonbar #title {float:left; width:100px;}        
     #projectfilterbuttons label{float:right; width: 226px; }
     
 </style>
-    <div id="projectlinkscontainer">        
-        <div id ="projectfilterbuttons">
-            <div id="buttonbar">
-                <!--<div id="title"><h2>Filter projects</h2></div>-->
-                <ul>                                
-                    <li>                        
-                        <label id="challenge_active" title="Challenge projects that currently accept new submissions">Active</label>
-                       <input type="checkbox" class="include" checked="true" id="challenge_active" name="ShowProspect">
-                    </li>
-                    <li>
-                        <label id="challenge_inactive">Inactive</label>
-                        <input type="checkbox" class="include" id="challenge_inactive"  name="ShowOpenToAll">
-                    </li>
-                    <li>
-                        <label id="data_pub">Data publication</label>
-                        <input type="checkbox" class="include" id="data_pub"  name="ShowOpenToAll">
-                    </li>
             
-                 </ul>
-                 <ul id="filters">    
-                    <li>
-                        <label id="comic">Hosted on comic only</label>
-                        <input type="checkbox" class="filter"  id="comic" name="ShowPrivate">
-                    </li>
-                    <li>
-                        <label id="challenge_upcoming"  title="Challenge projects with a workshop that has not yet been held">Upcoming only</label>
-                        <input type="checkbox" class="filter" checked="true" id="challenge_upcoming" name="ShowPrivate">
-                        
-                    </li>
-               </ul>            
-            </div>
-        </div>
-        <div style="clear:both;"></div>
-        
-        {% all_projectlinks %}
-        
-        
+<div id ="projectfilterbuttons">
+    <div id="buttonbar">
+        <!--<div id="title"><h2>Filter projects</h2></div>-->
+        <ul>                                
+            <li>                        
+                <label id="open" title="Show projects that currently accept new submissions">Open for submissions</label>
+               <input type="checkbox" class="include" checked="true" id="open">
+            </li>
+            <li>
+                <label id="closed">Closed</label>
+                <input type="checkbox" class="include" id="closed">
+            </li>                
+         </ul>
+         <ul id="filters">    
+            <li>
+                <label id="grand-challenge">Hosted on Grand-challenge only</label>
+                <input type="checkbox" class="filter"  id="grand-challenge">
+            </li>            
+       </ul>            
     </div>
+</div>
+<div style="clear:both;"></div>
 
 <script>
  $(document).ready(function() {     
@@ -296,8 +269,4 @@
 });
     
 </script>
-    
-{% endblock %}
 
-
-    
