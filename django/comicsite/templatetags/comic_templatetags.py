@@ -1467,14 +1467,23 @@ class AllProjectLinksNode(template.Node):
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
 
-        html = """<div id='projectlinks'>
-                    <ul>{0}
+        html = """
+                  {filter_buttons_HTML}
+                  <div id='projectlinks'>
+                    <ul>{html}
                         <div style='clear:both'></div>
                     </ul>
-                  </div> """.format(html)
-                  
-
+                  </div> """.format(filter_buttons_HTML = self.get_filter_buttons_HTML(),
+                                    html=html)
         return html
+    
+    def get_filter_buttons_HTML(self):
+        """ Get all the HTML and Jquery to have working filter and selection
+        checkboxes on top of the projectlinks overview
+        """
+        from django.template import loader, Context
+        return loader.render_to_string('all_projectlinks_filter.html')
+    
 
     def render_project_links(self,projectlinks,max_projects):
         """ Show all projectlinks in one big list, sorted by date, most recent first
@@ -1563,7 +1572,7 @@ class AllProjectLinksNode(template.Node):
             
         
             html = """
-                   <div class = "projectlink {link_class} {year} {comiclabel}">
+                   <div class = "projectlink {link_class} {year}">
                      <div class ="top">
                          <a href="{url}">
                            <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
@@ -1580,9 +1589,7 @@ class AllProjectLinksNode(template.Node):
                        
                      </div>
                    </div>
-                    
-                    """.format(link_class = projectlink.find_link_class(),
-                               comiclabel = self.get_comic_label(projectlink),
+                    """.format(link_class = self.get_link_classes(projectlink),                               
                                year = str(projectlink.params["year"]),
                                url=projectlink.params["URL"],
                                thumb_image_url=self.get_thumb_url(projectlink),
@@ -1597,20 +1604,24 @@ class AllProjectLinksNode(template.Node):
         return html
     
     
-    
     def capitalize(self,string):
         return string[0].upper()+string[1:]
         
     
-    def get_comic_label(self,projectlink):
-        """ For add this as id, for jquery filtering later on
-         
+    def get_link_classes(self,projectlink):
+        """ For adding this as id, for jquery filtering later on
+        returns a space separated list of classes to use in html
         """
+        classes = []         
         
-        if projectlink.params["hosted on comic"]:
-            return "comic"
+        if projectlink.params["open for submission"] == 'yes':
+            classes.append("open")
         else:
-            return ""
+            classes.append("closed")
+        
+        classes.append(self.get_host_id(projectlink))
+        
+        return " ".join(classes)
     
     def get_stats_html(self,projectlink):
         """ Returns html to render number of downloads, participants etc..
@@ -1621,7 +1632,7 @@ class AllProjectLinksNode(template.Node):
         
         #stats.append("" + projectlink.get_short_project_type())
         
-        if projectlink.params["open for submission"]:
+        if projectlink.params["open for submission"] == "yes":
             open_for_submissions_HTML = self.make_link(projectlink.params["URL"],
                                                        "Open for submissions",
                                                        "submissionlink")
@@ -1682,22 +1693,43 @@ class AllProjectLinksNode(template.Node):
     def get_host_link(self,projectlink):
         """ Try to find out what framework this challenge is hosted on 
         """
-                
-        if "grand-challenge.org" in projectlink.params["URL"] or projectlink.params["hosted on comic"]:
+        
+        host_id = self.get_host_id(projectlink)        
+        if host_id == "grand-challenge":
             framework_name = "grand-challenge.org"
             framework_URL = "http://grand-challenge.org"
-            return self.make_link(framework_URL,framework_name,
-                                 "frameworklink")
-        elif True:
-            return "Unknown"
-            
         
+        elif host_id == "codalab":
+            framework_name = "codalab.org"
+            framework_URL = "http://codalab.org"
+        
+        elif host_id == "midas":
+            framework_name = "Midas"
+            framework_URL = "http://midas.kitware.com"        
         else:
             return ""
         
+        return self.make_link(framework_URL,framework_name,
+                              "frameworklink")
+        
+                
+    def get_host_id(self,projectlink):
+        """ Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML 
+        """
+                
+        if "grand-challenge.org" in projectlink.params["URL"] or projectlink.params["hosted on comic"]:
+            return "grand-challenge"
+            
+        if "codalab.org" in projectlink.params["URL"]:
+            return "codalab"
+        if "midas.kitware" in projectlink.params["URL"]:
+            return "kitware"
+        else :
+            return "Unknown"
         
         
-        
+
 
 
     def make_link(self,link_url,link_text,link_class=""):

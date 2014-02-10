@@ -433,7 +433,7 @@ class ComicSite(models.Model):
                 "overview article date":"",
                 "submission deadline":"",
                 "workshop date":self.workshop_date,
-                "open for submission":"",
+                "open for submission":"yes",
                 "dataset downloads":"",
                 "registered teams":"",
                 "submitted results":"",
