@@ -1563,18 +1563,21 @@ class AllProjectLinksNode(template.Node):
             
         
             html = """
-                   <div class = "projectlink {link_class} {year} {comiclabel}">                 
-                     <div class ="top">                     
+                   <div class = "projectlink {link_class} {year} {comiclabel}">
+                     <div class ="top">
                          <a href="{url}">
-                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
+                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
                          </a>
-                                        
+                         
                          
                          <div class="stats">{stats} </div>
-                     </div>
+                     </div>                     
                      <div class ="bottom">
                        <div class="projectname"> {projectname} </div>
                        <div class="description"> {description} </div>
+                     </div>
+                     <div class ="bottom linktarget" onclick="location.href='{url}'">
+                       
                      </div>
                    </div>
                     
@@ -1584,8 +1587,8 @@ class AllProjectLinksNode(template.Node):
                                url=projectlink.params["URL"],
                                thumb_image_url=self.get_thumb_url(projectlink),
                                projectname=projectlink.params["abreviation"],
-                               description = projectlink.params["description"],                           
-                               stats = self.get_stats_html(projectlink)                           
+                               description = projectlink.params["description"],
+                               stats = self.get_stats_html(projectlink)
                               )
         
         except UnicodeEncodeError as e:
@@ -1620,7 +1623,7 @@ class AllProjectLinksNode(template.Node):
         
         if projectlink.params["open for submission"]:
             open_for_submissions_HTML = self.make_link(projectlink.params["URL"],
-                                                       "open for submissions",
+                                                       "Open for submissions",
                                                        "submissionlink")
             stats.append(open_for_submissions_HTML)            
         else:
@@ -1629,8 +1632,8 @@ class AllProjectLinksNode(template.Node):
         #if projectlink.params["registered teams"]:
         #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
         
-        if projectlink.params["dataset downloads"]:            
-            stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
+        #if projectlink.params["dataset downloads"]:            
+        #    stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
                     
         if projectlink.params["submitted results"]:
             stats.append("submissions: " + str(projectlink.params["submitted results"]))        
@@ -1642,8 +1645,15 @@ class AllProjectLinksNode(template.Node):
             stats.append("last subm.: " + self.format_date(projectlink.params["last submission date"]))
         
         if projectlink.params["event name"]:
-            stats.append("event: " + self.make_event_link(projectlink))
-                
+            stats.append("Associated with: " + self.make_event_link(projectlink))
+        
+        if projectlink.params["overview article journal"]:
+            stats.append("Article: " + self.make_article_link(projectlink))
+        
+        hostlink = self.get_host_link(projectlink)
+        if hostlink != "":
+            stats.append("Hosted on: " + hostlink)
+        
         stats_caps = []         
         for string in stats:
            stats_caps.append(self.capitalize(string))
@@ -1654,14 +1664,42 @@ class AllProjectLinksNode(template.Node):
         return stats_html
         
     
+    def make_article_link(self,projectlink):
+        return self.make_link(projectlink.params["overview article url"],
+                              projectlink.params["overview article journal"],
+                              "articlelink")
+    
     def make_event_link(self,projectlink):
         """ To link to event, like ISBI 2013 in overviews
         
         """
-        return self.make_link(projectlink.params["event URL"],
-                              projectlink.params["event name"],"eventlink")
+        if projectlink.params["event URL"]:
+            return self.make_link(projectlink.params["event URL"],
+                                  projectlink.params["event name"],"eventlink")
+        else:
+            return projectlink.params["event name"] 
+        
+    def get_host_link(self,projectlink):
+        """ Try to find out what framework this challenge is hosted on 
+        """
+        
+        if "grand-challenge.org" in projectlink.params["URL"]:
+            framework_name = "grand-challenge.org"
+            framework_URL = "http://grand-challenge.org"
+            return self.make_link(framework_URL,framework_name,
+                                 "frameworklink")
+        elif True:
+            return "Unknown"
+            
+        
+        else:
+            return ""
         
         
+        
+        
+
+
     def make_link(self,link_url,link_text,link_class=""):
         if link_class == "":
             link_class_HTML = ""
