@@ -238,7 +238,7 @@ def sanitize_django_items(string):
 @register.simple_tag
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
-    html_string = "<div class='text'><span>COMIC:</span></div>"
+    html_string = "<div class='metaFooterMenuItem'><span>{}:</span></div>".format(settings.MAIN_PROJECT_NAME)
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
@@ -1455,8 +1455,8 @@ class AllProjectLinksNode(template.Node):
 
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
-            
-        if self.args:
+        
+        if self.args:            
             html = self.render_project_links(projectlinks,self.args["max_projects"])
         else:
             projectlinks += self.read_grand_challenge_projectlinks()            
@@ -1467,14 +1467,23 @@ class AllProjectLinksNode(template.Node):
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
 
-        html = """<div id='projectlinks'>
-                    <ul>{0}
+        html = """
+                  {filter_buttons_HTML}
+                  <div id='projectlinks'>
+                    <ul>{html}
                         <div style='clear:both'></div>
                     </ul>
-                  </div> """.format(html)
-                  
-
+                  </div> """.format(filter_buttons_HTML = self.get_filter_buttons_HTML(),
+                                    html=html)
         return html
+    
+    def get_filter_buttons_HTML(self):
+        """ Get all the HTML and Jquery to have working filter and selection
+        checkboxes on top of the projectlinks overview
+        """
+        from django.template import loader, Context
+        return loader.render_to_string('all_projectlinks_filter.html')
+    
 
     def render_project_links(self,projectlinks,max_projects):
         """ Show all projectlinks in one big list, sorted by date, most recent first
@@ -1563,29 +1572,30 @@ class AllProjectLinksNode(template.Node):
             
         
             html = """
-                   <div class = "projectlink {link_class} {year} {comiclabel}">                 
-                     <div class ="top">                     
+                   <div class = "projectlink {link_class} {year}">
+                     <div class ="top">
                          <a href="{url}">
-                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">                                                         
+                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
                          </a>
-                                        
+                         
                          
                          <div class="stats">{stats} </div>
-                     </div>
+                     </div>                     
                      <div class ="bottom">
                        <div class="projectname"> {projectname} </div>
                        <div class="description"> {description} </div>
                      </div>
+                     <div class ="bottom linktarget" onclick="location.href='{url}'">
+                       
+                     </div>
                    </div>
-                    
-                    """.format(link_class = projectlink.find_link_class(),
-                               comiclabel = self.get_comic_label(projectlink),
+                    """.format(link_class = self.get_link_classes(projectlink),                               
                                year = str(projectlink.params["year"]),
                                url=projectlink.params["URL"],
                                thumb_image_url=self.get_thumb_url(projectlink),
-                               projectname=projectlink.params["abreviation"],
-                               description = projectlink.params["description"],                           
-                               stats = self.get_stats_html(projectlink)                           
+                               projectname=projectlink.params["title"],
+                               description = projectlink.params["description"],
+                               stats = self.get_stats_html(projectlink)
                               )
         
         except UnicodeEncodeError as e:
@@ -1594,20 +1604,26 @@ class AllProjectLinksNode(template.Node):
         return html
     
     
-    
     def capitalize(self,string):
         return string[0].upper()+string[1:]
         
     
-    def get_comic_label(self,projectlink):
-        """ For add this as id, for jquery filtering later on
-         
+    def get_link_classes(self,projectlink):
+        """ For adding this as id, for jquery filtering later on
+        returns a space separated list of classes to use in html
         """
+        classes = []         
         
-        if projectlink.params["hosted on comic"]:            
-            return "comic"
-        else:
-            return ""
+        classes.append("project")
+        if projectlink.params["open for submission"] == 'yes':
+            classes.append("open")
+        
+        if projectlink.params["data download"]:
+            classes.append("datadownload")
+        
+        classes.append(self.get_host_id(projectlink))
+        
+        return " ".join(classes)
     
     def get_stats_html(self,projectlink):
         """ Returns html to render number of downloads, participants etc..
@@ -1616,16 +1632,26 @@ class AllProjectLinksNode(template.Node):
         
         stats = []
         
-        stats.append("" + projectlink.get_short_project_type())
+        #stats.append("" + projectlink.get_short_project_type())
+        
+        if projectlink.params["open for submission"] == "yes":
+            open_for_submissions_HTML = self.make_link(projectlink.params["URL"],
+                                                       "Open for submissions",
+                                                       "submissionlink")
+            stats.append(open_for_submissions_HTML)            
+        
+        if projectlink.params["data download"] == "yes":
+            data_download_HTML = self.make_link(projectlink.params["URL"],
+                                                       "Data download",
+                                                       "datadownloadlink")
+            stats.append(data_download_HTML)            
         
         
-        
-            
         #if projectlink.params["registered teams"]:
         #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
         
-        if projectlink.params["dataset downloads"]:            
-            stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
+        #if projectlink.params["dataset downloads"]:            
+        #    stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
                     
         if projectlink.params["submitted results"]:
             stats.append("submissions: " + str(projectlink.params["submitted results"]))        
@@ -1637,8 +1663,15 @@ class AllProjectLinksNode(template.Node):
             stats.append("last subm.: " + self.format_date(projectlink.params["last submission date"]))
         
         if projectlink.params["event name"]:
-            stats.append("event: " + self.make_event_link(projectlink))
-                
+            stats.append("Associated with: " + self.make_event_link(projectlink))
+        
+        if projectlink.params["overview article journal"]:
+            stats.append("Article: " + self.make_article_link(projectlink))
+        
+        hostlink = self.get_host_link(projectlink)
+        if hostlink != "":
+            stats.append("Hosted on: " + hostlink)
+        
         stats_caps = []         
         for string in stats:
            stats_caps.append(self.capitalize(string))
@@ -1649,13 +1682,68 @@ class AllProjectLinksNode(template.Node):
         return stats_html
         
     
+    def make_article_link(self,projectlink):
+        return self.make_link(projectlink.params["overview article url"],
+                              projectlink.params["overview article journal"],
+                              "articlelink")
+    
     def make_event_link(self,projectlink):
         """ To link to event, like ISBI 2013 in overviews
         
         """
-    
-        return "<a href='{0}' class='eventlink'>{1}</a>".format(projectlink.params["event URL"],
-                                                                projectlink.params["event name"])
+        if projectlink.params["event URL"]:
+            return self.make_link(projectlink.params["event URL"],
+                                  projectlink.params["event name"],"eventlink")
+        else:
+            return projectlink.params["event name"] 
+        
+    def get_host_link(self,projectlink):
+        """ Try to find out what framework this challenge is hosted on 
+        """
+        
+        host_id = self.get_host_id(projectlink)        
+        if host_id == "grand-challenge":
+            framework_name = "grand-challenge.org"
+            framework_URL = "http://grand-challenge.org"
+        
+        elif host_id == "codalab":
+            framework_name = "codalab.org"
+            framework_URL = "http://codalab.org"
+        
+        elif host_id == "midas":
+            framework_name = "Midas"
+            framework_URL = "http://midas.kitware.com"        
+        else:
+            return ""
+        
+        return self.make_link(framework_URL,framework_name,
+                              "frameworklink")
+        
+                
+    def get_host_id(self,projectlink):
+        """ Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML 
+        """
+                
+        if "grand-challenge.org" in projectlink.params["URL"] or projectlink.params["hosted on comic"]:
+            return "grand-challenge"
+            
+        if "codalab.org" in projectlink.params["URL"]:
+            return "codalab"
+        if "midas.kitware" in projectlink.params["URL"]:
+            return "kitware"
+        else :
+            return "Unknown"
+        
+        
+    def make_link(self,link_url,link_text,link_class=""):
+        if link_class == "":
+            link_class_HTML = ""
+        else:
+            link_class_HTML = "class="+link_class
+             
+        return "<a href='{0}' {1}>{2}</a>".format(link_url,link_class,link_text)
+                
     
     def get_thumb_url(self,projectlink):
         """ For displaying a little thumbnail image for each project, in 
