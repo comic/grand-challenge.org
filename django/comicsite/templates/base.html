@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 {% load static %}
 {% load comic_templatetags %}
-<html>	
-	<head>
-		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		<meta name="description" content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms." />
-		<meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
-		<link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
-			
-					
-		<script type="text/javascript" src="{% get_static_prefix %}js/jquery/jquery-1.9.1.min.js"></script>		
-		<script type="text/javascript" src="{% get_static_prefix %}js/jqueryui/js/jquery-ui-1.10.1.custom.min.js"></script>
-		<script type="text/javascript" src="{% get_static_prefix %}js/MeVisLab/Private/Sources/Web/application/js/gui/Application.js"></script>
-		<script type="text/javascript" src="{% get_static_prefix %}js/DIAG/Application/Modules/Macros/COMICWorkstation/web/js/COMICWebWorkstationWrapper.js"></script>
+<html>    
+    <head>
+        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+        <meta name="description" content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms." />
+        <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
+        <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
+            
+                    
+        <script type="text/javascript" src="{% get_static_prefix %}js/jquery/jquery-1.9.1.min.js"></script>        
+        <script type="text/javascript" src="{% get_static_prefix %}js/jqueryui/js/jquery-ui-1.10.1.custom.min.js"></script>
+        <script type="text/javascript" src="{% get_static_prefix %}js/MeVisLab/Private/Sources/Web/application/js/gui/Application.js"></script>
+        <script type="text/javascript" src="{% get_static_prefix %}js/DIAG/Application/Modules/Macros/COMICWorkstation/web/js/COMICWebWorkstationWrapper.js"></script>
         <!--For displaying jquery UI widgets -->
-		<link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
-		<!--Adds sorting and other features to html tables -->
-		<script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>	
-		
-		<link href="{% get_static_prefix %}img/comic.ico" rel="shortcut icon">
-		
-		<link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
-		
-		<!--Put any site or page specific css here -->
-		<link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
-	
-		<script>
-		
+        <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />        
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+        <!--Adds sorting and other features to html tables -->
+        <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>    
+        
+        <link href="{% get_static_prefix %}img/comic.ico" rel="shortcut icon">
+        
+        <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
+        
+        <!--Put any site or page specific css here -->
+        <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
+    
+        <script>
+        
         $(document).ready(function() {
-        	
-        	// delete message on click
-            $(document).on('click','.del-msg',function(){            	
+            
+            // delete message on click
+            $(document).on('click','.del-msg',function(){                
                 $('.messagelist').attr('style', 'display:none;');
             });
-                    	       
             // messages timeout  
             setTimeout(function() {
                 $('.messagelist').fadeOut('slow');
             }, 5000); // <-- time in milliseconds, 1000 =  1 sec
-    		           
+                       
             $('table.sortable').dataTable({
                             "bJQueryUI": true,
                             "sPaginationType": "full_numbers",
@@ -54,56 +54,63 @@
         </script>
         
         <style>
-        	{% block additionalCSS %}{% endblock %}
+            {% block additionalCSS %}{% endblock %}
         </style>        
 
-		<title> {% block pageName %} COMIC main portal {% endblock %} </title>
-	</head>
-	<body>
-		<div id="messagescontainer">
-			{% block messages %}
-				{% if messages %}
-					<ul class="messagelist">{% for message in messages %}
-						<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-						{% if 'safe' in message.tags %}
-							 {{ message | safe }}
-						{% else %}
-							{{ message }}
-						{% endif %}
-						<div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
-						</li>
-						{% endfor %}
-					</ul>
-				{% endif %}
-			{% endblock messages %}
-    	</div>
-		<div id="page">			
-			<div id="header">							
-				<div id="headerTitle">
-					
+        <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+    </head>
+    <body>
+        <div id="topheader">
+            {% metafooterpages %}
+            <div id="topheader_right">
+                {% if user.is_authenticated %}
+                    <a class="metaFooterItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>                
+                    <a class="metaFooterItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a>
+                {% else %}
+                    {% block loginbutton %}
+                       <a class="metaFooterItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
+                    {% endblock %}
+                {% endif %}
+            </div>
+            <div style="clear:both;"></div>
+         </div>
+        <div id="messagescontainer">
+            {% block messages %}
+                {% if messages %}
+                    <ul class="messagelist">{% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                        {% if 'safe' in message.tags %}
+                             {{ message | safe }}
+                        {% else %}
+                            {{ message }}
+                        {% endif %}
+                        <div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endblock messages %}
+        </div>
+        
+        <div id="page">
+            <div id="header">
+                <div id="headerTitle">
+                    
                     {% block headerTitle %} <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
-				</div>
+                </div>
                 <div id="navMenuContainer">
                     <div id="navMenu">
-                        <ul>					
+                        <ul>
                             {% block topmenu %} {% endblock %}
                         </ul>
-                    </div>				
+                    </div>
                     <div id="additionalNavigation">
                         <ul>
-                        	
-                        	
-                            {% if user.is_authenticated %}
-	                            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a></li>
-	                            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-	                            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a> </li>
-                            {% else %}
-                            	{% block loginbutton %}
-                            	   <li><a class="menuItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a></li>
-                                {% endblock %}
-                            {% endif %}
                             
-                            {% block adminbutton %} {% endblock %}                            
+                            
+                            
+                            
+                            {% block adminbutton %} {% endblock %}
                             
                         </ul>
                     </div> 
@@ -115,21 +122,21 @@
                     {% block content %} content {% endblock %}
                 </div>
             </div>
+            <div style="clear:both;"></div>
             <!-- container -->
             
-        </div>		
+        </div>        
         <!-- page -->
         {% block footer %}
-               	<div id="metafooter">
-               		<div id="metaFooterMenu">
-            			{% metafooterpages %}
-            		</div>
-            	            	
-	            	<div id="copyrightNotice">
-	                	COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2013, <a href="{% url 'comicsite.views.page' site_short_name='COMIC' page_title='contact' %}">Consortium for Open Medical Image Computing</a>
-	                </div>
-	
-	            </div>
+                   <div id="metafooter">
+                       
+                                
+                    <div id="copyrightNotice">
+                        COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2013, <a href="{% url 'comicsite.views.page' site_short_name='COMIC' page_title='contact' %}">Consortium for Open Medical Image Computing</a>
+                    </div>
+    
+                </div>
         {% endblock %}
-	</body>
+        <div style="clear:both;"></div>
+    </body>
 </html>

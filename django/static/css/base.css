@@ -1,7 +1,7 @@
-body {background-color: #F9F9F9;font-family: sans-serif;padding-top: 1px;}
+body {background-color: #F9F9F9;font-family: 'Open Sans', sans-serif;padding-top: 1px;}
 
 
-#page { margin-left:auto; margin-right:auto; width: 1000px; font-family : Verdana,helvetica,sans-serif; font-size: 10pt; }
+#page { margin-left:auto; margin-right:auto; width: 1000px; font-size: 10pt; }
 
 /* Formatting for forms (at the moment only tested on /accounts/signup */
 label { display:block; float:left; width:180px; }
@@ -93,6 +93,7 @@ div.statistics {
 #additionalNavigation {	float:right; vertical-align:baseline; }
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
 #messagescontainer{ position: fixed;width: 100%;}
+#messagescontainer li{list-style: none; margin-left: -33px;}
 #metafooter {float:left; width:100%; border-top:1px solid #cccccc; font-size:smaller; margin-top: 47px; }
 #metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
 #metafooter div {font-size: small;}
@@ -101,7 +102,7 @@ div.statistics {
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
 li.menuBullet{ padding:0px;	margin:0px; }
 
-.messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; padding-left: 3px; width: 1000px;}
+.messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; width: 1000px;}
 .messagelist .warning{color:orange;}
 .messagelist .error{color:red;}
 .menuItem{ color:#fff; font-weight:bold; }
@@ -111,16 +112,23 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
 /* main page, base.html */
+#topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px;}
+#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #6B6B6B;
+                                                                            padding-right: 13px;text-decoration: none;}
+#topheader a:hover{color:#333333;}
+#topheader_right {float:right;}
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
 #headerTitle .noimage{ font-size: 48px; padding-left:12px; padding-top:10px; padding-bottom: 14px;}
 #headerTitle img { vertical-align:bottom;}
 #headerTitle a { text-decoration: none; color:inherit; }
+
 #loginInfo{ float:right; }
-#mainContent{}
+#mainContent{margin:9px;}
 #pageContainer {padding-right: 8px; padding-left: 8px; padding-bottom: 12px; padding-top: 12px;}
 #copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
 #copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
+
 
 .comicSiteSummary .thumb img { width:100px; height:100px; }
 .comicSiteSummary .description { width:550px;  padding-left: 8px;}
@@ -173,18 +181,16 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 		  	 margin-left: -100px;}
 
 .projectlink {height:255px; background-color:#f1f1f1 ; margin:10px; float:left; position:relative; color:#474747;}
-.projectlink .projectname {clear:both; margin-bottom: 6px; font-size: 22px;}
+.projectlink .projectname {clear:both; margin-bottom: 6px; color: #101010;font-size: 17px;}
 .projectlink .description {float:left;}
-.projectlink .stats {float:left; margin-left: 3px;}
+.projectlink .stats {float:left; margin-left: 3px;line-height: 16px;}
 .projectlink .stats div {float:left; clear:both; width: 210px;}
 .projectlink img {float:left;}
 .projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
-.projectlink .bottom{top:104px; left:0; position:absolute; margin-left:3px; overflow: hidden; height:144px;}
-.projectlink .imagefader{width:100px; height:100px; position:absolute; top:0px; left:0px;background-color: rgba(255, 255, 255, 0.5);}
-.projectlink, .projectlink .top, .projectlink .bottom {width:313px;}
-.projectlink.challenge_inactive img{filter: alpha(opacity=0.5);opacity: 0.5;}
-.projectlink.challenge_inactive .top{background-color:#dddddd;}
-.projectlink.challenge_inactive {color:#666666;}
+.projectlink .bottom{top:100px; left:0; position:absolute; padding-left:3px; overflow: hidden; height:155px;width:307px;}
+.projectlink .bottom.linktarget:hover {background-color: rgba(140, 158, 172, 0.3); cursor:pointer ;padding-right: 3px;}
+
+.projectlink, .projectlink .top{width:313px;}
 .projectlink.data_pub .top{background-color:#cce2d3;}
 
 .project_thumb{width:113px;}
@@ -194,7 +200,7 @@ label.greyed_out{color:#666666;}
 a.eventlink:visited, a.eventlink:link {text-decoration:none;}
 
 /*very long urls were disturbing the table layout, making the external link icon appear in a weird place*/
-#projectlinks {margin:-9px;}
+#projectlinks {margin:-17px;}
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
 #projectlinks ul {padding-left:0px;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
