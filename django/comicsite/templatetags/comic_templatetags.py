@@ -1614,10 +1614,12 @@ class AllProjectLinksNode(template.Node):
         """
         classes = []         
         
+        classes.append("project")
         if projectlink.params["open for submission"] == 'yes':
             classes.append("open")
-        else:
-            classes.append("closed")
+        
+        if projectlink.params["data download"]:
+            classes.append("datadownload")
         
         classes.append(self.get_host_id(projectlink))
         
@@ -1637,8 +1639,13 @@ class AllProjectLinksNode(template.Node):
                                                        "Open for submissions",
                                                        "submissionlink")
             stats.append(open_for_submissions_HTML)            
-        else:
-            pass
+        
+        if projectlink.params["data download"] == "yes":
+            data_download_HTML = self.make_link(projectlink.params["URL"],
+                                                       "Data download",
+                                                       "datadownloadlink")
+            stats.append(data_download_HTML)            
+        
         
         #if projectlink.params["registered teams"]:
         #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
@@ -1729,9 +1736,6 @@ class AllProjectLinksNode(template.Node):
             return "Unknown"
         
         
-
-
-
     def make_link(self,link_url,link_text,link_class=""):
         if link_class == "":
             link_class_HTML = ""

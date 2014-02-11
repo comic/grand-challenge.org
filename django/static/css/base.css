@@ -113,8 +113,9 @@ li.menuBullet{ padding:0px;	margin:0px; }
 
 /* main page, base.html */
 #topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px;}
-#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited { color:#cccccc; text-decoration:none; }
-#topheader a:hover{ color:#cccccc; text-decoration:underline;}
+#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #6B6B6B;
+                                                                            padding-right: 13px;text-decoration: none;}
+#topheader a:hover{color:#333333;}
 #topheader_right {float:right;}
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
@@ -186,9 +187,8 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .projectlink .stats div {float:left; clear:both; width: 210px;}
 .projectlink img {float:left;}
 .projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
-.projectlink .bottom{top:100px; left:0; position:absolute; padding-left:3px; overflow: hidden; height:155px;width:310px;}
-.projectlink .bottom.linktarget:hover {background-color: rgba(140, 158, 172, 0.3); cursor:pointer;}    
-
+.projectlink .bottom{top:100px; left:0; position:absolute; padding-left:3px; overflow: hidden; height:155px;width:307px;}
+.projectlink .bottom.linktarget:hover {background-color: rgba(140, 158, 172, 0.3); cursor:pointer ;padding-right: 3px;}
 
 .projectlink, .projectlink .top{width:313px;}
 .projectlink.data_pub .top{background-color:#cce2d3;}

@@ -15,12 +15,12 @@
         <!--<div id="title"><h2>Filter projects</h2></div>-->
         <ul>                                
             <li>                        
-                <label id="open" title="Show projects that currently accept new submissions">Open for submissions</label>
+                <label id="open" title="Show projects that accept new submissions">Open for submissions</label>
                <input type="checkbox" class="include" checked="true" id="open">
             </li>
             <li>
-                <label id="closed">Closed</label>
-                <input type="checkbox" class="include" id="closed">
+                <label id="datadownload" title="Show projects that offer data download">Data download</label>
+                <input type="checkbox" class="include" checked="true" id="datadownload">
             </li>                
          </ul>
          <ul id="filters">    
@@ -92,8 +92,6 @@
         }else{
             log("WARNING, checkbox having class "+checkbox.attr("class")+" did not have a known class. I don't know what to do when this box is checked")
         }
-        
-                           
     }
     
     function modifyCollection(checkbox,collection){
@@ -116,9 +114,9 @@
         
         if(checkbox.attr("class") == "filter"){
             //filter checkbox will remove all others when checked
-            if(checkbox.is(':checked') ){                
-                log("hiding all non    '." + name+"'");
-                hide = hide.add(".projectlink:not(."+name+")");                                
+            if(checkbox.is(':checked') ){
+                log("hiding all non '." + name+"'");
+                hide = hide.add(".projectlink:not(."+name+")");
             }
             else{
                 log("filter on '." + name+"' released. doing nothing.");
@@ -127,14 +125,14 @@
         }else if(checkbox.attr("class") == "include"){
             // include checkbox will include or exclude only the items with
             // the same name
-            if(checkbox.is(':checked') ){                
+            if(checkbox.is(':checked') ){
                 log("showing ''." + name+"'");
-                show = show.add(".projectlink."+name);                
+                show = show.add(".projectlink."+name);
                 
             }
             else{
                 log("hiding '." + name+"'");
-                hide = hide.add(".projectlink."+name);                
+                hide = hide.add(".projectlink."+name);
             };
             
         
@@ -144,8 +142,6 @@
         
         collection = {"show":show, "hide":hide};
         return collection;
-        
-                           
     }
     
     
@@ -219,12 +215,8 @@
             }else{
                 $("label#"+inputname).addClass("greyed_out")
             }
-            
-            
-                                                                        
         })
     }
-    
     
     function hideEmptyYears(){
         // hide year headings without any items in them
