@@ -96,6 +96,7 @@ class ProjectLink(object):
     # Using dict instead of giving a lot of fields to this object because the former
     # is easier to work with 
     defaults = {"abreviation":"",
+                "title":"",
                 "description":"",
                 "URL":"",
                 "event name":"",
@@ -104,6 +105,7 @@ class ProjectLink(object):
                 "image URL":"",
                 "website section":"",
                 "overview article url":"",
+                "overview article journal":"",
                 "overview article citations":"",
                 "overview article date":"",
                 "submission deadline":"",
@@ -417,8 +419,10 @@ class ComicSite(models.Model):
         thumb_image_url = reverse('project_serve_file', args=[self.short_name,self.logo])
         
         args = {"abreviation":self.short_name,
+                "title":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "submission URL":reverse('comicsite.views.site', args=[self.short_name]),
                 "event name":self.event_name,
                 "year":"",
                 "event URL":self.event_url,                
@@ -430,7 +434,8 @@ class ComicSite(models.Model):
                 "overview article date":"",
                 "submission deadline":"",
                 "workshop date":self.workshop_date,
-                "open for submission":"",
+                "open for submission":"yes",
+                "data download":"yes",
                 "dataset downloads":"",
                 "registered teams":"",
                 "submitted results":"",

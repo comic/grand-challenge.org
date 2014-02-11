@@ -17,7 +17,7 @@
         <p style="float: right;">
         <strong><a href="http://openid.net/what">learn more &raquo;</a></strong>
         </p>
-    </div>
+    </div>    
     <!-- END: Shamelessly copied from stackoverflow.com -->
 <div class="white-box">
     <div id="signincontainer">
@@ -29,13 +29,13 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'socialauth_begin' 'google' %}?next=/projects/">
+                <a href="{% url 'socialauth_begin' 'google' %}?next={{request.GET.next}}">
                     <p>Signin using</p>
                     <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
                 </a>
             </li>
             <li>
-                <a href="{% url 'socialauth_begin' 'yahoo' %}?next=/projects/">
+                <a href="{% url 'socialauth_begin' 'yahoo' %}?next={{request.GET.next}}">
                     <p>Signin using</p>
                     <img src="{% static "img/openid-logo-yahoo.png" %}" alt="Signin using Yahoo"/>
                 </a>
