@@ -112,12 +112,14 @@ class ComicframeworkTestCase(TestCase):
          
         Do not create this project through admin because admin will throw an error 
         at this point because MAIN_PROJECT can not be found. 
-        """
-        main = ComicSite.objects.create(short_name=settings.MAIN_PROJECT_NAME,
-                                        description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
-                                        skin="fakeskin.css"
-                                        )
-        main.save()
+        """        
+        if len(ComicSite.objects.filter(short_name=settings.MAIN_PROJECT_NAME)) == 0:
+            main = ComicSite.objects.create(short_name=settings.MAIN_PROJECT_NAME,
+                                            description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
+                                            skin="fakeskin.css"
+                                            )
+            main.save()
+        
                      
     def _create_dummy_project(self,projectname="testproject"):
         """ Create a project with some pages and users. In part this is 
