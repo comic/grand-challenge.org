@@ -6,6 +6,10 @@
 
 {% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
+
+{% block topmenu %}
+{% endblock %}
+
 {% block loginbutton %}
 {% if site.hide_signin %}
 					

@@ -64,11 +64,11 @@
             {% metafooterpages %}
             <div id="topheader_right">
                 {% if user.is_authenticated %}
-                    <a class="metaFooterItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>                
-                    <a class="metaFooterItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a>
+                    <a class="metaFooterMenuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>                
+                    <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}"> Sign     out</a>
                 {% else %}
                     {% block loginbutton %}
-                       <a class="metaFooterItem" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
+                       <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
                     {% endblock %}
                 {% endif %}
             </div>
@@ -132,7 +132,7 @@
                        
                                 
                     <div id="copyrightNotice">
-                        COMIC <a href="http://en.wikipedia.org/wiki/Captain_Marvel_%28DC_Comics%29">&copy;</a> 2013, <a href="{% url 'comicsite.views.page' site_short_name='COMIC' page_title='contact' %}">Consortium for Open Medical Image Computing</a>
+                        Consortium for Open Medical Image Computing</a> &copy; 2012-2014
                     </div>
     
                 </div>
