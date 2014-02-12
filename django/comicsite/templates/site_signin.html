@@ -3,6 +3,7 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
+{% block pageName %} {{site.short_name}} - Login {% endblock %}
 {% block loginbutton %}
 	{% if site.hide_signin %}
 					
