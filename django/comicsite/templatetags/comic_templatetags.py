@@ -1613,8 +1613,7 @@ class AllProjectLinksNode(template.Node):
         returns a space separated list of classes to use in html
         """
         classes = []         
-        
-        classes.append("project")
+                
         if projectlink.params["open for submission"] == 'yes':
             classes.append("open")
         

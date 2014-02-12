@@ -94,12 +94,9 @@ div.statistics {
 #footer { width: 100%; font-size:smaller; padding-top:20px; }
 #messagescontainer{ position: fixed;width: 100%;}
 #messagescontainer li{list-style: none; margin-left: -33px;}
-#metafooter {float:left; width:100%; border-top:1px solid #cccccc; font-size:smaller; margin-top: 47px; }
-#metaFooter a, #metaFooter a:active, #metaFooter a:link, #metafooter a:visited { color:#cccccc; text-decoration:none; }
-#metafooter div {font-size: small;}
-#metafooter div a {text-decoration:none;}
 #metaFooterMenu .text { float:left; color:#666666; }
 #metaFooterMenu { margin-left:auto; margin-right:auto; margin-top:10px; width: 1000px; }
+
 li.menuBullet{ padding:0px;	margin:0px; }
 
 .messagelist{background-color: #FDFDD4; border: 1px solid black; margin: -3px auto 7px; padding-bottom: 1px; width: 1000px;}
@@ -113,9 +110,12 @@ li.menuBullet{ padding:0px;	margin:0px; }
 
 /* main page, base.html */
 #topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px;}
+  
 #topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #6B6B6B;
                                                                             padding-right: 13px;text-decoration: none;}
+
 #topheader a:hover{color:#333333;}
+#topheader a.last{border-right:none;}
 #topheader_right {float:right;}
 #header { width:100%; float:left; background-color:#6f91ab; color:white; }
 #headerTop{ padding: 12px; height:100px; }
@@ -124,10 +124,10 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle a { text-decoration: none; color:inherit; }
 
 #loginInfo{ float:right; }
-#mainContent{margin:9px;}
-#pageContainer {padding-right: 8px; padding-left: 8px; padding-bottom: 12px; padding-top: 12px;}
-#copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#cccccc}
-#copyrightNotice a, #copyrightNotice a:link {color:#cccccc; text-decoration:none;}
+#mainContent{margin:9px; padding-bottom: 12px; padding-top: 12px;}
+#pageContainer {padding-right: 8px; padding-left: 8px;}
+#copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#9D9D9D;}
+#copyrightNotice a, #copyrightNotice a:link {color:#9D9D9D; text-decoration:none;}
 
 
 .comicSiteSummary .thumb img { width:100px; height:100px; }
@@ -200,7 +200,7 @@ label.greyed_out{color:#666666;}
 a.eventlink:visited, a.eventlink:link {text-decoration:none;}
 
 /*very long urls were disturbing the table layout, making the external link icon appear in a weird place*/
-#projectlinks {margin:-17px;}
+#projectlinks {margin:-9px;}
 #projectlinks table {word-wrap: break-word; word-break: break-all; table-layout: fixed;}
 #projectlinks ul {padding-left:0px;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
@@ -209,7 +209,8 @@ a.eventlink:visited, a.eventlink:link {text-decoration:none;}
 
 
 
-div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;}
+div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;padding-left: 10px;
+}}
 
 /* svg graph plots*/
 svg {margin-bottom:10px;}
