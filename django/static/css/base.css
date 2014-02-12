@@ -124,7 +124,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 #headerTitle a { text-decoration: none; color:inherit; }
 
 #loginInfo{ float:right; }
-#mainContent{margin:9px; padding-bottom: 12px; padding-top: 12px;}
+#mainContent{margin:9px; padding-bottom: 12px;}
 #pageContainer {padding-right: 8px; padding-left: 8px;}
 #copyrightNotice{ width:32em; margin: 83px auto 24px; text-decoration:none; color:#9D9D9D;}
 #copyrightNotice a, #copyrightNotice a:link {color:#9D9D9D; text-decoration:none;}
