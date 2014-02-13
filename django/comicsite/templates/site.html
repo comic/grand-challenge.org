@@ -14,6 +14,14 @@
 
 {% block pageName %} {{site.short_name}} {% endblock %}
 
+{% block topheader %}
+    {% if site.hide_footer %}
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+
+{% endblock topheader%}
+
 {% block headerTitle %}
 	{%if site.header_image == "" %} 
 		<div class="noimage">
