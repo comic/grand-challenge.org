@@ -60,20 +60,22 @@
         <title> {% block pageName %} COMIC main portal {% endblock %} </title>
     </head>
     <body>
-        <div id="topheader">
-            {% metafooterpages %}
-            <div id="topheader_right">
-                {% if user.is_authenticated %}
-                    <a class="metaFooterMenuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>                
-                    <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}"> Sign     out</a>
-                {% else %}
-                    {% block loginbutton %}
-                       <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
-                    {% endblock %}
-                {% endif %}
-            </div>
-            <div style="clear:both;"></div>
-         </div>
+        {% block topheader %}
+            <div id="topheader">
+                {% metafooterpages %}
+                <div id="topheader_right">
+                    {% if user.is_authenticated %}
+                        <a class="metaFooterMenuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>                
+                        <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}"> Sign     out</a>
+                    {% else %}
+                        {% block loginbutton %}
+                           <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
+                        {% endblock %}
+                    {% endif %}
+                </div>
+                <div style="clear:both;"></div>
+             </div>
+        {% endblock topheader %}
         <div id="messagescontainer">
             {% block messages %}
                 {% if messages %}
