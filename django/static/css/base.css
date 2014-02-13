@@ -1,4 +1,4 @@
-body {background-color: #F9F9F9;font-family: 'Open Sans', sans-serif;padding-top: 1px;}
+body {background-color: #F9F9F9;font-family: 'Open Sans', sans-serif;padding-top: 1px; font-size:10pt;}
 
 
 #page { margin-left:auto; margin-right:auto; width: 1000px; font-size: 10pt; }
@@ -109,7 +109,7 @@ li.menuBullet{ padding:0px;	margin:0px; }
 .selected, .selected:link, .selected:visited {text-decoration:underline; }
 
 /* main page, base.html */
-#topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px;}
+#topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px; font-size: 14px;}
   
 #topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #6B6B6B;
                                                                             padding-right: 13px;text-decoration: none;}
