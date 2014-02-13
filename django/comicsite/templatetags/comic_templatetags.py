@@ -1465,7 +1465,7 @@ class AllProjectLinksNode(template.Node):
         #for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
 
-        html = """
+        html = u"""
                   {filter_buttons_HTML}
                   <div id='projectlinks'>
                     <ul>{html}
@@ -1522,7 +1522,7 @@ class AllProjectLinksNode(template.Node):
             #html += yearheader
             #html += "\n".join([link.render_to_html() for link in year[1]])
             projectlinks = "\n".join([self.render_to_html(link) for link in year[1]]) 
-            html += "<div class=projectlinksyearcontainer \
+            html += u"<div class=projectlinksyearcontainer \
                     style='background-color:{0}'>{1}{2} <div style='clear:both;'>\
                     </div></div>".format("none",
                                           yearheader,
@@ -1561,44 +1561,33 @@ class AllProjectLinksNode(template.Node):
 
     def render_to_html(self,projectlink):
         """ return html representation of projectlink """
-        #html = '<div class = "projectlink"></div>'
-        
 
-        html = ""
-        try:
-        
-            
-        
-            html = """
-                   <div class = "projectlink {link_class} {year}">
-                     <div class ="top">
-                         <a href="{url}">
-                           <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
-                         </a>
-                         
-                         
-                         <div class="stats">{stats} </div>
-                     </div>                     
-                     <div class ="bottom">
-                       <div class="projectname"> {projectname} </div>
-                       <div class="description"> {description} </div>
-                     </div>
-                     <div class ="bottom linktarget" onclick="location.href='{url}'">
-                       
-                     </div>
-                   </div>
-                    """.format(link_class = self.get_link_classes(projectlink),                               
-                               year = str(projectlink.params["year"]),
-                               url=projectlink.params["URL"],
-                               thumb_image_url=self.get_thumb_url(projectlink),
-                               projectname=projectlink.params["title"],
-                               description = projectlink.params["description"],
-                               stats = self.get_stats_html(projectlink)
-                              )
-        
-        except UnicodeEncodeError as e:
-            logger.warning("Encoding error in" + projectlink.params["abreviation"])
-            
+        html = u"""
+               <div class = "projectlink {link_class} {year}">
+                 <div class ="top">
+                     <a href="{url}">
+                       <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
+                     </a>
+                     
+                     
+                     <div class="stats">{stats} </div>
+                 </div>                     
+                 <div class ="bottom">
+                   <div class="projectname"> {projectname} </div>
+                   <div class="description"> {description} </div>
+                 </div>
+                 <div class ="bottom linktarget" onclick="location.href='{url}'">
+                   
+                 </div>
+               </div>
+                """.format(link_class = self.get_link_classes(projectlink),
+                           year = str(projectlink.params["year"]),
+                           url=projectlink.params["URL"],
+                           thumb_image_url=self.get_thumb_url(projectlink),
+                           projectname=projectlink.params["title"],
+                           description = projectlink.params["description"],
+                           stats = self.get_stats_html(projectlink)
+                          )
         return html
     
     
