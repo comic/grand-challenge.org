@@ -99,6 +99,7 @@ class ProjectLink(object):
                 "title":"",
                 "description":"",
                 "URL":"",
+                "submission URL":"",
                 "event name":"",
                 "year":"",
                 "event URL":"",
@@ -114,7 +115,7 @@ class ProjectLink(object):
                 "dataset downloads":"",
                 "registered teams":"",
                 "submitted results":"",
-                "last submission date":"",                
+                "last submission date":"",
                 "hosted on comic":False,
                 "project type":""
                 }
@@ -305,7 +306,7 @@ class ComicSite(models.Model):
     
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
-    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")    
+    event_url = models.URLField(blank=True, null=True, help_text = "Website of the event which will host the workshop")
 
     CHALLENGE_ACTIVE = 'challenge_active'
     CHALLENGE_INACTIVE = 'challenge_inactive'
@@ -314,10 +315,24 @@ class ComicSite(models.Model):
     PROJECT_TYPES = ((CHALLENGE_ACTIVE, 'Active Challenge'),
                      (CHALLENGE_INACTIVE, 'Inactive Challenge'),
                      (DATA_PUB, 'Data Publication')        
-                     )        
+                     )
+    
     project_type = models.CharField(max_length=18,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
+    is_open_for_submissions = models.BooleanField(default=False, help_text = "This project currently accepts new submissions. Affects listing in projects overview")
+    submission_page_name = models.CharField(blank=True, null=True,max_length=255,default='results',help_text= "If the project allows submissions, there will be a link in projects overview going directly to you project/<submission_page_name>/. If empty, the projects main page will be used instead")
+    number_of_submissions = models.IntegerField(blank=True, null=True, help_text="The number of submissions have been evalutated for this project")
+    last_submission_date = models.DateField(null=True, blank=True, help_text = "When was the last submission evaluated?")
+    
+    offers_data_download = models.BooleanField(default=False, help_text = "This project currently accepts new submissions. Affects listing in projects overview")    
+    number_of_downloads = models.IntegerField(blank=True, null=True, help_text="How often has the dataset for this project been downloaded?")
+    
+    publication_url = models.URLField(blank=True, null=True, help_text = "URL of a publication describing this project")
+    publication_journal_name = models.CharField(max_length = 225, blank=True, null=True,
+                                                help_text = "If publication was in a journal, please list the journal name here"
+                                                            " We use <a target='new' href='https://www.ncbi.nlm.nih.gov/nlmcatalog/journals'>PubMed journal abbreviations</a> format" ) 
     require_participant_review = models.BooleanField(default=False, help_text = "If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
+     
     
     
     objects = ComicSiteManager()
@@ -393,7 +408,7 @@ class ComicSite(models.Model):
             return False
         
     def is_participant(self,user):
-        """ is user in the participants group for the comicsite to which this object belongs? superuser always passes        
+        """ is user in the participants group for the comicsite to which this object belong? superuser always passes
         
         """
         if user.is_superuser:
@@ -422,24 +437,25 @@ class ComicSite(models.Model):
                 "title":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
-                "submission URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "submission URL":self.get_submission_URL(),
                 "event name":self.event_name,
                 "year":"",
                 "event URL":self.event_url,                
                 "image URL":self.logo,
                 "thumb_image_url":thumb_image_url,
                 "website section":"active challenges",
-                "overview article url":"",
+                "overview article url":self.publication_journal_name,
+                "overview article journal":self.publication_journal_name,
                 "overview article citations":"",
                 "overview article date":"",
                 "submission deadline":"",
                 "workshop date":self.workshop_date,
-                "open for submission":"yes",
-                "data download":"yes",
-                "dataset downloads":"",
+                "open for submission":"yes" if self.is_open_for_submissions else "no",
+                "data download":"yes" if self.offers_data_download else "no",
+                "dataset downloads":self.number_of_downloads,
                 "registered teams":"",
-                "submitted results":"",
-                "last submission date":"",
+                "submitted results":self.number_of_submissions,
+                "last submission date":self.last_submission_date,
                 "hosted on comic":True,
                 "created at":self.created_at,
                 "project type":self.project_type
@@ -449,6 +465,16 @@ class ComicSite(models.Model):
         
         projectlink = ProjectLink(args)
         return projectlink
+    
+    def get_submission_URL(self):
+        
+        URL = reverse('comicsite.views.site', args=[self.short_name])
+        if self.submission_page_name:
+            page = self.submission_page_name
+            if not page.endswith("/"):
+                page += "/"
+            URL += page
+        return URL
     
     def add_participant(self,user):
         group = Group.objects.get(name=self.participants_group_name())                    
