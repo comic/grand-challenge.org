@@ -445,7 +445,7 @@ class ComicSite(models.Model):
                 "image URL":self.logo,
                 "thumb_image_url":thumb_image_url,
                 "website section":"active challenges",
-                "overview article url":self.publication_journal_name,
+                "overview article url":self.publication_url,
                 "overview article journal":self.publication_journal_name,
                 "overview article citations":"",
                 "overview article date":"",
