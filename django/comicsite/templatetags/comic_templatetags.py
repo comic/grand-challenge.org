@@ -1634,7 +1634,8 @@ class AllProjectLinksNode(template.Node):
         #stats.append("" + projectlink.get_short_project_type())
         
         if projectlink.params["open for submission"] == "yes":
-            open_for_submissions_HTML = self.make_link(projectlink.params["URL"],
+            
+            open_for_submissions_HTML = self.make_link(self.get_submission_link(projectlink),
                                                        "Open for submissions",
                                                        "submissionlink")
             stats.append(open_for_submissions_HTML)            
@@ -1651,15 +1652,16 @@ class AllProjectLinksNode(template.Node):
         
         #if projectlink.params["dataset downloads"]:            
         #    stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
-                    
+                 
         if projectlink.params["submitted results"]:
-            stats.append("submissions: " + str(projectlink.params["submitted results"]))        
+            submissionstring = ("submissions: " + str(projectlink.params["submitted results"]))
+            if projectlink.params["last submission date"]:
+                submissionstring += ", last: " + self.format_date(projectlink.params["last submission date"])
+            stats.append(submissionstring)
         
-        if projectlink.params["workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():            
+        if projectlink.params["workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():
             stats.append("workshop: " + self.format_date(projectlink.params["workshop date"]))
         
-        if projectlink.params["last submission date"]:
-            stats.append("last subm.: " + self.format_date(projectlink.params["last submission date"]))
         
         if projectlink.params["event name"]:
             stats.append("Associated with: " + self.make_event_link(projectlink))
@@ -1680,6 +1682,11 @@ class AllProjectLinksNode(template.Node):
                
         return stats_html
         
+    def get_submission_link(self,projectlink):
+        if projectlink.params["submission URL"]:
+            return projectlink.params["submission URL"]
+        else:
+            return projectlink.params["URL"]
     
     def make_article_link(self,projectlink):
         return self.make_link(projectlink.params["overview article url"],
