@@ -26,7 +26,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from django import template
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 from django.core.urlresolvers import NoReverseMatch
 from django.contrib.auth.models import Group, User, Permission
@@ -40,6 +39,7 @@ from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder,Reg
 from comicmodels.models import ComicSite, Page
 import comicsite.views
 from comicsite.utils.html import escape_for_html_id
+from comicsite.core.urlresolvers import reverse
 from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
@@ -96,7 +96,6 @@ def get_taglist(parser, token):
 
 #=========#=========#=========#=========#=========#=========#=========#=========#=========
 
-
 def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
 
@@ -112,7 +111,6 @@ def subdomain_is_projectname():
         subdomain_is_projectname = False
 
     return subdomain_is_projectname
-
 
 
 @register.tag
