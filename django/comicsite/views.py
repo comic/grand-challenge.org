@@ -28,8 +28,10 @@ from userena import views as userena_views
 
 from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest
 from comicsite.admin import ComicSiteAdmin
+from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
 from comicsite.models import ComicSiteException
+
 
 from filetransfers.api import serve_file
 from filetransfers.views import download_handler_file
@@ -557,8 +559,8 @@ def comic_site_to_grand_challenge_html(comic_site,link=""):
 def comic_site_to_html(comic_site,link=""):
      """ Return an html overview of the given ComicSite """
      
-     if link == "":
-         link = reverse('comicsite.views.site', args=[comic_site.short_name])
+     
+     link = reverse('comicsite.views.site', args=[comic_site.short_name])         
      
      html = create_HTML_a(link,comic_site.short_name)     
      if comic_site.description !="":

@@ -13,7 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.core.urlresolvers import reverse
+#from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
@@ -27,6 +27,7 @@ from guardian.shortcuts import assign,remove_perm
 
 from dataproviders import FileSystemDataProvider,DropboxDataProvider
 from comicmodels.template.decorators import track_data
+from comicsite.core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
 
@@ -320,7 +321,7 @@ class ComicSite(models.Model):
     project_type = models.CharField(max_length=18,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
     is_open_for_submissions = models.BooleanField(default=False, help_text = "This project currently accepts new submissions. Affects listing in projects overview")
-    submission_page_name = models.CharField(blank=True, null=True,max_length=255,default='results',help_text= "If the project allows submissions, there will be a link in projects overview going directly to you project/<submission_page_name>/. If empty, the projects main page will be used instead")
+    submission_page_name = models.CharField(blank=True, null=True,max_length=255,help_text= "If the project allows submissions, there will be a link in projects overview going directly to you project/<submission_page_name>/. If empty, the projects main page will be used instead")
     number_of_submissions = models.IntegerField(blank=True, null=True, help_text="The number of submissions have been evalutated for this project")
     last_submission_date = models.DateField(null=True, blank=True, help_text = "When was the last submission evaluated?")
     
