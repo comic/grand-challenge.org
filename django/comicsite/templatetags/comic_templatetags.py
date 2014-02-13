@@ -1729,7 +1729,7 @@ class AllProjectLinksNode(template.Node):
         a string which can also be an id or class in HTML 
         """
                 
-        if "grand-challenge.org" in projectlink.params["URL"] or projectlink.params["hosted on comic"]:
+        if projectlink.params["hosted on comic"]:
             return "grand-challenge"
             
         if "codalab.org" in projectlink.params["URL"]:
