@@ -185,7 +185,7 @@ body.MLAB-GUI-HiddenDOMElement { visibility:visible;}
 .projectlink .stats {float:left; margin-left: 3px;line-height: 16px;}
 .projectlink .stats div {float:left; clear:both; width: 210px;}
 .projectlink img {float:left;}
-.projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute;}
+.projectlink .top{background-color:#bfd0de; top:0; left:0; position:absolute; height: 100px; overflow:hidden;}
 .projectlink .bottom{top:100px; left:0; position:absolute; padding-left:3px; overflow: hidden; height:155px;width:307px;}
 .projectlink .bottom.linktarget:hover {background-color: rgba(140, 158, 172, 0.3); cursor:pointer ;padding-right: 3px;}
 
@@ -205,9 +205,6 @@ a.eventlink:visited, a.eventlink:link {text-decoration:none;}
 #projectlinks .thumbcontainer {width:100px; height:100px; background-color: #CCCCCC;}
 #projectlinkscontainer {width: 100%;}
 
-
-
-
 div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;padding-left: 10px;
 }}
 
@@ -215,7 +212,6 @@ div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;padding-left: 10
 svg {margin-bottom:10px;}
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
-
 
 /**/
 html
