@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'ComicSite.submission_page_name'
         db.add_column(u'comicmodels_comicsite', 'submission_page_name',
-                      self.gf('django.db.models.fields.CharField')(default='results', max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'ComicSite.number_of_submissions'
