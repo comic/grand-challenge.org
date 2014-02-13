@@ -1604,7 +1604,7 @@ class AllProjectLinksNode(template.Node):
         if projectlink.params["open for submission"] == 'yes':
             classes.append("open")
         
-        if projectlink.params["data download"]:
+        if projectlink.params["data download"] == 'yes':
             classes.append("datadownload")
         
         classes.append(self.get_host_id(projectlink))
