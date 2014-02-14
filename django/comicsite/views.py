@@ -22,7 +22,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse,Http404,HttpResponseForbidden
 from django.shortcuts import render_to_response,get_object_or_404
 from django.template import RequestContext,Context,Template,TemplateSyntaxError
-
+from django.template.defaulttags import VerbatimNode
 
 from userena import views as userena_views
 
@@ -176,13 +176,14 @@ def renderTags(request, p, recursecount=0):
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
     else:
-                
-        #pass page to context here to be able to render tags based on which page does the rendering
+
+        t = escape_verbatim_node_contents(t)
         
-        pagecontents = t.render(ComicSiteRequestContext(request,p))            
-                
+        #pass page to context here to be able to render tags based on which page does the rendering
+        pagecontents = t.render(ComicSiteRequestContext(request,p))
+        
         if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
-            if recursecount < recurselimit :                
+            if recursecount < recurselimit :
                 p2 = copy_page(p) 
                 p2.html = pagecontents
                 return renderTags(request,p2,recursecount+1)
@@ -190,10 +191,26 @@ def renderTags(request, p, recursecount=0):
                 # when page contents cannot be rendered, just display raw contents and include error message on page
                 errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(recurselimit) + " </span>"
                 pagecontents = p.html + errormsg
-         
-        
+
     return pagecontents
 
+
+def escape_verbatim_node_contents(template):
+    """ Page contents are possibly doing multiple passes through rendering. This
+    means the {% verbatim %} tag will usually now work as expected because its 
+    contents are rendered verbatim and then rendered again, actually evaluating
+    whatever the verbatim content should be. This method puts additional 
+    {% verbatim %} tags around any {% verbatim %} node found. 
+    
+    This crude method is a lot easier than defining a custom render()
+    method  
+    """
+    
+    for node in template.nodelist:
+        if type(node) == VerbatimNode:
+            node.content = node.content.replace("%","&#37")
+    
+    return template
 
 
 def permissionMessage(request, site, p):
