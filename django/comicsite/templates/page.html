@@ -9,9 +9,8 @@
 	{% if site.disclaimer %}
 		<div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
 		
-		<p>{% autoescape off %}{{site.disclaimer}}{% endautoescape %}</p> 
-		</div>
-		
+	   <p>{% autoescape off %}{{site.disclaimer}}{% endautoescape %}</p> 
+	   </div>		
 	{% endif %}
 	<div id=pageContainer>{{currentpage.rawHTML}}</div>
 		
