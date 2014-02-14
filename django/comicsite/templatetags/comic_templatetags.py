@@ -28,6 +28,7 @@ from django import template
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
 from django.core.urlresolvers import NoReverseMatch
+from django.core.urlresolvers import reverse as reverse_djangocore
 from django.contrib.auth.models import Group, User, Permission
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
@@ -161,9 +162,7 @@ class comic_URLNode(defaulttags.URLNode):
         #get the url the default django method would give.
         url = super(comic_URLNode, self).render(context)
 
-
         url = url.lower()
-
         if subdomain_is_projectname:
             if hasattr(context['request'],"subdomain"):
                 subdomain = context['request'].subdomain
@@ -177,8 +176,10 @@ class comic_URLNode(defaulttags.URLNode):
                 # Interpret subdomain as a comicsite. What would normally be the
                 # path to this comicsite?
 
-
-                path_to_site = reverse("comicsite.views.site",args=[subdomain]).lower()
+                # TODO: importing reverse function from two location is stinky 
+                # refactor comicsite reverse so it can handle pages as well and
+                # reverse the whole thing at once.
+                path_to_site = reverse_djangocore("comicsite.views.site",args=[subdomain]).lower()
 
                 if url.startswith(path_to_site):
                     return url.replace(path_to_site,"/")
