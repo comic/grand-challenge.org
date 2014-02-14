@@ -1632,18 +1632,11 @@ class AllProjectLinksNode(template.Node):
                                                        "Data download",
                                                        "datadownloadlink")
             stats.append(data_download_HTML)            
-        
-        
-        #if projectlink.params["registered teams"]:
-        #    stats.append("registered: " + str(projectlink.params["registered teams"]))        
-        
-        #if projectlink.params["dataset downloads"]:            
-        #    stats.append("downloads: " + str(projectlink.params["dataset downloads"]))
                  
         if projectlink.params["submitted results"]:
-            submissionstring = ("submissions: " + str(projectlink.params["submitted results"]))
+            submissionstring = ("results: " + str(projectlink.params["submitted results"]))
             if projectlink.params["last submission date"]:
-                submissionstring += ", last: " + self.format_date(projectlink.params["last submission date"])
+                submissionstring += ", Latest: " + self.format_date(projectlink.params["last submission date"])
             stats.append(submissionstring)
         
         if projectlink.params["workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():
