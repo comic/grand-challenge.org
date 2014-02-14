@@ -110,10 +110,8 @@ li.menuBullet{ padding:0px;	margin:0px; }
 
 /* main page, base.html */
 #topheader{border-bottom: 1px solid #CCCCCC; margin-bottom: 7px; padding-bottom: 3px; font-size: 14px;}
-  
-#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #6B6B6B;
+#topheader a, #topheader a:active, #topheader a:link, #topheader a:visited {border-right: 1px solid #D3D3D3;color: #252525;
                                                                             padding-right: 13px;text-decoration: none;}
-
 #topheader a:hover{color:#333333;}
 #topheader a.last{border-right:none;}
 #topheader_right {float:right;}
