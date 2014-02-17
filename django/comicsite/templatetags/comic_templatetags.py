@@ -1564,6 +1564,7 @@ class AllProjectLinksNode(template.Node):
         """ return html representation of projectlink """
 
         html = u"""
+               <a id="{abreviation}">
                <div class = "projectlink {link_class} {year}">
                  <div class ="top">
                      <a href="{url}">
@@ -1583,6 +1584,7 @@ class AllProjectLinksNode(template.Node):
                </div>
                 """.format(link_class = self.get_link_classes(projectlink),
                            year = str(projectlink.params["year"]),
+                           abreviation = projectlink.params["abreviation"],
                            url=projectlink.params["URL"],
                            thumb_image_url=self.get_thumb_url(projectlink),
                            projectname=projectlink.params["title"],
