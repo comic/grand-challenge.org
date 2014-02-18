@@ -270,7 +270,7 @@ class ProjectLink(object):
 def validate_nounderscores(value):
     if "_" in value:
         raise ValidationError(u"underscores not allowed. The url \
-            '{0}.comicframework.org' would not be valid, please use hyphens (-).".format(value))
+            '{0}.{1}' would not be valid, please use hyphens (-).".format(value,settings.MAIN_PROJECT_NAME))
 
 class ComicSite(models.Model):
     """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
@@ -297,7 +297,7 @@ class ComicSite(models.Model):
                             "Relative to project datafolder. Suggested default:"+public_folder+"/header.png")
         
     
-    hidden = models.BooleanField(default=False, help_text = "Do not display this Project in any public overview")
+    hidden = models.BooleanField(default=True, help_text = "Do not display this Project in any public overview")
     hide_signin = models.BooleanField(default=False, help_text = "Do no show the Sign in / Register link on any page")
     hide_footer = models.BooleanField(default=False, help_text = "Do not show the general links or the grey divider line in page footers")
     
@@ -312,13 +312,6 @@ class ComicSite(models.Model):
     CHALLENGE_ACTIVE = 'challenge_active'
     CHALLENGE_INACTIVE = 'challenge_inactive'
     DATA_PUB = 'data_pub'
-    
-    PROJECT_TYPES = ((CHALLENGE_ACTIVE, 'Active Challenge'),
-                     (CHALLENGE_INACTIVE, 'Inactive Challenge'),
-                     (DATA_PUB, 'Data Publication')        
-                     )
-    
-    project_type = models.CharField(max_length=18,choices=PROJECT_TYPES,default=CHALLENGE_ACTIVE,help_text= "Is this project a challenge where participants can upload data, or a project which just publishes data? This setting affects listing in project overview") 
     
     is_open_for_submissions = models.BooleanField(default=False, help_text = "This project currently accepts new submissions. Affects listing in projects overview")
     submission_page_name = models.CharField(blank=True, null=True,max_length=255,help_text= "If the project allows submissions, there will be a link in projects overview going directly to you project/<submission_page_name>/. If empty, the projects main page will be used instead")

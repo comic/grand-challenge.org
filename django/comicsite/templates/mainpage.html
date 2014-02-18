@@ -10,15 +10,13 @@
     {%if site.header_image == "" %} 
         <div class="noimage">
             <a href="/">{{site.short_name}}</a>
-        </div>          
+        </div>
     {% else %}
         <div class="image">
             <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/img></a>
         </div>  
     {% endif %}
-
 {% endblock %}
-
 
 
 {% block topmenu %}
@@ -32,14 +30,10 @@
 	    <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>	   
        
 	{% endif %}
-	
-	
 {% endblock %}
 
 	
 {% block content %}
-	
-
 	{% block pagecontent %}		
 	
 	{% if site.disclaimer %}
