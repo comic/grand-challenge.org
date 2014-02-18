@@ -6,6 +6,20 @@
 
 {% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
+{% block headerTitle %}
+    {%if site.header_image == "" %} 
+        <div class="noimage">
+            <a href="/">{{site.short_name}}</a>
+        </div>          
+    {% else %}
+        <div class="image">
+            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/img></a>
+        </div>  
+    {% endif %}
+
+{% endblock %}
+
+
 
 {% block topmenu %}
 {% endblock %}
