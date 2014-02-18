@@ -10,19 +10,6 @@
 {% block topmenu %}
 {% endblock %}
 
-{% block loginbutton %}
-{% if site.hide_signin %}
-					
-	{% else %}
-		{% if user.is_authenticated %}                  			                        	                          
-            <a class="metaFooterItem" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}">Signout</a>
-        {% else %}	                                                    	
-        	<a class="metaFootuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% firstof request.path "/" %}">Sign in / Register</a>
-        {% endif %}		
-			
-	{% endif %}	
-{% endblock %}
-
 {% block adminbutton %}
 
 	{% get_obj_perms user for site as "site_perms" %}	
