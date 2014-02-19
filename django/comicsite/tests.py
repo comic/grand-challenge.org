@@ -359,7 +359,6 @@ class ComicframeworkTestCase(TestCase):
             "skin":"fake_test_dir/fakecss.css",
             "logo":"fakelogo.jpg",
             "header_image":header_image,
-            "project_type":ComicSite.CHALLENGE_ACTIVE,
             "prefix":"form",
             "page_set-TOTAL_FORMS":u"0",
             "page_set-INITIAL_FORMS":u"0", 

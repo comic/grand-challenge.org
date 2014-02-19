@@ -1621,8 +1621,6 @@ class AllProjectLinksNode(template.Node):
         
         stats = []
         
-        #stats.append("" + projectlink.get_short_project_type())
-        
         if projectlink.params["open for submission"] == "yes":
             
             open_for_submissions_HTML = self.make_link(self.get_submission_link(projectlink),

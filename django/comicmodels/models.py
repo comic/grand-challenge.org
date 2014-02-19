@@ -227,24 +227,6 @@ class ProjectLink(object):
 
         return linkclass
      
-    def get_short_project_type(self):
-        """ Get a single word describing this project link, for use in terse
-        overviews
-        
-        """
-        linkclass = self.find_link_class()
-        type = ""
-        if self.UPCOMING in linkclass:
-            type = "Upcoming"
-        elif ComicSite.CHALLENGE_ACTIVE in linkclass:
-            type = "Active"
-        elif ComicSite.CHALLENGE_INACTIVE in linkclass:
-            type = "Inactive"
-        elif ComicSite.DATA_PUB in linkclass:
-            type = "Data publication"
-        
-        return type
-     
     def to_datetime(self,date):
         """ add midnight to a date to make it a datetime because I cannot
         ompare these two types directly. Also add offset awareness to easily
@@ -451,8 +433,7 @@ class ComicSite(models.Model):
                 "submitted results":self.number_of_submissions,
                 "last submission date":self.last_submission_date,
                 "hosted on comic":True,
-                "created at":self.created_at,
-                "project type":self.project_type
+                "created at":self.created_at                
                 }
         
          
