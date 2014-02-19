@@ -8,7 +8,7 @@
         <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
         <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
             
-                    
+        <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
         <script type="text/javascript" src="{% get_static_prefix %}js/jquery/jquery-1.9.1.min.js"></script>        
         <script type="text/javascript" src="{% get_static_prefix %}js/jqueryui/js/jquery-ui-1.10.1.custom.min.js"></script>
         <script type="text/javascript" src="{% get_static_prefix %}js/MeVisLab/Private/Sources/Web/application/js/gui/Application.js"></script>
@@ -27,7 +27,6 @@
         <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
     
         <script>
-        
         $(document).ready(function() {
             
             // delete message on click
@@ -48,8 +47,6 @@
                             "bInfo": false,
                             "bAutoWidth": false
                        });
-            
-           
         });
         </script>
         
