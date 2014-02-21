@@ -13,6 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
+from django.core.validators import validate_slug
 #from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -262,7 +263,7 @@ class ComicSite(models.Model):
     short_name = models.SlugField(max_length = 50, default="", 
                                   help_text = "short name used in url, specific"
                                   " css, files etc. No spaces allowed",
-                                  validators=[validate_nounderscores])
+                                  validators=[validate_nounderscores,validate_slug])
     skin = models.CharField(max_length = 225, default= public_folder+"/project.css", 
                             help_text = "css file to include throughout this"
                             " project. relative to project data folder")    
