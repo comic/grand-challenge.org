@@ -4,6 +4,7 @@ Created on Jun 18, 2012
 @author: Sjoerd
 '''
 import pdb
+import logging
 from django.contrib import admin
 from django import forms
 from django.conf.urls.defaults import patterns, url
@@ -50,6 +51,8 @@ from django.views.decorators.csrf import csrf_protect
 from functools import update_wrapper
 from django.core.urlresolvers import reverse, NoReverseMatch
 
+
+logger = logging.getLogger("django")
 
 
 class ProjectAdminSite(AdminSite):
@@ -531,9 +534,16 @@ class ComicSiteAdmin(admin.ModelAdmin):
     
     def link(self,obj):
         """ link to current project, so you can easily view project """
-        link_url = reverse('comicsite.views.site', args=[obj.short_name])
-        link_text = "view "+obj.short_name
-        link_html = "<a href=\"" + link_url + "\">" +  link_text + "</a>"
+        try:
+            link_url = reverse('comicsite.views.site', args=[obj.short_name])
+            link_text = "view "+obj.short_name
+            link_html = "<a href=\"" + link_url + "\">" +  link_text + "</a>"
+            
+        except NoReverseMatch as e:
+            #
+            logger.error(e)
+            return ""
+        
         return link_html
     link.allow_tags = True
         
