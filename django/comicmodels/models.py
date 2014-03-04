@@ -441,13 +441,17 @@ class ComicSite(models.Model):
         return projectlink
     
     def get_submission_URL(self):
-        
-        URL = reverse('comicsite.views.site', args=[self.short_name])
+        """ What url can you go to to submit for this project? """
+        URL = reverse('comicsite.views.site', args=[self.short_name])        
         if self.submission_page_name:
-            page = self.submission_page_name
-            if not page.endswith("/"):
-                page += "/"
-            URL += page
+            if self.submission_page_name.startswith("http://") or self.submission_page_name.startswith("https://"):
+                # the url in the submission page box is a full url                 
+                return self.submission_page_name
+            else:
+                page = self.submission_page_name
+                if not page.endswith("/"):
+                    page += "/"
+                URL += page
         return URL
     
     def add_participant(self,user):
