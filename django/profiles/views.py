@@ -16,7 +16,7 @@ def profile(request):
     Redirect to the profile page of the currently signed in user.
     """
     if request.user.is_authenticated():
-        print "username: ", request.user.username
+        print "username:", request.user.username
         print "redirect to profile"
         return redirect('/accounts/'+request.user.username)
     else:
