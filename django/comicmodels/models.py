@@ -187,7 +187,7 @@ class ProjectLink(object):
             except ValueError:
                 logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
                 date = timezone.make_aware(datetime.datetime(2013,01,01),
-                                           timezone.get_default_timezone())                
+                                           timezone.get_default_timezone())
         
         return date
     
@@ -243,7 +243,7 @@ class ProjectLink(object):
     
     def get_thumb_image_url(self):
         if self.is_hosted_on_comic():
-            thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+            thumb_image_url = ""
         else:
             thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
         
@@ -436,8 +436,6 @@ class ComicSite(models.Model):
                 "hosted on comic":True,
                 "created at":self.created_at                
                 }
-        
-         
         
         projectlink = ProjectLink(args)
         return projectlink

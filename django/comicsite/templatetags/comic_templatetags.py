@@ -1522,7 +1522,7 @@ class AllProjectLinksNode(template.Node):
             yearheader = "<div class ='yearHeader' id ='{0}'><a class ='yearHeaderAnchor'>{0}</a></div>".format(year[0])
             #html += yearheader
             #html += "\n".join([link.render_to_html() for link in year[1]])
-            projectlinks = "\n".join([self.render_to_html(link) for link in year[1]]) 
+            projectlinks = "\n".join([self.render_to_html(link) for link in year[1]])
             html += u"<div class=projectlinksyearcontainer \
                     style='background-color:{0}'>{1}{2} <div style='clear:both;'>\
                     </div></div>".format("none",
@@ -1737,11 +1737,14 @@ class AllProjectLinksNode(template.Node):
             project overviews 
             
         """
-        if projectlink.is_hosted_on_comic():
-            #thumb_image_url = "https://i.duckduckgo.com/i/764237a0.jpg"
+        if projectlink.is_hosted_on_comic():            
             thumb_image_url = projectlink.params["thumb_image_url"]
         else:
-            thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
+            thumb_image_url = reverse('project_serve_file',
+                                      args=[settings.MAIN_PROJECT_NAME,
+                                            "public_html/images/all_challenges/{0}.png".format(projectlink.params["abreviation"])])
+            
+            #thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
             
         return thumb_image_url
 
