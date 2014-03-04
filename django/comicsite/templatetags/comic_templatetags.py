@@ -1763,11 +1763,12 @@ class AllProjectLinksNode(template.Node):
 
     
     def read_grand_challenge_projectlinks(self):
-        filename = "challengestats.xls"
-        project_name = settings.MAIN_PROJECT_NAME
-        filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+        filepath = os.path.join(settings.DROPBOX_ROOT,
+                                settings.MAIN_PROJECT_NAME,
+                                settings.EXTERNAL_PROJECTS_FILE)        
         reader = ProjectExcelReader(filepath,'Challenges')
         
+        #pdb.set_trace()
         logger.info("Reading projects excel from '%s'" %(filepath))        
         try:
             projectlinks = reader.get_project_links()
