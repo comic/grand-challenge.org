@@ -1629,10 +1629,15 @@ class AllProjectLinksNode(template.Node):
             stats.append(open_for_submissions_HTML)            
         
         if projectlink.params["data download"] == "yes":
-            data_download_HTML = self.make_link(projectlink.params["URL"],
-                                                       "Data download",
-                                                       "datadownloadlink")
-            stats.append(data_download_HTML)            
+            if projectlink.params["download URL"]:
+                data_download_link = projectlink.params["download URL"]
+            else:
+                data_download_link = projectlink.params["URL"]
+                
+            data_download_HTML = self.make_link(data_download_link,
+                                                "Data download",
+                                                "datadownloadlink")
+            stats.append(data_download_HTML)
                  
         if projectlink.params["submitted results"]:
             submissionstring = ("results: " + str(projectlink.params["submitted results"]))
