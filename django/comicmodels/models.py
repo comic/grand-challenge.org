@@ -414,6 +414,7 @@ class ComicSite(models.Model):
                 "title":self.short_name,
                 "description":self.description,
                 "URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "download URL":"",
                 "submission URL":self.get_submission_URL(),
                 "event name":self.event_name,
                 "year":"",
@@ -453,7 +454,7 @@ class ComicSite(models.Model):
                     page += "/"
                 URL += page
         return URL
-    
+        
     def add_participant(self,user):
         group = Group.objects.get(name=self.participants_group_name())                    
         user.groups.add(group)
