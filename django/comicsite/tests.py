@@ -110,7 +110,7 @@ class ComicframeworkTestCase(TestCase):
         """ Everything in the framework assumes that there is one main project which
         is always shown in a bar at the very top of the page. Make sure this exists
          
-        Do not create this project through admin because admin will throw an error 
+        Do not create this project through admin because admin will throw an error
         at this point because MAIN_PROJECT can not be found. 
         """        
         if len(ComicSite.objects.filter(short_name=settings.MAIN_PROJECT_NAME)) == 0:

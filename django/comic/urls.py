@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'^projectlinks/$','comicsite.views.projectlinks'),
 
     url(r'^filetransfers/',include('filetransfers.urls')),
-    
+        
     # Used for logging in and managing profiles. This is done on the framework
     # level because it is too hard to get this all under each project 
     url(r'^accounts/',include('profiles.urls')),
@@ -38,16 +38,22 @@ urlpatterns = patterns('',
     #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
     url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
     
-    # when all other urls have been checked, try to load page from main project
-    # keep this url at the bottom of this list, because urls are checked in order 
-    url(r'^(?P<page_title>[\w-]+)/$','comicsite.views.comicmain'),
+    # Submit a project for addition to the projects overview
+    url(r'^add_project_link/$','comicsite.views.add_project_link'),
+    
     
     # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
     url(r'^django_dropbox/',include('django_dropbox.urls')),
     
     # WYSIWYG editor for HTML
     (r'^ckeditor/', include('ckeditor.urls')),
-            
+    
+    # ========== catch all ====================
+    # when all other urls have been checked, try to load page from main project
+    # keep this url at the bottom of this list, because urls are checked in order 
+    url(r'^(?P<page_title>[\w-]+)/$','comicsite.views.comicmain'),
+    
+    
     
 )
 

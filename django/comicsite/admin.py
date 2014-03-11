@@ -769,7 +769,6 @@ class PageAdminForm():
                          ('LAST', 'Last'),
                         )
         
-
 admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)
 

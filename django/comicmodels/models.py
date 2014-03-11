@@ -87,7 +87,8 @@ class ComicSiteManager(models.Manager):
     def get_query_set(self):
         
         return super(ComicSiteManager, self).get_query_set()
-    
+
+
 class ProjectLink(object):
     """ Metadata about a single project: url, event etc. Used as the shared class
     for both external challenges and projects hosted on comic so they can be 
@@ -125,9 +126,7 @@ class ProjectLink(object):
     
     # css selector used to designate a project as still open 
     UPCOMING = "challenge_upcoming"
-    
-    
-    
+
     def __init__(self,params,date=""):
         
         self.params = copy.deepcopy(self.defaults)                        
@@ -236,7 +235,6 @@ class ProjectLink(object):
         
         dt = datetime.datetime(date.year,date.month,date.day)
         return timezone.make_aware(dt, timezone.get_default_timezone())
-        
         
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]    
@@ -581,6 +579,65 @@ class ComicSiteModel(models.Model):
     class Meta:
        abstract = True
        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
+
+class ProjectMetaData(models.Model):
+    """ Things like event this project is associated to, whether there is an overview article, etcetera.
+    Currently this info also part of the ComicSite model, and can be read from xls. However we need a form
+    so people can add their own links on the site.
+    
+    The Projectlink class itself acts as a base class for information from ComicSites, xls file.
+    it uses a dict to hold all variables so cannot be used in django admin directly.
+    """
+    
+    contact_name = models.CharField(max_length = 255, default="",help_text = "Who is the main contact person for this project?")
+    contact_email = models.EmailField(help_text = "")
+        
+    title = models.CharField(max_length = 255, default="", help_text = "Will be printed in bold on the projects overview")
+    description = models.CharField(max_length = 350, default="", blank=True, help_text = "Will be used in projects overview")
+    URL = models.URLField(blank=False, null=False, help_text = "URL of the main page of your project")
+    
+    
+    event_name = models.CharField(max_length = 255, default="", blank=True, help_text = "Name of the event this project is associated to, if any")
+    event_URL = models.URLField(blank=True, null=True, help_text = "Url of the event ths project is associated to, if any")
+    
+    submission_deadline = models.DateField(blank=True,help_text = "Deadline for submitting results to your project")
+    workshop_date = models.DateField(blank=True,)
+    
+    open_for_submissions = models.BooleanField(default=False, help_text = "Does your project accept submissions?")
+    submission_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to submit results")
+    
+    offers_data_download = models.BooleanField(default=False, help_text = "Can data be downloaded from you project website?")
+    download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL of the data download page of your project")
+    
+    """
+    "abreviation":self.short_name,
+                "title":self.short_name,
+                "description":self.description,
+                "URL":reverse('comicsite.views.site', args=[self.short_name]),
+                "download URL":"",
+                "submission URL":self.get_submission_URL(),
+                "event name":self.event_name,
+                "year":"",
+                "event URL":self.event_url,
+                "image URL":self.logo,
+                "thumb_image_url":thumb_image_url,
+                "website section":"active challenges",
+                "overview article url":self.publication_url,
+                "overview article journal":self.publication_journal_name,
+                "overview article citations":"",
+                "overview article date":"",
+                "submission deadline":"",
+                "workshop date":self.workshop_date,
+                "open for submission":"yes" if self.is_open_for_submissions else "no",
+                "data download":"yes" if self.offers_data_download else "no",
+                "dataset downloads":self.number_of_downloads,
+                "registered teams":"",
+                "submitted results":self.number_of_submissions,
+                "last submission date":self.last_submission_date,
+                "hosted on comic":True,
+                "created at":self.created_at
+    """
+    
 
 
 class Page(ComicSiteModel):
@@ -1018,10 +1075,4 @@ class RegistrationRequest(models.Model):
     def user_affiliation(self):
         profile = self.user.user_profile 
         return profile.institution + " - " + profile.department
-    
-    
-    
-    
-        
-    
     
