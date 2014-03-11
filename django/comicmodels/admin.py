@@ -15,7 +15,7 @@ from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
-from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest
+from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest,ProjectMetaData
 from comicsite.models import ComicSiteException,send_participation_request_rejected_email,send_participation_request_accepted_email
 
 
@@ -353,7 +353,8 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
             self.process_status_change(request,obj)
     
 
-admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
-admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
-admin.site.register(UploadModel,UploadModelAdmin)
-admin.site.register(DropboxFolder,DropboxFolderAdmin)
+#admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
+#admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
+#admin.site.register(UploadModel,UploadModelAdmin)
+#admin.site.register(DropboxFolder,DropboxFolderAdmin)
+admin.site.register(ProjectMetaData)

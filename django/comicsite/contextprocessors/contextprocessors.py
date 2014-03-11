@@ -19,7 +19,7 @@ def comic_site(request):
     
     try:
         resolution = resolve(request.path)
-    except Http404:
+    except Http404 as e:
         #fail silently beacuse any exeception here will cause a 500 server error
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")

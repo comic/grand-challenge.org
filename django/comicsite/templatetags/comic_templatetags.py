@@ -163,6 +163,7 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
 
         url = url.lower()
+        
         if subdomain_is_projectname:
             if hasattr(context['request'],"subdomain"):
                 subdomain = context['request'].subdomain
@@ -247,6 +248,7 @@ def metafooterpages():
             html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
             html_string += p.display_title == "" and p.title or p.display_title
             html_string += "</a>"
+    
     return html_string
 
 

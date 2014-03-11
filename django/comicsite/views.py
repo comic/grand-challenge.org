@@ -12,6 +12,7 @@ import logging
 
 from itertools import chain
 from os import path
+from django import forms
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
@@ -26,7 +27,7 @@ from django.template.defaulttags import VerbatimNode
 
 from userena import views as userena_views
 
-from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest
+from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest,ProjectMetaData
 from comicsite.admin import ComicSiteAdmin
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
@@ -53,7 +54,7 @@ def _register(request, site_short_name):
         if site.require_participant_review:
             currentpage = _register_after_approval(request, site)
         else:
-            currentpage = _register_directly(request, site)            
+            currentpage = _register_directly(request, site)
         
     else:
         html = "you need to be logged in to use this url"
@@ -496,7 +497,7 @@ def comicmain(request, page_title=""):
     # to display pages from main project at the very bottom of the site as
     # general links
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
-    
+        
     return render_to_response('mainpage.html',
                               {'site': p.comicsite,
                                'currentpage': p,
@@ -669,8 +670,47 @@ def signup_complete(request, site_short_name,):
     
     return response
 
-
+class ProjectMetadataForm(forms.ModelForm):
+    """ For (anonymous) users to submit projects to list in the overview"""
+    required_css_class = 'required' 
     
+    class Meta:
+        model = ProjectMetaData
+
+
+def add_project_link(request):
+    """ Register the current user for given comicsite """
+    
+    [site, pages, metafooterpages] = site_get_standard_vars(settings.MAIN_PROJECT_NAME)
+    
+    if request.method == 'POST': # If the form has been submitted...
+        # ContactForm was defined in the the previous section
+        form = ProjectMetadataForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+            # Process the data in form.cleaned_data
+            print "DONE"
+            
+            return render_to_response('add_project_link.html', 
+                              {'site': site,
+                               'currentpage': Page(comicsite=site, title="Project_link_submitted", display_title="Project link submitted", html="Thank you. An email has been sent to the administrators. You will be notified when your project has been added to the overview."),
+                               "pages":pages,
+                               "metafooterpages":metafooterpages,
+                               "form":form},
+                              context_instance=RequestContext(request))
+    else:
+    
+        form = ProjectMetadataForm() 
+        
+    return render_to_response('add_project_link.html', 
+                              {'site': site,
+                               'currentpage': Page(comicsite=site, title="Add_project_link", display_title="Add project link", html=""),
+                               "pages":pages,
+                               "metafooterpages":metafooterpages,
+                               "form":form},
+                              context_instance=RequestContext(request))
+
+
+
 # ======================================================  debug and test ==================================================
 
  
