@@ -1,4 +1,5 @@
 import pdb
+import logging
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
