@@ -13,7 +13,7 @@ from django.contrib.sites.models import get_current_site
 from django.utils.html import strip_tags
 from userena.signals import signup_complete
 from comicmodels.signals import new_admin,file_uploaded
-
+from comicmodels.models import ComicSite
 
 
 class ComicSiteException(Exception):
@@ -90,7 +90,29 @@ signup_complete.connect(set_project_admin_permissions,dispatch_uid="set_project_
 
 # ======================================= sending notification emails ====================
 
- 
+
+def send_existing_project_link_submission_notification_email(request,obj):
+    """ When someone has completed the form to submit a new existing challenge 
+    site for the overview, let this know to all admins of the main project    
+    params:
+    obj:         a ProjectMetaData object, which is the database object which 
+                 has just been created by submitting the form 
+                     
+    """        
+    
+    title = 'Existing project form submitted:"{0}"'.format(obj.title)
+    mainproject = ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
+    
+    
+    kwargs={'obj':obj,
+            'site':get_current_site(request),
+            'mainproject':mainproject}
+    for admin in mainproject.get_admins():
+        kwargs["admin"] = admin
+        send_templated_email(title, "admin/emails/existing_project_link_submission_notification_email.txt",kwargs,[admin.email]
+                        ,"noreply@"+get_current_site(request).domain, fail_silently=False)
+        
+    #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
 
 def send_participation_request_notification_email(request,obj):
     """ When a user requests to become a participant, let this know to all admins            

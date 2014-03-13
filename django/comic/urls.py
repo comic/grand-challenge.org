@@ -39,8 +39,7 @@ urlpatterns = patterns('',
     url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
     
     # Submit a project for addition to the projects overview
-    url(r'^add_project_link/$','comicsite.views.add_project_link'),
-    
+    url(r'^submit_existing_project/$','comicsite.views.submit_existing_project'),
     
     # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
     url(r'^django_dropbox/',include('django_dropbox.urls')),
@@ -52,8 +51,6 @@ urlpatterns = patterns('',
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in order 
     url(r'^(?P<page_title>[\w-]+)/$','comicsite.views.comicmain'),
-    
-    
     
 )
 

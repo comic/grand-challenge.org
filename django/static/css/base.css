@@ -209,6 +209,14 @@ div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;padding-left: 10
 /* svg graph plots*/
 svg {margin-bottom:10px;}
 
+
+/* style for submit_existing_project form */
+p.required label{font-weight:bold;}
+
+#addexistingproject input[type="text"]{width:30em;}
+#addexistingproject textarea{width:31em; height:10em;}
+#addexistingproject .helptext {margin-left:10px; color:#474747; font-size:small;}
+
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
 /**/

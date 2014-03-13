@@ -88,6 +88,13 @@ def extract_href_from_anchor(anchor):
     return find_text_between('href="','">',anchor)
         
 
+
+def is_subset(listA,listB):
+    """ True if listA is a subset of listB 
+    """
+    all(item in listA for item in listB)
+    
+    
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """ 
@@ -99,26 +106,40 @@ class ComicframeworkTestCase(TestCase):
     def setUp_base(self):
         """ This setup should be run for all comic framework testcases
         """
-        self._create_main_project()
+        self._create_main_project_and_root()
         
     def setUp_extra(self):
         """ Overwrite this method in child classes 
         """
         pass
     
-    def _create_main_project(self):
+    def _create_main_project_and_root(self):
         """ Everything in the framework assumes that there is one main project which
         is always shown in a bar at the very top of the page. Make sure this exists
          
         Do not create this project through admin because admin will throw an error
-        at this point because MAIN_PROJECT can not be found. 
+        at this point because MAIN_PROJECT can not be found. Chicken Egg. 
+        
+        Create root user to have an admin user for main project. Root is automatically
+        admin for every project
         """        
         if len(ComicSite.objects.filter(short_name=settings.MAIN_PROJECT_NAME)) == 0:
             main = ComicSite.objects.create(short_name=settings.MAIN_PROJECT_NAME,
                                             description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
                                             skin="fakeskin.css"
                                             )
+            
             main.save()
+            
+            # A user who has created a project
+            root = User.objects.create_user('root',
+                                        'w.s.kerkstra@gmail.com',
+                                        'testpassword')        
+            root.is_staff = True
+            root.is_superuser = True
+            root.save()
+            
+            self.root = root
         
                      
     def _create_dummy_project(self,projectname="testproject"):
@@ -129,15 +150,10 @@ class ComicframeworkTestCase(TestCase):
         # projectadmin, cam do things to a project he or she owns. And logged in
         # user 
         
-        root = User.objects.create_user('root',
-                                        'w.s.kerkstra@gmail.com',
-                                        'testpassword')        
-        root.is_staff = True
-        root.is_superuser = True
-        root.save()
-        
+        #created in  _create_main_project_and_root.
+        root = self.root
         # non-root users are created as if they signed up through the project,    
-        # to maximize test coverage.        
+        # to maximize test coverage.                
         
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin_")
@@ -405,19 +421,41 @@ class ComicframeworkTestCase(TestCase):
         success = self.client.login(username=user.username,password=password)
         self.assertTrue(success, "could not log in as user %s using password %s"
                         % (user.username,password))   
-        return success     
+        return success
+
+    
+    def assertEmail(self,email,email_expected):
+        """ Convenient way to check subject, content, mailto etc at once for
+        an email 
+        
+        email : django.core.mail.message object
+        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }        
+        """
+        for attr in email_expected.keys():
+            try:
+                found = getattr(email,attr)
+            except AttributeError as e:
+                raise AttributeError("Could not find attribute '{0}' for this email.\
+                                     are you sure it exists? - {1}".format(attr,str(e)))
+            expected = email_expected[attr]
+            self.assertTrue(expected == found or is_subset(found,expected) or (expected in found),
+                            "Expected to find '{0}' for email attribute \
+                            '{1}' but found '{2}' instead".format(expected,
+                                                                  attr,
+                                                                  found))    
+     
 
 
 # =============================================================================
 # Decorators applied to the ComicframeworkTestCase class: see 
 # https://docs.djangoproject.com/en/1.4/topics/testing/#django.test.utils.override_settings
 
-#don't send real emails, keep them in memory
+# don't send real emails, keep them in memory
 ComicframeworkTestCase = override_settings(EMAIL_BACKEND='django.core.mail.'
                                          'backends.locmem.EmailBackend'
                                          )(ComicframeworkTestCase)
                                         
-#use fast, non-safe password hashing to speed up testing
+# use fast, non-safe password hashing to speed up testing
 ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
                                            'auth.hashers.SHA1PasswordHasher',)
                                            )(ComicframeworkTestCase)
@@ -427,6 +465,11 @@ ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
 ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE = 
                                            "comicsite.storage.MockStorage"
                                            )(ComicframeworkTestCase)
+
+# SITE_ID is used to look in the database for the name and domain of the current
+# site. This can be different in different settings files, but for testing do
+# not depend on any custom content of the database, so just use 1, the default. 
+ComicframeworkTestCase = override_settings(SITE_ID = 1)(ComicframeworkTestCase)
 
 
 
@@ -438,12 +481,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         These cannot be created 
         
         """        
-        self.root = User.objects.create_user('root',
-                                             'w.s.kerkstra@gmail.com',
-                                             'testpassword')        
-        self.root.is_staff = True
-        self.root.is_superuser = True
-        self.root.save()
+        
         
         # non-root users are created as if they signed up through the project,    
         # to maximize test coverage.        
@@ -478,8 +516,6 @@ class CreateProjectTest(ComicframeworkTestCase):
         self.assertTrue(errors,u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(project_name))
         
-        
-                
         
 class ViewsTest(ComicframeworkTestCase):
     
@@ -1191,7 +1227,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         request_mail = mail.outbox[-1]
         
-        self.assertEmail(request_mail,{"to":self.testproject.get_admins()[0].email,
+        admins = User.objects.filter(groups__name=self.testproject.admin_group_name())
+                                     
+        self.assertEmail(request_mail,{"to":admins[0].email,
                                        "subject":"New participation request",
                                        "body":"has just requested to participate"                                       
                                        })
@@ -1245,30 +1283,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         return mail.alternatives[0][0]    
-   
-    def assertEmail(self,email,email_expected):
-        """ Convenient way to check subject, content, mailto etc at once for
-        an email 
-        
-        email : django.core.mail.message object
-        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }        
-        """
-        for attr in email_expected.keys():
-            try:
-                found = getattr(email,attr)
-            except AttributeError as e:
-                raise AttributeError("Could not find attribute '{0}' for this email.\
-                                     are you sure it exists? - {1}".format(attr,str(e)))
-                
-            expected = email_expected[attr]
-            self.assertTrue(expected in found,
-                            "Expected to find '{0}' for email attribute \
-                            '{1}' but found '{2}' instead".format(expected,
-                                                                  attr,
-                                                                  found))    
-        
-        
-        
+           
     def assertText(self,content,expected_text,description=""):
         """ assert that expected_text can be found in text, 
         description can describe what this link should do, like 
@@ -1345,3 +1360,36 @@ class ProjectLoginTest(ComicframeworkTestCase):
         # leave to userena to test.
        
  
+ 
+class FormsTest(ComicframeworkTestCase):
+     """ Any form you can fill out on the website. Does it work? """
+     
+     def test_submit_existing_project_form(self):
+        
+        
+        url = reverse("comicsite.views.submit_existing_project")
+        factory = RequestFactory()
+        storage = DefaultStorage()
+        
+        data = {"contact_name":"Test contact name",
+            "contact_email":"testcontactadmin@test.com",
+            "title":"Mytestexisting project",
+            "URL":"testexistingproject.com"
+            }
+        
+        response = self.client.post(url, data)
+        # check email
+        self.assertTrue('Thank you. An email has been sent' in response.content, "could not create user. errors in"
+                        " html:\n %s \n posted data: %s"                        
+                        %(extract_form_errors(response.content),data))
+                        
+
+        
+        self.assertTrue(len(mail.outbox) > 0,"An email should have been sent to admins but none appears to be sent")
+        
+        request_mail = mail.outbox[-1]
+        project = ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
+        
+        self.assertEmail(request_mail,{"to":[x.email for x in project.get_admins()]})
+        
+  

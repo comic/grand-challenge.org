@@ -13,6 +13,7 @@ import logging
 from itertools import chain
 from os import path
 from django import forms
+from django.db import models
 from django.conf import settings
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
@@ -31,7 +32,7 @@ from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteM
 from comicsite.admin import ComicSiteAdmin
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
-from comicsite.models import ComicSiteException
+from comicsite.models import ComicSiteException,send_existing_project_link_submission_notification_email
 
 
 from filetransfers.api import serve_file
@@ -672,14 +673,18 @@ def signup_complete(request, site_short_name,):
 
 class ProjectMetadataForm(forms.ModelForm):
     """ For (anonymous) users to submit projects to list in the overview"""
-    required_css_class = 'required' 
+    required_css_class = 'required'
+
     
     class Meta:
         model = ProjectMetaData
 
 
-def add_project_link(request):
-    """ Register the current user for given comicsite """
+def submit_existing_project(request):
+    """ Form to submit a project outside comic to be included in the overview
+    
+    Doing this so elaborately, with db objects, so that it can be combined into the comic framework later,
+    for example requiring a comic registration before submitting, or editing a previous submission"""
     
     [site, pages, metafooterpages] = site_get_standard_vars(settings.MAIN_PROJECT_NAME)
     
@@ -687,23 +692,21 @@ def add_project_link(request):
         # ContactForm was defined in the the previous section
         form = ProjectMetadataForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-            # Process the data in form.cleaned_data
-            print "DONE"
-            
-            return render_to_response('add_project_link.html', 
+            # Process the data in form.cleaned_data            
+            form.instance.save()
+            send_existing_project_link_submission_notification_email(request,form.instance)
+            return render_to_response('submit_existing_project_thanks.html', 
                               {'site': site,
-                               'currentpage': Page(comicsite=site, title="Project_link_submitted", display_title="Project link submitted", html="Thank you. An email has been sent to the administrators. You will be notified when your project has been added to the overview."),
                                "pages":pages,
-                               "metafooterpages":metafooterpages,
-                               "form":form},
+                               "metafooterpages":metafooterpages
+                               },
                               context_instance=RequestContext(request))
     else:
     
         form = ProjectMetadataForm() 
         
-    return render_to_response('add_project_link.html', 
-                              {'site': site,
-                               'currentpage': Page(comicsite=site, title="Add_project_link", display_title="Add project link", html=""),
+    return render_to_response('submit_existing_project.html', 
+                              {'site': site,                               
                                "pages":pages,
                                "metafooterpages":metafooterpages,
                                "form":form},

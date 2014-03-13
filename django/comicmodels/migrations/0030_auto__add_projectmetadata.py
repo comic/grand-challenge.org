@@ -8,30 +8,28 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'ProjectMetadata'
+        # Adding model 'ProjectMetaData'
         db.create_table(u'comicmodels_projectmetadata', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('title', self.gf('django.db.models.fields.SlugField')(max_length=64, blank=True)),
-            ('comicsite', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['comicmodels.ComicSite'])),
-            ('permission_lvl', self.gf('django.db.models.fields.CharField')(default='ALL', max_length=3)),
-            ('contact_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True)),
+            ('contact_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255)),
             ('contact_email', self.gf('django.db.models.fields.EmailField')(max_length=75)),
+            ('title', self.gf('django.db.models.fields.CharField')(default='', max_length=255)),
             ('description', self.gf('django.db.models.fields.CharField')(default='', max_length=350, blank=True)),
             ('URL', self.gf('django.db.models.fields.URLField')(max_length=200)),
-            ('event_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True)),
+            ('event_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True,null=True)),
             ('event_URL', self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True)),
-            ('submission_deadline', self.gf('django.db.models.fields.DateField')()),
-            ('workshop_date', self.gf('django.db.models.fields.DateField')()),
-            ('open_for_submissions', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('submission_deadline', self.gf('django.db.models.fields.DateField')(blank=True,null=True)),
+            ('workshop_date', self.gf('django.db.models.fields.DateField')(blank=True,null=True)),
+            ('open_for_submissions', self.gf('django.db.models.fields.BooleanField')(default=False,null=True)),
             ('submission_URL', self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True)),
-            ('offers_data_download', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('offers_data_download', self.gf('django.db.models.fields.BooleanField')(default=False,null=True)),
             ('download_URL', self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True)),
         ))
-        db.send_create_signal(u'comicmodels', ['ProjectMetadata'])
+        db.send_create_signal(u'comicmodels', ['ProjectMetaData'])
 
 
     def backwards(self, orm):
-        # Deleting model 'ProjectMetadata'
+        # Deleting model 'ProjectMetaData'
         db.delete_table(u'comicmodels_projectmetadata')
 
 
@@ -122,11 +120,10 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.SlugField', [], {'max_length': '64', 'blank': 'True'})
         },
         u'comicmodels.projectmetadata': {
-            'Meta': {'object_name': 'ProjectMetadata'},
+            'Meta': {'object_name': 'ProjectMetaData'},
             'URL': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
-            'comicsite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['comicmodels.ComicSite']"}),
             'contact_email': ('django.db.models.fields.EmailField', [], {'max_length': '75'}),
-            'contact_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255', 'blank': 'True'}),
+            'contact_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255'}),
             'description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '350', 'blank': 'True'}),
             'download_URL': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'event_URL': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
@@ -134,11 +131,10 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'offers_data_download': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'open_for_submissions': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'permission_lvl': ('django.db.models.fields.CharField', [], {'default': "'ALL'", 'max_length': '3'}),
             'submission_URL': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
-            'submission_deadline': ('django.db.models.fields.DateField', [], {}),
-            'title': ('django.db.models.fields.SlugField', [], {'max_length': '64', 'blank': 'True'}),
-            'workshop_date': ('django.db.models.fields.DateField', [], {})
+            'submission_deadline': ('django.db.models.fields.DateField', [], {'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '255'}),
+            'workshop_date': ('django.db.models.fields.DateField', [], {'blank': 'True'})
         },
         u'comicmodels.registrationrequest': {
             'Meta': {'object_name': 'RegistrationRequest'},
