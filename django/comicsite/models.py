@@ -15,6 +15,7 @@ from userena.signals import signup_complete
 from comicmodels.signals import new_admin,file_uploaded
 from comicmodels.models import ComicSite
 
+logger = logging.getLogger("django")
 
 class ComicSiteException(Exception):
     """ any type of exception for which a django or python exception is not defined """
@@ -109,6 +110,7 @@ def send_existing_project_link_submission_notification_email(request,obj):
             'mainproject':mainproject}
     for admin in mainproject.get_admins():
         kwargs["admin"] = admin
+        logger.info("Sending exiting project submission notification email to '{}'".format(admin.email))
         send_templated_email(title, "admin/emails/existing_project_link_submission_notification_email.txt",kwargs,[admin.email]
                         ,"noreply@"+get_current_site(request).domain, fail_silently=False)
         
