@@ -110,6 +110,8 @@ def send_existing_project_link_submission_notification_email(request,obj):
             'site':get_current_site(request),
             'mainproject':mainproject}
     for admin in mainproject.get_admins():
+        if admin == '':
+            continue
         kwargs["admin"] = admin
         logger.info("Sending exiting project submission notification email to '{}'".format(admin.email))
         send_templated_email(title, "admin/emails/existing_project_link_submission_notification_email.txt",kwargs,[admin.email]
