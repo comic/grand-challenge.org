@@ -1,0 +1,8 @@
+{% autoescape off %}
+Dear {{ admin.username }},<br/>
+<br/>
+A new external project "{{obj.title}}" has been submitted to include in the projects overview. You can view it <a href="http://{{ site.domain}}{% url 'admin:comicmodels_projectmetadata_change' obj.pk%}">here</a> 
+
+Regards,<br/>
+{{ site.name }}
+{% endautoescape %}

@@ -396,8 +396,10 @@ class ComicSite(models.Model):
     
     def get_admins(self):
         """ Return array of all users that are in this comicsites admin group, including superusers
-        """             
-        admins = User.objects.filter(groups__name=self.admin_group_name())
+        """
+        
+        admins = User.objects.filter(Q(groups__name=self.admin_group_name()) | Q(is_superuser=True))
+        
         return admins
         
     def to_projectlink(self):
@@ -592,52 +594,26 @@ class ProjectMetaData(models.Model):
     contact_name = models.CharField(max_length = 255, default="",help_text = "Who is the main contact person for this project?")
     contact_email = models.EmailField(help_text = "")
         
-    title = models.CharField(max_length = 255, default="", help_text = "Will be printed in bold on the projects overview")
-    description = models.CharField(max_length = 350, default="", blank=True, help_text = "Will be used in projects overview")
-    URL = models.URLField(blank=False, null=False, help_text = "URL of the main page of your project")
+    title = models.CharField(max_length = 255, default="", help_text = "Project title, will be printed in bold in projects overview")
+    URL = models.URLField(blank=False, null=False, help_text = "URL of the main page of the project")
+    description = models.TextField(max_length = 350, default="", blank=True, help_text = "Max 350 characters. Will be used in projects overview")
     
+    event_name = models.CharField(max_length = 255, default="", blank=True, help_text = "Name of the event this project is associated with, if any")
+    event_URL = models.URLField(blank=True, null=True, help_text = "Url of the event this project is associated to, if any")
     
-    event_name = models.CharField(max_length = 255, default="", blank=True, help_text = "Name of the event this project is associated to, if any")
-    event_URL = models.URLField(blank=True, null=True, help_text = "Url of the event ths project is associated to, if any")
+    submission_deadline = models.DateField(null=True, blank=True,help_text = "Deadline for submitting results to this project")
+    workshop_date = models.DateField(blank=True,null=True)
     
-    submission_deadline = models.DateField(blank=True,help_text = "Deadline for submitting results to your project")
-    workshop_date = models.DateField(blank=True,)
+    open_for_submissions = models.BooleanField(default=False, help_text = "This project accepts and evaluates submissions")
+    submission_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where you can submit results")
     
-    open_for_submissions = models.BooleanField(default=False, help_text = "Does your project accept submissions?")
-    submission_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to submit results")
+    offers_data_download = models.BooleanField(default=False, help_text = "Data be downloaded from this project's website")
+    download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where this data can be downloaded")
     
-    offers_data_download = models.BooleanField(default=False, help_text = "Can data be downloaded from you project website?")
-    download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL of the data download page of your project")
-    
-    """
-    "abreviation":self.short_name,
-                "title":self.short_name,
-                "description":self.description,
-                "URL":reverse('comicsite.views.site', args=[self.short_name]),
-                "download URL":"",
-                "submission URL":self.get_submission_URL(),
-                "event name":self.event_name,
-                "year":"",
-                "event URL":self.event_url,
-                "image URL":self.logo,
-                "thumb_image_url":thumb_image_url,
-                "website section":"active challenges",
-                "overview article url":self.publication_url,
-                "overview article journal":self.publication_journal_name,
-                "overview article citations":"",
-                "overview article date":"",
-                "submission deadline":"",
-                "workshop date":self.workshop_date,
-                "open for submission":"yes" if self.is_open_for_submissions else "no",
-                "data download":"yes" if self.offers_data_download else "no",
-                "dataset downloads":self.number_of_downloads,
-                "registered teams":"",
-                "submitted results":self.number_of_submissions,
-                "last submission date":self.last_submission_date,
-                "hosted on comic":True,
-                "created at":self.created_at
-    """
-    
+    def __unicode__(self):
+        """ describes this object in admin interface etc.
+        """
+        return "ProjectMetadata '{0}'. Contact: {1}".format(self.title,self.contact_email)
 
 
 class Page(ComicSiteModel):
