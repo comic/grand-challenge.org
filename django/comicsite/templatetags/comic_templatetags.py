@@ -194,8 +194,6 @@ class comic_URLNode(defaulttags.URLNode):
             return url
 
 
-
-
 class TagListNode(template.Node):
     """ Print available tags as text
     """
