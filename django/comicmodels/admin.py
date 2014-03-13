@@ -347,14 +347,14 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
     def reject(self, request, queryset):
         """ called from admin actions dropdown in RegistrationRequests list 
         
-        """        
+        """
         for obj in queryset.all():
             obj.status = RegistrationRequest.REJECTED
             self.process_status_change(request,obj)
-    
 
-#admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
-#admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
-#admin.site.register(UploadModel,UploadModelAdmin)
-#admin.site.register(DropboxFolder,DropboxFolderAdmin)
+
+admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
+admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
+admin.site.register(UploadModel,UploadModelAdmin)
+admin.site.register(DropboxFolder,DropboxFolderAdmin)
 admin.site.register(ProjectMetaData)
