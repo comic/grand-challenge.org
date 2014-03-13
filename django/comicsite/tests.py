@@ -1277,6 +1277,13 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # just to test, a random user should not be able to see this page
         self._test_page_can_not_be_viewed(self._create_random_user("not_registered"),registeredonlypage)
         
+        # check if admin can load the view to show all registration requests
+        admin_url = reverse('admin:comicmodels_registrationrequest_add')
+                
+        self._test_url_can_be_viewed(self.projectadmin,admin_url)
+        
+        #self._test_page_can_be_viewed(self.projectadmin,registeredonlypage)
+        
                     
     def get_mail_html_part(self,mail):
         """ Extract html content from email sent with models.comicsite.send_templated_email
