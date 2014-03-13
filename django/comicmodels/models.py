@@ -598,7 +598,7 @@ class ProjectMetaData(models.Model):
     description = models.TextField(max_length = 350, default="", blank=True, help_text = "Max 350 characters. Will be used in projects overview")
     
     event_name = models.CharField(max_length = 255, default="", blank=True, help_text = "Name of the event this project is associated with, if any")
-    event_URL = models.URLField(blank=True, null=True, help_text = "Url of the event this project is associated to, if any")
+    event_URL = models.URLField(blank=True, null=True, help_text = "URL of the event this project is associated to, if any")
     
     submission_deadline = models.DateField(null=True, blank=True,help_text = "Deadline for submitting results to this project")
     workshop_date = models.DateField(blank=True,null=True)
@@ -606,7 +606,7 @@ class ProjectMetaData(models.Model):
     open_for_submissions = models.BooleanField(default=False, help_text = "This project accepts and evaluates submissions")
     submission_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where you can submit results")
     
-    offers_data_download = models.BooleanField(default=False, help_text = "Data be downloaded from this project's website")
+    offers_data_download = models.BooleanField(default=False, help_text = "Data can be downloaded from this project's website")
     download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where this data can be downloaded")
     
     def __unicode__(self):
