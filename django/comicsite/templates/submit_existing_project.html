@@ -40,6 +40,24 @@
                     $("#id_workshop_date").datepicker();
                     $("#id_submission_deadline").datepicker();
                 });
+                 
+                 function addCounter(selector){
+                     function count(selector){                         
+                         var len = $(selector).val().length
+                         $("span#description_counter").html(len)
+                     
+                     }                     
+                     $(selector).after("<span id='description_counter' class='counter'>test</span>");
+                     count(selector);
+                     $(selector).bind('input',function(){
+                                        count(selector);
+                                        })
+                                       
+                 }
+                 
+                 
+                 addCounter('#id_description');
+                 
             </script>
             
         {% endblock %}

@@ -216,6 +216,8 @@ p.required label{font-weight:bold;}
 #addexistingproject input[type="text"]{width:30em;}
 #addexistingproject textarea{width:31em; height:10em;}
 #addexistingproject .helptext {margin-left:10px; color:#474747; font-size:small;}
+span.counter {color: #474747; margin-left: 10px; position: absolute;}
+
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
