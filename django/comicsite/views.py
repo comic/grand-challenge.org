@@ -217,10 +217,19 @@ def escape_verbatim_node_contents(template):
 
 def permissionMessage(request, site, p):
     if request.user.is_authenticated():
-        msg = "You do not have permission to view page '" + p.title + "'. If you feel this is an error, please contact the project administrators"
+        msg = """ <div class="system_message">
+                <h2> Restricted page</h2>
+                  This page can only be viewed by participants of this project to view this page please make sure of the following:
+                  <ul>
+                      <li>First, log in to {0} by using the 'Sign in' button at the top right.</li>
+                      <li>Second, you need to join / register with the specific project you are interested in as a participant. 
+                      The link to do this is provided by the project organizers on the project webiste.</li>
+                  </ul>
+                  <div>
+              """.format(settings.MAIN_PROJECT_NAME)
         title = p.title
     else:
-        msg = "The page '" + p.title + "' can only be viewed by registered users. Sign in to view this page."
+        msg = "The page '" + p.title + "' can only be viewed by registered users. Please sign in to view this page."
         title = p.title
     page = ErrorPage(comicsite=site, title=title, html=msg)
     currentpage = page

@@ -218,6 +218,8 @@ p.required label{font-weight:bold;}
 #addexistingproject .helptext {margin-left:10px; color:#474747; font-size:small;}
 #addexistingproject span.counter {color: #474747; margin-left: 10px; position: absolute;}
 
+.system_message {width:700px;} 
+
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
 
