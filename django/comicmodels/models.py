@@ -13,7 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.core.validators import validate_slug
+from django.core.validators import validate_slug, MaxLengthValidator
 #from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
@@ -595,7 +595,8 @@ class ProjectMetaData(models.Model):
         
     title = models.CharField(max_length = 255, default="", help_text = "Project title, will be printed in bold in projects overview")
     URL = models.URLField(blank=False, null=False, help_text = "URL of the main page of the project")
-    description = models.TextField(max_length = 350, default="", blank=True, help_text = "Max 350 characters. Will be used in projects overview")
+    description = models.TextField(max_length = 350, default="", blank=True, help_text = "Max 350 characters. Will be used in projects overview",
+                                   validators=[MaxLengthValidator(350)])
     
     event_name = models.CharField(max_length = 255, default="", blank=True, help_text = "Name of the event this project is associated with, if any")
     event_URL = models.URLField(blank=True, null=True, help_text = "URL of the event this project is associated to, if any")
