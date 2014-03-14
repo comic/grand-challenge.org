@@ -223,7 +223,7 @@ def permissionMessage(request, site, p):
                   <ul>
                       <li>First, log in to {0} by using the 'Sign in' button at the top right.</li>
                       <li>Second, you need to join / register with the specific project you are interested in as a participant. 
-                      The link to do this is provided by the project organizers on the project webiste.</li>
+                      The link to do this is provided by the project organizers on the project website.</li>
                   </ul>
                   <div>
               """.format(settings.MAIN_PROJECT_NAME)
