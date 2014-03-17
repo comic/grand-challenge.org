@@ -397,8 +397,7 @@ class ComicSite(models.Model):
     def get_admins(self):
         """ Return array of all users that are in this comicsites admin group, including superusers
         """
-        admins = User.objects.filter(Q(groups__name=self.admin_group_name()) | Q(is_superuser=True))
-        
+        admins = User.objects.filter(Q(groups__name=self.admin_group_name()) | Q(is_superuser=True)).distinct()
         return admins
         
     def to_projectlink(self):
