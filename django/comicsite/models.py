@@ -128,12 +128,12 @@ def send_participation_request_notification_email(request,obj):
     
     """        
     
+    
     title = 'New participation request for {0}'.format(obj.project.short_name)
     mainportal = get_current_site(request)
     kwargs={'user':obj.user,            
             'site':mainportal,
             'project':obj.project}
-    
     for admin in obj.project.get_admins():
         kwargs["admin"] = admin 
         send_templated_email(title, "admin/emails/participation_request_notification_email.txt",kwargs,[admin.email]
@@ -275,13 +275,15 @@ def send_templated_email(subject, email_template_name, email_context, recipients
 
     text_part = strip_tags(template.render(c))
     html_part = template.render(c)
-
+    
     if type(recipients) == str:
         if recipients.find(','):
             recipients = recipients.split(',')
     elif type(recipients) != list:
         recipients = [recipients,]
-
+    
+    recipients = remove_empty(recipients)
+    
     msg = EmailMultiAlternatives(subject,
                                 text_part,
                                 sender,
@@ -298,3 +300,15 @@ def send_templated_email(subject, email_template_name, email_context, recipients
 
     return msg.send(fail_silently)
 
+def remove_empty(adresses):
+    """ Remove invalid email adresses from list
+    Currently only removed empty
+    
+    """
+    cleaned = []
+    for adress in adresses:
+        if adress != "":
+            cleaned.append(adress)
+             
+    
+    return cleaned
