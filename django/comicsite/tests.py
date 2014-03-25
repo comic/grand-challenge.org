@@ -1199,7 +1199,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.testproject.save()
                                      
         response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)
-        self.assertTextBetweenTags(response.content,"registration","Register for","registering without review")
+        self.assertTextBetweenTags(response.content,"registration","Participate in","registering without review")
             
                 
         # when participant review is on, all admins will receive an email of a 
@@ -1211,7 +1211,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         response = self._test_page_can_be_viewed(self.signedup_user,registrationpage)
         self.assertTextBetweenTags(response.content,
                                    "registration",
-                                   "Request registration for",
+                                   "Request to participate in",
                                    "registering with participation review")
         
         registration_anchor = find_text_between('<registration>','</registration>',response.content)
@@ -1221,7 +1221,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         # user should see some useful info after requestion registration                
         self.assertText(response.content,
-                        "A registration request has been sent",
+                        "A participation request has been sent",
                         "Checking message after user has requested participation")
         # and admins should receive an email 
         

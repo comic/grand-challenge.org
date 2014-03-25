@@ -1661,7 +1661,7 @@ class AllProjectLinksNode(template.Node):
         if hostlink != "":
             stats.append("Hosted on: " + hostlink)
         
-        stats_caps = []         
+        stats_caps = []
         for string in stats:
            stats_caps.append(self.capitalize(string))
         
@@ -1903,19 +1903,13 @@ class RegistrationFormNode(template.Node):
                      + reverse('comicsite.views.page', kwargs={'site_short_name':project.short_name, 'page_title':pagetitle})
         signuplink = makeHTMLLink(signup_url, "sign in")
 
-
-
-        registerlink = makeHTMLLink(reverse('comicsite_signup',args=[project.short_name]), "register")
-
-
         if not context['user'].is_authenticated():
-            return "To register for " + project.short_name + ", you need be logged in to COMIC.\
-            please " + signuplink + " or " + registerlink
+            return "To participate in {0}, Please {1}".format(project.short_name,signuplink)                         
 
         else:
             
             if project.is_participant(context['user']):
-                msg = "You have already registered for " + project.short_name
+                msg = "You are already participating in" + project.short_name
             else:
                 register_url = reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
                 
@@ -1930,11 +1924,11 @@ class RegistrationFormNode(template.Node):
                     if pending:                        
                         msg = pending[0].status_to_string()                         
                     else:
-                        msg = makeHTMLLink(register_url, "Request registration for " + project.short_name)
+                        msg = makeHTMLLink(register_url, "Request to participate in " + project.short_name)
                     
                                     
                 else:
-                    msg = makeHTMLLink(register_url, "Register for " + project.short_name)
+                    msg = makeHTMLLink(register_url, "Participate in " + project.short_name)
                 
             return msg
 
@@ -1953,7 +1947,7 @@ class TemplateErrorNode(template.Node):
 
 
 def HTML_encode_django_chars(string):
-    """replace curly braces and percent signs by their html encoded equivolents
+    """replace curly braces and percent signs by their html encoded equivalents
     """
     string = string.replace("{", "&#123;")
     string = string.replace("}", "&#125;")
