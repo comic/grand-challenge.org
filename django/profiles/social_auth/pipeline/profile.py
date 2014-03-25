@@ -1,7 +1,7 @@
 from userena.models import UserenaSignup
 from profiles.models import UserProfile as Profile
 from userena.managers import ASSIGNED_PERMISSIONS
-from guardian.shortcuts import assign
+from guardian.shortcuts import assign_perm
 from userena.signals import signup_complete
 from comicsite.models import get_or_create_projectadmingroup
 
@@ -24,10 +24,10 @@ def set_guardian_permissions(user=None, profile=None, *args, **kwargs):
     if profile:
         # Give permissions to view and change profile
         for perm in ASSIGNED_PERMISSIONS['profile']:
-            assign(perm[0], user, profile)
+            assign_perm(perm[0], user, profile)
     # Give permissions to view and change itself
     for perm in ASSIGNED_PERMISSIONS['user']:
-        assign(perm[0], user, user)
+        assign_perm(perm[0], user, user)
 
 
 def set_project_permissions(user=None, profile=None, *args, **kwargs):
