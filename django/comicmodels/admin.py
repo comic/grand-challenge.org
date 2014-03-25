@@ -10,6 +10,7 @@ from django.contrib.admin.util import unquote
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import utc
 
 from dropbox import client, rest, session
 from dropbox.rest import ErrorResponse
@@ -309,7 +310,9 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         
     def process_acceptance(self,request,obj):                        
         obj.status = RegistrationRequest.ACCEPTED
-        obj.changed = datetime.datetime.today()
+        
+        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
+        #obj.changed = datetime.datetime.today()
         obj.save()
         
         obj.project.add_participant(obj.user)                
@@ -321,7 +324,8 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
                
     def process_rejection(self,request,obj):                        
         obj.status = RegistrationRequest.REJECTED
-        obj.changed = datetime.datetime.today()
+        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
+        #obj.changed = datetime.datetime.today()
         obj.save()
         
         obj.project.remove_participant(obj.user)                
