@@ -3,9 +3,9 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from guardian.shortcuts import assign 
+from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group,Permission
- 
+
 
 
 class Migration(SchemaMigration):
@@ -15,51 +15,51 @@ class Migration(SchemaMigration):
             # some object classes can only be seen by root, like all users for
             # instance. Add the new object class RegistrationRequest to the group
             # which all project admins are part of, so they don't get a 403 forbidden
-            # when trying to see requests for their project 
-                                    
-            try:                                                               
+            # when trying to see requests for their project
+
+            try:
                 projectadmins = Group.objects.get(name="projectadmins")
-            except Group.DoesNotExist as e:                            
+            except Group.DoesNotExist as e:
                 projectadmins = Group(name='projectadmins')
                 #TODO add permissions for all comicmodels and registrationRequest
                 projectadmins.save()
-                 
+
             # my god spent 2 hours on this line. But this fixes any issues with
             # default permissions for registrationrequest not being found..
             db.send_pending_create_signals()
-                        
+
             # each user in comic is part of this group projectadmins. With the
             # permission in this group you can determine which types of objects
             # regular adins can see and edit in the admin interface.
-                
+
             self.add_standard_perms("comicmodels","registrationrequest",projectadmins)
             self.add_standard_perms("comicmodels","comicsite",projectadmins)
-            self.add_standard_perms("comicmodels","page",projectadmins)                                    
-            
-    
+            self.add_standard_perms("comicmodels","page",projectadmins)
+
+
     def add_standard_perms(self,appname,modelname,group):
 
         self.assign_once("{0}.add_{1}".format(appname,modelname),group)
         self.assign_once("{0}.change_{1}".format(appname,modelname),group)
         self.assign_once("{0}.delete_{1}".format(appname,modelname),group)
-        
-    
+
+
     def assign_once(self,perm,group):
         """ Assign perm to group if it did not have it already. This fixes erros
         with double permissions after migrations
-        
-        """        
-        if not self.has_perm(group,perm):                            
-            assign(perm,group)
-            
 
-    
+        """
+        if not self.has_perm(group,perm):
+            assign_perm(perm,group)
+
+
+
     def has_perm(self,group,perm):
         """ Could not find this function in guardian.shortcuts so making it here
         Does group have permission perm assigned to it?
-        
-        Raises ValueError if perm is not in 'appname.codename' format 
-        """        
+
+        Raises ValueError if perm is not in 'appname.codename' format
+        """
         try:
             app_label, codename = perm.split('.', 1)
         except ValueError:
@@ -70,9 +70,9 @@ class Migration(SchemaMigration):
             return True
         else:
             return False
-        
-    
-                         
+
+
+
     def backwards(self, orm):
         pass
 
