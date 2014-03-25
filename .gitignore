@@ -65,3 +65,7 @@ local.properties
 #
 # # PDT-specific
 .buildpath
+
+# ignore any specific conf files, execept the default one
+django/comic/settings/*.conf
+!django/comic/settings/00_default.conf
