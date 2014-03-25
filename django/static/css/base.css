@@ -17,8 +17,8 @@ ul#box-nav li:hover { background-color:#fff; border-style:solid solid none solid
 ul#box-nav a, ul#box-nav a:visited { font-weight:bold; color:#6f91ab; text-decoration:none;}
 .white-box { padding: 12px 0; overflow: auto; }
 .white-box img { float:left; margin: 0 10px; margin-bottom:10px; border-radius:5px; }
-.white-box dl { margin-bottom:50px; }
-.white-box dl dt { background:#eee; width:100px; float:left; font-weight:bold; margin-right:10px; padding:5px; }
+.white-box dl { margin-left: 110px; margin-bottom:50px; }
+.white-box dl dt { width:100px; float:left; font-weight:bold; margin-right:10px; padding:5px; }
 .white-box dl dd { margin:2px 0; padding:5px 0; }
 
 /* style for the signin list */
