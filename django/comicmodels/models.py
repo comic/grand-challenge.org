@@ -1026,7 +1026,7 @@ class RegistrationRequest(models.Model):
                                                              self.project.short_name)
 
     def status_to_string(self):
-        str = "Your registration request for " + self.project.short_name +\
+        str = "Your participation request for " + self.project.short_name +\
                 ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:
