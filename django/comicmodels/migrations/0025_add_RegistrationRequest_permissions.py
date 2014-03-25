@@ -3,7 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign 
 from django.contrib.auth.models import Group,Permission
  
 
@@ -39,18 +39,18 @@ class Migration(SchemaMigration):
     
     def add_standard_perms(self,appname,modelname,group):
 
-        self.assign_perm_once("{0}.add_{1}".format(appname,modelname),group)
-        self.assign_perm_once("{0}.change_{1}".format(appname,modelname),group)
-        self.assign_perm_once("{0}.delete_{1}".format(appname,modelname),group)
+        self.assign_once("{0}.add_{1}".format(appname,modelname),group)
+        self.assign_once("{0}.change_{1}".format(appname,modelname),group)
+        self.assign_once("{0}.delete_{1}".format(appname,modelname),group)
         
     
-    def assign_perm_once(self,perm,group):
+    def assign_once(self,perm,group):
         """ Assign perm to group if it did not have it already. This fixes erros
         with double permissions after migrations
         
         """        
         if not self.has_perm(group,perm):                            
-            assign_perm(perm,group)
+            assign(perm,group)
             
 
     
