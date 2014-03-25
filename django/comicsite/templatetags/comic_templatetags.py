@@ -701,7 +701,9 @@ class InsertFileNode(template.Node):
         folder: string containing a filepath
         project: a comicsite object
         """        
-        data_folder = project.get_project_data_folder()      
+        data_folder = project.get_project_data_folder()
+        folder = self.make_canonical_path(folder)
+        data_folder = self.make_canonical_path(data_folder)     
         if folder.startswith(data_folder):
             return True
         else:
