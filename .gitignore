@@ -65,3 +65,7 @@ local.properties
 #
 # # PDT-specific
 .buildpath
+
+# Ignore intellij stuff
+*.iml
+**/.idea
