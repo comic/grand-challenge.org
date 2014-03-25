@@ -5,44 +5,44 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from guardian.shortcuts import assign
+from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 
 
 class Migration(DataMigration):
-    
-    # run this first because adding user 'anonymousUser' in 
-    # fixtures/user_everyone.json requires it    
+
+    # run this first because adding user 'anonymousUser' in
+    # fixtures/user_everyone.json requires it
     depends_on = (
              ("profiles", "0002_auto__add_field_userprofile_country"),
     )
-    
+
     def forwards(self, orm):
         "Write your forwards methods here."
         # Note: Remember to use orm['appname.ModelName'] rather than "from appname.models..."
         permission = 'view_ComicSiteModel'
-        
-                
+
+
         if not db.dry_run:
             print "Everyone should be able to see uploaded files by default for now. giving\
                   '"+permission+"' permission to 'everyone' user for the following UploadModel\
                   instances: "
-                  
-            #create the 'everyone' user in database                  
+
+            #create the 'everyone' user in database
             call_command("loaddata", "../fixtures/user_everyone.json")
-                        
+
             everyonegroup = orm['auth.Group'].objects.get(name="everyone")
             evg = Group.objects.get(name="everyone")
             # For permissions to work properly after migrating
-            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():                
-                assign(permission,evg,uploadmodel)
-                
+            for uploadmodel in orm['comicmodels.UploadModel'].objects.all():
+                assign_perm(permission,evg,uploadmodel)
+
                 print uploadmodel.file
                 #uploadmodel.setpermissions(uploadmodel.ALL)
-                
-            
-        
+
+
+
 
     def backwards(self, orm):
         "Write your backwards methods here."
@@ -111,7 +111,7 @@ class Migration(DataMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'permission_lvl': ('django.db.models.fields.CharField', [], {'default': "'ALL'", 'max_length': '3'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '64', 'blank': 'True'})
-        
+
         },
         'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},

@@ -15,7 +15,7 @@ class SignupFormExtra(SignupForm):
                                  required=True,
                                  help_text=_(u'Department you represent.'))
     country = forms.ChoiceField(label=_(u'Country'),
-                                choices=COUNTRIES,
+                                choices=tuple([('00', _('-' * 9))] + list(COUNTRIES)),
                                 required=True)
     website = forms.CharField(label=_(u'Website'),
                               max_length=150,
@@ -41,6 +41,14 @@ class SignupFormExtra(SignupForm):
         new_order.insert(1, 'last_name')
         self.fields.keyOrder = new_order
         self.base_fields['comicsite'].initial = ""
+
+    def clean_country(self):
+        """ Make sure the user changed the country field.
+        """
+        country = self.cleaned_data['country']
+        if country == '00':
+            raise forms.ValidationError("Please choose a valid country.")
+        return country
 
     def save(self):
         user = super(SignupFormExtra, self).save()
