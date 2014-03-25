@@ -39,5 +39,6 @@
     {% endfor %}
   </fieldset>
   <input type="submit" value="{% trans "Signup"%}" />
+    {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
 </form>
 {% endblock %}
