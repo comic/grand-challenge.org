@@ -39,9 +39,12 @@ urlpatterns = patterns('',
     
     url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$','filetransfers.views.serve',name="project_serve_file"),
     
-    url(r'^(?P<site_short_name>[\w-]+)/_register/$','comicsite.views._register'),
-    
+    #_register should be removed, moving to _request_participation. See #240 keeping it now for any links going here directly
     url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$','comicsite.views._register'),
+    url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$','comicsite.views._register'),
+     
+        
+    
     
     url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$','comicsite.views.pagesource'),
     
