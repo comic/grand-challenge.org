@@ -58,8 +58,19 @@ def _register(request, site_short_name):
             currentpage = _register_directly(request, site)
         
     else:
-        html = "you need to be logged in to use this url"
-        currentpage = Page(comicsite=site, title="please_log_in", display_title="Please log in", html=html)
+        if "user_just_registered" in request.GET:
+            # show message to use activation mail first, then refresh the page
+            html = """<h2> Please activate your account </h2> 
+            <p>An activation link has been sent to the email adress you provided.
+            Please use this link to activate your account.</p> 
+            
+            After activating your account, click <a href="{0}">here to continue</a>  
+            """.format("")
+            
+            currentpage = Page(comicsite=site, title="activate_your_account", display_title="activate your account", html=html)
+        else: 
+            html = "you need to be logged in to use this url"
+            currentpage = Page(comicsite=site, title="please_log_in", display_title="Please log in", html=html)
         
     return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
 
@@ -658,8 +669,12 @@ def signin(request, site_short_name, extra_context=None):
 
 def signup(request, site_short_name, extra_context=None,**kwargs):            
     extra_context = get_extra_context(site_short_name)
-    # signup_form, template_name, success_url, extra_context    
-    success = reverse("comicsite_signup_complete",kwargs={"site_short_name":site_short_name})
+    # signup_form, template_name, success_url, extra_context
+        
+    if "next" in request.GET:
+        success = request.GET["next"] + "?user_just_registered=True"
+    else:
+        success = reverse("comicsite_signup_complete",kwargs={"site_short_name":site_short_name})
     response = userena_views.signup(request=request,
                                     extra_context=extra_context,
                                     success_url=success,
