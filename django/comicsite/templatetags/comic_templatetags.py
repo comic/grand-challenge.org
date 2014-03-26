@@ -1896,44 +1896,46 @@ class RegistrationFormNode(template.Node):
     def __init__(self, projects):
         self.projects = projects
 
+
+    
     def render(self, context):
         project = context.page.comicsite        
         pagetitle = context.page.title
         signup_url = reverse('comicsite_signin',args=[project.short_name]) + "?next=" \
-                     + reverse('comicsite.views.page', kwargs={'site_short_name':project.short_name, 'page_title':pagetitle})
-        signuplink = makeHTMLLink(signup_url, "sign in")
+                     + reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
+        
+        if project.require_participant_review:
+            signuplink = makeHTMLLink(signup_url, "Request to participate in {0}".format(project.short_name))
+        else:
+            signuplink = makeHTMLLink(signup_url, "Participate in {0}".format(project.short_name))
 
         if not context['user'].is_authenticated():
-            return "To participate in {0}, Please {1}".format(project.short_name,signuplink)                         
+            return signuplink
 
         else:
             
             if project.is_participant(context['user']):
                 msg = "You are already participating in" + project.short_name
             else:
-                register_url = reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
-                
-                # nested if loops through the roof. What would uncle Bob say? 
-                # "nested if loops are a missed chance for inheritance."
-                # TODO: possible way out: create some kind of registration request 
-                # manager which can be asked these things
-                
-                 
-                if project.require_participant_review:                    
-                    pending = RegistrationRequest.objects.get_pending_registration_requests(context['user'],project)                    
-                    if pending:                        
-                        msg = pending[0].status_to_string()                         
-                    else:
-                        msg = makeHTMLLink(register_url, "Request to participate in " + project.short_name)
-                    
-                                    
-                else:
-                    msg = makeHTMLLink(register_url, "Participate in " + project.short_name)
+                msg = self.get_signup_link(context, project)
                 
             return msg
-
     
-
+    def get_signup_link(self, context, project):
+        register_url = reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
+    # nested if loops through the roof. What would uncle Bob say?
+    # "nested if loops are a missed chance for inheritance."
+    # TODO: possible way out: create some kind of registration request
+    # manager which can be asked these things
+        if project.require_participant_review:
+            pending = RegistrationRequest.objects.get_pending_registration_requests(context['user'], project)
+            if pending:
+                msg = pending[0].status_to_string()
+            else:
+                msg = makeHTMLLink(register_url, "Request to participate in " + project.short_name)
+        else:
+            msg = makeHTMLLink(register_url, "Participate in " + project.short_name)
+        return msg
 
 
 class TemplateErrorNode(template.Node):
