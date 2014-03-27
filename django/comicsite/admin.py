@@ -80,7 +80,7 @@ class ProjectAdminSite(AdminSite):
 
         if settings.DEBUG:
             self.check_dependencies()
-
+            
         def wrap(view, cacheable=False):
             def wrapper(*args, **kwargs):
                 return self.admin_view(view, cacheable)(*args, **kwargs)
@@ -124,7 +124,7 @@ class ProjectAdminSite(AdminSite):
         urlpatterns += patterns(
             url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
                 wrap(contenttype_views.shortcut)),
-            url(r'^(?P<app_label>[\w-]+/$',
+            url(r'^(?P<app_label>[\w-]+)/$',
                 wrap(self.app_index),
                 name='app_list')
         )
@@ -167,13 +167,9 @@ class ProjectAdminSite(AdminSite):
            this should be shown by default, instead of list of all objects"""
 
         #def change_view(self, request, object_id, form_url='', extra_context=None):
-
         comicsiteadmin = self._registry[ComicSite]
         extra_context["projectname"] = request.projectname
-        
         return comicsiteadmin.change_view(request,"1","",extra_context)
-
-        #return self.show_all_objects(request, extra_context)
 
 
     @never_cache
