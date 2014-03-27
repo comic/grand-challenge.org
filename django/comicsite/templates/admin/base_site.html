@@ -19,8 +19,8 @@
 
 
 {% block branding %}
-{% if projectname %}
-    <p>{{ projectname }} Admin <a href="{%url 'comicsite.views.site' projectname %}">(back to {{ projectname }})</a></p>
+{% if site %}
+    <p>{{ site.short_name }} Admin <a href="{%url 'comicsite.views.site' site.short_name %}">(back to {{ site.short_name }})</a></p>
 {% else %}
     <p>Root Admin <a href="/">(back to main)</a></p>
 {% endif %}
