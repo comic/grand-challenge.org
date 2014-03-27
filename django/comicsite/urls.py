@@ -22,7 +22,7 @@ urlpatterns = patterns('',
                              
     url(r'^(?P<site_short_name>[\w-]+)/$','comicsite.views.site'),
         
-    url(r'^(?P<site_short_name>[\w-]+)/admin/', include(projectadminsite.urls)),
+    url(r'^(?P<site_short_name>[\w-]+)/admin/', include(projectadminsite.urls), name="projectadmin"),
     
     url(r'^(?P<site_short_name>[\w-]+)/robots\.txt$', TemplateView.as_view(template_name='robots.html'),name="comicsite_robots_txt"),
     

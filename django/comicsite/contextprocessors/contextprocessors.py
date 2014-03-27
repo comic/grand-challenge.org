@@ -5,17 +5,17 @@
 
 from django.template import RequestContext
 from django.conf import settings
+from django.core.urlresolvers import resolve
 
 from comicsite.views import site_get_standard_vars
 from django.http import Http404
+
 
 def comic_site(request):
     """ Find out in which comic site this request is loaded. If you cannot
     figure it out. Use main project. 
     
     """
-        
-    from django.core.urlresolvers import resolve
     
     try:
         resolution = resolve(request.path)
