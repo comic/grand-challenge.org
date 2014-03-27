@@ -58,6 +58,13 @@ logger = logging.getLogger("django")
 class ProjectAdminSite(AdminSite):
     """Admin for a specific project. Only shows and allows access to object
     associated with that project"""
+    login_form = None
+    index_template = None
+    app_index_template = None
+    login_template = None
+    logout_template = None
+    password_change_template = None
+    password_change_done_template = None
 
     #site_short_name = ""
 #    def __init__(self, name='admin', app_name='admin'):
