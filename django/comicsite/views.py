@@ -111,7 +111,7 @@ def _register_after_approval(request, project):
         from comicsite.models import send_participation_request_notification_email
         send_participation_request_notification_email(request,reg_request)
         
-        html = "<p> A participation request has been sent to the " + project.short_name + " organizers.You will receive an email when your request has been reviewed<p>"
+        html = "<p> A participation request has been sent to the " + project.short_name + " organizers. You will receive an email when your request has been reviewed<p>"
             
 
     
