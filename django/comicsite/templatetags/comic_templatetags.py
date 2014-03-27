@@ -156,13 +156,14 @@ class comic_URLNode(defaulttags.URLNode):
 
     def render(self, context):
 
+        
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
 
         #get the url the default django method would give.
-        url = super(comic_URLNode, self).render(context)
-
+        url = super(comic_URLNode, self).render(context)        
         url = url.lower()
+        
         
         if subdomain_is_projectname:
             if hasattr(context['request'],"subdomain"):

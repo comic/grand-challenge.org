@@ -399,6 +399,14 @@ class ComicSite(models.Model):
         """
         admins = User.objects.filter(Q(groups__name=self.admin_group_name()) | Q(is_superuser=True)).distinct()
         return admins
+    
+    def get_absolute_url(self):
+        """ With this method, admin will show a 'view on site' button """
+        
+        
+        url = reverse('comicsite.views.site', args=[self.short_name])
+        
+        return url
 
     def to_projectlink(self):
         """ Return a ProjectLink representation of this comicsite, to show in an
