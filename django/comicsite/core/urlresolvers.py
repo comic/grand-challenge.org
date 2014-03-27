@@ -27,7 +27,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None, current
     I am not certain that this is the most elegant way to do this. However this will
     currently solve the problem of links in projects overview being of the wrong kind 
     """
-    # TODO: The final clasuse in the if statement is a total hack. May posterity 
+    # TODO: The final clause in the if statement is a total hack. May posterity 
     # forgive me for this method.
     # What is needed is a clear and unanbiguous way to deal with subdomain as project name
     # See for example the custom url template tag in comicsite.templatetags, which 
