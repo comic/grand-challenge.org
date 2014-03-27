@@ -1,5 +1,6 @@
 {% extends "admin/base.html" %}
 {% load i18n %}
+{% load comic_templatetags %}
 
 {% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
 
@@ -18,7 +19,7 @@
 
 {% block branding %}
 
-<p>COMIC Admin <a class = "linktocomicmain" href="/"> (back to grand-challenge.org) </a> </p>
+<p>{{ projectname }} Admin <a href="{%url 'comicsite.views.site' projectname %}">(back to {{ projectname }})</a></p>
 
 {% endblock %}
 

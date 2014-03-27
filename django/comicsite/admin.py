@@ -59,10 +59,11 @@ class ProjectAdminSite(AdminSite):
     """Admin for a specific project. Only shows and allows access to object
     associated with that project"""
 
-    site_short_name = ""
-    #def __init__(self, name='admin', app_name='admin'):
-     #   self.site_short_name
-      #  super(ProjectAdminSite,self).__init__(name,app_name)
+    #site_short_name = ""
+#    def __init__(self, name='admin', app_name='admin'):
+#        
+#        super(ProjectAdminSite,self).__init__(name,app_name)
+#        self.site_short_name
 
     def get_urls(self):
         from django.conf.urls import patterns, url, include
@@ -154,14 +155,15 @@ class ProjectAdminSite(AdminSite):
 
 
     @never_cache
-    def index(self, request, extra_context=None):
+    def index(self, request, extra_context={}):
         """Show the edit page of the current project. This is the main source of information for any project so
            this should be shown by default, instead of list of all objects"""
 
         #def change_view(self, request, object_id, form_url='', extra_context=None):
 
         comicsiteadmin = self._registry[ComicSite]
-
+        extra_context["projectname"] = request.projectname
+        
         return comicsiteadmin.change_view(request,"1","",extra_context)
 
         #return self.show_all_objects(request, extra_context)
@@ -238,6 +240,7 @@ class ProjectAdminSite(AdminSite):
 
 
 projectadminsite =  ProjectAdminSite(name="projectadmin",app_name="projectadmin")
+
 
 # ======================= end testing creating of custom admin
 
