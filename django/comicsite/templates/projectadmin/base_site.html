@@ -16,14 +16,12 @@
         {% endfor %}</ul>
         {% endif %}
 {% endblock messages %}
+
 {% block branding %}
-{% if site %}
-    <p>{{ site.short_name }} Admin <a href="{%url 'comicsite.views.site' site.short_name %}">(back to {{ site.short_name }})</a></p>
-{% else %}
-    <p>Root Admin <a href="/">(back to main)</a></p>
-{% endif %}
+ <p>{{ site.short_name }} Admin <a href="{%url 'comicsite.views.site' site.short_name %}">(back to {{ site.short_name }})</a></p>
 {% if projectadmin %}
- YES Project
+ 
+ YES Project and PROJECTADMIN
 {% else %}
 NO project
 {% endif %}

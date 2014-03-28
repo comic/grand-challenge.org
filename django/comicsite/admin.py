@@ -5,6 +5,7 @@ Created on Jun 18, 2012
 '''
 import pdb
 import logging
+import copy
 from django.contrib import admin
 from django import forms
 from django.conf.urls import patterns, url
@@ -106,7 +107,6 @@ class ProjectAdminSite(AdminSite):
             url(r'^jsi18n/$',
                 wrap(self.i18n_javascript, cacheable=True),
                 name='jsi18n')
-
         )
 
         # Add in each model's views.
@@ -129,9 +129,7 @@ class ProjectAdminSite(AdminSite):
                 name='app_list')
         )
 
-
         return urlpatterns
-
 
     def admin_view(self, view, cacheable=False):
         """
@@ -148,10 +146,12 @@ class ProjectAdminSite(AdminSite):
                 return self.login(request)
 
             if "site_short_name" in kwargs.keys():
-                extra_context = {"site_short_name":kwargs["site_short_name"]}
-                print "site_short_name was ====================" + kwargs["site_short_name"]
+                extra_context = {"site_short_name":kwargs["site_short_name"]}                
                 del kwargs["site_short_name"]
-            return view(request,extra_context=kwargs,*args,**kwargs)
+            
+            ec = copy.deepcopy(kwargs)
+            ec["projectadmin"] = True
+            return view(request,extra_context=ec,*args,**kwargs)
         if not cacheable:
             inner = never_cache(inner)
         # We add csrf_protect here so this function can be used as a utility
