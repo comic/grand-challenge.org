@@ -279,8 +279,7 @@ class PageAdmin(ComicModelAdmin):
     change_form_template = None
 
     #Show these page params in admin overview list
-    list_display = ('title','comicsite','order')
-    list_filter = ['comicsite']
+    list_display = ('title','comicsite','order')    
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows':40, 'cols':80})},
     }
