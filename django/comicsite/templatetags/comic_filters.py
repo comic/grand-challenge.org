@@ -14,7 +14,3 @@ designated by /site/<projectname>/admin.
 @register.filter
 def project_admin_urlname(value, arg):    
     return 'projectadmin:%s_%s_%s' % (value.app_label, value.module_name, arg)
-
-@register.filter
-def project_admin_urlquote(value):
-    return quote(value)
