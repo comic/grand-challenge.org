@@ -309,9 +309,17 @@ class PageAdmin(ComicModelAdmin):
 
 
     def queryset(self, request):
-        """ overwrite this method to return only pages comicsites to which current user has access """
+        """ overwrite this method to return only pages comicsites to which current user has access 
+            In Addition, if your are on a project-admin page, show only content associated with that
+            project
+        """
+        
         user_qs = get_objects_for_user(request.user, 'comicmodels.change_page')
-        return user_qs
+        
+        if request.projectname:
+            project_only_qs = user_qs.filter(comicsite__short_name=request.projectname)
+            
+        return project_only_qs
 
     def response_change(self, request, obj, post_url_continue=None):
         """This makes the response after adding go to another apps changelist for some model"""
@@ -395,7 +403,7 @@ class PageAdmin(ComicModelAdmin):
             # try to get current project by url TODO: This solution is too specific for page. Should be  a general
             # property of the admin site. But I can't get this right at projectadmin.
 
-            match = re.match(r"^/site/(?P<site_short_name>[\w-]+/admin/.*",request.path)
+            match = re.match(r"^/site/(?P<site_short_name>[\w-]+)/admin/.*",request.path)
             if match:
                 site_short_name = match.group("site_short_name")
             else:

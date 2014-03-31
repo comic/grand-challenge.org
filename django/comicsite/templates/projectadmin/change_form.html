@@ -16,14 +16,7 @@
 {% block bodyclass %}{{ opts.app_label }}-{{ opts.object_name.lower }} change-form{% endblock %}
 
 {% if not is_popup %}
-    {% block breadcrumbs %}
-        <div class="breadcrumbs">
-        <a href="{% url 'projectadmin:index' site.short_name%}">{{site.short_name}}</a>        
-        &rsaquo; {% if has_change_permission %}<a href="{% url opts|project_admin_urlname:'changelist' site.short_name %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
-            &rsaquo; {% if add %}{% trans 'Add' %} {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
-            </div>
-        
-    {% endblock %}
+    
     
 {% endif %}
 
