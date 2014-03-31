@@ -28,6 +28,14 @@ class ComicModelAdmin(GuardedModelAdmin):
     # if user has this permission, user can access this ComicModel.
     permission_name = 'view_ComicSiteModel'
     
+    def __init__(self, model, admin_site):        
+        super(GuardedModelAdmin, self).__init__(model,admin_site)
+        
+        # use general template instead of the one GuardedModelAdmin puts in there
+        # because I do not want to show the object permissions button project
+        # admins 
+        self.change_form_template = 'admin/change_form.html'
+    
     def save_model(self, request, obj, form, change):        
         obj.save()
     

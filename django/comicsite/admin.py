@@ -153,7 +153,7 @@ class ProjectAdminSite(AdminSite):
                 return self.login(request)
 
             if "site_short_name" in kwargs.keys():
-                extra_context = {"site_short_name":kwargs["site_short_name"]}                
+                extra_context = {"site_short_name":kwargs["site_short_name"]}
                 del kwargs["site_short_name"]
             
             ec = copy.deepcopy(kwargs)
