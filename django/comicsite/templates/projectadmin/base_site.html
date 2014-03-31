@@ -18,13 +18,7 @@
 {% endblock messages %}
 
 {% block branding %}
- <p>{{ site.short_name }} Admin <a href="{%url 'comicsite.views.site' site.short_name %}">(back to {{ site.short_name }})</a></p>
-{% if projectadmin %}
- 
- YES Project and PROJECTADMIN
-{% else %}
-NO project
-{% endif %}
+ <p>{{ site.short_name }} Admin </a></p>
 
 {% endblock %}
 
