@@ -163,6 +163,7 @@ class comic_URLNode(defaulttags.URLNode):
         #get the url the default django method would give.
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
+                
         
         if subdomain_is_projectname:
             if hasattr(context['request'],"subdomain"):
