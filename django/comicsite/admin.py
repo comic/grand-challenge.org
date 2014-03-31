@@ -8,6 +8,7 @@ import logging
 import copy
 from django.contrib import admin
 from django import forms
+
 from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.contrib.admin.options import InlineModelAdmin
@@ -20,6 +21,7 @@ from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
+from django.utils import six
 from django.utils.translation import ugettext as _
 from django.utils.encoding import force_unicode
 from guardian.admin import GuardedModelAdmin
@@ -115,11 +117,16 @@ class ProjectAdminSite(AdminSite):
         # Also I want for example pages to be displayed at <projectname>/admin/page/<id> and not at
         # <projectname>/admin/comicmodels/page/<id>.
 
-        for model, model_admin in self._registry.iteritems():
+        
+        
+        for model, model_admin in six.iteritems(self._registry):
             urlpatterns += patterns('',
-                url(r'^%s/' % (model._meta.module_name),
+                url(r'^%s/%s/' % (model._meta.app_label, model._meta.module_name),
                     include(model_admin.urls))
-            )
+        )
+        
+
+
 
         urlpatterns += patterns(
             url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
