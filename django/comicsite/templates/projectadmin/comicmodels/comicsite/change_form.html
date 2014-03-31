@@ -1,8 +1,8 @@
-{% extends "rootadmin/base_site.html" %}
-
+{% extends "projectadmin/base_site.html" %}
 {% load i18n admin_static admin_modify %}
 {% load admin_urls %}
 {% load comic_templatetags %}
+{% load comic_filters %}
 
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
@@ -17,14 +17,9 @@
 
 {% if not is_popup %}
     {% block breadcrumbs %}
-        
-            <div class="breadcrumbs">    
-            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-            &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ app_label|capfirst|escape }}</a>
-            &rsaquo; {% if has_change_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
-            &rsaquo; {% if add %}{% trans 'Add' %} {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+        <div class="breadcrumbs">
+        <a href="{% url 'projectadmin:index' site.short_name%}">{{site.short_name}}</a>
             </div>
-        
     {% endblock %}
     
 {% endif %}
@@ -34,10 +29,7 @@
 {% if change %}{% if not is_popup %}
   <ul class="object-tools">
     {% block object-tools-items %}
-    
-    <li><a href="permissions/" class="permissionslink">{% trans "Object permissions" %}</a></li>
-    <li><a href="{% url 'projectadmin:index' site.short_name %}" class="historylink">{% trans "TestSomething" %}</a></li>
-    <li><a href="{% url opts|admin_urlname:'history' original.pk|admin_urlquote %}" class="historylink">{% trans "History" %}</a></li>
+    <li><a href="{% url opts|project_admin_urlname:'history' site.short_name original.pk|admin_urlquote %}" class="historylink">{% trans "History" %}</a></li>
     {% if has_absolute_url %}<li><a href="{% url 'admin:view_on_site' content_type_id original.pk %}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
     {% endblock %}
   </ul>

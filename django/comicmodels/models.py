@@ -402,10 +402,8 @@ class ComicSite(models.Model):
     
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        
-        
+
         url = reverse('comicsite.views.site', args=[self.short_name])
-        
         return url
 
     def to_projectlink(self):
@@ -468,6 +466,14 @@ class ComicSite(models.Model):
     def remove_participant(self,user):
         group = Group.objects.get(name=self.participants_group_name())
         user.groups.remove(group)
+        
+        
+    class Meta:
+        # 'comicsite' was renamed to 'project' but acutally renaming all classes
+       # is a ****load of work. Keeping it a superficial changes for now, so
+       # admins will at least nog see the workd 'comicsite' as often.
+       verbose_name = "project"
+       verbose_name_plural = "projects"
 
 
 
@@ -675,6 +681,12 @@ class Page(ComicSiteModel):
             raise NotImplementedError("Somebody should implement this!")
         if move == 'LAST':
             raise NotImplementedError("Somebody should implement this!")
+        
+    def get_absolute_url(self):
+        """ With this method, admin will show a 'view on site' button """
+
+        url = reverse('comicsite.views.page', args=[self.comicsite.short_name,self.title])
+        return url
 
 
     class Meta(ComicSiteModel.Meta):
