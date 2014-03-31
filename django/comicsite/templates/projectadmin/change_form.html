@@ -38,7 +38,7 @@
     
     <li><a href="{% url 'projectadmin:index' site.short_name %}" class="historylink">{% trans "TestSomething" %}</a></li>
     <li><a href="{% url 'projectadmin:comicmodels_page_change' site.short_name 4 %}" class="historylink">{% trans "Testpage" %}</a></li>
-    <li><a href="{% url opts|admin_urlname:'history' original.pk|admin_urlquote %}" class="historylink">{% trans "History" %}</a></li>
+    <li><a href="{% url 'projectadmin:comicmodels_comicsite_history' site.short_name original.pk %}" class="historylink">{% trans "History" %}</a></li>    
     {% if has_absolute_url %}<li><a href="{% url 'admin:view_on_site' content_type_id original.pk %}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
     {% endblock %}
   </ul>
