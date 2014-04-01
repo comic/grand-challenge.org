@@ -39,7 +39,6 @@ class ComicModelAdmin(GuardedModelAdmin):
     def save_model(self, request, obj, form, change):        
         obj.save()
     
-    
     def queryset(self, request): 
         """ overwrite this method to return only pages comicsites to which current user has access 
             
@@ -58,9 +57,8 @@ class ComicModelAdmin(GuardedModelAdmin):
             get_objects_for_users """ 
         
         return get_objects_for_user(request.user, self.permission_name,self)
-    
-        
-        
+
+
 class FileSystemDatasetForm(forms.ModelForm):
                 
     folder = forms.CharField(widget=forms.TextInput(attrs={'size': 60}),help_text = "All files for this dataset are stored in this folder on disk")
