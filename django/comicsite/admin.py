@@ -155,10 +155,11 @@ class ProjectAdminSite(AdminSite):
                 del kwargs["site_short_name"]
             
                 
-                # Make sure the value for comicsite is automatically filled in                
+                # Make sure the value for comicsite is automatically filled in
                 if not 'comicsite' in request.GET.keys():
                     request.GET = request.GET.copy()
                     request.GET.update({'comicsite':request.project_pk})
+            
             
             ec = copy.deepcopy(kwargs)
             ec["projectadmin"] = True
@@ -797,9 +798,6 @@ class PageAdminForm():
 admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)
 
-
 projectadminsite.register(Page,PageAdmin)
 projectadminsite.register(ComicSite,ComicSiteAdmin)
-
-
 
