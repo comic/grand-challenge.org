@@ -34,4 +34,3 @@ def comic_site(request):
     [site, pages, metafooterpages] = site_get_standard_vars(sitename)
     
     return {"site":site,"pages":pages,"metafooterpages":metafooterpages}
-        

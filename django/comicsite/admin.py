@@ -126,8 +126,6 @@ class ProjectAdminSite(AdminSite):
         )
         
 
-
-
         urlpatterns += patterns(
             url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
                 wrap(contenttype_views.shortcut)),
@@ -156,8 +154,15 @@ class ProjectAdminSite(AdminSite):
                 extra_context = {"site_short_name":kwargs["site_short_name"]}
                 del kwargs["site_short_name"]
             
+                
+                # Make sure the value for comicsite is automatically filled in                
+                if not 'comicsite' in request.GET.keys():
+                    request.GET = request.GET.copy()
+                    request.GET.update({'comicsite':request.project_pk})
+            
             ec = copy.deepcopy(kwargs)
             ec["projectadmin"] = True
+            
             return view(request,extra_context=ec,*args,**kwargs)
         if not cacheable:
             inner = never_cache(inner)
@@ -791,12 +796,6 @@ class PageAdminForm():
 
 admin.site.register(ComicSite,ComicSiteAdmin)
 admin.site.register(Page,PageAdmin)
-
-
-
-# DEBUG ==================================
-# Let's create AdminSite instance
-# NOTICE: here you can ovverride admin class and create your own AdminSite implementation
 
 
 projectadminsite.register(Page,PageAdmin)

@@ -1,6 +1,7 @@
-
 from django.core.urlresolvers import resolve,Resolver404
 from django.conf import settings
+
+from comicmodels.models import ComicSite
     
 class ProjectMiddleware:
     """ Everything you do on comicframework is related to a project. This
@@ -36,7 +37,7 @@ class ProjectMiddleware:
               stinky. How to do this so that changing urls will not break this?
                 
         """
-                   
+        
         resolution = resolve(request.path)
         
         if resolution.kwargs.has_key("site_short_name"):
@@ -52,18 +53,9 @@ class ProjectMiddleware:
         return request
 
     def add_project_pk(self,request):
-        """ if the requested url is in admin try to infer from url which project
-            this is regarding. TODO: the best way to fix this is to have seperate
-            admin sites for each project #181..
-            
-             
-    
+        """ Add unique key of current comicsite. This is used in admin views to
+        auto fill comicsite for any comicsitemodel
         """
-              
-        resolution = resolve(request.path)
-        if resolution.url_name == "comicmodels_comicsite_participantrequests":
-            project_pk = resolution.kwargs["object_pk"]
-        else:
-            project_pk = -1
-        request.project_pk = project_pk
+        
+        request.project_pk = ComicSite.objects.get(short_name=request.projectname).pk
         return request
