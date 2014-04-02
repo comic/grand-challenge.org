@@ -24,8 +24,11 @@ class ProjectMiddleware:
             request = self.add_project_pk(request)
         except Resolver404:
             request.project_pk = -1
-         
-        
+            
+        try:
+            request.is_projectadmin = self.is_project_admin_url(request)
+        except Resolver404:
+            request.is_projectadmin = False
         
         
     def add_project_name(self,request):
@@ -33,11 +36,7 @@ class ProjectMiddleware:
         
         Raises Resolver404
         
-        TODO: Geting current project from the name given to it in urls.py is
-              stinky. How to do this so that changing urls will not break this?
-                
         """
-        
         resolution = resolve(request.path)
         
         if resolution.kwargs.has_key("site_short_name"):
@@ -59,3 +58,13 @@ class ProjectMiddleware:
         
         request.project_pk = ComicSite.objects.get(short_name=request.projectname).pk
         return request
+
+    def is_project_admin_url(self,request):
+        """ When you are in admin for a single project, only show objects for
+            this project. This check must be made here as the request cannot
+            be modified later
+             
+        """
+        resolution = resolve(request.path)
+        return resolution.app_name == 'projectadmin'
+
