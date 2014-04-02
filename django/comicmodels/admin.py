@@ -36,7 +36,7 @@ class ComicModelAdmin(GuardedModelAdmin):
         # admins 
         self.change_form_template = 'admin/change_form.html'
     
-    def save_model(self, request, obj, form, change):        
+    def save_model(self, request, obj, form, change):
         obj.save()
     
     def queryset(self, request): 
@@ -60,7 +60,6 @@ class ComicModelAdmin(GuardedModelAdmin):
 
 
 class FileSystemDatasetForm(forms.ModelForm):
-                
     folder = forms.CharField(widget=forms.TextInput(attrs={'size': 60}),help_text = "All files for this dataset are stored in this folder on disk")
     folder.required = False    
     

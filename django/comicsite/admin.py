@@ -143,6 +143,7 @@ class ProjectAdminSite(AdminSite):
         stuff.
         """
         def inner(request, *args, **kwargs):
+            
             if not self.has_permission(request):
                 if request.path == reverse('admin:logout',
                                            current_app=self.name):
@@ -154,15 +155,20 @@ class ProjectAdminSite(AdminSite):
                 extra_context = {"site_short_name":kwargs["site_short_name"]}
                 del kwargs["site_short_name"]
             
-                
-                # Make sure the value for comicsite is automatically filled in
-                if not 'comicsite' in request.GET.keys():
-                    request.GET = request.GET.copy()
-                    request.GET.update({'comicsite':request.project_pk})
+            
+            
+            #request.GET.update({"projectadmin"] = True
+            # Make sure the value for comicsite is automatically filled in
+            if not 'comicsite' in request.GET.keys():
+                request.GET = request.GET.copy()                
+                request.GET.update({'comicsite':request.project_pk})
+            
+            
             
             
             ec = copy.deepcopy(kwargs)
             ec["projectadmin"] = True
+            
             
             return view(request,extra_context=ec,*args,**kwargs)
         if not cacheable:
@@ -319,12 +325,12 @@ class PageAdmin(ComicModelAdmin):
             project
         """
         
-        user_qs = get_objects_for_user(request.user, 'comicmodels.change_page')
+        qs = get_objects_for_user(request.user, 'comicmodels.change_page')
         
-        if request.projectname:
-            project_only_qs = user_qs.filter(comicsite__short_name=request.projectname)
+        if request.is_projectadmin: #this info is added by project middleware
+            qs = qs.filter(comicsite__short_name=request.projectname)
             
-        return project_only_qs
+        return qs
 
     def response_change(self, request, obj, post_url_continue=None):
         """This makes the response after adding go to another apps changelist for some model"""
