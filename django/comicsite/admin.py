@@ -9,13 +9,16 @@ import copy
 from django.contrib import admin
 from django import forms
 
+
 from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.admin.views.main import ChangeList
+from django.contrib.admin.util import quote
 from django.contrib.auth.models import Group,Permission,User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import get_current_site
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse,resolve
 from django.db import models
 from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
@@ -30,8 +33,7 @@ from guardian.shortcuts import get_objects_for_user,assign_perm
 from comicmodels.models import ComicSite,Page,RegistrationRequest
 from comicmodels.signals import new_admin,removed_admin
 from comicmodels.admin import ComicModelAdmin
-
-
+from comicsite.core.exceptions import ProjectAdminExcepetion
 
 
 # ======================= testing creating of custom admin
@@ -123,7 +125,26 @@ class ProjectAdminSite(AdminSite):
             urlpatterns += patterns('',
                 url(r'^%s/%s/' % (model._meta.app_label, model._meta.module_name),
                     include(model_admin.urls))
-        )
+                                    )
+            
+            #pdb.set_trace()
+            
+        
+        # add in urls for comicsite. Do this explicitly here instead of through 
+        # modeladmin
+        try:
+            comicsite_admin = self._registry[ComicSite]
+        except KeyError as e:
+            raise ProjectAdminExcepetion("""The model 'ComicSite' needs to be
+             registered with the admin interface, but it was not found.
+             Please use the projectadmin.site.register() method to do this.""")
+        
+        info = comicsite_admin.model._meta.app_label, comicsite_admin.model._meta.module_name
+        urlpatterns += patterns('',
+            url(r'^admins/$',
+                #view=self.admin_view(comicsite_admin.admin_add_view),
+                view=self.admin_view(self.project_admin_management_view),
+                name='%s_%s_admins' % info))
         
 
         urlpatterns += patterns(
@@ -133,9 +154,34 @@ class ProjectAdminSite(AdminSite):
                 wrap(self.app_index),
                 name='app_list')
         )
-
+        
+        
         return urlpatterns
+    
+    def get_comicsite_admin(self):
+        """ For getting the current instance of the ComicSiteAdmin class.
+        """ 
+        # Getting a specific class here makes ProjectAdminSite less general,
+        # but the whole ProjecAdminSite is built on the idea that there are
+        # comicsites so I think it is ok here. 
+         
+        
+        try:
+            comicsite_admin = self._registry[ComicSite]
+        except KeyError as e:
+            raise ProjectAdminExcepetion("""The model 'ComicSite' needs to be
+             registered with the admin interface, but it was not found.
+             Please use the projectadmin.site.register() method to do this.""")
+        
+        return comicsite_admin
 
+    
+    def project_admin_management_view(self, request,extra_context={}):
+        
+        cma = self.get_comicsite_admin()
+        return cma.admin_add_view(request,request.project_pk,extra_context)
+        
+        
     def admin_view(self, view, cacheable=False):
         """
         Changes to original admin view: this one passes kwargs to the view as 'extra_context'. This way the
@@ -155,21 +201,13 @@ class ProjectAdminSite(AdminSite):
                 extra_context = {"site_short_name":kwargs["site_short_name"]}
                 del kwargs["site_short_name"]
             
-            
-            
             #request.GET.update({"projectadmin"] = True
-            # Make sure the value for comicsite is automatically filled in
+            # Make sure the value for comicsite is automatically filled in            
             if not 'comicsite' in request.GET.keys():
-                request.GET = request.GET.copy()                
+                request.GET = request.GET.copy()
                 request.GET.update({'comicsite':request.project_pk})
-            
-            
-            
-            
             ec = copy.deepcopy(kwargs)
-            ec["projectadmin"] = True
-            
-            
+            ec["projectadmin"] = True            
             return view(request,extra_context=ec,*args,**kwargs)
         if not cacheable:
             inner = never_cache(inner)
@@ -177,7 +215,11 @@ class ProjectAdminSite(AdminSite):
         # function for any view, without having to repeat 'csrf_protect'.
         if not getattr(view, 'csrf_exempt', False):
             inner = csrf_protect(inner)
+        
+        
         return update_wrapper(inner, view)
+
+    
 
 
     @never_cache
@@ -259,7 +301,7 @@ class ProjectAdminSite(AdminSite):
         return TemplateResponse(request, [
             self.index_template or 'admin/index.html',
         ], context, current_app=self.name)
-
+        
 
 projectadminsite =  ProjectAdminSite(name="projectadmin",app_name="projectadmin")
 
@@ -516,6 +558,62 @@ class ComicSiteManager(models.Manager):
 class RegistrationRequestInline(admin.StackedInline):
     model = RegistrationRequest
 
+class RegistrationRequestAdmin(admin.ModelAdmin):
+    """Define the admin interface for pages"""
+    
+    def queryset(self, request):
+        """ Only overwriting this because RegistrationRequest does not extend
+        comicmodel, and thus has no parmeter 'comicsite'. Instead this is called
+        'project'. Rename the default GET param inserted by projectadminsite here
+        
+        TODO: make RegistrationRequest into a comicmodel. Why was it not?
+        """
+        
+        
+        if 'comicsite' in request.GET.keys():
+            
+            request.GET = request.GET.copy()
+            
+             
+            request.GET.update({'project':request.GET['comicsite']})            
+            items = dict([x for x in request.GET.items() if x[0] != 'comicsite'])
+            request.GET.clear()
+            
+            request.GET.update(items)
+        qs = super(admin.ModelAdmin, self).queryset(request)
+        return qs
+    
+    def get_changelist(self, request, **kwargs):
+        """
+        Returns the ChangeList class for use on the changelist page.
+        
+        Overriding this so I can set the urls in changelist correctly
+        """
+        #from django.contrib.admin.views.main import ChangeList
+        from comicsite.admin import ProjectAdminSite
+        
+        return ProjectAdminChangeList
+
+class ProjectAdminChangeList(ChangeList):
+    
+    
+    def __init__(self, request, model, list_display, list_display_links,
+            list_filter, date_hierarchy, search_fields, list_select_related,
+            list_per_page, list_max_show_all, list_editable, model_admin):
+        super(ProjectAdminChangeList,self).__init__(request, model, list_display, list_display_links,
+            list_filter, date_hierarchy, search_fields, list_select_related,
+            list_per_page, list_max_show_all, list_editable, model_admin)
+        
+        self.projectname = request.projectname
+        
+    
+    def url_for_result(self, result):
+        pk = getattr(result, self.pk_attname)
+        return reverse('projectadmin:%s_%s_change' % (self.opts.app_label,
+                                               self.opts.module_name),
+                       args=(self.projectname,quote(pk),),
+                       current_app=self.model_admin.admin_site.name)
+
 
 class ComicSiteAdmin(admin.ModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
@@ -559,9 +657,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("manage_admin_link","link","manage_participation_request_link")
 
-
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'
+
 
 
     def link(self,obj):
@@ -586,7 +684,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
     manage_admin_link.short_description="Admins"
 
     def manage_participation_request_link(self,instance):
-        return "<a href=\"registration_requests\">Approve or reject participation requests</a>"
+        url = reverse("projectadmin:comicmodels_registrationrequest_changelist",args=[instance.short_name])
+        return "<a href=\'{}'>Approve or reject participation requests</a>".format(url)
+    
     manage_participation_request_link.allow_tags=True #allow links
     manage_participation_request_link.short_description="Participation Requests"
 
@@ -623,7 +723,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             #    view=self.admin_site.admin_view(
             #        self.obj_perms_manage_group_view),
             #    name='%s_%s_permissions_manage_group' % info),
-        )
+        )        
         return myurls + urls
 
 
@@ -647,13 +747,14 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return context
 
 
-    def admin_add_view(self, request, object_pk):
+    def admin_add_view(self, request, object_pk,extra_context={}):
         """
         Show all users in admin_group for this comicsite, allow adding users
         """
         comicsite = get_object_or_404(ComicSite,id=object_pk)
         admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
 
+        
         if request.method == 'POST' and 'submit_add_user' in request.POST:
             user_form = AdminManageForm(request.POST)
             if user_form.is_valid():
@@ -693,7 +794,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                         removed.append(username)
 
                 msg = "Removed users [" + ", ".join(removed) + "] from "+comicsite.short_name+\
-                      "admin group. " + msg2
+                      " admin group. " + msg2
                 messages.add_message(request, messages.SUCCESS, msg)
 
                 #send signal to be picked up for example by email notifier
@@ -707,10 +808,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
         # how to fill this amdin list without explicit filling?
         choices = tuple([(user.username,user.username) for user in admins])
         user_form.fields['admins'].widget.choices = choices
-
+        
         context = self.get_base_context(request, comicsite)
         context['user_form'] = user_form
-
+        
+        context.update(extra_context)
 
         return render_to_response(self.admin_manage_template,
             context, RequestContext(request, current_app=self.admin_site.name))
@@ -806,4 +908,5 @@ admin.site.register(Page,PageAdmin)
 
 projectadminsite.register(Page,PageAdmin)
 projectadminsite.register(ComicSite,ComicSiteAdmin)
+projectadminsite.register(RegistrationRequest,RegistrationRequestAdmin)
 
