@@ -18,14 +18,6 @@ from comicmodels.models import ComicSite
 
 logger = logging.getLogger("django")
 
-class ComicSiteException(Exception):
-    """ any type of exception for which a django or python exception is not defined """
-    def __init__(self, value):
-        self.parameter = value
-    def __str__(self):
-        return repr(self.parameter)
-
-
 # =============================== permissions ===================================
 # put permissions code here because signal receiver code should go into models.py
 # according to https://docs.djangoproject.com/en/dev/topics/signals/#connecting-receiver-functions
@@ -47,8 +39,6 @@ def set_project_admin_permissions(sender, **kwargs):
     # activate through email link before being able to log in at all.
     user.is_staff = True
     user.save()
-
-
 
 def get_or_create_projectadmingroup():
     """ create the group 'projectadmin' which should have class-level permissions for all
