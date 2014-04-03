@@ -1018,7 +1018,7 @@ class RegistrationRequest(models.Model):
     user = models.ForeignKey(User, help_text = "which user requested to participate?")
     project = models.ForeignKey(ComicSite,
                                   help_text = "To which project does the user want to register?")
-
+    
     created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
     changed = models.DateTimeField(blank=True,null=True)
 

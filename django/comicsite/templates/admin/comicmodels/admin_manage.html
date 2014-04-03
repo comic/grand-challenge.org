@@ -7,20 +7,9 @@
 </style>
 {% endblock %}
 
-{% block breadcrumbs %}{% if not is_popup %}
-<div class="breadcrumbs">
-     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
-     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo; 
-     {% if has_change_permission %}<a href="../../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo; 
-     {% if has_change_permission %}<a href="../">{{ original|truncatewords:"18" }}</a>{% else %}{{ original|truncatewords:"18" }}{% endif %} &rsaquo;
-     {% trans "Add Admin" %}
-</div>
-{% endif %}{% endblock %}
 
 {% block content %}
 <div id="content-main">
-
-
 
     {% if user_form.errors %}
     <div>
@@ -54,8 +43,6 @@
         {% endwith %}
         </form>
     </fieldset>
-    
-
 
 </div>
 {% endblock %}
