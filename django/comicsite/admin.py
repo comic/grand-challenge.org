@@ -811,11 +811,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
         
         context = self.get_base_context(request, comicsite)
         context['user_form'] = user_form
+        context['title'] = "Manage Admins"
         
         context.update(extra_context)
 
         return render_to_response(self.admin_manage_template,
             context, RequestContext(request, current_app=self.admin_site.name))
+        
 
     def save_model(self, request, obj, form, change):
         """ when saving for the first time, set object permissions; give all permissions to creator """

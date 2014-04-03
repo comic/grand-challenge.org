@@ -3,7 +3,7 @@
 {% load comic_templatetags %}
 {% load comic_filters %}
 
-{% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
+{% block title %}{{ title }} | {{site.short_name}} admin {% endblock %}
 
 {% block messages %}
         {% if messages %}
@@ -17,6 +17,14 @@
         {% endfor %}</ul>
         {% endif %}
 {% endblock messages %}
+
+{% block userlinks %}
+                {% url 'django-admindocs-docroot' as docsroot %}
+                {% if docsroot %}
+                    <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+                {% endif %}
+                <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+{% endblock %}
 
 {% block branding %}
  <p>{{ site.short_name }} Admin </a></p>
