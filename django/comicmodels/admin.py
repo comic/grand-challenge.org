@@ -19,7 +19,8 @@ from dropbox.rest import ErrorResponse
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest,ProjectMetaData
-from comicsite.models import ComicSiteException,send_participation_request_rejected_email,send_participation_request_accepted_email
+from comicsite.models import send_participation_request_rejected_email,send_participation_request_accepted_email
+from comicsite.core.exceptions import ComicException
 
 
 class ComicModelAdmin(GuardedModelAdmin):
@@ -197,7 +198,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
             buttons = HTML_RESETBUTTON + HTML_REFRESHBUTTON
         else:
             buttons = HTML_RESETBUTTON + HTML_REFRESHBUTTON
-            #raise ComicSiteException("Unknown status: '"+status+"' I don't know which buttons to show")
+            #raise ComicException("Unknown status: '"+status+"' I don't know which buttons to show")
          
         return buttons
         
