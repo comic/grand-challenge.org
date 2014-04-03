@@ -32,8 +32,8 @@ from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteM
 from comicsite.admin import ComicSiteAdmin
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
-from comicsite.models import ComicSiteException,send_existing_project_link_submission_notification_email
-
+from comicsite.models import send_existing_project_link_submission_notification_email
+from comicsite.core.exceptions import ComicException
 
 from filetransfers.api import serve_file
 from filetransfers.views import download_handler_file
@@ -775,7 +775,7 @@ def throw_exception(request):
     """ Test handling of exceptions
     
     """
-    raise ComicSiteException("An exception thrown to test exception handling")
+    raise ComicException("An exception thrown to test exception handling")
 
 def throw_http404(request):
     """ Test handling of exceptions
