@@ -230,7 +230,7 @@ class ProjectAdminSite(AdminSite):
         #def change_view(self, request, object_id, form_url='', extra_context=None):
         comicsiteadmin = self._registry[ComicSite]
         extra_context["projectname"] = request.projectname
-        return comicsiteadmin.change_view(request,"1","",extra_context)
+        return comicsiteadmin.change_view(request,str(request.project_pk),"",extra_context)
 
 
     @never_cache
