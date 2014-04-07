@@ -343,19 +343,27 @@ class ComicframeworkTestCase(TestCase):
                          "yet validated with link!"),
         
         # validate the user with the link that was emailed
-        validationlink_result = re.search('/example.com(.*)\n',
+        pattern = '/example.com(.*)\r'
+        validationlink_result = re.search(pattern,
                                           validation_mail.body,
                                           re.IGNORECASE)
         
+        
         self.assertTrue(validationlink_result, "could not find any link in" 
-                        "registration email")
+                        "registration email. Tried to match pattern '{}' but found no match in"
+                        "this email: \n{}".format(pattern,validation_mail.body))
         
         validationlink = validationlink_result.group(1)        
         response = self.client.get(validationlink)        
         
-        self.assertEqual(self.client.get('/accounts/'+username+'/').status_code,
+        self.assertEqual(response.status_code,302, "Could not load user validation link. Expected"
+                                       " a redirect (HTTP 302), got HTTP {} instead".format(response.status_code))
+        
+        
+        resp = self.client.get('/accounts/'+username+'/')
+        self.assertEqual(resp.status_code,
                          200,"Could not access user account after using" 
-                         "validation link!")
+                         "validation link! Expected 200, got {} instead".format(resp.status_code))
             
         
         query_result = User.objects.filter(username=username)        
@@ -481,8 +489,6 @@ class CreateProjectTest(ComicframeworkTestCase):
         These cannot be created 
         
         """        
-        
-        
         # non-root users are created as if they signed up through the project,    
         # to maximize test coverage.        
         
@@ -1399,4 +1405,30 @@ class FormsTest(ComicframeworkTestCase):
         
         self.assertEmail(request_mail,{"to":[x.email for x in project.get_admins()]})
         
-  
+
+class AdminTest(ComicframeworkTestCase):
+    """ Comic features a rather involved rewriting of the django interface, offering
+    a dedicated admin site for each project in the database. Is everything still working?
+        
+    """
+    
+    def setUp_extra(self):
+        """ Called by ComicframeworkTestCase
+        """
+        [self.testproject,
+         self.root,
+         self.projectadmin,
+         self.participant,
+         self.registered_user] = self._create_dummy_project("admin-test")
+    
+    def test_jsi18n(self):
+        """ Is javascript being included on admin pages correctly?
+        """
+        
+        jspath = reverse("admin:jsi18n")
+        self._test_url_can_be_viewed(self.projectadmin,jspath)
+        
+        jspath = reverse("projectadmin:jsi18n")
+        self._test_url_can_be_viewed(self.projectadmin,jspath)
+        
+        
