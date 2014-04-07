@@ -413,6 +413,15 @@ class ProjectAdminSite2(AdminSite):
 
         return update_wrapper(inner, view)
     
+    @never_cache
+    def index(self, request, extra_context={}):
+        """Show the edit page of the current project. This is the main source of information for any project so
+           this should be shown by default, instead of list of all objects"""
+           
+        comicsiteadmin = self._registry[ComicSite]
+        extra_context["projectname"] = request.projectname
+        return comicsiteadmin.change_view(request, str(self.project.pk), "", extra_context)
+    
     def has_permission(self,request):
         """ For projectadmin, in addition to standard django checks, check if requesting
         user is an admin for this project    
