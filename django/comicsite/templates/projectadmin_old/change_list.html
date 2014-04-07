@@ -1,6 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_static admin_list %}
+
 {% load admin_urls %}
+{% load comic_templatetags %}
+{% load comic_filters %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -38,9 +41,9 @@
 {% if not is_popup %}
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ app_label|capfirst|escape }}</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+        <a href="{% url 'projectadmin:index' site.short_name%}">{{site.short_name}}</a>
+        
+            </div>
 </div>
 {% endblock %}
 {% endif %}
@@ -54,7 +57,7 @@
         <ul class="object-tools">
           {% block object-tools-items %}
             <li>
-              <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink">
+              <a href="{% url cl.opts|project_admin_urlname:'add' site.short_name %}{% if is_popup %}?_popup=1{% endif %}" class="addlink">
                 {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
               </a>
             </li>
