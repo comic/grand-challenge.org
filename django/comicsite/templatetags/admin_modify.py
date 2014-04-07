@@ -17,6 +17,10 @@ def submit_row(context):
     """
     ctx = original.submit_row(context)
     ctx["site"] = context["site"]
+    
+    if "projectadmin" in context:
+        ctx["projectadmin"] = context["projectadmin"]
+    
     return ctx
     
 
