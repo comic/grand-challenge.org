@@ -3,7 +3,7 @@ from django.views.generic import TemplateView
 
 from profiles.forms import SignupFormExtra
 
-from comicsite.admin import projectadminsite
+from comicsite.admin import projectadminsite,vessel12adminsite
 
 
 
@@ -21,8 +21,12 @@ urlpatterns = patterns('',
     #url(r'^admin/', include(projectadminsite.urls)),
                              
     url(r'^(?P<site_short_name>[\w-]+)/$','comicsite.views.site'),
-        
-    url(r'^(?P<site_short_name>[\w-]+)/admin/', include(projectadminsite.urls), name="projectadmin"),
+            
+    
+    url(r'^vessel12/admin/', include(vessel12adminsite.urls), name="projectadmin"),
+    
+    
+    #url(r'^(?P<site_short_name>[\w-]+)/admin/', include(projectadminsite.urls), name="projectadmin"),
     
     url(r'^(?P<site_short_name>[\w-]+)/robots\.txt$', TemplateView.as_view(template_name='robots.html'),name="comicsite_robots_txt"),
     
@@ -31,6 +35,8 @@ urlpatterns = patterns('',
     url(r'^(?P<site_short_name>[\w-]+)/accounts/signin/$','comicsite.views.signin',name="comicsite_signin"),
     url(r'^(?P<site_short_name>[\w-]+)/accounts/signup/$','comicsite.views.signup',{'signup_form':SignupFormExtra},name="comicsite_signup"),    
     url(r'^(?P<site_short_name>[\w-]+)/accounts/signup_complete/$','comicsite.views.signup_complete',name="comicsite_signup_complete"),
+    
+    
     
     # url(r'^(?P<site_short_name>[\w-]+)/accounts/signup/$','comicsite.views.signup',{'signup_form':SignupFormExtra},name="comicsite_signup"),
     # tell (nice) bots what to do  
