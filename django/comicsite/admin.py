@@ -317,8 +317,9 @@ class ProjectAdminSite2(AdminSite):
     def get_urls(self):
                 
         for model, model_admin in six.iteritems(self._registry):
+            
             # Wrap all modeladmin queryset methods so that they only return content
-            # relevant for the current project            
+            # relevant for the current project
             model_admin.queryset = self.queryset_wrapper(model_admin.queryset)
             
             model_admin.add_view = self.add_view_wrapper(model_admin.add_view)
@@ -382,6 +383,7 @@ class ProjectAdminSite2(AdminSite):
         """
         def inner(request, *args, **kwargs):
             
+            request.resolver_match
             # Let templates know this is projectadmin, and which project it is
             extra_context = {"projectadmin":True,
                              "project_name":self.project.short_name,
@@ -390,14 +392,19 @@ class ProjectAdminSite2(AdminSite):
             # If there is existing extra_context, add this. but then remove it
             # from kwargs because otherwise you will get a "got two values for" exception
             if "extra_context" in kwargs:
-                extra_context.update(kwargs["extra_context"])
-                del kwargs["extra_context"]
+                kwargs["extra_context"].update(extra_context)
+            else:
+                kwargs["extra_context"] = extra_context
             
+            # certain standard admin urls cannot handle the extra_context var,
+            # making an excpetion here
+            if request.resolver_match.url_name == "jsi18n":
+                del kwargs["extra_context"]
+                
             # Going for high ranking here in most unreadable line of python 2014
             # What would uncle bob say? Would he even survive? And how could Guido's
             # dream of clean readble code have turned so nightmarish? 
             return super(ProjectAdminSite2,self).admin_view(view)(request,
-                                                                  extra_context=extra_context,
                                                                   *args,
                                                                   **kwargs)
 
