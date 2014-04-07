@@ -398,9 +398,12 @@ class ProjectAdminSite2(AdminSite):
             
             # certain standard admin urls cannot handle the extra_context var,
             # making an excpetion here
-            if request.resolver_match.url_name == "jsi18n":
+            no_extra_context = ["jsi18n","view_on_site","logout","password_change",
+                                "password_change_done"]
+            if request.resolver_match.url_name in no_extra_context:
                 del kwargs["extra_context"]
-                
+            
+            
             # Going for high ranking here in most unreadable line of python 2014
             # What would uncle bob say? Would he even survive? And how could Guido's
             # dream of clean readble code have turned so nightmarish? 
