@@ -402,7 +402,14 @@ class ProjectAdminSite2(AdminSite):
                                                                   **kwargs)
 
         return update_wrapper(inner, view)
-
+    
+    def has_permission(self,request):
+        """ For projectadmin, in addition to standard django checks, check if requesting
+        user is an admin for this project    
+        """
+        standard_check = super(ProjectAdminSite2,self).has_permission(request)        
+        return standard_check and self.project.is_admin(request.user)
+    
 
 projectadminsite = ProjectAdminSite(name="projectadmin", app_name="projectadmin")
 
