@@ -3,7 +3,8 @@ from django.views.generic import TemplateView
 
 from profiles.forms import SignupFormExtra
 
-from comicsite.admin import projectadminsite,vessel12adminsite
+#from comicsite.admin import vessel12adminsite,test
+from comicsite.admin import test
 
 
 
@@ -23,9 +24,10 @@ urlpatterns = patterns('',
     url(r'^(?P<site_short_name>[\w-]+)/$','comicsite.views.site'),
             
     
-    url(r'^vessel12/admin/', include(vessel12adminsite.urls), name="projectadmin"),
+    url(r'^', include(test.allurls),name='projectadmin'),
     
-    
+    #url(r'^vessel12/admin/', include(test.urls),name='projectadmin'),
+        
     #url(r'^(?P<site_short_name>[\w-]+)/admin/', include(projectadminsite.urls), name="projectadmin"),
     
     url(r'^(?P<site_short_name>[\w-]+)/robots\.txt$', TemplateView.as_view(template_name='robots.html'),name="comicsite_robots_txt"),

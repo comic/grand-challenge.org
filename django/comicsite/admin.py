@@ -10,7 +10,7 @@ from django.contrib import admin
 from django import forms
 
 
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 from django.contrib import messages
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.views.main import ChangeList
@@ -430,11 +430,67 @@ class ProjectAdminSite2(AdminSite):
         return standard_check and self.project.is_admin(request.user)
     
 
-projectadminsite = ProjectAdminSite(name="projectadmin", app_name="projectadmin")
-
 from comicmodels.models import ComicSite
-vessel12 = ComicSite.objects.get(short_name="VESSEL12")
-vessel12adminsite = ProjectAdminSite2(name="projectadmin", project=vessel12)
+
+class AllProjectAdminSites(object):
+    """ Class to use in urls.py, will build explicit urls and projectadmins for 
+    every project which has been defined in database
+    """
+        
+    
+    @property
+    def urls(self):
+        
+        project = ComicSite.objects.get(short_name="VESSEL12")
+        name = project.short_name+"admin"
+        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=vessel12)
+        self.register_comicmodels(projectadminsite)
+        
+        urls = projectadminsite.get_urls()
+        app_name = "admin"
+        #name = app_name
+        name = project.short_name+"admin"
+        
+        return urls, app_name, name
+    
+    @property
+    def allurls(self):
+        
+        projectname = "vessel12"
+        project = ComicSite.objects.get(short_name=projectname)
+        name = project.short_name+"admin"
+        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=vessel12)
+        self.register_comicmodels(projectadminsite)
+        
+        urls = projectadminsite.get_urls()
+        app_name = "admin"
+        #name = app_name
+        name = project.short_name+"admin"
+        
+        regex = r'^vessel12/admin/'
+        pat = patterns('',
+            url(regex,
+                projectadminsite.urls,
+                name=name)
+                )
+        
+        #return url(r'^admin/', include(projectadminsite.urls)),
+        return pat
+
+    def register_comicmodels(self,projectadminsite):
+        """ Make sure comicmodels can be edited and are shown in a projectadminsite 
+        
+        """
+        projectadminsite.register(ComicSite, ComicSiteAdmin)
+        projectadminsite.register(Page, PageAdmin)
+        projectadminsite.register(RegistrationRequest, RegistrationRequestAdmin)
+
+    
+
+#create_all_project_admin_sites()
+
+
+
 
 
 # ======================= end testing creating of custom admin
@@ -1038,15 +1094,25 @@ class PageAdminForm():
                          ('LAST', 'Last'),
                         )
 
+
+vessel12 = ComicSite.objects.get(short_name="VESSEL12")
+#vessel12adminsite = ProjectAdminSite2(name="projectadmin", project=vessel12)
+
+test = AllProjectAdminSites()
+
+#test = (vessel12adminsite.get_urls(),"projectadmin","projectadmin")
+#test = vessel12adminsite
+
+
+
 admin.site.register(ComicSite, ComicSiteAdmin)
 admin.site.register(Page, PageAdmin)
 
-projectadminsite.register(Page, PageAdmin)
-projectadminsite.register(ComicSite, ComicSiteAdmin)
-projectadminsite.register(RegistrationRequest, RegistrationRequestAdmin)
+#vessel12adminsite.register(ComicSite, ComicSiteAdmin)
+#vessel12adminsite.register(Page, PageAdmin)
+#vessel12adminsite.register(RegistrationRequest, RegistrationRequestAdmin)
 
-vessel12adminsite.register(ComicSite, ComicSiteAdmin)
-vessel12adminsite.register(Page, PageAdmin)
-vessel12adminsite.register(RegistrationRequest, RegistrationRequestAdmin)
+
+#test = AllProjectAdminSites
 
 
