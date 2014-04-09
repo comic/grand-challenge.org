@@ -455,27 +455,36 @@ class AllProjectAdminSites(object):
     
     @property
     def allurls(self):
+                
+        pat = []
+        for project in ComicSite.objects.all():
+            pat += self.get_admin_patterns(project)
+                #return url(r'^admin/', include(projectadminsite.urls)),
+        return pat
+    
+    
+    def get_admin_patterns(self,project):
+        """ get all url patterns for project, to use in urls.py
         
-        projectname = "vessel12"
-        project = ComicSite.objects.get(short_name=projectname)
-        name = project.short_name+"admin"
-        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=vessel12)
+        """
+        name = project.short_name+"admin"        
+        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=project)
         self.register_comicmodels(projectadminsite)
         
         urls = projectadminsite.get_urls()
         app_name = "admin"
         #name = app_name
-        name = project.short_name+"admin"
         
-        regex = r'^vessel12/admin/'
-        pat = patterns('',
+        
+        regex = r'^{}/admin/'.format(project.short_name)
+        
+        urlpatterns = patterns('',
             url(regex,
                 projectadminsite.urls,
                 name=name)
                 )
         
-        #return url(r'^admin/', include(projectadminsite.urls)),
-        return pat
+        return urlpatterns
 
     def register_comicmodels(self,projectadminsite):
         """ Make sure comicmodels can be edited and are shown in a projectadminsite 
@@ -771,38 +780,6 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
             request.GET.update(items)
         qs = super(admin.ModelAdmin, self).queryset(request)
         return qs
-
-    def get_changelist(self, request, **kwargs):
-        """
-        Returns the ChangeList class for use on the changelist page.
-
-        Overriding this so I can set the urls in changelist correctly
-        """
-        # from django.contrib.admin.views.main import ChangeList
-        from comicsite.admin import ProjectAdminSite
-
-        return ProjectAdminChangeList
-
-class ProjectAdminChangeList(ChangeList):
-
-
-    def __init__(self, request, model, list_display, list_display_links,
-            list_filter, date_hierarchy, search_fields, list_select_related,
-            list_per_page, list_max_show_all, list_editable, model_admin):
-        super(ProjectAdminChangeList, self).__init__(request, model, list_display, list_display_links,
-            list_filter, date_hierarchy, search_fields, list_select_related,
-            list_per_page, list_max_show_all, list_editable, model_admin)
-
-        self.projectname = request.projectname
-
-
-    def url_for_result(self, result):
-        pk = getattr(result, self.pk_attname)
-        return reverse('projectadmin:%s_%s_change' % (self.opts.app_label,
-                                               self.opts.module_name),
-                       args=(self.projectname, quote(pk),),
-                       current_app=self.model_admin.admin_site.name)
-
 
 class ComicSiteAdmin(admin.ModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
