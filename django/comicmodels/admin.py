@@ -255,7 +255,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
             
 
         
-class RegistrationRequestsAdmin(GuardedModelAdmin):    
+class RegistrationRequestAdmin(GuardedModelAdmin):    
     # TODO: This class should derive from ComicModelAdmin and not from GuardedModelAdmin
     
     # if user has this permission, user can access this ComicModel.
@@ -274,7 +274,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         """
         
         self.process_status_change(request,obj)            
-        super(RegistrationRequestsAdmin,self).save_model(request, obj, form, change)
+        super(RegistrationRequestAdmin,self).save_model(request, obj, form, change)
 
     
     def queryset(self, request): 
@@ -287,9 +287,9 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
         
         # TODO: This way of filtering should be used for all comicobjects, this
         #       would be a lot of rafactoring.                   
-        qs = super(RegistrationRequestsAdmin, self).queryset(request)
+        qs = super(RegistrationRequestAdmin, self).queryset(request)
         
-        if request.project_pk == -1:
+        if not request.is_projectadmin:
             if request.user.is_superuser:
                 # in general registration_requests overview, show requests for all
                 # projects only to admin
@@ -365,7 +365,7 @@ class RegistrationRequestsAdmin(GuardedModelAdmin):
             self.process_status_change(request,obj)
 
 
-admin.site.register(RegistrationRequest,RegistrationRequestsAdmin)
+admin.site.register(RegistrationRequest,RegistrationRequestAdmin)
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
 admin.site.register(UploadModel,UploadModelAdmin)
 admin.site.register(DropboxFolder,DropboxFolderAdmin)

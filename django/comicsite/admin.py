@@ -32,7 +32,7 @@ from guardian.shortcuts import get_objects_for_user, assign_perm
 
 from comicmodels.models import ComicSite, Page, RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
-from comicmodels.admin import ComicModelAdmin
+from comicmodels.admin import ComicModelAdmin,RegistrationRequestAdmin
 from comicsite.core.exceptions import ProjectAdminExcepetion
 
 
@@ -753,34 +753,6 @@ class ComicSiteManager(models.Manager):
         return self.filter(hidden=False)
 
 
-class RegistrationRequestInline(admin.StackedInline):
-    model = RegistrationRequest
-
-class RegistrationRequestAdmin(admin.ModelAdmin):
-    """Define the admin interface for pages"""
-
-    def queryset(self, request):
-        """ Only overwriting this because RegistrationRequest does not extend
-        comicmodel, and thus has no parmeter 'comicsite'. Instead this is called
-        'project'. Rename the default GET param inserted by projectadminsite here
-
-        TODO: make RegistrationRequest into a comicmodel. Why was it not?
-        """
-
-
-        if 'comicsite' in request.GET.keys():
-
-            request.GET = request.GET.copy()
-
-
-            request.GET.update({'project':request.GET['comicsite']})
-            items = dict([x for x in request.GET.items() if x[0] != 'comicsite'])
-            request.GET.clear()
-
-            request.GET.update(items)
-        qs = super(admin.ModelAdmin, self).queryset(request)
-        return qs
-
 class ComicSiteAdmin(admin.ModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page
@@ -1033,12 +1005,12 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         context = self.get_base_context(request, comicsite)
 
-        from comicmodels.admin import RegistrationRequestsAdmin
+        from comicmodels.admin import RegistrationRequestAdmin
         from comicmodels.models import RegistrationRequest
 
-        rra = RegistrationRequestsAdmin(RegistrationRequest, admin.site)
+        rra = RegistrationRequestAdmin(RegistrationRequest, admin.site)
         return rra.changelist_view(request)
-        # TODO: why is RegistrationRequestsAdmin in a different class. This is
+        # TODO: why is RegistrationRequestAdmin in a different class. This is
         # so confusing. Think about class responsibilities and fix this.
 
 
