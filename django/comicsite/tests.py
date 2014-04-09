@@ -1251,7 +1251,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
                                                                                      self.testproject))
         
         
-        from comicmodels.admin import RegistrationRequestsAdmin
+        from comicmodels.admin import RegistrationRequestAdmin
         
                                                                                            
         factory = RequestFactory()
@@ -1260,7 +1260,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         self.apply_standard_middleware(request)
                 
-        modeladmin = RegistrationRequestsAdmin(RegistrationRequest,admin.site)
+        modeladmin = RegistrationRequestAdmin(RegistrationRequest,admin.site)
         modeladmin.accept(request,reg_request)
         
                 
