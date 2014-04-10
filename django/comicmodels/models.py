@@ -351,8 +351,23 @@ class ComicSite(models.Model):
     def public_upload_dir_rel(self):
         """ Path to public uploaded files, relative to MEDIA_ROOT
 
-        """
+        """        
         return os.path.join(self.short_name,settings.COMIC_PUBLIC_FOLDER_NAME)
+
+    def get_project_admin_instance_name(self):
+        """ Each comicsite has a dedicated django admin instance. Return the
+        name for this instance. This can be used in reverse() like this:
+        
+        # will return url to root admin instance (shows all projects/objects)
+        reverse("admin:index") 
+        
+        # will return url to admin specific to this project (shows only objects 
+        # for this project)
+        reverse("admin:index", name = self.get_project_admin_instance_name())
+        """
+        
+        return "{}admin".format(self.short_name)
+        
 
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
