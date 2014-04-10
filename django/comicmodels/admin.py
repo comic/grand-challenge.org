@@ -255,7 +255,7 @@ class DropboxFolderAdmin(ComicModelAdmin):
             
 
         
-class RegistrationRequestAdmin(GuardedModelAdmin):    
+class RegistrationRequestAdmin(admin.ModelAdmin):    
     # TODO: This class should derive from ComicModelAdmin and not from GuardedModelAdmin
     
     # if user has this permission, user can access this ComicModel.
