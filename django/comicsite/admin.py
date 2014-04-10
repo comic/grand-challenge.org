@@ -310,8 +310,8 @@ class ProjectAdminSite2(AdminSite):
     associated with that project"""
 
 
-    def __init__(self, project, name='admin', app_name='admin'):
-        super(ProjectAdminSite2, self).__init__(name, app_name)
+    def __init__(self, project, name='admin', app_name=''):
+        super(ProjectAdminSite2, self).__init__(name)
         self.project = project
 
     def get_urls(self):
@@ -438,21 +438,7 @@ class AllProjectAdminSites(object):
     """
         
     
-    @property
-    def urls(self):
-        
-        project = ComicSite.objects.get(short_name="VESSEL12")
-        name = project.short_name+"admin"
-        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=vessel12)
-        self.register_comicmodels(projectadminsite)
-        
-        urls = projectadminsite.get_urls()
-        app_name = "admin"
-        #name = app_name
-        name = project.short_name+"admin"
-        
-        return urls, app_name, name
-    
+
     @property
     def allurls(self):
                 
@@ -467,22 +453,17 @@ class AllProjectAdminSites(object):
         """ get all url patterns for project, to use in urls.py
         
         """
-        name = project.short_name+"admin"        
-        projectadminsite = ProjectAdminSite2(app_name="admin", name=name, project=project)
+        name = project.get_project_admin_instance_name()
+        projectadminsite = ProjectAdminSite2(name=name,project=project)
         self.register_comicmodels(projectadminsite)
         
         urls = projectadminsite.get_urls()
-        app_name = "admin"
-        #name = app_name
-        
-        
         regex = r'^{}/admin/'.format(project.short_name)
         
         urlpatterns = patterns('',
-            url(regex,
-                projectadminsite.urls,
-                name=name)
-                )
+                               url(regex,
+                               projectadminsite.urls)
+                               )
         
         return urlpatterns
 
@@ -494,15 +475,7 @@ class AllProjectAdminSites(object):
         projectadminsite.register(Page, PageAdmin)
         projectadminsite.register(RegistrationRequest, RegistrationRequestAdmin)
 
-    
 
-#create_all_project_admin_sites()
-
-
-
-
-
-# ======================= end testing creating of custom admin
 
 class PageAdminForm(forms.ModelForm):
     move = forms.CharField(widget=forms.Select)
