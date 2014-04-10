@@ -1428,6 +1428,8 @@ class AdminTest(ComicframeworkTestCase):
         jspath = reverse("admin:jsi18n")
         self._test_url_can_be_viewed(self.projectadmin,jspath)
         
+        pdb.set_trace()
+        
         jspath = reverse("projectadmin:jsi18n")
         self._test_url_can_be_viewed(self.projectadmin,jspath)
         
