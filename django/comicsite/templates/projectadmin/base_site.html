@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load comic_templatetags %}
 
-{% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
+{% block title %}{{ title }} | {{ project_name }} Admin {% endblock %}
 
 {% block messages %}
         {% if messages %}
@@ -17,8 +17,9 @@
         {% endif %}
 {% endblock messages %}
 
+
 {% block branding %}
- <p>{{ project_name }} Admin </p>
+ <p>{{ project_name }} Admin</p>
 {% endblock %}
 
 {% block userlinks %}
@@ -30,3 +31,4 @@
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
+
