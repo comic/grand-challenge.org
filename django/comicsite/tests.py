@@ -1428,9 +1428,12 @@ class AdminTest(ComicframeworkTestCase):
         jspath = reverse("admin:jsi18n")
         self._test_url_can_be_viewed(self.projectadmin,jspath)
         
-        pdb.set_trace()
         
-        jspath = reverse("projectadmin:jsi18n")
+        ain = self.testproject.get_project_admin_instance_name()        
+        jspathpa = reverse("admin:jsi18n",current_app=self.testproject.get_project_admin_instance_name())
         self._test_url_can_be_viewed(self.projectadmin,jspath)
+        
+        self.assertTrue(jspath!=jspathpa,"Path to root admin should differ from "
+                            "path to project admin, but both resolve to '{}'".format(jspath))
         
         
