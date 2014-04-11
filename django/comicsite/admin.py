@@ -60,7 +60,22 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 logger = logging.getLogger("django")
 
 
+def reload_url_conf():
+    """ urlpatterns for project admin in urls.py are generated based on je current
+    projects in the database. When a project gets added, the admin urls for the
+    new project are not in the imported urls.py. A reload is required
+    """    
+    import comicsite.urls
+    import comic.urls
+    reload(comicsite.urls)
+    reload(comic.urls)
+    
+def clear_url_resolver_cache():
+    from django.core import urlresolvers
+    urlresolvers._resolver_cache = {}
 
+    
+    
 
 class ProjectAdminSite(AdminSite):
     """Admin for a specific project. Only shows and allows access to object
@@ -464,7 +479,6 @@ class AllProjectAdminSites(object):
                                url(regex,
                                projectadminsite.urls)
                                )
-        
         return urlpatterns
 
     def register_comicmodels(self,projectadminsite):
@@ -474,7 +488,6 @@ class AllProjectAdminSites(object):
         projectadminsite.register(ComicSite, ComicSiteAdmin)
         projectadminsite.register(Page, PageAdmin)
         projectadminsite.register(RegistrationRequest, RegistrationRequestAdmin)
-
 
 
 class PageAdminForm(forms.ModelForm):
@@ -935,11 +948,24 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         if obj.id is None:
             self.set_base_permissions(request, obj)
+            reload_url_conf()
+            clear_url_resolver_cache()
 
         else:
             # if object already existed just save
             obj.save()
+            
+    
+    def delete_model(self, request, obj):
+        """
+        Given a model instance delete it from the database.
+        """
+        self.remove_related_groups(request,obj)
+        obj.delete()
 
+    def remove_related_groups(self,request,obj):
+        Group.objects.get(name=obj.admin_group_name()).delete()
+        Group.objects.get(name=obj.participants_group_name()).delete()
 
     def set_base_permissions(self, request, obj):
         """ if saving for the first time, create admin and participants permissions groups that go along with
