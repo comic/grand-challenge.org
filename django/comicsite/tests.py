@@ -1428,7 +1428,6 @@ class AdminTest(ComicframeworkTestCase):
         jspath = reverse("admin:jsi18n")
         self._test_url_can_be_viewed(self.projectadmin,jspath)
         
-        
         ain = self.testproject.get_project_admin_instance_name()        
         jspathpa = reverse("admin:jsi18n",current_app=self.testproject.get_project_admin_instance_name())
         self._test_url_can_be_viewed(self.projectadmin,jspath)
