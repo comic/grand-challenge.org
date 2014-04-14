@@ -801,12 +801,21 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
 
     def manage_admin_link(self, instance):
-        return "<a href=\"admins\">View, Add or Remove Administrators for this project</a>"
+        """ HTML link to the overview of all admins for this project. Used in 
+        admin interface. 
+        """
+        
+        url = reverse("admin:comicmodels_comicsite_admins",args=[instance.pk],current_app=instance.get_project_admin_instance_name())
+        return "<a href={}>View, Add or Remove Administrators for this project</a>".format(url)
+    
     manage_admin_link.allow_tags = True  # allow links
     manage_admin_link.short_description = "Admins"
 
     def manage_participation_request_link(self, instance):
-        url = reverse("projectadmin:comicmodels_registrationrequest_changelist", args=[instance.short_name])
+        """ HTML link to overview of all participation requests. Used in admin.
+        """
+        
+        url = reverse("admin:comicmodels_registrationrequest_changelist",current_app=instance.get_project_admin_instance_name())        
         return "<a href=\'{}'>Approve or reject participation requests</a>".format(url)
 
     manage_participation_request_link.allow_tags = True  # allow links

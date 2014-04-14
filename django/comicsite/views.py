@@ -149,7 +149,7 @@ def site_get_standard_vars(site_short_name):
     Get all this info and return a dictionary ready to pass to render_to_response. Convenience method
     to save typing.
  
-    """    
+    """
     
     try:
         site = getSite(site_short_name)                  
