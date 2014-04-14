@@ -20,6 +20,7 @@ from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
 from ckeditor.views import upload_to_project 
+from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page,ComicSite,UploadModel,ComicSite,RegistrationRequest
 from comicmodels.views import upload_handler
 from comicsite.admin import ComicSiteAdmin,PageAdmin
@@ -56,7 +57,28 @@ def create_page_in_admin(comicsite,title,content="testcontent",permission_lvl=""
                                permission_lvl=permission_lvl)
     page_admin.first_save(page)
     return page
+
+def create_registrationrequest_in_admin(comicsite,requesting_user):
+    """ Create a  object as if created through django admin interface.    
+    """
     
+    
+    page_admin = PageAdmin(Page,admin.site)
+    page = Page.objects.create(title=title,
+                               comicsite=comicsite,
+                               html=content,
+                               permission_lvl=permission_lvl)
+    page_admin.first_save(page)
+    return page
+
+    
+
+def get_first_page(comicsite):
+    """ Get the first page of comicsite, saves some typing..
+    """
+    return Page.objects.filter(comicsite = comicsite)[0]
+
+
 def extract_form_errors(html):
     """ If something in post to a form url fails, I want to know what the
     problem was.
@@ -218,7 +240,7 @@ class ComicframeworkTestCase(TestCase):
     def _test_url_can_be_viewed(self,user,url):
         response,username = self._view_url(user,url)                    
         self.assertEqual(response.status_code, 200, "could not load page"
-                         "'%s' logged in as user '%s'"% (url,user))
+                         "'%s' logged in as user '%s'. Expected HTML200, got HTML%s"% (url,user,str(response.status_code)))
         return response
     
     def _test_url_can_not_be_viewed(self,user,url):        
@@ -1251,9 +1273,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
                                                                                      self.testproject))
         
         
-        from comicmodels.admin import RegistrationRequestAdmin
-        
-                                                                                           
         factory = RequestFactory()
         request = factory.get("/") #just fake a request, we only need to add user
         request.user = self.testproject.get_admins()[0]
@@ -1271,7 +1290,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
                         
         self.assertEmail(acceptance_mail,{"to":self.signedup_user.email,
                                           "subject":"participation request accepted",
-                                          "body":"has just accepted your request"                                       
+                                          "body":"has just accepted your request"
                                           })
                 
         # after acceptance, user should be able to access restricted pages.
@@ -1435,4 +1454,60 @@ class AdminTest(ComicframeworkTestCase):
         self.assertTrue(jspath!=jspathpa,"Path to root admin should differ from "
                             "path to project admin, but both resolve to '{}'".format(jspath))
         
+    
+    def _check_project_admin_view(self,project,viewname,args=[],user=None):
         
+        if user == None:
+            user = self.projectadmin
+        url = reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
+        response = self._test_url_can_be_viewed(user,url)
+        
+        expected_header = "<p>{} Admin</p>".format(project.short_name)
+        
+        self.assertTrue(expected_header in response.content,
+                        "Did not find expected header '{}'in page source for "
+                        "project admin url {}. This header should be printed "
+                        "on top of the page".format(expected_header,url))
+                                                    
+    
+    
+    def test_projectadmin_views(self):
+        """ Is javascript being included on admin pages correctly?
+        """
+                
+        self._check_project_admin_view(self.testproject,"admin:index")
+        
+        # check page add view    
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_page_add")
+        
+        # check page edit view for first page in project
+        firstpage = get_first_page(self.testproject)        
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_page_change",args=[firstpage.pk])
+        
+        # check page history view for first page in project
+        firstpage = get_first_page(self.testproject)
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_page_history",args=[firstpage.pk])
+        
+        # check overview of all pages
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_page_changelist")
+        
+        
+        # Do the same for registration requests: check of standard views do not crash
+        
+        # Create some registrationrequests 
+        rr1 = RegistrationRequest.objects.create(user=self.participant,project=self.testproject)
+        rr2 = RegistrationRequest.objects.create(user=self.participant,project=self.testproject,status=RegistrationRequest.REJECTED)
+        rr3 = RegistrationRequest.objects.create(user=self.participant,project=self.testproject,status=RegistrationRequest.ACCEPTED)
+        
+        # Using root here because projectadmin cannot see objects created above. Don't know why but this is not tested here.
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_registrationrequest_change",args=[rr1.pk],user=self.root)
+                
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_registrationrequest_history",args=[rr1.pk],user=self.root)
+        
+        self._check_project_admin_view(self.testproject,"admin:comicmodels_registrationrequest_changelist",user=self.root)
+        
+        # check admin add/ remove view
+        
+        
+        # check that expected links are present in main admin page
+         
