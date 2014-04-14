@@ -1,8 +1,7 @@
 {% extends "django_original/admin/change_list.html" %}
 {% load i18n admin_static admin_list %}
 {% load admin_urls %}
-          
-{% block object-tools-items %}
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{{project_name}} admin</a>
@@ -10,4 +9,4 @@
 </div>
 {% endblock %}
 
-{% endblock %}
+
