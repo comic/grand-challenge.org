@@ -23,7 +23,7 @@ from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page,ComicSite,UploadModel,ComicSite,RegistrationRequest
 from comicmodels.views import upload_handler
-from comicsite.admin import ComicSiteAdmin,PageAdmin
+from comicsite.admin import ComicSiteAdmin,PageAdmin,ProjectAdminSite2
 from comicsite.storage import MockStorage
 from django.core.files.storage import DefaultStorage
 from comicsite.views import _register
@@ -31,6 +31,7 @@ from profiles.admin import UserProfileAdmin
 from profiles.models import UserProfile
 from profiles.forms import SignupFormExtra
 from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+
 
 
 def get_or_create_user(username,password):
@@ -58,19 +59,49 @@ def create_page_in_admin(comicsite,title,content="testcontent",permission_lvl=""
     page_admin.first_save(page)
     return page
 
-def create_registrationrequest_in_admin(comicsite,requesting_user):
-    """ Create a  object as if created through django admin interface.    
+def get_projectadmin(project):
+    """ Return a django admin site centered on comicsite: will show only
+    objects for this comicsite, never from other comicsites.
     """
+    name = project.get_project_admin_instance_name()
+    projectadminsite = ProjectAdminSite2(name=name,project=project)
+    projectadminsite.register_comicmodels()
+    
+    return projectadminsite
+    
+
+def create_page_in_projectadmin(comicsite,title,content="testcontent",permission_lvl="",comicsite_for_page=""):
+    """ Create a Page object as if created through django projectadmin interface.
+    
+    """
+    # to be able to test creating a page for a different comicsite from this admin
+    # should not be possible, but that's what tests are for
+    if comicsite_for_page == "":
+        comicsite_for_page = comicsite
+    
+    # Rename, trying to call comicsite 'project' everywhere. Doing a full
+    # rename is very hard however 
+    project = comicsite
     
     
-    page_admin = PageAdmin(Page,admin.site)
+    # Create the overarching admin interface for any single project    
+    projectadminsite = get_projectadmin(project)
+    
+    # Each model in the admin interface has its own model admin, which is
+    # wrapped and modified by projectadminsite. Get this modified modeladmin
+    pageadmin = projectadminsite._registry[Page]
+
+    # Now create the page and save in the correct project-only modified object
+    # admin...
+    if permission_lvl == "":
+       permission_lvl = Page.ALL
+    
     page = Page.objects.create(title=title,
                                comicsite=comicsite,
                                html=content,
                                permission_lvl=permission_lvl)
-    page_admin.first_save(page)
+    pageadmin.first_save(page)
     return page
-
     
 
 def get_first_page(comicsite):
@@ -1471,7 +1502,7 @@ class AdminTest(ComicframeworkTestCase):
                                                     
     
     
-    def test_projectadmin_views(self):
+    def test_project_admin_views(self):
         """ Is javascript being included on admin pages correctly?
         """
                 
@@ -1506,8 +1537,13 @@ class AdminTest(ComicframeworkTestCase):
         
         self._check_project_admin_view(self.testproject,"admin:comicmodels_registrationrequest_changelist",user=self.root)
         
-        # check admin add/ remove view
+        # see if adding a page crashes the admin
+        create_page_in_projectadmin(self.testproject,"test_project_admin_page_add")
         
-        
+        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
+        # set to the project this projectadmin is for. Test this by creating a
+        # page without a project. 
+        create_page_in_projectadmin(self.testproject,"test_project_admin_page_add_without_comicsite",comicsite_for_page=None)
+    
         # check that expected links are present in main admin page
          

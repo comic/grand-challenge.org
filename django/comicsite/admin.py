@@ -339,6 +339,15 @@ class ProjectAdminSite2(AdminSite):
             
 
         return super(ProjectAdminSite2, self).get_urls()
+    
+    def register_comicmodels(self):
+        """ Make sure all relevant models can be edited and are shown in this projectadminsite 
+        
+        """
+        self.register(ComicSite, ComicSiteAdmin)
+        self.register(Page, PageAdmin)
+        self.register(RegistrationRequest, RegistrationRequestAdmin)
+
 
     def queryset_wrapper(self, querysetfunction):
         """ Modify queryset so it only show objects related to the current project
@@ -468,7 +477,7 @@ class AllProjectAdminSites(object):
         """
         name = project.get_project_admin_instance_name()
         projectadminsite = ProjectAdminSite2(name=name,project=project)
-        self.register_comicmodels(projectadminsite)
+        projectadminsite.register_comicmodels()
         
         urls = projectadminsite.get_urls()
         regex = r'^{}/admin/'.format(project.short_name)
@@ -478,14 +487,6 @@ class AllProjectAdminSites(object):
                                projectadminsite.urls)
                                )
         return urlpatterns
-
-    def register_comicmodels(self,projectadminsite):
-        """ Make sure comicmodels can be edited and are shown in a projectadminsite 
-        
-        """
-        projectadminsite.register(ComicSite, ComicSiteAdmin)
-        projectadminsite.register(Page, PageAdmin)
-        projectadminsite.register(RegistrationRequest, RegistrationRequestAdmin)
 
 
 class PageAdminForm(forms.ModelForm):
