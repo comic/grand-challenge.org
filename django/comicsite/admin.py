@@ -72,9 +72,7 @@ def reload_url_conf():
     
 def clear_url_resolver_cache():
     from django.core import urlresolvers
-    urlresolvers._resolver_cache = {}
-
-    
+    urlresolvers._resolver_cache.clear()
     
 
 class ProjectAdminSite(AdminSite):
@@ -325,8 +323,8 @@ class ProjectAdminSite2(AdminSite):
     associated with that project"""
 
 
-    def __init__(self, project, name='admin', app_name=''):
-        super(ProjectAdminSite2, self).__init__(name)
+    def __init__(self, project, name='admin', app_name='admin'):
+        super(ProjectAdminSite2, self).__init__(name,app_name)
         self.project = project
 
     def get_urls(self):
@@ -950,6 +948,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
             self.set_base_permissions(request, obj)
             reload_url_conf()
             clear_url_resolver_cache()
+            
+
 
         else:
             # if object already existed just save
