@@ -480,7 +480,7 @@ class AllProjectAdminSites(object):
         projectadminsite.register_comicmodels()
         
         urls = projectadminsite.get_urls()
-        regex = r'^{}/admin/'.format(project.short_name)
+        regex = r'^{}/admin/'.format(project.short_name.lower())
         
         urlpatterns = patterns('',
                                url(regex,

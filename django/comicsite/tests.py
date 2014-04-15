@@ -237,7 +237,8 @@ class ComicframeworkTestCase(TestCase):
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
-                
+        self.apply_standard_middleware(request)
+        
         response = _register(request,project.short_name)
         
         
@@ -504,7 +505,22 @@ class ComicframeworkTestCase(TestCase):
                             '{1}' but found '{2}' instead".format(expected,
                                                                   attr,
                                                                   found))    
-     
+    def apply_standard_middleware(self, request):
+        """ Some actions in the admin pages require certain middleware which is not
+        always present in admin. Apply this explicitly here.
+        
+        """        
+        from django.contrib.sessions.middleware import SessionMiddleware # Some admin actions render messages and will crash without explicit import
+        from django.contrib.messages.middleware import MessageMiddleware
+        from comicsite.middleware.project import ProjectMiddleware
+        sm = SessionMiddleware()
+        mm = MessageMiddleware()
+        pm = ProjectMiddleware()
+        
+        sm.process_request(request)
+        mm.process_request(request)
+        pm.process_request(request)
+ 
 
 
 # =============================================================================
@@ -930,6 +946,8 @@ class UploadTest(ComicframeworkTestCase):
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
+        self.apply_standard_middleware(request)
+
         response = upload_handler(request, project.short_name)
         return response
     
@@ -1227,21 +1245,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
                     
         self.assertTrue(allprojectsHTML != "","Nothing was rendered for projects overview")
                     
-
-    def apply_standard_middleware(self, request):
-        """ Some actions in the admin pages require messages middleware, which is
-        not active for some reason when running tests. Manually Process a request
-        with middleware so it can be used in an admin action writing messages 
-        without crashing
-        
-        """        
-        from django.contrib.sessions.middleware import SessionMiddleware # Some admin actions render messages and will crash without explicit import
-        from django.contrib.messages.middleware import MessageMiddleware
-        sm = SessionMiddleware()
-        mm = MessageMiddleware()
-        sm.process_request(request)
-        mm.process_request(request)
-
 
     def test_registration_request_tag(self):
         """   Registration tags renders a link to register. Either directly of
