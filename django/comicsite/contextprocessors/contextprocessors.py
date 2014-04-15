@@ -16,7 +16,7 @@ def comic_site(request):
     figure it out. Use main project. 
     
     """
-    
+
     try:
         resolution = resolve(request.path)
     except Http404 as e:
@@ -30,7 +30,7 @@ def comic_site(request):
         sitename = resolution.kwargs["project_name"]
     else:
         sitename = settings.MAIN_PROJECT_NAME
-    
+
     [site, pages, metafooterpages] = site_get_standard_vars(sitename)
     
     return {"site":site,"pages":pages,"metafooterpages":metafooterpages}

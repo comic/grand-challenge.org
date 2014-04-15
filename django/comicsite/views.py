@@ -31,7 +31,7 @@ from userena import views as userena_views
 from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest,ProjectMetaData
 from comicsite.admin import ComicSiteAdmin
 from comicsite.core.urlresolvers import reverse
-from comicsite.template.context import ComicSiteRequestContext
+from comicsite.template.context import ComicSiteRequestContext,CurrentAppRequestContext
 from comicsite.models import send_existing_project_link_submission_notification_email
 from comicsite.core.exceptions import ComicException
 
@@ -41,7 +41,7 @@ from dataproviders import FileSystemDataProvider
 
 
 def index(request):
-    return  HttpResponse("ComicSite index page.",context_instance=RequestContext(request))
+    return  HttpResponse("ComicSite index page.",context_instance=CurrentAppRequestContext(request))
 
 
 def _register(request, site_short_name):
@@ -72,7 +72,7 @@ def _register(request, site_short_name):
             html = "you need to be logged in to use this url"
             currentpage = Page(comicsite=site, title="please_log_in", display_title="Please log in", html=html)
         
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=CurrentAppRequestContext(request))
 
 
 def _register_directly(request, project):
@@ -125,7 +125,8 @@ def site(request, site_short_name):
     # How to handle not found nicely? Throwing exception in site_get_standard_vars
     # seems like a nice start, but this function is called throughout the code
     # also outside views (in contextprocessor). Throwing Http404 there will 
-    # result in server error.. 
+    # result in server error..
+    
     try:
         site = getSite(site_short_name)
     except ComicSite.DoesNotExist:
@@ -141,8 +142,8 @@ def site(request, site_short_name):
         currentpage = pages[0]
             
     currentpage = getRenderedPageIfAllowed(currentpage,request,site)
-    #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=RequestContext(request))
-    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=RequestContext(request))
+    #return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=CurrentAppRequestContext(request))
+    return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages},context_instance=CurrentAppRequestContext(request))
 
 def site_get_standard_vars(site_short_name):
     """ When rendering a site you need to pass the current site, all pages for this site, and footer pages.
@@ -295,7 +296,7 @@ def projectlinks(request):
     grand-challenge.org 
     
     """    
-    response =  render_to_response('projectlinks.html', context_instance=RequestContext(request))
+    response =  render_to_response('projectlinks.html', context_instance=CurrentAppRequestContext(request))
     return response
     
 
@@ -308,7 +309,7 @@ def page(request, site_short_name, page_title):
     currentpage = getRenderedPageIfAllowed(page_title,request,site)
     response =  render_to_response('page.html',
                                            {'currentpage': currentpage},
-                                           context_instance=RequestContext(request))
+                                           context_instance=CurrentAppRequestContext(request))
     
     # TODO: THis has code smell. If page has to be checked like this, is it 
     # ok to use a page object for error messages?
@@ -330,7 +331,7 @@ def pagesource(request, site_short_name, page_title):
         
     return render_to_response('pagesource.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+                                            context_instance=CurrentAppRequestContext(request))
 
 
 def errorpage(request,site_short_name,page_title,message):
@@ -338,7 +339,7 @@ def errorpage(request,site_short_name,page_title,message):
     page = ErrorPage(comicsite=site, title=page_title, html=message)
     return render_to_response('page.html', {'site': site, 'currentpage': page, "pages":pages, 
                                             "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+                                            context_instance=CurrentAppRequestContext(request))
 
 
 
@@ -379,7 +380,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     
     return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+                                            context_instance=CurrentAppRequestContext(request))
 
     
 def inserted_file(request, site_short_name, filepath=""):
@@ -440,7 +441,7 @@ def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
         
     return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages":pages, 
                                             "metafooterpages":metafooterpages},
-                                            context_instance=RequestContext(request))
+                                            context_instance=CurrentAppRequestContext(request))
 
 
 def dropboximage(request, site_short_name, page_title,dropboxname,dropboxpath=""):
@@ -476,7 +477,7 @@ def comicmain(request, page_title=""):
         return render_to_response('temppage.html',
                                   {'site': p.comicsite,
                                    'currentpage': p},
-                                  context_instance=RequestContext(request))
+                                  context_instance=CurrentAppRequestContext(request))
 
             
     pages = getPages(site_short_name)
@@ -495,8 +496,8 @@ def comicmain(request, page_title=""):
         p = create_temp_page(title="no_pages_found",html=html)
         return render_to_response('temppage.html',
                                   {'site': p.comicsite,
-                                   'currentpage': p},                                                                    
-                                  context_instance=RequestContext(request))
+                                   'currentpage': p},
+                                  context_instance=CurrentAppRequestContext(request))
         
     elif page_title=="":
         #if no page title is given, just use the first page found            
@@ -518,13 +519,16 @@ def comicmain(request, page_title=""):
     # to display pages from main project at the very bottom of the site as
     # general links
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
-        
+    
+    context = CurrentAppRequestContext(request)
+    #context.current_app = "VESSEL12admin"
+    
     return render_to_response('mainpage.html',
                               {'site': p.comicsite,
                                'currentpage': p,
                                "pages":pages,
                                "metafooterpages":metafooterpages},
-                              context_instance=RequestContext(request))
+                              context_instance=context)
 
                 
     
@@ -548,7 +552,7 @@ def dataPage(request):
                               {'site': p.comicsite,
                                'currentpage': p,
                                "pages":pages }
-                              ,context_instance=RequestContext(request))
+                              ,context_instance=CurrentAppRequestContext(request))
 
 # ======================================== not called directly from urls.py =========================================
 
@@ -691,7 +695,7 @@ def signup_complete(request, site_short_name,):
                                             "pages":pages,
                                             "currentpage":currentpage,
                                             "metafooterpages":metafooterpages},
-                                           context_instance=RequestContext(request))
+                                           context_instance=CurrentAppRequestContext(request))
     
     return response
 
@@ -724,7 +728,7 @@ def submit_existing_project(request):
                                "pages":pages,
                                "metafooterpages":metafooterpages
                                },
-                              context_instance=RequestContext(request))
+                              context_instance=CurrentAppRequestContext(request))
     else:
     
         form = ProjectMetadataForm() 
@@ -734,7 +738,7 @@ def submit_existing_project(request):
                                "pages":pages,
                                "metafooterpages":metafooterpages,
                                "form":form},
-                              context_instance=RequestContext(request))
+                              context_instance=CurrentAppRequestContext(request))
 
 
 
