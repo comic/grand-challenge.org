@@ -106,8 +106,7 @@ def _register_after_approval(request, project):
         reg_request = RegistrationRequest()
         reg_request.project = project
         reg_request.user = request.user
-        reg_request.save()
-        
+        reg_request.save()        
         from comicsite.models import send_participation_request_notification_email
         send_participation_request_notification_email(request,reg_request)
         

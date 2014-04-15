@@ -731,6 +731,7 @@ class ViewsTest(ComicframeworkTestCase):
                 
         
         response,username = self._view_url(None,non_existant_url)
+        
         self.assertEqual(response.status_code, 404, "Expected non existing url"
         "'%s' to give 404, instead found %s"%(non_existant_url,response.status_code))
             
