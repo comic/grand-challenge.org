@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.urlresolvers import resolve
 
 from comicsite.views import site_get_standard_vars
+from comicmodels.models import ComicSite
 from django.http import Http404
 
 
@@ -31,6 +32,11 @@ def comic_site(request):
     else:
         sitename = settings.MAIN_PROJECT_NAME
 
-    [site, pages, metafooterpages] = site_get_standard_vars(sitename)
+    try:
+        [site, pages, metafooterpages] = site_get_standard_vars(sitename)
+    except ComicSite.DoesNotExist:
+        # Don't crash the system here, if a site cannot be found it will crash 
+        # in a more appropriate location
+        return {}
     
     return {"site":site,"pages":pages,"metafooterpages":metafooterpages}
