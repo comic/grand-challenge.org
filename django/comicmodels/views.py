@@ -8,13 +8,14 @@ from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, render
-from django.template import RequestContext
 
 from comicmodels.models import ComicSite
 from comicmodels.forms import UploadForm,UserUploadForm
 from comicmodels.models import UploadModel,Page
 from comicmodels.signals import file_uploaded
+from comicsite.template.context import CurrentAppRequestContext
 from comicsite.views import site_get_standard_vars,concatdicts,getSite,permissionMessage
+
 from filetransfers.api import prepare_upload, serve_file
 
 
@@ -64,7 +65,7 @@ def upload_handler(request,site_short_name):
                                         'currentpage': currentpage, 
                                         "pages":pages,                                            
                                         "metafooterpages":metafooterpages},
-                                       context_instance=RequestContext(request))
+                                       context_instance=CurrentAppRequestContext(request))
         
         response.status_code = 403
         return response
@@ -79,9 +80,10 @@ def upload_handler(request,site_short_name):
                                 order_by('modified').reverse()
 
     #return direct_to_template(request, 'upload/comicupload.html',
-    return render(request, 'upload/comicupload.html',
+    return render_to_response('upload/comicupload.html',
         {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
          'uploads': uploadsforcurrentsite,'site': site,'pages': pages,
-         'metafooterpages' : metafooterpages})
+         'metafooterpages' : metafooterpages},
+          context_instance=CurrentAppRequestContext(request))
 
 

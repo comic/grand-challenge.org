@@ -77,6 +77,7 @@
 	{% get_obj_perms user for site as "site_perms" %}			
 	{% if "change_comicsite" in site_perms or request.user.is_superuser %}	   
 	   <li> <a class="menuItem" href="{% url 'admin:comicmodels_comicsite_change' site.pk%}">Admin</a></li>	   	  
+	   <li> <a class="menuItem" href="{% url 'admin:index' %}">Adminnew</a></li>
     
 	{% endif %}
 	

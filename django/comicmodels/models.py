@@ -77,6 +77,14 @@ def get_anonymous_user():
     return User.objects.get(username = "AnonymousUser")
 
 
+def get_project_admin_instance_name(projectname):
+    """ Convention for naming the projectadmin interface for the given project
+    Defining this here so it can be used from anywhere without needing a 
+    ComicSite Instance.
+    """
+    
+    return "{}admin".format(projectname.lower())
+
 class ComicSiteManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """
 
@@ -366,7 +374,7 @@ class ComicSite(models.Model):
         reverse("admin:index", name = self.get_project_admin_instance_name())
         """
         
-        return "{}admin".format(self.short_name)
+        return get_project_admin_instance_name(self.short_name)
         
 
     def admin_group_name(self):
