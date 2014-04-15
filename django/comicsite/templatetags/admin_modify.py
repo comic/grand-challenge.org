@@ -16,7 +16,9 @@ def submit_row(context):
     here so projectadmin can redirect to correctproject after saving,deleting
     """
     ctx = original.submit_row(context)
-    ctx["site"] = context["site"]
+    
+    if "site" in ctx:
+        ctx["site"] = context["site"]
     
     if "projectadmin" in context:
         ctx["projectadmin"] = context["projectadmin"]
