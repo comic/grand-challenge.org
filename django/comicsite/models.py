@@ -94,8 +94,7 @@ def send_existing_project_link_submission_notification_email(request,obj):
     
     title = 'Existing project form submitted:"{0}"'.format(obj.title)
     mainproject = ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
-    
-    
+        
     kwargs={'obj':obj,
             'site':get_current_site(request),
             'mainproject':mainproject}
@@ -214,7 +213,8 @@ def send_file_uploaded_notification_email(sender,**kwargs):
     else:
         kwargs['additional_message'] = ''
         admin_email_adresses = [x.email for x in admins]
-
+    
+    kwargs['project'] = comicsite
     send_templated_email(title, "admin/emails/file_uploaded_email.txt",kwargs,
                          admin_email_adresses ,"noreply@"+site.domain,
                          fail_silently=False)
@@ -256,8 +256,18 @@ def send_templated_email(subject, email_template_name, email_context, recipients
         eg ('/tmp/file1.txt', '/tmp/image.png')
 
     """
-
+    
+    from comicmodels.models import get_project_admin_instance_name
+    
+    
     c = Context(email_context)
+    # Add current app so {% url admin:index %} will resolve to project admin
+    # like /site/vessel12/admin instead of /admin
+    # if there is no project defined, do not add current app, which will render
+    # email with links to main admin
+    if "project" in c:  
+        c.current_app =  c['project'].get_project_admin_instance_name()
+        
     if not sender:
         sender = settings.DEFAULT_FROM_EMAIL
 
