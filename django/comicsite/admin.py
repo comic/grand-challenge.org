@@ -70,6 +70,7 @@ def reload_url_conf():
     reload(comicsite.urls)
     reload(comic.urls)
     
+    
 def clear_url_resolver_cache():
     from django.core import urlresolvers
     urlresolvers._resolver_cache.clear()
@@ -1065,6 +1066,7 @@ test = AllProjectAdminSites()
 
 admin.site.register(ComicSite, ComicSiteAdmin)
 admin.site.register(Page, PageAdmin)
+
 
 #vessel12adminsite.register(ComicSite, ComicSiteAdmin)
 #vessel12adminsite.register(Page, PageAdmin)

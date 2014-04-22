@@ -19,11 +19,13 @@ urlpatterns = patterns('',
     
     url(r'^test/test_logging/$','comicsite.views.test_logging'),
         
-    #url(r'^admin/', include(projectadminsite.urls)),
-                             
     url(r'^(?P<site_short_name>[\w-]+)/$','comicsite.views.site'),
             
     
+    # Include an admin url for each project in database. This stretches the django
+    # Assumptions of urls being fixed a bit, but it is the only way to reuse much
+    # of the automatic admin functionality whithout rewriting the whole interface 
+    # see issue #181
     url(r'^', include(test.allurls),name='projectadmin'),
     
     #url(r'^vessel12/admin/', include(test.urls),name='projectadmin'),
