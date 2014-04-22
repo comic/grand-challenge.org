@@ -29,7 +29,7 @@ class ComicModelAdmin(GuardedModelAdmin):
     # if user has this permission, user can access this ComicModel.
     permission_name = 'view_ComicSiteModel'
     
-    def __init__(self, model, admin_site):        
+    def __init__(self, model, admin_site):
         super(GuardedModelAdmin, self).__init__(model,admin_site)
         
         # use general template instead of the one GuardedModelAdmin puts in there
@@ -363,7 +363,6 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
         for obj in queryset.all():
             obj.status = RegistrationRequest.REJECTED
             self.process_status_change(request,obj)
-
 
 admin.site.register(RegistrationRequest,RegistrationRequestAdmin)
 admin.site.register(FileSystemDataset,FileSystemDatasetAdmin)
