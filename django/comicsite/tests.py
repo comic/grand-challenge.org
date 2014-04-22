@@ -33,6 +33,8 @@ from profiles.forms import SignupFormExtra
 from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
 
 
+# Platform independent regex which will match line endings in win and linux
+PI_LINE_END_REGEX = "(\r\n|\n)"
 
 def get_or_create_user(username,password):
     query_result = User.objects.filter(username=username)
@@ -129,7 +131,7 @@ def find_text_between(start,end,haystack):
         found = re.search(start+'(.*)'+end,haystack,re.IGNORECASE | re.DOTALL)
                 
         if found:
-            return found.group(1)
+            return found.group(1).strip()
         else:
             raise Exception("There is no substring starting with '{}', ending"
                             " with '{}' in content '{}' ".format(start,end,haystack))
@@ -397,17 +399,16 @@ class ComicframeworkTestCase(TestCase):
                          "yet validated with link!"),
         
         # validate the user with the link that was emailed
-        pattern = '/example.com(.*)\r'
+        pattern = '/example.com(.*)'+PI_LINE_END_REGEX
         validationlink_result = re.search(pattern,
                                           validation_mail.body,
                                           re.IGNORECASE)
         
-        
         self.assertTrue(validationlink_result, "could not find any link in" 
                         "registration email. Tried to match pattern '{}' but found no match in"
-                        "this email: \n{}".format(pattern,validation_mail.body))
+                        "this email: {}{}".format(pattern,PI_LINE_END_REGEX,validation_mail.body))
         
-        validationlink = validationlink_result.group(1)        
+        validationlink = validationlink_result.group(1).strip()      
         response = self.client.get(validationlink)        
         
         self.assertEqual(response.status_code,302, "Could not load user validation link. Expected"
@@ -1106,10 +1107,10 @@ class TemplateTagsTest(ComicframeworkTestCase):
         found = re.search('<ul class="dataset">(.*)</ul>', response1.content, re.IGNORECASE)
         link = ""
         if found:
-            filelist_HTML = found.group(0)
+            filelist_HTML = found.group(0).strip()
             found_link = re.search('href="(.*)">', found.group(0), re.IGNORECASE)
             if found_link:
-                link = found_link.group(1)
+                link = found_link.group(1).strip()
         
         self.assertTrue(link!="","Could not find any list of files after rendering html '%s'" % response1.content)
         return link                
