@@ -7,7 +7,6 @@ from comicmodels.models	 import ComicSite
  
 admin.autodiscover()
 
-
 urlpatterns = patterns('',
     
     # Uncomment the admin/doc line below to enable admin documentation:
@@ -21,10 +20,11 @@ urlpatterns = patterns('',
     # give a 404.  WHY?
     url(r'^robots\.txt$', TemplateView.as_view(template_name='robots.html')),
       
-    url(r'^site/',include('comicsite.urls'),name='site'),
     
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    
+    url(r'^site/',include('comicsite.urls'),name='site'),
     
     url(r'^projectlinks/$','comicsite.views.projectlinks'),
 
