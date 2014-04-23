@@ -1053,26 +1053,10 @@ class PageAdminForm():
                          ('LAST', 'Last'),
                         )
 
-
-vessel12 = ComicSite.objects.get(short_name="VESSEL12")
-#vessel12adminsite = ProjectAdminSite2(name="projectadmin", project=vessel12)
-
-test = AllProjectAdminSites()
-
-#test = (vessel12adminsite.get_urls(),"projectadmin","projectadmin")
-#test = vessel12adminsite
-
-
+# this variable is included in urls.py to get admin urls for each project in
+# the database  
+projectadminurls = AllProjectAdminSites()
 
 admin.site.register(ComicSite, ComicSiteAdmin)
 admin.site.register(Page, PageAdmin)
-
-
-#vessel12adminsite.register(ComicSite, ComicSiteAdmin)
-#vessel12adminsite.register(Page, PageAdmin)
-#vessel12adminsite.register(RegistrationRequest, RegistrationRequestAdmin)
-
-
-#test = AllProjectAdminSites
-
 
