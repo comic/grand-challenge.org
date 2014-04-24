@@ -85,6 +85,22 @@ def get_project_admin_instance_name(projectname):
     
     return "{}admin".format(projectname.lower())
 
+def get_projectname(project_admin_instance_name):
+    """ Return lowercase projectname for an admin instance admin instance name.
+    For example for 'caddementiaadmin' return project name 'caddementia'
+    
+    In some places, for example middleware/project.py, the project_admin_instance_name
+    is the only lead we have for determining which project the request is associated with.
+    In those place you want to get the project name back from the admin_instance_name
+    
+    """
+    if not "admin" in project_admin_instance_name:
+        from exceptions import ValueError 
+        raise ValueError("expected an admin site instance name ending in 'admin',"
+                         " but did not find this in value '{}'".format(project_admin_instance_name))
+    return project_admin_instance_name[:-5]
+    
+
 class ComicSiteManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """
 

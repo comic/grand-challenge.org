@@ -362,7 +362,7 @@ class ProjectAdminSite2(AdminSite):
             # Is rather a lot work because of dependencies with the database and
             # other code. Going for quick fix here. Ideal solution is to rewrite
             # all comic objects to have a 'project' param.
-            
+                        
             if qs:
                 if hasattr(qs[0],'project'):
                     qs = qs.filter(project=self.project)
