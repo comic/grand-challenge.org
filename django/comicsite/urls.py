@@ -26,7 +26,7 @@ urlpatterns = patterns('',
     url(r'^(?P<site_short_name>[\w-]+)/robots\.txt$', TemplateView.as_view(template_name='robots.html'),name="comicsite_robots_txt"),
     
     
-    #url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
+    url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
     
     # these registration and account views are viewed in the context of a
     # project
