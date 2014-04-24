@@ -1338,11 +1338,22 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # just to test, a random user should not be able to see this page
         self._test_page_can_not_be_viewed(self._create_random_user("not_registered"),registeredonlypage)
         
-        # check if admin can load the view to show all registration requests
+        # check if admin can load the view to add a registration requests
         admin_url = reverse('admin:comicmodels_registrationrequest_add')
                 
         self._test_url_can_be_viewed(self.projectadmin,admin_url)
+        #test whether the participationrequest is actually in the list in the admin
+        projectadmin_list =  reverse('admin:comicmodels_registrationrequest_changelist',
+                current_app=self.testproject.get_project_admin_instance_name())
         
+        # check an admin can see the registration request that was just made by signup_user.
+        result = self._test_url_can_be_viewed(self.projectadmin,projectadmin_list)
+        name = self.signedup_user.username
+        
+        self.assertTrue(name in result.rendered_content,"An admin user in projectadmin should be able to see the participation"
+        "request that was just made, but could not find the requesting users name '{}' anywhere in the content of"
+        " page {}". format(name,projectadmin_list)) 
+         
         #self._test_page_can_be_viewed(self.projectadmin,registeredonlypage)
         
                     

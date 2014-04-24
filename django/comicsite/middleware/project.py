@@ -1,7 +1,8 @@
 from django.core.urlresolvers import resolve,Resolver404
 from django.conf import settings
 
-from comicmodels.models import ComicSite
+from comicmodels.models import ComicSite,get_projectname
+
     
 class ProjectMiddleware:
     """ Everything you do on comicframework is related to a project. This
@@ -14,9 +15,9 @@ class ProjectMiddleware:
         in views.
                 
         """
+        request.is_projectadmin = self.is_projectadmin_url(request)
         request.projectname = self.get_project_name(request)
         request.project_pk = self.get_project_pk(request)
-        request.is_projectadmin = self.is_projectadmin_url(request)
         
         
     def get_project_name(self,request):
@@ -29,6 +30,8 @@ class ProjectMiddleware:
                 projectname = resolution.kwargs["site_short_name"]
             elif resolution.kwargs.has_key("project_name"):
                 projectname = resolution.kwargs["project_name"]
+            elif request.is_projectadmin:
+                projectname = get_projectname(resolution.namespace)
             else:
                 projectname = settings.MAIN_PROJECT_NAME
         except Resolver404:
@@ -57,11 +60,15 @@ class ProjectMiddleware:
         is_projectadmin = False
         try:
             resolution = resolve(request.path)
-            is_projectadmin = resolution.app_name == 'projectadmin'
+            # urls.py is set up in such a way that 'namespace' is always 'xxxadmin'
+            # for example it is 'vesse12admin' for the vessel12 admin. It is only
+            # 'admin' for the main (root) admin site. 
+            is_projectadmin = resolution.namespace != 'admin' and self.is_admin_page(resolution)
         except Resolver404:
             is_projectadmin = False
         
         return is_projectadmin
         
-    
+    def is_admin_page(self,resolution):
+        return resolution.app_name == 'admin'
     
