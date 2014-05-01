@@ -454,6 +454,65 @@ class ListDirNode(template.Node):
         return htmlOut
 
 
+@register.tag(name = "image_browser")
+def render_image_browser(parser, token):
+    """ Given a folder and project, render a browser so you can skip through them in browser """
+
+    usagestr = """Tag usage: {% image_browser path:string - path relative to current project %}
+                      
+                  """
+    try:
+        args = parseKeyValueToken(token)
+    except ValueError:
+        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        return TemplateErrorNode(errormsg)
+
+    if "path" not in args.keys():
+        errormsg = "Error rendering {% " + token.contents + " %}: path argument is missing." + usagestr
+        return TemplateErrorNode(errormsg)
+
+    return ImageBrowserNode(args)
+
+class ImageBrowserNode(template.Node):
+    """
+    Render jquery browser to go through all images in given folder
+    """
+
+    def __init__(self, args):
+        self.args = args
+
+    def make_dataset_error_msg(self, msg):
+        errormsg = "Error rendering Visualization '" + str(self.args) + ":" + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+        htmlOut = """
+
+          <div class="ImageBrowser">
+            A browser for path '{PATH}' to be implemented
+          </div>
+
+          <h3>Results viewer</h3>
+            <div id="resultViewer">
+                <div id="resultViewerGUI"></div>     
+                <div id="resultMessage"></div>
+            </div>
+            <div style="clear:both;"></div>
+        
+        
+        
+        
+        <script type="text/javascript" src="/static/js/challengeResultViewer/challengeResultViewer.js"></script> 
+        <script type="text/javascript">
+            renderResultViewerGUI($("#resultViewerGUI"));
+        </script> 
+
+        """.format(PATH=self.args["path"])
+        return htmlOut
+
+
+
+
 
 @register.tag(name = "visualization")
 def render_visualization(parser, token):
