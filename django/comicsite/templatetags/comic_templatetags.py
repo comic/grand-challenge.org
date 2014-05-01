@@ -454,6 +454,7 @@ class ListDirNode(template.Node):
         return htmlOut
 
 
+
 @register.tag(name = "visualization")
 def render_visualization(parser, token):
     """ Given a dataset name, show a 2D visualization for that """
@@ -853,9 +854,57 @@ class InsertBrowserNode(template.Node):
 
 
 # {% insertfile results/test.txt %}
+@register.tag(name="url_to_file",
+              usagestr = """Tag usage: {% url_to_file <file> %}
+                  <file>: filepath relative to project dropboxfolder.
+                  Example: {% url_to_file results/image1.txt %}
+                  You can use url parameters in <file> by using {{curly braces}}.
+                  Example: {% url_to_file {{id}}/result.txt %} called with ?id=1234
+                  appended to the url will render a url to the file "1234/image1.txt".
+                  """)
+def render_url_to_file(parser, token):
+    """ Render a url to a file in a project folder """
+
+    
+    split = token.split_contents()
+    tag = split[0]
+    all_args = split[1:]
+    
+
+    if len(all_args) != 1:
+        error_message = "Expected 1 argument, found " + str(len(all_args))
+        return TemplateErrorNode(error_message)
+    else:
+        args = {}
+        filename = all_args[0]
+        
+        args["file"] = add_quotes(filename)
+
+    return RenderFileUrlNode(args, parser)
+
+
+class RenderFileUrlNode(template.Node):
+    
+    usagestr = get_usagestr("render_url_to_file")
+    
+    def __init__(self, args,parser):
+        self.args = args
+        self.parser = parser
+
+    def render(self, context):
+        projectname = context.page.comicsite.short_name
+        filename = strip_quotes(self.args["file"])
+        url = reverse("project_serve_file",args=[projectname,filename])
+        
+        return url
+    
+    
+
+# {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
-    """ Render a file from the local dropbox folder of the current project"""
+    """ Render the contents of a file from the local dropbox folder of the 
+        current project"""
 
     usagestr = """Tag usage: {% insertfile <file> %}
                   <file>: filepath relative to project dropboxfolder.
@@ -881,6 +930,7 @@ def insert_file(parser, token):
 
     replacer = HtmlLinkReplacer()
     return InsertFileNode(args, replacer, parser)
+
 
 class InsertFileNode(template.Node):
     def __init__(self, args, replacer,parser):
