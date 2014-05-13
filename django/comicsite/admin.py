@@ -33,7 +33,7 @@ from guardian.shortcuts import get_objects_for_user, assign_perm
 from comicmodels.models import ComicSite, Page, RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
 from comicmodels.admin import ComicModelAdmin,RegistrationRequestAdmin
-from comicsite.core.exceptions import ProjectAdminExcepetion
+from comicsite.core.exceptions import ProjectAdminException
 
 
 # ======================= testing creating of custom admin
@@ -151,7 +151,7 @@ class ProjectAdminSite(AdminSite):
         try:
             comicsite_admin = self._registry[ComicSite]
         except KeyError as e:
-            raise ProjectAdminExcepetion("""The model 'ComicSite' needs to be
+            raise ProjectAdminException("""The model 'ComicSite' needs to be
              registered with the admin interface, but it was not found.
              Please use the projectadmin.site.register() method to do this.""")
 
@@ -185,7 +185,7 @@ class ProjectAdminSite(AdminSite):
         try:
             comicsite_admin = self._registry[ComicSite]
         except KeyError as e:
-            raise ProjectAdminExcepetion("""The model 'ComicSite' needs to be
+            raise ProjectAdminException("""The model 'ComicSite' needs to be
              registered with the admin interface, but it was not found.
              Please use the projectadmin.site.register() method to do this.""")
 
