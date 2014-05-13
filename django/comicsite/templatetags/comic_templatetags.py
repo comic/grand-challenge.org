@@ -486,6 +486,7 @@ class ImageBrowserNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
+        import json
         htmlOut = """
 
           <div class="ImageBrowser">
@@ -504,10 +505,14 @@ class ImageBrowserNode(template.Node):
         
         <script type="text/javascript" src="/static/js/challengeResultViewer/challengeResultViewer.js"></script> 
         <script type="text/javascript">
-            renderResultViewerGUI($("#resultViewerGUI"));
+            viewer{viewer_id} = new ResultViewerGUI();
+            viewer{viewer_id}.init("#resultViewerGUI",{options});            
         </script> 
 
-        """.format(PATH=self.args["path"])
+        """.format(PATH=self.args["path"],
+                   viewer_id=random.randrange(100000,999999), #just 6 random numbers
+                   options = json.dumps({"files":["crass.png","logo.png"]}))
+                                       
         return htmlOut
 
 
