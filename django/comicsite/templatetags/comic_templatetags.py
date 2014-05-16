@@ -2284,16 +2284,36 @@ def makeErrorMsgHtml(text):
      errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(text) + " </span></p>"
      return errorMsgHTML;
 
-
 @register.tag(name="project_statistics")
 def display_project_statistics(parser, token):
-    """ Parser for the project statistics tag.
-    """
+    usagestr = """Tag usage: {% project_statistics %}
+                  Displays a javascript map of the world listing the country
+                  of residence entered by each participants for this project when they signed up.
+                  
+                  """
+    
     return ProjectStatisticsNode()
 
 
+
+@register.tag(name="allusers_statistics")
+def display_project_statistics(parser, token):
+    usagestr = """Tag usage: {% allusers_statistics %}
+                  Displays a javascript map of the world which listing the country
+                  of residence entered by each user of the framework when they signed up.
+                  """
+    
+    return ProjectStatisticsNode(allusers=True)
+
+
 class ProjectStatisticsNode(template.Node):
-    def __init__(self):
+    
+    def __init__(self,allusers=False):
+        """
+        Allusers is meant to be used on the main website, and does not filter for
+        current project, but shows all registered users in the whole system
+        """
+        self.allusers = allusers
         pass
 
     def render(self, context):
@@ -2304,7 +2324,11 @@ class ProjectStatisticsNode(template.Node):
 
         # Get the users belonging to this project
         perm = Group.objects.get(name='{}_participants'.format(project_name))
-        users = User.objects.filter(groups=perm).distinct()
+        if self.allusers:
+            users = User.objects.all().distinct()
+        else:
+            users = User.objects.filter(groups=perm).distinct()
+        
         countries = [u.get_profile().get_country_display() for u in users]
         hist_countries = Counter(countries)
         chart_data = [['Country', '#Participants']]
