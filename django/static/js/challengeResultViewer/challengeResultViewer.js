@@ -333,6 +333,7 @@ function ResultViewerGUI() {
         return containerDiv;
     
     }
+	
     //create 'select' element by itself
     this.createStringDropdownBoxAndBreak = function(id, options) {    
         var textBox = this.createStringDropdownBox(id, options);    
@@ -341,10 +342,8 @@ function ResultViewerGUI() {
         containerDiv.append(textBox);
         containerDiv.append($("<br/>"));
     
-        return containerDiv;
-    
+        return containerDiv;    
     }
-    
     
     //create 'select' element dropdownbox
     this.createStringDropdownElement = function(id, options) {
@@ -530,7 +529,7 @@ function loadAllScreenshots() {
 
     
     //var params = getDisplayScreenshotParams();
-    var params = {resultdirs:["dir1","dir2"]};
+    var params = {resultDirs:["dir1","dir2"]};
     var width = $("#Width").val();
         
 
@@ -539,7 +538,7 @@ function loadAllScreenshots() {
     // params yields an array results folders. For each result params with only
     // one result, and ask for a screenshot link to each one.
 
-    //first create a space for each image. This has to be done before asyncronously loading to make sure the order of scans is correct.
+    //first create a space for each image. This has to be done before asynchronously loading to make sure the order of scans is correct.
     //For each image a container div is created with a unique id. To this container the image itself is added later.
     
     $.each(params["resultDirs"], function (index, value) {
@@ -580,7 +579,7 @@ function loadAllScreenshots() {
         var paramsCurrent = params;
         paramsCurrent["resultDirs"] = value;
         //console.info("getting link..");
-        $.post("/Results/getVESSEL12ScreenshotLink", {resultId:paramsCurrent["resultDirs"],type:paramsCurrent["authenticationType"],fileName:paramsCurrent["item"]},
+        $.post("../serve/public_html/test_1.PNG/",
                 function (data) {// create a block with a header which image is being shown and the image below that                    
                     paramsCurrent["resultDirs"] = value; //this needs to be set again for some reason. Otherwise first paramsCurrent will be used always
                     var resultImageId = paramsToId(paramsCurrent)  //get unique html id based on these params
