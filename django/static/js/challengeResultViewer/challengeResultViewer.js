@@ -178,9 +178,12 @@ function ResultViewerGUI() {
 
 		$(self.base).append(this.createSingleRowTable([row1, row2, row3]));
 		$(self.base).append(this.createSubmitButton("loadButton", "Load"));
+		
+		this.init_hooks();
 
 					
 	}//end init
+	
 	//return a table with a single row, each element in elements in its own column
     this.createSingleRowTable = function(elements){
         var table = $("<table>");
@@ -396,7 +399,197 @@ function ResultViewerGUI() {
     
         return allResults;
         }
-    
+		//======================== functions ===================================================================================
+	// Anything called while interacting with the GUI
+
+	this.loadAllScreenshots = function(){
+		//var params = getDisplayScreenshotParams();
+		var params = {resultDirs:["dir1","dir2"]};
+		var width = $("#Width").val();
+			
+
+		$("#resultMessage").html(""); //clear previous images
+
+		// params yields an array results folders. For each result params with only
+		// one result, and ask for a screenshot link to each one.
+
+		//first create a space for each image. This has to be done before asynchronously loading to make sure the order of scans is correct.
+		//For each image a container div is created with a unique id. To this container the image itself is added later.
+		
+		$.each(params["resultDirs"], function (index, value) {
+			var paramsCurrent = params;
+			paramsCurrent["resultDirs"] = value;
+
+			// create a block with a header which image is being shown and the image below that
+			var header = $("<div>"); //create a header showing which type of image this is
+			header.html(paramsToString(paramsCurrent));
+			header.addClass("resultImageHeader");
+
+			var image = $("<div>"); //create container for image                
+			image.addClass("resultImage");
+			// Put an animated GIF image insight of content
+			image.html("<img src=\""+LOADING_IMAGE_URL+"\">");  
+
+			var container = $("<div>"); //create container to hold header + image
+			container.append(header);
+			container.append(image);
+			container.addClass("resultImageContainer");
+			var containerId = paramsToId(paramsCurrent);  //get unique html id based on these params
+			container.attr("id", containerId);
+			container.width(width + "px");
+			//set height to make sure the screen does shift while images are loading
+			container.height(width + "px");
+
+			$("#resultMessage").append(container);
+
+		});
+
+		//show or hide headers according to what is set in checkbox "ShowHeaders"
+		setHeaders();
+		//params have been changed from array to one item of this array by the previous loop. Why? To fix just get params again.
+		var params = getDisplayScreenshotParams();
+		//After creating containers, try to fill each.
+		
+		$.each(params["resultDirs"], function (index, value) {
+			var paramsCurrent = params;
+			paramsCurrent["resultDirs"] = value;
+			//console.info("getting link..");
+			$.post("../serve/public_html/test_1.PNG/",
+					function (data) {// create a block with a header which image is being shown and the image below that                    
+						paramsCurrent["resultDirs"] = value; //this needs to be set again for some reason. Otherwise first paramsCurrent will be used always
+						var resultImageId = paramsToId(paramsCurrent)  //get unique html id based on these params
+						var container = $("#" + resultImageId + " .resultImage");
+						container.empty(); //remove loading animation
+
+						if (isUrl(data)) {  //check whether string returned is actually an url. If not it is an error message
+							container.append(htmlImage(data, width));
+
+						} else {
+							container.append(htmlImageError(data, width));
+						}
+					});
+
+			var resultImageId = paramsToId(paramsCurrent)  //get unique html id based on these params
+			var container = $("#" + resultImageId + " .resultImage");
+			
+			container.empty(); //remove loading animation
+			
+	   
+		});
+		
+
+
+	}
+	
+	this.init_hooks = function(){		
+		
+		$(function () {
+			$("#loadButton").click(function () {
+				self.loadAllScreenshots();
+			});
+
+		});
+
+		$(function () {
+			$("#prevItemButton").click(function () {
+				var prevAllowed = givePrevDropdownValueName("#Item")
+				$("#Item").val(prevAllowed);
+				self.loadAllScreenshots();        
+			});
+
+		});
+
+		$(function () {
+			$("#nextItemButton").click(function () {        
+				var nextAllowed = giveNextDropdownValueName("#Item")
+				$("#Item").val(nextAllowed);
+				self.loadAllScreenshots();
+			});
+
+		});
+
+
+
+		$(function () {
+			$("#Width").keypress(function (e) {
+				//if enter is pressed
+				code = (e.keyCode ? e.keyCode : e.which);
+				if (code == 13) {
+					var width = $("#Width").val();
+					setAllImageWidths(width);
+				}
+			});
+
+		});
+
+		$(function () {
+			$("#ShowHeaders").change(function () {
+				setHeaders();
+			});
+
+		});
+
+
+		$(function () {
+			$("#showAll").click(function () {                
+				self.loadAllScreenshots();
+				if ($("#showAll").attr("checked")) {
+					
+					$("#showOrg").attr("disabled","true");
+					$("#showRes").attr("disabled","true");
+					$("#method1").attr("disabled","true");
+					$("#method2").attr("disabled","true");
+				}else{
+					$("#showOrg").removeAttr("disabled");
+					$("#showRes").removeAttr("disabled","false");
+					$("#method1").removeAttr("disabled","false");
+					$("#method2").removeAttr("disabled","false");
+				}
+
+			});
+
+		});
+
+		$(function () {
+			$("#showOrg").click(function () {                
+				self.loadAllScreenshots();
+			});
+
+		});
+
+		$(function () {
+			$("#showRes").click(function () {                
+				self.loadAllScreenshots();
+			});
+
+		});
+
+		$(function () {
+			$("#method1").change(function () {                
+				self.loadAllScreenshots();
+			});
+
+		});
+
+		$(function () {
+			$("#method2").change(function () {                
+				self.loadAllScreenshots();
+			});
+
+		});
+
+		$(function () {
+			$("#Item").change(function () {                
+				self.loadAllScreenshots();
+			});
+
+		});
+
+
+		//======================== end hooking functions to GUI element ========================================================
+
+	}
+
 	
 	
     
@@ -415,108 +608,6 @@ $(document).ready(function () {
 });
 
 
-$(function () {
-    $("#loadButton").click(function () {
-        loadAllScreenshots();
-    });
-
-});
-
-
-$(function () {
-    $("#prevItemButton").click(function () {
-        var prevAllowed = givePrevDropdownValueName("#Item")
-        $("#Item").val(prevAllowed);
-        loadAllScreenshots();        
-    });
-
-});
-
-$(function () {
-    $("#nextItemButton").click(function () {        
-        var nextAllowed = giveNextDropdownValueName("#Item")
-        $("#Item").val(nextAllowed);
-        loadAllScreenshots();
-    });
-
-});
-
-
-
-$(function () {
-    $("#Width").keypress(function (e) {
-        //if enter is pressed
-        code = (e.keyCode ? e.keyCode : e.which);
-        if (code == 13) {
-            var width = $("#Width").val();
-            setAllImageWidths(width);
-        }
-    });
-
-});
-
-$(function () {
-    $("#ShowHeaders").change(function () {
-        setHeaders();
-    });
-
-});
-
-
-$(function () {
-    $("#showAll").click(function () {                
-        loadAllScreenshots();
-        if ($("#showAll").attr("checked")) {
-            
-            $("#showOrg").attr("disabled","true");
-            $("#showRes").attr("disabled","true");
-            $("#method1").attr("disabled","true");
-            $("#method2").attr("disabled","true");
-        }else{
-            $("#showOrg").removeAttr("disabled");
-            $("#showRes").removeAttr("disabled","false");
-            $("#method1").removeAttr("disabled","false");
-            $("#method2").removeAttr("disabled","false");
-        }
-
-    });
-
-});
-
-$(function () {
-    $("#showOrg").click(function () {                
-        loadAllScreenshots();
-    });
-
-});
-
-$(function () {
-    $("#showRes").click(function () {                
-        loadAllScreenshots();
-    });
-
-});
-
-$(function () {
-    $("#method1").change(function () {                
-        loadAllScreenshots();
-    });
-
-});
-
-$(function () {
-    $("#method2").change(function () {                
-        loadAllScreenshots();
-    });
-
-});
-
-$(function () {
-    $("#Item").change(function () {                
-        loadAllScreenshots();
-    });
-
-});
 
 
 //======================== end hooking functions to GUI element ========================================================
@@ -960,6 +1051,24 @@ function givePrevDropdownValueName(dropDownId){
 function log(msg){
     console.log("* "+msg);
 }
+
+
+// ======================== make ajax calls work with csrf protection ==================
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+var csrftoken = $.cookie('csrftoken');
+
+$.ajaxSetup({
+    crossDomain: false, // obviates need for sameOrigin test
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type)) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
 
 //======================== end functions ===================================================================================
 
