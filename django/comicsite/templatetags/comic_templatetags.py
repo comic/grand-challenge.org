@@ -495,13 +495,10 @@ class ImageBrowserNode(template.Node):
 
           <h3>Results viewer</h3>
             <div id="resultViewer">
-                <div id="resultViewerGUI"></div>     
+                <div id="resultViewerGUI"></div>
                 <div id="resultMessage"></div>
             </div>
             <div style="clear:both;"></div>
-        
-        
-        
         
         <script type="text/javascript" src="/static/js/challengeResultViewer/challengeResultViewer.js"></script> 
         <script type="text/javascript">
@@ -511,7 +508,7 @@ class ImageBrowserNode(template.Node):
 
         """.format(PATH=self.args["path"],
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
-                   options = json.dumps({"files":["crass.png","logo.png"]}))
+                   options = json.dumps({"resultDirs":[self.args["path"]],"files":["crass.png","logo.png"]}))
                                        
         return htmlOut
 
@@ -718,7 +715,7 @@ def inlist(needles,haystack):
 
 @register.tag(name="browser")
 def insert_browser(parser, token):
-    """ Render a jquery browser to show all scans in the given directory"""
+    """ Render a jquery browser to show all images in the given directory"""
 
     usagestr = """Tag usage: {% browse <path> %}
                   <path>: filepath relative to project dropboxfolder.
