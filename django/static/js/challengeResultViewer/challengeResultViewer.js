@@ -17,7 +17,6 @@ LOADING_IMAGE_URL = "/static/js/challengeResultViewer/ajax-loader.gif";
 //======================== GUI (creating html elements) ==========================================================
 // These functions are only used at page creation, to show buttons, inputs, text, etc.
 
-
 //create the results viewer GUI inside the (div) element 'base' given as input.
 //names in the GUI are identifiers and are hooked on by resultsViewer functions 
 //restricted = true means only certain scans are loadable
@@ -464,21 +463,23 @@ function ResultViewerGUI() {
 				var directory = valued;
 				var path = directory+"/"+filename;
 				
-				var resultImageId = self.getUniqueId(filename,directory);  //get unique html id based on these params
+				var resultImageId = "#"+self.getUniqueId(filename,directory);  //get unique html id based on these params
 			
-				log("filling space for '"+resultImageId+"'");
-				
 				//console.info("getting link..");
 				//$.post("../serve/public_html/test_1.PNG/",
 				//		function (data) {// create a block with a header which image is being shown and the image below that
+						//var data = "../serve/"+valuef+"/"+valued+"/";
 						var data = "../serve/public_html/test_1.PNG/";							
-							var container = $("#" + resultImageId);
-							container.empty(); //remove loading animation
-							
-							log("appending to "+container);
-							container.append(htmlImage(data, width));
+						
+						
+						var container = $(resultImageId);
+						
+						log("loading image '"+data+"' in div'"+resultImageId+"'");
+						container.empty(); //remove loading animation
+												
+						container.append(htmlImage(data, width));
 
-				var container = $("#" + resultImageId + " .resultImage");
+				var container = $(resultImageId + " .resultImage");
 				
 				container.empty(); //remove loading animation
 				
