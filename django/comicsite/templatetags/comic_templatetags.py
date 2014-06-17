@@ -41,6 +41,7 @@ from comicmodels.models import ComicSite, Page
 import comicsite.views
 from comicsite.utils.html import escape_for_html_id
 from comicsite.core.urlresolvers import reverse
+from comicsite.core.exceptions import ParserException
 from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
@@ -970,14 +971,21 @@ class InsertGraphNode(template.Node):
         except Exception as e:
             return self.make_error_msg(str("getrenderer:" + e.message))
 
-
+        
+        RENDER_FRIENDLY_ERRORS = True
+        # FRIENDLY = on template tag error, replace template tag with red error
+        #            text
+        # NOT SO FRIENDLY = on template tag error, stop rendering, show full
+        #                   debug page
         try:
             svg_data = render_function(filename)
-        # except Exception as e:
-        except:
-            raise
-            # return self.make_error_msg(str("Error calling render funtion '%s()' : %s" %(render_function.__name__,
-             #                                                                           traceback.format_exc(0))))
+        
+        except Exception as e:
+            if RENDER_FRIENDLY_ERRORS:
+                return self.make_error_msg(str("Error in render funtion '%s()' : %s" %(render_function.__name__,
+                                                                                    traceback.format_exc(0))))
+            else:
+                raise
         # self.get_graph_svg(table,headers)
 
         # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
@@ -1051,6 +1059,31 @@ def canvas_to_svg(canvas):
 
 
 # readers for graph data.
+
+def parse_csv_table(has_header, f):
+    table = []
+    csvreader = csv.reader(f)
+    i = 0
+    headers = []
+    try:
+        for row in csvreader:
+            if not has_header or i > 0:
+                for j, cell in enumerate(row):
+                    row[j] = float(cell)
+                
+                table.append(row)
+            elif has_header:
+                headers = row
+                # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
+                # print nonFloatColumns
+            i = i + 1
+    except ValueError as e: #
+        #pdb.set_trace()
+        raise ParserException("Error parsing '{}' (item {} on row {}) in file '{}'".format(row[j],j,i,f))
+    
+    
+    return table, headers
+
 def render_FROC(filename):
     """ Read in csv file with the following format:
         x_value,        all nodules,    peri-fissural nodules, ...N
@@ -1064,22 +1097,11 @@ def render_FROC(filename):
         of all the variables found in file
     """    
     has_header = True
-    table = []
+    
     storage = DefaultStorage()
     f = storage.open(filename, 'r')
-    csvreader = csv.reader(f)
-    i = 0
-    headers = []
-    for row in csvreader:      
-      if not has_header or i > 0:
-        for j, cell in enumerate(row):
-          row[j] = float(cell)
-        table.append(row)
-      elif has_header:
-        headers = row
-        # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
-        # print nonFloatColumns
-      i = i + 1
+    
+    table, headers = parse_csv_table(has_header, f)
         
     f.close()
     
@@ -1283,9 +1305,10 @@ def parse_php_arrays(filename):
         content = f.read()
         content = content.replace("\n", "")
         php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
-        phpcontent = php.search(content).group(1)
-        assert phpcontent != "" , "could not find anything like <?php ?> in '%s'" % filename
-
+        s = php.search(content)
+        assert s != None , "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
+        phpcontent = s.group(1)
+        
         phpvars = phpcontent.split("$")
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
