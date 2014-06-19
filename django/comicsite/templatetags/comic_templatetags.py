@@ -1004,8 +1004,9 @@ def getrenderer(format):
     only functions listed here can be called from the template tag render_graph.
     """
     renderers = {"csv":render_FROC,
-               "anode09":render_anode09_result,
-               "anode09_table":render_anode09_table, }
+                 "table":render_table,
+                 "anode09":render_anode09_result,
+                 "anode09_table":render_anode09_table, }
 
     if not renderers.has_key(format):
         raise Exception("reader for format '%s' not found. Available formats: %s" % (format, \
@@ -1016,10 +1017,8 @@ def getrenderer(format):
 
 def get_graph_svg(table, headers):
         """ return svg instructions as string to plot a froc curve of csvfile
-
         """
         # del table[-1]
-
         columns = zip(*table)
 
         fig = Figure(facecolor='white')
@@ -1069,7 +1068,11 @@ def parse_csv_table(has_header, f):
         for row in csvreader:
             if not has_header or i > 0:
                 for j, cell in enumerate(row):
-                    row[j] = float(cell)
+                    try:
+                        row[j] = float(cell)
+                    except ValueError:
+                        row[j] = str(cell)
+                        
                 
                 table.append(row)
             elif has_header:
@@ -1083,6 +1086,10 @@ def parse_csv_table(has_header, f):
     
     
     return table, headers
+
+def is_quoted(string):
+    """ True if string is surrounded by quotes, either double", single', 
+        or apostophe` """
 
 def render_FROC(filename):
     """ Read in csv file with the following format:
@@ -1108,7 +1115,6 @@ def render_FROC(filename):
     columns = zip(*table)
     escaped_headers = [escape_for_html_id(x) for x in headers] 
 
-
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
 
@@ -1127,11 +1133,48 @@ def render_FROC(filename):
 
     return canvas_to_svg(canvas)
 
+def render_table(filename):
+    """ Read in a csv file and output HTML to render as HTML table.
+    Adds class='sortable' so the JS lib 'datatables' can be called upon this
+    table to make it sortable interactively.
+    
+    First line of the csv is interpreted as header 
+    """
+    # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+    has_header = True
+    storage = DefaultStorage()
+    f = storage.open(filename, 'r')
+    table, headers = parse_csv_table(has_header, f)
+    
+    f.close()
+    
+    columns = zip(*table)
+    escaped_headers = [escape_for_html_id(x) for x in headers] 
+
+    table_id = id_generator()
+
+    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="{}">""".format(table_id)
+        
+    if has_header:
+        tableHTML += "<thead>"
+        tableHTML += array_to_table_row(headers)
+        tableHTML += "</thead>"
+    
+    tableHTML += "<tbody>"
+    for tablerow in table:
+        tableHTML += array_to_table_row(tablerow)
+    
+    tableHTML = tableHTML + "</tbody>"
+    tableHTML = tableHTML + "</table>"
+    
+    return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
 def render_anode09_result(filename):
-    """ Read in a file with the anode09 result format, to be able to read this without
-        changing the evaluation executable. anode09 results have the following format:
+    """ Read in a file with the anode09 result format, return html to render an 
+        FROC graph.
+        To be able to read this without changing the evaluation
+        executable. anode09 results have the following format:
 
     <?php
         $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
@@ -1254,22 +1297,6 @@ def render_anode09_table(filename):
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
 
-    # FIXME: create a temporary solution to including javascript and css with template tags
-    script = """<script type="text/javascript">
-
-                        $('#%s').dataTable({
-                            "bJQueryUI": true,
-                            "sPaginationType": "full_numbers",
-                            "bPaginate": false,
-                            "bLengthChange": false,
-                            "bFilter": false,
-                            "bInfo": false,
-                            "bAutoWidth": false
-                        });
-
-            </script>""" % table_id
-
-
     return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
@@ -1333,15 +1360,11 @@ def parse_php_arrays(filename):
                                                               "[" + ",".join(result.groups()) + "]")
                continue
 
-
            (varname, varcontent) = result.groups()
 
            output[varname] = [float(x) for x in varcontent.split(",")]
 
     return output
-
-
-
 
 
 @register.tag(name="url_parameter")
