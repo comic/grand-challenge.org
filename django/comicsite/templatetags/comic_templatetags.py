@@ -508,7 +508,7 @@ class ImageBrowserNode(template.Node):
 
         """.format(PATH=self.args["path"],
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
-                   options = json.dumps({"resultDirs":[self.args["path"]],"files":["crass.png","logo.png"]}))
+                   options = json.dumps({"dirs":[self.args["path"]],"fileNames":["crass.png","logo.png"]}))
                                        
         return htmlOut
 

@@ -10,7 +10,7 @@
 
 
 
-//======================== Parmeters =============================================================================
+//======================== Parameters =============================================================================
 LOADING_IMAGE_URL = "/static/js/challengeResultViewer/ajax-loader.gif";
 
 
@@ -24,23 +24,22 @@ function ResultViewerGUI() {
 	var self = this;
 	
 	var default_options = {restricted: true,
-                           image_url:'/static/site/VESSEL12/serve/',
-                           files:[]
+	                       //prepend this to filename to serve images from project data folder
+                           static_url:'/site/VESSEL12/serve/',
+                           dirs:[],
+                           files:[]                           
                            };
 						   
+	
+	
 	
 	this.init = function(base,input_options){
 		input_options = typeof(input_options) != 'undefined' ? input_options : {}; //default to empty list if no options given 
 		self.base = base;
 		log("init viewer in element '"+self.base+"'");		
 		self.input_options = input_options;
-			    
 		var input_options = self.input_options;
 		
-		
-		
-						 
-						  
 		// Merge defaults and options passed when calling this function. Take default
 		// if a key is not defined in input  
 		var options = $.extend({},default_options,input_options);
@@ -52,17 +51,16 @@ function ResultViewerGUI() {
 		var table = $("<table>");
 		var tr = $("<tr>");
 
-
 		var row1 = $("<div>");
 		
-		row1.append(this.createCheckboxElement("showOrg", true, "show original scan"));    
-		row1.append(this.createCheckboxElement("showRes", true, "show current result: " + $("#resultDir").val()));    
-		row1.append(this.createLabel("method1", "show additional results:"));    
-		row1.append(this.createStringDropdownBoxAndBreak("method1",$.merge(["None"], this.getAllResultsExceptCurrent())));    
+		row1.append(this.createCheckboxElement("showOrg", true, "show original scan"));
+		row1.append(this.createCheckboxElement("showRes", true, "show current result: " + $("#resultDir").val()));
+		row1.append(this.createLabel("method1", "show additional results:"));
+		row1.append(this.createStringDropdownBoxAndBreak("method1",$.merge(["None"], this.getAllResultsExceptCurrent())));
 		row1.append(this.createStringDropdownBoxAndBreak("method2",$.merge(["None"], this.getAllResultsExceptCurrent())));
-		row1.append(this.createCheckboxElement("showAll", false, "show all results"));    
+		row1.append(this.createCheckboxElement("showAll", false, "show all results"));
 
-		var row2 = $("<div>");    
+		var row2 = $("<div>");
 		row2.append(this.createLabel("Item", "Item"));
 		row2.append(this.createStringDropdownElement("Item",["DenseAbnormalities.png",
 														"Fibrosis.png",
@@ -73,96 +71,6 @@ function ResultViewerGUI() {
 														"nodule_04.png",
 														"nodule_05.png",
 														"nodule_06.png",
-														"nodule_07.png",
-														"nodule_08.png",
-														"nodule_09.png",
-														"nodule_10.png",
-														"nodule_11.png",
-														"nodule_12.png",
-														"nodule_13.png",
-														"nodule_14.png",
-														"nodule_15.png",
-														"VESSEL12_01_Slice_126.png",
-														"VESSEL12_01_Slice_155.png",
-														"VESSEL12_01_Slice_212.png",
-														"VESSEL12_01_Slice_240.png",
-														"VESSEL12_02_Slice_146.png",
-														"VESSEL12_02_Slice_186.png",
-														"VESSEL12_02_Slice_265.png",
-														"VESSEL12_02_Slice_304.png",
-														"VESSEL12_03_Slice_164.png",
-														"VESSEL12_03_Slice_213.png",
-														"VESSEL12_03_Slice_311.png",
-														"VESSEL12_03_Slice_360.png",
-														"VESSEL12_04_Slice_164.png",
-														"VESSEL12_04_Slice_202.png",
-														"VESSEL12_04_Slice_278.png",
-														"VESSEL12_04_Slice_316.png",
-														"VESSEL12_05_Slice_163.png",
-														"VESSEL12_05_Slice_197.png",
-														"VESSEL12_05_Slice_264.png",
-														"VESSEL12_05_Slice_298.png",
-														"VESSEL12_06_Slice_166.png",
-														"VESSEL12_06_Slice_191.png",
-														"VESSEL12_06_Slice_240.png",
-														"VESSEL12_06_Slice_264.png",
-														"VESSEL12_07_Slice_177.png",
-														"VESSEL12_07_Slice_208.png",
-														"VESSEL12_07_Slice_271.png",
-														"VESSEL12_07_Slice_302.png",
-														"VESSEL12_08_Slice_154.png",
-														"VESSEL12_08_Slice_192.png",
-														"VESSEL12_08_Slice_268.png",
-														"VESSEL12_08_Slice_306.png",
-														"VESSEL12_09_Slice_204.png",
-														"VESSEL12_09_Slice_253.png",
-														"VESSEL12_09_Slice_350.png",
-														"VESSEL12_09_Slice_399.png",
-														"VESSEL12_10_Slice_176.png",
-														"VESSEL12_10_Slice_210.png",
-														"VESSEL12_10_Slice_277.png",
-														"VESSEL12_10_Slice_310.png",
-														"VESSEL12_11_Slice_184.png",
-														"VESSEL12_11_Slice_209.png",
-														"VESSEL12_11_Slice_260.png",
-														"VESSEL12_11_Slice_285.png",
-														"VESSEL12_12_Slice_173.png",
-														"VESSEL12_12_Slice_202.png",
-														"VESSEL12_12_Slice_259.png",
-														"VESSEL12_12_Slice_288.png",
-														"VESSEL12_13_Slice_206.png",
-														"VESSEL12_13_Slice_246.png",
-														"VESSEL12_13_Slice_325.png",
-														"VESSEL12_13_Slice_365.png",
-														"VESSEL12_14_Slice_182.png",
-														"VESSEL12_14_Slice_207.png",
-														"VESSEL12_14_Slice_256.png",
-														"VESSEL12_14_Slice_281.png",
-														"VESSEL12_15_Slice_203.png",
-														"VESSEL12_15_Slice_221.png",
-														"VESSEL12_15_Slice_256.png",
-														"VESSEL12_15_Slice_274.png",
-														"VESSEL12_16_Slice_153.png",
-														"VESSEL12_16_Slice_204.png",
-														"VESSEL12_16_Slice_307.png",
-														"VESSEL12_16_Slice_358.png",
-														"VESSEL12_17_Slice_249.png",
-														"VESSEL12_17_Slice_265.png",
-														"VESSEL12_17_Slice_296.png",
-														"VESSEL12_17_Slice_311.png",
-														"VESSEL12_18_Slice_139.png",
-														"VESSEL12_18_Slice_172.png",
-														"VESSEL12_18_Slice_238.png",
-														"VESSEL12_18_Slice_271.png",
-														"VESSEL12_19_Slice_177.png",
-														"VESSEL12_19_Slice_205.png",
-														"VESSEL12_19_Slice_262.png",
-														"VESSEL12_19_Slice_290.png",
-														"VESSEL12_20_Slice_154.png",
-														"VESSEL12_20_Slice_176.png",
-														"VESSEL12_20_Slice_220.png",
-														"VESSEL12_20_Slice_242.png",
-														"Vessels.png"
 													])) //create box containing only allowed elements    
 
 		var row3 = $("<div>");
@@ -179,8 +87,6 @@ function ResultViewerGUI() {
 		$(self.base).append(this.createSubmitButton("loadButton", "Load"));
 		
 		this.init_hooks();
-
-					
 	}//end init
 	
 	//return a table with a single row, each element in elements in its own column
@@ -403,9 +309,10 @@ function ResultViewerGUI() {
 
 	this.loadAllScreenshots = function(){
 		//var params = getDisplayScreenshotParams();
-		var params = {resultDirs:["public_html"],fileNames:["test_1.PNG"]};
-		
+		//var params = {resultDirs:["public_html"],fileNames:["test_1.PNG","test_2.PNG"]};
+		var params = this.options;
 		var width = $("#Width").val();
+		var static_url = this.options["static_url"]
 			
 
 		$("#resultMessage").html(""); //clear previous images
@@ -417,7 +324,7 @@ function ResultViewerGUI() {
 		//For each image a container div is created with a unique id. To this container the image itself is added later.
 		
 		$.each(params["fileNames"], function (indexf, valuef) {
-			$.each(params["resultDirs"], function (indexd, valued) {
+			$.each(params["dirs"], function (indexd, valued) {
 			
 				var filename = valuef;
 				var directory = valued;
@@ -429,11 +336,10 @@ function ResultViewerGUI() {
 				var header = $("<div>"); //create a header showing which type of image this is
 				header.html("header TODO");
 				header.addClass("resultImageHeader");
-
 				var image = $("<div>"); //create container for image                
 				image.addClass("resultImage");
 				// Put an animated GIF image insight of content
-				image.html("<img src=\""+LOADING_IMAGE_URL+"\">");  
+				image.html("<img src=\""+LOADING_IMAGE_URL+"\">");
 
 				var container = $("<div>"); //create container to hold header + image
 				container.append(header);
@@ -444,9 +350,7 @@ function ResultViewerGUI() {
 				container.width(width + "px");
 				//set height to make sure the screen does shift while images are loading
 				container.height(width + "px");
-
 				$("#resultMessage").append(container);
-
 			});
 		});
 
@@ -457,7 +361,7 @@ function ResultViewerGUI() {
 		//After creating containers, try to fill each.
 		
 		$.each(params["fileNames"], function (indexf, valuef) {
-			$.each(params["resultDirs"], function (indexd, valued) {
+			$.each(params["dirs"], function (indexd, valued) {
 				
 				var filename = valuef;
 				var directory = valued;
@@ -469,9 +373,8 @@ function ResultViewerGUI() {
 				//$.post("../serve/public_html/test_1.PNG/",
 				//		function (data) {// create a block with a header which image is being shown and the image below that
 						//var data = "../serve/"+valuef+"/"+valued+"/";
-						var data = "../serve/public_html/test_1.PNG/";							
-						
-						
+						var data = static_url + path;
+						//var data = "../serve/public_html/test_1.PNG/";
 						var container = $(resultImageId);
 						
 						log("loading image '"+data+"' in div'"+resultImageId+"'");
