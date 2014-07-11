@@ -152,6 +152,16 @@ def url(parser, token):
     orgnode = defaulttags.url(parser,token)
     return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
 
+def filter_by_extension(filenames,extensions):
+    """ Takes two lists of strings. Return only strings that end with any of 
+    the strings in extensions. 
+    """
+    filtered = []
+    for extension in extensions:
+            filtered = filtered + [f for f in filenames if f.endswith(extension)]
+    return filtered
+ 
+
 class comic_URLNode(defaulttags.URLNode):
 
     def render(self, context):
@@ -421,23 +431,19 @@ class ListDirNode(template.Node):
         project_name = context.page.comicsite.short_name
         projectpath = project_name + "/" + self.path
         storage = DefaultStorage()
-
+        
         try:
             filenames = storage.listdir(projectpath)[1]
-
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
 
         filenames.sort()
 
         # if extensionsFilter is given,  show only filenames with those extensions
-        if 'extensionFilter' in self.args.keys():
+        if 'extensionFilter' in self.args.keys():        
             extensions = self.args['extensionFilter'].split(",")
-            filtered = []
-            for extension in extensions:
-
-                filtered = filtered + [f for f in filenames if f.endswith(extension)]
-            filenames = filtered
+            filenames = filter_by_extension(filenames,extensions)
+            
 
         links = []
         for filename in filenames:
@@ -508,9 +514,29 @@ class ImageBrowserNode(template.Node):
 
         """.format(PATH=self.args["path"],
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
-                   options = json.dumps({"dirs":[self.args["path"]],"fileNames":["crass.png","logo.png"]}))
+                   options = json.dumps({"dirs":[self.args["path"]],"fileNames":self.get_filenames(context)}))
                                        
         return htmlOut
+    
+    def get_filenames(self,context):        
+        project_name = context.page.comicsite.short_name
+        projectpath = project_name + "/" + self.args["path"]
+        storage = DefaultStorage()
+        
+        try:
+            filenames = storage.listdir(projectpath)[1]
+        except OSError as e:
+            return self.make_dataset_error_msg(str(e))
+
+        filenames.sort()
+
+        # if extensionsFilter is given,  show only filenames with those extensions
+        if 'extensionFilter' in self.args.keys():        
+            extensions = self.args['extensionFilter'].split(",")
+            filenames = filter_by_extension(filenames,extensions)
+        
+        return filenames
+
 
 
 
