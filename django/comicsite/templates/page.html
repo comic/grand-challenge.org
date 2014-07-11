@@ -4,6 +4,24 @@
 
 {% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
+
+{% block sitemenuloginbutton %}
+    {% if site.hide_signin %}
+    
+    {% elif site.hide_footer %}
+        {% if user.is_authenticated %}
+            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a></li>
+            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Signout</a> </li>
+        {% else %}
+            <li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Sign in / Register</a></li>
+        {% endif %}
+    
+    
+    {% endif %}
+       </li>
+{% endblock %}
+
 {% block pagecontent %}		
 		
 	{% if site.disclaimer %}
