@@ -41,6 +41,7 @@ from comicmodels.models import ComicSite, Page
 import comicsite.views
 from comicsite.utils.html import escape_for_html_id
 from comicsite.core.urlresolvers import reverse
+from comicsite.core.exceptions import ParserException
 from dropbox.rest import ErrorResponse
 from dataproviders import FileSystemDataProvider
 from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
@@ -1303,14 +1304,21 @@ class InsertGraphNode(template.Node):
         except Exception as e:
             return self.make_error_msg(str("getrenderer:" + e.message))
 
-
+        
+        RENDER_FRIENDLY_ERRORS = True
+        # FRIENDLY = on template tag error, replace template tag with red error
+        #            text
+        # NOT SO FRIENDLY = on template tag error, stop rendering, show full
+        #                   debug page
         try:
             svg_data = render_function(filename)
-        # except Exception as e:
-        except:
-            raise
-            # return self.make_error_msg(str("Error calling render funtion '%s()' : %s" %(render_function.__name__,
-             #                                                                           traceback.format_exc(0))))
+        
+        except Exception as e:
+            if RENDER_FRIENDLY_ERRORS:
+                return self.make_error_msg(str("Error in render funtion '%s()' : %s" %(render_function.__name__,
+                                                                                    traceback.format_exc(0))))
+            else:
+                raise
         # self.get_graph_svg(table,headers)
 
         # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
@@ -1329,8 +1337,9 @@ def getrenderer(format):
     only functions listed here can be called from the template tag render_graph.
     """
     renderers = {"csv":render_FROC,
-               "anode09":render_anode09_result,
-               "anode09_table":render_anode09_table, }
+                 "table":render_table,
+                 "anode09":render_anode09_result,
+                 "anode09_table":render_anode09_table, }
 
     if not renderers.has_key(format):
         raise Exception("reader for format '%s' not found. Available formats: %s" % (format, \
@@ -1341,10 +1350,8 @@ def getrenderer(format):
 
 def get_graph_svg(table, headers):
         """ return svg instructions as string to plot a froc curve of csvfile
-
         """
         # del table[-1]
-
         columns = zip(*table)
 
         fig = Figure(facecolor='white')
@@ -1384,6 +1391,39 @@ def canvas_to_svg(canvas):
 
 
 # readers for graph data.
+
+def parse_csv_table(has_header, f):
+    table = []
+    csvreader = csv.reader(f)
+    i = 0
+    headers = []
+    try:
+        for row in csvreader:
+            if not has_header or i > 0:
+                for j, cell in enumerate(row):
+                    try:
+                        row[j] = float(cell)
+                    except ValueError:
+                        row[j] = str(cell)
+                        
+                
+                table.append(row)
+            elif has_header:
+                headers = row
+                # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
+                # print nonFloatColumns
+            i = i + 1
+    except ValueError as e: #
+        #pdb.set_trace()
+        raise ParserException("Error parsing '{}' (item {} on row {}) in file '{}'".format(row[j],j,i,f))
+    
+    
+    return table, headers
+
+def is_quoted(string):
+    """ True if string is surrounded by quotes, either double", single', 
+        or apostophe` """
+
 def render_FROC(filename):
     """ Read in csv file with the following format:
         x_value,        all nodules,    peri-fissural nodules, ...N
@@ -1397,28 +1437,16 @@ def render_FROC(filename):
         of all the variables found in file
     """    
     has_header = True
-    table = []
+    
     storage = DefaultStorage()
     f = storage.open(filename, 'r')
-    csvreader = csv.reader(f)
-    i = 0
-    headers = []
-    for row in csvreader:      
-      if not has_header or i > 0:
-        for j, cell in enumerate(row):
-          row[j] = float(cell)
-        table.append(row)
-      elif has_header:
-        headers = row
-        # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
-        # print nonFloatColumns
-      i = i + 1
+    
+    table, headers = parse_csv_table(has_header, f)
         
     f.close()
     
     columns = zip(*table)
     escaped_headers = [escape_for_html_id(x) for x in headers] 
-
 
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
@@ -1438,11 +1466,48 @@ def render_FROC(filename):
 
     return canvas_to_svg(canvas)
 
+def render_table(filename):
+    """ Read in a csv file and output HTML to render as HTML table.
+    Adds class='sortable' so the JS lib 'datatables' can be called upon this
+    table to make it sortable interactively.
+    
+    First line of the csv is interpreted as header 
+    """
+    # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+    has_header = True
+    storage = DefaultStorage()
+    f = storage.open(filename, 'r')
+    table, headers = parse_csv_table(has_header, f)
+    
+    f.close()
+    
+    columns = zip(*table)
+    escaped_headers = [escape_for_html_id(x) for x in headers] 
+
+    table_id = id_generator()
+
+    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="{}">""".format(table_id)
+        
+    if has_header:
+        tableHTML += "<thead>"
+        tableHTML += array_to_table_row(headers)
+        tableHTML += "</thead>"
+    
+    tableHTML += "<tbody>"
+    for tablerow in table:
+        tableHTML += array_to_table_row(tablerow)
+    
+    tableHTML = tableHTML + "</tbody>"
+    tableHTML = tableHTML + "</table>"
+    
+    return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
 def render_anode09_result(filename):
-    """ Read in a file with the anode09 result format, to be able to read this without
-        changing the evaluation executable. anode09 results have the following format:
+    """ Read in a file with the anode09 result format, return html to render an 
+        FROC graph.
+        To be able to read this without changing the evaluation
+        executable. anode09 results have the following format:
 
     <?php
         $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
@@ -1565,22 +1630,6 @@ def render_anode09_table(filename):
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
 
-    # FIXME: create a temporary solution to including javascript and css with template tags
-    script = """<script type="text/javascript">
-
-                        $('#%s').dataTable({
-                            "bJQueryUI": true,
-                            "sPaginationType": "full_numbers",
-                            "bPaginate": false,
-                            "bLengthChange": false,
-                            "bFilter": false,
-                            "bInfo": false,
-                            "bAutoWidth": false
-                        });
-
-            </script>""" % table_id
-
-
     return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
@@ -1616,9 +1665,10 @@ def parse_php_arrays(filename):
         content = f.read()
         content = content.replace("\n", "")
         php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
-        phpcontent = php.search(content).group(1)
-        assert phpcontent != "" , "could not find anything like <?php ?> in '%s'" % filename
-
+        s = php.search(content)
+        assert s != None , "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
+        phpcontent = s.group(1)
+        
         phpvars = phpcontent.split("$")
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
@@ -1643,15 +1693,11 @@ def parse_php_arrays(filename):
                                                               "[" + ",".join(result.groups()) + "]")
                continue
 
-
            (varname, varcontent) = result.groups()
 
            output[varname] = [float(x) for x in varcontent.split(",")]
 
     return output
-
-
-
 
 
 @register.tag(name="url_parameter")
