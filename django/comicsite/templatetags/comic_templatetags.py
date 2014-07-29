@@ -515,10 +515,22 @@ class ImageBrowserNode(template.Node):
 
         """.format(PATH=self.args["path"],
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
-                   options = json.dumps({"dirs":[self.args["path"]],"fileNames":self.get_filenames(context)}))
+                   options = json.dumps({"dirs":[self.args["path"]],
+                                         "fileNames":self.get_filenames(context),
+                                         "url_params":self.get_url_params(context)}))
                                        
         return htmlOut
     
+    def get_url_params(self,context):
+        url_params = context["request"].GET.items()
+        dict = {}
+        #convert tuples to dictionary because this is easier to read
+        for (key,value) in url_params:
+            dict[key] = value
+        
+        return dict
+    
+        
     def get_filenames(self,context):        
         project_name = context.page.comicsite.short_name
         projectpath = project_name + "/" + self.args["path"]
