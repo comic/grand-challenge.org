@@ -10,4 +10,9 @@ class ProjectAdminException(ComicException):
 
 
 class ParserException(ComicException):
-    """ Error when trying to parse some file included on a project page"""
+    """ Error trying to parse some file included on a project page"""
+    
+class PathResolutionException(ComicException):
+    """ A path given to a COMIC template tag contained variables that could not
+        be resolved
+    """
