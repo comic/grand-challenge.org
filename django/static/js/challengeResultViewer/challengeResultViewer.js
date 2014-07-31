@@ -8,8 +8,6 @@
 //                                  calling one function, instead of having to copy the entire GUI html code.
 
 
-
-
 //======================== Parameters =============================================================================
 LOADING_IMAGE_URL = "/static/js/challengeResultViewer/ajax-loader.gif";
 
@@ -26,41 +24,34 @@ function ResultViewerGUI() {
     var default_options = {restricted: true,
                            //prepend this to filename to serve images from project data folder
                            static_url:'/site/VESSEL12/serve/',
-                           dirs:[],
-                           files:[],
-                           controls:{tickboxes:[["showOrg",true,"show original scan"],
-                                                ["showRes", true, "show current result"]],
-                                     selectionboxes:[["default","default",["option1","option2"]]]
+                           controls:{tickboxes:[],
+                                     selectionboxes:[["default","default",["option1","option2"]]],
+                                     imagePathsFunction:undefined
                                  },
                            };
                            
-
-    this.init = function(base,input_options,input_imagePathsFunction){
-        input_options = typeof(input_options) != 'undefined' ? input_options : {}; //default to empty list if no options given 
-        
-        imagePathsFunction = typeof(input_imagePathsFunction) != 'undefined' ? input_imagePathsFunction : getImagePaths; //default to empty list if no options given
-        
+    this.init = function(base,input_options){
+        input_options = typeof(input_options) != 'undefined' ? input_options : {}; //default to empty list if no options given         
         self.base = base;
+        
         log("init viewer in element '"+self.base+"'");        
         self.input_options = input_options;
         var input_options = self.input_options;
         
         // Merge defaults and options passed when calling this function. Take default
         // if a key is not defined in input  
-        var options = $.extend({},default_options,input_options);
+        self.options = $.extend({},default_options,input_options);
         
         //assigning a function here
-        self.getImagePaths = imagePathsFunction;
+        if(self.options["imagePathsFunction"] == undefined){
+            log("No custom imagePathsFunction defined. using standard");
+            self.setImagePathsFunction(getImagePaths);
+        }else{
+            self.setImagePathsFunction(self.options["imagePathsFunction"]);
+            
+        };
         
-        //DEBUG
-        options["controls"] = {tickboxes:[["showOrg",true,"show original scan"],
-                                          ["showRes",true, "show current result"]],
-                              selectionboxes:[["Image","Image",options["fileNames"]]]
-                              };
-
-        this.options = options;
-        
-        log("viewer options were'"+JSON.stringify(options)+"'");
+        log("viewer options were'"+JSON.stringify(self.options)+"'");
                 
         var table = $("<table>");
         var tr = $("<tr>");
@@ -68,14 +59,14 @@ function ResultViewerGUI() {
         var row1 = $("<div>");
         // initialize all gui controls that user can use to browse through the
         // images
-        options.controls.tickboxes.forEach(function (value, index) {
+        self.options.controls.tickboxes.forEach(function (value, index) {
             log("creating tickbox based on" + JSON.stringify(value));            
             row1.append(self.createCheckboxElement(value[0],value[1],value[2]));
         });
         
 
         var row2 = $("<div>");
-        options.controls.selectionboxes.forEach(function (value, index) {
+        self.options.controls.selectionboxes.forEach(function (value, index) {
             log("creating selectionbox based on" + JSON.stringify(value));
             row2.append(self.createLabel(value[0], value[1]));
             row2.append(self.createStringDropdownElement(value[1],self.options["fileNames"])); //create box containing only allowed elements                        
@@ -96,6 +87,19 @@ function ResultViewerGUI() {
         
         this.init_hooks();
     };//end init
+    
+    this.setImagePathsFunction = function(imagePathsFunction){
+        //The imagePathsFunction takes a single object (options) representing the state of all tickboxes
+        // and dropdown menus, and returns an array of image paths to display 
+        if(imagePathsFunction.prototype.toString() != "[object Object]"){
+          log("this.setImagePathsFunction: single inputargument to this function should be a function, found "+imagePathsFunction.prototype.toString()+" instead.");
+                 
+        }else{
+            self.getImagePaths = imagePathsFunction;
+        };
+        
+          
+    };
     
     //return a table with a single row, each element in elements in its own column
     this.createSingleRowTable = function(id, elements){
@@ -496,6 +500,7 @@ function getDropDownValue(id){
 
 function getTickBoxValue(id){
     //Get the text which is currently selected
+    
     return $(id).is(":checked");
 };
 
@@ -827,9 +832,8 @@ function getAllAllowedScans(){
 //for sorting numbers using sort.. why is this not built in?
 function isGreaterThan(a,b){
 
-    return a-b //return positive if a is greater than b.
+    return a-b; //return positive if a is greater than b.
 }
-
 
 
 //returns true if this element is found inside current page.
@@ -840,11 +844,11 @@ function htmlTagExists(htmlTag){
 
 //checks the given dropdown item id for the name of the next option
 function giveNextDropdownValueName(dropDownId){
-    next = $(dropDownId + " option:selected").next().val()
+    next = $(dropDownId + " option:selected").next().val();
     if(next === undefined){
-        next = $(dropDownId).val() //if next item does not exist, stay at current item
+        next = $(dropDownId).val(); //if next item does not exist, stay at current item
     };
-    return next
+    return next;
 
 }
 
