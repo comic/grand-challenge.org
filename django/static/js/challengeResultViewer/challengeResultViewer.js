@@ -493,6 +493,9 @@ function getImagePaths(options){
     return imagePaths;
 };
 
+// ================ Helperfunction that can be called in custom viewer 
+//                  imagepaths function ======================
+
 function getDropDownValue(id){
     //Get the text which is currently selected
     return $(id + " option:selected").val();
@@ -505,7 +508,7 @@ function getTickBoxValue(id){
 };
 
 
-//======================== end GUI (creating html elements) ========================================================
+//======================== end GUI (creating html elements) ============================================================
 
 
 //======================== end hooking functions to GUI element ========================================================
@@ -520,7 +523,6 @@ function loadAllScreenshots_org() {
 
     var params = getDisplayScreenshotParams();
     var width = $("#Width").val();
-        
 
     $("#resultMessage").html(""); //clear previous images
 
@@ -539,7 +541,7 @@ function loadAllScreenshots_org() {
         header.html(paramsToString(paramsCurrent));
         header.addClass("resultImageHeader");
 
-        var image = $("<div>"); //create container for image                
+        var image = $("<div>"); //create container for image
         image.addClass("resultImage");
         // Put an animated GIF image insight of content
         image.html("<img src=\""+LOADING_IMAGE_URL+"\">");  

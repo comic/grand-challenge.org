@@ -551,15 +551,16 @@ def render_image_browser(parser, token):
         errormsg = "Error rendering {% " + token.contents + " %}: path argument is missing." + usagestr
         return TemplateErrorNode(errormsg)
 
-    return ImageBrowserNode(args)
+    return ImageBrowserNode(args,parser)
 
 class ImageBrowserNode(template.Node):
     """
     Render jquery browser to go through all images in given folder
     """
 
-    def __init__(self, args):
+    def __init__(self, args, parser):
         self.args = args
+        self.parser = parser
 
     def make_dataset_error_msg(self, msg):
         errormsg = "Error rendering Visualization '" + str(self.args) + ":" + msg
@@ -567,10 +568,21 @@ class ImageBrowserNode(template.Node):
 
     def render(self, context):
         import json
+        
+        # Get variables used in rendering html below.
+        
+        # path can contain variables like "/results/{{resultId}}/screenshots/"
+        path_resolved = resolve_path(self.args["path"],self.parser,context)
+        
+        try:
+            filenames = self.get_filenames(context,path_resolved)
+        except OSError as e:
+            return self.make_dataset_error_msg(str(e))
+        
         htmlOut = """
 
           <div class="ImageBrowser">
-            A browser for path '{PATH}' to be implemented
+            A browser for path '{path}' to be implemented
           </div>
 
           <h3>Results viewer</h3>
@@ -591,14 +603,14 @@ class ImageBrowserNode(template.Node):
             viewer{viewer_id}.init("#resultViewerGUI",options);
         </script> 
 
-        """.format(PATH=self.args["path"],
+        """.format(path=path_resolved,
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
                    custom_options_include = self.get_custom_options_include(context),
-                   dg_options = json.dumps({"dirs":[self.args["path"]],
-                                            "fileNames":self.get_filenames(context),
+                   dg_options = json.dumps({"dirs":[path_resolved],
+                                            "fileNames":filenames,
                                             "url_params":self.get_url_params(context)})
                    )
-                
+        
         return htmlOut
     
     def get_custom_options_include(self, context):
@@ -615,11 +627,6 @@ class ImageBrowserNode(template.Node):
         else:
             return "<script> options = undefined; </script>";
             
-        
-        
-        
-
-    
     def get_url_params(self,context):
         url_params = context["request"].GET.items()
         dict = {}
@@ -630,15 +637,15 @@ class ImageBrowserNode(template.Node):
         return dict
     
         
-    def get_filenames(self,context):        
-        project_name = context.page.comicsite.short_name
-        projectpath = project_name + "/" + self.args["path"]
-        storage = DefaultStorage()
+    def get_filenames(self,context,path):
+        """ Get all filenames in path
         
-        try:
-            filenames = storage.listdir(projectpath)[1]
-        except OSError as e:
-            return self.make_dataset_error_msg(str(e))
+        Raises OSError if directory can not be found
+        """
+        project_name = context.page.comicsite.short_name
+        projectpath = project_name + "/" + path
+        storage = DefaultStorage()        
+        filenames = storage.listdir(projectpath)[1]
 
         filenames.sort()
 
