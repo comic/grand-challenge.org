@@ -44,9 +44,12 @@ urlpatterns = patterns('',
     
     url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$','comicsite.views.pagesource'),
     
+    url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$','comicsite.api.get_public_results'),
+    
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/db/(?P<dropboxname>[\w-]+)/(?P<dropboxpath>.+)/$','comicsite.views.dropboxpage'),
     
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/(?P<dropboxpath>.+)/$','comicsite.views.insertedpage'),
-    
+        
+    # If nothing specific matches, try to resove the url as project/pagename
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$','comicsite.views.page'),
 )
