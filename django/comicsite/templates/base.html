@@ -30,6 +30,9 @@
         <script>
         $(document).ready(function() {
             
+            //url prefix for API functions
+            API_PREFIX = "{% get_project_prefix %}api",
+            
             // delete message on click
             $(document).on('click','.del-msg',function(){                
                 $('.messagelist').attr('style', 'display:none;');

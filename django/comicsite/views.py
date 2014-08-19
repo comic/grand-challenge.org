@@ -19,6 +19,7 @@ from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
+from django.core.files.storage import DefaultStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse,Http404,HttpResponseForbidden
@@ -381,16 +382,35 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
                                             "metafooterpages":metafooterpages},
                                             context_instance=CurrentAppRequestContext(request))
 
+
+def get_data_folder_path(project_name):
+    """ Returns physical base path to the root of the folder where all files for
+    this project are kept """
+    return path.join(settings.DROPBOX_ROOT,project_name)
     
+
+def get_dirnames(path):
+        """ Get all directory names in path as list of strings
+                
+        Raises: OSError if directory can not be found
+        """
+        storage = DefaultStorage()                
+        dirnames = storage.listdir(path)[0]
+        dirnames.sort()
+        return dirnames
+
+
+
 def inserted_file(request, site_short_name, filepath=""):
     """ Get image from local dropbox and serve. 
-    
-    
+        
     """        
     
     from filetransfers.views import can_access
     
-    filename = path.join(settings.DROPBOX_ROOT,site_short_name,filepath)
+    data_folder_root = get_data_folder_path(site_short_name)
+    
+    filename = path.join(data_folder_root,filepath)
     
     # can this location be served regularly (e.g. it is in public folder)?
     serve_allowed = can_access(request.user,filepath,site_short_name)

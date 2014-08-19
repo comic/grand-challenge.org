@@ -1114,7 +1114,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         self.assertTrue(link!="","Could not find any list of files after rendering html '%s'" % response1.content)
         return link                
-                                
+     
 
     def test_listdir(self):
         """ Does the template tag for listing and downloading files in a dir work

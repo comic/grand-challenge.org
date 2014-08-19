@@ -655,8 +655,7 @@ class ImageBrowserNode(template.Node):
             filenames = filter_by_extension(filenames,extensions)
         
         return filenames
-
-
+    
 
 
 
@@ -1104,7 +1103,30 @@ class RenderFileUrlNode(template.Node):
         
         return url
     
+
+# {% insertfile results/test.txt %}
+@register.tag(name="get_project_prefix",
+              usagestr = """Tag usage: {% get_api_prefix %}
+                  Get the base url for this project as string, with trailing slash
+                  """)
+def get_project_prefix(parser, token):
+    """ Get the base url for this project as string, with trailing slash.
+    Created this originally to be able to use for project-specific api calls in
+    javascript"""
+
+    return RenderGetProjectPrefixNode()
+
+
+class RenderGetProjectPrefixNode(template.Node):    
+    usagestr = get_usagestr("get_project_prefix")
     
+    def render(self, context):
+        projectname = context["site"].short_name        
+        url = reverse("comicsite.views.site",args=[projectname])        
+        return url
+    
+
+
 
 # {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
