@@ -483,7 +483,7 @@ function ResultViewerGUI() {
 
 
 function getImagePaths(options){
-    //returns a list of image paths to show.  
+    // returns a list of image paths to show.  
     var static_url = options["static_url"];
     var folder = options["dirs"][0];
     var imageDropDownValue = getDropDownValue("#Image");
@@ -497,15 +497,21 @@ function getImagePaths(options){
 //                  imagepaths function ======================
 
 function getDropDownValue(id){
-    //Get the text which is currently selected
+    // Get the text which is currently selected
     return $(id + " option:selected").val();
 };
 
 function getTickBoxValue(id){
-    //Get the text which is currently selected
+    // Get the text which is currently selected
     
     return $(id).is(":checked");
 };
+
+function get_public_results(){
+	// get the available results for the current project. Current project is
+	// determined in django
+	  
+}
 
 
 //======================== end GUI (creating html elements) ============================================================
