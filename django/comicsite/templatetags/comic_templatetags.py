@@ -58,20 +58,37 @@ logger = logging.getLogger("django")
 
 
 def parseKeyValueToken(token):
-    """
-    Parses the given token string and returns a parameter dictionary
-    \param token A string given by the templatetag which is assumes to look like
-    \this:
-            visualization key1:value1,key2:value2,...
-    \return A dictionary
+    """Parses token content string into a parameter dictionary
+    
+    Args:        
+        token (django.base.Token): Object representing the string content of
+            the template tag. Key values are expected to be of the format         
+            key1:value1 key2:value2,...
+    
+    Returns:
+        A dictionary of key:value pairs
+        
+    Raises:
+        ValueError: if token contents are not in key:val1 key:val2 .. format
+        
     """
     split = token.split_contents()
     tag = split[0]
     args = split[1:]
+    
+    if "=" in "".join(args):
+        raise ValueError("Please use colon ':' instead of equals '=' to separate keys and values")
+    
     return dict([param.split(":") for param in args])
 
 
-
+def cleanKeyValueToken(token):
+    """Remove some common mistake for which I do not want to throw any error
+    
+    """
+    token = token.contents.replace("=",":")
+    return token 
+     
 def get_usagestr(function_name):
     """
     Return usage string for a registered template tag function. For displaying
@@ -117,7 +134,7 @@ def subdomain_is_projectname():
 
 @register.tag
 def url(parser, token):
-    """ Overwrite built in url tag. It works identicaly, except that where possible
+    """Overwrites built in url tag to use . It works identicaly, except that where possible
     it will use subdomains to refer to a project instead of a full url path.
 
     For example, if the subdomain is vessel12.domain.com it will refer to a page
@@ -154,8 +171,9 @@ def url(parser, token):
     return comic_URLNode(orgnode.view_name,orgnode.args, orgnode.kwargs, orgnode.asvar)
 
 def filter_by_extension(filenames,extensions):
-    """ Takes two lists of strings. Return only strings that end with any of 
+    """Takes two lists of strings. Return only strings that end with any of 
     the strings in extensions. 
+    
     """
     filtered = []
     for extension in extensions:
@@ -163,25 +181,27 @@ def filter_by_extension(filenames,extensions):
     return filtered
  
 def resolve_path(path, parser, context):
-        """ Paths in COMIC template tag parameters can include variables. Try to
-        resolve these and throw error if this is not possible. 
+        """Try to resolve all parameters in path   
         
-        args:
+        Paths in COMIC template tag parameters can include variables. Try to
+        resolve these and throw error if this is not possible. 
+        path can be of three types:
+            * a raw filename like "stuff.html" or "results/table1.txt"
+            * a filname containing a variable like "results/{{teamid}}/table1.txt"
+            * a django template variable like "site.short_name"
+        
+        Args:
             Path (string)
             parser (django object) 
-            context (context given tag render function)
+            context (django context given tag render function)
             
             
-        returns:
+        Returns:
             resolved path (string)
         
-        raises:
+        Raises:
             PathResolutionException when path cannot be resolved
-            
-        path can be of three types:
-        # * a raw filename like "stuff.html" or "results/table1.txt"
-        # * a filname containing a variable like "results/{{teamid}}/table1.txt"
-        # * a django template variable like "site.short_name"
+                    
         """
         
         # Find out what type it is:
@@ -460,7 +480,7 @@ class DatasetNode(template.Node):
 
 
 @register.tag(name="listdir",
-              usagestr= """Tag usage: {% listdir path:string  extensionFilter:ext1,ext2,ext3 %}
+              usagestr= """Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}
 
               path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.
               extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
@@ -477,9 +497,8 @@ def listdir(parser, token):
         errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
         return TemplateErrorNode(errormsg)
 
-
     if "path" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: dataset argument is missing." + usagestr
+        errormsg = "Error rendering {% " + token.contents + " %}: 'path' argument is missing." + usagestr
         return TemplateErrorNode(errormsg)
 
     return ListDirNode(args)
@@ -534,9 +553,60 @@ class ListDirNode(template.Node):
         return htmlOut
 
 
+class DownloadLinkNode(template.Node):
+    
+
+    usagestr = get_usagestr("listdir")
+
+    def __init__(self, args):
+        self.path = args['path']
+        self.args = args
+
+
+    def make_dataset_error_msg(self, msg):
+        errormsg = "Error listing folder '" + self.path + "': " + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+
+        project_name = context.page.comicsite.short_name
+        projectpath = project_name + "/" + self.path
+        storage = DefaultStorage()
+        
+        try:
+            filenames = storage.listdir(projectpath)[1]
+        except OSError as e:
+            return self.make_dataset_error_msg(str(e))
+
+        filenames.sort()
+
+        # if extensionsFilter is given,  show only filenames with those extensions
+        if 'extensionFilter' in self.args.keys():        
+            extensions = self.args['extensionFilter'].split(",")
+            filenames = filter_by_extension(filenames,extensions)
+            
+
+        links = []
+        for filename in filenames:
+
+            downloadlink = reverse('project_serve_file',
+                                    kwargs={'project_name':project_name,
+                                            'path':self.path+"/"+filename})
+
+            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
+
+
+        htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
+
+        return htmlOut
+
+
+
 @register.tag(name = "image_browser")
 def render_image_browser(parser, token):
-    """ Given a folder and project, render a browser so you can skip through them in browser """
+    """Given a folder and project, render a browser so you can skip through them in browser
+    
+    """
 
     usagestr = """Tag usage: {% image_browser path:string - path relative to current project
                                               config:string - path relative to current project %}
@@ -554,8 +624,8 @@ def render_image_browser(parser, token):
     return ImageBrowserNode(args,parser)
 
 class ImageBrowserNode(template.Node):
-    """
-    Render jquery browser to go through all images in given folder
+    """Render jquery browser to go through all images in given folder
+    
     """
 
     def __init__(self, args, parser):
@@ -579,12 +649,27 @@ class ImageBrowserNode(template.Node):
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
         
+        # try to get names of all public results to be available in javascript
+        # Where are the results?
+        from comicsite.api import get_public_results_by_project_name
+       
+        try:
+            public_results = get_public_results_by_project_name(context['site'].short_name)            
+        except OSError as e:
+            # if no results can be found just skip it
+            public_results = [] 
+        
+        # Url relative to hostname. To serve /foo/file.txt from project datafolder,
+        # what url needs to go in front?  Thsi var can be used in javascript to
+        # create links. Using dummyfile because django resolution does not except
+        # explicit empty strings.
+        serve_file_prefix = reverse("project_serve_file",args=[context['site'].short_name,"dummyfile"])        
+        # remove "dummyfile/" from end of path again. This feels dirty but I cannot see        
+        # much wrong with it here. 
+        serve_file_prefix = serve_file_prefix[:-10] 
+        
+        
         htmlOut = """
-
-          <div class="ImageBrowser">
-            A browser for path '{path}' to be implemented
-          </div>
-
           <h3>Results viewer</h3>
             <div id="resultViewer">
                 <div id="resultViewerGUI"></div>
@@ -593,22 +678,30 @@ class ImageBrowserNode(template.Node):
             <div style="clear:both;"></div>
         
         <script type="text/javascript" src="/static/js/challengeResultViewer/challengeResultViewer.js"></script>
-        {custom_options_include} 
         <script type="text/javascript">
+            // some useful vars you might need to build a browser in javascript
+            var project_info = {project_info};            
+        </script> 
+        {custom_options_include} 
+        <script type="text/javascript">            
             //combine default options generated by django with user-defined options
             var django_generated_options = {dg_options};
             var user_defined_options = options;
             options = $.extend({{}},user_defined_options,django_generated_options);
             viewer{viewer_id} = new ResultViewerGUI();
             viewer{viewer_id}.init("#resultViewerGUI",options);
+            viewer{viewer_id}.loadAllScreenshots();
         </script> 
 
         """.format(path=path_resolved,
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
                    custom_options_include = self.get_custom_options_include(context),
+                   project_info = json.dumps({"public_results":public_results,
+                                              "url_params":self.get_url_params(context)}),
                    dg_options = json.dumps({"dirs":[path_resolved],
                                             "fileNames":filenames,
-                                            "url_params":self.get_url_params(context)})
+                                            "serve_file_prefix":serve_file_prefix}
+                                            )
                    )
         
         return htmlOut
@@ -1095,14 +1188,180 @@ class RenderFileUrlNode(template.Node):
     def __init__(self, args,parser):
         self.args = args
         self.parser = parser
+    
+    def make_url_to_file_error_msg(self, msg):
+        errormsg = "Error rendering tag {% url_to_file %} with parameters'" + str(self.args) + "':" + msg
+        return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
         projectname = context.page.comicsite.short_name
         filename = strip_quotes(self.args["file"])
-        url = reverse("project_serve_file",args=[projectname,filename])
-        
+        try:
+            filename = resolve_path(filename,self.parser,context)
+        except PathResolutionException as e:
+            return self.make_url_to_file_error_msg(str(e))
+                        
+        url = reverse("project_serve_file",args=[projectname,filename])        
         return url
     
+
+
+@register.tag(name="get_result_info",
+              usagestr = """Tag usage: {% get_result_info id:<resultID>, type:<item> %}
+                  <resultID>: string containing the first characters of the folder
+                      containing the results. Results are searched for only in the
+                      /results folder. Folders are searched for in alphabetical order,
+                  the first is returned
+                  <item>: what type of info should be returned? one of the following
+                      strings:
+                         * "folder_name"           - the full name of this results' folder
+                         * "description_file_path" - full path to the file describing
+                                                    this result, from this project's
+                                                    root.                                                              
+                  
+                  """)
+def get_result_info(parser, token):
+    """ Get a string of information regarding a certain result """
+    
+    usagestr = get_usagestr("get_result_info")
+    
+    try:        
+        args = parseKeyValueToken(token)
+        ensure_args_length(2,args)
+        ensure_key_in_args("id",args)
+        ensure_key_in_args("type",args)
+        ensure_value_is_in_list(args["type"],["folder_name","description_file_path"])
+    
+                        
+    except ValueError as e:
+        errormsg = "Error parsing {% " + token.contents + " %}: "+str(e)+" <br/> " + usagestr
+        return TemplateErrorNode(errormsg)        
+
+    return GetResultInfoNode(args, parser)
+
+
+class GetResultInfoNode(template.Node):
+    
+    usagestr = get_usagestr("get_result_info")
+    
+    def __init__(self, args,parser):
+        self.args = args
+        self.parser = parser
+    
+    def make_resultsinfo_error_msg(self, msg):
+        errormsg = "Error rendering tag {% get_results_info %} with parameters'" + str(self.args) + "':" + msg
+        return makeErrorMsgHtml(errormsg)
+
+    def render(self, context):
+                
+        # path can contain variables like "/results/{{resultId}}/screenshots/"
+        self.args["id"] = resolve_path(self.args["id"],self.parser,context)
+        
+        result_folder = self.try_find_result_folder(context)
+        
+        if result_folder == "":
+            return """result folder starting with '{id}' could not be found. 
+            Searched {folder} up to a depth of {depth}""".format(id=self.args["id"],
+                                                                 folder=results_folder,
+                                                                 depth=recursion_depth)
+        
+        type = self.args["type"]
+        if type == "folder_name":
+            return result_folder 
+        elif type == "description_file_path":
+            return "description file for {}".format(self.args["id"])
+        else: 
+            return make_resultsinfo_error_msg("unknown type '{}'. I don't know that to return.")
+        
+        
+    def try_find_result_folder(self,context):
+        from comic.settings import COMIC_RESULTS_FOLDER_NAME
+        results_folder = COMIC_RESULTS_FOLDER_NAME
+        
+        project_name = context.page.comicsite.short_name
+        results_path = project_name + "/" + results_folder
+                
+        recursion_depth = 1
+        try:
+            result_folder = find_dir_starting_with(self.args["id"],results_path,recursion_depth)
+        except OSError as e:
+            return self.make_resultsinfo_error_msg(str(e))
+        
+        
+        return result_folder
+        
+
+
+
+def find_dir_starting_with(startswith,path,max_depth,current_depth=0):
+    """Return the first directory which starts with startswith.
+         
+    Searches path a-z first, then subdirs a-z in order
+    
+    Params:
+        startswith (string)
+        path : full path the directory on disk
+        depth: search subdirectories up to this depth
+    
+    Returns:
+        Full path to the first directory found to start with given string 
+        empty string otherwise
+    
+    Raises:
+        OSError if path does not exist
+              
+    """
+    
+    storage = DefaultStorage()
+    dirs = storage.listdir(path)[0]
+    
+
+    while current_depth <= max_depth:
+        for dir in dirs:
+            if dir.startswith(startswith):
+                return dir
+        
+        for dir in dirs:
+            subdirpath = path+"/"+dir
+            print("searching {}, depth {}".format(subdirpath,current_depth))
+            subdir = find_dir_starting_with(startswith,subdirpath,max_depth,current_depth+1)
+            if subdir != "":
+                return subdir
+        
+        return ""
+            
+    return ""
+
+
+
+def ensure_key_in_args(param_name,args):
+    """Raise a descriptive error when a key is not in the given dict
+    
+    Used to save typing during input checking for django template tags 
+    
+    """
+    if param_name not in args.keys():    
+        raise ValueError("ensure_key_in_args: '"+param_name+"' argument is missing.")
+    
+    
+
+def ensure_args_length(length,args):
+    """Raise a descriptive error when dictionary is not of expected length
+    
+    """
+    
+    if len(args) != length:        
+        raise  ValueError("ensure_args_length: Expected "+str(length)+" arguments, found " + str(len(args)) + ".")
+    
+
+def ensure_value_is_in_list(value,allowed_values):
+    """Raise descriptive ValueError when value is not one of allowed values
+    
+    """
+    if not value in allowed_values:
+        raise ValueError("ensure_value_is_in_list: Unknown value '"+value+"'. Expected one of ["+",".join(allowed_values)+"]")
+        
+        
 
 # {% insertfile results/test.txt %}
 @register.tag(name="get_project_prefix",
@@ -1110,7 +1369,7 @@ class RenderFileUrlNode(template.Node):
                   Get the base url for this project as string, with trailing slash
                   """)
 def get_project_prefix(parser, token):
-    """ Get the base url for this project as string, with trailing slash.
+    """Get the base url for this project as string, with trailing slash.
     Created this originally to be able to use for project-specific api calls in
     javascript"""
 
@@ -1131,8 +1390,10 @@ class RenderGetProjectPrefixNode(template.Node):
 # {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
-    """ Render the contents of a file from the local dropbox folder of the 
-        current project"""
+    """Render the contents of a file from the local dropbox folder of the 
+    current project
+        
+    """
 
     usagestr = """Tag usage: {% insertfile <file> %}
                   <file>: filepath relative to project dropboxfolder.
@@ -1886,12 +2147,9 @@ def render_all_projectlinks(parser, token):
                                 also, show only projects hosted on comic, not
                                 external links                                
                   """
-    try:
-        args = parseKeyValueToken(token)
-    except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
-        return TemplateErrorNode(errormsg)
-
+    
+    args = parseKeyValueToken(token)
+    
     if len(args) > 1:
         errormsg = "Error rendering {% {0} %}: expected at most one argument, but found [{1}]".format(token.contents,
                                                                                                  ",".join(args.keys()))

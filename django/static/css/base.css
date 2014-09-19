@@ -4,7 +4,7 @@ body {background-color: #F9F9F9;font-family: 'Open Sans', sans-serif;padding-top
 #page { margin-left:auto; margin-right:auto; width: 1000px; font-size: 10pt; }
 
 /* Formatting for forms (at the moment only tested on /accounts/signup */
-label { display:block; float:left; width:180px; }
+label { display:block; float:left;}
 span.required:after { content: " *"; color: #f00; }
 span.help_text { font-size:8pt; color:#666; }
 
@@ -220,6 +220,20 @@ p.required label{font-weight:bold;}
 #addexistingproject span.counter {color: #474747; margin-left: 10px; position: absolute;}
 
 .system_message {width:700px;}
+
+
+/* style for javascript image browser renderd by image_browser tag */
+
+.resultImageContainer{float:left; padding-right:6px;}
+.resultImageHeader{height:19px; word-wrap: break-word;}
+.intSelectTextBox{width:3em; margin-left:1ex; margin-right:1ex;}
+.resultviewerControlsColumn{padding-right:3em;}
+.resultviewerControlsColumn .editor-field{width:400px;}
+.resultviewerControlsColumn label{padding-right:10px; padding-top:2px;}
+.resultviewerControlsColumn input[type='checkbox']{float:right;}
+.resultviewerControlsLastColumn{} /*So as not pad last column because it eats up space*/
+#resultViewerGUI input#loadButton {margin-bottom:7px; margin-top:5px;}
+ 
 
 
 /*=================  everything below this line pasted from lola 11 just to get someting going*/
@@ -500,29 +514,3 @@ li.selectedMenuItem
 
 }
 
-/*07/10/2011 - used for displaying result screenshots*/
-.resultImageContainer
-{
-    float:left;
-    padding-right:1em;
-}
-
-/*10/10/2011 - used for entering an int, for example scan number*/
-.intSelectTextBox
-{
-    width:3em;
-    margin-left:1ex;
-    margin-right:1ex;
-}
-
-/*10/10/2011 - used for layout of resultviewer controls into columns*/
-.resultviewerControlsColumn
-{
-    padding-right:5em;
-}
-
-/*10/10/2011 - So not pad last column because it eats up space*/
-.resultviewerControlsLastColumn
-{
-
-}
