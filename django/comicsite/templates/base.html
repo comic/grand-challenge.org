@@ -28,10 +28,10 @@
         <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
     
         <script>
-        $(document).ready(function() {
-            
-            //url prefix for API functions
+        //url prefix for API functions
             API_PREFIX = "{% get_project_prefix %}api",
+            
+        $(document).ready(function() {
             
             // delete message on click
             $(document).on('click','.del-msg',function(){                
