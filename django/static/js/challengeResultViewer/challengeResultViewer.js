@@ -15,10 +15,11 @@ LOADING_IMAGE_URL = "/static/js/challengeResultViewer/ajax-loader.gif";
 //======================== GUI (creating html elements) ==========================================================
 // These functions are only used at page creation, to show buttons, inputs, text, etc.
 
-//create the results viewer GUI inside the (div) element 'base' given as input.
-//names in the GUI are identifiers and are hooked on by resultsViewer functions 
-//restricted = true means only certain scans are loadable
+
 function ResultViewerGUI() {
+	//create the results viewer GUI inside the (div) element 'base' given as input.
+	//names in the GUI are identifiers and are hooked on by resultsViewer functions 
+	//restricted = true means only certain scans are loadable
     var self = this;
     
     var default_options = {restricted: true,
@@ -36,20 +37,18 @@ function ResultViewerGUI() {
         
         log("init viewer in element '"+self.base+"'");        
         self.input_options = input_options;
-        var input_options = self.input_options;
         
         // Merge defaults and options passed when calling this function. Take default
         // if a key is not defined in input  
         self.options = $.extend({},default_options,input_options);
         
-        //assigning a function here
-        if(self.options["imagePathsFunction"] == undefined){
-            log("No custom imagePathsFunction defined. using standard");
-            self.setImagePathsFunction(getImagePaths);
-        }else{
-            self.setImagePathsFunction(self.options["imagePathsFunction"]);
-            
-        };
+        // Keeps track of which images are currently loaded so we can do nice
+        // remove/ add animations which make you appear professional 
+        self.currentlyLoadedImagePathsAndHeaders = {};
+        
+        // Register the function that will return which images to show given
+        // the current state of all the buttons
+        self.setImagePathsFunction(self.options["imagePathsFunction"]);
         
         log("viewer options were'"+JSON.stringify(self.options)+"'");
                 
@@ -69,7 +68,7 @@ function ResultViewerGUI() {
         self.options.controls.selectionboxes.forEach(function (value, index) {
             log("creating selectionbox based on" + JSON.stringify(value));
             row2.append(self.createLabel(value[0], value[1]));
-            row2.append(self.createStringDropdownElement(value[1],self.options["fileNames"])); //create box containing only allowed elements                        
+            row2.append(self.createStringDropdownElement(value[1],value[2]));                        
         });
 
         var row3 = $("<div>");
@@ -90,7 +89,18 @@ function ResultViewerGUI() {
     
     this.setImagePathsFunction = function(imagePathsFunction){
         //The imagePathsFunction takes a single object (options) representing the state of all tickboxes
-        // and dropdown menus, and returns an array of image paths to display 
+        // and dropdown menus, and returns an array of image paths to display
+        
+        if(imagePathsFunction == undefined){
+            log("No custom imagePathsFunction defined. using default function");
+            var defaultFunction = getImagePaths;
+            imagePathsFunction = defaultFunction;            
+            
+        }
+        
+        // do some type checking because javascript will probably give unreadable
+        // errors if things go wrong here.
+        
         if(imagePathsFunction.prototype.toString() != "[object Object]"){
           log("this.setImagePathsFunction: single inputargument to this function should be a function, found "+imagePathsFunction.prototype.toString()+" instead.");
                  
@@ -101,8 +111,9 @@ function ResultViewerGUI() {
           
     };
     
-    //return a table with a single row, each element in elements in its own column
+    
     this.createSingleRowTable = function(id, elements){
+    	//return a table with a single row, each element in elements in its own column
         var table = $("<table id = '"+ id +"'>");
         var tr = $("<tr>");
         tr.appendTo(table);
@@ -120,25 +131,27 @@ function ResultViewerGUI() {
         return table;
     };
     
-        //create a checkbox inside a div, with label. 
-    //example:
-    //<div class="editor-label"> <input id="showRef" name="showRef" type="checkbox" checked="checked"/> <label for="reference">reference</label> </div>
+
      this.createCheckboxElement = function(id, checked, labelText) {
+     	//create a checkbox inside a div, with label. 
+		//example:
+		//<div class="editor-label"> <input id="showRef" name="showRef" type="checkbox" checked="checked"/> <label for="reference">reference</label> </div>
         var containerDiv = $("<div>");
         containerDiv.attr("class", "editor-label");
     
         var checkBox = this.createCheckBox(id, checked);
     
         var label = this.createLabel(id, labelText);
-    
+
+       	containerDiv.append(label);
         containerDiv.append(checkBox);
-        containerDiv.append(label);
         return containerDiv;
     };
     
-    //create this:
-    //<input class="" id="id" name="id" type="checkbox" checked=checked /> 
+    
     this.createCheckBox = function(id, checked) {
+    	//create this:
+    	//<input class="" id="id" name="id" type="checkbox" checked=checked />
         var checkBox = $('<input type="checkbox"/>');
         checkBox.attr('id', id);
         checkBox.attr('name', id);
@@ -150,19 +163,20 @@ function ResultViewerGUI() {
     };
     
     
-    //create this:
-    //<label for="id">labelText</label><br/>
+
     this.createLabel = function(forId, labelText) {
+    	//create this:
+    	//<label for="id">labelText</label><br/>
         var label = $("<label>");
         label.attr("for", forId);
         label.html(labelText);
         label.append($("<br/>"));
         return label;
     };
-    
-    //create this:
-    //<input class="text-box single-line" id=id name=id type="text" value=value" />
+        
     this.createIntSelectBox = function(id, startVal) {
+    	//create this:
+    	//<input class="text-box single-line" id=id name=id type="text" value=value" />
         var textBox = $('<input type="text"/>');
         textBox.attr('class', "intSelectTextBox");
         textBox.attr('id', id);
@@ -171,9 +185,10 @@ function ResultViewerGUI() {
         return textBox;
     };
     
-    //create this:
-    //<select>  <option>options[0]</option>... </select>  
+      
     this.createIntDropdownBox = function(id, options) {
+    	//create this:
+    	//<select>  <option>options[0]</option>... </select>
         var selectBox = $('<select>');
         selectBox.attr('class', "intSelectTextBox");
         selectBox.attr('id', id);
@@ -189,40 +204,80 @@ function ResultViewerGUI() {
         return selectBox;
     };
     
-    //create this:
-    //<select>  <option>options[0]</option>... </select>  
-    this.createStringDropdownBox = function(id, options) {
+      
+    this.createStringDropdownBox = function(id, selectOptions) {
+    	//create this:
+    	//<select>  <option>options[0]</option>... </select>
         var selectBox = $('<select>');
         selectBox.attr('class', "stringSelectTextBox");
         selectBox.attr('id', id);
         selectBox.attr('name', id);
-        //selectBox.attr('value', startVal);    
-        $.each(options, function(i,value) {
-            option = $("<option />");
+        //selectBox.attr('value', startVal);
+        
+        // if selectedOptions is an array, fill the selectbox right away
+    	selectBoxFull = this.fillDropdownBox(selectBox,selectOptions);
+
+		if (typeof(selectedOptions) == "function") {
+		// do something
+		}
+
+
+    	// id selectedOptions is a function, assume this function an ajax call
+    	// pass the fillDropdownBox function as a callback so the dropdownbox
+    	// can be filled once the ajax call returns
+    
+        
+    
+        return selectBoxFull;
+    };
+    
+    this.fillDropdownBoxAsync = function(selectBox,selectOptions){
+    	
+		$.get(api_prefix+"/get_public_results/")
+		.done(this.createSelectBoxUpdateClosure(selectBox,selectOptions));
+    	
+    };
+    
+    this.createSelectBoxUpdateClosure = function(selectBox,selectOptions){
+    	// only good of passing additional parameters into a callback function
+    	// in this case the selectbox that should be updated is passed
+    	// see http://stackoverflow.com/questions/939032/jquery-pass-more-parameters-into-callback
+    	return function(data,textStatus,jqXHR){
+    		this.fillDropdownBox(selectBox,jQuery.parseJSON(data));
+    	};    	
+    };
+    
+    
+    this.fillDropdownBox = function(selectBox,selectOptions){
+    	
+    	$.each(selectOptions, function(i,value) {
+            var option = $("<option />");
             option.val(value);
             option.text(cleanResultName(value));
             selectBox.append(option);
-        });    
-    
-        return selectBox;
+        });
+        
+    	return selectBox;
     };
     
-    //create this:
-    //<input type="submit" value=buttonText id=id />
+
     this.createSubmitButton = function(id, buttonText) {
+    	//create this:
+    	//<input type="submit" value=buttonText id=id />
         var button = $('<input type="submit"/>');
         button.attr("id", id);
         button.attr("value", buttonText);
         return button;
     };
     
-    //create something like this:
-    //<div class="editor-field">
-    //      <input type="submit" value="prev" id="prevScanButton" />
-    //      <input class="text-box single-line" id="Scan" name="Scan" type="text" value="1" style="width:3em;" />
-    //      <input type="submit" value="next" id="nextScanButton" />
-    //</div>
+    
     this.createIntSelectElement = function(id, startVal) {
+    	//create something like this:
+	    //<div class="editor-field">
+	    //      <input type="submit" value="prev" id="prevScanButton" />
+	    //      <input class="text-box single-line" id="Scan" name="Scan" type="text" value="1" style="width:3em;" />
+	    //      <input type="submit" value="next" id="nextScanButton" />
+	    //</div>
         var prevButton = this.createSubmitButton("prev" + id + "Button", "prev");
         var textBox = createIntSelectBox(id, startVal);    
         var nextButton = this.createSubmitButton("next" + id + "Button", "next");
@@ -238,11 +293,12 @@ function ResultViewerGUI() {
     
     };
     
-    //create 'select' element dropdownbox with buttons
+    
     this.createIntDropdownElement = function(id, options) {
-        var prevButton = this.createSubmitButton("prev" + id + "Button", "prev");    
+    	//create 'select' element dropdownbox with buttons
+        var prevButton = this.createSubmitButton("prevButton", "prev");    
         var textBox = createIntDropdownBox(id, options);
-        var nextButton = this.createSubmitButton("next" + id + "Button", "next");
+        var nextButton = this.createSubmitButton("nextButton", "next");
         var containerDiv = $("<div>");
         containerDiv.attr("class", "editor-field");
         containerDiv.attr("id", id);
@@ -255,8 +311,9 @@ function ResultViewerGUI() {
     
     };
     
-    //create 'select' element by itself
-    this.createStringDropdownBoxAndBreak = function(id, options) {    
+    
+    this.createStringDropdownBoxAndBreak = function(id, options) {
+    	//create 'select' element by itself    
         var textBox = this.createStringDropdownBox(id, options);    
         var containerDiv = $("<div>");
         containerDiv.attr("class", "editor-field");    
@@ -266,11 +323,12 @@ function ResultViewerGUI() {
         return containerDiv;    
     };
     
-    //create 'select' element dropdownbox
+    
     this.createStringDropdownElement = function(id, options) {
-        var prevButton = this.createSubmitButton("prev" + id + "Button", "prev");    
+    	//create 'select' element dropdownbox
+        var prevButton = this.createSubmitButton("prevButton", "prev");    
         var textBox = this.createStringDropdownBox(id, options);
-        var nextButton = this.createSubmitButton("next" + id + "Button", "next");
+        var nextButton = this.createSubmitButton("nextButton", "next");
         var containerDiv = $("<div>");
         containerDiv.attr("class", "editor-field");
         containerDiv.attr("id", id);
@@ -283,16 +341,18 @@ function ResultViewerGUI() {
     
     };
     
-    //return all results, except the one for which this page is made
+    
     this.getAllResultsExceptCurrent = function(){
+    	//return all results, except the one for which this page is made
         all =  this.getAllResults();
         var clean = removeFromArray(all,$("#resultDir").val());
-        return clean
+        return clean;
     };
     
-    //Return all results which can be compared 
+     
     this.getAllResults = function(){
-    //TODO: get all results dynamically
+    	//Return all results which can be compared
+    	//TODO: get all results dynamically
         allResults =   ["20120227124320_104_DIAG_HUVesselSeg",
                         "20120322112800_189_MEDKIS_MedKIS_SDTF",
                         "20120322173351_193_Labhuman_VESSEL12_Results_Labhuman_SDTF",
@@ -325,14 +385,13 @@ function ResultViewerGUI() {
         log("creating space for '"+id+"'");
         
         var width = $("#Width").val();        
-        var header = $("<div>"); //create a header showing which type of image this is
-        header.html("header TODO");
-        header.addClass("resultImageHeader");
+        var header = $("<div>"); //create a header showing which type of image this is        
+        header.addClass("resultImageHeader");        
         var image = $("<div>"); //create container for image                
         image.addClass("resultImage");
         // Put an animated GIF image insight of content
         image.html("<img src=\""+LOADING_IMAGE_URL+"\">");
-        
+                
         var container = $("<div>"); //create container to hold header + image
         container.append(header);
         container.append(image);
@@ -340,7 +399,7 @@ function ResultViewerGUI() {
         container.attr("id",id);
         container.width(width + "px");
         //set height to make sure the screen does shift while images are loading
-        container.height(width + "px");
+        //container.height(width + "px");
         return container;
     };
     
@@ -348,24 +407,40 @@ function ResultViewerGUI() {
     this.fillImagePlaceholder = function(id,path){
         log("filling '"+id+"' with '" + path + "'");
         var width = $("#Width").val();
-        var container = $("#"+id);        
-        log("loading image '"+path+"' in div'"+id+"'");
-        container.empty(); //remove loading animation
-        container.append(htmlImage(path, width));        
+        var containerImageDiv = $("#"+id+" .resultImage");                
+        containerImageDiv.empty(); //remove loading animation
+        containerImageDiv.append(htmlImage(path, width));
         
-};
+    };        
+        
+    this.fillHeader = function(id,headerContent){
+        log("filling header in element'"+id+"' with '" +headerContent +"'");
+        var width = $("#Width").val();
+        var headerContainer = $("#"+id+" .resultImageHeader");
+        headerContainer.html(headerContent);
+        
+        //also set header to appear when hovering over the image
+        var containerImage = $("#"+id+" .resultImage img");
+        containerImage.attr("title",headerContent);
+	};
     
         //======================== functions ===================================================================================
     // Anything called while interacting with the GUI
 
     this.loadAllScreenshots = function(){
-        //var params = getDisplayScreenshotParams();
-        //var params = {resultDirs:["public_html"],fileNames:["test_1.PNG","test_2.PNG"]};
-        
         var params = this.options;
         log("loading all images, params are" + JSON.stringify(this.options));
         
-        var imagePaths = self.getImagePaths(this.options);
+        //who thought of this variable name?
+        var currentImages = self.currentlyLoadedImagePathsAndHeaders;
+                
+        var newImages = self.getImagePaths(this.options);
+        
+        var pathsAndHeaders = self.determineDifference(currentImages,newImages);
+        pathsAndHeaders = newImages;
+         
+        var imagePaths = pathsAndHeaders["paths"];
+        var imageHeaders = pathsAndHeaders["headers"];
         
         var width = $("#Width").val();
         var static_url = this.options["static_url"];
@@ -381,11 +456,28 @@ function ResultViewerGUI() {
         
         $.each(imagePaths, function (indexf, valuef){
             elementId = self.getUniqueId(valuef);
-            self.fillImagePlaceholder(elementId,valuef);
+            self.fillImagePlaceholder(elementId,valuef);            
+            var header = imageHeaders[indexf];
+            self.fillHeader(elementId,header);
             
         });
+        
+        //make sure the current choices for size and show headers are used
+        setHeaders();
+        setAllImageWidths($("#Width").val());
+        
  
     };
+    
+    
+    self.determineDifference = function(currentImages,newImages){
+    	// given two collections of images, determine which are added in new 
+    	// and which were removed
+    	// image collections are in the format {"paths:"[],"imageHeaders[]"}
+    	
+    	return null;
+    };
+    
     
     
     this.getUniqueId = function(filename,directory){
@@ -402,7 +494,6 @@ function ResultViewerGUI() {
     
     
     this.init_hooks = function(){
-        
         //When any button is checked, load all screenshots
         this.options.controls.tickboxes.forEach(function (value, index) {            
             
@@ -454,9 +545,9 @@ function ResultViewerGUI() {
     };
     this.hookDropdownElement = function(divSelector){
         log("creating function hooks for dropdown \'" +divSelector+"\'");
-        dropdownSelector = divSelector + " select";
-        nextSelector = divSelector + " input#nextImageButton";
-        prevSelector = divSelector + " input#prevImageButton";
+        var dropdownSelector = divSelector + " select";
+        var nextSelector = divSelector + " input#nextButton";
+        var prevSelector = divSelector + " input#prevButton";
         
         $(function () {
             $(dropdownSelector).click(function () {
@@ -496,6 +587,7 @@ function getImagePaths(options){
 // ================ Helperfunction that can be called in custom viewer 
 //                  imagepaths function ======================
 
+
 function getDropDownValue(id){
     // Get the text which is currently selected
     return $(id + " option:selected").val();
@@ -507,11 +599,73 @@ function getTickBoxValue(id){
     return $(id).is(":checked");
 };
 
-function get_public_results(){
-	// get the available results for the current project. Current project is
-	// determined in django
-	  
+
+function getAllPublicResults(dropdownElement){
+	// Get all public results via a json callback, and fill the dropdownbox with
+	// the values dropdownElement is a DOM element
+	
+	$.get(api_prefix+"/get_public_results/")
+		.done(function(results){alert(results);});		
+
 }
+
+function getPublicResults(){
+	// get the available results for the current project. Current project is
+	// determined in django. Callback is a function that gets executed
+		
+	//this var is included by django on every page 
+	var api_prefix = API_PREFIX;
+		
+	$.get(api_prefix+"/get_public_results/")
+		.done(function(results){alert(results);});
+};
+
+
+function removeDuplicates(array){
+	// remove duplicates. Returned array will contain only the first occurence
+	// of each duplicate
+	var unique = [];
+	$.each(names, function(i, el){
+    	if($.inArray(el, unique) === -1) unique.push(el);
+    return unique;
+	});
+}
+
+function removeEmptyAndUndefined(array){
+	// remove empty strings, the value undefined and null from array
+	var cleaned = [];
+	$.each(array, function(i, el){
+    	if(el == '' || el == undefined || el == null) cleaned.push(el);
+    return cleaned;
+	});
+}
+
+function getUrlParamValue(paramName){
+	// get the value of a parameter defined in the url, php style (?param='value') 
+	if(!(paramName in project_info["url_params"])){
+		log("getUrlParamValue: got command to find url param '"+paramName+"' but found only params "+JSON.stringify(project_info["url_params"])+". Returning 'undefined'","warning" );
+	}
+	return project_info["url_params"][paramName];
+}
+
+function getAllPublicResults(){
+	// Get Id's for all results in results/public.
+	return project_info["public_results"];
+}
+
+//go from "20120404182013_109_CIMA_BWH-ACIL_VesselProbability-BWHACIL" to "CIMA_BWH-ACIL_VesselProbability-BWHACIL" to make a more informative string
+function cleanResultName(resultNameString){    
+    var clean = resultNameString;    
+    if(resultNameString[14] == "_"){
+        clean = clean.slice(15);
+    }
+    ns = clean.indexOf("_"); //position of next underscore 
+    if(ns <= 4){
+        clean = clean.slice(ns+1);
+    }
+     return clean
+}
+
 
 
 //======================== end GUI (creating html elements) ============================================================
@@ -522,8 +676,6 @@ function get_public_results(){
 
 //======================== functions ===================================================================================
 // Anything called while interacting with the GUI
-
-
 
 function loadAllScreenshots_org() {
 
@@ -560,7 +712,7 @@ function loadAllScreenshots_org() {
         container.attr("id", containerId);
         container.width(width + "px");
         //set height to make sure the screen does shift while images are loading
-        container.height(width + "px");
+        //container.height(width + "px");
 
         $("#resultMessage").append(container);
 
@@ -610,7 +762,7 @@ function setAllImageWidths(widthIn) {
     $(".resultImageContainer").width(widthIn + "px");
     //set height as well, this is set when loading to make sure the screen does not shift while images load into divs.
     //when resizing here, set this too because otherwise the images can go through the footer
-    $(".resultImageContainer").height(widthIn + "px");
+    //$(".resultImageContainer").height(widthIn + "px");
     //set width of image inside container
     $(".resultImageContainer img").width(widthIn + "px");
     //set width of error div if any.    
@@ -870,8 +1022,25 @@ function givePrevDropdownValueName(dropDownId){
 
 }
 
-function log(msg){
-    console.log("* "+msg);
+function log(msg,lvl){
+	if(lvl == undefined){
+		lvl = 'info';
+	}
+	lvl == lvl.toLowerCase();
+	if(lvl == 'info'){
+		console.log("* "+msg);	
+	}else if(lvl == 'warning'){
+		console.log("%c* WARNING: "+msg+"", 'color: #FF9933');
+	}else if(lvl == 'error'){
+		console.log("%c* ERROR: "+msg+"", 'color: #FF0000');
+	}else{
+		console.log("* "+msg);
+	}
+	
+	
+	
+	
+    
 }
 
 
