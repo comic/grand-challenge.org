@@ -666,7 +666,7 @@ class ImageBrowserNode(template.Node):
         serve_file_prefix = reverse("project_serve_file",args=[context['site'].short_name,"dummyfile"])        
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see        
         # much wrong with it here. 
-        serve_file_prefix = serve_file_prefix[:-10] 
+        serve_file_prefix = serve_file_prefix[:-10]         
         
         
         htmlOut = """
@@ -677,7 +677,7 @@ class ImageBrowserNode(template.Node):
             </div>
             <div style="clear:both;"></div>
         
-        <script type="text/javascript" src="/static/js/challengeResultViewer/challengeResultViewer.js"></script>
+        <script type="text/javascript" src="{main_hostname}/static/js/challengeResultViewer/challengeResultViewer.js"></script>
         <script type="text/javascript">
             // some useful vars you might need to build a browser in javascript
             var project_info = {project_info};            
@@ -693,7 +693,8 @@ class ImageBrowserNode(template.Node):
             viewer{viewer_id}.loadAllScreenshots();
         </script> 
 
-        """.format(path=path_resolved,
+        """.format(main_hostname=settings.MAIN_HOST_NAME, 
+                   path=path_resolved,
                    viewer_id=random.randrange(100000,999999), #just 6 random numbers
                    custom_options_include = self.get_custom_options_include(context),
                    project_info = json.dumps({"public_results":public_results,
