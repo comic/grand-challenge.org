@@ -164,16 +164,26 @@ def _required_permission(user,path,project_name):
                                    "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
                                    " to your .conf file." )
     
-    
-    
+    if hasattr(settings,"COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
+        if startwith_any(path,settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
+            return ComicSiteModel.ALL
+        
     if path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
-        return ComicSiteModel.ALL
+        return ComicSiteModel.ALL            
     elif path.startswith(settings.COMIC_REGISTERED_ONLY_FOLDER_NAME):
         return ComicSiteModel.REGISTERED_ONLY
     else:
         return ComicSiteModel.ADMIN_ONLY
  
-
+def startwith_any(path,start_options):
+    """ Return true if path starts with any of the strings in string array start_options
+     
+    """    
+    for option in start_options:
+        if path.startswith(option):
+            return True
+    
+    return False
 
 def serve(request, project_name, path, document_root=None,override_permission=""):
     """
