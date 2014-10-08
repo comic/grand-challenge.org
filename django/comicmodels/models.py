@@ -4,6 +4,7 @@ import datetime
 import pdb
 import logging
 import copy
+import comicsite.utils.query
 
 from django import forms
 from django.conf import settings
@@ -717,9 +718,27 @@ class Page(ComicSiteModel):
             self.order += 1
             self.save()
         if move == 'FIRST':
-            raise NotImplementedError("Somebody should implement this!")
+            pages = Page.objects.filter(comicsite=self.comicsite)                    
+            idx = comicsite.utils.query.index(pages,self)
+            pages[idx].order = pages[0].order -1
+            pages = sorted(pages, key=lambda page: page.order)
+            self.normalize_page_order(pages)                            
         if move == 'LAST':
-            raise NotImplementedError("Somebody should implement this!")
+            pages = Page.objects.filter(comicsite=self.comicsite)                    
+            idx = comicsite.utils.query.index(pages,self)
+            pages[idx].order = pages[len(pages)-1].order +1
+            pages = sorted(pages, key=lambda page: page.order)
+            self.normalize_page_order(pages)
+            
+    def normalize_page_order(self,pages):
+        """Make sure order in pages Queryset starts at 1 and increments 1 at
+        every page. Saves all pages
+         
+        """
+        for index,page in enumerate(pages):
+            page.order = index + 1
+            page.save() 
+         
         
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
