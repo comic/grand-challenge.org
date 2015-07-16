@@ -31,6 +31,13 @@ You can install these requirements easily with pip::
 
     pip install django==1.5.7 South django-countries django-userena django-social-auth Pillow beautifulsoup4 dropbox matplotlib xlrd
 
+If you do not modify the configuration to use sqlite, you'll need to install
+the Python MySQL library::
+
+    pip install MySQL-python
+
+Then you'll want to create the database user and edit the configuration values
+as discussed below.
 
 Getting the framework up and running
 ------------------------------------
