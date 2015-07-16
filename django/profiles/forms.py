@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from django_countries.countries import COUNTRIES
+from django_countries import countries
 
 from userena.forms import SignupForm
 
@@ -15,7 +15,7 @@ class SignupFormExtra(SignupForm):
                                  required=True,
                                  help_text=_(u'Department you represent.'))
     country = forms.ChoiceField(label=_(u'Country'),
-                                choices=tuple([('00', _('-' * 9))] + list(COUNTRIES)),
+                                choices=tuple([('00', _('-' * 9))] + list(countries)),
                                 required=True)
     website = forms.CharField(label=_(u'Website'),
                               max_length=150,
