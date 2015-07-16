@@ -29,8 +29,15 @@ Package Requirements
 
 You can install these requirements easily with pip::
 
-    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox matplotlib xlrd
+    pip install django==1.5.7 South django-countries django-userena django-social-auth Pillow beautifulsoup4 dropbox matplotlib xlrd
 
+If you do not modify the configuration to use sqlite, you'll need to install
+the Python MySQL library::
+
+    pip install MySQL-python
+
+Then you'll want to create the database user and edit the configuration values
+as discussed below.
 
 Getting the framework up and running
 ------------------------------------
@@ -108,4 +115,4 @@ Troubleshooting
 ----------------
 Pip does not install matplotlib correctly::
 	You can try an installer from the matplotlib website: http://matplotlib.org/downloads.html. After running the installer, you need to install the pyparsing module using
-		pip install pyparsing 
+		pip install pyparsing
