@@ -2644,7 +2644,7 @@ class RegistrationFormNode(template.Node):
         else:
             
             if project.is_participant(context['user']):
-                msg = "You are already participating in" + project.short_name
+                msg = "You are already participating in" + ' ' + project.short_name
             else:
                 msg = self.get_signup_link(context, project)
                 
