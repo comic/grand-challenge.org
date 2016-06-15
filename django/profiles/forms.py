@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from django_countries.countries import COUNTRIES
+from django_countries import countries
 
 from userena.forms import SignupForm
 
@@ -15,15 +15,15 @@ class SignupFormExtra(SignupForm):
                                  required=True,
                                  help_text=_(u'Department you represent.'))
     country = forms.ChoiceField(label=_(u'Country'),
-                                choices=tuple([('00', _('-' * 9))] + list(COUNTRIES)),
+                                choices=tuple([('00', _('-' * 9))] + list(countries)),
                                 required=True)
     website = forms.CharField(label=_(u'Website'),
                               max_length=150,
                               required=False,
                               help_text=_(u'A website which describes you or your department'))
-    comicsite = forms.CharField(label=_(u'comicsite'),
-                                max_length=30,
-                                required=False)
+    #comicsite = forms.CharField(label=_(u'comicsite'),
+                                #max_length=30,
+                                #required=False)
     first_name = forms.CharField(label=_(u'First Name'),
                                  max_length=30,
                                  required=True)
@@ -40,7 +40,7 @@ class SignupFormExtra(SignupForm):
         new_order.insert(0, 'first_name')
         new_order.insert(1, 'last_name')
         self.fields.keyOrder = new_order
-        self.base_fields['comicsite'].initial = ""
+        #self.base_fields['comicsite'].initial = ""
 
     def clean_country(self):
         """ Make sure the user changed the country field.
