@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
-<p>Signin using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p>
+<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p>
 
 </div>
 <div class="white-box">
@@ -27,7 +27,7 @@
             </li> -->
             <li>
                 <a href="{% url 'socialauth_begin' 'yahoo' %}?next={{request.GET.next}}">
-                    <p>Signin using</p>
+                    <p>Sign in using</p>
                     <img src="{% static "img/openid-logo-yahoo.png" %}" alt="Sign in using Yahoo"/>
                 </a>
             </li>
