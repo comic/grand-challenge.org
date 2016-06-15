@@ -21,6 +21,9 @@ class SignupFormExtra(SignupForm):
                               max_length=150,
                               required=False,
                               help_text=_(u'A website which describes you or your department'))
+    comicsite = forms.CharField(label=_(u'comicsite'),
+                                max_length=30,
+                                required=False)
     first_name = forms.CharField(label=_(u'First Name'),
                                  max_length=30,
                                  required=True)
@@ -37,7 +40,7 @@ class SignupFormExtra(SignupForm):
         new_order.insert(0, 'first_name')
         new_order.insert(1, 'last_name')
         self.fields.keyOrder = new_order
-        #self.base_fields['comicsite'].initial = ""
+        self.base_fields['comicsite'].initial = ""
 
     def clean_country(self):
         """ Make sure the user changed the country field.
