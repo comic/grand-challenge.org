@@ -45,7 +45,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
 
-
+    
     if hasattr(uploadmodel,'short_name'):
         is_comicsite = True
     else:
@@ -62,11 +62,22 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-        path = os.path.join(comicsite.public_upload_dir_rel(),
-                            filename)
+	"""Since we want this procedure only working for a specific Challenge (i.e., LUNA16) we put this flag. Hardcoding name of specific Challenge LUNA16"""  
+	
+	if str(uploadmodel.comicsite) == "LUNA16": 
+            path = os.path.join(comicsite.public_upload_dir_rel(),
+                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+
+        else:
+	    path = os.path.join(comicsite.public_upload_dir_rel(), filename)
     else:
-        path = os.path.join(comicsite.upload_dir_rel(),
-                            filename)
+	
+	if str(uploadmodel.comicsite) == "LUNA16": 
+	    path = os.path.join(comicsite.upload_dir_rel(),
+                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+
+	else:
+            path = os.path.join(comicsite.upload_dir_rel(), filename)
 
     path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
     return path
@@ -309,7 +320,7 @@ class ComicSite(models.Model):
 
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
 
-    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
+    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now 
 
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
