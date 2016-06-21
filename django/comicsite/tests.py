@@ -340,9 +340,9 @@ class ComicframeworkTestCase(TestCase):
                 'institution':'test',
                 'department':'test', 
                 'country':'NL',
-                'webproject':'testwebproject',
-                'comicsite':'testcomicwebproject'}
-        
+                'webproject':'testwebproject'}
+       
+        #,'comicsite':'testcomicwebproject'
         data.update(overwrite_data) #overwrite any key in default if in data
         
         if site == None:
