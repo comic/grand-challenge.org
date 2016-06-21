@@ -3,7 +3,7 @@ from django.db import models
 from userena.models import UserenaBaseProfile
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save
-from django_countries import CountryField
+from django_countries.fields import CountryField
 
 
 class UserProfile(UserenaBaseProfile):
