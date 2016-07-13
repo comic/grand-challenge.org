@@ -47,10 +47,12 @@
                 <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
             </form>   
         </div>
-        <form action ="{% url 'comicsite_signup' site.short_name %}?next={{request.GET.next}}" class="signup"> <input type="submit", value="Register as a new participant">
-	<form action= "/site/grand-challenges/newsletter/" class="signup"> <input type="submit", value="Subscribe to Newsletter">
-	</form>
-    </div>
+
+	<div class="container">
+	<form action="{% url 'comicsite_signup' site.short_name %}?next={{request.GET.next}}" class="containernews"> <input type="submit", value="Register as a new participant"></form>
+	<a href="/site/grand-challenges/Newsletter/" class="buttonnews">Subscribe to Newsletter</a>
+	</div>
+   </div>
 </div>
 <script>
 // $("#comicsignin").click(function() {
