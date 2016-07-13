@@ -57,6 +57,22 @@ ul#signinlist li a p {
     color: darkgrey;
 }
 
+.containernews {
+	display: inline-block; 
+}
+
+
+.buttonnews {
+        appearance: button;
+        -moz-appearance: button;
+        -webkit-appearance: button;
+        text-decoration: none; 
+        font: menu; 
+        color: ButtonText;
+        display: inline-block; 
+        padding: 2px 8px;
+}
+
 p.forgot-password { margin-top: 0.5em; }
 p.forgot-password a {
     text-decoration: none;
