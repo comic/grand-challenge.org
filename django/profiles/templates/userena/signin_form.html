@@ -6,8 +6,8 @@
 {% block title %}{% trans "Signin" %}{% endblock %}
 
 {% block content %}
-<div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
-<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p>
+<!-- <div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
+<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p> -->
 
 </div>
 <div class="white-box">
@@ -19,12 +19,12 @@
                     <img src="{% static "img/openid-logo-comic.png" %}" alt="Signin using COMIC"/>
                 </a>
             </li>-->
-            <!--<li>
-                <a href="{% url 'socialauth_begin' 'google' %}?next={{request.GET.next}}">
+            <li>
+                <a href="{% url 'socialauth_begin' 'google-oauth2' %}?next={{request.GET.next}}">
                     <p>Sign in using</p>
                     <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
                 </a>
-            </li>-->
+            </li>
             <li>
                 <a href="{% url 'socialauth_begin' 'yahoo' %}?next={{request.GET.next}}">
                     <p>Sign in using</p>
