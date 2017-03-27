@@ -18,7 +18,6 @@ import StringIO
 import sys
 import traceback
 import logging
-from collections import Counter
 
 from exceptions import Exception
 from matplotlib.figure import Figure
@@ -33,6 +32,7 @@ from django.contrib.auth.models import Group, User, Permission
 from django.core.files.storage import DefaultStorage
 from django.template import RequestContext, defaulttags
 from django.utils.html import escape
+from django.db.models import Count
 from profiles.forms import SignupFormExtra
 from profiles.models import UserProfile
 
@@ -2758,15 +2758,12 @@ class ProjectStatisticsNode(template.Node):
         else:
             users = User.objects.filter(groups=perm).distinct()
         
-        countries = [u.get_profile().get_country_display() for u in users]
-        hist_countries = Counter(countries)
+        country_counts = UserProfile.objects.filter(user__in=users).values('country').annotate(dcount=Count('country'))
+        
         chart_data = [['Country', '#Participants']]
-        for key, val in hist_countries.iteritems():
-            try:
-                chart_data.append([str(key), val])
-            except UnicodeEncodeError:
-                pass
-
+        for country_count in country_counts:
+            chart_data.append([str(country_count['country']), country_count['dcount']])
+        
         snippet_geochart = """
         <script type='text/javascript' src='https://www.google.com/jsapi'></script>
         <script type='text/javascript'>
