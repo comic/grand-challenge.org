@@ -2762,7 +2762,10 @@ class ProjectStatisticsNode(template.Node):
         hist_countries = Counter(countries)
         chart_data = [['Country', '#Participants']]
         for key, val in hist_countries.iteritems():
-            chart_data.append([str(key), val])
+            try:
+                chart_data.append([str(key), val])
+            except UnicodeEncodeError:
+                pass
 
         snippet_geochart = """
         <script type='text/javascript' src='https://www.google.com/jsapi'></script>
