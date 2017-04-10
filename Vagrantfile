@@ -16,7 +16,5 @@ Vagrant.configure("2") do |config|
     
     pip install --upgrade pip
     pip install -r /vagrant/requirements.txt
-
-    python /vagrant/django/manage.py test comicsite
   SHELL
 end
