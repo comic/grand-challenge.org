@@ -885,7 +885,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         Show all users in admin_group for this comicsite, allow adding users
         """
         comicsite = get_object_or_404(ComicSite, id=object_pk)
-        admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
+        admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 
 
         if request.method == 'POST' and 'submit_add_user' in request.POST:

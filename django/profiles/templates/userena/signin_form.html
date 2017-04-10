@@ -6,8 +6,8 @@
 {% block title %}{% trans "Signin" %}{% endblock %}
 
 {% block content %}
-<div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
-<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p>
+<!-- <div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
+<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p> -->
 
 </div>
 <div class="white-box">
@@ -19,12 +19,12 @@
                     <img src="{% static "img/openid-logo-comic.png" %}" alt="Signin using COMIC"/>
                 </a>
             </li>-->
-            <!--<li>
-                <a href="{% url 'socialauth_begin' 'google' %}?next={{request.GET.next}}">
+            <li>
+                <a href="{% url 'socialauth_begin' 'google-oauth2' %}?next={{request.GET.next}}">
                     <p>Sign in using</p>
                     <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
                 </a>
-            </li>-->
+            </li>
             <li>
                 <a href="{% url 'socialauth_begin' 'yahoo' %}?next={{request.GET.next}}">
                     <p>Sign in using</p>
@@ -45,10 +45,14 @@
                 <input type="submit" value="{% trans "Signin" %}" />
                 {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
                 <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-            </form>
+            </form>   
         </div>
-        <p class="signup"><a href="{% url 'comicsite_signup' site.short_name %}?next={{request.GET.next}}" title="{% trans "Register as a new user." %}">{% trans "Register as a new user." %}</a></p>
-    </div>
+
+	<div class="containernews">
+	<form action="{% url 'comicsite_signup' site.short_name %}?next={{request.GET.next}}" class="containernews"> <input type="submit", value="Register as a new participant"></form>
+	<a class="buttonnews" href="/site/grand-challenges/Newsletter/">Subscribe to Newsletter</a>
+	</div>
+   </div>
 </div>
 <script>
 // $("#comicsignin").click(function() {
