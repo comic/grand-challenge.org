@@ -1,6 +1,9 @@
 COMIC Django Frontend
 =====================
 
+.. image:: https://travis-ci.org/comic/comic-django.svg?branch=master
+    :target: https://travis-ci.org/comic/comic-django
+
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
 
 .. _installation:
