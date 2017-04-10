@@ -14,6 +14,7 @@ from django.core import mail
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -186,6 +187,9 @@ class ComicframeworkTestCase(TestCase):
             
             main.save()
             
+        try:
+            self.root = User.objects.get(username='root')
+        except ObjectDoesNotExist:
             # A user who has created a project
             root = User.objects.create_user('root',
                                         'w.s.kerkstra@gmail.com',

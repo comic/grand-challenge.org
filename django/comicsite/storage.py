@@ -1,4 +1,3 @@
-import Image
 import pdb
 import os
 import StringIO
