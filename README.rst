@@ -14,7 +14,14 @@ Installation
 You can fetch a copy by cloning the git repository::
 
     git clone git://github.com/comic/comic-django.git
+
+You can then install the requirements into your python environment with::
+
     pip install -r requirements.txt
+
+Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, install comic, and run the tests. Simply invoke::
+
+    vagrant up
 
 Testing
 -------
