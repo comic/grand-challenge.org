@@ -1,35 +1,34 @@
 COMIC Django Frontend
 =====================
 
+.. image:: https://travis-ci.org/comic/comic-django.svg?branch=master
+    :target: https://travis-ci.org/comic/comic-django
+
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
 
 .. _installation:
 
-Installation.
--------------
-
-Before installing make sure you have a copy of `Django <http://www.djangoproject.com/>`_1.5 or 
-newer installed.
+Installation
+------------
 
 You can fetch a copy by cloning the git repository::
 
     git clone git://github.com/comic/comic-django.git
 
-Package Requirements
----------------------
+You can then install the requirements into your python environment with::
 
-- South
-- Django Countries
-- Django Userena
-- Django Social Auth
-- PIL
-- beautifulsoup4
-- MatPlotLib (for rendering graphs)
-- xlrd (for reading xls files)
+    pip install -r requirements.txt
 
-You can install these requirements easily with pip::
+Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, install comic, and run the tests. Simply invoke::
 
-    pip install South django-countries django-userena django-social-auth pil beautifulsoup4 dropbox matplotlib xlrd
+    vagrant up
+
+Testing
+-------
+
+You can run the tests by invoking::
+
+    python django/manage.py test comicsite
 
 
 Getting the framework up and running
