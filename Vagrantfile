@@ -16,5 +16,10 @@ Vagrant.configure("2") do |config|
     
     pip install --upgrade pip
     pip install -r /vagrant/requirements.txt
+
+    wget https://github.com/mozilla/geckodriver/releases/download/v0.15.0/geckodriver-v0.15.0-linux64.tar.gz
+    tar -xvzf geckodriver*
+    chmod +x geckodriver
+    cp geckodriver* /usr/local/bin
   SHELL
 end
