@@ -12,14 +12,10 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update && apt-get upgrade -y
 
-    apt-get install -y python python-pip python-openssl libpng-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev 
-    
+    apt-get install -y python python-pip python-openssl libpng-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev mariadb-server
+
     pip install --upgrade pip
     pip install -r /vagrant/requirements.txt
 
-    wget https://github.com/mozilla/geckodriver/releases/download/v0.15.0/geckodriver-v0.15.0-linux64.tar.gz
-    tar -xvzf geckodriver*
-    chmod +x geckodriver
-    cp geckodriver* /usr/local/bin
   SHELL
 end
