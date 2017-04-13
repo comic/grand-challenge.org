@@ -12,7 +12,9 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update && apt-get upgrade -y
 
-    apt-get install -y python python-pip python-openssl libpng-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev mariadb-server
+    apt-get install -y python python-pip python-openssl libpng-dev libjpeg-dev libjpeg8-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev mariadb-server
+
+    mysql -u root --password= -e "CREATE DATABASE comic DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
 
     pip install --upgrade pip
     pip install -r /vagrant/requirements.txt
