@@ -2027,7 +2027,7 @@ def parse_php_arrays(filename):
         content = content.replace("\n", "")
         php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
         s = php.search(content)
-        assert s != None , "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
+        assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
         phpcontent = s.group(1)
         
         phpvars = phpcontent.split("$")
@@ -2042,7 +2042,7 @@ def parse_php_arrays(filename):
            result = phpvar.search(var)
 
            #TODO Log these messages as info
-           if result == None :
+           if result is None:
                msg = "Could not match regex pattern '%s' to '%s'\
                                     " % (phpvar.pattern, var)
                continue

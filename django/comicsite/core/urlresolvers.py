@@ -34,7 +34,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None, current
     # does almost the same as this method but in an even more complex way. Both
     # These methods should be refactored until they shine.  
     
-    if viewname == 'comicsite.views.site' and subdomain_is_projectname() and args[0]!=None:
+    if viewname == 'comicsite.views.site' and subdomain_is_projectname() and args[0] is not None:
         protocol,domainname = settings.MAIN_HOST_NAME.split("//")
         url = protocol + "//" +args[0] +"."+ domainname
         

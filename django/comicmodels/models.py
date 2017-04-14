@@ -699,7 +699,7 @@ class Page(ComicSiteModel):
             except ObjectDoesNotExist :
                 max_order = None
 
-            if max_order["order__max"] == None:
+            if max_order["order__max"] is None:
                 self.order = 1
             else:
                 self.order = max_order["order__max"] + 1

@@ -351,7 +351,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     (mimetype,encoding) = mimetypes.guess_type(dropboxpath)
             
 
-    if mimetype == None:
+    if mimetype is None:
         mimetype = "NoneType"  #make the next statement not crash on non-existant mimetype
         
     if mimetype.startswith("image"):

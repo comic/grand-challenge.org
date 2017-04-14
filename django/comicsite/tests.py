@@ -349,7 +349,7 @@ class ComicframeworkTestCase(TestCase):
         #,'comicsite':'testcomicwebproject'
         data.update(overwrite_data) #overwrite any key in default if in data
         
-        if site == None:
+        if site is None:
             sitename = settings.MAIN_PROJECT_NAME
         else:
             sitename = site.short_name
@@ -1509,7 +1509,7 @@ class AdminTest(ComicframeworkTestCase):
     
     def _check_project_admin_view(self,project,viewname,args=[],user=None):
         
-        if user == None:
+        if user is None:
             user = self.projectadmin
         url = reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
         response = self._test_url_can_be_viewed(user,url)
