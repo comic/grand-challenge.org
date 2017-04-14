@@ -16,6 +16,7 @@ Vagrant.configure("2") do |config|
 
     cp /vagrant/testing/60-mariadb.cnf /etc/mysql/mariadb.conf.d/
     service mysql restart
+    mysql -u root --password= -e "use mysql; update user set plugin='' where User='root'; flush privileges"
     mysql -u root --password= -e "CREATE DATABASE comic DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
 
     pip install --upgrade pip

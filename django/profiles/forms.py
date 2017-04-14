@@ -55,7 +55,7 @@ class SignupFormExtra(SignupForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.save()
-        user_profile = user.get_profile()
+        user_profile = user.user_profile
         user_profile.institution = self.cleaned_data['institution']
         user_profile.department = self.cleaned_data['department']
         user_profile.country = self.cleaned_data['country']
