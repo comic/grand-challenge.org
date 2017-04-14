@@ -221,7 +221,7 @@ a.eventlink:visited, a.eventlink:link {text-decoration:none;}
 #projectlinkscontainer {width: 100%;}
 
 div.yearHeader{color: #666666;font-size: 24px; margin-top: 20px;padding-left: 10px;
-}}
+}
 
 /* svg graph plots*/
 svg {margin-bottom:10px;}
@@ -257,7 +257,6 @@ p.required label{font-weight:bold;}
 /**/
 html
 {
-    overflow: -moz-scollbars-vertical; /*make scollbar always visable to counteract scrolbar shift*/
     overflow-y:scroll;
 }
 
