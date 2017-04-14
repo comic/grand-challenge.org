@@ -232,7 +232,7 @@ def resolve_path(path, parser, context):
             missed_parameters = re.findall("{{\w+}}", filename)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
@@ -1102,7 +1102,7 @@ class InsertBrowserNode(template.Node):
             missed_parameters = re.findall("{{\w+}}", filename)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
@@ -1629,7 +1629,7 @@ class InsertGraphNode(template.Node):
             missed_parameters = re.findall("{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)

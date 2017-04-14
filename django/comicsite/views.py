@@ -314,7 +314,7 @@ def page(request, site_short_name, page_title):
     # TODO: THis has code smell. If page has to be checked like this, is it 
     # ok to use a page object for error messages?
     if hasattr(currentpage,"is_error_page"):
-        if currentpage.is_error_page == True:
+        if currentpage.is_error_page:
             response.status_code = "403"
              
     return response
