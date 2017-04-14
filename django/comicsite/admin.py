@@ -1055,19 +1055,6 @@ def add_standard_permissions(group, objname):
     can_delete_obj = Permission.objects.get(codename="delete_" + objname)
     group.permissions.add(can_add_obj, can_change_obj, can_delete_obj)
 
-
-
-class PageAdminForm:
-    move = forms.CharField(widget=forms.Select)
-    move.required = False
-    move.widget.choices = (
-                         (models.BLANK_CHOICE_DASH[0]),
-                         ('FIRST', 'First'),
-                         ('UP', 'Up'),
-                         ('DOWN', 'Down'),
-                         ('LAST', 'Last'),
-                        )
-
 # this variable is included in urls.py to get admin urls for each project in
 # the database  
 projectadminurls = AllProjectAdminSites()
