@@ -3,59 +3,43 @@ Created on Jun 18, 2012
 
 @author: Sjoerd
 '''
-import pdb
-import logging
 import copy
-from django.contrib import admin
-from django import forms
-
-
-from django.conf.urls import patterns, url, include
-from django.contrib import messages
-from django.contrib.admin.options import InlineModelAdmin
-from django.contrib.admin.views.main import ChangeList
-from django.contrib.admin.util import quote
-from django.contrib.auth.models import Group, Permission, User
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import get_current_site
-from django.core.urlresolvers import reverse, resolve
-from django.db import models
-from django.forms import TextInput, Textarea
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404, redirect
-from django.template import RequestContext
-from django.utils import six
-from django.utils.translation import ugettext as _
-from django.utils.encoding import force_unicode
-from guardian.admin import GuardedModelAdmin
-from guardian.shortcuts import get_objects_for_user, assign_perm
-
-from comicmodels.models import ComicSite, Page, RegistrationRequest
-from comicmodels.signals import new_admin, removed_admin
-from comicmodels.admin import ComicModelAdmin,RegistrationRequestAdmin
-from comicsite.core.exceptions import ProjectAdminException
-
-
+import logging
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin
 import re
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.contrib.admin.options import ModelAdmin, HORIZONTAL, VERTICAL
-from django.contrib.admin.options import StackedInline, TabularInline
+from functools import update_wrapper
+
+from django import forms
+from django.conf.urls import patterns, url
+from django.contrib import admin
+from django.contrib import messages
+from django.contrib.admin.options import InlineModelAdmin
 # NOTICE: that we are not importing site here!
 # basically this is the only one import you'll need
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
-from django.contrib.admin.filters import (ListFilter, SimpleListFilter,
-    FieldListFilter, BooleanFieldListFilter, RelatedFieldListFilter,
-    ChoicesFieldListFilter, DateFieldListFilter, AllValuesFieldListFilter)
-from django.views.decorators.cache import never_cache
-from django.utils.text import capfirst
-from django.template.response import TemplateResponse
-from django.views.decorators.csrf import csrf_protect
-from functools import update_wrapper
+from django.contrib.auth.models import Group, Permission, User
+from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
+from django.db import models
+from django.forms import TextInput, Textarea
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
+from django.template.response import TemplateResponse
+from django.utils import six
+from django.utils.encoding import force_unicode
+from django.utils.text import capfirst
+from django.utils.translation import ugettext as _
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from guardian.shortcuts import get_objects_for_user, assign_perm
 
+from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
+from comicmodels.models import Page, RegistrationRequest
+from comicmodels.signals import new_admin, removed_admin
+from comicsite.core.exceptions import ProjectAdminException
 
 logger = logging.getLogger("django")
 

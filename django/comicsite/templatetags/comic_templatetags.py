@@ -6,52 +6,46 @@ Custom tags to use in templates or code to render file lists etc.
 
 """
 
-import pdb
-import csv, numpy
+import StringIO
+import csv
 import datetime
+import logging
 import ntpath
 import os
 import random
 import re
 import string
-import StringIO
-import sys
 import traceback
-import logging
-
-from exceptions import Exception
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from django import template
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
-from django.core.urlresolvers import NoReverseMatch
-from django.core.urlresolvers import reverse as reverse_djangocore
-from django.contrib.auth.models import Group, User, Permission
+from django.contrib.auth.models import Group, User
+from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
-from django.template import RequestContext, defaulttags
-from django.utils.html import escape
+from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
-from profiles.forms import SignupFormExtra
+from django.template import defaulttags
+from dropbox.rest import ErrorResponse
+from exceptions import Exception
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+import comicsite.views
+from comicmodels.models import ComicSite
+from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder, \
+    RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicsite.core.exceptions import ParserException, PathResolutionException
+from comicsite.core.urlresolvers import reverse
+# ---------#---------#---------#---------#---------#---------#---------#---------
+# This is needed to use the @register.tag decorator
+# register = template.Library()
+from comicsite.templatetags import library_plus
+from comicsite.utils.html import escape_for_html_id
+from dataproviders import FileSystemDataProvider
+from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+from dataproviders.ProjectExcelReader import ProjectExcelReader
 from profiles.models import UserProfile
 
-from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder,RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
-from comicmodels.models import ComicSite, Page
-import comicsite.views
-from comicsite.utils.html import escape_for_html_id
-from comicsite.core.urlresolvers import reverse
-from comicsite.core.exceptions import ParserException,PathResolutionException
-from dropbox.rest import ErrorResponse
-from dataproviders import FileSystemDataProvider
-from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
-from dataproviders.ProjectExcelReader import ProjectExcelReader
-
-
-#---------#---------#---------#---------#---------#---------#---------#---------
-# This is needed to use the @register.tag decorator
-#register = template.Library()
-from comicsite.templatetags import library_plus
 register = library_plus.LibraryPlus()
 
 logger = logging.getLogger("django")
@@ -2222,7 +2216,7 @@ class AllProjectLinksNode(template.Node):
         """ Get all the HTML and Jquery to have working filter and selection
         checkboxes on top of the projectlinks overview
         """
-        from django.template import loader, Context
+        from django.template import loader
         return loader.render_to_string('all_projectlinks_filter.html')
     
 

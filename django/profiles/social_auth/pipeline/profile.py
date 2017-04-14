@@ -1,9 +1,8 @@
-from userena.models import UserenaSignup
-from profiles.models import UserProfile as Profile
-from userena.managers import ASSIGNED_PERMISSIONS
 from guardian.shortcuts import assign_perm
-from userena.signals import signup_complete
+from userena.managers import ASSIGNED_PERMISSIONS
+
 from comicsite.models import get_or_create_projectadmingroup
+from profiles.models import UserProfile as Profile
 
 
 def create_profile(user=None, profile=None, *args, **kwargs):

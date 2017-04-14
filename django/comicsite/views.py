@@ -5,40 +5,32 @@ Testing views. Each of these views is referenced in urls.py
 
 @author: Sjoerd
 '''
-import pdb
-import mimetypes
 import logging
- 
-
+import mimetypes
 from itertools import chain
 from os import path
+
 from django import forms
-from django.db import models
 from django.conf import settings
-from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import Group
-from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse,Http404,HttpResponseForbidden
-from django.shortcuts import render_to_response,get_object_or_404
-from django.template import RequestContext,Context,Template,TemplateSyntaxError
+from django.http import HttpResponse, Http404, HttpResponseForbidden
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
-
 from userena import views as userena_views
 
-from comicmodels.models import ComicSite,Page,ErrorPage,DropboxFolder,ComicSiteModel,RegistrationRequest,ProjectMetaData
-from comicsite.admin import ComicSiteAdmin
-from comicsite.core.urlresolvers import reverse
-from comicsite.template.context import ComicSiteRequestContext,CurrentAppRequestContext
-from comicsite.models import send_existing_project_link_submission_notification_email
+from comicmodels.models import ComicSite, Page, ErrorPage, DropboxFolder, ComicSiteModel, RegistrationRequest, \
+    ProjectMetaData
 from comicsite.core.exceptions import ComicException
-
-from filetransfers.api import serve_file
-from filetransfers.views import download_handler_file
+from comicsite.core.urlresolvers import reverse
+from comicsite.models import send_existing_project_link_submission_notification_email
+from comicsite.template.context import ComicSiteRequestContext, CurrentAppRequestContext
 from dataproviders import FileSystemDataProvider
+from filetransfers.api import serve_file
 
 
 def index(request):

@@ -1,6 +1,4 @@
-from django.core.urlresolvers import reverse
 from django import template
-from django.contrib.admin.util import quote
 
 register = template.Library()
 

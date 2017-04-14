@@ -1,22 +1,18 @@
 # Create your views here.
-import pdb
-from os import path
 import ntpath
 
 from django.contrib import messages
 from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render_to_response
 
-from comicmodels.models import ComicSite
-from comicmodels.forms import UploadForm,UserUploadForm
-from comicmodels.models import UploadModel,Page
+from comicmodels.forms import UserUploadForm
+from comicmodels.models import UploadModel, Page
 from comicmodels.signals import file_uploaded
 from comicsite.template.context import CurrentAppRequestContext
-from comicsite.views import site_get_standard_vars,concatdicts,getSite,permissionMessage
-
-from filetransfers.api import prepare_upload, serve_file
+from comicsite.views import site_get_standard_vars, getSite, permissionMessage
+from filetransfers.api import prepare_upload
 
 
 def upload_handler(request,site_short_name):

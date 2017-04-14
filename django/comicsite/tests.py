@@ -4,35 +4,29 @@ when you run "manage.py test.
 
 
 """
-import pdb
 import re
-from random import choice,randint
+from random import choice, randint
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
-from ckeditor.views import upload_to_project 
+from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
-from comicmodels.models import Page,ComicSite,UploadModel,ComicSite,RegistrationRequest
+from comicmodels.models import Page, UploadModel, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
-from comicsite.admin import ComicSiteAdmin,PageAdmin,ProjectAdminSite2
-from comicsite.storage import MockStorage
-from django.core.files.storage import DefaultStorage
+from comicsite.admin import PageAdmin, ProjectAdminSite2
 from comicsite.views import _register
-from profiles.admin import UserProfileAdmin
-from profiles.models import UserProfile
-from profiles.forms import SignupFormExtra
 from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
-
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"

@@ -1,16 +1,11 @@
+import copy
+import datetime
+import logging
 import os
 import re
-import datetime
-import pdb
-import logging
-import copy
-import comicsite.utils.query
 
-from django import forms
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.models import Group,User,Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
@@ -18,17 +13,17 @@ from django.core.validators import validate_slug, MaxLengthValidator
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
-from django.utils.safestring import mark_safe
 from django.utils import timezone
-
-from ckeditor.fields import RichTextField
-from dropbox import client, rest, session
+from django.utils.safestring import mark_safe
+from dropbox import client, session
 from dropbox.rest import ErrorResponse
 from guardian.shortcuts import assign_perm, remove_perm
 
-from dataproviders import FileSystemDataProvider,DropboxDataProvider
+import comicsite.utils.query
+from ckeditor.fields import RichTextField
 from comicmodels.template.decorators import track_data
 from comicsite.core.urlresolvers import reverse
+from dataproviders import FileSystemDataProvider, DropboxDataProvider
 
 logger = logging.getLogger("django")
 

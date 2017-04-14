@@ -1,26 +1,17 @@
 import datetime
 
-from exceptions import AttributeError,Exception
-
 from django import forms
-
-from django.db import models
 from django.conf import settings
-from django.contrib import admin,messages
-from django.contrib.admin.util import unquote
-from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin
+from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import utc
-
-
-from dropbox import client, rest, session
-from dropbox.rest import ErrorResponse
+from dropbox import session
+from exceptions import AttributeError
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
-from comicmodels.models import FileSystemDataset,UploadModel,DropboxFolder,RegistrationRequest,ProjectMetaData
-from comicsite.models import send_participation_request_rejected_email,send_participation_request_accepted_email
-from comicsite.core.exceptions import ComicException
+
+from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder, RegistrationRequest, ProjectMetaData
+from comicsite.models import send_participation_request_rejected_email, send_participation_request_accepted_email
 
 
 class ComicModelAdmin(GuardedModelAdmin):

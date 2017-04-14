@@ -1,20 +1,16 @@
-import pdb
 import logging
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-from django.contrib.auth.models import Group,Permission,User
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.sites.models import get_current_site
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import get_app, get_models
 from django.template import loader, Context
-from django.template.loader import get_template
-from django.contrib.sites.models import get_current_site
-
 from django.utils.html import strip_tags
 from userena.signals import signup_complete
-from comicmodels.signals import new_admin,file_uploaded
+
 from comicmodels.models import ComicSite
+from comicmodels.signals import new_admin, file_uploaded
 
 logger = logging.getLogger("django")
 
@@ -255,10 +251,7 @@ def send_templated_email(subject, email_template_name, email_context, recipients
         eg ('/tmp/file1.txt', '/tmp/image.png')
 
     """
-    
-    from comicmodels.models import get_project_admin_instance_name
-    
-    
+
     c = Context(email_context)
     # Add current app so {% url admin:index %} will resolve to project admin
     # like /site/vessel12/admin instead of /admin
