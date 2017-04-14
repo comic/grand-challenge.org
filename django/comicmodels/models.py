@@ -15,7 +15,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.validators import validate_slug, MaxLengthValidator
-#from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
@@ -45,7 +44,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
 
-    
+
     if hasattr(uploadmodel,'short_name'):
         is_comicsite = True
     else:
@@ -62,21 +61,21 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-	"""Since we want this procedure only working for a specific Challenge (i.e., LUNA16) we put this flag. Hardcoding name of specific Challenge LUNA16"""  
-	
-	if str(uploadmodel.comicsite) == "LUNA16": 
+        """Since we want this procedure only working for a specific Challenge (i.e., LUNA16) we put this flag. Hardcoding name of specific Challenge LUNA16"""
+
+        if str(uploadmodel.comicsite) == "LUNA16":
             path = os.path.join(comicsite.public_upload_dir_rel(),
                             os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
         else:
-	    path = os.path.join(comicsite.public_upload_dir_rel(), filename)
+            path = os.path.join(comicsite.public_upload_dir_rel(), filename)
     else:
-	
-	if str(uploadmodel.comicsite) == "LUNA16": 
-	    path = os.path.join(comicsite.upload_dir_rel(),
+
+        if str(uploadmodel.comicsite) == "LUNA16":
+            path = os.path.join(comicsite.upload_dir_rel(),
                             os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
-	else:
+        else:
             path = os.path.join(comicsite.upload_dir_rel(), filename)
 
     path = path.replace("\\","/") # replace remove double slashes because this can mess up django's url system
@@ -94,7 +93,7 @@ def get_project_admin_instance_name(projectname):
     Defining this here so it can be used from anywhere without needing a 
     ComicSite Instance.
     """
-    
+
     return "{}admin".format(projectname.lower())
 
 def get_projectname(project_admin_instance_name):
@@ -107,11 +106,11 @@ def get_projectname(project_admin_instance_name):
     
     """
     if not "admin" in project_admin_instance_name:
-        from exceptions import ValueError 
+        from exceptions import ValueError
         raise ValueError("expected an admin site instance name ending in 'admin',"
                          " but did not find this in value '{}'".format(project_admin_instance_name))
     return project_admin_instance_name[:-5]
-    
+
 
 class ComicSiteManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """
@@ -122,7 +121,7 @@ class ComicSiteManager(models.Manager):
 
     def get_query_set(self):
 
-        return super(ComicSiteManager, self).get_query_set()
+        return super(ComicSiteManager, self).get_queryset()
 
 
 class ProjectLink(object):
@@ -320,7 +319,7 @@ class ComicSite(models.Model):
 
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
 
-    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now 
+    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
 
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
@@ -387,7 +386,7 @@ class ComicSite(models.Model):
     def public_upload_dir_rel(self):
         """ Path to public uploaded files, relative to MEDIA_ROOT
 
-        """        
+        """
         return os.path.join(self.short_name,settings.COMIC_PUBLIC_FOLDER_NAME)
 
     def get_project_admin_instance_name(self):
@@ -401,9 +400,9 @@ class ComicSite(models.Model):
         # for this project)
         reverse("admin:index", name = self.get_project_admin_instance_name())
         """
-        
+
         return get_project_admin_instance_name(self.short_name)
-        
+
 
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
@@ -450,7 +449,7 @@ class ComicSite(models.Model):
         """
         admins = User.objects.filter(Q(groups__name=self.admin_group_name()) | Q(is_superuser=True)).distinct()
         return admins
-    
+
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
 
@@ -517,8 +516,8 @@ class ComicSite(models.Model):
     def remove_participant(self,user):
         group = Group.objects.get(name=self.participants_group_name())
         user.groups.remove(group)
-        
-        
+
+
     class Meta:
         # 'comicsite' was renamed to 'project' but acutally renaming all classes
        # is a ****load of work. Keeping it a superficial changes for now, so
@@ -729,18 +728,18 @@ class Page(ComicSiteModel):
             self.order += 1
             self.save()
         if move == 'FIRST':
-            pages = Page.objects.filter(comicsite=self.comicsite)                    
+            pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages,self)
             pages[idx].order = pages[0].order -1
             pages = sorted(pages, key=lambda page: page.order)
-            self.normalize_page_order(pages)                            
+            self.normalize_page_order(pages)
         if move == 'LAST':
-            pages = Page.objects.filter(comicsite=self.comicsite)                    
+            pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages,self)
             pages[idx].order = pages[len(pages)-1].order +1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
-            
+
     def normalize_page_order(self,pages):
         """Make sure order in pages Queryset starts at 1 and increments 1 at
         every page. Saves all pages
@@ -748,9 +747,9 @@ class Page(ComicSiteModel):
         """
         for index,page in enumerate(pages):
             page.order = index + 1
-            page.save() 
-         
-        
+            page.save()
+
+
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
 
@@ -1070,7 +1069,7 @@ class RegistrationRequestManager(models.Manager):
 
     def get_query_set(self):
 
-        return super(RegistrationRequestManager, self).get_query_set()
+        return super(RegistrationRequestManager, self).get_queryset()
 
 
 
@@ -1087,7 +1086,7 @@ class RegistrationRequest(models.Model):
     user = models.ForeignKey(User, help_text = "which user requested to participate?")
     project = models.ForeignKey(ComicSite,
                                   help_text = "To which project does the user want to register?")
-    
+
     created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
     changed = models.DateTimeField(blank=True,null=True)
 
