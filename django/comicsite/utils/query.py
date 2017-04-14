@@ -8,8 +8,8 @@ def index(queryset,object):
     """
     
     for index,item in enumerate(queryset):
-    	if item == object:
-    		return index
+        if item == object:
+            return index
     		
     return -1
     
