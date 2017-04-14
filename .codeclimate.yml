@@ -31,3 +31,4 @@ ratings:
 exclude_paths:
   - django/static/**/*
   - django/ckeditor/static/**/*
+  - django/**/migrations/**/*
