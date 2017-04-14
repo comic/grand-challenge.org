@@ -459,7 +459,7 @@ class DatasetNode(template.Node):
 
         try:
               filenames = dp.getAllFileNames()
-        except (OSError) as e:
+        except OSError as e:
 
           return self.make_dataset_error_msg(str(e))
       
@@ -2004,9 +2004,9 @@ def array_to_table_row(rowvalues, trclass=""):
     output = "<tr class = \"%s\">" % trclass
     for value in rowvalues:
         if type(value) is float:
-            output = output + "<td>%.3f</td>" % (value)
+            output = output + "<td>%.3f</td>" % value
         else:
-            output = output + "<td>%s</td>" % (str(value))
+            output = output + "<td>%s</td>" % str(value)
     output = output + "</tr>"
     return output
 
@@ -2034,7 +2034,7 @@ def parse_php_arrays(filename):
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
             print "found %d php variables in %s. " % (len(phpvars), filename)
-            print "parsing %s into int arrays.. " % (filename)
+            print "parsing %s into int arrays.. " % filename
 
         # check wheteher this looks like a php var
         phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",re.DOTALL)
@@ -2516,7 +2516,7 @@ class AllProjectLinksNode(template.Node):
         reader = ProjectExcelReader(filepath,'Challenges')
         
         #pdb.set_trace()
-        logger.info("Reading projects excel from '%s'" %(filepath))        
+        logger.info("Reading projects excel from '%s'" % filepath)
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:

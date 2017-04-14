@@ -12,7 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 path = os.path.join(os.path.dirname(__file__), 'settings', '*.conf')
 conffiles = glob.glob(path)
 
-if(len(conffiles) == 0):
+if len(conffiles) == 0:
     msg = "Could not find any files matching '" + path + "'. There should be at least one configuration file containing django settings at that location."
     raise ImproperlyConfigured(msg) 
 

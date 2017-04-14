@@ -1057,7 +1057,7 @@ def add_standard_permissions(group, objname):
 
 
 
-class PageAdminForm():
+class PageAdminForm:
     move = forms.CharField(widget=forms.Select)
     move.required = False
     move.widget.choices = (

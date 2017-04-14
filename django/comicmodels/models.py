@@ -65,7 +65,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
         if str(uploadmodel.comicsite) == "LUNA16":
             path = os.path.join(comicsite.public_upload_dir_rel(),
-                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+                            os.path.join('%s' % uploadmodel.user, '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.public_upload_dir_rel(), filename)
@@ -73,7 +73,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
         if str(uploadmodel.comicsite) == "LUNA16":
             path = os.path.join(comicsite.upload_dir_rel(),
-                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+                            os.path.join('%s' % uploadmodel.user, '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.upload_dir_rel(), filename)
@@ -929,7 +929,7 @@ class DropboxFolder(ComicSiteModel):
     def get_dropbox_app_keys(self):
         """ Get dropbox keys unique to COMIC. Throws AttributError if not found
         """
-        return (settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,settings.DROPBOX_ACCESS_TYPE)
+        return settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,settings.DROPBOX_ACCESS_TYPE
 
 
     def get_connection_status(self):
@@ -965,7 +965,7 @@ class DropboxFolder(ComicSiteModel):
         if self.pk:
             DropboxFolder.objects.filter(pk=self.pk).update(last_status_msg=msg)
 
-        return (status,msg)
+        return status, msg
 
 
     def get_info(self):
