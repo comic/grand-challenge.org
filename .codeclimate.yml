@@ -29,4 +29,5 @@ ratings:
   - "**.py"
   - "**.rb"
 exclude_paths:
-  - static/**/*
+  - django/static/**/*
+  - django/ckeditor/static/**/*
