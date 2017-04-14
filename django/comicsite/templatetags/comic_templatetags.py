@@ -1576,8 +1576,7 @@ def insert_graph(parser, token):
         return TemplateErrorNode(error_message + "usage: \n" + usagestr)
 
     else:
-        args = {}
-        args["file"] = all_args[0]
+        args = {"file": all_args[0]}
         if len(all_args) == 2:
             args["type"] = all_args[1].split(":")[1]
         else:
@@ -2079,8 +2078,7 @@ def url_parameter(parser, token):
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
     else:
-        args = {}
-        args["url_parameter"] = all_args[0]
+        args = {"url_parameter": all_args[0]}
 
     args["token"] = token
 
