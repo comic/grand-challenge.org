@@ -192,7 +192,10 @@ class ProjectAdminSite(AdminSite):
         return comicsite_admin
 
 
-    def project_admin_management_view(self, request, extra_context={}):
+    def project_admin_management_view(self, request, extra_context=None):
+
+        if extra_context is None:
+            extra_context = {}
 
         cma = self.get_comicsite_admin()
         return cma.admin_add_view(request, request.project_pk, extra_context)
@@ -239,9 +242,12 @@ class ProjectAdminSite(AdminSite):
 
 
     @never_cache
-    def index(self, request, extra_context={}):
+    def index(self, request, extra_context=None):
         """Show the edit page of the current project. This is the main source of information for any project so
            this should be shown by default, instead of list of all objects"""
+
+        if extra_context is None:
+            extra_context = {}
 
         # def change_view(self, request, object_id, form_url='', extra_context=None):
         comicsiteadmin = self._registry[ComicSite]
@@ -437,10 +443,13 @@ class ProjectAdminSite2(AdminSite):
         return update_wrapper(inner, view)
     
     @never_cache
-    def index(self, request, extra_context={}):
+    def index(self, request, extra_context=None):
         """Show the edit page of the current project. This is the main source of information for any project so
            this should be shown by default, instead of list of all objects"""
-           
+
+        if extra_context is None:
+            extra_context = {}
+
         comicsiteadmin = self._registry[ComicSite]
         extra_context["projectname"] = request.projectname
         return comicsiteadmin.change_view(request, str(self.project.pk), "", extra_context)
@@ -882,10 +891,14 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return context
 
 
-    def admin_add_view(self, request, object_pk, extra_context={}):
+    def admin_add_view(self, request, object_pk, extra_context=None):
         """
         Show all users in admin_group for this comicsite, allow adding users
         """
+
+        if extra_context is None:
+            extra_context = {}
+
         comicsite = get_object_or_404(ComicSite, id=object_pk)
         admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 

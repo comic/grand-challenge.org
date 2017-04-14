@@ -327,14 +327,18 @@ class ComicframeworkTestCase(TestCase):
             
             
     
-    def _signup_user(self,overwrite_data={},site=None):
+    def _signup_user(self,overwrite_data=None,site=None):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called 
         'user1' and fills the rest with default data.  
         
         
-        """    
+        """
+
+        if overwrite_data is None:
+            overwrite_data = {}
+
         data = {'first_name':'test',
                 'last_name':'test',
                 'username':'test',            
@@ -1507,10 +1511,14 @@ class AdminTest(ComicframeworkTestCase):
                             "path to project admin, but both resolve to '{}'".format(jspath))
         
     
-    def _check_project_admin_view(self,project,viewname,args=[],user=None):
-        
+    def _check_project_admin_view(self,project,viewname,args=None,user=None):
+
+        if args is None:
+            args = []
+
         if user is None:
             user = self.projectadmin
+
         url = reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
         response = self._test_url_can_be_viewed(user,url)
         
