@@ -24,7 +24,7 @@ You can then install the requirements into your python environment with::
 
     pip install -r requirements.txt
 
-Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, install comic, and run the tests. Simply invoke::
+Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, and install comic. Simply invoke::
 
     vagrant up
 

@@ -14,6 +14,8 @@ Vagrant.configure("2") do |config|
 
     apt-get install -y python python-pip python-openssl libpng-dev libjpeg-dev libjpeg8-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev mariadb-server
 
+    cp /vagrant/testing/60-mariadb.cnf /etc/mysql/mariadb.conf.d/
+    service mysql restart
     mysql -u root --password= -e "CREATE DATABASE comic DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
 
     pip install --upgrade pip
