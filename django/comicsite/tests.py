@@ -4,35 +4,29 @@ when you run "manage.py test.
 
 
 """
-import pdb
 import re
-from random import choice,randint
+from random import choice, randint
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 
-from ckeditor.views import upload_to_project 
+from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
-from comicmodels.models import Page,ComicSite,UploadModel,ComicSite,RegistrationRequest
+from comicmodels.models import Page, UploadModel, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
-from comicsite.admin import ComicSiteAdmin,PageAdmin,ProjectAdminSite2
-from comicsite.storage import MockStorage
-from django.core.files.storage import DefaultStorage
+from comicsite.admin import PageAdmin, ProjectAdminSite2
 from comicsite.views import _register
-from profiles.admin import UserProfileAdmin
-from profiles.models import UserProfile
-from profiles.forms import SignupFormExtra
 from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
-
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -327,14 +321,18 @@ class ComicframeworkTestCase(TestCase):
             
             
     
-    def _signup_user(self,overwrite_data={},site=None):
+    def _signup_user(self,overwrite_data=None,site=None):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called 
         'user1' and fills the rest with default data.  
         
         
-        """    
+        """
+
+        if overwrite_data is None:
+            overwrite_data = {}
+
         data = {'first_name':'test',
                 'last_name':'test',
                 'username':'test',            
@@ -349,7 +347,7 @@ class ComicframeworkTestCase(TestCase):
         #,'comicsite':'testcomicwebproject'
         data.update(overwrite_data) #overwrite any key in default if in data
         
-        if site == None:
+        if site is None:
             sitename = settings.MAIN_PROJECT_NAME
         else:
             sitename = site.short_name
@@ -1507,10 +1505,14 @@ class AdminTest(ComicframeworkTestCase):
                             "path to project admin, but both resolve to '{}'".format(jspath))
         
     
-    def _check_project_admin_view(self,project,viewname,args=[],user=None):
-        
-        if user == None:
+    def _check_project_admin_view(self,project,viewname,args=None,user=None):
+
+        if args is None:
+            args = []
+
+        if user is None:
             user = self.projectadmin
+
         url = reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
         response = self._test_url_can_be_viewed(user,url)
         

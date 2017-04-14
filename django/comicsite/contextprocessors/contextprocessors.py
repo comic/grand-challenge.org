@@ -3,13 +3,12 @@
  see http://www.djangobook.com/en/2.0/chapter09.html  
 """
 
-from django.template import RequestContext
 from django.conf import settings
 from django.core.urlresolvers import resolve
-
-from comicsite.views import site_get_standard_vars
-from comicmodels.models import ComicSite
 from django.http import Http404
+
+from comicmodels.models import ComicSite
+from comicsite.views import site_get_standard_vars
 
 
 def comic_site(request):

@@ -6,52 +6,46 @@ Custom tags to use in templates or code to render file lists etc.
 
 """
 
-import pdb
-import csv, numpy
+import StringIO
+import csv
 import datetime
+import logging
 import ntpath
 import os
 import random
 import re
 import string
-import StringIO
-import sys
 import traceback
-import logging
-
-from exceptions import Exception
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from django import template
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist,ImproperlyConfigured
-from django.core.urlresolvers import NoReverseMatch
-from django.core.urlresolvers import reverse as reverse_djangocore
-from django.contrib.auth.models import Group, User, Permission
+from django.contrib.auth.models import Group, User
+from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
-from django.template import RequestContext, defaulttags
-from django.utils.html import escape
+from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
-from profiles.forms import SignupFormExtra
+from django.template import defaulttags
+from dropbox.rest import ErrorResponse
+from exceptions import Exception
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+import comicsite.views
+from comicmodels.models import ComicSite
+from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder, \
+    RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicsite.core.exceptions import ParserException, PathResolutionException
+from comicsite.core.urlresolvers import reverse
+# ---------#---------#---------#---------#---------#---------#---------#---------
+# This is needed to use the @register.tag decorator
+# register = template.Library()
+from comicsite.templatetags import library_plus
+from comicsite.utils.html import escape_for_html_id
+from dataproviders import FileSystemDataProvider
+from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+from dataproviders.ProjectExcelReader import ProjectExcelReader
 from profiles.models import UserProfile
 
-from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder,RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
-from comicmodels.models import ComicSite, Page
-import comicsite.views
-from comicsite.utils.html import escape_for_html_id
-from comicsite.core.urlresolvers import reverse
-from comicsite.core.exceptions import ParserException,PathResolutionException
-from dropbox.rest import ErrorResponse
-from dataproviders import FileSystemDataProvider
-from dataproviders.DropboxDataProvider import DropboxDataProvider, HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
-from dataproviders.ProjectExcelReader import ProjectExcelReader
-
-
-#---------#---------#---------#---------#---------#---------#---------#---------
-# This is needed to use the @register.tag decorator
-#register = template.Library()
-from comicsite.templatetags import library_plus
 register = library_plus.LibraryPlus()
 
 logger = logging.getLogger("django")
@@ -232,7 +226,7 @@ def resolve_path(path, parser, context):
             missed_parameters = re.findall("{{\w+}}", filename)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
@@ -437,7 +431,7 @@ class DatasetNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.warning("Error rendering DataSet '" + self.dataset_title + "' for project '" + self.project_name + "': " + msg)
-	errormsg = "Error rendering DataSet"
+        errormsg = "Error rendering DataSet"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -459,7 +453,7 @@ class DatasetNode(template.Node):
 
         try:
               filenames = dp.getAllFileNames()
-        except (OSError) as e:
+        except OSError as e:
 
           return self.make_dataset_error_msg(str(e))
       
@@ -518,7 +512,7 @@ class ListDirNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.warning("Error listing folder '" + self.path + "': " + msg)
-	errormsg = "Error listing folder"
+        errormsg = "Error listing folder"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -567,7 +561,7 @@ class DownloadLinkNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.warning("Error listing folder '" + self.path + "': " + msg)
-	errormsg = "Error listing folder"
+        errormsg = "Error listing folder"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -637,7 +631,7 @@ class ImageBrowserNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.warning("Error rendering Visualization '" + str(self.args) + ":" + msg)
-	errormsg = "Error rendering Visualization"
+        errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -794,7 +788,7 @@ class VisualizationNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.warning("Error rendering Visualization '" + str(self.args) + ":" + msg)
-	errormsg = "Error rendering Visualization"
+        errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -889,7 +883,7 @@ class DropboxNode(template.Node):
 
     def make_dropbox_error_msg(self, msg):
         logger.warning("Error rendering dropbox '" + str(self.args) + ": " + msg)
-	errormsg = "Error rendering dropbox"
+        errormsg = "Error rendering dropbox"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -995,7 +989,7 @@ class InsertBrowserNode(template.Node):
 
     def make_error_msg(self, msg):
         logger.warning("Error including file '" + "," + self.args["file"] + "': " + msg)
-	errormsg = "Error including file"
+        errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
           
@@ -1102,7 +1096,7 @@ class InsertBrowserNode(template.Node):
             missed_parameters = re.findall("{{\w+}}", filename)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
@@ -1437,7 +1431,7 @@ class InsertFileNode(template.Node):
 
     def make_error_msg(self, msg):
         logger.warning("Error including file '" + "," + self.args["file"] + "': " + msg)
-	errormsg = "Error including file"
+        errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
           
@@ -1576,8 +1570,7 @@ def insert_graph(parser, token):
         return TemplateErrorNode(error_message + "usage: \n" + usagestr)
 
     else:
-        args = {}
-        args["file"] = all_args[0]
+        args = {"file": all_args[0]}
         if len(all_args) == 2:
             args["type"] = all_args[1].split(":")[1]
         else:
@@ -1597,7 +1590,7 @@ class InsertGraphNode(template.Node):
 
     def make_error_msg(self, msg):
         logger.warning("Error rendering graph from file '" + "," + self.args["file"] + "': " + msg)
-	errormsg = "Error rendering graph from file"
+        errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
     def substitute(self, string, substitutions):
@@ -1629,7 +1622,7 @@ class InsertGraphNode(template.Node):
             missed_parameters = re.findall("{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
 
-            if found_parameters == []:
+            if not found_parameters:
                 found_parameters = "None"
             error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s "\
                         "" % (missed_parameters, found_parameters)
@@ -1757,6 +1750,8 @@ def parse_csv_table(has_header, f):
     table = []
     csvreader = csv.reader(f)
     i = 0
+    j = 0
+    row = ''
     headers = []
     try:
         for row in csvreader:
@@ -2004,9 +1999,9 @@ def array_to_table_row(rowvalues, trclass=""):
     output = "<tr class = \"%s\">" % trclass
     for value in rowvalues:
         if type(value) is float:
-            output = output + "<td>%.3f</td>" % (value)
+            output = output + "<td>%.3f</td>" % value
         else:
-            output = output + "<td>%s</td>" % (str(value))
+            output = output + "<td>%s</td>" % str(value)
     output = output + "</tr>"
     return output
 
@@ -2027,14 +2022,14 @@ def parse_php_arrays(filename):
         content = content.replace("\n", "")
         php = re.compile("\<\?php(.*?)\?\>",re.DOTALL)
         s = php.search(content)
-        assert s != None , "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
+        assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
         phpcontent = s.group(1)
         
         phpvars = phpcontent.split("$")
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
             print "found %d php variables in %s. " % (len(phpvars), filename)
-            print "parsing %s into int arrays.. " % (filename)
+            print "parsing %s into int arrays.. " % filename
 
         # check wheteher this looks like a php var
         phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",re.DOTALL)
@@ -2042,7 +2037,7 @@ def parse_php_arrays(filename):
            result = phpvar.search(var)
 
            #TODO Log these messages as info
-           if result == None :
+           if result is None:
                msg = "Could not match regex pattern '%s' to '%s'\
                                     " % (phpvar.pattern, var)
                continue
@@ -2079,8 +2074,7 @@ def url_parameter(parser, token):
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
     else:
-        args = {}
-        args["url_parameter"] = all_args[0]
+        args = {"url_parameter": all_args[0]}
 
     args["token"] = token
 
@@ -2094,7 +2088,7 @@ class UrlParameterNode(template.Node):
 
     def make_error_msg(self, msg):
         logger.warning("Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg)
-	errormsg = "Error in url_parameter tag"
+        errormsg = "Error in url_parameter tag"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -2105,7 +2099,7 @@ class UrlParameterNode(template.Node):
         else:
             logger.warning("Error rendering %s: Parameter '%s' not found in request URL" % ("{%  " + self.args['token'].contents + "%}",
                                                                                              self.args['url_parameter']))
-	    error_message = "Error rendering"
+            error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
 
 
@@ -2222,7 +2216,7 @@ class AllProjectLinksNode(template.Node):
         """ Get all the HTML and Jquery to have working filter and selection
         checkboxes on top of the projectlinks overview
         """
-        from django.template import loader, Context
+        from django.template import loader
         return loader.render_to_string('all_projectlinks_filter.html')
     
 
@@ -2516,7 +2510,7 @@ class AllProjectLinksNode(template.Node):
         reader = ProjectExcelReader(filepath,'Challenges')
         
         #pdb.set_trace()
-        logger.info("Reading projects excel from '%s'" %(filepath))        
+        logger.info("Reading projects excel from '%s'" % filepath)
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:

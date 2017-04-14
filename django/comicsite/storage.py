@@ -1,15 +1,11 @@
-import pdb
-import os
 import StringIO
+import os
 from io import BytesIO
-from exceptions import OSError
-
-
-from django.core.files.storage import FileSystemStorage
-from django.core.files import File
-
 
 from django.conf import settings
+from django.core.files import File
+from django.core.files.storage import FileSystemStorage
+from exceptions import OSError
 
 
 def fake_file(filename,content="mock content"):

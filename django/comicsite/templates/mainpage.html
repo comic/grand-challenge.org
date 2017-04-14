@@ -13,7 +13,7 @@
         </div>
     {% else %}
         <div class="image">
-            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/img></a>
+            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}" /></a>
         </div>  
     {% endif %}
 {% endblock %}

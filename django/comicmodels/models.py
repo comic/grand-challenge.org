@@ -1,16 +1,11 @@
+import copy
+import datetime
+import logging
 import os
 import re
-import datetime
-import pdb
-import logging
-import copy
-import comicsite.utils.query
 
-from django import forms
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.models import Group,User,Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
@@ -18,17 +13,17 @@ from django.core.validators import validate_slug, MaxLengthValidator
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
-from django.utils.safestring import mark_safe
 from django.utils import timezone
-
-from ckeditor.fields import RichTextField
-from dropbox import client, rest, session
+from django.utils.safestring import mark_safe
+from dropbox import client, session
 from dropbox.rest import ErrorResponse
 from guardian.shortcuts import assign_perm, remove_perm
 
-from dataproviders import FileSystemDataProvider,DropboxDataProvider
+import comicsite.utils.query
+from ckeditor.fields import RichTextField
 from comicmodels.template.decorators import track_data
 from comicsite.core.urlresolvers import reverse
+from dataproviders import FileSystemDataProvider, DropboxDataProvider
 
 logger = logging.getLogger("django")
 
@@ -65,7 +60,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
         if str(uploadmodel.comicsite) == "LUNA16":
             path = os.path.join(comicsite.public_upload_dir_rel(),
-                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+                            os.path.join('%s' % uploadmodel.user, '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.public_upload_dir_rel(), filename)
@@ -73,7 +68,7 @@ def giveFileUploadDestinationPath(uploadmodel,filename):
 
         if str(uploadmodel.comicsite) == "LUNA16":
             path = os.path.join(comicsite.upload_dir_rel(),
-                            os.path.join('%s' %(uploadmodel.user), '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
+                            os.path.join('%s' % uploadmodel.user, '%s_' %(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.upload_dir_rel(), filename)
@@ -699,7 +694,7 @@ class Page(ComicSiteModel):
             except ObjectDoesNotExist :
                 max_order = None
 
-            if max_order["order__max"] == None:
+            if max_order["order__max"] is None:
                 self.order = 1
             else:
                 self.order = max_order["order__max"] + 1
@@ -929,7 +924,7 @@ class DropboxFolder(ComicSiteModel):
     def get_dropbox_app_keys(self):
         """ Get dropbox keys unique to COMIC. Throws AttributError if not found
         """
-        return (settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,settings.DROPBOX_ACCESS_TYPE)
+        return settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,settings.DROPBOX_ACCESS_TYPE
 
 
     def get_connection_status(self):
@@ -965,7 +960,7 @@ class DropboxFolder(ComicSiteModel):
         if self.pk:
             DropboxFolder.objects.filter(pk=self.pk).update(last_status_msg=msg)
 
-        return (status,msg)
+        return status, msg
 
 
     def get_info(self):

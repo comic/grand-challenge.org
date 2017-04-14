@@ -3,59 +3,43 @@ Created on Jun 18, 2012
 
 @author: Sjoerd
 '''
-import pdb
-import logging
 import copy
-from django.contrib import admin
-from django import forms
-
-
-from django.conf.urls import patterns, url, include
-from django.contrib import messages
-from django.contrib.admin.options import InlineModelAdmin
-from django.contrib.admin.views.main import ChangeList
-from django.contrib.admin.util import quote
-from django.contrib.auth.models import Group, Permission, User
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import get_current_site
-from django.core.urlresolvers import reverse, resolve
-from django.db import models
-from django.forms import TextInput, Textarea
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404, redirect
-from django.template import RequestContext
-from django.utils import six
-from django.utils.translation import ugettext as _
-from django.utils.encoding import force_unicode
-from guardian.admin import GuardedModelAdmin
-from guardian.shortcuts import get_objects_for_user, assign_perm
-
-from comicmodels.models import ComicSite, Page, RegistrationRequest
-from comicmodels.signals import new_admin, removed_admin
-from comicmodels.admin import ComicModelAdmin,RegistrationRequestAdmin
-from comicsite.core.exceptions import ProjectAdminException
-
-
+import logging
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin
 import re
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.contrib.admin.options import ModelAdmin, HORIZONTAL, VERTICAL
-from django.contrib.admin.options import StackedInline, TabularInline
+from functools import update_wrapper
+
+from django import forms
+from django.conf.urls import patterns, url
+from django.contrib import admin
+from django.contrib import messages
+from django.contrib.admin.options import InlineModelAdmin
 # NOTICE: that we are not importing site here!
 # basically this is the only one import you'll need
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
-from django.contrib.admin.filters import (ListFilter, SimpleListFilter,
-    FieldListFilter, BooleanFieldListFilter, RelatedFieldListFilter,
-    ChoicesFieldListFilter, DateFieldListFilter, AllValuesFieldListFilter)
-from django.views.decorators.cache import never_cache
-from django.utils.text import capfirst
-from django.template.response import TemplateResponse
-from django.views.decorators.csrf import csrf_protect
-from functools import update_wrapper
+from django.contrib.auth.models import Group, Permission, User
+from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
+from django.db import models
+from django.forms import TextInput, Textarea
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
+from django.template.response import TemplateResponse
+from django.utils import six
+from django.utils.encoding import force_unicode
+from django.utils.text import capfirst
+from django.utils.translation import ugettext as _
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from guardian.shortcuts import get_objects_for_user, assign_perm
 
+from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
+from comicmodels.models import Page, RegistrationRequest
+from comicmodels.signals import new_admin, removed_admin
+from comicsite.core.exceptions import ProjectAdminException
 
 logger = logging.getLogger("django")
 
@@ -192,7 +176,10 @@ class ProjectAdminSite(AdminSite):
         return comicsite_admin
 
 
-    def project_admin_management_view(self, request, extra_context={}):
+    def project_admin_management_view(self, request, extra_context=None):
+
+        if extra_context is None:
+            extra_context = {}
 
         cma = self.get_comicsite_admin()
         return cma.admin_add_view(request, request.project_pk, extra_context)
@@ -239,9 +226,12 @@ class ProjectAdminSite(AdminSite):
 
 
     @never_cache
-    def index(self, request, extra_context={}):
+    def index(self, request, extra_context=None):
         """Show the edit page of the current project. This is the main source of information for any project so
            this should be shown by default, instead of list of all objects"""
+
+        if extra_context is None:
+            extra_context = {}
 
         # def change_view(self, request, object_id, form_url='', extra_context=None):
         comicsiteadmin = self._registry[ComicSite]
@@ -437,10 +427,13 @@ class ProjectAdminSite2(AdminSite):
         return update_wrapper(inner, view)
     
     @never_cache
-    def index(self, request, extra_context={}):
+    def index(self, request, extra_context=None):
         """Show the edit page of the current project. This is the main source of information for any project so
            this should be shown by default, instead of list of all objects"""
-           
+
+        if extra_context is None:
+            extra_context = {}
+
         comicsiteadmin = self._registry[ComicSite]
         extra_context["projectname"] = request.projectname
         return comicsiteadmin.change_view(request, str(self.project.pk), "", extra_context)
@@ -882,10 +875,14 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return context
 
 
-    def admin_add_view(self, request, object_pk, extra_context={}):
+    def admin_add_view(self, request, object_pk, extra_context=None):
         """
         Show all users in admin_group for this comicsite, allow adding users
         """
+
+        if extra_context is None:
+            extra_context = {}
+
         comicsite = get_object_or_404(ComicSite, id=object_pk)
         admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 
@@ -928,13 +925,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
                         user.groups.remove(admingroup)
                         removed.append(username)
 
+                        # send signal to be picked up for example by email notifier
+                        removed_admin.send(sender=self, adder=request.user, removed_admin=user, comicsite=comicsite,
+                                           site=get_current_site(request))
+
                 msg = "Removed users [" + ", ".join(removed) + "] from " + comicsite.short_name + \
                       " admin group. " + msg2
                 messages.add_message(request, messages.SUCCESS, msg)
-
-                # send signal to be picked up for example by email notifier
-                removed_admin.send(sender=self, adder=request.user, removed_admin=user, comicsite=comicsite
-                                   , site=get_current_site(request))
 
         else:
             user_form = AdminManageForm()
@@ -1002,7 +999,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """
-        if obj == None:
+        if obj is None:
             messages.info(request, 'Please fill out the form to create a new project. <b>Required fields are bold.</b> Please save your project before adding pages or admins.', extra_tags='safe')
 
         return super(ComicSiteAdmin, self).render_change_form(request, context, add, change, form_url, obj)
@@ -1041,19 +1038,6 @@ def add_standard_permissions(group, objname):
     can_change_obj = Permission.objects.get(codename="change_" + objname)
     can_delete_obj = Permission.objects.get(codename="delete_" + objname)
     group.permissions.add(can_add_obj, can_change_obj, can_delete_obj)
-
-
-
-class PageAdminForm():
-    move = forms.CharField(widget=forms.Select)
-    move.required = False
-    move.widget.choices = (
-                         (models.BLANK_CHOICE_DASH[0]),
-                         ('FIRST', 'First'),
-                         ('UP', 'Up'),
-                         ('DOWN', 'Down'),
-                         ('LAST', 'Last'),
-                        )
 
 # this variable is included in urls.py to get admin urls for each project in
 # the database  
