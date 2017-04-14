@@ -941,13 +941,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
                         user.groups.remove(admingroup)
                         removed.append(username)
 
+                        # send signal to be picked up for example by email notifier
+                        removed_admin.send(sender=self, adder=request.user, removed_admin=user, comicsite=comicsite,
+                                           site=get_current_site(request))
+
                 msg = "Removed users [" + ", ".join(removed) + "] from " + comicsite.short_name + \
                       " admin group. " + msg2
                 messages.add_message(request, messages.SUCCESS, msg)
-
-                # send signal to be picked up for example by email notifier
-                removed_admin.send(sender=self, adder=request.user, removed_admin=user, comicsite=comicsite
-                                   , site=get_current_site(request))
 
         else:
             user_form = AdminManageForm()

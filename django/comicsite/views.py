@@ -78,13 +78,16 @@ def _register(request, site_short_name):
 
 def _register_directly(request, project):
     
-    title = "registration_successful"
-    display_title = "registration successful"
     if request.user.is_authenticated():
-        project.add_participant(request.user)        
+        project.add_participant(request.user)
+        title = "registration_successful"
+        display_title = "registration successful"
         html = "<p> You are now registered to " + project.short_name + "<p>"
-    
-        
+    else:
+        title = "registration_unsuccessful"
+        display_title = "registration unsuccessful"
+        html = "<p><b>ERROR:</b>You need to be signed in to register<p>"
+
     currentpage = Page(comicsite=project, title=title, display_title=display_title, html=html)
     return currentpage
 
@@ -178,33 +181,31 @@ def renderTags(request, p, recursecount=0):
     
     """
     recurselimit = 2
-    rendererror = ""
-    
+
     
     try:
         t = Template("{% load comic_templatetags %}" + p.html)
     except TemplateSyntaxError as e:
         rendererror = e.message
-    if rendererror:
         # when page contents cannot be rendered, just display raw contents and include error message on page
         errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
         pagecontents = p.html + errormsg
-    else:
+        return pagecontents
 
-        t = escape_verbatim_node_contents(t)
-        
-        #pass page to context here to be able to render tags based on which page does the rendering
-        pagecontents = t.render(ComicSiteRequestContext(request,p))
-        
-        if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
-            if recursecount < recurselimit :
-                p2 = copy_page(p) 
-                p2.html = pagecontents
-                return renderTags(request,p2,recursecount+1)
-            else:
-                # when page contents cannot be rendered, just display raw contents and include error message on page
-                errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(recurselimit) + " </span>"
-                pagecontents = p.html + errormsg
+    t = escape_verbatim_node_contents(t)
+
+    #pass page to context here to be able to render tags based on which page does the rendering
+    pagecontents = t.render(ComicSiteRequestContext(request,p))
+
+    if "{%" in pagecontents or "{{" in pagecontents: #if rendered tags results in another tag, try to render this as well
+        if recursecount < recurselimit :
+            p2 = copy_page(p)
+            p2.html = pagecontents
+            return renderTags(request,p2,recursecount+1)
+        else:
+            # when page contents cannot be rendered, just display raw contents and include error message on page
+            errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(recurselimit) + " </span>"
+            pagecontents = p.html + errormsg
 
     return pagecontents
 
@@ -770,19 +771,12 @@ def send_email(request):
         
     adress = 'w.s.kerkstra@gmail.com' 
     title = 'Your email setting are ok for sending'
-    message = 'Just checking the sending of email using DJANGO. If you read this things are properly configured'
-    
-    password = ""
-    if request.GET.has_key("pass"):
-        password = request.GET['pass']
-    
-    #only set password if bots really make this a problem
-    if True: #password == "one0nine":
-        send_mail(title, 'Here is the message.', 'test@comicframework.org',
+
+    send_mail(title, 'Here is the message.', 'test@comicframework.org',
                   [adress], fail_silently=False)
-        text="Sent test email titled '" + title + "' to email adress '"+ adress +"'"
+    text="Sent test email titled '" + title + "' to email adress '"+ adress +"'"
         
-    return HttpResponse(text);
+    return HttpResponse(text)
 
 def test_logging(request):    
     logger = logging.getLogger("django")

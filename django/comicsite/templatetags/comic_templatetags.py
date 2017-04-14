@@ -1756,6 +1756,8 @@ def parse_csv_table(has_header, f):
     table = []
     csvreader = csv.reader(f)
     i = 0
+    j = 0
+    row = ''
     headers = []
     try:
         for row in csvreader:
