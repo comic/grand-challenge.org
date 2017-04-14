@@ -1,10 +1,14 @@
 language: python
 python:
-  - "2.7"
+  - 2.7
+addons:
+  mariadb: 10.1
 install:
-  - "pip install -r requirements.txt"
-  - "pip install coveralls"
+  - pip install -r requirements.txt
+  - pip install coveralls
+  - cp testing/60-mariadb.cnf $HOME/.my.cnf
+  - mysql -u root --password= -e "CREATE DATABASE comic;"
 script:
-  coverage run --source=django django/manage.py test comicsite contenttypes sessions messages sites comicmodels profiles django_dropbox
+  cd django && coverage run --source='.' manage.py test
 after_success:
   coveralls

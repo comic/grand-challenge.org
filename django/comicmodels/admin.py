@@ -79,8 +79,9 @@ class FileSystemDatasetForm(forms.ModelForm):
 
     
     class Meta:       
-       model = FileSystemDataset
-       
+        model = FileSystemDataset
+        fields = '__all__'
+
         
 
 class FileSystemDatasetInitialForm(forms.ModelForm):
@@ -287,7 +288,7 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
         
         # TODO: This way of filtering should be used for all comicobjects, this
         #       would be a lot of rafactoring.                   
-        qs = super(RegistrationRequestAdmin, self).queryset(request)
+        qs = super(RegistrationRequestAdmin, self).get_queryset(request)
         
         if not request.is_projectadmin:
             if request.user.is_superuser:

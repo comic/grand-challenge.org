@@ -503,6 +503,7 @@ class PageAdminForm(forms.ModelForm):
 
     class Meta:
         model = Page
+        fields = '__all__'
 
 class PageAdmin(ComicModelAdmin):
     """Define the admin interface for pages"""
@@ -728,6 +729,7 @@ class ComicSiteAdminForm(forms.ModelForm):
 
     class Meta:
         model = ComicSite
+        fields = '__all__'
 
 
 
@@ -826,7 +828,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
     def queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
-        qs = super(ComicSiteAdmin, self).queryset(request)
+        qs = super(ComicSiteAdmin, self).get_queryset(request)
 
         if request.user.is_superuser:
             return qs
@@ -840,7 +842,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         """
 
         urls = super(ComicSiteAdmin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.module_name
+        info = self.model._meta.app_label, self.model._meta.model_name
         myurls = patterns('',
             url(r'^(?P<object_pk>.+)/admins/$',
                 view=self.admin_site.admin_view(self.admin_add_view),

@@ -5,6 +5,9 @@ COMIC Django Frontend
     :target: https://travis-ci.org/comic/comic-django
 .. image:: https://coveralls.io/repos/github/comic/comic-django/badge.svg?branch=master
     :target: https://coveralls.io/github/comic/comic-django?branch=master
+.. image:: https://codeclimate.com/github/comic/comic-django/badges/gpa.svg
+   :target: https://codeclimate.com/github/comic/comic-django
+   :alt: Code Climate
 
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
 
@@ -21,7 +24,7 @@ You can then install the requirements into your python environment with::
 
     pip install -r requirements.txt
 
-Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, install comic, and run the tests. Simply invoke::
+Alternatively, you can use the provided vagrantfile which will set up a complete Ubuntu 16 environment, and install comic. Simply invoke::
 
     vagrant up
 
