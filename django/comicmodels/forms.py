@@ -5,6 +5,7 @@ class UploadForm(forms.ModelForm):
     
     class Meta:
         model = UploadModel
+        fields = '__all__'
 
 
 class UserUploadForm(forms.ModelForm):

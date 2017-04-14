@@ -725,6 +725,7 @@ class ProjectMetadataForm(forms.ModelForm):
     
     class Meta:
         model = ProjectMetaData
+        fields = '__all__'
 
 
 def submit_existing_project(request):

@@ -119,7 +119,7 @@ class ComicSiteManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
 
-    def get_query_set(self):
+    def get_queryset(self):
 
         return super(ComicSiteManager, self).get_queryset()
 
@@ -1067,7 +1067,7 @@ class RegistrationRequestManager(models.Manager):
                            status=RegistrationRequest.ACCEPTED)
 
 
-    def get_query_set(self):
+    def get_queryset(self):
 
         return super(RegistrationRequestManager, self).get_queryset()
 
