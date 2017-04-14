@@ -13,6 +13,6 @@ install:
   - echo "collation-server = utf8_general_ci" >> $HOME/.my.cnf
   - mysql -u root --password= -e "CREATE DATABASE comic;"
 script:
-  coverage run --source=django django/manage.py test
+  cd django && coverage run --source='.' manage.py test
 after_success:
   coveralls
