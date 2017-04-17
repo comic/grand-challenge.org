@@ -3,7 +3,7 @@ import logging
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Context
 from django.utils.html import strip_tags
