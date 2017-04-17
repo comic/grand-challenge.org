@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load guardian_tags %}
 {% load admin_urls %}
+{% load firstof from future %}
 
 {% block stylesheet %} {{STATIC_URL}}css/{{site.skin}}.css {% endblock %}
 
