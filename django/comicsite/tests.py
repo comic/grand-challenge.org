@@ -12,6 +12,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management import call_command
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -147,7 +148,9 @@ def is_subset(listA,listB):
     
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
-    """ 
+    """
+
+    fixtures = ['comic_initial_project', 'user_everyone']
     
     def setUp(self):
         self.setUp_base()        
@@ -193,7 +196,8 @@ class ComicframeworkTestCase(TestCase):
             root.save()
             
             self.root = root
-        
+
+        call_command('check_permissions')
                      
     def _create_dummy_project(self,projectname="testproject"):
         """ Create a project with some pages and users. In part this is 

@@ -31,7 +31,7 @@ class ComicModelAdmin(GuardedModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.save()
     
-    def queryset(self, request): 
+    def get_queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access 
             
             note: GuardedModelAdmin can also restrict queryset to owned by user only, but this
@@ -269,7 +269,7 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
         super(RegistrationRequestAdmin,self).save_model(request, obj, form, change)
 
     
-    def queryset(self, request): 
+    def get_queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access 
             
             note: GuardedModelAdmin can also restrict queryset to owned by user only, but this

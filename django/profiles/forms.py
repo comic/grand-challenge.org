@@ -6,6 +6,12 @@ from userena.forms import SignupForm
 
 
 class SignupFormExtra(SignupForm):
+    first_name = forms.CharField(label=_(u'First Name'),
+                                 max_length=30,
+                                 required=True)
+    last_name = forms.CharField(label=_(u'Last Name'),
+                                max_length=30,
+                                required=True)
     institution = forms.CharField(label=_(u'Institution'),
                                   max_length=100,
                                   required=True,
@@ -22,25 +28,9 @@ class SignupFormExtra(SignupForm):
                               required=False,
                               help_text=_(u'A website which describes you or your department'))
 
-    #comicsite = forms.CharField(label=_(u'comicsite'), max_length=30, required=False)
-
-    first_name = forms.CharField(label=_(u'First Name'),
-                                 max_length=30,
-                                 required=True)
-    last_name = forms.CharField(label=_(u'Last Name'),
-                                max_length=30,
-                                required=True)
 
     def __init__(self, *args, **kw):
-        """ Bit of hackery to get the first and last name at the top of the form.
-        """
         super(SignupFormExtra, self).__init__(*args, **kw)
-        # Put the first and last name at the top.
-        new_order = self.fields.keyOrder[:-2]
-        new_order.insert(0, 'first_name')
-        new_order.insert(1, 'last_name')
-        self.fields.keyOrder = new_order
-        #self.base_fields['comicsite'].initial = ""
 
     def clean_country(self):
         """ Make sure the user changed the country field.
