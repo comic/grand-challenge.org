@@ -21,7 +21,7 @@ from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.sites.models import get_current_site
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import reverse, NoReverseMatch, clear_url_caches
 from django.db import models
 from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
@@ -56,8 +56,7 @@ def reload_url_conf():
     
     
 def clear_url_resolver_cache():
-    from django.core import urlresolvers
-    urlresolvers._resolver_cache.clear()
+    clear_url_caches()
     
 
 class ProjectAdminSite(AdminSite):
@@ -324,7 +323,7 @@ class ProjectAdminSite2(AdminSite):
             
             # Wrap all modeladmin queryset methods so that they only return content
             # relevant for the current project
-            model_admin.queryset = self.queryset_wrapper(model_admin.queryset)
+            model_admin.get_queryset = self.queryset_wrapper(model_admin.get_queryset)
             
             model_admin.add_view = self.add_view_wrapper(model_admin.add_view)
             
@@ -537,7 +536,7 @@ class PageAdmin(ComicModelAdmin):
         assign_perm("change_page", admingroup, obj)
 
 
-    def queryset(self, request):
+    def get_queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access
             In Addition, if your are on a project-admin page, show only content associated with that
             project
@@ -819,7 +818,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
     manage_participation_request_link.short_description = "Participation Requests"
 
 
-    def queryset(self, request):
+    def get_queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
         qs = super(ComicSiteAdmin, self).get_queryset(request)
 
@@ -983,7 +982,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         """
         admingroup = Group.objects.create(name=obj.admin_group_name())
-        participantsgroup = Group.objects.create(name=obj.short_name + "_participants")
+        participantsgroup = Group.objects.create(name=obj.participants_group_name())
 
         # add object-level permission to the specific ComicSite so it shows up in admin
         obj.save()
