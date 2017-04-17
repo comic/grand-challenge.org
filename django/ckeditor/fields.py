@@ -1,4 +1,3 @@
-import pdb
 from django.db import models
 from django import forms
 
@@ -35,9 +34,3 @@ class RichTextFormField(forms.fields.Field):
         """
         
         return {"jemoeder":True}
-
-try:
-    from south.modelsinspector import add_introspection_rules
-    add_introspection_rules([], ["^ckeditor\.fields\.RichTextField"])
-except:
-    pass
