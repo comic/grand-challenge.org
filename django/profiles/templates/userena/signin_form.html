@@ -13,22 +13,10 @@
 <div class="white-box">
     <div id="signincontainer">
         <ul id="signinlist">
-            <!--<li>
-                <a href="#" id="comicsignin">
-                    <p>Signin using</p>
-                    <img src="{% static "img/openid-logo-comic.png" %}" alt="Signin using COMIC"/>
-                </a>
-            </li>-->
             <li>
-                <a href="{% url 'socialauth_begin' 'google-oauth2' %}?next={{request.GET.next}}">
+                <a href="{% url 'social:begin' 'google-oauth2' %}?next={{request.GET.next}}">
                     <p>Sign in using</p>
                     <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'socialauth_begin' 'yahoo' %}?next={{request.GET.next}}">
-                    <p>Sign in using</p>
-                    <img src="{% static "img/openid-logo-yahoo.png" %}" alt="Sign in using Yahoo"/>
                 </a>
             </li>
         </ul>
