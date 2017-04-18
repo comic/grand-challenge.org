@@ -1,10 +1,10 @@
 import logging
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import get_app, get_models
 from django.template import loader, Context
 from django.utils.html import strip_tags
 from userena.signals import signup_complete
@@ -47,9 +47,9 @@ def get_or_create_projectadmingroup():
         # if projectadmins group did not exist, add default permissions.
         # adding permissions to all models in the comicmodels app.
         appname = 'comicmodels'
-        app = get_app(appname)
-        for model in get_models(app):
-            classname = model.__name__.lower()
+        app = apps.get_app_config(appname)
+        for model in app.models:
+            classname = model.lower()
             add_standard_perms(projectadmins,classname,appname)
 
     return projectadmins

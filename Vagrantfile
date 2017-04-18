@@ -23,6 +23,7 @@ Vagrant.configure("2") do |config|
     pip install -r /vagrant/requirements.txt
 
     cd /vagrant/django
+    python manage.py migrate
     python manage.py loaddata comic_initial_project user_everyone
   SHELL
 end

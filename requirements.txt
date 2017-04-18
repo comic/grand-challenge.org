@@ -32,6 +32,5 @@ python-openid==2.2.5
 pytz==2015.4
 selenium==3.3.1
 six==1.9.0
-South==1.0.2
 urllib3==1.10.4
 xlrd==0.9.4
