@@ -1,32 +1,26 @@
 from guardian.shortcuts import assign_perm
 from userena.managers import ASSIGNED_PERMISSIONS
+from userena.models import UserenaSignup
+from userena.utils import get_user_profile
 
 from comicsite.models import get_or_create_projectadmingroup
-from profiles.models import UserProfile as Profile
 
 
-def create_profile(user=None, profile=None, *args, **kwargs):
+def create_profile(user=None, is_new=False, *args, **kwargs):
     """ Create user profile if necessary
     """
-    if profile:
-        return { 'profile':profile }
-    if not user:
-        return
-    return { 'profile': Profile.objects.get_or_create(user=user)[0] }
+    if is_new:
+        UserenaSignup.objects.get_or_create(user=user)
 
-
-def set_guardian_permissions(user=None, profile=None, *args, **kwargs):
-    """ Give the user permission to modify themselves
-    """
-    if not user or not user.is_authenticated():
-        return
-    if profile:
         # Give permissions to view and change profile
         for perm in ASSIGNED_PERMISSIONS['profile']:
-            assign_perm(perm[0], user, profile)
-    # Give permissions to view and change itself
-    for perm in ASSIGNED_PERMISSIONS['user']:
-        assign_perm(perm[0], user, user)
+            assign_perm(perm[0], user, get_user_profile(user=user))
+
+        # Give permissions to view and change itself
+        for perm in ASSIGNED_PERMISSIONS['user']:
+            assign_perm(perm[0], user, user)
+
+    return {'profile': get_user_profile(user=user)}
 
 
 def set_project_permissions(user=None, profile=None, *args, **kwargs):

@@ -31,7 +31,7 @@ urlpatterns = patterns('',
     # Used for logging in and managing profiles. This is done on the framework
     # level because it is too hard to get this all under each project 
     url(r'^accounts/',include('profiles.urls')),
-    url(r'^socialauth/',include('social_auth.urls')),
+    url(r'^socialauth/',include('social.apps.django_app.urls', namespace='social')),
     
     #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
     url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
