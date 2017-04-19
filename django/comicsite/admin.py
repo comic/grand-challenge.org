@@ -55,6 +55,48 @@ def clear_url_resolver_cache():
     clear_url_caches()
 
 
+def get_comicsite_shortnames_that_user_is_admin_for(user):
+    """
+    Returns a list of shortnames that the user is an administrator for
+    :param user: The user
+    :return: List of short comicsite names
+    """
+    user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
+    short_names = [x.name.rstrip('_admins') for x in user_admin_groups]
+    return short_names
+
+def filter_if_not_empty(qs, filter_set):
+    """
+    Utility function that filters a query set by the given list of Q functions. Returns nothing if the list is empty
+    :param qs: The query set
+    :param filter_set: The list of q functions
+    :return: A filtered queryset
+    """
+    if len(filter_set) == 0:
+        return qs.none()
+    else:
+        return qs.filter(*filter_set)
+
+def filter_projects_by_user_admin(qs, user):
+    """
+    Filters a queryset of projects by user admin status
+    :param qs: A queryset containing projects (comicsites)
+    :param user: The User
+    :return: The comicsites this user is a admin for
+    """
+    admin_projects = [models.Q(short_name=x) for x in get_comicsite_shortnames_that_user_is_admin_for(user)]
+    return filter_if_not_empty(qs, admin_projects)
+
+def filter_pages_by_user_admin(qs, user):
+    """
+    Filters a queryset of pages by the user admin status
+    :param qs: A queryset containg pages
+    :param user: The user
+    :return: The pages this user can edit
+    """
+    admin_projects = [models.Q(comicsite__short_name=x) for x in get_comicsite_shortnames_that_user_is_admin_for(user)]
+    return filter_if_not_empty(qs, admin_projects)
+
 class ProjectAdminSite2(AdminSite):
     """Admin for a specific project. Only shows and allows access to object
     associated with that project"""
@@ -112,23 +154,11 @@ class ProjectAdminSite2(AdminSite):
                 # just show this project
                 if type(qs[0]) == ComicSite:
                     qs = qs.filter(short_name=self.project.short_name)
-                    qs = self._filter_projects_by_user_admin(qs, args[0].user)
 
             return qs
 
         return wrap
 
-    def _filter_projects_by_user_admin(self, qs, user):
-        """
-        Filters a QuerySet for items of which the user is an admin
-        :param qs: 
-        :param user: 
-        :return: 
-        """
-        user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
-        admin_projects = [models.Q(short_name=x.name.rstrip('_admins')) for x in user_admin_groups]
-        qs = qs.filter(*admin_projects)
-        return qs
 
     def add_view_wrapper(self, add_view):
         """ In projectadmin you can only create objects for this project. That
@@ -303,8 +333,10 @@ class PageAdmin(ComicModelAdmin):
         """
 
         qs = get_objects_for_user(request.user, 'comicmodels.change_page')
-
-
+        if request.user.is_superuser:
+            return qs
+        else:
+            qs = filter_pages_by_user_admin(qs, request.user)
 
         if request.is_projectadmin:  # this info is added by project middleware
             qs = qs.filter(comicsite__short_name=request.projectname)
@@ -585,7 +617,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         else:
-            return get_objects_for_user(request.user, 'comicmodels.change_comicsite')
+            qs = get_objects_for_user(request.user, 'comicmodels.change_comicsite')
+            qs = filter_projects_by_user_admin(qs, request.user)
+            return qs
 
     def get_urls(self):
         """
