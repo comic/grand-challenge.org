@@ -3,7 +3,6 @@ Created on Jun 18, 2012
 
 @author: Sjoerd
 '''
-import copy
 import logging
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin
@@ -27,20 +26,16 @@ from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.template.response import TemplateResponse
 from django.utils import six
 from django.utils.encoding import force_unicode
-from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_protect
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from six.moves import reload_module
 
 from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
 from comicmodels.models import Page, RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
-from comicsite.core.exceptions import ProjectAdminException
 
 logger = logging.getLogger("django")
 
@@ -58,255 +53,6 @@ def reload_url_conf():
     
 def clear_url_resolver_cache():
     clear_url_caches()
-    
-
-class ProjectAdminSite(AdminSite):
-    """Admin for a specific project. Only shows and allows access to object
-    associated with that project"""
-    login_form = None
-    index_template = None
-    app_index_template = None
-    login_template = None
-    logout_template = None
-    password_change_template = None
-    password_change_done_template = None
-
-    # site_short_name = ""
-#    def __init__(self, name='admin', app_name='admin'):
-#
-#        super(ProjectAdminSite,self).__init__(name,app_name)
-#        self.site_short_name
-
-    def get_urls(self):
-        from django.conf.urls import patterns, url, include
-        from django.conf import settings
-
-        from django.contrib.contenttypes import views as contenttype_views
-
-        if settings.DEBUG:
-            self.check_dependencies()
-
-        def wrap(view, cacheable=False):
-            def wrapper(*args, **kwargs):
-                return self.admin_view(view, cacheable)(*args, **kwargs)
-            return update_wrapper(wrapper, view)
-
-        # Admin-site-wide views.
-        urlpatterns = patterns('',
-            url(r'^$',
-                wrap(self.index),
-                name='index'),
-            url(r'^all/',
-                wrap(self.show_all_objects),
-                name='show_all_objects'),
-            url(r'^logout/$',
-                wrap(self.logout),
-                name='logout'),
-            url(r'^password_change/$',
-                wrap(self.password_change, cacheable=True),
-                name='password_change'),
-            url(r'^password_change/done/$',
-                wrap(self.password_change_done, cacheable=True),
-                name='password_change_done'),
-            url(r'^jsi18n/$',
-                wrap(self.i18n_javascript, cacheable=True),
-                name='jsi18n')
-        )
-
-        # Add in each model's views.
-        # COMIC edit: We want comicmodels/comicsite to be the base of all admin, because admin is only for a single project
-        # This means that index show comicmodels/comicsite/change view directly instead of overview of all installed apps.
-        # Also I want for example pages to be displayed at <projectname>/admin/page/<id> and not at
-        # <projectname>/admin/comicmodels/page/<id>.
-
-
-
-        for model, model_admin in six.iteritems(self._registry):
-            urlpatterns += patterns('',
-                url(r'^%s/%s/' % (model._meta.app_label, model._meta.module_name),
-                    include(model_admin.urls))
-                                    )
-
-            # pdb.set_trace()
-
-
-        # add in urls for comicsite. Do this explicitly here instead of through
-        # modeladmin
-        try:
-            comicsite_admin = self._registry[ComicSite]
-        except KeyError as e:
-            raise ProjectAdminException("""The model 'ComicSite' needs to be
-             registered with the admin interface, but it was not found.
-             Please use the projectadmin.site.register() method to do this.""")
-
-        info = comicsite_admin.model._meta.app_label, comicsite_admin.model._meta.module_name
-        urlpatterns += patterns('',
-            url(r'^admins/$',
-                # view=self.admin_view(comicsite_admin.admin_add_view),
-                view=self.admin_view(self.project_admin_management_view),
-                name='%s_%s_admins' % info))
-
-
-        urlpatterns += patterns(
-            url(r'^r/(?P<content_type_id>\d+)/(?P<object_id>.+)/$',
-                wrap(contenttype_views.shortcut)),
-            url(r'^(?P<app_label>[\w-]+)/$',
-                wrap(self.app_index),
-                name='app_list')
-        )
-
-
-        return urlpatterns
-
-    def get_comicsite_admin(self):
-        """ For getting the current instance of the ComicSiteAdmin class.
-        """
-        # Getting a specific class here makes ProjectAdminSite less general,
-        # but the whole ProjecAdminSite is built on the idea that there are
-        # comicsites so I think it is ok here.
-
-
-        try:
-            comicsite_admin = self._registry[ComicSite]
-        except KeyError as e:
-            raise ProjectAdminException("""The model 'ComicSite' needs to be
-             registered with the admin interface, but it was not found.
-             Please use the projectadmin.site.register() method to do this.""")
-
-        return comicsite_admin
-
-
-    def project_admin_management_view(self, request, extra_context=None):
-
-        if extra_context is None:
-            extra_context = {}
-
-        cma = self.get_comicsite_admin()
-        return cma.admin_add_view(request, request.project_pk, extra_context)
-
-
-    def admin_view(self, view, cacheable=False):
-        """
-        Changes to original admin view: this one passes kwargs to the view as 'extra_context'. This way the
-        url argument site_short_name gets passed to all the admin functions so they can do project specific
-        stuff.
-        """
-        def inner(request, *args, **kwargs):
-
-            if not self.has_permission(request):
-                if request.path == reverse('admin:logout',
-                                           current_app=self.name):
-                    index_path = reverse('admin:index', current_app=self.name)
-                    return HttpResponseRedirect(index_path)
-                return self.login(request)
-
-            if "site_short_name" in kwargs.keys():
-                extra_context = {"site_short_name":kwargs["site_short_name"]}
-                del kwargs["site_short_name"]
-
-            # request.GET.update({"projectadmin"] = True
-            # Make sure the value for comicsite is automatically filled in
-            if not 'comicsite' in request.GET.keys():
-                request.GET = request.GET.copy()
-                request.GET.update({'comicsite':request.project_pk})
-            ec = copy.deepcopy(kwargs)
-            ec["projectadmin"] = True
-            return view(request, extra_context=ec, *args, **kwargs)
-        if not cacheable:
-            inner = never_cache(inner)
-        # We add csrf_protect here so this function can be used as a utility
-        # function for any view, without having to repeat 'csrf_protect'.
-        if not getattr(view, 'csrf_exempt', False):
-            inner = csrf_protect(inner)
-
-
-        return update_wrapper(inner, view)
-
-
-
-
-    @never_cache
-    def index(self, request, extra_context=None):
-        """Show the edit page of the current project. This is the main source of information for any project so
-           this should be shown by default, instead of list of all objects"""
-
-        if extra_context is None:
-            extra_context = {}
-
-        # def change_view(self, request, object_id, form_url='', extra_context=None):
-        comicsiteadmin = self._registry[ComicSite]
-        extra_context["projectname"] = request.projectname
-        return comicsiteadmin.change_view(request, str(request.project_pk), "", extra_context)
-
-
-    @never_cache
-    def show_all_objects(self, request, extra_context=None):
-        """
-        Displays the main admin index page, which lists all of the installed
-        apps that have been registered in this site.
-
-        SJOERD: copied this completely from AdminSite in django.contrib.admin.sites. This seemed the only way
-        to get the urls for the apps list right (currently the apps registered to projectadminsite contain links
-        to regular admin. This is because the index method contains "reverse('admin:..." statements, when
-        they should be "reverse('projectadmin". Just copying the whole thing seems a bad solution but I see
-        no other way to overwrite. Why is the reverse not based on app_name property? Done that here.
-        """
-        print("site_short_name was =====++===============" + extra_context["site_short_name"])
-        app_dict = {}
-        user = request.user
-        for model, model_admin in self._registry.items():
-            app_label = model._meta.app_label
-            has_module_perms = user.has_module_perms(app_label)
-
-            if has_module_perms:
-                perms = model_admin.get_model_perms(request)
-
-                # Check whether user has any perm for this module.
-                # If so, add the module to the model_list.
-                if True in perms.values():
-                    info = (app_label, model._meta.module_name)
-                    model_dict = {
-                        'name': capfirst(model._meta.verbose_name_plural),
-                        'perms': perms,
-                    }
-
-                    site_short_name = extra_context['site_short_name']
-                    if perms.get('change', False):
-                        try:
-                            model_dict['admin_url'] = reverse(self.app_name + ':%s_%s_changelist' % info, current_app=self.name, kwargs={'site_short_name':site_short_name})
-                        except NoReverseMatch:
-                            pass
-                    if perms.get('add', False):
-                        try:
-                            model_dict['add_url'] = reverse(self.app_name + ':%s_%s_add' % info, current_app=self.name, kwargs={'site_short_name':site_short_name})
-                        except NoReverseMatch:
-                            pass
-                    if app_label in app_dict:
-                        app_dict[app_label]['models'].append(model_dict)
-                    else:
-                        app_dict[app_label] = {
-                            'name': app_label.title(),
-                            'app_url': reverse(self.app_name + ':app_list', kwargs={'app_label': app_label, 'site_short_name':site_short_name}, current_app=self.name),
-                            'has_module_perms': has_module_perms,
-                            'models': [model_dict],
-                        }
-
-        # Sort the apps alphabetically.
-        app_list = app_dict.values()
-        app_list.sort(key=lambda x: x['name'])
-
-        # Sort the models alphabetically within each app.
-        for app in app_list:
-            app['models'].sort(key=lambda x: x['name'])
-
-        context = {
-            'title': _('Site administration'),
-            'app_list': app_list,
-        }
-        context.update(extra_context or {})
-        return TemplateResponse(request, [
-            self.index_template or 'admin/index.html',
-        ], context, current_app=self.name)
 
 
 class ProjectAdminSite2(AdminSite):
