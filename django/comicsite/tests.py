@@ -12,14 +12,15 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.management import call_command
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
+from six import StringIO
 
 from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
@@ -865,8 +866,7 @@ class UploadTest(ComicframeworkTestCase):
         request = factory.get(url)
         request.user = user
         
-        import StringIO
-        fakefile = File(StringIO.StringIO("some uploaded content for" + testfilename))
+        fakefile = File(StringIO("some uploaded content for" + testfilename))
         
         fakecontent = "some uploaded content for" + testfilename
         request.FILES['file'] = SimpleUploadedFile(name=testfilename,
@@ -915,8 +915,7 @@ class UploadTest(ComicframeworkTestCase):
          
         request.user = user
         
-        import StringIO
-        fakefile = File(StringIO.StringIO("some uploaded content for" + testfilename))
+        fakefile = File(StringIO("some uploaded content for" + testfilename))
         
         fakecontent = "some uploaded content for" + testfilename
         request.FILES['upload'] = SimpleUploadedFile(name=testfilename,

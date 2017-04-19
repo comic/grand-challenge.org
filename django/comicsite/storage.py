@@ -1,11 +1,10 @@
-import StringIO
 import os
 from io import BytesIO
 
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
-from exceptions import OSError
+from six import StringIO
 
 
 def fake_file(filename,content="mock content"):
@@ -39,7 +38,7 @@ class MockStorage(FileSystemStorage):
 
     def _save(self, name, content):
         
-        mockfile = File(StringIO.StringIO(content)) 
+        mockfile = File(StringIO(content))
         mockfile.name = name
                 
         self.saved_files[name] = mockfile
@@ -76,7 +75,7 @@ class MockStorage(FileSystemStorage):
                if filename == mockfilename:
                    content = mockcontent
                             
-            mockfile = File(StringIO.StringIO(content)) 
+            mockfile = File(StringIO(content))
             mockfile.name = "MOCKED_FILE_"+path
         
         

@@ -1,22 +1,18 @@
-import errno
-import os.path
-import re
-import urlparse
-import urllib
 import itertools
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-from dropbox.session import DropboxSession
-from dropbox.client import DropboxClient
-from dropbox.rest import ErrorResponse
+import os.path
+
 from django.core.files import File
 from django.core.files.storage import Storage
 from django.utils.encoding import filepath_to_uri
+from dropbox.client import DropboxClient
+from dropbox.rest import ErrorResponse
+from dropbox.session import DropboxSession
+from six import StringIO
+from six.moves.urllib_parse import urlparse
 
 from .settings import (CONSUMER_KEY, CONSUMER_SECRET,
                        ACCESS_TYPE, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
 
 class DropboxStorage(Storage):
     """

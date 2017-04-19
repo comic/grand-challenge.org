@@ -1,4 +1,5 @@
 from django.db.models.signals import post_init
+from six import iteritems
 
 def track_data(*fields):
     # decorator posted by Riya Jose in http://computer3technology.blogspot.nl/2013/02/tracking-changes-to-fields-in-django.html
@@ -16,7 +17,7 @@ def track_data(*fields):
     >>> @classmethod
     >>> def post_save(cls, sender, instance, created, **kwargs):
     >>> if instance.has_changed('name'):
-    >>> print "Hooray!"
+    >>> print("Hooray!")
     """
 
     UNSAVED = dict()
@@ -49,7 +50,7 @@ def track_data(*fields):
             changed = {}
             if self.__data is UNSAVED:
                 return changed
-            for k, v in self.__data.iteritems():
+            for k, v in iteritems(self.__data):
                 if v != getattr(self, k):
                     changed[k] = v
             return changed

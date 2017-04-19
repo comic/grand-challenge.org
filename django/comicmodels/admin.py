@@ -6,7 +6,6 @@ from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import utc
 from dropbox import session
-from exceptions import AttributeError
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 

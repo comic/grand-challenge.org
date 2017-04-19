@@ -35,6 +35,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from guardian.shortcuts import get_objects_for_user, assign_perm
+from six.moves import reload_module
 
 from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
 from comicmodels.models import Page, RegistrationRequest
@@ -51,8 +52,8 @@ def reload_url_conf():
     """    
     import comicsite.urls
     import comic.urls
-    reload(comicsite.urls)
-    reload(comic.urls)
+    reload_module(comicsite.urls)
+    reload_module(comic.urls)
     
     
 def clear_url_resolver_cache():
@@ -250,7 +251,7 @@ class ProjectAdminSite(AdminSite):
         they should be "reverse('projectadmin". Just copying the whole thing seems a bad solution but I see
         no other way to overwrite. Why is the reverse not based on app_name property? Done that here.
         """
-        print "site_short_name was =====++===============" + extra_context["site_short_name"]
+        print("site_short_name was =====++===============" + extra_context["site_short_name"])
         app_dict = {}
         user = request.user
         for model, model_admin in self._registry.items():
