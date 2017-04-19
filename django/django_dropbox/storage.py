@@ -8,7 +8,7 @@ from dropbox.client import DropboxClient
 from dropbox.rest import ErrorResponse
 from dropbox.session import DropboxSession
 from six import StringIO
-from six.moves.urllib_parse import urlparse
+from six.moves.urllib.parse import urljoin
 
 from .settings import (CONSUMER_KEY, CONSUMER_SECRET,
                        ACCESS_TYPE, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
@@ -84,7 +84,7 @@ class DropboxStorage(Storage):
             name = name[len(self.location) + 1:]
         if self.base_url is None:
             raise ValueError("This file is not accessible via a URL.")
-        return urlparse.urljoin(self.base_url, filepath_to_uri(name))
+        return urljoin(self.base_url, filepath_to_uri(name))
 
     def get_available_name(self, name):
         """
