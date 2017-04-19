@@ -112,10 +112,24 @@ class ProjectAdminSite2(AdminSite):
                 # just show this project
                 if type(qs[0]) == ComicSite:
                     qs = qs.filter(short_name=self.project.short_name)
-            
+                    qs = self._filter_projects_by_user_admin(qs, args[0].user)
+
             return qs
+
         return wrap
-    
+
+    def _filter_projects_by_user_admin(self, qs, user):
+        """
+        Filters a QuerySet for items of which the user is an admin
+        :param qs: 
+        :param user: 
+        :return: 
+        """
+        user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
+        admin_projects = [models.Q(short_name=x.name.rstrip('_admins')) for x in user_admin_groups]
+        qs = qs.filter(*admin_projects)
+        return qs
+
     def add_view_wrapper(self, add_view):
         """ In projectadmin you can only create objects for this project. That
         why you should not have a field to choose this, and 'project' or 'comicsite'
@@ -142,7 +156,6 @@ class ProjectAdminSite2(AdminSite):
         """
         def inner(request, *args, **kwargs):
             
-            request.resolver_match
             # Let templates know this is projectadmin, and which project it is
             extra_context = {"projectadmin":True,
                              "project_name":self.project.short_name,
@@ -571,9 +584,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         if request.user.is_superuser:
             return qs
-
-        user_qs = get_objects_for_user(request.user, 'comicmodels.change_comicsite')
-        return user_qs
+        else:
+            return get_objects_for_user(request.user, 'comicmodels.change_comicsite')
 
     def get_urls(self):
         """

@@ -1516,7 +1516,7 @@ class AdminTest(ComicframeworkTestCase):
         if user is None:
             user = self.projectadmin
 
-        url = reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
+        url = self._get_admin_url(viewname, args, project)
         response = self._test_url_can_be_viewed(user,url)
         
         expected_header = "<p>{} Admin</p>".format(project.short_name)
@@ -1526,8 +1526,12 @@ class AdminTest(ComicframeworkTestCase):
                         "project admin url {}. This header should be printed "
                         "on top of the page".format(expected_header,url))
                                                     
-    
-    
+    def _get_admin_url(self, viewname, args, project):
+        return reverse(viewname,args=args,current_app=project.get_project_admin_instance_name())
+
+    def test_admin_view_permissions(self):
+        self._check_project_admin_view(self.testproject, "admin:comicmodels_comicsite_changelist")
+
     def test_project_admin_views(self):
         """ Is javascript being included on admin pages correctly?
         """
