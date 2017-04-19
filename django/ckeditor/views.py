@@ -1,7 +1,5 @@
-import pdb
 import os
 import re
-from urlparse import urlparse, urlunparse
 from datetime import datetime
 
 from django.conf import settings
@@ -9,12 +7,12 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from six.moves.urllib_parse import urlparse, urlunparse
 
 from comic import settings
+from comicmodels.forms import UserUploadForm
+from comicmodels.models import UploadModel
 from comicsite.views import getSite
-from comicmodels.forms import UploadForm,UserUploadForm
-from comicmodels.models import UploadModel,Page
-
 
 try:
     from PIL import Image, ImageOps

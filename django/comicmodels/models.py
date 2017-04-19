@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import re
+import stat
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -101,7 +102,6 @@ def get_projectname(project_admin_instance_name):
     
     """
     if not "admin" in project_admin_instance_name:
-        from exceptions import ValueError
         raise ValueError("expected an admin site instance name ending in 'admin',"
                          " but did not find this in value '{}'".format(project_admin_instance_name))
     return project_admin_instance_name[:-5]
@@ -211,11 +211,11 @@ class ProjectLink(object):
             year = int(self.params["year"])
 
             try:
-                date = timezone.make_aware(datetime.datetime(year,01,01),
+                date = timezone.make_aware(datetime.datetime(year,1,1),
                                            timezone.get_default_timezone())
             except ValueError:
                 logger.warn("could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %(year,self.params["abreviation"]))
-                date = timezone.make_aware(datetime.datetime(2013,01,01),
+                date = timezone.make_aware(datetime.datetime(2013,1,1),
                                            timezone.get_default_timezone())
 
         return date
@@ -877,7 +877,7 @@ class FileSystemDataset(Dataset):
     def ensure_dir(self,dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
-            os.chmod(dir,0775) #refs #142
+            os.chmod(dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH) #refs #142
 
 
 class DropboxFolder(ComicSiteModel):

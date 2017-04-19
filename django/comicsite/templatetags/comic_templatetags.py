@@ -1,12 +1,5 @@
-"""
-Custom tags to use in templates or code to render file lists etc.
+from __future__ import print_function
 
- History
- 03/09/2012    -     Sjoerd    -    Created this file
-
-"""
-
-import StringIO
 import csv
 import datetime
 import logging
@@ -26,9 +19,9 @@ from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
 from django.template import defaulttags
 from dropbox.rest import ErrorResponse
-from exceptions import Exception
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from six import StringIO, iteritems
 
 import comicsite.views
 from comicmodels.models import ComicSite
@@ -305,7 +298,7 @@ class TagListNode(template.Node):
 
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
-        for key,val in register.usagestrings.iteritems():
+        for key,val in iteritems(register.usagestrings):
             if not val == "":
                 html_out = html_out + "<tr class=\"%s\"><td>%s</td><td>%s</td></tr>\
                         " %(rowclass, key, sanitize_django_items(val))
@@ -1732,7 +1725,7 @@ def canvas_to_svg(canvas):
     pasted into any html page and will be rendered as graph by any modern browser.
 
     """
-    imgdata = StringIO.StringIO()
+    imgdata = StringIO()
     imgdata.seek(0, os.SEEK_END)
 
     canvas.print_svg(imgdata, format='svg')
@@ -2028,8 +2021,8 @@ def parse_php_arrays(filename):
         phpvars = phpcontent.split("$")
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
-            print "found %d php variables in %s. " % (len(phpvars), filename)
-            print "parsing %s into int arrays.. " % filename
+            print("found %d php variables in %s. " % (len(phpvars), filename))
+            print("parsing %s into int arrays.. " % filename)
 
         # check wheteher this looks like a php var
         phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",re.DOTALL)
@@ -2281,7 +2274,7 @@ class AllProjectLinksNode(template.Node):
                   (138,148,175),
                   (208,153,131),                  
                   (200,210,230),
-                  (003,100,104),
+                  (  3,100,104),
                   (100,160,100)
                  ]
                   
@@ -2290,7 +2283,7 @@ class AllProjectLinksNode(template.Node):
         #idx = random.randint(0,9)
         if idx == -1:            
             idx = idx = random.randint(0,len(colors))                
-        idx = idx % len(colors);                    
+        idx = idx % len(colors)
         css_color = "rgb({},{},{})".format(*colors[idx]) 
         
         return css_color

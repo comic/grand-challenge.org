@@ -25,5 +25,6 @@ Vagrant.configure("2") do |config|
     cd /vagrant/django
     python manage.py migrate
     python manage.py loaddata comic_initial_project user_everyone
+    python manage.py check_permissions
   SHELL
 end

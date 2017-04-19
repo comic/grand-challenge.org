@@ -1,28 +1,21 @@
-import pdb
-import posixpath
-import re
 import os
-try:
-    from urllib.parse import unquote
-except ImportError:     # Python 2
-    from urllib import unquote
-from exceptions import Exception
+import posixpath
 
+from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
-from django.http import Http404
-from django.utils.translation import ugettext as _, ugettext_noop
-#from django.views.generic.simple import direct_to_template
+from six.moves.urllib_parse import unquote
 
-from filetransfers.forms import UploadForm
+from comicmodels.models import FileSystemDataset, ComicSite, UploadModel, ComicSiteModel
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
 from filetransfers.api import prepare_upload, serve_file
-from comicmodels.models import FileSystemDataset,ComicSite,UploadModel,ComicSiteModel
-from django.conf import settings
+from filetransfers.forms import UploadForm
+
 
 def upload_handler(request):
     view_url = reverse('filetransfers.views.upload_handler')
