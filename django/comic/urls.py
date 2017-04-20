@@ -39,9 +39,6 @@ urlpatterns = patterns('',
     # Submit a project for addition to the projects overview
     url(r'^submit_existing_project/$','comicsite.views.submit_existing_project'),
     
-    # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
-    url(r'^django_dropbox/',include('django_dropbox.urls')),
-    
     # WYSIWYG editor for HTML
     (r'^ckeditor/', include('ckeditor.urls')),
     
