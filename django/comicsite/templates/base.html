@@ -10,13 +10,11 @@
         <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
             
         <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
-        <script type="text/javascript" src="{% get_static_prefix %}js/jquery/jquery-1.9.1.min.js"></script>        
-        <script type="text/javascript" src="{% get_static_prefix %}js/jqueryui/js/jquery-ui-1.10.1.custom.min.js"></script>
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js" integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
         <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
-        <script type="text/javascript" src="{% get_static_prefix %}js/MeVisLab/Private/Sources/Web/application/js/gui/Application.js"></script>
-        <script type="text/javascript" src="{% get_static_prefix %}js/DIAG/Application/Modules/Macros/COMICWorkstation/web/js/COMICWebWorkstationWrapper.js"></script>
         <!--For displaying jquery UI widgets -->
-        <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />        
+        <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
         <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
         <!--Adds sorting and other features to html tables -->
         <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>    
@@ -24,7 +22,7 @@
         <link href="{% get_static_prefix %}img/grand-challenge.ico" rel="shortcut icon">
         
         <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
-        
+
         <!--Put any site or page specific css here -->
         <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
     

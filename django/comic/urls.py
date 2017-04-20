@@ -32,15 +32,9 @@ urlpatterns = patterns('',
     # level because it is too hard to get this all under each project 
     url(r'^accounts/',include('profiles.urls')),
     url(r'^socialauth/',include('social.apps.django_app.urls', namespace='social')),
-    
-    #temporary url to test MeVisLab visualisation. This should be moved to a seperate MeVis app
-    url(r'^mevislab_visualisation', 'mevislab_visualisation.views.index'),
-    
+
     # Submit a project for addition to the projects overview
     url(r'^submit_existing_project/$','comicsite.views.submit_existing_project'),
-    
-    # some methods for dealing with dropbox folders. Used to make asynchronous calls from admin.
-    url(r'^django_dropbox/',include('django_dropbox.urls')),
     
     # WYSIWYG editor for HTML
     (r'^ckeditor/', include('ckeditor.urls')),
