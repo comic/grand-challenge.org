@@ -39,7 +39,7 @@ class ComicModelAdmin(GuardedModelAdmin):
         """
         try:
             user_qs = self.defaultQuerySet(request)
-        except ObjectDoesNotExist as e:
+        except (ObjectDoesNotExist, TypeError):
             return UploadModel.objects.none()
         return user_qs
     
