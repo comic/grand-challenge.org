@@ -11,20 +11,6 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update && apt-get upgrade -y
-
-    apt-get install -y python python-pip python-openssl libpng-dev libjpeg-dev libjpeg8-dev libfreetype6-dev libxft-dev libmysqlclient-dev libffi-dev mariadb-server
-
-    cp /vagrant/testing/60-mariadb.cnf /etc/mysql/mariadb.conf.d/
-    service mysql restart
-    mysql -u root --password= -e "use mysql; update user set plugin='' where User='root'; flush privileges"
-    mysql -u root --password= -e "CREATE DATABASE comic DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
-
-    pip install --upgrade pip
-    pip install -r /vagrant/requirements.txt
-
-    cd /vagrant/django
-    python manage.py migrate
-    python manage.py loaddata comic_initial_project user_everyone
-    python manage.py check_permissions
+    apt-get install -y docker-compose
   SHELL
 end

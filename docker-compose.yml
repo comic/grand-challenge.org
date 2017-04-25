@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+  db:
+    image: mariadb:10.1
+    environment:
+     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+     - MYSQL_DATABASE=comic
+  web:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/gunicorn/Dockerfile
+    command: >-
+      dockerize -wait tcp://db:3306 -timeout 120s bash -c "
+      python manage.py migrate
+      && python manage.py loaddata comic_initial_project user_everyone
+      && python manage.py check_permissions
+      && python manage.py runserver 0.0.0.0:8000
+      "
+    ports:
+      - "8000:8000"
+    links:
+      - db:mysql
+    depends_on:
+      - db
