@@ -1,14 +1,14 @@
+sudo: required
+services:
+  - docker
 language: python
 python:
   - 2.7
-addons:
-  mariadb: 10.1
-install:
-  - pip install -r requirements.txt
-  - pip install coveralls
-  - cp testing/60-mariadb.cnf $HOME/.my.cnf
-  - mysql -u root --password= -e "CREATE DATABASE comic;"
+before_install:
+  - docker-compose up --build -d
+  - docker-compose run web pip install coveralls
 script:
-  cd django && coverage run --source='.' manage.py test
-after_success:
-  coveralls
+  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s bash -c "coverage run --source='.' manage.py test"
+after_script:
+  - docker-compose run web coveralls
+  - docker-compose down
