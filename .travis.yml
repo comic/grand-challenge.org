@@ -6,10 +6,7 @@ python:
   - 2.7
 install:
   - docker-compose up --build -d
-  - docker-compose run web pip install coveralls
 script:
-  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s bash -c "coverage run --source='.' manage.py test"
-after_success:
-  - docker-compose run web coveralls
+  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s bash -c "pip install coveralls && coverage run --source='.' manage.py test && coveralls"
 after_script:
   - docker-compose down
