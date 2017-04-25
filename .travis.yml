@@ -7,11 +7,9 @@ python:
 install:
   - docker-compose up --build -d
 script: >-
-  docker-compose run -e CODECLIMATE_REPO_TOKEN="$CODECLIMATE_REPO_TOKEN" web dockerize -wait tcp://db:3306 -timeout 120s
+  docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  pip install coverage codeclimate-test-reporter
-  && coverage run --source='.' manage.py test
-  && codeclimate-test-reporter
+  python manage.py test
   "
 after_script:
   - docker-compose down
