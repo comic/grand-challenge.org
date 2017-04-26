@@ -1,11 +1,14 @@
 version: '2'
 
 services:
+
   db:
     image: mariadb:10.1
     environment:
      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
      - MYSQL_DATABASE=comic
+    restart: always
+
   web:
     build:
       context: .
@@ -23,16 +26,28 @@ services:
       - db
     volumes:
       - static:/static/
+    restart: always
+
   http:
     build: ./dockerfiles/http
     ports:
       - "8000:80"
     links:
       - web
-    volumes:
-      - static:/http/static/:ro
     depends_on:
       - web
+      - dropbox
+    volumes:
+      - static:/srv/static/:ro
+      - dbox:/srv/dropbox/:ro
+    restart: always
+
+  dropbox:
+    image: janeczku/dropbox
+    volumes:
+      - dbox:/dbox/Dropbox/
+    restart: always
 
 volumes:
   static:
+  dbox:
