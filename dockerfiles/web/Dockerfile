@@ -26,5 +26,9 @@ WORKDIR /app
 
 ADD requirements.txt /app/
 RUN pip install -r requirements.txt
+RUN pip install gunicorn
 
 ADD ./django /app/
+
+RUN mkdir /static
+RUN python manage.py collectstatic --noinput
