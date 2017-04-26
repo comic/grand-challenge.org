@@ -9,17 +9,30 @@ services:
   web:
     build:
       context: .
-      dockerfile: ./dockerfiles/gunicorn/Dockerfile
+      dockerfile: ./dockerfiles/web/Dockerfile
     command: >-
       dockerize -wait tcp://db:3306 -timeout 120s bash -c "
       python manage.py migrate
       && python manage.py loaddata comic_initial_project user_everyone
       && python manage.py check_permissions
-      && python manage.py runserver 0.0.0.0:8000
+      && gunicorn -w 2 -b 0.0.0.0 comic.wsgi
       "
-    ports:
-      - "8000:8000"
     links:
       - db:mysql
     depends_on:
       - db
+    volumes:
+      - static:/static/
+  http:
+    build: ./dockerfiles/http
+    ports:
+      - "8000:80"
+    links:
+      - web
+    volumes:
+      - static:/http/static/:ro
+    depends_on:
+      - web
+
+volumes:
+  static:
