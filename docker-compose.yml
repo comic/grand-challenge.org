@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
 
@@ -13,9 +13,13 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/web/Dockerfile
+    environment:
+      - GOOGLE_ANALYTICS_TRACKING_ID=UA-XXXXX-Y
     command: >-
       dockerize -wait tcp://db:3306 -timeout 120s bash -c "
-      python manage.py migrate
+      envsubst < /tmp/google-analytics-tracking.js.template > /static/js/google-analytics-tracking.js
+      && rm /tmp/google-analytics-tracking.js.template
+      && python manage.py migrate
       && python manage.py loaddata comic_initial_project user_everyone
       && python manage.py check_permissions
       && gunicorn -w 2 -b 0.0.0.0 comic.wsgi

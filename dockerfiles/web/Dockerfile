@@ -10,7 +10,8 @@ RUN apt-get update && \
     libxft-dev \
     libmysqlclient-dev \
     libffi-dev \
-    wget
+    wget \
+    gettext
 
 # We need to wait for the database to be available, which happens
 # some time after the container is started. Dockerize allows us to do this.
@@ -29,6 +30,8 @@ RUN pip install -r requirements.txt
 RUN pip install gunicorn
 
 ADD ./django /app/
+
+ADD ./dockerfiles/web/google-analytics-tracking.js.template /tmp/google-analytics-tracking.js.template
 
 RUN mkdir /static
 RUN python manage.py collectstatic --noinput
