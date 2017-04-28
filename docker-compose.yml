@@ -42,15 +42,15 @@ services:
       - dropbox
     volumes:
       - static:/srv/static/:ro
-      - dbox:/srv/dropbox/:ro
+    volumes_from:
+      - dropbox
     restart: always
 
   dropbox:
     image: janeczku/dropbox
     volumes:
-      - dbox:/dbox/Dropbox/
+      - /srv/Dropbox/:/dbox/Dropbox/
     restart: always
 
 volumes:
   static:
-  dbox:
