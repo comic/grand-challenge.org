@@ -27,8 +27,11 @@ services:
       - db:mysql
     depends_on:
       - db
+      - dropbox
     volumes:
       - static:/static/
+    volumes_from:
+      - dropbox
     restart: always
 
   http:
