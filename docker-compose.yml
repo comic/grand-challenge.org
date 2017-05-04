@@ -42,11 +42,8 @@ services:
       - web
     depends_on:
       - web
-      - dropbox
     volumes:
       - static:/srv/static/:ro
-    volumes_from:
-      - dropbox
     restart: always
 
   dropbox:
