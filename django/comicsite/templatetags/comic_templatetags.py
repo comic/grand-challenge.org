@@ -2752,11 +2752,12 @@ class ProjectStatisticsNode(template.Node):
             chart_data.append([str(country_count['country']), country_count['dcount']])
         
         snippet_geochart = """
-        <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type='text/javascript'>
-            google.load('visualization', '1', {{'packages': ['geochart']}});
-            google.setOnLoadCallback(drawRegionsMap);
+            google.charts.load('current', {{'packages': ['geochart']}});
+            google.charts.setOnLoadCallback(drawRegionsMap);
             function drawRegionsMap() {{
+                google.visualization.mapsApiKey = '{maps_api_key}'
                 var data = google.visualization.arrayToDataTable(
                 {data}
                 );
@@ -2766,7 +2767,7 @@ class ProjectStatisticsNode(template.Node):
             }};
         </script>
         <div id="chart_div" style="width: 100%; height: 170px;"></div>
-        """.format(data=chart_data)
+        """.format(data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY)
 
         snippet = """
         <h1>Statistics</h1><br>

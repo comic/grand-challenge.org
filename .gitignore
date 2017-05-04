@@ -76,3 +76,6 @@ django/comic/settings/*.conf
 
 # Ignore vagrant folders
 .vagrant
+
+# Docker compose file
+docker-compose
