@@ -25,8 +25,10 @@ services:
       "
     links:
       - db:mysql
+      - memcached
     depends_on:
       - db
+      - memcached
       - dropbox
     volumes:
       - static:/static/
@@ -44,6 +46,10 @@ services:
       - web
     volumes:
       - static:/srv/static/:ro
+    restart: always
+
+  memcached:
+    image: memcached:1.4
     restart: always
 
   dropbox:
