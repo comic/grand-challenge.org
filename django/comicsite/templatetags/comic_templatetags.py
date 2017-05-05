@@ -13,6 +13,7 @@ import traceback
 from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse as reverse_djangocore
@@ -2730,17 +2731,31 @@ class ProjectStatisticsNode(template.Node):
         current project, but shows all registered users in the whole system
         """
         self.allusers = allusers
-        pass
 
     def render(self, context):
+        """
+        Renders a map of users and statistics for the current project. This is slow, so cache the response for 10 mins.
+        :param context: the page context
+        :return: the map html string
+        """
         project_name = context.page.comicsite.short_name
+        all_users = self.allusers
+        key = 'ProjectStatisticsNode.{}.{}'.format(project_name, all_users)
+        content = cache.get(key)
+        if content is None:
+            content = self._get_map(project_name, all_users)
+            cache.set(key, content, 10 * 60)
+        return content
+
+    @classmethod
+    def _get_map(cls, project_name, all_users):
 
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
 
         # Get the users belonging to this project
         perm = Group.objects.get(name='{}_participants'.format(project_name))
-        if self.allusers:
+        if all_users:
             users = User.objects.all().distinct()
         else:
             users = User.objects.filter(groups=perm).distinct()
