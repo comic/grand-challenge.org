@@ -247,6 +247,9 @@ def substitute(string, substitutions):
 
 class comic_URLNode(defaulttags.URLNode):
 
+    def __init__(self, *args, **kwargs):
+        super(comic_URLNode, self).__init__(*args, **kwargs)
+
     def render(self, context):
 
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
@@ -256,21 +259,29 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
 
-        if subdomain_is_projectname:
+        if subdomain_is_projectname and self.view_name.var in ["comicsite.views.site",
+                                                               "comicsite.views.page",
+                                                               "comicsite_signin",
+                                                               "comicsite_signup",
+                                                               "project_serve_file"]:
+
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
 
-            try:
-                project = re.findall('^\/site\/([^\/]+)\/.*$', url)[0]
+            args = [arg.resolve(context) for arg in self.args]
+            project = args[0]
 
-            except IndexError:
+            if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
                 # in that case hardcode the domain to make sure the sub-
                 # domain is gone after following this link
                 return settings.MAIN_HOST_NAME + url
 
-            url.replace("/site/" + project,"")
+            path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
+
+            if url.startswith(path_to_site):
+                return url.replace(path_to_site, "/")
 
         return url
 
