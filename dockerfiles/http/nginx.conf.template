@@ -38,17 +38,17 @@ http {
     # Remove the www subdomain
     listen 80;
     listen 443 ssl;
-    server_name www.gcstaging.dev;
-    return 301 $scheme://gcstaging.dev$request_uri;
+    server_name www.${SERVER_NAME};
+    return 301 $scheme://${SERVER_NAME}$request_uri;
   }
 
   server {
     listen 80;
     listen 443 ssl;
-    server_name ~^(?<project>.*)\.gcstaging\.dev;
-    location ~ ^/(static|site)/ {
+    server_name ~^(?<project>.*).${SERVER_NAME};
+    location ~ ^/(static|site|accounts|socialauth)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
-      proxy_set_header Host gcstaging.dev;
+      proxy_set_header Host ${SERVER_NAME};
     }
     location / {
       proxy_pass $scheme://127.0.0.1/site/$project$request_uri;
@@ -61,7 +61,7 @@ http {
     client_max_body_size 4G;
 
     # set the correct host(s) for your site
-    server_name gcstaging.dev "";
+    server_name ${SERVER_NAME} "";
 
     root /srv/;
 
