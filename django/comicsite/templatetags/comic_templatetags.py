@@ -107,17 +107,18 @@ def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
 
     """
+
+    is_projectname = False
+
     if hasattr(settings,"SUBDOMAIN_IS_PROJECTNAME"):
-        subdomain_is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
-        if subdomain_is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):
+        is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
+        if is_projectname and not hasattr(settings,"MAIN_HOST_NAME"):
             msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
              but 'MAIN_HOST_NAME' was not. These belong together. Please
              add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
             raise ImproperlyConfigured(msg)
-    else:
-        subdomain_is_projectname = False
 
-    return subdomain_is_projectname
+    return is_projectname
 
 
 @register.tag
@@ -246,45 +247,43 @@ def substitute(string, substitutions):
 
 class comic_URLNode(defaulttags.URLNode):
 
+    def __init__(self, *args, **kwargs):
+        super(comic_URLNode, self).__init__(*args, **kwargs)
+
     def render(self, context):
 
-        
         # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
         subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
 
         #get the url the default django method would give.
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
-                
-        
-        if subdomain_is_projectname:
-            if hasattr(context['request'],"subdomain"):
-                subdomain = context['request'].subdomain
-            else:
-                subdomain = ""
 
-            if subdomain == "":
-                #we are on the regular domain, do not change any links
-                return url
-            else:
-                # Interpret subdomain as a comicsite. What would normally be the
-                # path to this comicsite?
+        if subdomain_is_projectname and self.view_name.var in ["comicsite.views.site",
+                                                               "comicsite.views.page",
+                                                               "comicsite_signin",
+                                                               "comicsite_signup",
+                                                               "project_serve_file"]:
 
-                # TODO: importing reverse function from two location is stinky 
-                # refactor comicsite reverse so it can handle pages as well and
-                # reverse the whole thing at once.
-                path_to_site = reverse_djangocore("comicsite.views.site",args=[subdomain]).lower()
+            # Interpret subdomain as a comicsite. What would normally be the
+            # path to this comicsite?
 
-                if url.startswith(path_to_site):
-                    return url.replace(path_to_site,"/")
-                else:
-                    # this url cannot use the domain name shortcut, so it is
-                    # probably meant as a link the main comicframework site.
-                    # in that case hardcode the domain to make sure the sub-
-                    # domain is gone after following this link
-                    return settings.MAIN_HOST_NAME + url
-        else:
-            return url
+            args = [arg.resolve(context) for arg in self.args]
+            project = args[0]
+
+            if project == settings.MAIN_PROJECT_NAME:
+                # this url cannot use the domain name shortcut, so it is
+                # probably meant as a link the main comicframework site.
+                # in that case hardcode the domain to make sure the sub-
+                # domain is gone after following this link
+                return settings.MAIN_HOST_NAME + url
+
+            path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
+
+            if url.startswith(path_to_site):
+                return url.replace(path_to_site, "/")
+
+        return url
 
 
 class TagListNode(template.Node):

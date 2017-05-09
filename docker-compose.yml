@@ -38,6 +38,11 @@ services:
 
   http:
     build: ./dockerfiles/http
+    environment:
+      - SERVER_NAME=localhost
+    command: >-
+      bash -c "envsubst '$$SERVER_NAME' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf 
+      && nginx -g 'daemon off;'" 
     ports:
       - "8000:80"
     links:

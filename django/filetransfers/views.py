@@ -226,7 +226,7 @@ def serve(request, project_name, path, document_root=None,override_permission=""
         fullpath = os.path.join(document_root,project_name, newpath)
     
     if not storage.exists(fullpath):
-        raise Http404(_('"%(path)s" does not exist') % {'path': fullpath})
+        raise Http404('"%(path)s" does not exist' % {'path': fullpath})
     
     
     if can_access(request.user,path,project_name,override_permission):    
@@ -237,15 +237,3 @@ def serve(request, project_name, path, document_root=None,override_permission=""
     else:        
         return HttpResponseForbidden("This file is not available without "
                                     "credentials")        
-        
-    
-        
-       
-        
-    
-    
-
-    
-
-
-
