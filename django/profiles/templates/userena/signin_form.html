@@ -6,17 +6,13 @@
 {% block title %}{% trans "Signin" %}{% endblock %}
 
 {% block content %}
-<!-- <div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: small; margin: 10px; padding-left: 10px;">
-<p>Sign in using google is currently unavailable. More info and workaround can be found <a href="/google_login_workaround/">here</a></p> -->
 
-</div>
 <div class="white-box">
     <div id="signincontainer">
         <ul id="signinlist">
             <li>
-                <a href="{% url 'social:begin' 'google-oauth2' %}?next={{request.GET.next}}">
-                    <p>Sign in using</p>
-                    <img src="{% static "img/openid-logo-google.png" %}" alt="Signin using Google"/>
+                <a class="btn btn-lg" href="{% url 'social:begin' 'google-oauth2' %}?next={{request.GET.next}}">
+                    <i class="fa fa-google fa-pull-left fa-3x"></i> Sign in with<br>Google
                 </a>
             </li>
         </ul>
