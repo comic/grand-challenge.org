@@ -31,7 +31,7 @@ RUN pip install gunicorn
 
 ADD ./django /app/
 
+RUN mkdir /tmp
 ADD ./dockerfiles/web/google-analytics-tracking.js.template /tmp/google-analytics-tracking.js.template
 
 RUN mkdir /static
-RUN mkdir /tmp
