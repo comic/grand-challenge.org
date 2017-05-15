@@ -34,4 +34,3 @@ ADD ./django /app/
 ADD ./dockerfiles/web/google-analytics-tracking.js.template /tmp/google-analytics-tracking.js.template
 
 RUN mkdir /static
-RUN mkdir /tmp
