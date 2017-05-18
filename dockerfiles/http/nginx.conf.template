@@ -18,7 +18,6 @@ http {
   sendfile ${SENDFILE_STATUS};
 
   # SSL
-  ssl on;
   ssl_certificate /etc/ssl/certs/${SERVER_NAME}.crt;
   ssl_certificate_key /etc/ssl/private/${SERVER_NAME}.key;
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
