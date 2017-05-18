@@ -23,9 +23,11 @@ services:
     build: ./dockerfiles/http
     environment:
       - SERVER_NAME=localhost
+      - SENDFILE_STATUS=off
     command: >-
-      bash -c "envsubst '$$SERVER_NAME' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf 
-      && nginx -g 'daemon off;'" 
+      bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+      && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
+      && nginx -g 'daemon off;'"
     restart: always
 
   memcached:

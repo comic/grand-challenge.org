@@ -36,7 +36,7 @@ The easiest way is to use the provided docker compose file. Simply invoke::
 
     docker-compose up --build
 
-You will then be able run comic at http://localhost:8000.
+You will then be able run comic at https://localhost - note that we generate a self signed certificate as part of the build so you will need to accept the unsafe to continue warning.
 
 Editing settings
 ----------------

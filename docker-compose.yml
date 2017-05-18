@@ -31,6 +31,7 @@ services:
       service: http
     ports:
       - "8000:80"
+      - "443:443"
     links:
       - web
     depends_on:
