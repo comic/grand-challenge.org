@@ -75,7 +75,7 @@ def filter_if_not_empty(qs, filter_set):
     if len(filter_set) == 0:
         return qs.none()
     else:
-        return qs.filter(*filter_set)
+        return qs.filter(filter_set)
 
 def filter_projects_by_user_admin(qs, user):
     """
@@ -84,7 +84,11 @@ def filter_projects_by_user_admin(qs, user):
     :param user: The User
     :return: The comicsites this user is a admin for
     """
-    admin_projects = [models.Q(short_name=x) for x in get_comicsite_shortnames_that_user_is_admin_for(user)]
+    admin_projects = models.Q()
+
+    for s in get_comicsite_shortnames_that_user_is_admin_for(user):
+        admin_projects |= models.Q(short_name=s)
+
     return filter_if_not_empty(qs, admin_projects)
 
 def filter_pages_by_user_admin(qs, user):
@@ -94,7 +98,11 @@ def filter_pages_by_user_admin(qs, user):
     :param user: The user
     :return: The pages this user can edit
     """
-    admin_projects = [models.Q(comicsite__short_name=x) for x in get_comicsite_shortnames_that_user_is_admin_for(user)]
+    admin_projects = models.Q()
+
+    for s in get_comicsite_shortnames_that_user_is_admin_for(user):
+        admin_projects |= models.Q(comicsite__short_name=s)
+
     return filter_if_not_empty(qs, admin_projects)
 
 class ProjectAdminSite2(AdminSite):
