@@ -77,11 +77,15 @@ http {
 
     server_name ${SERVER_NAME};
 
-    root /srv/;
-
     keepalive_timeout 5;
+    
+    location /dbox/ {
+      internal;
+      alias   /dbox/;
+    }
 
     location / {
+      root /srv/;
       try_files $uri @proxy_to_app;
     }
 
