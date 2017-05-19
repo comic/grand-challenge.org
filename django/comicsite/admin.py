@@ -62,7 +62,8 @@ def get_comicsite_shortnames_that_user_is_admin_for(user):
     :return: List of short comicsite names
     """
     user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
-    short_names = [x.name.rstrip('_admins') for x in user_admin_groups]
+    # Strip _admins from string
+    short_names = [x.name[:-7] for x in user_admin_groups]
     return short_names
 
 def filter_if_not_empty(qs, filter_set):
