@@ -35,7 +35,7 @@ http {
     listen 80;
     listen [::]:80;
 
-    server_name ${SERVER_NAME};
+    server_name .${SERVER_NAME};
 
     return 301 https://$host$request_uri;
   }
