@@ -57,7 +57,7 @@ http {
 
     server_name ~^(?<project>.*).${SERVER_NAME};
 
-    location ~ ^/(static|site|accounts|socialauth|dbox)/ {
+    location ~ ^/(static|site|accounts|socialauth|dbox|admin)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
       proxy_set_header Host ${SERVER_NAME};
     }
