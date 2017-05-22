@@ -35,7 +35,7 @@ http {
     listen 80;
     listen [::]:80;
 
-    server_name ${SERVER_NAME};
+    server_name .${SERVER_NAME};
 
     return 301 https://$host$request_uri;
   }
@@ -57,7 +57,7 @@ http {
 
     server_name ~^(?<project>.*).${SERVER_NAME};
 
-    location ~ ^/(static|site|accounts|socialauth|dbox)/ {
+    location ~ ^/(static|site|accounts|socialauth|dbox|admin)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
       proxy_set_header Host ${SERVER_NAME};
     }
