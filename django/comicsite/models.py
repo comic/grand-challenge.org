@@ -260,8 +260,8 @@ def send_templated_email(subject, email_template_name, email_context, recipients
     if "project" in c:  
         c.current_app =  c['project'].get_project_admin_instance_name()
         
-    if not sender:
-        sender = settings.DEFAULT_FROM_EMAIL
+    # We can only send mail from the DEFAULT_FROM_EMAIL now
+    sender = settings.DEFAULT_FROM_EMAIL
 
     template = loader.get_template(email_template_name)
 
