@@ -85,7 +85,7 @@ http {
     }
 
     location / {
-      root /srv/;
+      root /srv/public/;
       try_files $uri @proxy_to_app;
     }
 
