@@ -81,8 +81,6 @@ http {
 
     keepalive_timeout 5;
     
-    rewrite ^(.*[^/])$ $1/ last;
-    
     location /dbox/ {
       internal;
       alias   /dbox/;
