@@ -56,6 +56,8 @@ http {
     listen [::]:443 ssl;
 
     server_name ~^(?<project>.*).${SERVER_NAME};
+    
+    rewrite ^(.*[^/])$ $1/ last;
 
     location ~ ^/(static|site|accounts|socialauth|dbox|admin)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
