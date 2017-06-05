@@ -56,8 +56,11 @@ http {
     listen [::]:443 ssl;
 
     server_name ~^(?<project>.*).${SERVER_NAME};
-    
-    rewrite ^(.*[^/])$ $1/ permanent;
+
+    if ($uri !~ ^/.*(.css|.js) ) {
+      # If we're not looking for css or js then add a slash at the end of the url
+      rewrite ^(.*[^/])$ $1/ permanent;
+    }
 
     location ~ ^/(static|site|accounts|socialauth|dbox|admin)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
