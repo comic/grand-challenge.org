@@ -281,8 +281,12 @@ class comic_URLNode(defaulttags.URLNode):
 
             path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
 
+            hostpart = reverse("comicsite.views.site", args=[project]).lower()
+
             if url.startswith(path_to_site):
-                return url.replace(path_to_site, "/")
+                url = url.replace(path_to_site, "/")
+
+            return hostpart + url
 
         return url
 
