@@ -86,10 +86,11 @@ http {
 
     location / {
       root /srv/public/;
-      try_files $uri @proxy_to_app;
+      try_files $uri $uri/ @proxy_to_app;
     }
 
     location @proxy_to_app {
+      rewrite ^(.*[^/])$ $1/ break;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header Host $host;
       proxy_redirect off;
