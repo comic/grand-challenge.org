@@ -2627,7 +2627,7 @@ class RegistrationFormNode(template.Node):
         project = context.page.comicsite
 
         if not context['user'].is_authenticated():
-            return "You need to sign in before you can register for a challenge."
+            return "<strong>You need to sign in before you can register for a challenge.</strong>"
 
         else:
             
