@@ -1257,7 +1257,7 @@ class GetResultInfoNode(template.Node):
         if result_folder == "":
             return """result folder starting with '{id}' could not be found. 
             Searched {folder} up to a depth of {depth}""".format(id=self.args["id"],
-                                                                 folder=results_folder,
+                                                                 folder=result_folder,
                                                                  depth=recursion_depth)
         
         type = self.args["type"]
