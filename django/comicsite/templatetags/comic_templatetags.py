@@ -271,7 +271,8 @@ class comic_URLNode(defaulttags.URLNode):
             args = [arg.resolve(context) for arg in self.args]
             project = args[0]
 
-            if project == settings.MAIN_PROJECT_NAME:
+            if project == settings.MAIN_PROJECT_NAME and self.view_name.var not in ["comicsite_signin",
+                                                                                    "comicsite_signup", ]:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
                 # in that case hardcode the domain to make sure the sub-
