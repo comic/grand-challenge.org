@@ -45,7 +45,7 @@ http {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name www.${SERVER_NAME} mobile.${SERVER_NAME};
+    server_name www.${SERVER_NAME} mobile.${SERVER_NAME} m.${SERVER_NAME};
 
     return 301 $scheme://${SERVER_NAME}$request_uri;
   }
