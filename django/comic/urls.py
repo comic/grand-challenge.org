@@ -16,7 +16,7 @@ urlpatterns = patterns('',
     
     # tell nice bots what to do. TODO: using 'robots.txt' as a template name will
     # give a 404.  WHY?
-    url(r'^robots\.txt$/', TemplateView.as_view(template_name='robots.html')),
+    url(r'^robots\.txt/$', TemplateView.as_view(template_name='robots.html')),
       
     
     # Uncomment the next line to enable the admin:
