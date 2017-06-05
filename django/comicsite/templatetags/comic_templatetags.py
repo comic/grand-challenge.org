@@ -423,7 +423,7 @@ class DatasetNode(template.Node):
 
 
     def make_dataset_error_msg(self, msg):
-        logger.warning("Error rendering DataSet '" + self.dataset_title + "' for project '" + self.project_name + "': " + msg)
+        logger.error("Error rendering DataSet '" + self.dataset_title + "' for project '" + self.project_name + "': " + msg)
         errormsg = "Error rendering DataSet"
         return makeErrorMsgHtml(errormsg)
 
@@ -504,7 +504,7 @@ class ListDirNode(template.Node):
 
 
     def make_dataset_error_msg(self, msg):
-        logger.warning("Error listing folder '" + self.path + "': " + msg)
+        logger.error("Error listing folder '" + self.path + "': " + msg)
         errormsg = "Error listing folder"
         return makeErrorMsgHtml(errormsg)
 
@@ -553,7 +553,7 @@ class DownloadLinkNode(template.Node):
 
 
     def make_dataset_error_msg(self, msg):
-        logger.warning("Error listing folder '" + self.path + "': " + msg)
+        logger.error("Error listing folder '" + self.path + "': " + msg)
         errormsg = "Error listing folder"
         return makeErrorMsgHtml(errormsg)
 
@@ -623,7 +623,7 @@ class ImageBrowserNode(template.Node):
         self.parser = parser
 
     def make_dataset_error_msg(self, msg):
-        logger.warning("Error rendering Visualization '" + str(self.args) + ":" + msg)
+        logger.error("Error rendering Visualization '" + str(self.args) + ":" + msg)
         errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
@@ -780,7 +780,7 @@ class VisualizationNode(template.Node):
         self.args = args
 
     def make_dataset_error_msg(self, msg):
-        logger.warning("Error rendering Visualization '" + str(self.args) + ":" + msg)
+        logger.error("Error rendering Visualization '" + str(self.args) + ":" + msg)
         errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
@@ -875,7 +875,7 @@ class DropboxNode(template.Node):
         self.replacer = replacer
 
     def make_dropbox_error_msg(self, msg):
-        logger.warning("Error rendering dropbox '" + str(self.args) + ": " + msg)
+        logger.error("Error rendering dropbox '" + str(self.args) + ": " + msg)
         errormsg = "Error rendering dropbox"
         return makeErrorMsgHtml(errormsg)
 
@@ -981,7 +981,7 @@ class InsertBrowserNode(template.Node):
         self.parser = parser
 
     def make_error_msg(self, msg):
-        logger.warning("Error including file '" + "," + self.args["file"] + "': " + msg)
+        logger.error("Error including file '" + "," + self.args["file"] + "': " + msg)
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
@@ -1423,7 +1423,7 @@ class InsertFileNode(template.Node):
         self.parser = parser
 
     def make_error_msg(self, msg):
-        logger.warning("Error including file '" + "," + self.args["file"] + "': " + msg)
+        logger.error("Error including file '" + "," + self.args["file"] + "': " + msg)
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
@@ -1582,7 +1582,7 @@ class InsertGraphNode(template.Node):
         self.replacer = replacer
 
     def make_error_msg(self, msg):
-        logger.warning("Error rendering graph from file '" + "," + self.args["file"] + "': " + msg)
+        logger.error("Error rendering graph from file '" + "," + self.args["file"] + "': " + msg)
         errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
@@ -2080,7 +2080,7 @@ class UrlParameterNode(template.Node):
         self.args = args
 
     def make_error_msg(self, msg):
-        logger.warning("Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg)
+        logger.error("Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg)
         errormsg = "Error in url_parameter tag"
         return makeErrorMsgHtml(errormsg)
 
@@ -2090,7 +2090,7 @@ class UrlParameterNode(template.Node):
         if context['request'].GET.has_key(self.args['url_parameter']):
             return context['request'].GET[self.args['url_parameter']]  # FIXME style: is this too much in one line?
         else:
-            logger.warning("Error rendering %s: Parameter '%s' not found in request URL" % ("{%  " + self.args['token'].contents + "%}",
+            logger.error("Error rendering %s: Parameter '%s' not found in request URL" % ("{%  " + self.args['token'].contents + "%}",
                                                                                              self.args['url_parameter']))
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
@@ -2508,7 +2508,7 @@ class AllProjectLinksNode(template.Node):
             projectlinks = reader.get_project_links()
         except IOError as e:
 
-            logger.warning("Could not read any projectlink information from"
+            logger.error("Could not read any projectlink information from"
                            " '%s' returning empty list. trace: %s " %(filepath,traceback.format_exc()))
             projectlinks = []
         
