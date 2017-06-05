@@ -704,15 +704,15 @@ class ViewsTest(ComicframeworkTestCase):
         
         """            
         # main domain robots.txt
-        robots_url = url = "/robots.txt"
+        robots_url = "/robots.txt/"
         
         # robots.txt for each project, which by bots can be seen as seperate
         # domain beacuse we use dubdomains to designate projects
         robots_url_project = reverse("comicsite_robots_txt",
                                      kwargs={"site_short_name":self.testproject.short_name})
         
-        response1 = self._test_url_can_be_viewed(None,robots_url) # None = not logged in
-        response2 = self._test_url_can_be_viewed(None,robots_url_project) # None = not logged in
+        self._test_url_can_be_viewed(None,robots_url) # None = not logged in
+        self._test_url_can_be_viewed(None,robots_url_project) # None = not logged in
         
         
     def test_non_exitant_page_gives_404(self):
