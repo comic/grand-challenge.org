@@ -277,11 +277,16 @@ class comic_URLNode(defaulttags.URLNode):
                 # in that case hardcode the domain to make sure the sub-
                 # domain is gone after following this link
                 return settings.MAIN_HOST_NAME + url
+            else:
 
-            path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
+                path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
 
-            if url.startswith(path_to_site):
-                return url.replace(path_to_site, "/")
+                if url.startswith(path_to_site):
+                    url = url.replace(path_to_site, "/")
+
+                scheme_subsite_and_host = reverse("comicsite.views.site", args=[project]).lower()
+                
+                return scheme_subsite_and_host + url
 
         return url
 
