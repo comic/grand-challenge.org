@@ -68,10 +68,10 @@
                 <div id="topheader_right">
                     {% if user.is_authenticated %}
                         <a class="metaFooterMenuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>
-                        <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next={% firstof request.path "/" %}"> Sign out</a>
+                        <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next=/"> Sign out</a>
                     {% else %}
                         {% block loginbutton %}
-                           <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next={% firstof request.path "/" %}">Sign in / Register</a>
+                           <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next=/">Sign in / Register</a>
                         {% endblock %}
                     {% endif %}
                 </div>

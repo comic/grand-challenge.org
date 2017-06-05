@@ -65,9 +65,9 @@
 	
 	{% else %}
 		{% if user.is_authenticated %}		   
-            <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Signout</a>
+            <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a>
         {% else %}
-        	<a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next={% url 'comicsite.views.page' site.short_name currentpage.title %}">Sign in / Register</a>
+        	<a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a>
         {% endif %}
 	{% endif %}	   
 {% endblock %}
