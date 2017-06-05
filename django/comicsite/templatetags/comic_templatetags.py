@@ -271,8 +271,7 @@ class comic_URLNode(defaulttags.URLNode):
             args = [arg.resolve(context) for arg in self.args]
             project = args[0]
 
-            if project == settings.MAIN_PROJECT_NAME and self.view_name.var not in ["comicsite_signin",
-                                                                                    "comicsite_signup", ]:
+            if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
                 # in that case hardcode the domain to make sure the sub-
@@ -282,13 +281,7 @@ class comic_URLNode(defaulttags.URLNode):
             path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
 
             if url.startswith(path_to_site):
-                url = url.replace(path_to_site, "/")
-
-            if project == settings.MAIN_PROJECT_NAME:
-                return url
-            else:
-                hostpart = reverse("comicsite.views.site", args=[project]).lower()
-                return hostpart + url
+                return url.replace(path_to_site, "/")
 
         return url
 
@@ -2635,8 +2628,7 @@ class RegistrationFormNode(template.Node):
     def render(self, context):
         project = context.page.comicsite        
         pagetitle = context.page.title
-        signup_url = reverse('comicsite_signin',args=[project.short_name]) + "?next=" \
-                     + reverse('comicsite.views._register', kwargs={'site_short_name':project.short_name})
+        signup_url = reverse('comicsite_signin',args=[project.short_name]) + "?next=/"
         
         if project.require_participant_review:
             signuplink = makeHTMLLink(signup_url, "Request to participate in {0}".format(project.short_name))
