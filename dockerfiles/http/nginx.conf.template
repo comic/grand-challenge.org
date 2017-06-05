@@ -41,11 +41,11 @@ http {
   }
 
   server {
-    # Remove the www subdomain
+    # Remove the www and mobile subdomains
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name www.${SERVER_NAME};
+    server_name www.${SERVER_NAME} mobile.${SERVER_NAME};
 
     return 301 $scheme://${SERVER_NAME}$request_uri;
   }
