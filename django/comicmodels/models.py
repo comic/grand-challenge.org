@@ -10,7 +10,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.core.validators import validate_slug, MaxLengthValidator
+from django.core.validators import validate_slug, MaxLengthValidator, MinLengthValidator
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
@@ -289,9 +289,9 @@ class ComicSite(models.Model):
     public_folder = "public_html"
 
     short_name = models.SlugField(max_length = 50, default="",
-                                  help_text = "short name used in url, specific"
-                                  " css, files etc. No spaces allowed",
-                                  validators=[validate_nounderscores,validate_slug])
+                                  help_text = "short name used in url, specific css, files etc. No spaces allowed",
+                                  validators=[validate_nounderscores, validate_slug, MinLengthValidator(1)],
+                                  unique=True)
     skin = models.CharField(max_length = 225, default= public_folder+"/project.css",
                             help_text = "css file to include throughout this"
                             " project. relative to project data folder")
