@@ -528,7 +528,7 @@ class ComicSiteModel(models.Model):
      such as authorization.
     """
     #user = models.ManyToManyField()
-    title = models.SlugField(max_length=64, blank=True)
+    title = models.SlugField(max_length=64, blank=False)
     comicsite = models.ForeignKey(ComicSite, help_text = "To which comicsite does this object belong?")
 
     ALL = 'ALL'
