@@ -115,17 +115,17 @@ def extract_form_errors(html):
     
     """
     errors = re.findall('<ul class="errorlist"(.*)</ul>',
-                         html,
+                         html.decode(),
                          re.IGNORECASE)
     
     return errors
 
-def find_text_between(start,end,haystack):
+def find_text_between(start,end,haystack: bytes):
         """ Return text between the first occurence of string start and 
         string end in haystack. 
          
         """
-        found = re.search(start+'(.*)'+end,haystack,re.IGNORECASE | re.DOTALL)
+        found = re.search(start+'(.*)'+end,haystack.decode(),re.IGNORECASE | re.DOTALL)
                 
         if found:
             return found.group(1).strip()
@@ -133,11 +133,11 @@ def find_text_between(start,end,haystack):
             raise Exception("There is no substring starting with '{}', ending"
                             " with '{}' in content '{}' ".format(start,end,haystack))
 
-def extract_href_from_anchor(anchor):
+def extract_href_from_anchor(anchor: str):
     """ For a html link like '<a href="www.some.nl">click here</a>' 
     return only 'www.some.nl'
     """
-    return find_text_between('href="','">',anchor)
+    return find_text_between('href="','">',anchor.encode())
         
 
 
@@ -299,7 +299,7 @@ class ComicframeworkTestCase(TestCase):
         
         
         errors = re.search('<ul class="errorlist">(.*)</ul>', 
-            response.content, 
+            response.content.decode(),
             re.IGNORECASE)
 
         if errors:        
@@ -870,7 +870,7 @@ class UploadTest(ComicframeworkTestCase):
         
         fakecontent = "some uploaded content for" + testfilename
         request.FILES['file'] = SimpleUploadedFile(name=testfilename,
-                                                   content=fakecontent)
+                                                   content=fakecontent.encode())
         
         request.method = "POST"
         
@@ -919,7 +919,7 @@ class UploadTest(ComicframeworkTestCase):
         
         fakecontent = "some uploaded content for" + testfilename
         request.FILES['upload'] = SimpleUploadedFile(name=testfilename,
-                                                   content=fakecontent)
+                                                   content=fakecontent.encode('UTF-8'))
         
         request.method = "POST"
         
@@ -937,10 +937,10 @@ class UploadTest(ComicframeworkTestCase):
             % (testfilename, user.username, project.short_name))
         
         errors = re.search('<ul class="errorlist">(.*)</ul>',
-                            response.content,
+                            response.content.decode(),
                              re.IGNORECASE)
         
-        self.assertFalse("Uploading failed" in response.content,
+        self.assertFalse("Uploading failed" in response.content.decode(),
                          "Uploading file %s as user %s to project %s in "
                          "ckeditor return javascript containing 'uploading failed'"
                          % (testfilename, user.username, project.short_name))
@@ -969,7 +969,7 @@ class UploadTest(ComicframeworkTestCase):
         response = self.get_uploadpage_response(user,self.testproject)
         
         for filename in filenames:
-            self.assertTrue(filename in response.content,"File '%s' was not "
+            self.assertTrue(filename in response.content.decode(),"File '%s' was not "
                             "visible on download page when viewed by user %s"
                             % (filename,user.username))
     
@@ -983,7 +983,7 @@ class UploadTest(ComicframeworkTestCase):
         response = self.get_uploadpage_response(user,self.testproject)
                 
         for filename in filenames:
-            self.assertTrue(filename not in response.content,"Restricted file"
+            self.assertTrue(filename not in response.content.decode(),"Restricted file"
                             " '%s' was visible on download page when viewed"
                             " by user %s"
                             % (filename,user.username))
@@ -993,7 +993,7 @@ class UploadTest(ComicframeworkTestCase):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
         """
-        return "%s_%s_%s" % (user.username.encode("ascii","ignore"),
+        return "%s_%s_%s" % (user.username,
                              str(randint(10000,99999)),
                              "testfile%s.txt" % postfix)
         
@@ -1111,7 +1111,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         
-        found = re.search('<ul class="dataset">(.*)</ul>', response1.content, re.IGNORECASE)
+        found = re.search('<ul class="dataset">(.*)</ul>', response1.content.decode(), re.IGNORECASE)
         link = ""
         if found:
             filelist_HTML = found.group(0).strip()
@@ -1305,7 +1305,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
                                        })
                  
         # link in this email should lead to admin overview of requests
-        link_in_email = find_text_between('href="','">here',self.get_mail_html_part(request_mail))
+        link_in_email = find_text_between('href="','">here',self.get_mail_html_part(request_mail).encode())
         #TODO: create a function to check all links in the email.
         
         reg_request = RegistrationRequest.objects.filter(project=self.testproject)
@@ -1375,7 +1375,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         "register user without permission", for better fail messages
                 
         """ 
-        self.assertTrue(expected_text in content,
+        self.assertTrue(expected_text in content.decode(),
                         "expected to find '{0}' but found '{1}' instead.\
                          Attemted action: {2}".format(expected_text,                                           
                                                       content,
@@ -1464,7 +1464,7 @@ class FormsTest(ComicframeworkTestCase):
         
         response = self.client.post(url, data)
         # check email
-        self.assertTrue('Thank you. An email has been sent' in response.content, "could not create user. errors in"
+        self.assertTrue('Thank you. An email has been sent' in response.content.decode(), "could not create user. errors in"
                         " html:\n %s \n posted data: %s"                        
                         %(extract_form_errors(response.content),data))
                         
@@ -1521,7 +1521,7 @@ class AdminTest(ComicframeworkTestCase):
         
         expected_header = "<p>{} Admin</p>".format(project.short_name)
         
-        self.assertTrue(expected_header in response.content,
+        self.assertTrue(expected_header in response.content.decode(),
                         "Did not find expected header '{}'in page source for "
                         "project admin url {}. This header should be printed "
                         "on top of the page".format(expected_header,url))

@@ -245,8 +245,11 @@ def permissionMessage(request, site, p):
 def getRenderedPageIfAllowed(page_or_page_title,request,site):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
+
+    if isinstance(page_or_page_title, bytes):
+        page_or_page_title = page_or_page_title.decode()
         
-    if isinstance(page_or_page_title,unicode) or isinstance(page_or_page_title,str):
+    if isinstance(page_or_page_title, str):
         page_title = page_or_page_title
         try:
             p = Page.objects.get(comicsite__short_name=site.short_name, title=page_title)
@@ -308,7 +311,7 @@ def page(request, site_short_name, page_title):
     # ok to use a page object for error messages?
     if hasattr(currentpage,"is_error_page"):
         if currentpage.is_error_page:
-            response.status_code = "403"
+            response.status_code = 403
              
     return response
 
