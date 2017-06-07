@@ -1380,7 +1380,10 @@ class RenderGetProjectPrefixNode(template.Node):
     usagestr = get_usagestr("get_project_prefix")
     
     def render(self, context):
-        projectname = context["site"].short_name        
+        try:
+            projectname = context["site"].short_name
+        except AttributeError:
+            projectname = settings.MAIN_PROJECT_NAME
         url = reverse("comicsite.views.site",args=[projectname])        
         return url
     

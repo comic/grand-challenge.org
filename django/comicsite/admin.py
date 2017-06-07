@@ -111,8 +111,8 @@ class ProjectAdminSite2(AdminSite):
     associated with that project"""
 
 
-    def __init__(self, project, name='admin', app_name='admin'):
-        super(ProjectAdminSite2, self).__init__(name,app_name)
+    def __init__(self, project, name='admin'):
+        super(ProjectAdminSite2, self).__init__(name)
         self.project = project
 
     def get_urls(self):

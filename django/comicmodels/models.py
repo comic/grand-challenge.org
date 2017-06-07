@@ -314,7 +314,7 @@ class ComicSite(models.Model):
 
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
 
-    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
+    created_at = models.DateTimeField(auto_now_add=True)
 
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
@@ -779,8 +779,8 @@ class UploadModel(ComicSiteModel):
 
     file = models.FileField(max_length=255,upload_to=giveFileUploadDestinationPath)
     user = models.ForeignKey(User, help_text = "which user uploaded this?")
-    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
-    modified = models.DateTimeField(auto_now=True,default=datetime.date.today)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     @property
     def filename(self):
@@ -1082,7 +1082,7 @@ class RegistrationRequest(models.Model):
     project = models.ForeignKey(ComicSite,
                                   help_text = "To which project does the user want to register?")
 
-    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
+    created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(blank=True,null=True)
 
     PENDING = 'PEND'
