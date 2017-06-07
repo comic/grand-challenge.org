@@ -54,6 +54,8 @@ http {
     # Rewrite subdomain uris
     listen 443 ssl;
     listen [::]:443 ssl;
+    
+    client_max_body_size 50m;
 
     server_name ~^(?<project>.*).${SERVER_NAME};
 
@@ -78,7 +80,7 @@ http {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
 
-    client_max_body_size 4G;
+    client_max_body_size 50m;
 
     server_name ${SERVER_NAME};
 
