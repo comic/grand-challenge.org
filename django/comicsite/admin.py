@@ -667,7 +667,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'object': obj,
             'app_label': self.model._meta.app_label,
             'opts': self.model._meta,
-            'original': hasattr(obj, '__unicode__') and obj.__unicode__() or\
+            'original': hasattr(obj, '__str__') and obj.__str__() or\
                 str(obj),
             'has_change_permission': self.has_change_permission(request, obj),
             # 'model_perms': get_perms_for_model(obj),

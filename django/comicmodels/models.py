@@ -342,7 +342,7 @@ class ComicSite(models.Model):
 
     objects = ComicSiteManager()
 
-    def __unicode__(self):
+    def __str__(self):
         """ string representation for this object"""
         return self.short_name
 
@@ -556,7 +556,7 @@ class ComicSiteModel(models.Model):
 
 
 
-    def __unicode__(self):
+    def __str__(self):
        """ string representation for this object"""
        return self.title
 
@@ -668,7 +668,7 @@ class ProjectMetaData(models.Model):
     offers_data_download = models.BooleanField(default=False, help_text = "Data can be downloaded from this project's website")
     download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where this data can be downloaded")
 
-    def __unicode__(self):
+    def __str__(self):
         """ describes this object in admin interface etc.
         """
         return "ProjectMetadata '{0}'. Contact: {1}".format(self.title,self.contact_email)
@@ -1102,7 +1102,7 @@ class RegistrationRequest(models.Model):
 
     #question: where to send email to admin? probably not here?
 
-    def __unicode__(self):
+    def __str__(self):
         """ describes this object in admin interface etc.
         """
         return "{1} registration request by user {0}".format(self.user.username,
