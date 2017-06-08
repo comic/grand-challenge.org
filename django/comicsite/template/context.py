@@ -54,5 +54,6 @@ class CurrentAppRequestContext(RequestContext):
             raise ImproperlyConfigured("CurrentAppRequestContext requires " 
             "project middleware to know which project the request is coming from")
         from comicmodels.models import get_project_admin_instance_name
-        self.current_app = get_project_admin_instance_name(request.projectname) 
+        request.current_app = get_project_admin_instance_name(request.projectname)
+
  

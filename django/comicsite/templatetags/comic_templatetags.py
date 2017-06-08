@@ -83,7 +83,7 @@ def get_usagestr(function_name):
     this info in errors or tag overviews
     """
     
-    if register.usagestrings.has_key(function_name):
+    if function_name in register.usagestrings:
         usagestr = register.usagestrings[function_name]
     else:
         usagestr = ""
@@ -708,14 +708,14 @@ class ImageBrowserNode(template.Node):
         javascript."""
         
         project_name = context.page.comicsite.short_name
-        if self.args.has_key("config"):
+        if "config" in self.args:
             downloadlink = reverse('project_serve_file',
                                    kwargs={'project_name':project_name,
                                            'path':self.args["config"]})
             
             return """<script type="text/javascript" src="{}"></script>""".format(downloadlink)
         else:
-            return "<script> options = undefined; </script>";
+            return "<script> options = undefined; </script>"
             
     def get_url_params(self,context):
         url_params = context["request"].GET.items()
@@ -1132,7 +1132,7 @@ class InsertBrowserNode(template.Node):
         # tags are implicitly passed page (and project) by default. It think
         # this needs custom template context processors or custom middleware.
         # As a workaround, just checking for both conditions.
-        if context.has_key("currentpage"):
+        if "currentpage" in context:
             currentpage = context["currentpage"]
         elif hasattr(context,"page"):
             currentpage = context.page
@@ -1380,7 +1380,10 @@ class RenderGetProjectPrefixNode(template.Node):
     usagestr = get_usagestr("get_project_prefix")
     
     def render(self, context):
-        projectname = context["site"].short_name        
+        try:
+            projectname = context["site"].short_name
+        except AttributeError:
+            projectname = settings.MAIN_PROJECT_NAME
         url = reverse("comicsite.views.site",args=[projectname])        
         return url
     
@@ -1524,7 +1527,7 @@ class InsertFileNode(template.Node):
         # tags are implicitly passed page (and project) by default. It think
         # this needs custom template context processors or custom middleware.
         # As a workaround, just checking for both conditions.
-        if context.has_key("currentpage"):
+        if "currentpage" in context:
             currentpage = context["currentpage"]
         elif hasattr(context,"page"):
             currentpage = context.page
@@ -1693,7 +1696,7 @@ def getrenderer(format):
                  "anode09":render_anode09_result,
                  "anode09_table":render_anode09_table, }
 
-    if not renderers.has_key(format):
+    if format not in renderers:
         raise Exception("reader for format '%s' not found. Available formats: %s" % (format, \
                         ",".join(renderers.keys())))
 
@@ -2092,7 +2095,7 @@ class UrlParameterNode(template.Node):
     def render(self, context):
 
         # request= context["request"].GET[]
-        if context['request'].GET.has_key(self.args['url_parameter']):
+        if self.args['url_parameter'] in context['request'].GET:
             return context['request'].GET[self.args['url_parameter']]  # FIXME style: is this too much in one line?
         else:
             logger.error("Error rendering %s: Parameter '%s' not found in request URL" % ("{%  " + self.args['token'].contents + "%}",
@@ -2242,7 +2245,7 @@ class AllProjectLinksNode(template.Node):
 
         for projectlink in projectlinks:
             year = projectlink.date.year
-            if years.has_key(year):
+            if year in years:
                 years[year].append(projectlink)
             else:
                 years[year] = [projectlink]

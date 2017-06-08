@@ -20,7 +20,7 @@ class LibraryPlus(template.Library):
         # Second call has no 'usagestr' defined workaround now is to check for existing key and not
         # overwriting it.
         
-        if not self.usagestrings.has_key(name):        
+        if name not in self.usagestrings:
             self.usagestrings[name] = usagestr            
         return tagfunction
         

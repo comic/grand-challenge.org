@@ -314,7 +314,7 @@ class ComicSite(models.Model):
 
     disclaimer = models.CharField(max_length = 2048, default="", blank=True, null=True, help_text = "Optional text to show on each page in the project. For showing 'under construction' type messages")
 
-    created_at = models.DateTimeField(auto_now_add = True, default=timezone.now) #django.utils.timezone.now
+    created_at = models.DateTimeField(auto_now_add=True)
 
     workshop_date = models.DateField(null=True, blank=True, help_text = "Date on which the workshop belonging to this project will be held")
     event_name = models.CharField(max_length = 1024, default="", blank=True, null=True, help_text="The name of the event the workshop will be held at")
@@ -342,7 +342,7 @@ class ComicSite(models.Model):
 
     objects = ComicSiteManager()
 
-    def __unicode__(self):
+    def __str__(self):
         """ string representation for this object"""
         return self.short_name
 
@@ -556,7 +556,7 @@ class ComicSiteModel(models.Model):
 
 
 
-    def __unicode__(self):
+    def __str__(self):
        """ string representation for this object"""
        return self.title
 
@@ -668,7 +668,7 @@ class ProjectMetaData(models.Model):
     offers_data_download = models.BooleanField(default=False, help_text = "Data can be downloaded from this project's website")
     download_URL = models.URLField(blank=True, null=True, help_text = "Direct URL to a page where this data can be downloaded")
 
-    def __unicode__(self):
+    def __str__(self):
         """ describes this object in admin interface etc.
         """
         return "ProjectMetadata '{0}'. Contact: {1}".format(self.title,self.contact_email)
@@ -779,8 +779,8 @@ class UploadModel(ComicSiteModel):
 
     file = models.FileField(max_length=255,upload_to=giveFileUploadDestinationPath)
     user = models.ForeignKey(User, help_text = "which user uploaded this?")
-    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
-    modified = models.DateTimeField(auto_now=True,default=datetime.date.today)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
 
     @property
     def filename(self):
@@ -1082,7 +1082,7 @@ class RegistrationRequest(models.Model):
     project = models.ForeignKey(ComicSite,
                                   help_text = "To which project does the user want to register?")
 
-    created = models.DateTimeField(auto_now_add=True,default=datetime.date.today)
+    created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(blank=True,null=True)
 
     PENDING = 'PEND'
@@ -1102,7 +1102,7 @@ class RegistrationRequest(models.Model):
 
     #question: where to send email to admin? probably not here?
 
-    def __unicode__(self):
+    def __str__(self):
         """ describes this object in admin interface etc.
         """
         return "{1} registration request by user {0}".format(self.user.username,

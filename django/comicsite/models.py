@@ -100,7 +100,7 @@ def send_existing_project_link_submission_notification_email(request,obj):
         kwargs["admin"] = admin
         logger.info("Sending existing project submission notification email to '{}'".format(admin.email))
         send_templated_email(title, "admin/emails/existing_project_link_submission_notification_email.txt",kwargs,[admin.email]
-                        ,"noreply@"+get_current_site(request).domain, fail_silently=False)
+                        ,"noreply@"+get_current_site(request).domain, fail_silently=False, request=request)
         
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
 
@@ -122,7 +122,7 @@ def send_participation_request_notification_email(request,obj):
     for admin in obj.project.get_admins():
         kwargs["admin"] = admin 
         send_templated_email(title, "admin/emails/participation_request_notification_email.txt",kwargs,[admin.email]
-                        ,"noreply@"+mainportal.domain, fail_silently=False)
+                        ,"noreply@"+mainportal.domain, fail_silently=False, request=request)
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     
     
@@ -146,7 +146,7 @@ def send_participation_request_accepted_email(request,obj):
 
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     send_templated_email(title, "admin/emails/participation_request_accepted_email.txt",kwargs,[obj.user.email]
-                        ,"noreply@"+mainportal.domain, fail_silently=False)
+                        ,"noreply@"+mainportal.domain, fail_silently=False, request=request)
 
 
 def send_participation_request_rejected_email(request,obj):
@@ -167,7 +167,7 @@ def send_participation_request_rejected_email(request,obj):
 
     #send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     send_templated_email(title, "admin/emails/participation_request_rejected_email.txt",kwargs,[obj.user.email]
-                        ,"noreply@"+mainportal.domain, fail_silently=False)
+                        ,"noreply@"+mainportal.domain, fail_silently=False, request=request)
 
 
 # TODO: below: why these confusing signals. These functions are called from comicsite.admin,
@@ -223,7 +223,7 @@ file_uploaded.connect(send_file_uploaded_notification_email,
 
 
 def send_templated_email(subject, email_template_name, email_context, recipients,
-                        sender=None,bcc=None, fail_silently=True, files=None):
+                        sender=None,bcc=None, fail_silently=True, files=None, request=None):
 
     """
     send_templated_mail() is a wrapper around Django's e-mail routines that
@@ -257,16 +257,16 @@ def send_templated_email(subject, email_template_name, email_context, recipients
     # like /site/vessel12/admin instead of /admin
     # if there is no project defined, do not add current app, which will render
     # email with links to main admin
-    if "project" in c:  
-        c.current_app =  c['project'].get_project_admin_instance_name()
-        
+    if "project" in c and request is not None:
+        request.current_app =  c['project'].get_project_admin_instance_name()
+
     # We can only send mail from the DEFAULT_FROM_EMAIL now
     sender = settings.DEFAULT_FROM_EMAIL
 
     template = loader.get_template(email_template_name)
 
-    text_part = strip_tags(template.render(c))
-    html_part = template.render(c)
+    text_part = strip_tags(template.render(context=c, request=request))
+    html_part = template.render(context=c, request=request)
     
     if type(recipients) == str:
         if recipients.find(','):

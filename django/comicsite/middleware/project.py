@@ -26,9 +26,9 @@ class ProjectMiddleware:
         """
         try:
             resolution = resolve(request.path)
-            if resolution.kwargs.has_key("site_short_name"):
+            if "site_short_name" in resolution.kwargs:
                 projectname = resolution.kwargs["site_short_name"]
-            elif resolution.kwargs.has_key("project_name"):
+            elif "project_name" in resolution.kwargs:
                 projectname = resolution.kwargs["project_name"]
             elif request.is_projectadmin:
                 projectname = get_projectname(resolution.namespace)

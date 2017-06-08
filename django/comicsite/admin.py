@@ -27,7 +27,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import six
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from guardian.shortcuts import get_objects_for_user, assign_perm
@@ -111,8 +111,8 @@ class ProjectAdminSite2(AdminSite):
     associated with that project"""
 
 
-    def __init__(self, project, name='admin', app_name='admin'):
-        super(ProjectAdminSite2, self).__init__(name,app_name)
+    def __init__(self, project, name='admin'):
+        super(ProjectAdminSite2, self).__init__(name)
         self.project = project
 
     def get_urls(self):
@@ -371,7 +371,7 @@ class PageAdmin(ComicModelAdmin):
 
         pk_value = obj._get_pk_val()
 
-        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_unicode(verbose_name), 'obj': force_unicode(obj)}
+        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_text(verbose_name), 'obj': force_text(obj)}
         if "_continue" in request.POST:
             self.message_user(request, msg + ' ' + _("You may edit it again below."))
             if "_popup" in request.REQUEST:
@@ -379,14 +379,14 @@ class PageAdmin(ComicModelAdmin):
             else:
                 return HttpResponseRedirect(request.path)
         elif "_saveasnew" in request.POST:
-            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {'name': force_unicode(verbose_name), 'obj': obj}
+            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {'name': force_text(verbose_name), 'obj': obj}
             self.message_user(request, msg)
             return HttpResponseRedirect(reverse('admin:%s_%s_change' %
                                         (opts.app_label, module_name),
                                         args=(pk_value,),
                                         current_app=self.admin_site.name))
         elif "_addanother" in request.POST:
-            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_unicode(verbose_name)))
+            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_text(verbose_name)))
             return HttpResponseRedirect(reverse('admin:%s_%s_add' %
                                         (opts.app_label, module_name),
                                         current_app=self.admin_site.name))
@@ -427,7 +427,7 @@ class PageAdmin(ComicModelAdmin):
             # editing a page, get comicsite from the object you're editing
             site_short_name = obj.comicsite.short_name
 
-        elif request.GET.has_key("comicsite"):
+        elif "comicsite" in request.GET:
             # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages
             site_short_name = ComicSite.objects.get(pk=request.GET["comicsite"]).short_name
         else:
@@ -667,7 +667,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'object': obj,
             'app_label': self.model._meta.app_label,
             'opts': self.model._meta,
-            'original': hasattr(obj, '__unicode__') and obj.__unicode__() or\
+            'original': hasattr(obj, '__str__') and obj.__str__() or\
                 str(obj),
             'has_change_permission': self.has_change_permission(request, obj),
             # 'model_perms': get_perms_for_model(obj),

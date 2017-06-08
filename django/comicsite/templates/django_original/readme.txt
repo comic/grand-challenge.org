@@ -9,4 +9,4 @@ include itself instead of the default base.html in django.
 To overcome this I copy the original django templates here.
 
 == Updates ==
-- Django 1.7.11
+- Django 1.8.18

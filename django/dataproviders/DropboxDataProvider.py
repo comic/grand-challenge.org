@@ -50,7 +50,7 @@ class HtmlLinkReplacer():
         baseURL              -- prepend to each link, cannot be traversed up 
         currentpath          -- path to prepend, this can be traversed up by links using ../
         """
-        soup = BeautifulSoup(html)
+        soup = BeautifulSoup(html, "html.parser")
         soup = self.replace_a(soup,baseURL,currentpath)
         soup = self.replace_img(soup,baseURL,currentpath)
                 
