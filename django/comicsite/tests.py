@@ -348,9 +348,9 @@ class ComicframeworkTestCase(TestCase):
         # check whether signin succeeded. If succeeded the response will be a
         # httpResponseRedirect object, which has a 'Location' key in its
         # items(). Don't know how to better check for type here.
-        list = [x[0] for x in signin_page.items()]
+        lst = [x[0] for x in signin_page.items()]
 
-        self.assertTrue('Location' in list, "could not create user. errors in"
+        self.assertTrue('Location' in lst, "could not create user. errors in"
                                             " html:\n %s \n posted data: %s"
                         % (extract_form_errors(signin_page.content), data))
 

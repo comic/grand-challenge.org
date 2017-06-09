@@ -101,12 +101,12 @@ class MockStorage(FileSystemStorage):
 
         if name.endswith("/"):
             name = name[:-1]
-        dir, file_or_folder = os.path.split(name)
+        directory, file_or_folder = os.path.split(name)
         if "." in file_or_folder:  # input was a file path
             filenames = [x["filename"] for x in self.FAKE_FILES]
-            return self.is_in_fake_test_dir(dir) and (file_or_folder in filenames)
+            return self.is_in_fake_test_dir(directory) and (file_or_folder in filenames)
         else:  # input was a directory path
-            return self.is_in_fake_test_dir(dir)
+            return self.is_in_fake_test_dir(directory)
 
     def listdir(self, path):
         if self.is_in_fake_test_dir(path):
@@ -137,8 +137,8 @@ class MockStorage(FileSystemStorage):
         on disk but returns some values anyway. For testing.
         
         """
-        for dir in self.FAKE_DIRS:
-            if dir in path:  # very rough test. But this is only for testing
+        for directory in self.FAKE_DIRS:
+            if directory in path:  # very rough test. But this is only for testing
                 return True
 
         return False

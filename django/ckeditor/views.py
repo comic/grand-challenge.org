@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.decorators.csrf import csrf_exempt
 from six.moves.urllib_parse import urlparse, urlunparse
 
 from comic import settings
@@ -14,19 +15,8 @@ from comicmodels.forms import UserUploadForm
 from comicmodels.models import UploadModel
 from comicsite.views import getSite
 
-try:
-    from PIL import Image, ImageOps
-except ImportError:
-    import Image
-    import ImageOps
+from PIL import Image, ImageOps
 
-try:
-    from django.views.decorators.csrf import csrf_exempt
-except ImportError:
-    # monkey patch this with a dummy decorator which just returns the
-    # same function (for compatability with pre-1.1 Djangos)
-    def csrf_exempt(fn):
-        return fn
 
 THUMBNAIL_SIZE = (75, 75)
 
@@ -102,7 +92,7 @@ def get_upload_filename(upload_name, user):
     date_path = datetime.now().strftime('%Y/%m/%d')
 
     # Complete upload path (upload_path + date_path).
-    upload_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH, user_path, \
+    upload_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH, user_path,
                                date_path)
 
     # Make sure upload_path exists.
@@ -202,7 +192,7 @@ def get_image_files(user=None):
     """
     # If a user is provided and CKEDITOR_RESTRICT_BY_USER is True,
     # limit images to user specific path, but not for superusers.
-    if user and not user.is_superuser and getattr(settings, \
+    if user and not user.is_superuser and getattr(settings,
                                                   'CKEDITOR_RESTRICT_BY_USER', False):
         user_path = user.username
     else:

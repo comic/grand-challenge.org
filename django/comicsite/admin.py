@@ -1,8 +1,3 @@
-'''
-Created on Jun 18, 2012
-
-@author: Sjoerd
-'''
 import logging
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin

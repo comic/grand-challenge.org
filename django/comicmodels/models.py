@@ -874,10 +874,10 @@ class FileSystemDataset(Dataset):
         """ Return the django template tag that can be used in page text to render this dataset on the page"""
         return "{% dataset " + self.cleantitle + " %}"
 
-    def ensure_dir(self, dir):
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-            os.chmod(dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)  # refs #142
+    def ensure_dir(self, directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.chmod(directory, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)  # refs #142
 
 
 class DropboxFolder(ComicSiteModel):
@@ -1018,15 +1018,6 @@ class DropboxFolder(ComicSiteModel):
         return "Connection succeeded."
 
 
-class ComicSiteFile(File):
-    """
-    A file which belongs to a certain ComicSite
-    """
-
-    def __init__(self, comicsite):
-        self.comicsite = comicsite
-
-
 class RegistrationRequestManager(models.Manager):
     """ adds some convenient queries to standard .objects()"""
 
@@ -1095,17 +1086,17 @@ class RegistrationRequest(models.Model):
                                                              self.project.short_name)
 
     def status_to_string(self):
-        str = "Your participation request for " + self.project.short_name + \
+        status = "Your participation request for " + self.project.short_name + \
               ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:
-            str += ", is awaiting review"
+            status += ", is awaiting review"
         elif self.status == self.ACCEPTED:
-            str += ", was accepted at " + self.format_date(self.changed)
+            status += ", was accepted at " + self.format_date(self.changed)
         elif self.status == self.REJECTED:
-            str += ", was rejected at " + self.format_date(self.changed)
+            status += ", was rejected at " + self.format_date(self.changed)
 
-        return str
+        return status
 
     def format_date(self, date):
         return date.strftime('%b %d, %Y at %H:%M')

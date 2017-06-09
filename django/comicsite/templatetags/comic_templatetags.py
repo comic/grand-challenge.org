@@ -193,6 +193,7 @@ def resolve_path(path, parser, context):
     
     Raises:
         PathResolutionException when path cannot be resolved
+        :param path: 
                 
     """
 
@@ -203,8 +204,8 @@ def resolve_path(path, parser, context):
     # rendering as var in that case.
     path_resolved = ""
     if not in_list(["{", "}", "\\", "/"], path):
-        filter = parser.compile_filter(strip_quotes(path))
-        path_resolved = filter.resolve(context)
+        compiled_filter = parser.compile_filter(strip_quotes(path))
+        path_resolved = compiled_filter.resolve(context)
 
     # if resolved filename is empty, resolution failed, just treat this
     # param as a filepath
@@ -425,6 +426,7 @@ class DatasetNode(template.Node):
     def __init__(self, dataset_title, project_name):
         self.dataset_title = dataset_title
         self.project_name = project_name
+        self.filefolder = None
 
     def make_dataset_error_msg(self, msg):
         logger.error(
@@ -707,12 +709,12 @@ class ImageBrowserNode(template.Node):
 
     def get_url_params(self, context):
         url_params = context["request"].GET.items()
-        dict = {}
+        params = {}
         # convert tuples to dictionary because this is easier to read
         for (key, value) in url_params:
-            dict[key] = value
+            params[key] = value
 
-        return dict
+        return params
 
     def get_filenames(self, context, path):
         """ Get all filenames in path
@@ -1055,8 +1057,8 @@ class InsertBrowserNode(template.Node):
         # rendering as var in that case.
         filename_resolved = ""
         if not in_list(["{", "}", "\\", "/"], token):
-            filter = self.parser.compile_filter(strip_quotes(token))
-            filename_resolved = filter.resolve(context)
+            compiled_filter = self.parser.compile_filter(strip_quotes(token))
+            filename_resolved = compiled_filter.resolve(context)
 
         # if resolved filename is empty, resolution failed, just treat this
         # param as a filepath
@@ -1235,10 +1237,10 @@ class GetResultInfoNode(template.Node):
             return """result folder starting with '{id}' could not be found. 
             Searched {folder}""".format(id=self.args["id"], folder=result_folder)
 
-        type = self.args["type"]
-        if type == "folder_name":
+        render_type = self.args["type"]
+        if render_type == "folder_name":
             return result_folder
-        elif type == "description_file_path":
+        elif render_type == "description_file_path":
             return "description file for {}".format(self.args["id"])
         else:
             return self.make_resultsinfo_error_msg("unknown type '{}'. I don't know that to return.")
@@ -1281,12 +1283,12 @@ def find_dir_starting_with(startswith, path, max_depth, current_depth=0):
     dirs = storage.listdir(path)[0]
 
     while current_depth <= max_depth:
-        for dir in dirs:
-            if dir.startswith(startswith):
-                return dir
+        for directory in dirs:
+            if directory.startswith(startswith):
+                return directory
 
-        for dir in dirs:
-            subdirpath = os.path.join(path, dir)
+        for directory in dirs:
+            subdirpath = os.path.join(path, directory)
             subdir = find_dir_starting_with(startswith, subdirpath, max_depth, current_depth + 1)
             if subdir is not None:
                 return subdir
@@ -1626,7 +1628,7 @@ class InsertGraphNode(template.Node):
         return html_out
 
 
-def getrenderer(format):
+def getrenderer(renderer_format):
     """Holds list of functions which can take in a filepath and return html to show a graph.
     By using this function we can easily list all available renderers and provide some safety:
     only functions listed here can be called from the template tag render_graph.
@@ -1636,8 +1638,8 @@ def getrenderer(format):
                  "anode09": render_anode09_result,
                  "anode09_table": render_anode09_table, }
 
-    if format not in renderers:
-        raise Exception("reader for format '%s' not found. Available formats: %s" % (format, \
+    if renderer_format not in renderers:
+        raise Exception("reader for format '%s' not found. Available formats: %s" % (renderer_format,
                                                                                      ",".join(renderers.keys())))
 
     return renderers[format]
@@ -1837,19 +1839,19 @@ def render_anode09_result(filename):
 
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
 
-    vars = parse_php_arrays(filename)
-    assert vars != {}, "parsed result of '%s' was emtpy. I cannot plot anything" % filename
+    variables = parse_php_arrays(filename)
+    assert variables != {}, "parsed result of '%s' was emtpy. I cannot plot anything" % filename
 
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
 
-    fig.gca().plot(vars["x"], vars["smally"], label="nodules < 5mm", gid="small")
-    fig.gca().plot(vars["x"], vars["largey"], label="nodules > 5mm", gid="large")
-    fig.gca().plot(vars["x"], vars["isolatedy"], label="isolated nodules", gid="isolated")
-    fig.gca().plot(vars["x"], vars["vasculary"], label="vascular nodules", gid="vascular")
-    fig.gca().plot(vars["x"], vars["pleuraly"], label="pleural nodules", gid="pleural")
-    fig.gca().plot(vars["x"], vars["fissurey"], label="peri-fissural nodules", gid="fissure")
-    fig.gca().plot(vars["x"], vars["frocy"], label="all nodules", gid="frocy")
+    fig.gca().plot(variables["x"], variables["smally"], label="nodules < 5mm", gid="small")
+    fig.gca().plot(variables["x"], variables["largey"], label="nodules > 5mm", gid="large")
+    fig.gca().plot(variables["x"], variables["isolatedy"], label="isolated nodules", gid="isolated")
+    fig.gca().plot(variables["x"], variables["vasculary"], label="vascular nodules", gid="vascular")
+    fig.gca().plot(variables["x"], variables["pleuraly"], label="pleural nodules", gid="pleural")
+    fig.gca().plot(variables["x"], variables["fissurey"], label="peri-fissural nodules", gid="fissure")
+    fig.gca().plot(variables["x"], variables["frocy"], label="all nodules", gid="frocy")
 
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
@@ -1900,8 +1902,8 @@ def render_anode09_table(filename):
 
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
 
-    vars = parse_php_arrays(filename)
-    assert vars != {}, "parsed result of '%s' was emtpy. I cannot create table" % filename
+    variables = parse_php_arrays(filename)
+    assert variables != {}, "parsed result of '%s' was emtpy. I cannot create table" % filename
 
     table_id = id_generator()
 
@@ -1915,13 +1917,13 @@ def render_anode09_table(filename):
         </tr></thead>""" % table_id
 
     tableHTML = tableHTML + "<tbody>"
-    tableHTML = tableHTML + array_to_table_row(["small nodules"] + vars["smallscore"])
-    tableHTML = tableHTML + array_to_table_row(["large nodules"] + vars["largescore"])
-    tableHTML = tableHTML + array_to_table_row(["isolated nodules"] + vars["isolatedscore"])
-    tableHTML = tableHTML + array_to_table_row(["vascular nodules"] + vars["vascularscore"])
-    tableHTML = tableHTML + array_to_table_row(["pleural nodules"] + vars["pleuralscore"])
-    tableHTML = tableHTML + array_to_table_row(["peri-fissural nodules"] + vars["fissurescore"])
-    tableHTML = tableHTML + array_to_table_row(["all nodules"] + vars["frocscore"])
+    tableHTML = tableHTML + array_to_table_row(["small nodules"] + variables["smallscore"])
+    tableHTML = tableHTML + array_to_table_row(["large nodules"] + variables["largescore"])
+    tableHTML = tableHTML + array_to_table_row(["isolated nodules"] + variables["isolatedscore"])
+    tableHTML = tableHTML + array_to_table_row(["vascular nodules"] + variables["vascularscore"])
+    tableHTML = tableHTML + array_to_table_row(["pleural nodules"] + variables["pleuralscore"])
+    tableHTML = tableHTML + array_to_table_row(["peri-fissural nodules"] + variables["fissurescore"])
+    tableHTML = tableHTML + array_to_table_row(["all nodules"] + variables["frocscore"])
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
 
@@ -2162,6 +2164,7 @@ class AllProjectLinksNode(template.Node):
         """ Show all projectlinks in one big list, sorted by date, most recent first
         
         @param max_projects: int show only this number   
+        :param projectlinks: 
         """
         projectlinks = sorted(projectlinks, key=lambda x: x.date, reverse=True)
         if max_projects:

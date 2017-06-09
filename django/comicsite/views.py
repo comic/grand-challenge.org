@@ -1,10 +1,10 @@
-'''
+"""
 Created on Jun 18, 2012
 
 Testing views. Each of these views is referenced in urls.py 
 
 @author: Sjoerd
-'''
+"""
 import logging
 import mimetypes
 from itertools import chain

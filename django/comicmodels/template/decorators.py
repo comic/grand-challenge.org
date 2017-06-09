@@ -23,7 +23,7 @@ def track_data(*fields):
     UNSAVED = dict()
 
     def _store(self):
-        "Updates a local copy of attributes values"
+        """Updates a local copy of attributes values"""
         if self.id:
             self.__data = dict((f, getattr(self, f)) for f in fields)
         else:
@@ -34,7 +34,7 @@ def track_data(*fields):
         cls.__data = {}
 
         def has_changed(self, field):
-            "Returns ``True`` if ``field`` has changed since initialization."
+            """Returns ``True`` if ``field`` has changed since initialization."""
             if self.__data is UNSAVED:
                 return False
             return self.__data.get(field) != getattr(self, field)
@@ -42,13 +42,13 @@ def track_data(*fields):
         cls.has_changed = has_changed
 
         def old_value(self, field):
-            "Returns the previous value of ``field``"
+            """Returns the previous value of ``field``"""
             return self.__data.get(field)
 
         cls.old_value = old_value
 
         def whats_changed(self):
-            "Returns a list of changed attributes."
+            """Returns a list of changed attributes."""
             changed = {}
             if self.__data is UNSAVED:
                 return changed

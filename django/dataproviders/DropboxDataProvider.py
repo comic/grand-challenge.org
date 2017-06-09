@@ -9,7 +9,7 @@ from dropbox.session import DropboxSession
 logger = logging.getLogger("django")
 
 
-class DropboxDataProvider():
+class DropboxDataProvider:
     """
     read and write files in a remote dropbox uing the dropbox API 
     """
@@ -27,7 +27,7 @@ class DropboxDataProvider():
         return self.client.get_file(filename).read()
 
 
-class HtmlLinkReplacer():
+class HtmlLinkReplacer:
     """ replaces links in html. Used to keep links working when including dropbox .html files in pages
         Uses BeautifulSoup html parser.
     """
@@ -120,9 +120,10 @@ class HtmlLinkReplacer():
         elif a.has_attr('href'):
             url = a['href']
         else:
-            return url
+            raise AttributeError("Trying to replace a link which has no src and no href"
+                           "attribute. This should never happen.")
 
-            # leave absolute links alone
+        # leave absolute links alone
         if re.match('http://', url) or re.match('https://', url):
             pass
 

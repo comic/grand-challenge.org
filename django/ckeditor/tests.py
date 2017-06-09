@@ -13,21 +13,21 @@ class ViewsTestCase(unittest.TestCase):
         self.orig_MEDIA_ROOT = settings.MEDIA_ROOT
         self.orig_CKEDITOR_UPLOAD_PATH = settings.CKEDITOR_UPLOAD_PATH
         self.orig_MEDIA_URL = settings.MEDIA_URL
-        self.orig_CKEDITOR_RESTRICT_BY_USER = getattr(settings, \
+        self.orig_CKEDITOR_RESTRICT_BY_USER = getattr(settings,
                                                       'CKEDITOR_RESTRICT_BY_USER', False)
 
         # Set some test settings.
         settings.MEDIA_ROOT = '/media/root/'
-        settings.CKEDITOR_UPLOAD_PATH = os.path.join(settings.MEDIA_ROOT, \
+        settings.CKEDITOR_UPLOAD_PATH = os.path.join(settings.MEDIA_ROOT,
                                                      'uploads')
         settings.MEDIA_URL = '/media/'
 
         # Create dummy test upload path.
-        self.test_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH, \
+        self.test_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH,
                                       'arbitrary', 'path', 'and', 'filename.ext')
 
         # Create mock user.
-        self.mock_user = type('User', (object,), dict(username='test_user', \
+        self.mock_user = type('User', (object,), dict(username='test_user',
                                                       is_superuser=False))
 
     def tearDown(self):
@@ -75,7 +75,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_get_image_browse_urls(self):
         settings.MEDIA_ROOT = os.path.join(os.path.dirname(__file__), 'media')
-        settings.CKEDITOR_UPLOAD_PATH = os.path.join(settings.MEDIA_ROOT, \
+        settings.CKEDITOR_UPLOAD_PATH = os.path.join(settings.MEDIA_ROOT,
                                                      'test_uploads')
         # settings.CKEDITOR_RESTRICT_BY_USER = True
 
