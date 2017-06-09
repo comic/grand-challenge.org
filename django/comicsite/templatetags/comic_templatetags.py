@@ -927,17 +927,6 @@ def in_list(needles, haystack):
     return False
 
 
-def inlist(needles, haystack):
-    """ Return true if any of the items in list needles is in haystack
-
-    """
-    for needle in needles:
-        if needle in haystack:
-            return True
-
-    return False
-
-
 @register.tag(name="browser")
 def insert_browser(parser, token):
     """ Render a jquery browser to show all images in the given directory"""
@@ -2608,7 +2597,7 @@ def makeHTMLLink(url, linktext):
 
 def hasImgExtension(filename):
     allowedextensions = [".jpg", ".jpeg", ".gif", ".png", ".bmp"]
-    ext = path.splitext(filename)[1]
+    ext = os.path.splitext(filename)[1]
     if ext in allowedextensions:
         return [True, ""]
     else:
