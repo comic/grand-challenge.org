@@ -216,9 +216,9 @@ def resolve_path(path, parser, context):
 
         # If any {{parameters}} are still in filename they were not replaced.
         # This filename is missing information, show this as error text.
-        if re.search("{{\w+}}", filename):
+        if re.search("{{\w+}}", str(filename)):
 
-            missed_parameters = re.findall("{{\w+}}", filename)
+            missed_parameters = re.findall("{{\w+}}", str(filename))
             found_parameters = context["request"].GET.items()
 
             if not found_parameters:
