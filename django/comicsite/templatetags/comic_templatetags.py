@@ -1259,11 +1259,9 @@ class GetResultInfoNode(template.Node):
         
         result_folder = self.try_find_result_folder(context)
         
-        if result_folder == "":
+        if result_folder is None:
             return """result folder starting with '{id}' could not be found. 
-            Searched {folder} up to a depth of {depth}""".format(id=self.args["id"],
-                                                                 folder=result_folder,
-                                                                 depth=recursion_depth)
+            Searched {folder}""".format(id=self.args["id"], folder=result_folder)
         
         type = self.args["type"]
         if type == "folder_name":
@@ -1271,15 +1269,14 @@ class GetResultInfoNode(template.Node):
         elif type == "description_file_path":
             return "description file for {}".format(self.args["id"])
         else: 
-            return make_resultsinfo_error_msg("unknown type '{}'. I don't know that to return.")
+            return self.make_resultsinfo_error_msg("unknown type '{}'. I don't know that to return.")
         
         
     def try_find_result_folder(self,context):
-        from comic.settings import COMIC_RESULTS_FOLDER_NAME
-        results_folder = COMIC_RESULTS_FOLDER_NAME
+        results_folder = settings.COMIC_RESULTS_FOLDER_NAME
         
         project_name = context.page.comicsite.short_name
-        results_path = project_name + "/" + results_folder
+        results_path = os.path.join(project_name, results_folder)
                 
         recursion_depth = 1
         try:
@@ -1322,15 +1319,14 @@ def find_dir_starting_with(startswith,path,max_depth,current_depth=0):
                 return dir
         
         for dir in dirs:
-            subdirpath = path+"/"+dir
-            print("searching {}, depth {}".format(subdirpath,current_depth))
+            subdirpath = os.path.join(path, dir)
             subdir = find_dir_starting_with(startswith,subdirpath,max_depth,current_depth+1)
-            if subdir != "":
+            if subdir is not None:
                 return subdir
         
-        return ""
+        return None
             
-    return ""
+    return None
 
 
 
