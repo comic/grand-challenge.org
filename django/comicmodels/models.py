@@ -840,14 +840,6 @@ class FileSystemDataset(Dataset):
     folder = models.FilePathField()
     folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on
 
-    def get_all_files(self):
-        """ return array of all files in this folder
-        """
-        dp = FileSystemDataProvider.FileSystemDataProvider(self.folder)
-        filenames = dp.getFileNames()
-        htmlOut = "available files:" + ", ".join(filenames)
-        return htmlOut
-
     def save_default(self, firstcreation):
 
         if firstcreation:
