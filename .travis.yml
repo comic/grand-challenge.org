@@ -6,7 +6,7 @@ services:
 language: python
 
 python:
-  - 2.7
+  - 3.6
 
 env:
   DOCKER_COMPOSE_VERSION: 1.12.0
@@ -25,8 +25,7 @@ install:
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
-  - mkdir coverage
-
+  - mkdir test_coverage_results
 
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
@@ -38,4 +37,4 @@ script: >-
 
 after_script:
   - docker-compose down
-  - cd coverage && ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - cd test_coverage_results && ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

@@ -22,7 +22,7 @@ services:
       - dropbox
     volumes:
       - static:/static/
-      - ./coverage:/coverage/
+      - ./test_coverage_results:/coverage/
     volumes_from:
       - dropbox
 
