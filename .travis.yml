@@ -22,11 +22,17 @@ before_install:
 install:
   - docker-compose up --build -d
 
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  python manage.py test
+  pip install coverage
+  && coverage run manage.py test
   "
 
 after_script:
   - docker-compose down
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
