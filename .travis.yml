@@ -25,7 +25,7 @@ install:
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
-  - mkdir test_coverage_results
+  - mkdir -p test_coverage_results
 
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
