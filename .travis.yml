@@ -38,4 +38,5 @@ script: >-
 
 after_script:
   - docker-compose down
-  - mv test_coverage_results/.coverage . && ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - ls test_coverage_results
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
