@@ -29,7 +29,7 @@ script: >-
   && curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   && chmod +x ./cc-test-reporter
   && coverage run manage.py test
-  && ./cc-test-reporter after-build --exit-code $? -p test_coverage_results
+  && ./cc-test-reporter after-build
   "
 
 after_script:
