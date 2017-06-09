@@ -38,5 +38,5 @@ script: >-
 
 after_script:
   - docker-compose down
-  - ls test_coverage_results
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - ls -la test_coverage_results
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT -p test_coverage_results
