@@ -20,9 +20,10 @@ services:
       - db
       - memcached
       - dropbox
+    environment:
+      CC_TEST_REPORTER_ID: "${CC_TEST_REPORTER_ID}"
     volumes:
       - static:/static/
-      - ./test_coverage_results:/coverage/
     volumes_from:
       - dropbox
 
