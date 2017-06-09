@@ -177,9 +177,8 @@ def renderTags(request, p, recursecount=0):
     try:
         t = Template("{% load comic_templatetags %}" + p.html)
     except TemplateSyntaxError as e:
-        rendererror = e.message
         # when page contents cannot be rendered, just display raw contents and include error message on page
-        errormsg = "<span class=\"pageError\"> Error rendering template: " + rendererror + " </span>"
+        errormsg = "<span class=\"pageError\"> Error rendering template: %s </span>" % e
         pagecontents = p.html + errormsg
         return pagecontents
 

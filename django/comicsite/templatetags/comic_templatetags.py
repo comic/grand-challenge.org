@@ -1602,7 +1602,7 @@ class InsertGraphNode(template.Node):
             render_function = getrenderer(self.args["type"])
             # (table,headers) = read_function(filename)
         except Exception as e:
-            return self.make_error_msg(str("getrenderer:" + e.message))
+            return self.make_error_msg("getrenderer: %s" % e)
 
         RENDER_FRIENDLY_ERRORS = True
         # FRIENDLY = on template tag error, replace template tag with red error
