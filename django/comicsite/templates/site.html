@@ -6,103 +6,106 @@
 
 
 {% block additionalCSS %}
-	{% if site.skin %} 
-		/* custom css for this project */
-		{% insert_file site.skin %}
-	{% endif %} 
+    {% if site.skin %}
+        /* custom css for this project */
+        {% insert_file site.skin %}
+    {% endif %}
 {% endblock %}
 
-{% block pageName %} {{site.short_name}} {% endblock %}
+{% block pageName %} {{ site.short_name }} {% endblock %}
 
 {% block topheader %}
     {% if site.hide_footer %}
-    <!--hidden -->
-    {% else %}        
+        <!--hidden -->
+    {% else %}
         {{ block.super }}
     {% endif %}
 
-{% endblock topheader%}
+{% endblock topheader %}
 
 {% block headerTitle %}
-	{%if site.header_image == "" %} 
-		<div class="noimage">
-			<a href="{%url 'comicsite.views.site' site.short_name %}">{{site.short_name}}</a>
-		</div>  		
-	{% else %}
-		<div class="image">
-			<a href="{%url 'comicsite.views.site' site.short_name %}"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/img></a>
-		</div>	
-	{% endif %}
+    {% if site.header_image == "" %}
+        <div class="noimage">
+            <a href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a>
+        </div>
+    {% else %}
+        <div class="image">
+            <a href="{% url 'comicsite.views.site' site.short_name %}"><img
+                    src="{% url 'project_serve_file' site.short_name site.header_image %}"></a>
+        </div>
+    {% endif %}
 
 {% endblock %}
 
-	
+
 
 {% block topmenu %}
-	{% for page in pages %}
-		{% if not page.hidden %}
-			{% if not forloop.first %}				
-				<li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-			{% endif %}
-			<li>
-				<a class="menuItem {% if page == currentpage %}	selected{%endif %}" href="{% url 'comicsite.views.page' site.short_name page.title %}">				
-					{% if page.display_title == "" %}
-						{{page.title}}
-					{% else %}
-						{{page.display_title}}
-					{% endif %}
-				</a>			
-			</li>
-			
-		{% endif %}
-	{% endfor %}
-	
+    {% for page in pages %}
+        {% if not page.hidden %}
+            {% if not forloop.first %}
+                <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+            {% endif %}
+            <li>
+                <a class="menuItem {% if page == currentpage %}	selected{% endif %}"
+                   href="{% url 'comicsite.views.page' site.short_name page.title %}">
+                    {% if page.display_title == "" %}
+                        {{ page.title }}
+                    {% else %}
+                        {{ page.display_title }}
+                    {% endif %}
+                </a>
+            </li>
+
+        {% endif %}
+    {% endfor %}
+
 {% endblock %}
 
 
 {% block loginbutton %}
-	{% if site.hide_signin %}
-	
-	{% else %}
-		{% if user.is_authenticated %}		   
+    {% if site.hide_signin %}
+
+    {% else %}
+        {% if user.is_authenticated %}
             <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a>
         {% else %}
-        	<a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a>
+            <a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in /
+                Register</a>
         {% endif %}
-	{% endif %}	   
+    {% endif %}
 {% endblock %}
 
 
 
 {% block adminbutton %}
 
-	{% get_obj_perms user for site as "site_perms" %}			
-	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	   {% if site.hide_footer %}
-	       <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-	   {% endif %}
-        <li> <a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
-    
-	{% endif %}
-	
-		
+    {% get_obj_perms user for site as "site_perms" %}
+    {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+        {% if site.hide_footer %}
+            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+        {% endif %}
+        <li><a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
+
+    {% endif %}
+
+
 {% endblock %}
 
 
-	
+
 {% block content %}
-	
-	{% block pagecontent %}
-		<p>redirect to first page here.</p>
-	{% endblock %}	
-	
+
+    {% block pagecontent %}
+        <p>redirect to first page here.</p>
+    {% endblock %}
+
 {% endblock %}
 
 {% block footer %}
-	{% if site.hide_footer %}
-			<div style="height: 30px; width: 100%; float:left;"></div>	
-		{% else %}
-			{{ block.super }}
-	{% endif %}
+    {% if site.hide_footer %}
+        <div style="height: 30px; width: 100%; float:left;"></div>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
 {% endblock %}
 

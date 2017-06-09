@@ -9,6 +9,7 @@ I want to extend the standard /admin url to always include the current project,
 designated by /site/<projectname>/admin. 
 """
 
+
 @register.filter
-def project_admin_urlname(value, arg):    
+def project_admin_urlname(value, arg):
     return 'projectadmin:%s_%s_%s' % (value.app_label, value.model_name, arg)

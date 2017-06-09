@@ -2,143 +2,151 @@
 {% load static %}
 {% load comic_templatetags %}
 {% load firstof from future %}
-<html>    
-    <head>
-        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-        <meta name="description" content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms." />
-        <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated" />
-        <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
-            
-        <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
-        <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js" integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
-        <!--For displaying jquery UI widgets -->
-        <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css" rel="Stylesheet" />
-        <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-        <!--Adds sorting and other features to html tables -->
-        <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>    
-        
-        <link href="{% get_static_prefix %}img/grand-challenge.ico" rel="shortcut icon">
-        
-        <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
+<html>
+<head>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+    <meta name="description"
+          content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms."/>
+    <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated"/>
+    <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
 
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+    <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+            integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
+            integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
+    <!--For displaying jquery UI widgets -->
+    <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
+          rel="Stylesheet"/>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <!--Adds sorting and other features to html tables -->
+    <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
 
-        <!--Put any site or page specific css here -->
-        <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
-    
-        <script>
+    <link href="{% get_static_prefix %}img/grand-challenge.ico" rel="shortcut icon">
+
+    <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+
+    <!--Put any site or page specific css here -->
+    <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
+
+    <script>
         //url prefix for API functions
-            API_PREFIX = "{% get_project_prefix %}api",
-            
-        $(document).ready(function() {
-            
-            // delete message on click
-            $(document).on('click','.del-msg',function(){                
-                $('.messagelist').attr('style', 'display:none;');
+        API_PREFIX = "{% get_project_prefix %}api",
+
+            $(document).ready(function () {
+
+                // delete message on click
+                $(document).on('click', '.del-msg', function () {
+                    $('.messagelist').attr('style', 'display:none;');
+                });
+                // messages timeout
+                setTimeout(function () {
+                    $('.messagelist').fadeOut('slow');
+                }, 5000); // <-- time in milliseconds, 1000 =  1 sec
+
+                $('table.sortable').dataTable({
+                    "bJQueryUI": true,
+                    "sPaginationType": "full_numbers",
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": false,
+                    "bInfo": false,
+                    "bAutoWidth": false
+                });
             });
-            // messages timeout  
-            setTimeout(function() {
-                $('.messagelist').fadeOut('slow');
-            }, 5000); // <-- time in milliseconds, 1000 =  1 sec
-                       
-            $('table.sortable').dataTable({
-                            "bJQueryUI": true,
-                            "sPaginationType": "full_numbers",
-                            "bPaginate": false,
-                            "bLengthChange": false,
-                            "bFilter": false,
-                            "bInfo": false,
-                            "bAutoWidth": false
-                       });
-        });
-        </script>
-        
-        <style>
-            {% block additionalCSS %}{% endblock %}
-        </style>        
+    </script>
 
-        <title> {% block pageName %} COMIC main portal {% endblock %} </title>
-    </head>
-    <body>
-        {% block topheader %}
-            <div id="topheader">
-                {% metafooterpages %}
-                <div id="topheader_right">
-                    {% if user.is_authenticated %}
-                        <a class="metaFooterMenuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a>
-                        <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next=/"> Sign out</a>
-                    {% else %}
-                        {% block loginbutton %}
-                           <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next=/">Sign in / Register</a>
-                        {% endblock %}
-                    {% endif %}
-                </div>
-                <div style="clear:both;"></div>
-             </div>
-        {% endblock topheader %}
-        <div id="messagescontainer">
-            {% block messages %}
-                {% if messages %}
-                    <ul class="messagelist">{% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-                        {% if 'safe' in message.tags %}
-                             {{ message | safe }}
-                        {% else %}
-                            {{ message }}
-                        {% endif %}
-                        <div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endblock messages %}
+    <style>
+        {% block additionalCSS %}{% endblock %}
+    </style>
+
+    <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+</head>
+<body>
+{% block topheader %}
+    <div id="topheader">
+        {% metafooterpages %}
+        <div id="topheader_right">
+            {% if user.is_authenticated %}
+                <a class="metaFooterMenuItem"
+                   href="{% url 'userena_profile_detail' user.username %}">{{ user.username }}</a>
+                <a class="metaFooterMenuItem last" href="{% url 'userena_signout' %}?next=/"> Sign out</a>
+            {% else %}
+                {% block loginbutton %}
+                    <a class="metaFooterMenuItem last" href="{% url 'userena_signin' %}?next=/">Sign in / Register</a>
+                {% endblock %}
+            {% endif %}
         </div>
-        
-        <div id="page">
-            <div id="header">
-                <div id="headerTitle">
-                    
-                    {% block headerTitle %} <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
-                </div>
-                <div id="navMenuContainer">
-                    <div id="navMenu">
-                        <ul>
-                            {% block topmenu %} {% endblock %}
-                        </ul>
-                    </div>
-                    <div id="additionalNavigation">
-                        <ul>
-                            
-                            {% block sitemenuloginbutton %} {% endblock %}
-                            {% block adminbutton %} {% endblock %}
-                            
-                        </ul>
-                    </div> 
-                </div>
-            </div> <!-- end header -->
-
-            <div id="container">
-                <div id="mainContent">
-                    {% block content %} content {% endblock %}
-                </div>
-            </div>
-            <div style="clear:both;"></div>
-            <!-- container -->
-            
-        </div>        
-        <!-- page -->
-        {% block footer %}
-                   <div id="metafooter">
-                       
-                                
-                    <div id="copyrightNotice">
-                        Consortium for Open Medical Image Computing &copy; 2012-<script>document.write(new Date().getFullYear())</script> <!2014>
-                    </div>
-    
-                </div>
-        {% endblock %}
         <div style="clear:both;"></div>
-    </body>
+    </div>
+{% endblock topheader %}
+<div id="messagescontainer">
+    {% block messages %}
+        {% if messages %}
+            <ul class="messagelist">{% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                    {% if 'safe' in message.tags %}
+                        {{ message | safe }}
+                    {% else %}
+                        {{ message }}
+                    {% endif %}
+                    <div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endblock messages %}
+</div>
+
+<div id="page">
+    <div id="header">
+        <div id="headerTitle">
+
+            {% block headerTitle %}
+                <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
+        </div>
+        <div id="navMenuContainer">
+            <div id="navMenu">
+                <ul>
+                    {% block topmenu %} {% endblock %}
+                </ul>
+            </div>
+            <div id="additionalNavigation">
+                <ul>
+
+                    {% block sitemenuloginbutton %} {% endblock %}
+                    {% block adminbutton %} {% endblock %}
+
+                </ul>
+            </div>
+        </div>
+    </div> <!-- end header -->
+
+    <div id="container">
+        <div id="mainContent">
+            {% block content %} content {% endblock %}
+        </div>
+    </div>
+    <div style="clear:both;"></div>
+    <!-- container -->
+
+</div>
+<!-- page -->
+{% block footer %}
+    <div id="metafooter">
+
+
+        <div id="copyrightNotice">
+            Consortium for Open Medical Image Computing &copy; 2012-
+            <script>document.write(new Date().getFullYear())</script>
+            <!2014>
+        </div>
+
+    </div>
+{% endblock %}
+<div style="clear:both;"></div>
+</body>
 </html>

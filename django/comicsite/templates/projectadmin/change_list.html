@@ -3,10 +3,10 @@
 {% load admin_urls %}
 
 {% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{{project_name}} admin</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
-</div>
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{{ project_name }} admin</a>
+        &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+    </div>
 {% endblock %}
 
 

@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
-from userena.models import UserenaBaseProfile
-from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save
+from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
+from userena.models import UserenaBaseProfile
 
 
 class UserProfile(UserenaBaseProfile):
@@ -20,5 +20,6 @@ class UserProfile(UserenaBaseProfile):
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
+
 
 post_save.connect(create_user_profile, sender=User)

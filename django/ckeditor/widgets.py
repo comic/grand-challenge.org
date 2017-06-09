@@ -1,15 +1,14 @@
-import pdb
 import json
+
 from django import forms
 from django.conf import settings
-from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
-from django.utils.html import conditional_escape
-from django.utils.encoding import force_text
-
 from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse
 from django.forms.utils import flatatt
+from django.template.loader import render_to_string
+from django.utils.encoding import force_text
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
 
 json_encode = json.JSONEncoder().encode
 
@@ -23,12 +22,12 @@ DEFAULT_CONFIG = {
 }
 
 
-
 class CKEditorWidget(forms.Textarea):
     """
     Widget providing CKEditor for Rich Text Editing.
     Supports direct image uploads and embed.
     """
+
     class Media:
         try:
             js = (
@@ -43,13 +42,13 @@ class CKEditorWidget(forms.Textarea):
 
     def __init__(self, config_name='default', *args, **kwargs):
         super(CKEditorWidget, self).__init__(*args, **kwargs)
-        
+
         # Setup config from defaults.
         self.config = DEFAULT_CONFIG.copy()
 
         # Try to get valid config from settings.
-        configs = getattr(settings, 'CKEDITOR_CONFIGS', None)        
-        if configs != None:
+        configs = getattr(settings, 'CKEDITOR_CONFIGS', None)
+        if configs is not None:
             if isinstance(configs, dict):
                 # Make sure the config_name exists.
                 if config_name in configs:
@@ -58,33 +57,38 @@ class CKEditorWidget(forms.Textarea):
                     if not isinstance(config, dict):
                         raise ImproperlyConfigured('CKEDITOR_CONFIGS["%s"] \
                                 setting must be a dictionary type.' % \
-                                config_name)
+                                                   config_name)
                     # Override defaults with settings config.
-                    self.config.update(config)                    
-                    
+                    self.config.update(config)
+
                 else:
                     raise ImproperlyConfigured("No configuration named '%s' \
                             found in your CKEDITOR_CONFIGS setting." % \
-                            config_name)
+                                               config_name)
             else:
                 raise ImproperlyConfigured('CKEDITOR_CONFIGS setting must be a\
                         dictionary type.')
 
-    def render(self, name, value, attrs={}):        
+    def render(self, name, value=None, attrs=None):
         if value is None:
             value = ''
-        
-        final_attrs = self.build_attrs(attrs, name=name)        
+
+        if attrs is None:
+            attrs = {}
+
+        final_attrs = self.build_attrs(attrs, name=name)
         # self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload')
-        
+
         # self.config['comicsite'] is set in comicmodel.PageAdmin, ckeditor 
         # knows where to put uploads per project 
-        self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload_to_project',kwargs={"site_short_name":self.config['comicsite']})
-        self.config['filebrowserBrowseUrl'] = reverse('ckeditor_browse_project',kwargs={"site_short_name":self.config['comicsite']})        
+        self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload_to_project',
+                                                      kwargs={"site_short_name": self.config['comicsite']})
+        self.config['filebrowserBrowseUrl'] = reverse('ckeditor_browse_project',
+                                                      kwargs={"site_short_name": self.config['comicsite']})
         return mark_safe(render_to_string('ckeditor/widget.html', {
             'final_attrs': flatatt(final_attrs),
             'value': conditional_escape(force_text(value)),
             'id': final_attrs['id'],
             'config': json_encode(self.config)
-            })
-        )
+        })
+                         )

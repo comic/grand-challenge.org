@@ -3,63 +3,66 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block pageName %} {{site.short_name}} - Submit project link {% endblock %}
+{% block pageName %} {{ site.short_name }} - Submit project link {% endblock %}
 {% block loginbutton %}
-	{% if site.hide_signin %}
-					
-	{% else %}
-		{% if user.is_authenticated %}
+    {% if site.hide_signin %}
+
+    {% else %}
+        {% if user.is_authenticated %}
             <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a>
         {% else %}
-        	<a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a>
-        {% endif %}		
-			
-	{% endif %}
+            <a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in /
+                Register</a>
+        {% endif %}
+
+    {% endif %}
 {% endblock %}
 
 
-{% block pagecontent %}    
-        <h1>Submit an existing project</h1>
-        <div id = "addexistingproject">
+{% block pagecontent %}
+    <h1>Submit an existing project</h1>
+    <div id="addexistingproject">
         {% block projectlinkpagecontent %}
             <p style="width:800px;">
                 To submit an existing project to be listed on grand-challenge.org, please fill out the form below.
-                A link to the submitted project will then be added to the <a target="_blank" href="/All_Challenges/"> projects overview</a>.
-                <b>Bold</b> items are required. 
-                
+                A link to the submitted project will then be added to the <a target="_blank" href="/All_Challenges/">
+                projects overview</a>.
+                <b>Bold</b> items are required.
+
             </p>
             <br>
             <form action="" method="post">{% csrf_token %}
                 {{ form.as_p }}
-                <input type="submit" value="Submit" />
+                <input type="submit" value="Submit"/>
             </form>
-            
+
             <script>
-                $(function() {
+                $(function () {
                     $("#id_workshop_date").datepicker();
                     $("#id_submission_deadline").datepicker();
                 });
-                 
-                 function addCounter(selector){
-                     function count(selector){                         
-                         var len = $(selector).val().length
-                         $("span#description_counter").html(len)
-                     
-                     }                     
-                     $(selector).after("<span id='description_counter' class='counter'>test</span>");
-                     count(selector);
-                     $(selector).bind('input',function(){
-                                        count(selector);
-                                        })
-                                       
-                 }
-                 
-                 
-                 addCounter('#id_description');
-                 
+
+                function addCounter(selector) {
+                    function count(selector) {
+                        var len = $(selector).val().length
+                        $("span#description_counter").html(len)
+
+                    }
+
+                    $(selector).after("<span id='description_counter' class='counter'>test</span>");
+                    count(selector);
+                    $(selector).bind('input', function () {
+                        count(selector);
+                    })
+
+                }
+
+
+                addCounter('#id_description');
+
             </script>
-            
+
         {% endblock %}
-        </div>
+    </div>
 
 {% endblock %}  

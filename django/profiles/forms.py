@@ -28,7 +28,6 @@ class SignupFormExtra(SignupForm):
                               required=False,
                               help_text=_(u'A website which describes you or your department'))
 
-
     def __init__(self, *args, **kw):
         super(SignupFormExtra, self).__init__(*args, **kw)
 

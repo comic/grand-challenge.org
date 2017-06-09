@@ -20,10 +20,10 @@ def comic_site(request):
     try:
         resolution = resolve(request.path)
     except Http404 as e:
-        #fail silently beacuse any exeception here will cause a 500 server error
+        # fail silently beacuse any exeception here will cause a 500 server error
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
-                        
+
     if "site_short_name" in resolution.kwargs:
         sitename = resolution.kwargs["site_short_name"]
     elif "project_name" in resolution.kwargs:
@@ -37,5 +37,5 @@ def comic_site(request):
         # Don't crash the system here, if a site cannot be found it will crash 
         # in a more appropriate location
         return {}
-    
-    return {"site":site,"pages":pages,"metafooterpages":metafooterpages}
+
+    return {"site": site, "pages": pages, "metafooterpages": metafooterpages}

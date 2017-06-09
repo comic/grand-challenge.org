@@ -5,40 +5,40 @@
 {% block title %}{% trans "Signup" %}{% endblock %}
 
 {% block content %}
-<form action="" method="post">
-  {% csrf_token %}
-  <fieldset>
-    <legend>{% trans "Signup" %}</legend>
-    {{ form.non_field_errors }}
-    {% for field in form %}
-        {{ field.errors }}
-        {% comment %} Displaying checkboxes differently {% endcomment %}
-        {% if field.name == 'tos' %}
-            <p class="checkbox">
-            <label for="{{ field.auto_id }}">
-                {{ field }}
-                {% if field.field.required %}<span class="required">{{ field.label }}</span>
-                {% else %} {{ field.label }} {% endif %}
-            </label>
-            {% if field.help_text %}
-                <span class="help_text">{{field.help_text|safe}}</span>
-            {% endif %}
-            </p>
-        {% else %}
-            <p>
-            <label for="{{ field.auto_id }}">
-                {% if field.field.required %}<span class="required">{{ field.label }}</span>
-                {% else %} {{ field.label }} {% endif %}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-                <span class="help_text">{{field.help_text|safe}}</span>
-            {% endif %}
-            </p>
-        {% endif %}
-    {% endfor %}
-  </fieldset>
-  <input type="submit" value="{% trans "Signup"%}" />
-    {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
-</form>
+    <form action="" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>{% trans "Signup" %}</legend>
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                {{ field.errors }}
+                {% comment %} Displaying checkboxes differently {% endcomment %}
+                {% if field.name == 'tos' %}
+                    <p class="checkbox">
+                        <label for="{{ field.auto_id }}">
+                            {{ field }}
+                            {% if field.field.required %}<span class="required">{{ field.label }}</span>
+                            {% else %} {{ field.label }} {% endif %}
+                        </label>
+                        {% if field.help_text %}
+                            <span class="help_text">{{ field.help_text|safe }}</span>
+                        {% endif %}
+                    </p>
+                {% else %}
+                    <p>
+                        <label for="{{ field.auto_id }}">
+                            {% if field.field.required %}<span class="required">{{ field.label }}</span>
+                            {% else %} {{ field.label }} {% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <span class="help_text">{{ field.help_text|safe }}</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+            {% endfor %}
+        </fieldset>
+        <input type="submit" value="{% trans "Signup" %}"/>
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}"/>{% endif %}
+    </form>
 {% endblock %}

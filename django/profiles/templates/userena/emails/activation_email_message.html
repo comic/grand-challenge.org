@@ -1,21 +1,23 @@
 {% load i18n %}{% autoescape off %}
-<html>
-<body>
-    {% if not without_usernames %}<p>{% blocktrans with user.username as username %}Dear {{ username }},</p>{% endblocktrans %}{% endif %}
+    <html>
+    <body>
+    {% if not without_usernames %}<p>{% blocktrans with user.username as username %}Dear {{ username }},</p>
+    {% endblocktrans %}{% endif %}
     {% blocktrans with site.name as site %}<p>Thank you for signing up at {{ site }}.</p>{% endblocktrans %}
     <p>
-        {% trans "To activate your account you should click on the link below:" %}<br />
-        {{ protocol }}://{{ site.domain }}{% url 'userena_activate' activation_key %}        
+        {% trans "To activate your account you should click on the link below:" %}<br/>
+        {{ protocol }}://{{ site.domain }}{% url 'userena_activate' activation_key %}
     </p>
-    
+
     <p>
-        Your account can be used in any project hosted on {{site.domain}}. To participate in any specific project however, explicit permission by the projects organizers might be required.
+        Your account can be used in any project hosted on {{ site.domain }}. To participate in any specific project
+        however, explicit permission by the projects organizers might be required.
     </p>
     <p>
-        {% trans "Thanks for using our site!" %}<br />
-        {% trans "Sincerely" %},<br />
+        {% trans "Thanks for using our site!" %}<br/>
+        {% trans "Sincerely" %},<br/>
         {{ site.name }}
     </p>
-</body>
-</html>
+    </body>
+    </html>
 {% endautoescape %}

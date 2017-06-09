@@ -103,7 +103,7 @@ def get_upload_filename(upload_name, user):
 
     # Complete upload path (upload_path + date_path).
     upload_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH, user_path, \
-            date_path)
+                               date_path)
 
     # Make sure upload_path exists.
     if not os.path.exists(upload_path):
@@ -142,32 +142,32 @@ def upload(request):
     <script type='text/javascript'>
         window.parent.CKEDITOR.tools.callFunction(%s, '%s');
     </script>""" % (request.GET['CKEditorFuncNum'], url))
-    
+
 
 @csrf_exempt
-def upload_to_project(request,site_short_name):
+def upload_to_project(request, site_short_name):
     """
     Uploads a file and send back its URL to CKEditor.
     Uploads to a public project directory   
     """
-    
+
     # set values excluded from form here to make the model validate
     site = getSite(site_short_name)
-    uploadedfile = UploadModel(comicsite=site,permission_lvl = UploadModel.ALL,
-                                   user=request.user,file=request.FILES["upload"])
+    uploadedfile = UploadModel(comicsite=site, permission_lvl=UploadModel.ALL,
+                               user=request.user, file=request.FILES["upload"])
     form = UserUploadForm(request.POST, request.FILES, instance=uploadedfile)
-    
+
     if form.is_valid():
-        form.save()            
+        form.save()
         # Respond with Javascript sending ckeditor upload url.
         # reverhttp://localhost:8000/site/vessel12/serve/uploads/vesselScreenshot_2.PNG/
-        url = get_media_url_project(site_short_name,uploadedfile.title)        
+        url = get_media_url_project(site_short_name, uploadedfile.title)
         return HttpResponse("""
         <script type='text/javascript'>
         window.parent.CKEDITOR.tools.callFunction(%s, '%s');
         </script>""" % (request.GET['CKEditorFuncNum'], url))
-        
-        
+
+
     else:
         url = "Uploading failed"
         return HttpResponse("""
@@ -175,25 +175,25 @@ def upload_to_project(request,site_short_name):
         window.parent.CKEDITOR.tools.callFunction(%s, '%s');
         </script>""" % (request.GET['CKEditorFuncNum'], url))
 
-    # create_thumbnail(upload_filename)
-    
+        # create_thumbnail(upload_filename)
 
-def get_media_url_project(projectname,filename):
+
+def get_media_url_project(projectname, filename):
     """ By which URL can the file in the given project be loaded?
     
     filename should be relative to projectfolder/public_html/ 
     
     """
-    filepath = os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME,filename)
-    filepath = filepath.replace('\\', '/') # double backslash here somehow causes an 
-                                           # infinite loop /filename/filename/filename..
-     
+    filepath = os.path.join(settings.COMIC_PUBLIC_FOLDER_NAME, filename)
+    filepath = filepath.replace('\\', '/')  # double backslash here somehow causes an
+    # infinite loop /filename/filename/filename..
+
     # upload files to project folder which is open to all by default     
-    url =  reverse("project_serve_file",
-                   kwargs={"project_name":projectname,
-                           "path":filepath})        
+    url = reverse("project_serve_file",
+                  kwargs={"project_name": projectname,
+                          "path": filepath})
     return url
-                                               
+
 
 def get_image_files(user=None):
     """
@@ -203,7 +203,7 @@ def get_image_files(user=None):
     # If a user is provided and CKEDITOR_RESTRICT_BY_USER is True,
     # limit images to user specific path, but not for superusers.
     if user and not user.is_superuser and getattr(settings, \
-            'CKEDITOR_RESTRICT_BY_USER', False):
+                                                  'CKEDITOR_RESTRICT_BY_USER', False):
         user_path = user.username
     else:
         user_path = ''
@@ -217,19 +217,18 @@ def get_image_files(user=None):
                 continue
             yield filename
 
+
 @csrf_exempt
-def browse_project(request,site_short_name):
+def browse_project(request, site_short_name):
     """
     Uploads a file and send back its URL to CKEditor.
     Uploads to a project directory
     """
-    
+
     context = RequestContext(request, {
-        'images': get_image_browse_urls_project(site_short_name,request.user),
+        'images': get_image_browse_urls_project(site_short_name, request.user),
     })
     return render_to_response('browse.html', context)
-
-        
 
 
 def get_image_browse_urls(user=None):
@@ -240,32 +239,33 @@ def get_image_browse_urls(user=None):
     images = []
     for filename in get_image_files(user=user):
         images.append({
-            'thumb': "",#get_media_url(get_thumb_filename(filename)),
+            'thumb': "",  # get_media_url(get_thumb_filename(filename)),
             'src': get_media_url(filename)
         })
 
     return images
 
-def get_image_browse_urls_project(site_short_name,user=None):
+
+def get_image_browse_urls_project(site_short_name, user=None):
     """ Return a url for each file in a project public folder 
         
     """
-    
+
     images = []
-    #get all uploadmodels for this user and site,
+    # get all uploadmodels for this user and site,
     site = getSite(site_short_name)
-        
-    files = os.listdir(site.public_upload_dir())    
-    for filename in files:                        
+
+    files = os.listdir(site.public_upload_dir())
+    for filename in files:
         # bypass for thumbs
         if os.path.splitext(filename)[0].endswith('_thumb'):
             continue
-                    
+
         images.append({
-            'thumb': get_media_url_project(site_short_name,filename),
-            'src': get_media_url_project(site_short_name,filename)
+            'thumb': get_media_url_project(site_short_name, filename),
+            'src': get_media_url_project(site_short_name, filename)
         })
-        
+
     return images
 
 

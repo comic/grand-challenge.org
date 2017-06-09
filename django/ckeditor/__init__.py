@@ -4,14 +4,14 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 if 'ckeditor' in settings.INSTALLED_APPS:
-    
+
     # Sjoerd 02/2013: Disabled this check as we use dynamic upload path based
     #                 on MEDIA_ROOT
-    
+
     # Confirm CKEDITOR_UPLOAD_PATH setting has been specified.
-    #try:
+    # try:
     #    settings.CKEDITOR_UPLOAD_PATH
-    #except AttributeError:
+    # except AttributeError:
     #    
     #    raise ImproperlyConfigured("django-ckeditor requires \
     #            CKEDITOR_UPLOAD_PATH setting. This setting specifies an \
@@ -25,4 +25,4 @@ if 'ckeditor' in settings.INSTALLED_APPS:
         if not os.path.exists(settings.CKEDITOR_UPLOAD_PATH):
             raise ImproperlyConfigured("django-ckeditor CKEDITOR_UPLOAD_PATH \
                     setting error, no such file or directory: '%s'" % \
-                    settings.CKEDITOR_UPLOAD_PATH)
+                                       settings.CKEDITOR_UPLOAD_PATH)
