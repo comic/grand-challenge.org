@@ -1639,6 +1639,7 @@ def getrenderer(renderer_format):
                  "anode09_table": render_anode09_table, }
 
     if renderer_format not in renderers:
+        logger.error("Renderers: %s \nrendere_format: %s"%(renderers, renderer_format))
         raise Exception("reader for format '%s' not found. Available formats: %s" % (renderer_format,
                                                                                      ",".join(renderers.keys())))
 
