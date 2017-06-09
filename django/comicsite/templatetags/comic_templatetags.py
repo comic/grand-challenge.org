@@ -1283,7 +1283,7 @@ class GetResultInfoNode(template.Node):
                 
         recursion_depth = 1
         try:
-            result_folder = find_dir_starting_with(self.args["id"],results_path,recursion_depth)
+            result_folder = find_dir_starting_with(str(self.args["id"]),results_path,recursion_depth)
         except OSError as e:
             return self.make_resultsinfo_error_msg(str(e))
         
