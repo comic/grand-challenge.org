@@ -363,11 +363,11 @@ class PageAdmin(ComicModelAdmin):
         # Handle proxy models automatically created by .only() or .defer().
         # Refs #14529
         verbose_name = opts.verbose_name
-        module_name = opts.module_name
+        module_name = opts.model_name
         if obj._deferred:
             opts_ = opts.proxy_for_model._meta
             verbose_name = opts_.verbose_name
-            module_name = opts_.module_name
+            module_name = opts_.model_name
 
         pk_value = obj._get_pk_val()
 
@@ -405,7 +405,7 @@ class PageAdmin(ComicModelAdmin):
             if self.has_change_permission(request, None):
 
                 post_url = reverse('admin:%s_%s_change' %
-                                   (obj.comicsite._meta.app_label, obj.comicsite._meta.module_name),
+                                   (obj.comicsite._meta.app_label, obj.comicsite._meta.model_name),
                                    args=(obj.comicsite.pk,),
                                    current_app=self.admin_site.name)
             else:

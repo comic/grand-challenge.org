@@ -11,4 +11,4 @@ designated by /site/<projectname>/admin.
 
 @register.filter
 def project_admin_urlname(value, arg):    
-    return 'projectadmin:%s_%s_%s' % (value.app_label, value.module_name, arg)
+    return 'projectadmin:%s_%s_%s' % (value.app_label, value.modal_name, arg)
