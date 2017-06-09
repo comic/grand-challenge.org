@@ -23,6 +23,7 @@ services:
     environment:
       CODECLIMATE_REPO_TOKEN: "${CC_TEST_REPORTER_ID}"
     volumes:
+      - .git:/app/.git:ro
       - static:/static/
     volumes_from:
       - dropbox
