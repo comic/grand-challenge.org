@@ -1,11 +1,11 @@
-from django.db import models
 from django import forms
+from django.db import models
 
 from ckeditor.widgets import CKEditorWidget
 
 
 class RichTextField(models.TextField):
-    def __init__(self, *args, **kwargs):        
+    def __init__(self, *args, **kwargs):
         self.config_name = kwargs.pop("config_name", "default")
         super(RichTextField, self).__init__(*args, **kwargs)
 
@@ -19,18 +19,17 @@ class RichTextField(models.TextField):
 
 
 class RichTextFormField(forms.fields.Field):
-    def __init__(self, config_name='default', *args, **kwargs):        
+    def __init__(self, config_name='default', *args, **kwargs):
         kwargs.update({'widget': CKEditorWidget(config_name=config_name)})
         if 'max_length' in kwargs:
             del kwargs['max_length']
         super(RichTextFormField, self).__init__(*args, **kwargs)
-        
-        
+
     def widget_attrs(self, widget):
         """
         Given a Widget instance (*not* a Widget class), returns a dictionary of
         any HTML attributes that should be added to the Widget, based on this
         Field.
         """
-        
-        return {"jemoeder":True}
+
+        return {"jemoeder": True}

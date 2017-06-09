@@ -3,49 +3,53 @@
 {% load comic_templatetags %}
 {% load firstof from future %}
 
-{% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block pageName %} {{ currentpage.comicsite.short_name }} -
+    {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 
 {% block sitemenuloginbutton %}
     {% if site.hide_signin %}
-    
+
     {% elif site.hide_footer %}
         {% if user.is_authenticated %}
-            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{user.username}}</a></li>
+            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{ user.username }}</a></li>
             <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
-            <li> <a class="menuItem" href="{% url 'userena_signout' %}?next=/">Signout</a> </li>
+            <li><a class="menuItem" href="{% url 'userena_signout' %}?next=/">Signout</a></li>
         {% else %}
-            <li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a></li>
+            <li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in / Register</a>
+            </li>
         {% endif %}
-    
-    
+
+
     {% endif %}
 {% endblock %}
 
-{% block pagecontent %}		
-		
-	{% if site.disclaimer %}
-		<div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
-		
-	   <p>{% autoescape off %}{{site.disclaimer}}{% endautoescape %}</p> 
-	   </div>		
-	{% endif %}
-	<div id=pageContainer>{{currentpage.rawHTML}}</div>
-		
-	<br/>
-	{% get_obj_perms user for site as "site_perms" %}	
-	{% if not currentpage.is_error_page %}		
-		{% block editlink %}	
-			{% if currentpage.pk %}
-				{% if "change_comicsite" in site_perms or request.user.is_superuser %}					   	  
-					   <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this page</a>
-					 
-				{% else %}
-								   
-				{% endif %}
-			{% endif %}
-		{% endblock %}	
-	{% endif %}	
+{% block pagecontent %}
+
+    {% if site.disclaimer %}
+        <div class="disclaimer"
+             style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
+
+            <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
+        </div>
+    {% endif %}
+    <div id=pageContainer>{{ currentpage.rawHTML }}</div>
+
+    <br/>
+    {% get_obj_perms user for site as "site_perms" %}
+    {% if not currentpage.is_error_page %}
+        {% block editlink %}
+            {% if currentpage.pk %}
+                {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                    <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this
+                        page</a>
+
+                {% else %}
+
+                {% endif %}
+            {% endif %}
+        {% endblock %}
+    {% endif %}
 {% endblock %}
 
 	

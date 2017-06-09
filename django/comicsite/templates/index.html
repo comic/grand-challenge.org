@@ -4,17 +4,18 @@
 
 {% block content %}
 
-<p> Welcome to the main portal site of COMIC, the Consortium for Open Medical Image Computing. The following sites are registered at COMIC:</p>
+    <p> Welcome to the main portal site of COMIC, the Consortium for Open Medical Image Computing. The following sites
+        are registered at COMIC:</p>
 
-<ol>
+    <ol>
 
-{% for site in object_list %}
-	<li><a href="{% url 'comicsite.views.site' site.short_name %}">{{site.short_name}}</a></li>
-{% endfor %}
-	
+        {% for site in object_list %}
+            <li><a href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a></li>
+        {% endfor %}
 
-</ol>
-<a href="{% url 'admin:comicmodels_comicsite_add' %}">Create new COMIC site</a>
+
+    </ol>
+    <a href="{% url 'admin:comicmodels_comicsite_add' %}">Create new COMIC site</a>
 
 
 {% endblock %}

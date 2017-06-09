@@ -13,6 +13,7 @@ class Command(NoArgsCommand):
     Creates thumbnail files for the CKEditor file image browser.
     Useful if starting to use django-ckeditor with existing images.
     """
+
     def handle_noargs(self, **options):
         for image in get_image_files():
             if not os.path.isfile(get_thumb_filename(image)):

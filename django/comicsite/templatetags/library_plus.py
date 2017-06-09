@@ -7,20 +7,18 @@ class LibraryPlus(template.Library):
     This makes it possible to register additional info for the usage of a tag, which can be printed or shown to a 
     user later on
     """
-    
+
     def __init__(self):
         self.usagestrings = {}
-        super(LibraryPlus,self).__init__()  
-        
-    
-    def tag(self,name=None,compile_function=None,usagestr=""):                
-        tagfunction = super(LibraryPlus,self).tag(name,compile_function)
-        
+        super(LibraryPlus, self).__init__()
+
+    def tag(self, name=None, compile_function=None, usagestr=""):
+        tagfunction = super(LibraryPlus, self).tag(name, compile_function)
+
         # fixme: Why is this function called twice for each @register.tag call in comic_templatetags.py?
         # Second call has no 'usagestr' defined workaround now is to check for existing key and not
         # overwriting it.
-        
+
         if name not in self.usagestrings:
-            self.usagestrings[name] = usagestr            
+            self.usagestrings[name] = usagestr
         return tagfunction
-        

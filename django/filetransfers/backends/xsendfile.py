@@ -2,7 +2,6 @@ from django.http import HttpResponse
 from django.utils.encoding import smart_str
 
 
-
 def serve_file(request, file, save_as, content_type, **kwargs):
     """Lets the web server serve the file using the X-Sendfile extension"""
     response = HttpResponse(content_type=content_type)

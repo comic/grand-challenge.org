@@ -19,7 +19,7 @@ import sys
 SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 sys.path.append(SITE_ROOT)
-sys.path.append(os.path.join(SITE_ROOT,"comic"))
+sys.path.append(os.path.join(SITE_ROOT, "comic"))
 
 os.environ.setdefault("PYTHON_EGG_CACHE", "/tmp/")
 
@@ -29,6 +29,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
 # file. This includes Django's development server, if the WSGI_APPLICATION
 # setting points here.
 from django.core.wsgi import get_wsgi_application
+
 application = get_wsgi_application()
 
 # Apply WSGI middleware here.

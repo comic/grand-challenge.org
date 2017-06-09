@@ -3,17 +3,18 @@
 {% load admin_urls %}
 {% load firstof from future %}
 
-{% block pageName %} {{currentpage.comicsite.short_name}} - {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block pageName %} {{ currentpage.comicsite.short_name }} -
+    {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block headerTitle %}
-    {%if site.header_image == "" %} 
+    {% if site.header_image == "" %}
         <div class="noimage">
-            <a href="/">{{site.short_name}}</a>
+            <a href="/">{{ site.short_name }}</a>
         </div>
     {% else %}
         <div class="image">
-            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}" /></a>
-        </div>  
+            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/></a>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -22,28 +23,29 @@
 {% endblock %}
 
 
-	
+
 {% block content %}
-	{% block pagecontent %}		
-	
-	{% if site.disclaimer %}
-        <div class="disclaimer" style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
-        
-       <p>{% autoescape off %}{{site.disclaimer}}{% endautoescape %}</p> 
-       </div>       
-    {% endif %}
-	<div>{{currentpage.rawHTML}}</div>
-	
-	<br/>
+    {% block pagecontent %}
 
-	{% get_obj_perms user for site as "site_perms" %}
-	{% if "change_comicsite" in site_perms or request.user.is_superuser %}
-	   	   
-	   <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk%}">Edit this page</a>	          
-	{% endif %}	
+        {% if site.disclaimer %}
+            <div class="disclaimer"
+                 style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
+
+                <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
+            </div>
+        {% endif %}
+        <div>{{ currentpage.rawHTML }}</div>
+
+        <br/>
+
+        {% get_obj_perms user for site as "site_perms" %}
+        {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+
+            <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this page</a>
+        {% endif %}
 
 
-	{% endblock %}
-		
-	
+    {% endblock %}
+
+
 {% endblock %}

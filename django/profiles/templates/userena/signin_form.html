@@ -7,79 +7,86 @@
 
 {% block content %}
 
-<div class="white-box">
-    <div id="signincontainer">
-        <ul id="signinlist">
-            <li>
-                <a class="btn btn-lg" href="{% url 'social:begin' 'google-oauth2' %}?next={{request.GET.next}}">
-                    <i class="fa fa-google fa-pull-left fa-3x"></i> Sign in with<br>Google
-                </a>
-            </li>
-        </ul>
-        <!--<div id="signinformcontainer" style="display: none;" >-->
-        <div id="signinformcontainer" style="display: block;" >
-            <form action="" method="post">
-                {% csrf_token %}
-                {{ form.non_field_errors }}
-                {{ form.identification.errors }}
-                {{ form.password.errors }}
-                <input class="required" id="id_{{ form.identification.name }}" maxlength="75" name="{{ form.identification.name }}" type="text" value="{{ form.identification.label }}" />
-                <input class="required" id="id_fakepassword" name="fakepassword" type="text" value="{{ form.password.label }}"/>
-                <input style="display: none;" class="required" id="id_{{ form.password.name }}" name="{{ form.password.name }}" type="password" />
-                <input type="submit" value="{% trans "Signin" %}" />
-                {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
-                <p class="forgot-password"><a href='{% url 'userena_password_reset' %}' title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a></p>
-            </form>   
+    <div class="white-box">
+        <div id="signincontainer">
+            <ul id="signinlist">
+                <li>
+                    <a class="btn btn-lg" href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.GET.next }}">
+                        <i class="fa fa-google fa-pull-left fa-3x"></i> Sign in with<br>Google
+                    </a>
+                </li>
+            </ul>
+            <!--<div id="signinformcontainer" style="display: none;" >-->
+            <div id="signinformcontainer" style="display: block;">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    {{ form.identification.errors }}
+                    {{ form.password.errors }}
+                    <input class="required" id="id_{{ form.identification.name }}" maxlength="75"
+                           name="{{ form.identification.name }}" type="text" value="{{ form.identification.label }}"/>
+                    <input class="required" id="id_fakepassword" name="fakepassword" type="text"
+                           value="{{ form.password.label }}"/>
+                    <input style="display: none;" class="required" id="id_{{ form.password.name }}"
+                           name="{{ form.password.name }}" type="password"/>
+                    <input type="submit" value="{% trans "Signin" %}"/>
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next" value="{{ request.GET.next }}"/>{% endif %}
+                    <p class="forgot-password"><a href='{% url 'userena_password_reset' %}'
+                                                  title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a>
+                    </p>
+                </form>
+            </div>
+
+            <div class="containernews">
+                <form action="{% url 'comicsite_signup' site.short_name %}?next={{ request.GET.next }}"
+                      class="containernews"><input type="submit" , value="Register as a new participant"></form>
+                <a class="buttonnews" href="/site/grand-challenges/Newsletter/">Subscribe to Newsletter</a>
+            </div>
         </div>
+    </div>
+    <script>
+        // $("#comicsignin").click(function() {
+        //     $("#signinformcontainer").slideDown(500);
+        // });
+        //
+        // if ('{{ form.non_field_errors }}' != '') {
+        //     $("#signinformcontainer").show();
+        // }
 
-	<div class="containernews">
-	<form action="{% url 'comicsite_signup' site.short_name %}?next={{request.GET.next}}" class="containernews"> <input type="submit", value="Register as a new participant"></form>
-	<a class="buttonnews" href="/site/grand-challenges/Newsletter/">Subscribe to Newsletter</a>
-	</div>
-   </div>
-</div>
-<script>
-// $("#comicsignin").click(function() {
-//     $("#signinformcontainer").slideDown(500);
-// });
-//
-// if ('{{ form.non_field_errors }}' != '') {
-//     $("#signinformcontainer").show();
-// }
+        // Clear the default value of text inputs onFocus
+        $("#id_{{ form.identification.name }}").each(function () {
+            $(this).blur(function () {
+                // if input is empty, reset value to default
+                if (this.value.length == 0) {
+                    this.value = this.defaultValue;
+                    $(this).css("color", "lightgrey");
+                }
+            }).focus(function () {
+                // when input is focussed, clear its contents
+                if (this.value == this.defaultValue) {
+                    this.value = "";
+                    $(this).css("color", "black");
+                }
+            }).css("color", "lightgrey");
+        });
 
-// Clear the default value of text inputs onFocus
-$("#id_{{ form.identification.name }}").each(function() {
-    $(this).blur(function() {
-        // if input is empty, reset value to default
-        if (this.value.length == 0) {
-            this.value = this.defaultValue;
-            $(this).css("color", "lightgrey");
-        }
-    }).focus(function() {
-        // when input is focussed, clear its contents
-        if (this.value == this.defaultValue) {
-            this.value = "";
-            $(this).css("color", "black");
-        }
-    }).css("color", "lightgrey");
-});
+        // Swap fakepassword field with the
+        $("#id_fakepassword").each(function () {
+            $(this).focus(function () {
+                $(this).hide();
+                $("#id_{{ form.password.name }}").show().focus();
+            });
+        }).css("color", "lightgrey");
 
-// Swap fakepassword field with the
-$("#id_fakepassword").each(function() {
-    $(this).focus(function() {
-        $(this).hide();
-        $("#id_{{ form.password.name }}").show().focus();
-    });
-}).css("color", "lightgrey");
+        $("#id_{{ form.password.name }}").each(function () {
+            $(this).blur(function () {
+                if (this.value.length == 0) {
+                    $(this).hide();
+                    $("#id_fakepassword").show()
+                }
+            });
+        });
 
-$("#id_{{ form.password.name }}").each(function() {
-    $(this).blur(function() {
-       if (this.value.length == 0) {
-           $(this).hide();
-           $("#id_fakepassword").show()
-       }
-    });
-});
-
-</script>
+    </script>
 {% endblock %}

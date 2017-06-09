@@ -5,20 +5,20 @@
 {% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
 
 {% block messages %}
-        {% if messages %}
-        
+    {% if messages %}
+
         <ul class="messagelist">{% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-           {% if 'safe' in message.tags %}{{ message|safe }}
-           {% else %} {{ message }}          
-           {% endif %}
-          </li>
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                {% if 'safe' in message.tags %}{{ message|safe }}
+                {% else %} {{ message }}
+                {% endif %}
+            </li>
         {% endfor %}</ul>
-        {% endif %}
+    {% endif %}
 {% endblock messages %}
 {% block branding %}
 
-<p>Root Admin</p>
+    <p>Root Admin</p>
 
 {% endblock %}
 

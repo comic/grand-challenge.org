@@ -1,8 +1,8 @@
 # Django settings for comic project.
 import glob
 import os
-import six
 
+import six
 from django.core.exceptions import ImproperlyConfigured
 
 # These need to be set in the conf files

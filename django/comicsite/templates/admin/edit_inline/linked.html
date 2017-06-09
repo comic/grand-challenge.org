@@ -53,6 +53,7 @@
 
 
                                             <a href="
+
                                                     {% url 'admin:index' %}{{ app_label }}/{{ inline_admin_formset.opts.admin_model_path }}/{{ inline_admin_form.original.pk }}/">
                                                 {% if field.is_readonly %}
                                                     <p>{{ field.contents|linebreaksbr }}</p>
