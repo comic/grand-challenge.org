@@ -30,7 +30,7 @@ urlpatterns = patterns('',
                        # Used for logging in and managing profiles. This is done on the framework
                        # level because it is too hard to get this all under each project
                        url(r'^accounts/', include('profiles.urls')),
-                       url(r'^socialauth/', include('social.apps.django_app.urls', namespace='social')),
+                       url(r'^socialauth/', include('social_django.urls', namespace='social')),
 
                        # Submit a project for addition to the projects overview
                        url(r'^submit_existing_project/$', 'comicsite.views.submit_existing_project'),
