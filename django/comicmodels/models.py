@@ -8,7 +8,6 @@ import stat
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.validators import validate_slug, MaxLengthValidator, MinLengthValidator
 from django.db import models
@@ -16,15 +15,12 @@ from django.db.models import Max
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from dropbox import client, session
-from dropbox.rest import ErrorResponse
 from guardian.shortcuts import assign_perm, remove_perm
 
 import comicsite.utils.query
 from ckeditor.fields import RichTextField
 from comicmodels.template.decorators import track_data
 from comicsite.core.urlresolvers import reverse
-from dataproviders import FileSystemDataProvider, DropboxDataProvider
 
 logger = logging.getLogger("django")
 
@@ -870,144 +866,6 @@ class FileSystemDataset(Dataset):
         if not os.path.exists(directory):
             os.makedirs(directory)
             os.chmod(directory, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)  # refs #142
-
-
-class DropboxFolder(ComicSiteModel):
-    """
-    Information to link with a single dropbox folder
-    """
-    access_token_key = models.CharField(max_length=255, default="", blank=True)
-    access_token_secret = models.CharField(max_length=255, default="", blank=True)
-    last_status_msg = models.CharField(max_length=1023, default="", blank=True)
-
-    # status of this object, used for communicating with admin, which buttons to show
-    # when etc.
-    NOT_SAVED = 'NOSAVE'
-    READY_FOR_AUTH = "RFA"
-    CONNECTED = 'CONNECTED'
-    ERROR = 'ERROR'
-
-    STATUS_OPTIONS = ((NOT_SAVED, 'Please save and reload to continue connecting to dropbox'),
-                      (READY_FOR_AUTH, 'Ready for authorization'),
-                      (CONNECTED, ''))
-
-    @property
-    def cleantitle(self):
-        return re.sub('[\[\]/{}., ]+', '', self.title)
-
-    def save_default(self, firstcreation):
-        """ overwrites comicSiteModel.save_default
-        """
-
-    def get_dropbox_data_provider(self):
-        """ Get a data provider for this Dropboxfolder object.
-            Data providers allows basic file operations like read and write
-        """
-
-        dropbox_dp = DropboxDataProvider.DropboxDataProvider(settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET,
-                                                             settings.DROPBOX_ACCESS_TYPE, self.access_token_key,
-                                                             self.access_token_secret,
-                                                             location='', )
-        return dropbox_dp
-
-    def get_dropbox_app_keys(self):
-        """ Get dropbox keys unique to COMIC. Throws AttributError if not found
-        """
-        return settings.DROPBOX_APP_KEY, settings.DROPBOX_APP_SECRET, settings.DROPBOX_ACCESS_TYPE
-
-    def get_connection_status(self):
-        """Check whether this dropboxfolder can be accessed
-        """
-
-        if not self.pk:
-            status = self.NOT_SAVED
-            msg = "<span class='errors'>No connection. Please save and reload to connect to dropbox </span>"
-
-        # if no access keys have been set validation still needs to occur
-        elif self.access_token_key == '' or self.access_token_secret == '':
-            try:  # check whether keys for COMIC itself are present.
-                self.get_dropbox_app_keys()
-            except AttributeError as e:
-                status = self.ERROR
-                msg = "ERROR: A key required for this app to connect to dropbox could not be found in settings..\
-                        Has this been forgotten?. Original error: " + str(e)
-
-            status = self.READY_FOR_AUTH
-            msg = "Ready for authorization."
-
-        else:  # if access keys have been filled, Try to get dropbox info to test connection
-            try:
-
-                info = self.get_info()
-                status = self.CONNECTED
-                msg = "Connected to dropbox '" + info["display_name"] + "', owned by '" + info["email"] + "'"
-            except ErrorResponse as e:
-                status = self.ERROR
-                msg = str(e)
-
-        if self.pk:
-            DropboxFolder.objects.filter(pk=self.pk).update(last_status_msg=msg)
-
-        return status, msg
-
-    def get_info(self):
-        """ Get account info for the given DropboxFolder object Throws ErrorResponse if info cannot be got.
-        """
-
-        (app_key, app_secret, access_type) = self.get_dropbox_app_keys()
-        sess = session.DropboxSession(app_key, app_secret, access_type)
-        sess.set_token(self.access_token_key, self.access_token_secret)
-
-        db_client = client.DropboxClient(sess)
-
-        # can throw ErrorResponse
-        info = db_client.account_info()
-
-        message = info
-
-        return message
-
-    def reset_connection(self, callback_host=""):
-        """ Generate a new link to authorize access to given dropbox. Will invalidate the old connection.
-            callback_url will be passed with dropbox auth link so after authorization you are redirected.
-        """
-
-        # request new session, request new auth key
-        (app_key, app_secret, access_type) = self.get_dropbox_app_keys()
-        sess = session.DropboxSession(app_key, app_secret, access_type)
-        request_token = sess.obtain_request_token()
-
-        # visit this url to validate
-        url = sess.build_authorize_url(request_token)
-
-        finalize_url = reverse('django_dropbox.views.finalize_connection', kwargs={'dropbox_folder_id': self.id})
-
-        if callback_host == "":
-            msg = (request_token, "Please visit <a href=\"" + url + "\" target=\"_new\"> this link</a>  to authorize access to dropbox.\
-                                  After authorizing, click <a href=\"" + finalize_url + "\">this link</a>")
-        else:
-            url = url + "&oauth_callback=" + callback_host + finalize_url
-            msg = (request_token, "Please visit <a href=\"" + url + "\"> this link</a> to authorize access to dropbox.")
-
-        return msg
-
-    def finalize_connection(self, request_token):
-
-        (app_key, app_secret, access_type) = self.get_dropbox_app_keys()
-        sess = session.DropboxSession(app_key, app_secret, access_type)
-
-        # once url has been loaded and access granted, this token can be used to access dropbox from now on
-        try:
-            access_token = sess.obtain_access_token(request_token)
-        except ErrorResponse as e:
-            return "finalize did not succeed: " + str(e)
-
-        # save access token to reuse later
-        self.access_token_key = access_token.key
-        self.access_token_secret = access_token.secret
-        self.save()
-
-        return "Connection succeeded."
 
 
 class RegistrationRequestManager(models.Manager):

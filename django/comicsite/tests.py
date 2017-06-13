@@ -22,7 +22,7 @@ from comicmodels.models import Page, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
 from comicsite.admin import PageAdmin, ProjectAdminSite2
 from comicsite.views import _register
-from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"

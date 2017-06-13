@@ -19,14 +19,13 @@ from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
 from django.template import defaulttags
-from dropbox.rest import ErrorResponse
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import comicsite.views
 from comicmodels.models import ComicSite
-from comicmodels.models import FileSystemDataset, UploadModel, DropboxFolder, \
+from comicmodels.models import FileSystemDataset, UploadModel, \
     RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
@@ -36,7 +35,7 @@ from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
 from dataproviders import FileSystemDataProvider
-from dataproviders.DropboxDataProvider import HtmlLinkReplacer  # TODO: move HtmlLinkReplacer to better location..
+from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from profiles.models import UserProfile
 
@@ -822,76 +821,6 @@ class VisualizationNode(template.Node):
                 "webSocketHostName": self.args.get("webSocketHostName",
                                                    "undefined"),
                 "webSocketPort": self.args.get("webSocketPort", "undefined")})
-        return htmlOut
-
-
-@register.tag(name="dropbox")
-def render_dropbox(parser, token):
-    """ Given a django_dropbox item title, render a file from this dropbox """
-
-    usagestr = """Tag usage: {% dropbox title:string file:filepath %}
-                  title: the title of an autorized django_dropbox item
-                  file: path to a file in your dropbox /apps/COMIC folder
-                  """
-    try:
-        args = parseKeyValueToken(token)
-    except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
-        return TemplateErrorNode(errormsg)
-
-    if "title" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: title argument is missing." + usagestr
-        return TemplateErrorNode(errormsg)
-
-    if "file" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: file argument is missing." + usagestr
-        return TemplateErrorNode(errormsg)
-
-    try:
-        df = DropboxFolder.objects.get(title=args['title'])
-    except ObjectDoesNotExist as e:
-        return TemplateErrorNode("could not find dropbox titled '" + args['title'] + "' in database")
-
-    provider = df.get_dropbox_data_provider()
-    replacer = HtmlLinkReplacer()
-
-    return DropboxNode(args, df, provider, replacer)
-
-
-class DropboxNode(template.Node):
-    def __init__(self, args, df, provider, replacer):
-        self.args = args
-        self.df = df
-        self.provider = provider
-        self.replacer = replacer
-
-    def make_dropbox_error_msg(self, msg):
-        logger.error("Error rendering dropbox '" + str(self.args) + ": " + msg)
-        errormsg = "Error rendering dropbox"
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-
-        try:
-            contents = self.provider.read(self.args["file"])
-        except ErrorResponse as e:
-            return self.make_dropbox_error_msg(str(e))
-
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        baseURL = reverse('comicsite.views.dropboxpage', kwargs={'site_short_name': context.page.comicsite.short_name,
-                                                                 'page_title': context.page.title,
-                                                                 'dropboxname': self.args['title'],
-                                                                 'dropboxpath': "remove"})
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
-        # nice.
-        baseURL = baseURL[:-7]  # remove "remove/" from baseURL
-        currentpath = ntpath.dirname(self.args['file']) + "/"  # path of currently rendered dropbox file
-
-        replaced = self.replacer.replace_links(contents, baseURL, currentpath)
-        htmlOut = replaced
-
         return htmlOut
 
 

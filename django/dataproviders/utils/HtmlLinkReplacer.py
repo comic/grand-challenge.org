@@ -3,28 +3,8 @@ import os
 import re
 
 from bs4 import BeautifulSoup
-from dropbox.client import DropboxClient
-from dropbox.session import DropboxSession
 
 logger = logging.getLogger("django")
-
-
-class DropboxDataProvider:
-    """
-    read and write files in a remote dropbox uing the dropbox API 
-    """
-
-    def __init__(self, app_key, app_secret, access_type, access_token, access_token_secret,
-                 location='', ):
-        session = DropboxSession(app_key, app_secret, access_type)
-        session.set_token(access_token, access_token_secret)
-        self.client = DropboxClient(session)
-        self.account_info = self.client.account_info()
-        self.location = location
-        self.base_url = 'http://dl.dropbox.com/u/{uid}/'.format(**self.account_info)
-
-    def read(self, filename):
-        return self.client.get_file(filename).read()
 
 
 class HtmlLinkReplacer:
@@ -121,13 +101,13 @@ class HtmlLinkReplacer:
             url = a['href']
         else:
             raise AttributeError("Trying to replace a link which has no src and no href"
-                           "attribute. This should never happen.")
+                                 "attribute. This should never happen.")
 
         # leave absolute links alone
         if re.match('http://', url) or re.match('https://', url):
             pass
 
-        # for root-relative links 
+        # for root-relative links
         elif re.match('/', url):
             url = baseURL + url
 
@@ -142,9 +122,9 @@ class HtmlLinkReplacer:
                 currentpath = currentpath[:-1]  # remove trailing slash to make first path.dirname actually go
                 # up one dir
                 # while re.match('\.\.',url):
-                # remove "../"                
+                # remove "../"
                 #   url = url[3:]
-                # go up one in currentpath                
+                # go up one in currentpath
                 #  if currentpath == "":
                 #     pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
                 # throw some kind of outsidescope error?
@@ -171,9 +151,3 @@ class HtmlLinkReplacer:
             pass
 
         return a
-
-
-def LocalDropboxDataProvider(FileSystemStorage):
-    """ For storing files in local folder which is synched with comicsiteframework dropbox account    
-    """
-    pass
