@@ -1,6 +1,6 @@
-beautifulsoup4==4.4.0
+beautifulsoup4==4.6.0
 django==1.8.18
-django-countries==3.3
+django-countries==4.5
 django-userena==1.5.1
 dropbox==2.2.0
 matplotlib==2.0.2
