@@ -35,8 +35,8 @@ from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
 from dataproviders import FileSystemDataProvider
-from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from dataproviders.ProjectExcelReader import ProjectExcelReader
+from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
@@ -733,95 +733,6 @@ class ImageBrowserNode(template.Node):
             filenames = filter_by_extension(filenames, extensions)
 
         return filenames
-
-
-@register.tag(name="visualization")
-def render_visualization(parser, token):
-    """ Given a dataset name, show a 2D visualization for that """
-
-    usagestr = """Tag usage: {% visualization dataset:string
-                                              width:number
-                                              height:number
-                                              deferredLoad:0|1
-                                              extensionFilter:ext1,ext2,ext3%}
-                  The only mandatory argument is dataset.
-                  width/heigth: Size of the 2D view area.
-                  defferedLoad: If active, user has to click on the area to load the viewer.
-                  extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-                  """
-    try:
-        args = parseKeyValueToken(token)
-    except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
-        return TemplateErrorNode(errormsg)
-
-    if "dataset" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: dataset argument is missing." + usagestr
-        return TemplateErrorNode(errormsg)
-
-    return VisualizationNode(args)
-
-
-class VisualizationNode(template.Node):
-    """
-    Renders the ComicWebWorkstation using MeVisLab
-    """
-
-    def __init__(self, args):
-        self.args = args
-
-    def make_dataset_error_msg(self, msg):
-        logger.error("Error rendering Visualization '" + str(self.args) + ":" + msg)
-        errormsg = "Error rendering Visualization"
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-        htmlOut = """
-
-          <div class="COMICWebWorkstationButtons">
-              <button id="comicViewerSetSmallSize%(id)d"> small </button>
-              <button id="comicViewerSetLargeSize%(id)d"> large </button>
-              <button id="comicViewerFullscreenToggle%(id)d"> fullscreen </button>
-          </div>
-          <div id="comicViewer%(id)d" style="width: %(width)spx; height:%(height)spx"></div>
-          <script type="text/javascript">
-            var fmeViewer%(id)d = null;
-            //$(document).ready(function() {
-              console.log('fmeviewee')
-              fmeViewer%(id)d = new COMICWebWorkstationWrapper("comicViewer%(id)d");
-              var options = {'path':'%(path)s',
-                             'deferredLoad':%(deferredLoad)s,
-                             'extensionFilter':'%(extensionFilter)s',
-                             'width':%(width)s,
-                             'height':%(height)s,
-                             'application': 'COMICWebWorkstation_1.2',
-                             'webSocketHostName':%(webSocketHostName)s,
-                             'webSocketPort':%(webSocketPort)s,
-                             'urlToMLABRoot': "/static/js" };
-              fmeViewer%(id)d.init(options);
-            //});
-
-            $("#comicViewerSetSmallSize%(id)d").click(function(){
-                fmeViewer%(id)d.setSmallSize()
-            })
-            $("#comicViewerSetLargeSize%(id)d").click(function(){
-                fmeViewer%(id)d.setLargeSize()
-            })
-            $("#comicViewerFullscreenToggle%(id)d").click(function(){
-                fmeViewer%(id)d.gotoFullscreen()
-            })
-
-          </script>
-        """ % ({"id": id(self),
-                "width": self.args.get("width", "600"),
-                "height": self.args.get("height", "400"),
-                "path": self.args.get("dataset"),
-                "extensionFilter": self.args.get("extensionFilter", ""),
-                "deferredLoad": self.args.get("deferredLoad", "0"),
-                "webSocketHostName": self.args.get("webSocketHostName",
-                                                   "undefined"),
-                "webSocketPort": self.args.get("webSocketPort", "undefined")})
-        return htmlOut
 
 
 def add_quotes(string):
@@ -1955,8 +1866,8 @@ class UrlParameterNode(template.Node):
             return context['request'].GET[self.args['url_parameter']]  # FIXME style: is this too much in one line?
         else:
             logger.error("Error rendering %s: Parameter '%s' not found in request URL" % (
-            "{%  " + self.args['token'].contents + "%}",
-            self.args['url_parameter']))
+                "{%  " + self.args['token'].contents + "%}",
+                self.args['url_parameter']))
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
 
