@@ -25,13 +25,9 @@ from six import StringIO, iteritems
 
 import comicsite.views
 from comicmodels.models import ComicSite
-from comicmodels.models import FileSystemDataset, UploadModel, \
-    RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import FileSystemDataset, RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
-# ---------#---------#---------#---------#---------#---------#---------#---------
-# This is needed to use the @register.tag decorator
-# register = template.Library()
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
 from dataproviders import FileSystemDataProvider
@@ -69,14 +65,6 @@ def parseKeyValueToken(token):
     return dict([param.split(":") for param in args])
 
 
-def cleanKeyValueToken(token):
-    """Remove some common mistake for which I do not want to throw any error
-    
-    """
-    token = token.contents.replace("=", ":")
-    return token
-
-
 def get_usagestr(function_name):
     """
     Return usage string for a registered template tag function. For displaying
@@ -100,8 +88,6 @@ def get_usagestr(function_name):
 def get_taglist(parser, token):
     return TagListNode()
 
-
-# =========#=========#=========#=========#=========#=========#=========#=========#=========
 
 def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
@@ -352,36 +338,6 @@ def metafooterpages():
     return html_string
 
 
-@register.tag(name="filelist")
-def do_get_files(parser, token):
-    try:
-        # split_contents() knows not to split quoted strings.
-        tag_name, filefolder = token.split_contents()
-        format_string = "\"%Y-%m-%d %I:%M %p\""
-    except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
-    if not (format_string[0] == format_string[-1] and format_string[0] in ('"', "'")):
-        raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
-    return FileListNode(format_string[1:-1], filefolder[1:-1])
-
-
-class FileListNode(template.Node):
-    """ Show list of files in given dir
-    """
-
-    def __init__(self, format_string, filefolder):
-        self.format_string = format_string
-        self.filefolder = filefolder
-
-    def render(self, context):
-        dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
-        images = dp.getImages()
-
-        htmlOut = "available files:" + ", ".join(images)
-        return htmlOut
-
-
-# ========#========#========#========#========#========#========#========
 @register.tag(name="dataset",
               usagestr="""Tag usage: {% dataset <datasetname>,<comicsitename> %}. <comicsitename> can be\
                   omitted, defaults to current site"""
@@ -501,49 +457,6 @@ class ListDirNode(template.Node):
     """ Show list of linked files for given directory
     """
 
-    usagestr = get_usagestr("listdir")
-
-    def __init__(self, args):
-        self.path = args['path']
-        self.args = args
-
-    def make_dataset_error_msg(self, msg):
-        logger.error("Error listing folder '" + self.path + "': " + msg)
-        errormsg = "Error listing folder"
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-
-        project_name = context.page.comicsite.short_name
-        projectpath = project_name + "/" + self.path
-        storage = DefaultStorage()
-
-        try:
-            filenames = storage.listdir(projectpath)[1]
-        except OSError as e:
-            return self.make_dataset_error_msg(str(e))
-
-        filenames.sort()
-
-        # if extensionsFilter is given,  show only filenames with those extensions
-        if 'extensionFilter' in self.args.keys():
-            extensions = self.args['extensionFilter'].split(",")
-            filenames = filter_by_extension(filenames, extensions)
-
-        links = []
-        for filename in filenames:
-            downloadlink = reverse('project_serve_file',
-                                   kwargs={'project_name': project_name,
-                                           'path': self.path + "/" + filename})
-
-            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
-
-        htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-
-        return htmlOut
-
-
-class DownloadLinkNode(template.Node):
     usagestr = get_usagestr("listdir")
 
     def __init__(self, args):
@@ -767,249 +680,6 @@ def in_list(needles, haystack):
     return False
 
 
-@register.tag(name="browser")
-def insert_browser(parser, token):
-    """ Render a jquery browser to show all images in the given directory"""
-
-    usagestr = """Tag usage: {% browse <path> %}
-                  <path>: filepath relative to project dropboxfolder.
-                  Example: {% browse public_html/result1 %}
-                  You can use url parameters in <file> by using {{curly braces}}.
-                  Example: {% browse results/{{id}} %} called with ?id=result1
-                  appended to the url will browse the contents of the folder
-                  "public_html/result1".
-                  """
-
-    split = token.split_contents()
-    tag = split[0]
-    all_args = split[1:]
-
-    if len(all_args) != 1:
-        error_message = "Expected 1 argument, found " + str(len(all_args))
-        return TemplateErrorNode(error_message)
-    else:
-        args = {}
-        filename = all_args[0]
-
-        args["file"] = add_quotes(filename)
-
-    replacer = HtmlLinkReplacer()
-    return InsertBrowserNode(args, replacer, parser)
-
-
-class InsertBrowserNode(template.Node):
-    def __init__(self, args, replacer, parser):
-        self.args = args
-        self.replacer = replacer
-        self.parser = parser
-
-    def make_error_msg(self, msg):
-        logger.error("Error including file '" + "," + self.args["file"] + "': " + msg)
-        errormsg = "Error including file"
-        return makeErrorMsgHtml(errormsg)
-
-    def is_inside_project_data_folder(self, folder, project):
-        """ For making sure nosey people do not use too many ../../../ in paths
-        to snoop around in the filesystem.
-        
-        folder: string containing a filepath
-        project: a comicsite object
-        """
-        data_folder = project.get_project_data_folder()
-        folder = self.make_canonical_path(folder)
-        data_folder = self.make_canonical_path(data_folder)
-        if folder.startswith(data_folder):
-            return True
-        else:
-            return False
-
-    def make_canonical_path(self, path):
-        """ Make this a nice path, with / separators
-        
-        """
-        path = path.replace("\\\\", "/")
-        return path.replace("\\", "/")
-
-    def substitute(self, string, substitutions):
-        """
-        Take each key in the substitutions dict. See if this key exists
-        between double curly braces in string. If so replace with value.
-
-        Example:
-        substitute("my name is {{name}}.",{version:1,name=John})
-        > "my name is John"
-        """
-
-        for key, value in substitutions:
-            string = re.sub("{{" + key + "}}", value, string)
-
-        return string
-
-    def replace_links(self, filename, contents, currentpage):
-        """Relative urls which work on disk might not
-        work properly when used in included file. Make sure any links in contents
-        still point to the right place 
-        
-        """
-
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name': currentpage.comicsite.short_name,
-                                                                   'page_title': currentpage.title,
-                                                                   'dropboxpath': "remove"})
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
-        replaced = self.replacer.replace_links(contents,
-                                               base_url,
-                                               current_path)
-        html_out = replaced
-
-        return html_out
-
-    def render(self, context):
-
-        # text typed in the tag
-        token = self.args['file']
-
-        # the token (parameter) given to this tag can be one of three types:
-        # * a raw filename like "stuff.html" or "results/table1.txt"
-        # * a filname containing a variable like "results/{{teamid}}/table1.txt"
-        # * a django template variable like "site.short_name"
-
-        # Find out what type it is:
-
-        # If it contains any / or {{ resolving as django var
-        # is going to throw an error. Prevent unneeded exception, just skip
-        # rendering as var in that case.
-        filename_resolved = ""
-        if not in_list(["{", "}", "\\", "/"], token):
-            compiled_filter = self.parser.compile_filter(strip_quotes(token))
-            filename_resolved = compiled_filter.resolve(context)
-
-        # if resolved filename is empty, resolution failed, just treat this
-        # param as a filepath
-        if filename_resolved == "":
-            filename = strip_quotes(token)
-        else:
-            filename = filename_resolved
-
-        # if there are {{}}'s in there, try to substitute this with url
-        # parameter given in the url
-        filename = substitute(filename, context["request"].GET.items())
-
-        # If any {{parameters}} are still in filename they were not replaced.
-        # This filename is missing information, show this as error text.
-        if re.search("{{\w+}}", filename):
-
-            missed_parameters = re.findall("{{\w+}}", filename)
-            found_parameters = context["request"].GET.items()
-
-            if not found_parameters:
-                found_parameters = "None"
-            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " \
-                        "" % (missed_parameters, found_parameters)
-            return self.make_error_msg(error_msg)
-
-        project_name = context["site"].short_name
-        filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
-        filepath = os.path.abspath(filepath)
-        filepath = self.make_canonical_path(filepath)
-
-        # when all rendering is done, check if the final path is still not getting
-        # into places it should not go.
-        if not self.is_inside_project_data_folder(filepath, context["site"]):
-            error_msg = "'{}' cannot be opened because it is outside the current project.".format(filepath)
-            return self.make_error_msg(error_msg)
-
-        storage = DefaultStorage()
-        try:
-            contents = storage.open(filepath, "r").read()
-        except Exception as e:
-            return self.make_error_msg("error opening file:" + str(e))
-
-        # TODO check content safety
-
-        # For some special pages like login and signup, there is no current page
-        # In that case just don't try any link rewriting
-
-        # TODO: here confused coding comes to light: I need to have the page
-        # object that this template tag is on in order to process it properly.
-        # I use both the element .page, added by
-        # ComicSiteRequestContext, and a key 'currentpage' added by the view.
-        # I think both are not ideal, and should be rewritten so all template
-        # tags are implicitly passed page (and project) by default. It think
-        # this needs custom template context processors or custom middleware.
-        # As a workaround, just checking for both conditions.
-        if "currentpage" in context:
-            currentpage = context["currentpage"]
-        elif hasattr(context, "page"):
-            currentpage = context.page
-        else:
-            currentpage = None
-
-        if currentpage and os.path.splitext(filename)[1] != ".css":
-            html_out = self.replace_links(filename, contents, currentpage)
-            # rewrite relative links
-        else:
-            html_out = contents
-
-        return html_out
-
-
-# {% insertfile results/test.txt %}
-@register.tag(name="url_to_file",
-              usagestr="""Tag usage: {% url_to_file <file> %}
-                  <file>: filepath relative to project dropboxfolder.
-                  Example: {% url_to_file results/image1.txt %}
-                  You can use url parameters in <file> by using {{curly braces}}.
-                  Example: {% url_to_file {{id}}/result.txt %} called with ?id=1234
-                  appended to the url will render a url to the file "1234/image1.txt".
-                  """)
-def render_url_to_file(parser, token):
-    """ Render a url to a file in a project folder """
-
-    split = token.split_contents()
-    tag = split[0]
-    all_args = split[1:]
-
-    if len(all_args) != 1:
-        error_message = "Expected 1 argument, found " + str(len(all_args))
-        return TemplateErrorNode(error_message)
-    else:
-        args = {}
-        filename = all_args[0]
-
-        args["file"] = add_quotes(filename)
-
-    return RenderFileUrlNode(args, parser)
-
-
-class RenderFileUrlNode(template.Node):
-    usagestr = get_usagestr("render_url_to_file")
-
-    def __init__(self, args, parser):
-        self.args = args
-        self.parser = parser
-
-    def make_url_to_file_error_msg(self, msg):
-        errormsg = "Error rendering tag {% url_to_file %} with parameters'" + str(self.args) + "':" + msg
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-        projectname = context.page.comicsite.short_name
-        filename = strip_quotes(self.args["file"])
-        try:
-            filename = resolve_path(filename, self.parser, context)
-        except PathResolutionException as e:
-            return self.make_url_to_file_error_msg(str(e))
-
-        url = reverse("project_serve_file", args=[projectname, filename])
-        return url
-
-
 @register.tag(name="get_result_info",
               usagestr="""Tag usage: {% get_result_info id:<resultID>, type:<item> %}
                   <resultID>: string containing the first characters of the folder
@@ -1155,7 +825,6 @@ def ensure_value_is_in_list(value, allowed_values):
             allowed_values) + "]")
 
 
-# {% insertfile results/test.txt %}
 @register.tag(name="get_project_prefix",
               usagestr="""Tag usage: {% get_api_prefix %}
                   Get the base url for this project as string, with trailing slash
@@ -1180,7 +849,6 @@ class RenderGetProjectPrefixNode(template.Node):
         return url
 
 
-# {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
     """Render the contents of a file from the local dropbox folder of the 
@@ -1474,31 +1142,6 @@ def getrenderer(renderer_format):
     return renderers[renderer_format]
 
 
-def get_graph_svg(table, headers):
-    """ return svg instructions as string to plot a froc curve of csvfile
-    """
-    # del table[-1]
-    columns = zip(*table)
-
-    fig = Figure(facecolor='white')
-    canvas = FigureCanvas(fig)
-
-    for i in range(1, len(columns)):
-        fig.gca().plot(columns[0], columns[i], label=headers[i], gid=headers[i])
-    fig.gca().set_xlim([10 ** -2, 10 ** 2])
-    fig.gca().set_ylim([0, 1])
-    fig.gca().legend(loc='best', prop={'size': 10})
-    fig.gca().grid()
-    fig.gca().grid(which='minor')
-    fig.gca().set_xlabel('False positives/scan')
-    fig.gca().set_ylabel('Sensitivity')
-
-    fig.gca().set_xscale("log")
-    fig.set_size_inches(8, 6)
-
-    return canvas_to_svg(canvas)
-
-
 def canvas_to_svg(canvas):
     """ Render matplotlib canvas as string containing html/svg instructions. These instructions can be
     pasted into any html page and will be rendered as graph by any modern browser.
@@ -1544,11 +1187,6 @@ def parse_csv_table(has_header, f):
         raise ParserException("Error parsing '{}' (item {} on row {}) in file '{}'".format(row[j], j, i, f))
 
     return table, headers
-
-
-def is_quoted(string):
-    """ True if string is surrounded by quotes, either double", single', 
-        or apostophe` """
 
 
 def render_FROC(filename):
@@ -2317,47 +1955,6 @@ class AllProjectLinksNode(template.Node):
         return date.strftime('%b %d, %Y')
 
 
-@register.tag(name="image_url")
-def render_image_url(parser, token):
-    """ render image based on image title """
-    # split_contents() knows not to split quoted strings.
-    tag_name, args = token.split_contents()
-    imagetitle = args
-
-    try:
-        image = UploadModel.objects.get(title=imagetitle)
-
-    except ObjectDoesNotExist as e:
-
-        errormsg = "Error rendering {% " + token.contents + " %}: Could not find any images named '" + imagetitle + "' in database."
-        # raise template.TemplateSyntaxError(errormsg)
-        return TemplateErrorNode(errormsg)
-
-    except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
-
-    [isImage, errorMessage] = hasImgExtension(str(image.file))
-    if not isImage:
-        errormsg = "Error rendering {% " + token.contents + " %}:" + errorMessage
-        # raise template.TemplateSyntaxError(errormsg)
-        return TemplateErrorNode(errormsg)
-
-    return imagePathNode(image)
-
-
-class imagePathNode(template.Node):
-    """ return local path to the given UploadModel
-    """
-
-    def __init__(self, image):
-        self.image = image
-
-    def render(self, context):
-        path = "/static/media/" + str(self.image.file)
-
-        return path
-
-
 @register.tag(name="registration")
 def render_registration_form(parser, token):
     """ Render a registration form for the current site """
@@ -2433,16 +2030,6 @@ def HTML_encode_django_chars(string):
 
 def makeHTMLLink(url, linktext):
     return "<a href=\"" + url + "\">" + linktext + "</a>"
-
-
-def hasImgExtension(filename):
-    allowedextensions = [".jpg", ".jpeg", ".gif", ".png", ".bmp"]
-    ext = os.path.splitext(filename)[1]
-    if ext in allowedextensions:
-        return [True, ""]
-    else:
-        return [False, "file \"" + filename + "\" does not look like an image. Allowed extensions: [" + ",".join(
-            allowedextensions) + "]"]
 
 
 def makeErrorMsgHtml(text):
