@@ -561,7 +561,7 @@ def add_quotes(s: str = ''):
 def strip_quotes(s: str = ''):
     """ strip outermost quotes from string if there
     """
-    if (s[0] == s[-1]) and s.startswith(("'", '"')):
+    if len(s) >= 2 and (s[0] == s[-1]) and s[0] in ("'", '"'):
         return s[1:-1]
     return s
 
