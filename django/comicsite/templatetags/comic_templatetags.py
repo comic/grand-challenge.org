@@ -25,8 +25,7 @@ from six import StringIO, iteritems
 
 import comicsite.views
 from comicmodels.models import ComicSite
-from comicmodels.models import FileSystemDataset, UploadModel, \
-    RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import FileSystemDataset, RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
 from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
@@ -2039,47 +2038,6 @@ class AllProjectLinksNode(template.Node):
 
     def format_date(self, date):
         return date.strftime('%b %d, %Y')
-
-
-@register.tag(name="image_url")
-def render_image_url(parser, token):
-    """ render image based on image title """
-    # split_contents() knows not to split quoted strings.
-    tag_name, args = token.split_contents()
-    imagetitle = args
-
-    try:
-        image = UploadModel.objects.get(title=imagetitle)
-
-    except ObjectDoesNotExist as e:
-
-        errormsg = "Error rendering {% " + token.contents + " %}: Could not find any images named '" + imagetitle + "' in database."
-        # raise template.TemplateSyntaxError(errormsg)
-        return TemplateErrorNode(errormsg)
-
-    except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
-
-    [isImage, errorMessage] = hasImgExtension(str(image.file))
-    if not isImage:
-        errormsg = "Error rendering {% " + token.contents + " %}:" + errorMessage
-        # raise template.TemplateSyntaxError(errormsg)
-        return TemplateErrorNode(errormsg)
-
-    return imagePathNode(image)
-
-
-class imagePathNode(template.Node):
-    """ return local path to the given UploadModel
-    """
-
-    def __init__(self, image):
-        self.image = image
-
-    def render(self, context):
-        path = "/static/media/" + str(self.image.file)
-
-        return path
 
 
 @register.tag(name="registration")
