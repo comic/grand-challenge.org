@@ -6,12 +6,6 @@ from profiles.forms import SignupFormExtra
 
 urlpatterns = patterns('',
 
-                       url(r'^test/send_email/$', 'comicsite.views.send_email'),
-                       url(r'^test/throw_exception/$', 'comicsite.views.throw_exception'),
-                       url(r'^test/throw_http404/$', 'comicsite.views.throw_http404'),
-
-                       url(r'^test/test_logging/$', 'comicsite.views.test_logging'),
-
                        url(r'^(?P<site_short_name>[\w-]+)/$', 'comicsite.views.site'),
 
                        # Include an admin url for each project in database. This stretches the django
@@ -39,8 +33,6 @@ urlpatterns = patterns('',
                        url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$', 'filetransfers.views.serve',
                            name="project_serve_file"),
 
-                       # _register should be removed, moving to _request_participation. See #240 keeping it now for any links going here directly
-                       url(r'^(?P<site_short_name>[\w-]+)/_register/$', 'comicsite.views._register'),
                        url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$', 'comicsite.views._register'),
 
                        url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$',
