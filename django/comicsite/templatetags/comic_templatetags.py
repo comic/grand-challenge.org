@@ -65,14 +65,6 @@ def parseKeyValueToken(token):
     return dict([param.split(":") for param in args])
 
 
-def cleanKeyValueToken(token):
-    """Remove some common mistake for which I do not want to throw any error
-    
-    """
-    token = token.contents.replace("=", ":")
-    return token
-
-
 def get_usagestr(function_name):
     """
     Return usage string for a registered template tag function. For displaying
@@ -96,8 +88,6 @@ def get_usagestr(function_name):
 def get_taglist(parser, token):
     return TagListNode()
 
-
-# =========#=========#=========#=========#=========#=========#=========#=========#=========
 
 def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
@@ -509,49 +499,6 @@ class ListDirNode(template.Node):
         return htmlOut
 
 
-class DownloadLinkNode(template.Node):
-    usagestr = get_usagestr("listdir")
-
-    def __init__(self, args):
-        self.path = args['path']
-        self.args = args
-
-    def make_dataset_error_msg(self, msg):
-        logger.error("Error listing folder '" + self.path + "': " + msg)
-        errormsg = "Error listing folder"
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-
-        project_name = context.page.comicsite.short_name
-        projectpath = project_name + "/" + self.path
-        storage = DefaultStorage()
-
-        try:
-            filenames = storage.listdir(projectpath)[1]
-        except OSError as e:
-            return self.make_dataset_error_msg(str(e))
-
-        filenames.sort()
-
-        # if extensionsFilter is given,  show only filenames with those extensions
-        if 'extensionFilter' in self.args.keys():
-            extensions = self.args['extensionFilter'].split(",")
-            filenames = filter_by_extension(filenames, extensions)
-
-        links = []
-        for filename in filenames:
-            downloadlink = reverse('project_serve_file',
-                                   kwargs={'project_name': project_name,
-                                           'path': self.path + "/" + filename})
-
-            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
-
-        htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-
-        return htmlOut
-
-
 @register.tag(name="image_browser")
 def render_image_browser(parser, token):
     """Given a folder and project, render a browser so you can skip through them in browser
@@ -878,7 +825,6 @@ def ensure_value_is_in_list(value, allowed_values):
             allowed_values) + "]")
 
 
-# {% insertfile results/test.txt %}
 @register.tag(name="get_project_prefix",
               usagestr="""Tag usage: {% get_api_prefix %}
                   Get the base url for this project as string, with trailing slash
@@ -903,7 +849,6 @@ class RenderGetProjectPrefixNode(template.Node):
         return url
 
 
-# {% insertfile results/test.txt %}
 @register.tag(name="insert_file")
 def insert_file(parser, token):
     """Render the contents of a file from the local dropbox folder of the 
@@ -1197,31 +1142,6 @@ def getrenderer(renderer_format):
     return renderers[renderer_format]
 
 
-def get_graph_svg(table, headers):
-    """ return svg instructions as string to plot a froc curve of csvfile
-    """
-    # del table[-1]
-    columns = zip(*table)
-
-    fig = Figure(facecolor='white')
-    canvas = FigureCanvas(fig)
-
-    for i in range(1, len(columns)):
-        fig.gca().plot(columns[0], columns[i], label=headers[i], gid=headers[i])
-    fig.gca().set_xlim([10 ** -2, 10 ** 2])
-    fig.gca().set_ylim([0, 1])
-    fig.gca().legend(loc='best', prop={'size': 10})
-    fig.gca().grid()
-    fig.gca().grid(which='minor')
-    fig.gca().set_xlabel('False positives/scan')
-    fig.gca().set_ylabel('Sensitivity')
-
-    fig.gca().set_xscale("log")
-    fig.set_size_inches(8, 6)
-
-    return canvas_to_svg(canvas)
-
-
 def canvas_to_svg(canvas):
     """ Render matplotlib canvas as string containing html/svg instructions. These instructions can be
     pasted into any html page and will be rendered as graph by any modern browser.
@@ -1267,11 +1187,6 @@ def parse_csv_table(has_header, f):
         raise ParserException("Error parsing '{}' (item {} on row {}) in file '{}'".format(row[j], j, i, f))
 
     return table, headers
-
-
-def is_quoted(string):
-    """ True if string is surrounded by quotes, either double", single', 
-        or apostophe` """
 
 
 def render_FROC(filename):
@@ -2115,16 +2030,6 @@ def HTML_encode_django_chars(string):
 
 def makeHTMLLink(url, linktext):
     return "<a href=\"" + url + "\">" + linktext + "</a>"
-
-
-def hasImgExtension(filename):
-    allowedextensions = [".jpg", ".jpeg", ".gif", ".png", ".bmp"]
-    ext = os.path.splitext(filename)[1]
-    if ext in allowedextensions:
-        return [True, ""]
-    else:
-        return [False, "file \"" + filename + "\" does not look like an image. Allowed extensions: [" + ",".join(
-            allowedextensions) + "]"]
 
 
 def makeErrorMsgHtml(text):
