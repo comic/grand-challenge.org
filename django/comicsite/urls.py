@@ -48,10 +48,6 @@ urlpatterns = patterns('',
 
                        url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$', 'comicsite.api.get_public_results'),
 
-                       url(
-                           r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/db/(?P<dropboxname>[\w-]+)/(?P<dropboxpath>.+)/$',
-                           'comicsite.views.dropboxpage'),
-
                        url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/(?P<dropboxpath>.+)/$',
                            'comicsite.views.insertedpage'),
 

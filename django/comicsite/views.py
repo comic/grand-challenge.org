@@ -1,10 +1,3 @@
-"""
-Created on Jun 18, 2012
-
-Testing views. Each of these views is referenced in urls.py 
-
-@author: Sjoerd
-"""
 import logging
 import mimetypes
 from itertools import chain
@@ -23,7 +16,7 @@ from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 from userena import views as userena_views
 
-from comicmodels.models import ComicSite, Page, ErrorPage, DropboxFolder, ComicSiteModel, RegistrationRequest, \
+from comicmodels.models import ComicSite, Page, ErrorPage, ComicSiteModel, RegistrationRequest, \
     ProjectMetaData
 from comicsite.core.exceptions import ComicException
 from comicsite.core.urlresolvers import reverse
@@ -422,45 +415,6 @@ def inserted_file(request, site_short_name, filepath=""):
     else:
         return HttpResponseForbidden("This file is not available without "
                                      "credentials")
-
-
-def dropboxpage(request, site_short_name, page_title, dropboxname, dropboxpath):
-    """ show contents of a file from dropbox account as page """
-
-    (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
-    if mimetype.startswith("image"):
-        return dropboximage(request, site_short_name, page_title, dropboxname, dropboxpath)
-
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-
-    p = get_object_or_404(Page, comicsite__short_name=site.short_name, title=page_title)
-
-    baselink = reverse('comicsite.views.page',
-                       kwargs={'site_short_name': p.comicsite.short_name, 'page_title': p.title})
-
-    msg = "<div class=\"breadcrumbtrail\"> Displaying '" + dropboxpath + "' from dropboxfolder '" + dropboxname + "', originally linked from\
-           page <a href=\"" + baselink + "\">" + p.title + "</a> </div>"
-    p.html = "{% dropbox title:" + dropboxname + " file:" + dropboxpath + " %} <br/><br/>" + msg
-
-    currentpage = getRenderedPageIfAllowed(p, request, site)
-
-    return render_to_response('dropboxpage.html', {'site': site, 'currentpage': currentpage, "pages": pages,
-                                                   "metafooterpages": metafooterpages},
-                              context_instance=CurrentAppRequestContext(request))
-
-
-def dropboximage(request, site_short_name, page_title, dropboxname, dropboxpath=""):
-    """ Get image from dropbox and pipe through django. 
-    Sjoerd: This method is probably very inefficient, however it works. optimize later > maybe get temp public link
-    from dropbox api and let dropbox serve, or else do some cashing. Cut out the routing through django.
-    """
-    df = get_object_or_404(DropboxFolder, title=dropboxname)
-    provider = df.get_dropbox_data_provider()
-
-    (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
-    response = HttpResponse(provider.read(dropboxpath), content_type=mimetype)
-
-    return response
 
 
 def comicmain(request, page_title=""):
