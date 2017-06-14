@@ -24,13 +24,11 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import comicsite.views
-from comicmodels.models import ComicSite
-from comicmodels.models import FileSystemDataset, RegistrationRequest  # FIXME: abstract Dataset should be imported here, not explicit filesystemdataset. the template tag should not care about the type of dataset.
+from comicmodels.models import ComicSite, RegistrationRequest
 from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
-from dataproviders import FileSystemDataProvider
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
@@ -336,96 +334,6 @@ def metafooterpages():
             html_string += "</a>"
 
     return html_string
-
-
-@register.tag(name="dataset",
-              usagestr="""Tag usage: {% dataset <datasetname>,<comicsitename> %}. <comicsitename> can be\
-                  omitted, defaults to current site"""
-              )
-def render_dataset(parser, token):
-    """ Given a challenge and a dataset name, show all files in this dataset as list"""
-
-    # usagestr = DatasetNode.usagestr
-    usagestr = get_usagestr("render_dataset")
-
-    # check some basic stuff
-    try:
-        tag_name, args = token.split_contents()
-    except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: tag requires at least one \
-                    argument. " + usagestr
-        # raise template.TemplateSyntaxError(errormsg)
-        return TemplateErrorNode(errormsg)
-
-    if args.count(",") == 0:
-        dataset_title = args
-        project_name = ""
-    elif args.count(",") == 1:
-        dataset_title, project_name = args.split(",")
-    else:
-        errormsg = "Error rendering {% " + token.contents + " %}: found " + str(args.count(",")) + \
-                   " comma's, expected at most 1." + usagestr
-        return TemplateErrorNode(errormsg)
-
-    return DatasetNode(dataset_title, project_name)
-
-
-class DatasetNode(template.Node):
-    """ Show list of linked files for given dataset
-    """
-
-    usagestr = """{% dataset <datasetname>,<comicsitename> %}
-                  Tag usage: {% dataset <datasetname>,<comicsitename> %}. <comicsitename> can be\
-                  omitted, defaults to current site"""
-
-    def __init__(self, dataset_title, project_name):
-        self.dataset_title = dataset_title
-        self.project_name = project_name
-        self.filefolder = None
-
-    def make_dataset_error_msg(self, msg):
-        logger.error(
-            "Error rendering DataSet '" + self.dataset_title + "' for project '" + self.project_name + "': " + msg)
-        errormsg = "Error rendering DataSet"
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-
-        if self.project_name == "":
-            self.project_name = context.page.comicsite.short_name
-
-        try:
-            dataset = FileSystemDataset.objects.get(comicsite__short_name=self.project_name, title=self.dataset_title)
-
-        except ObjectDoesNotExist as e:
-            return self.make_dataset_error_msg("could not find object in database")
-
-        else:
-            self.filefolder = dataset.get_full_folder_path()
-
-        dp = FileSystemDataProvider.FileSystemDataProvider(self.filefolder)
-
-        try:
-            filenames = dp.getAllFileNames()
-        except OSError as e:
-
-            return self.make_dataset_error_msg(str(e))
-
-        filenames.sort()
-
-        links = []
-        for filename in filenames:
-            downloadlink = reverse('filetransfers.views.download_handler_dataset_file',
-                                   kwargs={'project_name': dataset.comicsite.short_name,
-                                           'dataset_title': dataset.title,
-                                           'filename': filename})
-            # <a href="{% url filetransfers.views.download_handler_dataset_file project_name='VESSEL12' dataset_title='vessel12' filename='test.png' %}">test </a>
-            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
-
-        description = dataset.description
-        htmlOut = description + "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-
-        return htmlOut
 
 
 @register.tag(name="listdir",
