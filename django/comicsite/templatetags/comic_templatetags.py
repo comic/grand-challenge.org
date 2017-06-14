@@ -734,56 +734,6 @@ def in_list(needles, haystack):
     return False
 
 
-@register.tag(name="url_to_file",
-              usagestr="""Tag usage: {% url_to_file <file> %}
-                  <file>: filepath relative to project dropboxfolder.
-                  Example: {% url_to_file results/image1.txt %}
-                  You can use url parameters in <file> by using {{curly braces}}.
-                  Example: {% url_to_file {{id}}/result.txt %} called with ?id=1234
-                  appended to the url will render a url to the file "1234/image1.txt".
-                  """)
-def render_url_to_file(parser, token):
-    """ Render a url to a file in a project folder """
-
-    split = token.split_contents()
-    tag = split[0]
-    all_args = split[1:]
-
-    if len(all_args) != 1:
-        error_message = "Expected 1 argument, found " + str(len(all_args))
-        return TemplateErrorNode(error_message)
-    else:
-        args = {}
-        filename = all_args[0]
-
-        args["file"] = add_quotes(filename)
-
-    return RenderFileUrlNode(args, parser)
-
-
-class RenderFileUrlNode(template.Node):
-    usagestr = get_usagestr("render_url_to_file")
-
-    def __init__(self, args, parser):
-        self.args = args
-        self.parser = parser
-
-    def make_url_to_file_error_msg(self, msg):
-        errormsg = "Error rendering tag {% url_to_file %} with parameters'" + str(self.args) + "':" + msg
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-        projectname = context.page.comicsite.short_name
-        filename = strip_quotes(self.args["file"])
-        try:
-            filename = resolve_path(filename, self.parser, context)
-        except PathResolutionException as e:
-            return self.make_url_to_file_error_msg(str(e))
-
-        url = reverse("project_serve_file", args=[projectname, filename])
-        return url
-
-
 @register.tag(name="get_result_info",
               usagestr="""Tag usage: {% get_result_info id:<resultID>, type:<item> %}
                   <resultID>: string containing the first characters of the folder
