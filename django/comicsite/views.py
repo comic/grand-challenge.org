@@ -22,7 +22,6 @@ from comicsite.core.exceptions import ComicException
 from comicsite.core.urlresolvers import reverse
 from comicsite.models import send_existing_project_link_submission_notification_email
 from comicsite.template.context import ComicSiteRequestContext, CurrentAppRequestContext
-from dataproviders import FileSystemDataProvider
 from filetransfers.api import serve_file
 
 
@@ -484,29 +483,6 @@ def comicmain(request, page_title=""):
                                "pages": pages,
                                "metafooterpages": metafooterpages},
                               context_instance=context)
-
-
-def dataPage(request):
-    """ test function for data provider. Just get some files from provider and
-    show them as list
-    
-    """
-    path = r"D:\userdata\Sjoerd\Aptana Studio 3 Workspace\comic\comic-django" \
-           "\django\static\files"
-    dp = FileSystemDataProvider.FileSystemDataProvider(path)
-    images = dp.getImages()
-
-    htmlOut = "available files:" + ", ".join(images)
-    # p = createTestPage(html=htmlOut)
-    p = create_temp_page(html=htmlOut)
-
-    pages = [p]
-
-    return render_to_response('testpage.html',
-                              {'site': p.comicsite,
-                               'currentpage': p,
-                               "pages": pages}
-                              , context_instance=CurrentAppRequestContext(request))
 
 
 # ======================================== not called directly from urls.py =========================================
