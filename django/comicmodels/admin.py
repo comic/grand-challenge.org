@@ -1,13 +1,12 @@
 import datetime
 
-from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import utc
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 
-from comicmodels.models import FileSystemDataset, UploadModel, RegistrationRequest, ProjectMetaData
+from comicmodels.models import UploadModel, RegistrationRequest, ProjectMetaData
 from comicsite.models import send_participation_request_rejected_email, send_participation_request_accepted_email
 
 
@@ -46,65 +45,6 @@ class ComicModelAdmin(GuardedModelAdmin):
             get_objects_for_users """
 
         return get_objects_for_user(request.user, self.permission_name, self)
-
-
-class FileSystemDatasetForm(forms.ModelForm):
-    folder = forms.CharField(widget=forms.TextInput(attrs={'size': 60}),
-                             help_text="All files for this dataset are stored in this folder on disk")
-    folder.required = False
-
-    # TODO: print {% tag %} values in this
-    tag = forms.CharField(widget=forms.TextInput(attrs={'size': 60, 'readonly': 'readonly'}),
-                          help_text="To show all files in this dataset as downloads on a page, copy-paste this tag into the page contents")
-
-    def __init__(self, *args, **kwargs):
-        # only change attributes if an instance is passed                    
-        instance = kwargs.get('instance')
-
-        if instance:
-            self.base_fields['tag'].initial = instance.get_template_tag()
-
-            # self.base_fields['calculated'].initial = (instance.bar == 42)
-        forms.ModelForm.__init__(self, *args, **kwargs)
-
-    class Meta:
-        model = FileSystemDataset
-        fields = '__all__'
-
-
-class FileSystemDatasetInitialForm(forms.ModelForm):
-    """ In initial form, do not show folder edit field """
-
-    class Meta:
-        exclude = ['folder', ]
-        model = FileSystemDataset
-
-
-class FileSystemDatasetAdmin(ComicModelAdmin):
-    """ On initial creation, do not show the folder dialog because it is initialized to a default value"""
-
-    list_display = ('title', 'description', 'get_tag', 'comicsite')
-    form = FileSystemDatasetForm
-
-    # explicitly inherit manager because this is not done by default with non-abstract superclass
-    # see https://docs.djangoproject.com/en/dev/topics/db/managers/#custom-managers-and-model-inheritance
-    _default_manager = FileSystemDataset.objects
-
-    def get_tag(self, obj):
-        return obj.get_template_tag()
-
-    def get_form(self, request, obj=None, **kwargs):
-        if obj:
-
-            return FileSystemDatasetForm
-        else:
-            return FileSystemDatasetInitialForm
-
-    def defaultQuerySet(self, request):
-        """ Overwrite this method in child classes to make sure instance of that class is passed to 
-        get_objects_for_users """
-
-        return get_objects_for_user(request.user, self.permission_name, klass=FileSystemDataset.objects)
 
 
 class UploadModelAdmin(ComicModelAdmin):
@@ -225,6 +165,5 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
 
 
 admin.site.register(RegistrationRequest, RegistrationRequestAdmin)
-admin.site.register(FileSystemDataset, FileSystemDatasetAdmin)
 admin.site.register(UploadModel, UploadModelAdmin)
 admin.site.register(ProjectMetaData)

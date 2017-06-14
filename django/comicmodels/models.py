@@ -2,8 +2,6 @@ import copy
 import datetime
 import logging
 import os
-import re
-import stat
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -266,15 +264,6 @@ class ProjectLink(object):
 
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
-
-    def get_thumb_image_url(self):
-        if self.is_hosted_on_comic():
-            thumb_image_url = ""
-        else:
-            thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file=" + \
-                              projectlink.params["abreviation"] + ".png"
-
-        return thumb_image_url
 
 
 def validate_nounderscores(value):
@@ -813,59 +802,6 @@ class UploadModel(ComicSiteModel):
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
         verbose_name_plural = "uploaded files"
-
-
-class Dataset(ComicSiteModel):
-    """
-    Collection of files
-    """
-    description = models.TextField()
-
-    @property
-    def cleantitle(self):
-        return re.sub('[\[\]/{}., ]+', '', self.title)
-
-    class Meta(ComicSiteModel.Meta):
-        abstract = True
-
-
-class FileSystemDataset(Dataset):
-    """
-    A folder location on disk
-    """
-    folder = models.FilePathField()
-    folder_prefix = "datasets/"  # default initial subfolder to save datasets in, can be overwritten later on
-
-    def save_default(self, firstcreation):
-
-        if firstcreation:
-            # initialize data dir
-            data_dir = self.get_default_data_dir()
-            self.folder = data_dir
-        else:
-            # take possibly edited value from form, keep self.folder.
-            pass
-        self.ensure_dir(self.get_full_folder_path())
-
-    def get_full_folder_path(self):
-        """ Return full path of the folder in which this datasets files reside """
-        data_dir_path = os.path.join(settings.MEDIA_ROOT, self.folder)
-        return data_dir_path
-
-    def get_default_data_dir(self):
-        """ In which dir should this dataset be located by default? Return path relative to MEDIA_ROOT
-        """
-        data_dir_path = os.path.join(self.comicsite.short_name, self.folder_prefix, self.cleantitle)
-        return data_dir_path
-
-    def get_template_tag(self):
-        """ Return the django template tag that can be used in page text to render this dataset on the page"""
-        return "{% dataset " + self.cleantitle + " %}"
-
-    def ensure_dir(self, directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            os.chmod(directory, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)  # refs #142
 
 
 class RegistrationRequestManager(models.Manager):

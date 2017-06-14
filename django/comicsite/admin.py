@@ -774,7 +774,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
         add_standard_permissions(admingroup, "comicsite")
         add_standard_permissions(admingroup, "page")
-        add_standard_permissions(admingroup, "filesystemdataset")
 
         # add current user to admins for this site
         request.user.groups.add(admingroup)

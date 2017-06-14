@@ -25,6 +25,7 @@ services:
     volumes:
       - .git:/app/.git:ro
       - static:/static/
+      - ./django:/app/
     volumes_from:
       - dropbox
 
