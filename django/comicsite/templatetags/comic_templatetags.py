@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import csv
 import datetime
 import logging
@@ -1402,41 +1400,6 @@ class UrlParameterNode(template.Node):
                 self.args['url_parameter']))
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
-
-
-@register.tag(name="all_projects")
-def render_all_projects(parser, token):
-    """ Render an overview of all projects """
-
-    try:
-        projects = ComicSite.objects.non_hidden()
-    except ObjectDoesNotExist as e:
-        errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
-        return TemplateErrorNode(errormsg)
-
-    return AllProjectsNode(projects)
-
-
-class AllProjectsNode(template.Node):
-    """ return html list listing all projects in COMIC
-    """
-
-    def __init__(self, projects):
-        self.projects = projects
-
-    def render(self, context):
-        html = ""
-        for project in self.projects:
-            html += self.project_summary_html(project)
-        return html
-
-    def project_summary_html(self, project):
-        if subdomain_is_projectname():
-            protocol, domainname = settings.MAIN_HOST_NAME.split("//")
-            url = protocol + "//" + project.short_name + "." + domainname
-            return comicsite.views.comic_site_to_html(project, url)
-        else:
-            return comicsite.views.comic_site_to_html(project)
 
 
 @register.tag(name="all_projectlinks")
