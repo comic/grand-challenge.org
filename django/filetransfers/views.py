@@ -10,7 +10,7 @@ from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidde
 from django.shortcuts import get_object_or_404, render
 from six.moves.urllib_parse import unquote
 
-from comicmodels.models import FileSystemDataset, ComicSite, UploadModel, ComicSiteModel
+from comicmodels.models import ComicSite, UploadModel, ComicSiteModel
 # FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
 # Right now I feel as though I am entangeling things.. come back to this later
 from filetransfers.api import prepare_upload, serve_file
@@ -48,27 +48,6 @@ def uploadedfileserve_handler(request, pk):
         return serve_file(request, upload.file, save_as=False)
     else:
         return HttpResponse("You do not have permission to view this.")
-
-
-def download_handler_dataset_file(request, project_name, dataset_title, filename):
-    """offer file for download based on filename and dataset"""
-
-    dataset = FileSystemDataset.objects.get(comicsite__short_name=project_name, title=dataset_title)
-    filefolder = dataset.get_full_folder_path()
-    filepath = os.path.join(filefolder, filename)
-    f = open(filepath, 'r')
-    file = File(f)  # create django file object
-
-    return serve_file(request, file, save_as=True)
-
-
-def download_handler_file(request, filepath):
-    """offer file for download based on filepath relative to django root"""
-
-    f = open(filepath, 'r')
-    file = File(f)  # create django file object
-
-    return serve_file(request, file, save_as=True)
 
 
 def delete_handler(request, pk):
@@ -116,24 +95,6 @@ def can_access(user, path, project_name, override_permission=""):
             return True
         else:
             return False
-    else:
-        return False
-
-
-def _sufficient_permission(needed, granted):
-    """ Return true if granted permission is greater than or equal to needed
-    permission. 
-    
-    """
-    choices = [x[0] for x in CoomicSiteModel.PERMISSIONS_CHOICES]
-
-    if not needed in choices:
-        raise Exeption("input parameters should be one of [%s], found '%s' " % (",".join(choices), needed))
-    if not granted in choices:
-        raise Exeption("input parameters should be one of [%s], found '%s' " % (",".join(choices), granted))
-
-    if ComicSiteModel.PERMISSION_WEIGHTS[needed] >= ComicSiteModel.PERMISSION_WEIGHTS[granted]:
-        return True
     else:
         return False
 
