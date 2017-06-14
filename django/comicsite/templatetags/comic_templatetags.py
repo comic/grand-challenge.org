@@ -551,26 +551,19 @@ class ImageBrowserNode(template.Node):
         return filenames
 
 
-def add_quotes(string):
+def add_quotes(s: str = ''):
     """ add quotes to string if not there
     """
-    if string.startswith("'") or string.startswith("'"):
-        return string
-    else:
-        return "'" + string + "'"
+    s = strip_quotes(s)
+    return "'" + s + "'"
 
 
-def strip_quotes(string):
+def strip_quotes(s: str = ''):
     """ strip outermost quotes from string if there
     """
-
-    stripped = string
-    if string.startswith("'") or string.startswith("'"):
-        stripped = stripped[1:]
-    if string.endswith("'") or string.endswith("'"):
-        stripped = stripped[:-1]
-
-    return stripped
+    if (s[0] == s[-1]) and s.startswith(("'", '"')):
+        return s[1:-1]
+    return s
 
 
 def in_list(needles, haystack):
