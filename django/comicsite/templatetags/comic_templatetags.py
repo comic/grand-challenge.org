@@ -29,6 +29,7 @@ from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
+from comicsite.views import create_HTML_a
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
@@ -238,19 +239,15 @@ class comic_URLNode(defaulttags.URLNode):
         super(comic_URLNode, self).__init__(*args, **kwargs)
 
     def render(self, context):
-
-        # TODO: How to refer to method in this file nicely? This seems a bit cumbersome
-        subdomain_is_projectname = comicsite.templatetags.comic_templatetags.subdomain_is_projectname()
-
         # get the url the default django method would give.
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
 
-        if subdomain_is_projectname and self.view_name.var in ["comicsite.views.site",
-                                                               "comicsite.views.page",
-                                                               "comicsite_signin",
-                                                               "comicsite_signup",
-                                                               "project_serve_file"]:
+        if subdomain_is_projectname() and self.view_name.var in ["comicsite.views.site",
+                                                                 "comicsite.views.page",
+                                                                 "comicsite_signin",
+                                                                 "comicsite_signup",
+                                                                 "project_serve_file"]:
 
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
@@ -327,7 +324,7 @@ def metafooterpages():
     for p in pages:
         if not p.hidden:
             url = reverse('comicsite.views.comicmain', kwargs={'page_title': p.title})
-            if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+            if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
             html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
             html_string += p.display_title == "" and p.title or p.display_title
@@ -948,21 +945,6 @@ class InsertGraphNode(template.Node):
         errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
-    def substitute(self, string, substitutions):
-        """
-        Take each key in the substitutions dict. See if this key exists
-        between double curly braces in string. If so replace with value.
-
-        Example:
-        substitute("my name is {{name}}.",{version:1,name=John})
-        > "my name is John"
-        """
-
-        for key, value in substitutions:
-            string = re.sub("{{" + key + "}}", value, string)
-
-        return string
-
     def render(self, context):
 
         filename_raw = self.args['file']
@@ -1220,13 +1202,18 @@ def render_anode09_result(filename):
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
 
-    fig.gca().plot(variables["x"], variables["smally"], label="nodules < 5mm", gid="small")
-    fig.gca().plot(variables["x"], variables["largey"], label="nodules > 5mm", gid="large")
-    fig.gca().plot(variables["x"], variables["isolatedy"], label="isolated nodules", gid="isolated")
-    fig.gca().plot(variables["x"], variables["vasculary"], label="vascular nodules", gid="vascular")
-    fig.gca().plot(variables["x"], variables["pleuraly"], label="pleural nodules", gid="pleural")
-    fig.gca().plot(variables["x"], variables["fissurey"], label="peri-fissural nodules", gid="fissure")
-    fig.gca().plot(variables["x"], variables["frocy"], label="all nodules", gid="frocy")
+    classes = {
+        'small': 'nodules < 5mm',
+        'large': 'nodules > 5mm',
+        'isolated': 'isolated nodules',
+        'vascular': 'vascular nodules',
+        'pleural': 'pleural nodules',
+        'fissure': 'peri-fissural nodules',
+        'froc': 'all nodules'
+    }
+
+    for key, label in classes.items():
+        fig.gca().plot(variables["x"], variables[key + "y"], label=label, gid=key)
 
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
@@ -1407,9 +1394,8 @@ class UrlParameterNode(template.Node):
 
     def render(self, context):
 
-        # request= context["request"].GET[]
         if self.args['url_parameter'] in context['request'].GET:
-            return context['request'].GET[self.args['url_parameter']]  # FIXME style: is this too much in one line?
+            return context['request'].GET[self.args['url_parameter']]
         else:
             logger.error("Error rendering %s: Parameter '%s' not found in request URL" % (
                 "{%  " + self.args['token'].contents + "%}",
@@ -1445,7 +1431,7 @@ class AllProjectsNode(template.Node):
         return html
 
     def project_summary_html(self, project):
-        if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+        if subdomain_is_projectname():
             protocol, domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" + project.short_name + "." + domainname
             return comicsite.views.comic_site_to_html(project, url)
@@ -1796,7 +1782,7 @@ class AllProjectLinksNode(template.Node):
     def project_summary_html(self, project):
         """ get a link to this project """
 
-        if comicsite.templatetags.comic_templatetags.subdomain_is_projectname():
+        if subdomain_is_projectname():
             protocol, domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" + project.short_name + "." + domainname
             html = comicsite.views.comic_site_to_grand_challenge_html(project, url)
@@ -1910,9 +1896,9 @@ class RegistrationFormNode(template.Node):
             if pending:
                 msg = pending[0].status_to_string()
             else:
-                msg = makeHTMLLink(register_url, "Request to participate in " + project.short_name)
+                msg = create_HTML_a(register_url, "Request to participate in " + project.short_name)
         else:
-            msg = makeHTMLLink(register_url, "Participate in " + project.short_name)
+            msg = create_HTML_a(register_url, "Participate in " + project.short_name)
         return msg
 
 
@@ -1934,10 +1920,6 @@ def HTML_encode_django_chars(string):
     string = string.replace("}", "&#125;")
     string = string.replace("%", "&#37;")
     return string
-
-
-def makeHTMLLink(url, linktext):
-    return "<a href=\"" + url + "\">" + linktext + "</a>"
 
 
 def makeErrorMsgHtml(text):
