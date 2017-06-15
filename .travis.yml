@@ -27,7 +27,7 @@ script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
   pip install coverage
-  && coverage run manage.py test
+  && coverage run --source='.' manage.py test
   "
 
 after_success:
