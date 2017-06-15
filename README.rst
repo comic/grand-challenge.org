@@ -30,7 +30,7 @@ Testing
 
 You can run the tests by invoking::
 
-    python django/manage.py test
+    python app/manage.py test
 
 Getting the framework up and running
 ------------------------------------
