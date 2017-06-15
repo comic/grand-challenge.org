@@ -6,7 +6,6 @@ engines:
     enabled: true
     config:
       languages:
-      - ruby
       - javascript
       - python
       - php
@@ -17,6 +16,8 @@ engines:
   phpmd:
     enabled: true
   radon:
+    enabled: true
+  pep8:
     enabled: true
 ratings:
   paths:
