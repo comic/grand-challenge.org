@@ -25,10 +25,10 @@ install:
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  pip install coverage==4.3.4
-  && pip install codeclimate-test-reporter
+  pip install coveralls
   && coverage run manage.py test
-  && codeclimate-test-reporter
+  && export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+  && coveralls
   "
 
 after_script:

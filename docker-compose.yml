@@ -21,11 +21,11 @@ services:
       - memcached
       - dropbox
     environment:
-      CODECLIMATE_REPO_TOKEN: "${CC_TEST_REPORTER_ID}"
+      COVERALLS_REPO_TOKEN: "${COVERALLS_REPO_TOKEN}"
     volumes:
-      - .git:/app/.git:ro
       - static:/static/
-      - ./django:/app/
+      - .git:/.git:ro
+      - ./app:/app/
     volumes_from:
       - dropbox
 
