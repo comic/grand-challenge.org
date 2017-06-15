@@ -32,7 +32,7 @@ script: >-
   && ./cc-test-reporter before-build
   && coverage run manage.py test
   && coverage xml
-  && if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build; fi
+  && if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build -d; fi
   "
 
 after_script:
