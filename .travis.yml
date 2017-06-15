@@ -31,7 +31,9 @@ script: >-
   "
 
 after_success:
-  - coveralls --base_dir /
+  - mv app/.coverage .coverage.docker
+  - coverage combine
+  - coveralls
 
 after_script:
   - docker-compose down
