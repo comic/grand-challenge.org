@@ -18,6 +18,7 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
+  - pip install coveralls
 
 install:
   - docker-compose up --build -d
@@ -25,11 +26,12 @@ install:
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  pip install coveralls
+  pip install coverage
   && coverage run manage.py test
-  && export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
-  && coveralls
   "
+
+after_success:
+  - cd app && coveralls
 
 after_script:
   - docker-compose down
