@@ -19,6 +19,7 @@ services:
     depends_on:
       - db
       - memcached
+      - dropbox
     environment:
       CC_TEST_REPORTER_ID: "${CC_TEST_REPORTER_ID}"
     volumes:
@@ -46,6 +47,11 @@ services:
     extends:
       file: docker-compose.common.yml
       service: memcached
+
+  dropbox:
+    extends:
+      file: docker-compose.common.yml
+      service: dropbox
 
 volumes:
   static:
