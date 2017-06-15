@@ -18,7 +18,7 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - pip install coveralls
+  - pip install python-coveralls
 
 install:
   - docker-compose up --build -d
@@ -31,7 +31,7 @@ script: >-
   "
 
 after_success:
-  - cd app && coveralls
+  - coveralls --base_dir /
 
 after_script:
   - docker-compose down
