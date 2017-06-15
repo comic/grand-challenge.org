@@ -25,10 +25,12 @@ install:
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  pip install coverage==4.3.4
-  && pip install codeclimate-test-reporter
+  curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  && chmod +x ./cc-test-reporter
+  && pip install coverage
+  && ./cc-test-reporter before-build
   && coverage run manage.py test
-  && codeclimate-test-reporter
+  && ./cc-test-reporter after-build
   "
 
 after_script:
