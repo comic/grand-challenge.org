@@ -21,8 +21,7 @@ services:
       - memcached
       - dropbox
     environment:
-      CC_TEST_REPORTER_ID: "${CC_TEST_REPORTER_ID}"
-      TRAVIS_PULL_REQUEST: "${TRAVIS_PULL_REQUEST}"
+      COVERALLS_REPO_TOKEN: "${COVERALLS_REPO_TOKEN}"
     volumes:
       - static:/static/
       - .git:/.git:ro
