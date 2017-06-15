@@ -27,9 +27,11 @@ script: >-
   bash -c "
   curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   && chmod +x ./cc-test-reporter
+  && export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
   && pip install coverage
   && ./cc-test-reporter before-build
   && coverage run manage.py test
+  && coverage xml
   && ./cc-test-reporter after-build
   "
 
