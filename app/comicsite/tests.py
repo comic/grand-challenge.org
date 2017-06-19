@@ -143,6 +143,12 @@ def is_subset(listA, listB):
     all(item in listA for item in listB)
 
 
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+@override_settings(
+    PASSWORD_HASHERS=('django.contrib.auth.hashers.SHA1PasswordHasher',))
+@override_settings(DEFAULT_FILE_STORAGE="comicsite.storage.MockStorage")
+@override_settings(SITE_ID=1)
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """
@@ -505,32 +511,6 @@ class ComicframeworkTestCase(TestCase):
         sm.process_request(request)
         mm.process_request(request)
         pm.process_request(request)
-
-
-# =============================================================================
-# Decorators applied to the ComicframeworkTestCase class: see 
-# https://docs.djangoproject.com/en/1.4/topics/testing/#django.test.utils.override_settings
-
-# don't send real emails, keep them in memory
-ComicframeworkTestCase = override_settings(EMAIL_BACKEND='django.core.mail.'
-                                                         'backends.locmem.EmailBackend'
-                                           )(ComicframeworkTestCase)
-
-# use fast, non-safe password hashing to speed up testing
-ComicframeworkTestCase = override_settings(PASSWORD_HASHERS=('django.contrib.'
-                                                             'auth.hashers.SHA1PasswordHasher',)
-                                           )(ComicframeworkTestCase)
-
-# Use a fake storage provider which does not save anything to disk, and can 
-# mock reading files, returning some fake content
-ComicframeworkTestCase = override_settings(DEFAULT_FILE_STORAGE=
-                                           "comicsite.storage.MockStorage"
-                                           )(ComicframeworkTestCase)
-
-# SITE_ID is used to look in the database for the name and domain of the current
-# site. This can be different in different settings files, but for testing do
-# not depend on any custom content of the database, so just use 1, the default. 
-ComicframeworkTestCase = override_settings(SITE_ID=1)(ComicframeworkTestCase)
 
 
 class CreateProjectTest(ComicframeworkTestCase):
