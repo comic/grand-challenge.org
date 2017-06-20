@@ -9,5 +9,7 @@ python-memcached==1.58
 social-auth-app-django==1.2.0
 rollbar==0.13.11
 xlrd==0.9.4
+# Dev Requirements
 pytest-django
 pytest-cov
+factory_boy
