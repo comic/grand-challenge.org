@@ -1,6 +1,10 @@
 from evaluation.models import Job
 from comicmodels.models import UploadModel
 from comicsite.tests import ComicframeworkTestCase
+import tempfile
+
+
+
 
 
 class EvaluationModelTest(ComicframeworkTestCase):
