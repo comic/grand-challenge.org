@@ -27,6 +27,8 @@ urlpatterns = patterns('',
 
                        url(r'^filetransfers/', include('filetransfers.urls')),
 
+                       url(r'^evaluation/', include('evaluation.urls')),
+
                        # Used for logging in and managing profiles. This is done on the framework
                        # level because it is too hard to get this all under each project
                        url(r'^accounts/', include('profiles.urls')),
