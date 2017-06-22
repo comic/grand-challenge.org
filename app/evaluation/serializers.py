@@ -10,6 +10,10 @@ class ResultSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
+    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    challenge = serializers.SlugRelatedField(read_only=True,
+                                             slug_field='short_name')
+
     class Meta:
         model = Submission
         fields = ('user', 'challenge', 'created')

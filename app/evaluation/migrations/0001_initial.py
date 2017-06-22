@@ -2,18 +2,18 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import evaluation.models
-import uuid
 import social_django.fields
 from django.conf import settings
 import django.db.models.deletion
+import evaluation.models
+import uuid
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('comicmodels', '0007_auto_20170614_1134'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -50,6 +50,7 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('metrics', social_django.fields.JSONField(default=dict)),
+                ('public', models.BooleanField(default=True)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('method', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='evaluation.Method')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),

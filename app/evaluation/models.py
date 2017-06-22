@@ -1,8 +1,17 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
 from social_django.fields import JSONField
+
+
+@receiver(models.signals.post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
 
 
 class UUIDModel(models.Model):
@@ -34,6 +43,8 @@ class Result(UUIDModel):
                                on_delete=models.SET_NULL)
 
     metrics = JSONField(default=dict)
+
+    public = models.BooleanField(default=True)
 
 
 class Method(UUIDModel):
