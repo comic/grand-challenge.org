@@ -1,9 +1,27 @@
 from rest_framework import serializers
 
-from .models import Result
+from .models import Result, Submission, Job, Method
 
 
 class ResultSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Result
         fields = ('user', 'challenge', 'method', 'metrics')
+
+
+class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Submission
+        fields = ('user', 'challenge', 'created')
+
+
+class JobSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Job
+        fields = ('submission', 'method', 'status', 'status_history')
+
+
+class MethodSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Method
+        fields = ('challenge', 'image', 'version')

@@ -36,18 +36,6 @@ class Result(UUIDModel):
     metrics = JSONField(default=dict)
 
 
-def challenge_method_path(instance, filename):
-    """
-    Determine where the method source will be uploaded to, relative to
-    MEDIA_ROOT
-    :param instance: The instance of the model for the upload
-    :param filename: The filename as given by the user
-    :return: The upload path
-    """
-    return 'evaluation/challenge_{0}/method/version_{1}/{2}' \
-        .format(instance.challenge.id, instance.version, filename)
-
-
 class Method(UUIDModel):
     """
     This model stores the methods for performing an evaluation
@@ -59,7 +47,7 @@ class Method(UUIDModel):
                              null=True,
                              on_delete=models.SET_NULL)
 
-    source = models.FileField(upload_to=challenge_method_path)
+    image = models.CharField(max_length=100)
 
     version = models.PositiveIntegerField(default=0)
 

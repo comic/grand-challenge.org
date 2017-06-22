@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import evaluation.models
-import social_django.fields
 import uuid
+import social_django.fields
 from django.conf import settings
 import django.db.models.deletion
 
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('source', models.FileField(upload_to=evaluation.models.challenge_method_path)),
+                ('image', models.CharField(max_length=100)),
                 ('version', models.PositiveIntegerField(default=0)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
