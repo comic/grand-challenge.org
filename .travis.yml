@@ -24,7 +24,7 @@ install:
 
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=.";
-  if [ $(docker inspect -f '{{.State.ExitCode}}' $(docker-compose ps -q web)) == 0 ]; then true; else false; fi;
+  if [ $(docker inspect -f '{{.State.ExitCode}}' $(docker ps -aqf name=app_web_run_1)) == 0 ]; then true; else false; fi;
 
 after_success:
   - mv app/.coverage .coverage.docker
