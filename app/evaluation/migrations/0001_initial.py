@@ -2,11 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import social_django.fields
 from django.conf import settings
 import django.db.models.deletion
-import evaluation.models
+import social_django.fields
 import uuid
+import evaluation.models
 
 
 class Migration(migrations.Migration):
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='submission',
-            unique_together=set([('user', 'challenge', 'created')]),
+            unique_together=set([('user', 'challenge', 'created', 'file')]),
         ),
         migrations.AlterUniqueTogether(
             name='method',

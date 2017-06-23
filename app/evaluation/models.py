@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 from social_django.fields import JSONField
 
 
+# TODO: generate an auth token for all users
 @receiver(models.signals.post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
@@ -75,8 +76,10 @@ def challenge_submission_path(instance, filename):
     :param filename: The given filename
     :return: The path that the file will be uploaded to
     """
-    return 'evaluation/challenge_{0}/submission/user_{1}/{2}/{3}' \
-        .format(instance.challenge.id, instance.user.id, instance.created,
+    return 'evaluation/{0}/submission/{1}/{2}/{3}' \
+        .format(instance.challenge.short_name,
+                instance.user.username,
+                instance.created.strftime('%Y%m%d%H%M%S'),
                 filename)
 
 
@@ -95,7 +98,7 @@ class Submission(UUIDModel):
 
     class Meta:
         # Ensure that there is only 1 submission at a time for each challenge
-        unique_together = (("user", "challenge", "created"),)
+        unique_together = (("user", "challenge", "created", "file"),)
 
 
 class Job(UUIDModel):

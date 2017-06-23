@@ -34,11 +34,12 @@ def test_result_list(client, test_input, expected):
 
 @pytest.mark.django_db
 def test_token_generation(client):
+    # Check that we cannot get a token
     response = client.get(TOKEN_URL)
     assert response.status_code == 405
 
+    # Check that we can get the token for a new user, using post
     user = UserFactory()
-
     response = client.post(TOKEN_URL,
                            {'username': user.username,
                             'password': 'testpasswd'})
@@ -50,27 +51,36 @@ def test_token_generation(client):
 
 @pytest.mark.django_db
 def test_upload_file(client):
+    # Get the users token
     user = UserFactory()
     response = client.post(TOKEN_URL,
                            {'username': user.username,
                             'password': 'testpasswd'})
     token = response.data['token']
-    # TODO: make token authorization work
 
+    # Upload with token authorisation
+    with open(
+            '/tmp/google-analytics-tracking.js.template',
+            'rb') as f:
+        response = client.post('/evaluation/api/v1/submissions/',
+                               {'file': f, 'challenge': 'comic'},
+                               format='multipart',
+                               HTTP_AUTHORIZATION='Token ' + token)
+    assert response.status_code == 201
 
+    # Upload with session authorisation
     client.login(username=user.username, password='testpasswd')
-    # TODO: get the challenge name from the URL
     with open(
             '/tmp/google-analytics-tracking.js.template',
             'rb') as f:
         response = client.post('/evaluation/api/v1/submissions/',
                                {'file': f, 'challenge': 'comic'},
                                format='multipart')
-
     assert response.status_code == 201
 
     submissions = Submission.objects.all()
-
-    assert len(submissions) == 1
+    assert len(submissions) == 2
 
     # TODO: Validate the file and path
+    # TODO: Get the challenge name from the URL
+    # TODO: Check that the user is a participant of that challenge
