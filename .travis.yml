@@ -17,7 +17,7 @@ before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - pip install coveralls
+  - pip install coveralls codecov
 
 install:
   - docker-compose up --build -d
@@ -30,6 +30,7 @@ after_success:
   - mv app/.coverage .coverage.docker
   - coverage combine
   - coveralls
+  - codecov
 
 after_script:
   - echo $?
