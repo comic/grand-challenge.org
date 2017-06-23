@@ -25,7 +25,8 @@ install:
 script: >-
   docker-compose run web dockerize -wait tcp://db:3306 -timeout 120s
   bash -c "
-  py.test --cov=.
+  py.test --cov=.;
+  echo $?
   "
 
 after_success:
@@ -34,4 +35,5 @@ after_success:
   - coveralls
 
 after_script:
+  - echo $?
   - docker-compose down

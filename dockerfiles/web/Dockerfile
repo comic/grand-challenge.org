@@ -15,7 +15,7 @@ RUN apt-get update && \
 
 # We need to wait for the database to be available, which happens
 # some time after the container is started. Dockerize allows us to do this.
-ENV DOCKERIZE_VERSION v0.4.0
+ENV DOCKERIZE_VERSION v0.5.0
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
