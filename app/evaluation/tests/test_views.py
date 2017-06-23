@@ -1,6 +1,9 @@
 import json
+import os
+import tempfile
 
 import pytest
+from django.conf import settings
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
@@ -51,6 +54,11 @@ def test_token_generation(client):
 
 @pytest.mark.django_db
 def test_upload_file(client):
+
+    [fd, submission_file] = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as f:
+        f.write('A'*10000000)
+
     # Get the users token
     user = UserFactory()
     response = client.post(TOKEN_URL,
@@ -59,9 +67,7 @@ def test_upload_file(client):
     token = response.data['token']
 
     # Upload with token authorisation
-    with open(
-            '/tmp/google-analytics-tracking.js.template',
-            'rb') as f:
+    with open(submission_file, 'rb') as f:
         response = client.post('/evaluation/api/v1/submissions/',
                                {'file': f, 'challenge': 'comic'},
                                format='multipart',
@@ -70,9 +76,7 @@ def test_upload_file(client):
 
     # Upload with session authorisation
     client.login(username=user.username, password='testpasswd')
-    with open(
-            '/tmp/google-analytics-tracking.js.template',
-            'rb') as f:
+    with open(submission_file, 'rb') as f:
         response = client.post('/evaluation/api/v1/submissions/',
                                {'file': f, 'challenge': 'comic'},
                                format='multipart')
@@ -80,6 +84,16 @@ def test_upload_file(client):
 
     submissions = Submission.objects.all()
     assert len(submissions) == 2
+
+    # Cleanup
+    os.remove(submission_file)
+    for submission in submissions:
+        filepath = submission.file.name
+        submission.file.delete()
+        try:
+            os.removedirs(settings.MEDIA_ROOT + os.path.split(filepath)[0])
+        except OSError:
+            pass
 
     # TODO: Validate the file and path
     # TODO: Get the challenge name from the URL

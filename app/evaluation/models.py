@@ -96,10 +96,6 @@ class Submission(UUIDModel):
 
     file = models.FileField(upload_to=challenge_submission_path)
 
-    class Meta:
-        # Ensure that there is only 1 submission at a time for each challenge
-        unique_together = (("user", "challenge", "created", "file"),)
-
 
 class Job(UUIDModel):
     """

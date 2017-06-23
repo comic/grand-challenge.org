@@ -507,11 +507,8 @@ class ComicSite(models.Model):
         user.groups.remove(group)
 
     class Meta:
-        # 'comicsite' was renamed to 'project' but acutally renaming all classes
-        # is a ****load of work. Keeping it a superficial changes for now, so
-        # admins will at least nog see the workd 'comicsite' as often.
-        verbose_name = "project"
-        verbose_name_plural = "projects"
+        verbose_name = "challenge"
+        verbose_name_plural = "challenges"
 
 
 class ComicSiteModel(models.Model):
@@ -668,6 +665,9 @@ class ProjectMetaData(models.Model):
         """
         return "ProjectMetadata '{0}'. Contact: {1}".format(self.title, self.contact_email)
 
+    class Meta:
+        verbose_name = "project metadata"
+        verbose_name_plural = "project metadata"
 
 class Page(ComicSiteModel):
     """ A single editable page containing html and maybe special output plugins """
