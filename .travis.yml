@@ -20,8 +20,8 @@ before_install:
   - pip install coveralls
 
 script: >-
-  docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=.;";
-  exit $(docker inspect -f '{{.State.ExitCode}}' $(docker-compose ps -q web));
+  docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=.";
+  if [ $(docker inspect -f '{{.State.ExitCode}}' $(docker-compose ps -q web)) == 0 ]; then true; else false; fi;
 
 after_success:
   - mv app/.coverage .coverage.docker
