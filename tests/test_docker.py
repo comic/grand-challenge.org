@@ -1,48 +1,38 @@
 import subprocess
 
 
-def test_docker_registry_push():
-    response = subprocess.call(['docker', 'pull', 'alpine:latest'])
-    assert response == 0
+def docker_command(args):
+    """
+    Runs a docker command
+    :param args: Arguments to pass to the docker command
+    :return: Subprocess response
+    """
+    return subprocess.call(['docker'] + args)
 
-    response = subprocess.call(
-        ['docker', 'tag', 'alpine:latest', 'localhost:5000/my-alpine'])
-    assert response == 0
+
+def test_docker_registry_push():
+    test_image = 'alpine:latest'
+    registry_host = 'localhost:5000'
+    registry_image = registry_host + '/' + test_image
+
+    assert docker_command(['pull', test_image]) == 0
+
+    assert docker_command(['tag', test_image, registry_image]) == 0
 
     # This should fail as we have basic auth inplace
-    response = subprocess.call(
-        ['docker', 'push', 'localhost:5000/my-alpine']
-    )
-    assert response == 1
+    assert docker_command(['push', registry_image]) == 1
 
     # Authenticate
-    response = subprocess.call(
-        ['docker', 'login', '-u', 'testuser', '-p', 'testpassword', 'localhost:5000']
-    )
-    assert response == 0
+    assert docker_command(
+        ['login', '-u', 'testuser', '-p', 'testpassword', registry_host]) == 0
 
     # Now it should work
-    response = subprocess.call(
-        ['docker', 'push', 'localhost:5000/my-alpine']
-    )
-    assert response == 0
+    assert docker_command(['push', registry_image]) == 0
 
-    response = subprocess.call(
-        ['docker', 'image', 'remove', 'alpine:latest']
-    )
-    assert response == 0
+    assert docker_command(['image', 'remove', test_image]) == 0
 
-    response = subprocess.call(
-        ['docker', 'image', 'remove', 'localhost:5000/my-alpine']
-    )
-    assert response == 0
+    assert docker_command(['image', 'remove', registry_image]) == 0
 
-    response = subprocess.call(
-        ['docker', 'image', 'pull', 'localhost:5000/my-alpine']
-    )
-    assert response == 0
+    assert docker_command(['image', 'pull', registry_image]) == 0
 
-    response = subprocess.call(
-        ['docker', 'logout', 'localhost:5000']
-    )
-    assert response == 0
+    assert docker_command(['logout', registry_host]) == 0
