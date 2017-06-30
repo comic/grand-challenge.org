@@ -28,7 +28,8 @@ script:
 
 after_success:
   - mv app/.coverage .coverage.app
-  - mv .coverage .coverage.docker
+  - cat .coverage
+  - cat .coverage.app
   - coverage combine
   - cat .coverage
   - codecov
