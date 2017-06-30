@@ -27,10 +27,7 @@ script:
   - pytest --ignore=app --cov-report= --cov=.
 
 after_success:
-  - cat .coverage
-  - cat .coverage.docker
   - coverage combine
-  - cat .coverage
   - codecov
 
 after_script:
