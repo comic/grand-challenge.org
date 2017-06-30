@@ -42,4 +42,10 @@ services:
 
   registry:
     image: registry:2
+    environment:
+     - REGISTRY_HTTP_TLS_CERTIFICATE=/etc/ssl/certs/localhost.crt
+     - REGISTRY_HTTP_TLS_KEY=/etc/ssl/private/localhost.key
+     - REGISTRY_AUTH=htpasswd
+     - REGISTRY_AUTH_HTPASSWD_REALM="Registry Realm"
+     - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
     restart: always
