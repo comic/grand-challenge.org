@@ -50,5 +50,12 @@ services:
       file: docker-compose.common.yml
       service: dropbox
 
+  registry:
+    extends:
+      file: docker-compose.common.yml
+      service: registry
+    ports:
+      - "5000:5000"
+
 volumes:
   static:

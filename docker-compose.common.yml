@@ -39,3 +39,7 @@ services:
     volumes:
       - /srv/public/Dropbox/:/dbox/Dropbox/
     restart: always
+
+  registry:
+    image: registry:2
+    restart: always

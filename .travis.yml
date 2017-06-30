@@ -22,12 +22,13 @@ before_install:
 install:
   - docker-compose up --build -d
 
-script: >-
-  docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=.";
-  if [ $(docker inspect -f '{{.State.ExitCode}}' $(docker ps -aqf name=comicdjango_web_run_1)) == 0 ]; then true; else false; fi;
+script:
+  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=."; if [ $(docker inspect -f '{{.State.ExitCode}}' $(docker ps -aqf name=comicdjango_web_run_1)) == 0 ]; then true; else false; fi;
+  - pytest --ignore=app --cov-report= --cov=.
 
 after_success:
-  - mv app/.coverage .coverage.docker
+  - mv app/.coverage .coverage.app
+  - mv .coverage .coverage.docker
   - coverage combine
   - codecov
 
