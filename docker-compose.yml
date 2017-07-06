@@ -20,6 +20,7 @@ services:
       - db
       - memcached
       - dropbox
+      - celery_worker
     volumes:
       - static:/static/
       - ./app:/app/
