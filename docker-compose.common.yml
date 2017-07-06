@@ -49,3 +49,10 @@ services:
      - REGISTRY_AUTH_HTPASSWD_REALM="Registry Realm"
      - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
     restart: always
+
+  rabbitmq:
+    image: rabbitmq:3.6-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    restart: always

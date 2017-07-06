@@ -63,6 +63,27 @@ services:
       - ssl_private:/etc/ssl/private/:ro
       - ./tests/auth:/auth/
 
+  rabbitmq:
+    extends:
+      file: docker-compose.common.yml
+      service: rabbitmq
+    ports:
+      - "8080:15672"
+
+  celery_worker:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    command: celery -A comic worker -l info
+    links:
+      - db:mysql
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./app:/app/
+
+
 volumes:
   static:
   ssl_certs:
