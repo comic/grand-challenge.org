@@ -2,11 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import social_django.fields
-import django.db.models.deletion
 import evaluation.models
 import uuid
+import django.db.models.deletion
 from django.conf import settings
+import social_django.fields
 
 
 class Migration(migrations.Migration):
@@ -37,7 +37,9 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.CharField(max_length=100)),
+                ('image_repository', models.CharField(max_length=128)),
+                ('image_tag', models.CharField(max_length=64)),
+                ('image_sha256', models.CharField(max_length=64)),
                 ('version', models.PositiveIntegerField(default=0)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),

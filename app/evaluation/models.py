@@ -59,7 +59,11 @@ class Method(UUIDModel):
                              null=True,
                              on_delete=models.SET_NULL)
 
-    image = models.CharField(max_length=100)
+    image_repository = models.CharField(max_length=128)
+
+    image_tag = models.CharField(max_length=64)
+
+    image_sha256 = models.CharField(max_length=64)
 
     version = models.PositiveIntegerField(default=0)
 
@@ -77,8 +81,8 @@ def challenge_submission_path(instance, filename):
     :return: The path that the file will be uploaded to
     """
     return 'evaluation/{0}/submission/{1}/{2}/{3}' \
-        .format(instance.challenge.short_name,
-                instance.user.username,
+        .format(instance.challenge.id,
+                instance.user.id,
                 instance.created.strftime('%Y%m%d%H%M%S'),
                 filename)
 
