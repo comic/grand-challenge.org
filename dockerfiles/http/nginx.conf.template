@@ -27,7 +27,7 @@ http {
   ssl_session_cache shared:SSL:10m;
 
   upstream app_server {
-    server web:8000 fail_timeout=0;
+    server web:8000;
   }
 
   server {
