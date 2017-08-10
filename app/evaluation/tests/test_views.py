@@ -7,8 +7,8 @@ from django.conf import settings
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from .factories import UserFactory
-from ..models import Submission
+from evaluation.tests.factories import UserFactory
+from evaluation.models import Submission
 
 TOKEN_URL = '/evaluation/api-token-auth/'
 

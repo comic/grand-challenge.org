@@ -1,4 +1,4 @@
-from .factories import SubmissionFactory
+from evaluation.tests.factories import SubmissionFactory
 
 
 def test_submission():

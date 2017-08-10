@@ -1,25 +1,20 @@
-from rest_framework import generics
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.viewsets import ModelViewSet
 
 from comicmodels.models import ComicSite
-from .models import Result, Submission, Job, Method
-from .serializers import ResultSerializer, SubmissionSerializer, \
-    JobSerializer, \
-    MethodSerializer
+from evaluation.models import Result, Submission, Job, Method
+from evaluation.serializers import ResultSerializer, SubmissionSerializer, \
+    JobSerializer, MethodSerializer
 
 
-class ResultList(generics.ListCreateAPIView):
+class ResultViewSet(ModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class ResultDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
-
-
-class SubmissionList(generics.ListCreateAPIView):
+class SubmissionViewSet(ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
     parser_classes = (MultiPartParser, FormParser,)
@@ -32,11 +27,13 @@ class SubmissionList(generics.ListCreateAPIView):
                         file=self.request.data.get('file'))
 
 
-class JobList(generics.ListAPIView):
+class JobViewSet(ModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class MethodList(generics.ListCreateAPIView):
+class MethodViewSet(ModelViewSet):
     queryset = Method.objects.all()
     serializer_class = MethodSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
