@@ -15,7 +15,9 @@ http {
   default_type application/octet-stream;
 
   access_log /var/log/nginx/access.log combined;
+  
   sendfile ${SENDFILE_STATUS};
+  sendfile_max_chunk 512k;
 
   # SSL
   ssl_certificate /etc/ssl/certs/${SERVER_NAME}.crt;
