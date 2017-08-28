@@ -131,5 +131,7 @@ class Job(UUIDModel):
 
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES,
                                               default=INACTIVE)
+
     status_history = JSONField(default=dict)
+
     output = models.TextField()
