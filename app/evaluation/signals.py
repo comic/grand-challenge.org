@@ -19,5 +19,7 @@ def create_evaluation_job(sender: Submission, instance: Submission = None,
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender: User, instance: User = None,
                       created: bool = False, **kwargs):
-    if created:
+    # Ignore the anonymous user which is created by userena on initial
+    # migration
+    if created and instance.pk != settings.ANONYMOUS_USER_ID:
         Token.objects.create(user=instance)
