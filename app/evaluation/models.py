@@ -8,13 +8,6 @@ from rest_framework.authtoken.models import Token
 from social_django.fields import JSONField
 
 
-# TODO: generate an auth token for all users
-@receiver(models.signals.post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-
-
 class UUIDModel(models.Model):
     """
     Abstract class that consists of a UUID primary key, created and modified

@@ -1,5 +1,5 @@
 from comic.celery import debug_task
-from evaluation.tasks import start_sibling_container
+from evaluation.tasks import evaluate_submission
 
 
 def test_debug_task():
@@ -10,5 +10,5 @@ def test_debug_task():
 
 
 def test_start_sibling_container():
-    res = start_sibling_container.delay()
+    res = evaluate_submission.delay()
     assert res.get(timeout=10) == 'hello world\n'

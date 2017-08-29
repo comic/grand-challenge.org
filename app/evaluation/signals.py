@@ -16,6 +16,7 @@ def create_evaluation_job(sender: Submission, instance: Submission = None,
         evaluate_submission.delay()
 
 
+# TODO: generate an auth token for all users
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender: User, instance: User = None,
                       created: bool = False, **kwargs):
