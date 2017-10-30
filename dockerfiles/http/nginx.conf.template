@@ -1,12 +1,12 @@
 user nginx;
-worker_processes 1;
+worker_processes auto;
 
 error_log /var/log/nginx/error.log;
 pid /var/run/nginx.pid;
 
 events {
   worker_connections 1024; # increase if you have lots of clients
-  accept_mutex off; # set to 'on' if nginx worker_processes > 1
+  accept_mutex on; # set to 'off' if nginx worker_processes == 1
   use epoll;
 }
 
@@ -15,7 +15,9 @@ http {
   default_type application/octet-stream;
 
   access_log /var/log/nginx/access.log combined;
+  
   sendfile ${SENDFILE_STATUS};
+  sendfile_max_chunk 512k;
 
   # SSL
   ssl_certificate /etc/ssl/certs/${SERVER_NAME}.crt;
@@ -27,7 +29,7 @@ http {
   ssl_session_cache shared:SSL:10m;
 
   upstream app_server {
-    server web:8000 fail_timeout=0;
+    server web:8000;
   }
 
   server {
