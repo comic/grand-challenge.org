@@ -85,6 +85,14 @@ services:
       - ./app:/app/
       - /var/run/docker.sock:/var/run/docker.sock
 
+  flower:
+    image:  crgwbr/docker-celery-flower
+    ports:
+      - "5555:5555"
+    links:
+      - rabbitmq
+    restart: always
+
 
 volumes:
   static:

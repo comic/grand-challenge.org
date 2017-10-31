@@ -2,18 +2,18 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import evaluation.models
-import uuid
-import django.db.models.deletion
 from django.conf import settings
+import uuid
 import social_django.fields
+import evaluation.models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comicmodels', '0008_auto_20170623_1341'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('comicmodels', '0008_auto_20170623_1341'),
     ]
 
     operations = [
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('status', models.PositiveSmallIntegerField(default=0, choices=[(0, 'Inactive'), (1, 'Queued'), (2, 'Running'), (3, 'Success'), (4, 'Error'), (5, 'Cancelled')])),
+                ('status', models.PositiveSmallIntegerField(default=0, choices=[(0, 'The task is waiting for execution'), (1, 'The task has been started'), (2, 'The task is to be retried, possibly because of failure'), (3, 'The task raised an exception, or has exceeded the retry limit'), (4, 'The task executed successfully'), (5, 'The task was cancelled')])),
                 ('status_history', social_django.fields.JSONField(default=dict)),
                 ('output', models.TextField()),
             ],
@@ -62,12 +62,26 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='ResultScreenshot',
+            fields=[
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('modified', models.DateTimeField(auto_now=True)),
+                ('image', models.ImageField(upload_to=evaluation.models.result_screenshot_path)),
+                ('result', models.ForeignKey(to='evaluation.Result')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
             name='Submission',
             fields=[
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('file', models.FileField(upload_to=evaluation.models.challenge_submission_path)),
+                ('description', models.FileField(upload_to=evaluation.models.challenge_submission_path)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],

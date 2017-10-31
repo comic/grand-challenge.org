@@ -12,8 +12,9 @@ from evaluation.tasks import evaluate_submission
 def create_evaluation_job(sender: Submission, instance: Submission = None,
                           created: bool = False, **kwargs):
     if created:
-        Job.objects.create()
-        evaluate_submission.delay()
+        evaluation_job = Job.objects.create(submission_id=instance.id)
+        evaluate_submission.apply_async(task_id=evaluation_job.id,
+                                        kwargs={'job_id': evaluation_job.id})
 
 
 # TODO: generate an auth token for all users

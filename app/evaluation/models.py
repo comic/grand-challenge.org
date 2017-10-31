@@ -1,10 +1,7 @@
 import uuid
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
 from social_django.fields import JSONField
 
 
@@ -23,7 +20,7 @@ class UUIDModel(models.Model):
 
 class Result(UUIDModel):
     """
-    This model stores individual results for a challenges
+    Stores individual results for a challenges
     """
     user = models.ForeignKey(User,
                              null=True,
@@ -41,9 +38,26 @@ class Result(UUIDModel):
     public = models.BooleanField(default=True)
 
 
+def result_screenshot_path(instance, filename):
+    return 'evaluation/{0}/screenshots/{1}/{2}' \
+        .format(instance.challenge.id,
+                instance.result.id,
+                filename)
+
+
+class ResultScreenshot(UUIDModel):
+    """
+    Stores a screenshot that is generated during an evaluation
+    """
+    result = models.ForeignKey('Result',
+                               on_delete=models.CASCADE)
+
+    image = models.ImageField(upload_to=result_screenshot_path)
+
+
 class Method(UUIDModel):
     """
-    This model stores the methods for performing an evaluation
+    Stores the methods for performing an evaluation
     """
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
@@ -65,14 +79,6 @@ class Method(UUIDModel):
 
 
 def challenge_submission_path(instance, filename):
-    """
-    Determine where the uploaded submission should be stored.
-    Will be created relative to MEDIA_ROOT.
-
-    :param instance: The instance of the model
-    :param filename: The given filename
-    :return: The path that the file will be uploaded to
-    """
     return 'evaluation/{0}/submission/{1}/{2}/{3}' \
         .format(instance.challenge.id,
                 instance.user.id,
@@ -82,7 +88,7 @@ def challenge_submission_path(instance, filename):
 
 class Submission(UUIDModel):
     """
-    This model stores files for evaluation
+    Stores files for evaluation
     """
     user = models.ForeignKey(User,
                              null=True,
@@ -93,25 +99,31 @@ class Submission(UUIDModel):
 
     file = models.FileField(upload_to=challenge_submission_path)
 
+    description = models.FileField(upload_to=challenge_submission_path)
+
 
 class Job(UUIDModel):
     """
-    This model stores information about a job for a given upload
+    Stores information about a job for a given upload
     """
-    INACTIVE = 0
-    QUEUED = 1
-    RUNNING = 2
-    SUCCESS = 3
-    ERROR = 4
+
+    # The job statuses come directly from celery.result.AsyncResult.status:
+    # http://docs.celeryproject.org/en/latest/reference/celery.result.html
+    PENDING = 0
+    STARTED = 1
+    RETRY = 2
+    FAILURE = 3
+    SUCCESS = 4
     CANCELLED = 5
 
     STATUS_CHOICES = (
-        (INACTIVE, 'Inactive'),
-        (QUEUED, 'Queued'),
-        (RUNNING, 'Running'),
-        (SUCCESS, 'Success'),
-        (ERROR, 'Error'),
-        (CANCELLED, 'Cancelled')
+        (PENDING, 'The task is waiting for execution'),
+        (STARTED, 'The task has been started'),
+        (RETRY, 'The task is to be retried, possibly because of failure'),
+        (FAILURE,
+         'The task raised an exception, or has exceeded the retry limit'),
+        (SUCCESS, 'The task executed successfully'),
+        (CANCELLED, 'The task was cancelled')
     )
 
     submission = models.ForeignKey('Submission',
@@ -123,7 +135,7 @@ class Job(UUIDModel):
                                on_delete=models.SET_NULL)
 
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES,
-                                              default=INACTIVE)
+                                              default=PENDING)
 
     status_history = JSONField(default=dict)
 

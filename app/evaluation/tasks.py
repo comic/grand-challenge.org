@@ -1,11 +1,10 @@
-import uuid
 from contextlib import contextmanager
 
 import docker
 from celery import shared_task
 from django.conf import settings
 from docker.api.container import ContainerApiMixin
-from evaluation.models import Job
+
 
 @contextmanager
 def cleanup(container: ContainerApiMixin):
@@ -23,10 +22,10 @@ def cleanup(container: ContainerApiMixin):
 
 
 class Evaluator(object):
-    def __init__(self, job: Job):
+    def __init__(self, *, job_id: str):
         super(Evaluator, self).__init__()
 
-        self.__job_id = job.id
+        self.__job_id = job_id
         self.__client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
         self.__input_volume = f'{self.__job_id}-input'
@@ -69,6 +68,6 @@ class Evaluator(object):
 
 
 @shared_task
-def evaluate_submission():
-    result = Evaluator().evaluate()
+def evaluate_submission(*, job_id: str):
+    result = Evaluator(job_id=job_id).evaluate()
     return result.decode()

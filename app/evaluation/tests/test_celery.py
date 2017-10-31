@@ -1,3 +1,5 @@
+import uuid
+
 from comic.celery import debug_task
 from evaluation.tasks import evaluate_submission
 
@@ -10,5 +12,5 @@ def test_debug_task():
 
 
 def test_start_sibling_container():
-    res = evaluate_submission.delay()
-    assert res.get(timeout=10) == 'hello world\n'
+    res = evaluate_submission.delay(job_id=uuid.uuid4())
+    assert res.get(timeout=15) == 'hello world\n'
