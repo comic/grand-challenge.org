@@ -86,7 +86,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   flower:
-    image:  crgwbr/docker-celery-flower
+    image: crgwbr/docker-celery-flower
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
     ports:
       - "5555:5555"
     links:
