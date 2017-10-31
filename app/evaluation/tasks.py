@@ -51,7 +51,7 @@ class Evaluator(object):
         for volume in [self._input_volume, self._output_volume]:
             self._client.volumes.create(
                 name=volume,
-                labels={'job_id': self.__job_id}
+                labels={'job_id': self._job_id}
             )
 
     def _provision_input_volume(self):
