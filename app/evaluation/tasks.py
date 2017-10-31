@@ -4,6 +4,7 @@ import docker
 from celery import shared_task
 from django.conf import settings
 from docker.api.container import ContainerApiMixin
+from evaluation.utils import put_file
 
 
 @contextmanager
@@ -64,6 +65,7 @@ class Evaluator(object):
                     }
                 },
                 detach=True)) as writer:
+            #put_file(container=writer, src=None, dest=None)
             pass
 
 

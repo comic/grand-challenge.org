@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.models import User
 from django.db import models
 from social_django.fields import JSONField
+from evaluation.validators import MimeTypeValidator
 
 
 class UUIDModel(models.Model):
@@ -97,9 +98,14 @@ class Submission(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
-    file = models.FileField(upload_to=challenge_submission_path)
+    file = models.FileField(upload_to=challenge_submission_path,
+                            validators=[MimeTypeValidator(
+                                allowed_mimetypes=('application/pdf',))])
 
-    description = models.FileField(upload_to=challenge_submission_path)
+    description = models.FileField(upload_to=challenge_submission_path,
+                                   validators=[MimeTypeValidator(
+                                       allowed_mimetypes=(
+                                       'application/pdf',))])
 
 
 class Job(UUIDModel):

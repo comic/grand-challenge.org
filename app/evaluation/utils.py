@@ -6,7 +6,7 @@ from django.core.files import File
 from docker.api.container import ContainerApiMixin
 
 
-def put_file(container: ContainerApiMixin, src: File, dest: str) -> ():
+def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     """
     Puts a file on the host into a container.
     This method will create an in memory tar archive, add the src file to this

@@ -6,7 +6,7 @@ from evaluation.models import Result, Submission, Job, Method
 class ResultSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Result
-        fields = ('user', 'challenge', 'method', 'metrics')
+        fields = '__all__'
 
 
 class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
@@ -16,16 +16,16 @@ class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Submission
-        fields = ('user', 'challenge', 'created')
+        fields = '__all__'
 
 
 class JobSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Job
-        fields = ('submission', 'method', 'status', 'status_history')
+        fields = '__all__'
 
 
 class MethodSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Method
-        fields = ('challenge', 'image', 'version')
+        fields = '__all__'

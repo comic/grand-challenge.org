@@ -2,18 +2,19 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from django.conf import settings
+import evaluation.validators
 import uuid
 import social_django.fields
-import evaluation.models
 import django.db.models.deletion
+from django.conf import settings
+import evaluation.models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('comicmodels', '0008_auto_20170623_1341'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -80,8 +81,8 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(upload_to=evaluation.models.challenge_submission_path)),
-                ('description', models.FileField(upload_to=evaluation.models.challenge_submission_path)),
+                ('file', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_mimetypes=('application/pdf',))], upload_to=evaluation.models.challenge_submission_path)),
+                ('description', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_mimetypes=('application/pdf',))], upload_to=evaluation.models.challenge_submission_path)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
