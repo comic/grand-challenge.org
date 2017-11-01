@@ -52,9 +52,14 @@ def test_token_generation(client):
 
 
 @pytest.mark.django_db
-def test_upload_file(client):
+@pytest.mark.parametrize(
+    "test_file, expected_response",
+    [("compressed.zip", 201),
+     ("compressed.7z", 400)]
+)
+def test_upload_file(client, test_file, expected_response):
     submission_file = os.path.join(os.path.split(__file__)[0], 'resources',
-                                   'compressed.zip')
+                                   test_file)
     # Get the users token
     user = UserFactory()
     response = client.post(TOKEN_URL,
@@ -68,7 +73,7 @@ def test_upload_file(client):
                                {'file': f, 'challenge': 'comic'},
                                format='multipart',
                                HTTP_AUTHORIZATION='Token ' + token)
-    assert response.status_code == 201
+    assert response.status_code == expected_response
 
     # Upload with session authorisation
     client.login(username=user.username, password='testpasswd')
@@ -76,10 +81,13 @@ def test_upload_file(client):
         response = client.post('/evaluation/api/v1/submissions/',
                                {'file': f, 'challenge': 'comic'},
                                format='multipart')
-    assert response.status_code == 201
+    assert response.status_code == expected_response
 
     submissions = Submission.objects.all()
-    assert len(submissions) == 2
+    if expected_response == 201:
+        assert len(submissions) == 2
+    else:
+        assert len(submissions) == 0
 
     # Cleanup
     for submission in submissions:
