@@ -1,28 +1,34 @@
 from typing import Tuple
+
+import magic
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 
 
 @deconstructible
 class MimeTypeValidator(object):
-    allowed_mimetypes = ()
+    allowed_types = ()
 
-    def __init__(self, *, allowed_mimetypes: Tuple[str]):
-        self.allowed_mimetypes = tuple(x.lower() for x in allowed_mimetypes)
+    def __init__(self, *, allowed_types: Tuple[str]):
+        self.allowed_types = tuple(x.lower() for x in allowed_types)
         super(MimeTypeValidator, self).__init__()
 
     def __call__(self, value):
-        # TODO - Implement the validation
-        raise ValidationError('Filetype is not valid')
+        mimetype = magic.from_buffer(value.read(), mime=True)
+
+        if mimetype.lower() not in self.allowed_types:
+            raise ValidationError(f'File of type {mimetype} is not supported. '
+                                  'Allowed types are '
+                                  f'{", ".join(self.allowed_types)}.')
 
     def __eq__(self, other):
         return (
             isinstance(other, MimeTypeValidator) and
-            set(self.allowed_mimetypes) == set(other.allowed_mimetypes)
+            set(self.allowed_types) == set(other.allowed_types)
         )
 
     def __ne__(self, other):
         return not (self == other)
 
     def __hash__(self):
-        return hash(MimeTypeValidator) + 7*hash(self.allowed_mimetypes)
+        return hash(MimeTypeValidator) + 7 * hash(self.allowed_types)

@@ -6,10 +6,10 @@ from evaluation.views import ResultViewSet, SubmissionViewSet, JobViewSet, \
     MethodViewSet
 
 router = routers.DefaultRouter()
-router.register(r'results', ResultViewSet, base_name='results')
-router.register(r'submissions', SubmissionViewSet, base_name='submissions')
-router.register(r'jobs', JobViewSet, base_name='jobs')
-router.register(r'methods', MethodViewSet, base_name='methods')
+router.register(r'results', ResultViewSet)
+router.register(r'submissions', SubmissionViewSet)
+router.register(r'jobs', JobViewSet)
+router.register(r'methods', MethodViewSet)
 
 urlpatterns = [
     url(r'^api/v1/', include(router.urls)),

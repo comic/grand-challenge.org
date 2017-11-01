@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import evaluation.validators
+import django.db.models.deletion
+import evaluation.models
 import uuid
 import social_django.fields
-import django.db.models.deletion
+import evaluation.validators
 from django.conf import settings
-import evaluation.models
 
 
 class Migration(migrations.Migration):
@@ -81,8 +81,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_mimetypes=('application/pdf',))], upload_to=evaluation.models.challenge_submission_path)),
-                ('description', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_mimetypes=('application/pdf',))], upload_to=evaluation.models.challenge_submission_path)),
+                ('file', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/zip',))], upload_to=evaluation.models.challenge_submission_path)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],

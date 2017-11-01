@@ -1,14 +1,13 @@
 import json
 import os
-import tempfile
 
 import pytest
 from django.conf import settings
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from evaluation.tests.factories import UserFactory
 from evaluation.models import Submission
+from evaluation.tests.factories import UserFactory
 
 TOKEN_URL = '/evaluation/api-token-auth/'
 
@@ -54,11 +53,8 @@ def test_token_generation(client):
 
 @pytest.mark.django_db
 def test_upload_file(client):
-
-    [fd, submission_file] = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as f:
-        f.write('A'*10000000)
-
+    submission_file = os.path.join(os.path.split(__file__)[0], 'resources',
+                                   'compressed.zip')
     # Get the users token
     user = UserFactory()
     response = client.post(TOKEN_URL,
@@ -86,7 +82,6 @@ def test_upload_file(client):
     assert len(submissions) == 2
 
     # Cleanup
-    os.remove(submission_file)
     for submission in submissions:
         filepath = submission.file.name
         submission.file.delete()
@@ -95,6 +90,6 @@ def test_upload_file(client):
         except OSError:
             pass
 
-    # TODO: Validate the file and path
-    # TODO: Get the challenge name from the URL
-    # TODO: Check that the user is a participant of that challenge
+            # TODO: Validate the file and path
+            # TODO: Get the challenge name from the URL
+            # TODO: Check that the user is a participant of that challenge
