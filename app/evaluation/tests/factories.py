@@ -30,6 +30,7 @@ class SubmissionFactory(factory.Factory):
         model = Submission
 
     challenge = factory.SubFactory(ComicSiteFactory)
+    file = factory.django.FileField()
 
 
 class JobFactory(factory.Factory):

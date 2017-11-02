@@ -24,6 +24,8 @@ services:
     volumes:
       - static:/static/
       - ./app:/app/
+      # The docker socket is only needed for testing
+      - /var/run/docker.sock:/var/run/docker.sock
     volumes_from:
       - dropbox
 
