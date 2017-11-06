@@ -42,6 +42,9 @@ class MethodFactory(factory.Factory):
     class Meta:
         model = Method
 
+    challenge = factory.SubFactory(ComicSiteFactory)
+    container = factory.django.FileField()
+
 
 class ResultFactory(factory.Factory):
     class Meta:

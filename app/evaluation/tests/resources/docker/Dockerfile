@@ -11,6 +11,4 @@ WORKDIR /tmp
 ADD ground_truth.csv /tmp
 ADD evaluate_submission.py /tmp
 
-ADD submission.csv /input
-
 ENTRYPOINT ["python", "evaluate_submission.py"]

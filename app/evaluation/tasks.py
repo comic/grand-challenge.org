@@ -43,9 +43,11 @@ class Evaluator(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        # TODO - cleanup
         pass
 
-    def evaluate(self):
+    def evaluate(self) -> bytes:
+        # TODO - check that we're being run as part of a context manager
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
@@ -77,7 +79,7 @@ class Evaluator(object):
 
 
 @shared_task
-def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None):
+def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None) -> str:
     """
     Interfaces between Django and the Evaluation. Gathers together all
     resources, and then writes the result back to the database so that the
@@ -97,6 +99,8 @@ def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None):
     if job_id:
         job = Job.objects.get(id__exact=job_id)
 
-    result = Evaluator(job_id=job.id,
-                       input_file=job.submission.file).evaluate()
-    return result.decode()
+    with Evaluator(job_id=job.id,
+                   input_file=job.submission.file) as e:
+        result = e.evaluate().decode()
+
+    return result

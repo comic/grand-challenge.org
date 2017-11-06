@@ -41,10 +41,8 @@ class Result(UUIDModel):
 
 
 def result_screenshot_path(instance, filename):
-    return 'evaluation/{0}/screenshots/{1}/{2}' \
-        .format(instance.challenge.id,
-                instance.result.id,
-                filename)
+    return f'evaluation/{instance.challenge.id}/screenshots/' \
+           f'{instance.result.id}/{filename}'
 
 
 class ResultScreenshot(UUIDModel):
@@ -55,6 +53,11 @@ class ResultScreenshot(UUIDModel):
                                on_delete=models.CASCADE)
 
     image = models.ImageField(upload_to=result_screenshot_path)
+
+
+def method_container_path(instance, filename):
+    return f'evaluation/{instance.challenge.id}/methods/' \
+           f'{instance.method.id}/{filename}'
 
 
 class Method(UUIDModel):
@@ -68,24 +71,26 @@ class Method(UUIDModel):
                              null=True,
                              on_delete=models.SET_NULL)
 
-    image_repository = models.CharField(max_length=128)
-
-    image_tag = models.CharField(max_length=64)
-
-    image_sha256 = models.CharField(max_length=64)
-
-    version = models.PositiveIntegerField(default=0)
+    container = models.FileField(upload_to=method_container_path,
+                                 validators=[MimeTypeValidator(
+                                     allowed_types=(
+                                         'application/x-tarbinary',))],
+                                 help_text='Tar archive of the container '
+                                           'image produced from the command '
+                                           '`docker save IMAGE > '
+                                           'IMAGE.tar`. See '
+                                           'https://docs.docker.com/engine/reference/commandline/save/',
+                                 )
 
     class Meta:
-        unique_together = (("challenge", "version"),)
+        unique_together = (("challenge", "created"),)
 
 
 def challenge_submission_path(instance, filename):
-    return 'evaluation/{0}/submission/{1}/{2}/{3}' \
-        .format(instance.challenge.id,
-                instance.user.id,
-                instance.created.strftime('%Y%m%d%H%M%S'),
-                filename)
+    return f'evaluation/{instance.challenge.id}/submissions/' \
+           f'{instance.user.id}/' \
+           f'{instance.created.strftime("%Y%m%d%H%M%S")}/' \
+           f'{filename}'
 
 
 class Submission(UUIDModel):

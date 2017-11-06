@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import django.db.models.deletion
-import evaluation.models
-import uuid
 import social_django.fields
-import evaluation.validators
+import evaluation.models
 from django.conf import settings
+import uuid
+import django.db.models.deletion
+import evaluation.validators
 
 
 class Migration(migrations.Migration):
@@ -38,10 +38,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('image_repository', models.CharField(max_length=128)),
-                ('image_tag', models.CharField(max_length=64)),
-                ('image_sha256', models.CharField(max_length=64)),
-                ('version', models.PositiveIntegerField(default=0)),
+                ('container', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary',))], upload_to=evaluation.models.method_container_path)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
@@ -101,6 +98,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='method',
-            unique_together=set([('challenge', 'version')]),
+            unique_together=set([('challenge', 'created')]),
         ),
     ]
