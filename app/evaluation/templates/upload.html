@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+{% load dicom %}
+
+<html>
+	<head>
+		<title>File upload</title>
+		
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="-1">
+
+		<link rel="stylesheet" type="text/css" href="/static/evaluation/main.css">
+		<link rel="stylesheet" type="text/css" href="/static/evaluation/font-awesome.css">
+
+		<script type="text/javascript" src="/static/evaluation/jquery.js"></script>
+		<script type="text/javascript" src="/static/evaluation/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="/static/evaluation/jquery.fileupload.js"></script>
+	</head>
+	<body id="upload_page">
+		<div class="header">
+			<h1>File upload {{ job_package.id }} </h1>
+			<p>Content stored in: {{ job_package.archive_path }}</p>
+		</div>
+
+		<div id="main_uploads">
+			<div class="caption">
+				<h2>Archive: <img class="wait" src="/static/evaluation/images/ajax-loader.gif"><span class="name">{{ job_package.name }}</span><input type="text" value="{{ job_package.name }}" /><span class="fa fa-edit button"></span></h2>
+			</div>
+			
+
+			<script type="text/javascript">
+				"use strict";
+				
+				$(function() {
+					var name_edit_button = $('#main_uploads > div.caption span.button');
+					var name_edit_field = $('#main_uploads > div.caption input');
+					var ajax_wait_image = $('#main_uploads > div.caption img.wait');
+					
+					var click_function = switch_to_name_edit_mode;
+					
+					function switch_to_name_edit_mode() {
+						var name_span = $('#main_uploads > div.caption span.name');
+						
+						name_edit_field.val(name_span.text());
+						
+						name_edit_field.css("display", "inline");
+						name_span.css("display", "none");
+						name_edit_button.removeClass("fa-edit").addClass("fa-check")
+						
+						click_function = confirm_name_change;
+					}
+	
+					function confirm_name_change() {
+						var name_span = $('#main_uploads > div.caption span.name');
+						
+						name_edit_field.css("display", "none");
+						name_edit_button.removeClass("fa-check");
+						ajax_wait_image.css("display", "inline");
+						
+						click_function = switch_to_name_edit_mode;
+						
+						jQuery.ajax("ajax/set_name",
+							{
+								method: "POST",
+								data: {
+									name: name_edit_field.val() 
+								},
+								headers: {
+									"X-CSRFToken": "{{csrf_token}}"
+								}
+							}).done(function (data) {
+								name_span.text(name_edit_field.val());
+							}).fail(function (request) {
+								console.log(request);
+							}).always(function () {
+								ajax_wait_image.css("display", "none");
+								name_span.css("display", "inline");
+								name_edit_button.addClass("fa-edit");
+							});
+					}
+					
+					name_edit_field.on("keydown", function(event) {
+						if (event.which == 13) {
+							confirm_name_change();
+						}
+					});
+					name_edit_button.on('click', function() {
+						click_function();
+					});
+				});
+			</script>
+			
+
+			<div class="upload">
+				<form id="fileupload" action="/ajax/upload_file" method="POST" enctype="multipart/form-data">
+					<input type="file" name="files[]" multiple>
+					<div id="upload_bar">
+						<div class="label"></div>
+					</div>
+					<div id="failed_list" class="foldable folded">
+						<p><button form="null" onclick="fold_unfold('#failed_list')"></button>Failed uploads: <span class="count">0</span></p>
+						<button form="null" class="remove fa fa-remove"></button>
+					</div>
+
+					{% for study_instance_uid, studies_data in archive_data.items %}
+						<div class="study foldable folded" id="{{ study_instance_uid|sha256_css_name }}">
+							<p><button form="null" onclick="fold_unfold('#{{ study_instance_uid|sha256_css_name }}')"></button>Study: {{ study_instance_uid|escape }}</p>
+						
+							{% for series_instance_uid, sop_list in studies_data.items %}
+								<div class="series foldable folded" id="{{ study_instance_uid|sha256_css_name }}{{ series_instance_uid|sha256_css_name }}">
+									<p><button form="null" onclick="fold_unfold('#{{ study_instance_uid|sha256_css_name }}{{ series_instance_uid|sha256_css_name }}')"></button>Series: {{ series_instance_uid|escape }}</p>
+									{% for sop_instance_uid in sop_list %}
+										<div class="sop" id="{{ study_instance_uid|sha256_css_name }}{{ series_instance_uid|sha256_css_name }}{{ sop_instance_uid|sha256_css_name }}">
+											<p>Sop instance: {{ sop_instance_uid|escape }}</p>
+										</div>
+									{% endfor %}
+								</div>
+							{% endfor %}
+						</div>
+					{% endfor %}
+				</form>
+				
+				<script type="text/javascript">
+					function fold_unfold(id) {
+						$(id).toggleClass("folded");
+					}
+				</script>
+				
+				
+				<div id="drop_here_floater"><div>Drop files here</div></div>
+			</div>
+
+			<script type="text/javascript">
+				"use strict";
+				
+				var upload = null;
+				
+				$(function() {
+					var dropzone = $("div.upload");
+					var total_upload_progress_bar = $("div#upload_bar");
+					
+					upload = $("#fileupload");
+					upload.fileupload(
+						{
+							url: '/ajax/upload_file',
+							dropZone: dropzone,
+							headers: {
+								"X-CSRFToken": "{{csrf_token}}"
+							}
+						});
+
+					var drop_overlay_timer = null;
+					function show_drop_overlay() {
+						if (drop_overlay_timer !== null) {
+							clearTimeout(drop_overlay_timer);
+							drop_overlay_timer = null;
+						} else {
+							$("#drop_here_floater").css("display", "block");
+						}
+						drop_overlay_timer = setTimeout(hide_drop_overlay, 200);
+					}
+					function hide_drop_overlay() {
+						if (drop_overlay_timer !== null) {
+							clearTimeout(drop_overlay_timer);
+							drop_overlay_timer = null;
+						}
+						$("#drop_here_floater").css("display", "none");
+					}
+					
+					dropzone.on('dragover', function (e) {
+						show_drop_overlay();
+					});
+					dropzone.on('dragexit', function (e) {
+						hide_drop_overlay();
+					});
+					
+					upload.on('fileuploadprogressall', function (e, data) {
+						var percent = parseInt(data.loaded / data.total * 100, 10);
+						total_upload_progress_bar.progressbar({value: percent});
+						total_upload_progress_bar.find(".label").text("Uploading... " + percent + "%");
+					});
+					
+					upload.on('fileuploaddone', function (e, data) {
+						data.files.forEach(function (file) {
+							console.log("Upload done: " + file.name);
+						});
+						
+						for (var filename in data.result) {
+							var r = data.result[filename];
+							if (r.result === "OK") {
+								add_succeeded_upload(r, r.css);
+							} else {
+								add_failed_upload(filename, r.result);
+							}
+						}
+						
+						console.log("Result: ");
+						console.log(data.result);
+						console.log("Text status: " + data.textStatus);
+					});
+					
+					
+					function generate_standard_list_element(level, css_id, text) {
+						if (level === "series" || level === "study" ) {
+							return $(
+								"<div class='" + level + " foldable folded' id=" + css_id + ">" +
+									"<p><button form='null' onclick='fold_unfold(\"#" + css_id + "\")'></button>" + text + "</p>" +
+								"</div>");
+						} else if (level === "sop") {
+							return $(
+								"<div class='" + level + "' id=" + css_id + ">" +
+									"<p>" + text + "</p>" +
+								"</div>");
+						} else {
+							throw Error("Invalid level: " + level);
+						}
+					}
+					
+					var archive_list = upload;
+					function add_succeeded_upload(scan_info, css_uids) {
+						var sop_element = $("#" + css_uids.study_instance_uid + css_uids.series_instance_uid + css_uids.sop_instance_uid);
+						if (sop_element.length === 0) {
+							var study_element = $("#" + css_uids.study_instance_uid);
+							if (study_element.length === 0) {
+								study_element = generate_standard_list_element(
+									"study",
+									css_uids.study_instance_uid,
+									"Study: " + scan_info.study_instance_uid);
+								archive_list.append(study_element);
+							}
+							
+							var series_element = study_element.find("#" + css_uids.study_instance_uid + css_uids.series_instance_uid);
+							if (series_element.length === 0) {
+								series_element = generate_standard_list_element(
+										"series",
+										css_uids.study_instance_uid + css_uids.series_instance_uid,
+										"Series: " + scan_info.series_instance_uid);
+								study_element.append(series_element);
+							}
+							
+							sop_element = generate_standard_list_element(
+								"sop",
+								css_uids.study_instance_uid + css_uids.series_instance_uid + css_uids.sop_instance_uid,
+								"Sop instance: " + scan_info.sop_instance_uid);
+							series_element.append(sop_element);
+						}
+					}
+					
+					var failed_files_list = $("div#failed_list");
+					failed_files_list.find("button.remove").on("click", function(element) {
+						failed_files_list.css("display", "none");
+						failed_files_list.addClass("folded");
+						failed_files_list.find("span.count").text("0");
+						failed_files_list.find("div.failed_upload").remove();
+					});
+					function add_failed_upload(filename, message) {
+						failed_files_list.css("display", "block");
+						var countSpan = failed_files_list.find("span.count");
+						countSpan.text("" + (parseInt(countSpan.text(), 10) + 1));
+						failed_files_list.append($("<div class='failed_upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
+					}
+					
+					console.log("xxx");
+				});
+			</script>
+		</div>
+	</body>
+</html>

@@ -1,3 +1,6 @@
+from django.http.request import HttpRequest
+from django.http.response import HttpResponse
+from django.shortcuts import render
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
@@ -37,3 +40,8 @@ class MethodViewSet(ModelViewSet):
     queryset = Method.objects.all()
     serializer_class = MethodSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+
+
+def uploader_mock(request: HttpRequest) -> HttpResponse:
+    return render(request, "uploader.html")
