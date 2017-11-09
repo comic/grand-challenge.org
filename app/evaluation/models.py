@@ -1,10 +1,12 @@
+import tarfile
+import json
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
 from social_django.fields import JSONField
 
-from evaluation.validators import MimeTypeValidator
+from evaluation.validators import MimeTypeValidator, ContainerImageValidator
 
 
 class UUIDModel(models.Model):
@@ -55,9 +57,9 @@ class ResultScreenshot(UUIDModel):
     image = models.ImageField(upload_to=result_screenshot_path)
 
 
-def method_container_path(instance, filename):
+def method_image_path(instance, filename):
     return f'evaluation/{instance.challenge.id}/methods/' \
-           f'{instance.method.id}/{filename}'
+           f'{instance.id}/{filename}'
 
 
 class Method(UUIDModel):
@@ -71,16 +73,34 @@ class Method(UUIDModel):
                              null=True,
                              on_delete=models.SET_NULL)
 
-    container = models.FileField(upload_to=method_container_path,
-                                 validators=[MimeTypeValidator(
-                                     allowed_types=(
-                                         'application/x-tarbinary',))],
-                                 help_text='Tar archive of the container '
-                                           'image produced from the command '
-                                           '`docker save IMAGE > '
-                                           'IMAGE.tar`. See '
-                                           'https://docs.docker.com/engine/reference/commandline/save/',
-                                 )
+    image = models.FileField(upload_to=method_image_path,
+                             validators=[
+                                 MimeTypeValidator(allowed_types=(
+                                     'application/x-tarbinary',)),
+                                 ContainerImageValidator(single_image=True)],
+                             help_text='Tar archive of the container '
+                                       'image produced from the command '
+                                       '`docker save IMAGE > '
+                                       'IMAGE.tar`. See '
+                                       'https://docs.docker.com/engine/reference/commandline/save/',
+                             )
+
+    image_id = models.CharField(editable=False,
+                                max_length=64)
+
+    def save(self, *args, **kwargs):
+        self.image_id = self._image_id
+        super(Method, self).save(*args, **kwargs)
+
+    @property
+    def _image_id(self) -> str:
+        with tarfile.open(fileobj=self.image, mode='r') as t:
+            member = dict(zip(t.getnames(), t.getmembers()))[
+                'manifest.json']
+            manifest = t.extractfile(member).read()
+
+        manifest = json.loads(manifest)
+        return manifest[0]['Config'][:64]
 
     class Meta:
         unique_together = (("challenge", "created"),)

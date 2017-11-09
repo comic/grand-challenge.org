@@ -1,6 +1,1 @@
-from evaluation.tests.factories import SubmissionFactory
-
-
-def test_submission():
-    submission = SubmissionFactory()
-    assert submission.challenge.short_name == 'test_challenge'
+# TODO: Add some model tests

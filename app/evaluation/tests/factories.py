@@ -5,14 +5,14 @@ from comicmodels.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
 
 
-class ComicSiteFactory(factory.Factory):
+class ComicSiteFactory(factory.DjangoModelFactory):
     class Meta:
         model = ComicSite
 
-    short_name = 'test_challenge'
+    short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
 
 
-class UserFactory(factory.django.DjangoModelFactory):
+class UserFactory(factory.DjangoModelFactory):
     class Meta:
         model = User
 
@@ -25,7 +25,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_superuser = False
 
 
-class SubmissionFactory(factory.Factory):
+class SubmissionFactory(factory.DjangoModelFactory):
     class Meta:
         model = Submission
 
@@ -33,19 +33,19 @@ class SubmissionFactory(factory.Factory):
     file = factory.django.FileField()
 
 
-class JobFactory(factory.Factory):
+class JobFactory(factory.DjangoModelFactory):
     class Meta:
         model = Job
 
 
-class MethodFactory(factory.Factory):
+class MethodFactory(factory.DjangoModelFactory):
     class Meta:
         model = Method
 
     challenge = factory.SubFactory(ComicSiteFactory)
-    container = factory.django.FileField()
+    image = factory.django.FileField()
 
 
-class ResultFactory(factory.Factory):
+class ResultFactory(factory.DjangoModelFactory):
     class Meta:
         model = Result

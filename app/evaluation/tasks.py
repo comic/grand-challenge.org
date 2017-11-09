@@ -28,11 +28,14 @@ def cleanup(container: ContainerApiMixin):
 
 
 class Evaluator(object):
-    def __init__(self, *, job_id: uuid.UUID, input_file: File):
+    def __init__(self, *, job_id: uuid.UUID, input_file: File,
+                 eval_image: File, eval_image_id: str):
         super(Evaluator, self).__init__()
 
         self._job_id = str(job_id)
         self._input_file = input_file
+        self._eval_image = eval_image
+        self._eval_image_id = eval_image_id
 
         self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
@@ -54,8 +57,15 @@ class Evaluator(object):
         return self._client.containers.run('alpine', 'echo hello world')
 
     def _pull_images(self):
-        for image in ['alpine']:
-            self._client.images.pull(name=image)
+        # The alpine image is needed for the reader and writer containers
+        self._client.images.pull(name='alpine')
+
+        # Django file has no context manager
+        self._eval_image.open('rb')
+        try:
+            self._client.api.import_image(src=self._eval_image)
+        finally:
+            self._eval_image.close()
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
@@ -100,7 +110,9 @@ def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None) -> str:
         job = Job.objects.get(id__exact=job_id)
 
     with Evaluator(job_id=job.id,
-                   input_file=job.submission.file) as e:
+                   input_file=job.submission.file,
+                   eval_image=job.method.image,
+                   eval_image_id=job.method.image_id) as e:
         result = e.evaluate().decode()
 
     return result

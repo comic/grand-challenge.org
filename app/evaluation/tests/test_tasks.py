@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db.models import signals
 
 from evaluation.tasks import evaluate_submission
-from evaluation.tests.factories import SubmissionFactory, JobFactory, MethodFactory
+from evaluation.tests.factories import SubmissionFactory, JobFactory, MethodFactory, UserFactory
 
 
 def create_test_evaluation_container() -> str:
@@ -44,10 +44,12 @@ def test_submission_evaluation():
     testfile = os.path.join(os.path.split(__file__)[0], 'resources',
                             'compressed.zip')
 
-    submission = SubmissionFactory(file__from_path=testfile)
+    user = UserFactory()
+
+    submission = SubmissionFactory(file__from_path=testfile, user=user)
 
     eval_container = create_test_evaluation_container()
-    method = MethodFactory(container__from_path=eval_container)
+    method = MethodFactory(image__from_path=eval_container)
 
     job = JobFactory(submission=submission, method=method)
 
