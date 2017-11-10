@@ -1,5 +1,7 @@
 import datetime
 
+from collections import Iterable
+
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBadRequest, \
@@ -7,6 +9,10 @@ from django.http.response import HttpResponseBadRequest, \
 from django.template.loader import get_template
 
 from evaluation.models import StagedFile
+
+
+def cleanup_stale_files(*) -> str:
+    print("Hi!")
 
 
 class AjaxUploadWidget(Widget):
@@ -30,6 +36,7 @@ class AjaxUploadWidget(Widget):
        of an AjaxUploadWidget exposes the function 'handle_ajax' as handler
        for ajax requests. During initialization, the ajax-path must be
        defined using the 'ajax_target_path' named parameter
+     - Add cleanup service call to cleanup_stale_files in a background worker
 
     Notes
     -----
@@ -37,6 +44,8 @@ class AjaxUploadWidget(Widget):
     uploads are not linked to any session or similar. Anyone who can guess
     a valid database id referring to a file, can also refer to this file. What
     this means depends on the actual app that uses this widget.
+
+    This widget will require updating when moving forward from django 1.8.
     """
 
     CSS = "/static/evaluation/upload_widget.css"
@@ -78,10 +87,18 @@ class AjaxUploadWidget(Widget):
     def render(self, name, value, attrs=None):
         template = get_template("widgets/uploader.html")
 
-        context = {}
-        context["target"] = self.ajax_target_path
-        context["value"] = "" if value in (None, "") else str(value)
-        context["name"] = name
-        context["attrs"] = attrs
+        if isinstance(value, Iterable):
+            value = ",".join(str(x) for x in value)
+        elif value in (None, ""):
+            value = ""
+        else:
+            value = str(value)
+
+        context = {
+            "target": self.ajax_target_path,
+            "value": value,
+            "name": name,
+            "attrs": attrs,
+        }
 
         return template.render(context=context)
