@@ -60,13 +60,6 @@ class Evaluator(object):
         # The alpine image is needed for the reader and writer containers
         self._client.images.pull(name='alpine')
 
-        # Django file has no context manager
-        self._eval_image.open('rb')
-        try:
-            self._client.api.import_image(src=self._eval_image)
-        finally:
-            self._eval_image.close()
-
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
             self._client.volumes.create(
