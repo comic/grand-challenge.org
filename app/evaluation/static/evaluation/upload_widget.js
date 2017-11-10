@@ -20,6 +20,7 @@ function upload_fold_unfold(element) {
     function init_upload(upload_element) {
         upload_element = $(upload_element);
         var dropzone = upload_element;
+        var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
 
         var target_url = upload_element.attr("upload_target");
@@ -87,6 +88,7 @@ function upload_fold_unfold(element) {
             return $("<div>Uploaded: " + filename + "</div>")
         }
 
+        var succeeded_uploads_list = [];
         function add_succeeded_upload(file_info_list) {
             for (var i = 0; i < file_info_list.length; i++) {
                 var file_info = file_info_list[i];
@@ -97,7 +99,21 @@ function upload_fold_unfold(element) {
                         file_info.extra_attrs
                     )
                 );
+                succeeded_uploads_list.push(file_info);
             };
+            update_hidden_form_element();
+        }
+
+        function update_hidden_form_element() {
+            var uuid_list_string = "";
+            for (var i = 0; i < succeeded_uploads_list.length; i++) {
+                if (uuid_list_string !== "") {
+                    uuid_list_string += ",";
+                }
+                uuid_list_string += succeeded_uploads_list[i].uuid;
+            }
+            form_element.val(uuid_list_string);
+            console.log("uuid_list_string = " + uuid_list_string);
         }
 
         upload_element.on('fileuploaddone', function (e, data) {
