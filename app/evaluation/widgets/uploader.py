@@ -61,15 +61,19 @@ class AjaxUploadWidget(Widget):
         if request.method != "POST":
             return HttpResponseBadRequest()
 
-        result = {}
+        result = []
         for uploaded_file in request.FILES.values():
             new_staged_file = StagedFile.objects.create(
                     timeout=datetime.datetime.utcnow() + self.timeout,
                     file=uploaded_file
                 )
-            result[uploaded_file.name] = new_staged_file.id
+            result.append({
+                "filename": uploaded_file.name,
+                "uuid": new_staged_file.id,
+                "extra_attrs": {}
+            });
 
-        return JsonResponse(result)
+        return JsonResponse(result, safe=False)
 
     def render(self, name, value, attrs=None):
         template = get_template("widgets/uploader.html")

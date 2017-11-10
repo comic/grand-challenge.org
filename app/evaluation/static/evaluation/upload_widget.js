@@ -2,20 +2,20 @@
 
 var upload_csrf_token;
 
+function upload_fold_unfold(element) {
+    // Find the parent-foldable element
+    element = $(element);
+    while (!element.hasClass("foldable")) {
+        element = element.parent();
+        if (element.length == 0) {
+            throw Error("No parent element with class 'foldable' found");
+        }
+    }
+    element.toggleClass("folded");
+}
+
 (function () {
     var csrf_token = null;
-
-    function fold_unfold(element) {
-        // Find the parent-foldable element
-        element = $(element);
-        while (!element.hasClass("foldable")) {
-            element = element.parent();
-            if (element.length == 0) {
-                throw Error("No parent element with class 'foldable' found");
-            }
-        }
-        element.toggleClass("folded");
-    }
 
     function init_upload(upload_element) {
         upload_element = $(upload_element);
@@ -82,6 +82,34 @@ var upload_csrf_token;
             countSpan.text("" + (parseInt(countSpan.text(), 10) + 1));
             failed_files_list.append($("<div class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
         }
+
+        function generate_uploaded_file_element(filename, uuid, extra_attributes) {
+            return $("<div>Uploaded: " + filename + "</div>")
+        }
+
+        function add_succeeded_upload(file_info_list) {
+            for (var i = 0; i < file_info_list.length; i++) {
+                var file_info = file_info_list[i];
+                upload_element.append(
+                    generate_uploaded_file_element(
+                        file_info.filename,
+                        file_info.uuid,
+                        file_info.extra_attrs
+                    )
+                );
+            };
+        }
+
+        upload_element.on('fileuploaddone', function (e, data) {
+            add_succeeded_upload(data.result);
+        });
+
+        upload_element.on('fileuploadfail', function (e, data) {
+            for (var i = 0; i < data.files.length; i++) {
+                var file = data.files[i];
+                add_failed_upload(file.name, "Sending failed.");
+            }
+        });
     }
 
     $(function () {
