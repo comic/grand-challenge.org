@@ -14,9 +14,11 @@
 		<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
 	</head>
 	<body>
-		<form action="/got-a-form" method="post">
+		<form action="testwidget" method="post">
 			{% csrf_token %}
 			{{ testform }}
+
+			<input type="submit">
 		</form>
 	</body>
 </html>

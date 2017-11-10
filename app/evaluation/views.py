@@ -45,15 +45,19 @@ class MethodViewSet(ModelViewSet):
 
 
 
-
-
-def uploader_mock(request: HttpRequest) -> HttpResponse:
-    return render(request, "uploader.html")
-
-
 def uploader_widget_test(request: HttpRequest) -> HttpResponse:
-    test_form = UploadForm()
-    return render(request, "uploader_widget_test.html", {
-        "testform": test_form,
-        "upload_widget": AjaxUploadWidget.TEMPLATE_ATTRS
-    })
+    if request.method == "POST":
+        test_form = UploadForm(request.POST)
+        if test_form.is_valid():
+            result = "Success!!!\n"
+            result += "\n".join(f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
+        else:
+            result = "Validation error:\n"
+            result += "\n".join(f"  {e}" for e in test_form.errors)
+        return HttpResponse(result, content_type="text/plain")
+    else:
+        test_form = UploadForm()
+        return render(request, "uploader_widget_test.html", {
+            "testform": test_form,
+            "upload_widget": AjaxUploadWidget.TEMPLATE_ATTRS
+        })

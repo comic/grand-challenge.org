@@ -4,7 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 from evaluation.forms import test_upload_widget, test_upload_widget2
 from evaluation.views import ResultViewSet, SubmissionViewSet, JobViewSet, \
-    MethodViewSet, uploader_mock, uploader_widget_test
+    MethodViewSet, uploader_widget_test
 
 router = routers.DefaultRouter()
 router.register(r'results', ResultViewSet)
@@ -20,5 +20,4 @@ urlpatterns = [
     url(f'^{test_upload_widget.ajax_target_path}', test_upload_widget.handle_ajax),
     url(f'^{test_upload_widget2.ajax_target_path}', test_upload_widget2.handle_ajax),
     url(r'^testwidget', uploader_widget_test),
-    url(r'^test', uploader_mock),
 ]
