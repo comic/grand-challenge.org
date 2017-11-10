@@ -1,6 +1,10 @@
 "use strict";
 
+var upload_csrf_token;
+
 (function () {
+    var csrf_token = null;
+
     function fold_unfold(element) {
         // Find the parent-foldable element
         element = $(element);
@@ -18,12 +22,14 @@
         var dropzone = upload_element;
         var failed_files_list = upload_element.find("div.failed-list");
 
+        var target_url = upload_element.attr("upload_target");
+
         upload_element.fileupload(
             {
-                url: '/ajax/upload_file',
+                url: target_url,
                 dropZone: dropzone,
                 headers: {
-                    "X-CSRFToken": "{{csrf_token}}"
+                    "X-CSRFToken": csrf_token
                 }
             });
 
@@ -79,9 +85,23 @@
     }
 
     $(function () {
-        var file_uploads = $(".file-upload");
-        for (var i = 0; i < file_uploads.length; i++) {
-            init_upload(file_uploads[i]);
+        if (typeof upload_csrf_token !== 'undefined') {
+            csrf_token = upload_csrf_token;
+        } else {
+            // Try to find a django-hidden control with the correct value
+            var elements = $("input[name='csrfmiddlewaretoken']");
+            if (elements.length > 0) {
+                csrf_token = elements.attr("value");
+            }
+        }
+
+        if (!csrf_token) {
+            throw Error("Could not find a CSRF token, the uploads will not work!");
+        } else {
+            var file_uploads = $(".file-upload");
+            for (var i = 0; i < file_uploads.length; i++) {
+                init_upload(file_uploads[i]);
+            }
         }
     });
 })();

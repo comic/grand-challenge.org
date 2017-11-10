@@ -1,18 +1,16 @@
-<div class="file-upload">
-	<form action="{{ target }}" method="POST" enctype="multipart/form-data">
-		<input type="file" name="files[]" multiple>
-		<div class="upload-bar">
-			<div class="label"></div>
-		</div>
-		<div class="failed-list foldable folded">
-			<p>
-				<button form="null" onclick="fold_unfold(this)"></button>
-				Failed uploads:
-				<span class="count">0</span>
-			</p>
-			<button form="null" class="remove fa fa-remove"></button>
-		</div>
-	</form>
+<div class="file-upload" id="{{ id }}" upload_target="{{ target }}">
+	<input type="file" name="files[]" form="(null)" multiple>
+	<div class="upload-bar">
+		<div class="label"></div>
+	</div>
+	<div class="failed-list foldable folded">
+		<p>
+			<button form="null" onclick="fold_unfold(this)"></button>
+			Failed uploads:
+			<span class="count">0</span>
+		</p>
+		<button form="null" class="remove fa fa-remove"></button>
+	</div>
 
 	<div class="drop-here-floater">
 		<div>Drop files here</div>

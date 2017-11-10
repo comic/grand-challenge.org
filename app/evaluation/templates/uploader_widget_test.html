@@ -15,6 +15,7 @@
 	</head>
 	<body>
 		<form action="/got-a-form" method="post">
+			{% csrf_token %}
 			{{ testform }}
 		</form>
 	</body>
