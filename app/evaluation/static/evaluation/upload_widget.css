@@ -1,0 +1,185 @@
+/* General */
+
+.button {
+	padding: .1cm .1cm .1cm .1cm;
+	cursor: pointer;
+
+	border-style: hidden;
+	border-radius: .2cm;
+	border-width: 0px;
+}
+
+.button:hover {
+	border-style: solid;
+	color: blue;
+	background-color: #EEEEFF;
+}
+
+/* Upload page */
+
+#main-uploads {
+	display: flex;
+	flex-direction: column;
+}
+
+#main-uploads div.caption {
+	min-height: 1cm;
+}
+
+#main-uploads div.caption img.wait {
+	display: none;
+}
+
+#main-uploads div.caption input {
+	display: none;
+	width: 8cm;
+}
+
+div.file-upload {
+	position: relative;
+	min-height: 2cm;
+
+	flex: auto;
+	background-color: #EEEEFF;
+	
+	overflow-y: scroll;
+}
+
+div.file-upload form {
+}
+
+
+div.file-upload form div.study div.series p {
+	margin-left: 1em;
+}
+
+div.file-upload form div.study div.series div.sop p {
+	margin-left: 2em;
+}
+
+div.file-upload .upload-bar {
+	display: block;
+	height: 1em;
+}
+
+div.file-upload .upload-bar:not(.ui-progressbar),
+div.file-upload .upload-bar[aria-valuenow='100'] {
+	display: none;
+}
+
+div.file-upload .upload-bar > div.label {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	
+	text-align: center;
+	
+	font-size: .8em;
+	
+	overflow: hidden;
+}
+
+div.file-upload .upload-bar > div.ui-progressbar-value {
+	background-color: rgba(100, 100, 255, 1);
+	border-radius: .2cm;
+	height: 100%;
+}
+
+div.file-upload button[type='submit'],
+div.file-upload input[type='file'] {
+	display: none;
+}
+
+div.file-upload div.failed-list {
+	display: none;
+	position: relative;
+	background-color: rgba(255, 30, 30, 1);
+}
+
+div.file-upload div.failed-list button.remove {
+	position: absolute;
+	right: .2cm;
+	top: .1em;
+	border-radius: .4em;
+	
+	border-width: 1px;
+	border-style: solid;
+	border-color: black;
+	
+	background-color: transparent;
+}
+	
+div.file-upload div.failed-list p {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+div.file-upload div.failed-list div.failed-upload p {
+	margin-left: 2em;
+}
+
+div.file-upload div.failed-list div.failed-upload p > span.left {
+	display: inline-block;
+	width: 40%;
+}
+
+/* folding */
+
+div.file-upload div.foldable p {
+	display: inline;
+	margin: 0;
+	font-size: 1em;
+}
+
+div.file-upload div.foldable p > button {
+	width: .8cm;
+	margin-right: .2cm;
+	
+	background-color: rgba(255,255,255,.9);
+	
+	border-style: none;
+	border-radius: .5cm;
+}
+
+div.file-upload div.foldable:not(.folded) > p > button::before {
+	content: '-';
+}
+
+div.file-upload div.foldable.folded > div p {
+	display: none;
+}
+
+div.file-upload div.foldable.folded > p > button::before {
+	content: '+';
+}
+
+
+/* Drag&drop floater */
+div.file-upload .drop-here-floater {
+	display: none;
+	position: absolute;
+	
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	
+	overflow: hidden;
+
+	z-index: 1;
+	background-color: rgba(255, 255, 255, .5);
+}
+
+div.file-upload .drop-here-floater > div {
+	position: relative;
+	
+	top: 50%;
+	
+	margin-top: -.5cm;
+
+	font-size: 1cm;	
+	text-align: center;
+	font-family: Arial;
+}
