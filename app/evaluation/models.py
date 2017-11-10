@@ -147,3 +147,12 @@ class Job(UUIDModel):
     status_history = JSONField(default=dict)
 
     output = models.TextField()
+
+
+class StagedFile(UUIDModel):
+    """
+    Files uploaded but not committed to other forms.
+    """
+    timeout = models.DateTimeField(blank=False)
+    file = models.FileField(blank=False)
+    annotations = models.TextField(null=True)

@@ -6,9 +6,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
 
 from comicmodels.models import ComicSite
+from evaluation.forms import UploadForm
 from evaluation.models import Result, Submission, Job, Method
 from evaluation.serializers import ResultSerializer, SubmissionSerializer, \
     JobSerializer, MethodSerializer
+from evaluation.widgets.uploader import AjaxUploadWidget
 
 
 class ResultViewSet(ModelViewSet):
@@ -43,5 +45,15 @@ class MethodViewSet(ModelViewSet):
 
 
 
+
+
 def uploader_mock(request: HttpRequest) -> HttpResponse:
     return render(request, "uploader.html")
+
+
+def uploader_widget_test(request: HttpRequest) -> HttpResponse:
+    test_form = UploadForm()
+    return render(request, "uploader_widget_test.html", {
+        "testform": test_form,
+        "upload_widget": AjaxUploadWidget.TEMPLATE_ATTRS
+    })

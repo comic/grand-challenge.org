@@ -36,7 +36,7 @@
 		</div>
 
 		<script type="application/javascript">
-			"use strict"
+			"use strict";
 
 			function fold_unfold(element) {
 			    // Find the parent-foldable element
@@ -50,9 +50,53 @@
 				element.toggleClass("folded");
 			}
 
-			function init_upload(element) {
-			    element = $(element);
-				var failed_files_list = element.find("div.failed-list");
+			function init_upload(upload_element) {
+			    upload_element = $(upload_element);
+			    var dropzone = upload_element;
+				var failed_files_list = upload_element.find("div.failed-list");
+
+				upload_element.fileupload(
+					{
+						url: '/ajax/upload_file',
+						dropZone: dropzone,
+						headers: {
+							"X-CSRFToken": "{{csrf_token}}"
+						}
+					});
+
+				var drop_overlay_timer = null;
+				var drop_here_floater = upload_element.find(".drop-here-floater");
+				function show_drop_overlay() {
+					if (drop_overlay_timer !== null) {
+						clearTimeout(drop_overlay_timer);
+						drop_overlay_timer = null;
+					} else {
+						drop_here_floater.css("display", "block");
+					}
+					drop_overlay_timer = setTimeout(hide_drop_overlay, 2000000);
+				}
+				function hide_drop_overlay() {
+					if (drop_overlay_timer !== null) {
+						clearTimeout(drop_overlay_timer);
+						drop_overlay_timer = null;
+					}
+					drop_here_floater.css("display", "none");
+				}
+
+				dropzone.on('dragover', function (e) {
+					show_drop_overlay();
+				});
+				drop_here_floater.on('dragleave', function (e) {
+				    console.log("dragleave");
+					hide_drop_overlay();
+				});
+				drop_here_floater.on('dragexit', function (e) {
+				    console.log("dragexit");
+					hide_drop_overlay();
+				});
+				drop_here_floater.on('drop', function (e) {
+					hide_drop_overlay();
+				});
 
 				failed_files_list.find("button.remove").on("click", function(element) {
 					failed_files_list.css("display", "none");
@@ -69,6 +113,15 @@
 				}
 
 				// Tests
+				add_failed_upload("test1.txt", "demo error message");
+				add_failed_upload("test2.txt", "demo error message");
+				add_failed_upload("test3.txt", "demo error message");
+				add_failed_upload("test1.txt", "demo error message");
+				add_failed_upload("test2.txt", "demo error message");
+				add_failed_upload("test3.txt", "demo error message");
+				add_failed_upload("test1.txt", "demo error message");
+				add_failed_upload("test2.txt", "demo error message");
+				add_failed_upload("test3.txt", "demo error message");
 				add_failed_upload("test1.txt", "demo error message");
 				add_failed_upload("test2.txt", "demo error message");
 				add_failed_upload("test3.txt", "demo error message");

@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import social_django.fields
-import evaluation.models
 from django.conf import settings
-import uuid
 import django.db.models.deletion
 import evaluation.validators
+import evaluation.models
+import uuid
 
 
 class Migration(migrations.Migration):
@@ -67,6 +67,20 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('image', models.ImageField(upload_to=evaluation.models.result_screenshot_path)),
                 ('result', models.ForeignKey(to='evaluation.Result')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='StagedFile',
+            fields=[
+                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('modified', models.DateTimeField(auto_now=True)),
+                ('timeout', models.DateTimeField()),
+                ('file', models.FileField(upload_to='')),
+                ('annotations', models.TextField(null=True)),
             ],
             options={
                 'abstract': False,

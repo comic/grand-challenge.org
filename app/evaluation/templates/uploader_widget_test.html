@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Uploader widget test</title>
+
+		<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
+		<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+	</head>
+	<body>
+		<form action="/got-a-form" method="post">
+			{{ testform }}
+		</form>
+	</body>
+</html>
