@@ -11,7 +11,7 @@ from django.template.loader import get_template
 from evaluation.models import StagedFile
 
 
-def cleanup_stale_files(*) -> str:
+def cleanup_stale_files() -> str:
     print("Hi!")
 
 
