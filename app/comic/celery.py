@@ -2,6 +2,8 @@ import os
 
 from celery import Celery
 
+from celery.app import shared_task
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comic.settings')
 
 app = Celery('comic')
@@ -12,14 +14,10 @@ app.config_from_object('django.conf:settings', namespace='CELERY_')
 app.autodiscover_tasks()
 
 
-@app.task
-def cleanup_stale_uploads():
+@shared_task
+def cleanup_stale_uploads(*_):
     from evaluation.widgets.uploader import cleanup_stale_files
     cleanup_stale_files()
-
-    import datetime
-    with open('/tmp/a', 'ab') as f:
-        f.write(datetime.datetime.now().isoformat() + "\n")
 
 
 @app.on_after_configure.connect

@@ -87,6 +87,19 @@ services:
       - ./app:/app/
       - /var/run/docker.sock:/var/run/docker.sock
 
+  celery_beat:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    command: celery -A comic beat -l info
+    links:
+      - db:mysql
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./app:/app/
+
   flower:
     image: crgwbr/docker-celery-flower
     environment:
