@@ -16,25 +16,6 @@
 }
 
 /* Upload page */
-
-#main-uploads {
-	display: flex;
-	flex-direction: column;
-}
-
-#main-uploads div.caption {
-	min-height: 1cm;
-}
-
-#main-uploads div.caption img.wait {
-	display: none;
-}
-
-#main-uploads div.caption input {
-	display: none;
-	width: 8cm;
-}
-
 div.file-upload {
 	position: relative;
 	min-height: 2cm;
@@ -153,6 +134,33 @@ div.file-upload div.foldable.folded > div p {
 
 div.file-upload div.foldable.folded > p > button::before {
 	content: '+';
+}
+
+
+/* Progress bar */
+div.file-upload .upload_bar:not(.ui-progressbar),
+div.file-upload .upload_bar[aria-valuenow='100'] {
+	display: none;
+}
+
+div.file-upload .upload_bar > div.label {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+
+	text-align: center;
+
+	font-size: .8em;
+
+	overflow: hidden;
+}
+
+div.file-upload .upload_bar > div.ui-progressbar-value {
+	background-color: rgba(100, 100, 255, 1);
+	border-radius: .2cm;
+	height: 100%;
 }
 
 

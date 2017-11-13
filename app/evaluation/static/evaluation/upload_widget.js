@@ -126,6 +126,13 @@ function upload_fold_unfold(element) {
                 add_failed_upload(file.name, "Sending failed.");
             }
         });
+
+        var total_upload_progress_bar = upload_element.find("div.upload-bar");
+        upload_element.on('fileuploadprogressall', function (e, data) {
+            var percent = parseInt(data.loaded / data.total * 100, 10);
+            total_upload_progress_bar.progressbar({value: percent});
+            total_upload_progress_bar.find(".label").text("Uploading... " + percent + "%");
+        });
     }
 
     $(function () {
