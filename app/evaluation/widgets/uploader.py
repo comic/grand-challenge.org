@@ -11,7 +11,11 @@ from django.template.loader import get_template
 from evaluation.models import StagedFile
 
 def cleanup_stale_files():
-    print("Hi!")
+    now = datetime.datetime.utcnow()
+    files_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
+    for file in files_to_delete:
+        print(f"Deleting {file.id}...")
+        file.delete()
 
 
 class AjaxUploadWidget(Widget):

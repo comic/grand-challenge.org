@@ -3,6 +3,7 @@ import os
 from celery import Celery
 
 from celery.app import shared_task
+from celery.schedules import crontab
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comic.settings')
 
@@ -23,6 +24,6 @@ def cleanup_stale_uploads(*_):
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        1.0,
+        crontab(minute=0),
         cleanup_stale_uploads.s(),
         name="clean_stale_uploads")
