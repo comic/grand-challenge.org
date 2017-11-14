@@ -1,5 +1,5 @@
-import tarfile
 import json
+import tarfile
 import uuid
 
 from django.contrib.auth.models import User
@@ -85,8 +85,9 @@ class Method(UUIDModel):
                                        'https://docs.docker.com/engine/reference/commandline/save/',
                              )
 
+    # TODO: Add a validator to make sure the form is sha256:{64}
     image_id = models.CharField(editable=False,
-                                max_length=64)
+                                max_length=71)
 
     def save(self, *args, **kwargs):
         self.image_id = self._image_id
@@ -100,7 +101,8 @@ class Method(UUIDModel):
             manifest = t.extractfile(member).read()
 
         manifest = json.loads(manifest)
-        return manifest[0]['Config'][:64]
+        # TODO: Check if the encoding method is included in the manifest
+        return f"sha256:{manifest[0]['Config'][:64]}"
 
     class Meta:
         unique_together = (("challenge", "created"),)
@@ -124,6 +126,9 @@ class Submission(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
+    # Limitation for now: only accept zip files as these are expanded in
+    # evaluation.tasks.Evaluation. We could extend this first to csv file
+    # submission with some validation
     file = models.FileField(upload_to=challenge_submission_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])

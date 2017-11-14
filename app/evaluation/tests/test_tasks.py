@@ -1,4 +1,6 @@
 import os
+import tempfile
+import zipfile
 
 import docker
 import factory
@@ -7,14 +9,14 @@ from django.conf import settings
 from django.db.models import signals
 
 from evaluation.tasks import evaluate_submission
-from evaluation.tests.factories import SubmissionFactory, JobFactory, MethodFactory, UserFactory
+from evaluation.tests.factories import SubmissionFactory, JobFactory, \
+    MethodFactory, UserFactory
 
 
 def create_test_evaluation_container() -> str:
     """
     Creates the example evaluation container
     """
-    outfile = '/tmp/test_evaluation.tar'
 
     client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
@@ -27,8 +29,10 @@ def create_test_evaluation_container() -> str:
     cli = docker.APIClient(base_url=settings.DOCKER_BASE_URL)
     image = cli.get_image('test_evaluation:latest')
 
-    with open(outfile, 'wb') as f:
+    with tempfile.NamedTemporaryFile(suffix='.tar', mode='wb',
+                                     delete=False) as f:
         f.write(image.data)
+        outfile = f.name
 
     client.images.remove(image=im.id)
 
@@ -41,8 +45,19 @@ def create_test_evaluation_container() -> str:
 @factory.django.mute_signals(signals.post_save)
 def test_submission_evaluation():
     # Upload a submission and create a job
-    testfile = os.path.join(os.path.split(__file__)[0], 'resources',
-                            'compressed.zip')
+
+    with tempfile.NamedTemporaryFile(mode='r', suffix='.zip',
+                                     delete=False) as f:
+        testfile = f.name
+
+    z = zipfile.ZipFile(testfile, mode='w')
+    try:
+        z.write(os.path.join(os.path.split(__file__)[0], 'resources',
+                             'submission.csv'),
+                compress_type=zipfile.ZIP_DEFLATED,
+                arcname='submission.csv')
+    finally:
+        z.close()
 
     user = UserFactory()
 
@@ -54,4 +69,4 @@ def test_submission_evaluation():
     job = JobFactory(submission=submission, method=method)
 
     res = evaluate_submission(job=job)
-    assert res == 'hello world\n'
+    assert res["acc"] == 0.5
