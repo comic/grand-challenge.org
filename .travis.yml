@@ -24,7 +24,6 @@ install:
 
 script:
   - tests/app_tests.sh 
-  - pytest --ignore=app --cov-report= --cov=.
 
 after_success:
   - coverage combine
