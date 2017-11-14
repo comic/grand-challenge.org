@@ -22,6 +22,7 @@ services:
       - celery_worker
     volumes:
       - static:/static/
+      - media:/www-media/
       - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
@@ -39,6 +40,7 @@ services:
       - web
     volumes:
       - static:/srv/public/static/:ro
+      - media:/srv/public/media/:ro
 
   memcached:
     extends:
@@ -78,3 +80,4 @@ services:
 
 volumes:
   static:
+  media:
