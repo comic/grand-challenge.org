@@ -8,6 +8,7 @@ from json import JSONDecodeError
 
 import docker
 from celery import shared_task
+from celery.task.base import periodic_task
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
