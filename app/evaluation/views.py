@@ -51,6 +51,17 @@ def uploader_widget_test(request: HttpRequest) -> HttpResponse:
         if test_form.is_valid():
             result = "Success!!!\n"
             result += "\n".join(f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
+
+            result += "\n\n"
+
+            f1 = test_form.cleaned_data["upload_form"][0]
+            with f1.open() as f:
+                the_bytes = f.read(16)
+            result += f"""
+You uploaded {len(test_form.cleaned_data["upload_form"])} files in the first form.
+
+The first 16 bytes of the first file were: {the_bytes}
+            """
         else:
             result = "Validation error:\n"
             result += "\n".join(f"  {e}" for e in test_form.errors)
