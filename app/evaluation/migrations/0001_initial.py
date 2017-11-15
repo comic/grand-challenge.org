@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import evaluation.validators
 import uuid
-from django.conf import settings
 import evaluation.models
+from django.conf import settings
 import django.db.models.deletion
 import social_django.fields
 
@@ -13,8 +13,8 @@ import social_django.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('comicmodels', '0008_auto_20170623_1341'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -72,6 +72,20 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
+        ),
+        migrations.CreateModel(
+            name='StagedFile',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('csrf', models.CharField(max_length=128)),
+                ('client_id', models.CharField(max_length=128, null=True)),
+                ('file_id', models.UUIDField()),
+                ('timeout', models.DateTimeField()),
+                ('file', models.FileField(upload_to='')),
+                ('start_byte', models.BigIntegerField()),
+                ('end_byte', models.BigIntegerField()),
+                ('total_size', models.BigIntegerField(null=True)),
+            ],
         ),
         migrations.CreateModel(
             name='Submission',
