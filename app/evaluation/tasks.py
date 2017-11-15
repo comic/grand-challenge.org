@@ -38,6 +38,9 @@ class Evaluator(object):
         self._eval_image = eval_image
         self._eval_image_id = eval_image_id
 
+        self._io_image = 'alpine:3.6'
+
+        # TODO: error handling
         self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
         self._input_volume = f'{self._job_id}-input'
@@ -47,8 +50,13 @@ class Evaluator(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # TODO - cleanup
-        pass
+        filter = {'label': f'job_id={self._job_id}'}
+
+        for container in self._client.containers.list(filters=filter):
+            container.stop()
+
+        self._client.containers.prune(filters=filter)
+        self._client.volumes.prune(filters=filter)
 
     def evaluate(self) -> dict:
         # TODO - check that we're being run as part of a context manager
@@ -59,8 +67,8 @@ class Evaluator(object):
         return self._get_result()
 
     def _pull_images(self):
-        # The alpine image is needed for the reader and writer containers
-        self._client.images.pull(name='alpine')
+        if len(self._client.images.list(name=self._io_image)) == 0:
+            self._client.images.pull(name=self._io_image)
 
         if self._eval_image_id not in [x.id for x in
                                        self._client.images.list()]:
@@ -82,13 +90,14 @@ class Evaluator(object):
 
         # TODO: Add resource limits
         with cleanup(self._client.containers.run(
-                image='alpine',
+                image=self._io_image,
                 volumes={
                     self._input_volume: {
                         'bind': '/input/',
                         'mode': 'rw'
                     }
                 },
+                labels={'job_id': self._job_id},
                 detach=True,
                 tty=True)) as writer:
             put_file(container=writer, src=self._input_file, dest=dest_file)
@@ -112,18 +121,20 @@ class Evaluator(object):
                                             'bind': '/output/',
                                             'mode': 'rw'
                                         }
-                                    })
+                                    },
+                                    labels={'job_id': self._job_id})
 
     def _get_result(self) -> dict:
         # TODO: Error handling
         result = self._client.containers.run(
-            image='alpine',
+            image=self._io_image,
             volumes={
                 self._output_volume: {
                     'bind': '/output/',
                     'mode': 'ro'
                 }
             },
+            labels={'job_id': self._job_id},
             command='cat /output/metrics.json')
 
         result = json.loads(result.decode())

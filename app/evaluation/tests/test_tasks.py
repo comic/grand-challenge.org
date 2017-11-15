@@ -13,12 +13,10 @@ from evaluation.tests.factories import SubmissionFactory, JobFactory, \
     MethodFactory, UserFactory
 
 
-def create_test_evaluation_container() -> str:
+def create_test_evaluation_container(client) -> str:
     """
     Creates the example evaluation container
     """
-
-    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
     im = client.images.build(
         path=os.path.join(os.path.split(__file__)[0], 'resources', 'docker'),
@@ -46,6 +44,8 @@ def create_test_evaluation_container() -> str:
 def test_submission_evaluation():
     # Upload a submission and create a job
 
+    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+
     with tempfile.NamedTemporaryFile(mode='r', suffix='.zip',
                                      delete=False) as f:
         testfile = f.name
@@ -63,10 +63,19 @@ def test_submission_evaluation():
 
     submission = SubmissionFactory(file__from_path=testfile, user=user)
 
-    eval_container = create_test_evaluation_container()
+    eval_container = create_test_evaluation_container(client)
     method = MethodFactory(image__from_path=eval_container)
 
     job = JobFactory(submission=submission, method=method)
 
+    num_containers_before = len(client.containers.list())
+    num_volumes_before = len(client.volumes.list())
+
     res = evaluate_submission(job=job)
+
+    # The evaluation method should return the correct answer
     assert res["acc"] == 0.5
+
+    # The evaluation method should clean up after itself
+    assert len(client.volumes.list()) == num_volumes_before
+    assert len(client.containers.list()) == num_containers_before
