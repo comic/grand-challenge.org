@@ -126,11 +126,7 @@ function upload_fold_unfold(element) {
             return filename + '_' + rnd + '_' + date;
         }
 
-        var file_handle_ids = [];
-
         upload_element.on('fileuploadsubmit', function (e, data) {
-            console.log("asdf");
-            console.log(generate_unique_file_handle_id(data.files[0]));
             data.formData = {
                 "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
             };

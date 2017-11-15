@@ -7,6 +7,7 @@ from pprint import pprint
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBadRequest, \
@@ -82,21 +83,15 @@ class AjaxUploadWidget(Widget):
         self.ajax_target_path = ajax_target_path
         self.timeout = datetime.timedelta(hours=2)
 
-    def _handle_complete(self, request, csrf_token, uploaded_file):
-        # csrf = models.CharField(max_length=128)
-        # client_id = models.CharField(max_length=128)
-        #
-        # file_id = models.UUIDField(blank=False)
-        # timeout = models.DateTimeField(blank=False)
-        #
-        # file = models.FileField(blank=False)
-        # start_byte = models.BigIntegerField(blank=False)
-        # end_byte = models.BigIntegerField(blank=False)
-        # total_size = models.BigIntegerField(blank=False)
-
+    def _handle_complete(
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         new_staged_file = StagedFile.objects.create(
             csrf=csrf_token,
             client_id=None,
+            client_filename=uploaded_file.name,
 
             file_id=uuid.uuid4(),
             timeout=datetime.datetime.utcnow() + self.timeout,
@@ -108,12 +103,16 @@ class AjaxUploadWidget(Widget):
         )
 
         return {
-            "filename": new_staged_file.file.name,
+            "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
             "extra_attrs": {},
         }
 
-    def _handle_chunked(self, request, csrf_token, uploaded_file):
+    def _handle_chunked(
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         # Only content ranges of the form
         #
         #   bytes-unit SP byte-range-resp
@@ -160,6 +159,12 @@ class AjaxUploadWidget(Widget):
             if chunk_intersects:
                 raise InvalidRequestException("Overlapping chunks")
 
+            inconsistent_filenames = other_chunks.exclude(
+                client_filename=uploaded_file.name).exists()
+            if inconsistent_filenames:
+                raise InvalidRequestException(
+                    "Chunks have inconsistent filenames")
+
             if total_size is not None:
                 inconsistent_total_size = other_chunks.exclude(
                     total_size=None).exclude(
@@ -172,6 +177,7 @@ class AjaxUploadWidget(Widget):
         new_staged_file = StagedFile.objects.create(
             csrf=csrf_token,
             client_id=client_id,
+            client_filename=uploaded_file.name,
 
             file_id=file_id,
             timeout=datetime.datetime.utcnow() + self.timeout,
@@ -183,7 +189,7 @@ class AjaxUploadWidget(Widget):
         )
 
         return {
-            "filename": new_staged_file.file.name,
+            "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
             "extra_attrs": {},
         }
@@ -235,7 +241,7 @@ class UploadedAjaxFileList(forms.Field):
         allowed_characters = '0123456789abcdefABCDEF-,'
         if any(c for c in value if c not in allowed_characters):
             raise ValidationError(
-                "UUID list includes invalid cahracters")
+                "UUID list includes invalid characters")
 
         split_items = value.split(",")
         uuids = []
