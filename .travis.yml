@@ -23,9 +23,10 @@ install:
   - docker-compose up --build -d
 
 script:
-  - tests/app_tests.sh 
+  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "py.test --cov-report= --cov=."
 
 after_success:
+  - mv app/.coverage .coverage.docker
   - coverage combine
   - codecov
 
