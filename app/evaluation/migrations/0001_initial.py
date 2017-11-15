@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import social_django.fields
+import uuid
 from django.conf import settings
+import social_django.fields
 import django.db.models.deletion
 import evaluation.validators
 import evaluation.models
-import uuid
 
 
 class Migration(migrations.Migration):
@@ -75,16 +75,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='StagedFile',
             fields=[
-                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('csrf', models.CharField(max_length=128)),
+                ('client_id', models.CharField(max_length=128, null=True)),
+                ('file_id', models.UUIDField()),
                 ('timeout', models.DateTimeField()),
                 ('file', models.FileField(upload_to='')),
-                ('annotations', models.TextField(null=True)),
+                ('start_byte', models.BigIntegerField()),
+                ('end_byte', models.BigIntegerField()),
+                ('total_size', models.BigIntegerField(null=True)),
             ],
-            options={
-                'abstract': False,
-            },
         ),
         migrations.CreateModel(
             name='Submission',

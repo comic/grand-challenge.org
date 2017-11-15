@@ -29,6 +29,9 @@ function upload_fold_unfold(element) {
             {
                 url: target_url,
                 dropZone: dropzone,
+                maxChunkSize: 8000000,
+                retryTimeout: 500,
+                maxRetries: 50,
                 headers: {
                     "X-CSRFToken": csrf_token
                 }
@@ -115,6 +118,24 @@ function upload_fold_unfold(element) {
             form_element.val(uuid_list_string);
             console.log("uuid_list_string = " + uuid_list_string);
         }
+
+        function generate_unique_file_handle_id(file) {
+            var rnd = "" + Math.floor(Math.random() * 1000000);
+            var date = (new Date).toISOString();
+            var filename = file.name.slice(0, 32);
+            return filename + '_' + rnd + '_' + date;
+        }
+
+        var file_handle_ids = [];
+
+        upload_element.on('fileuploadsubmit', function (e, data) {
+            console.log("asdf");
+            console.log(generate_unique_file_handle_id(data.files[0]));
+            data.formData = {
+                "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
+            };
+        });
+
 
         upload_element.on('fileuploaddone', function (e, data) {
             add_succeeded_upload(data.result);
