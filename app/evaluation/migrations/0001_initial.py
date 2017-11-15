@@ -2,19 +2,19 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import evaluation.validators
+import uuid
 from django.conf import settings
 import evaluation.models
 import django.db.models.deletion
-import uuid
-import evaluation.validators
 import social_django.fields
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comicmodels', '0008_auto_20170623_1341'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('comicmodels', '0008_auto_20170623_1341'),
     ]
 
     operations = [

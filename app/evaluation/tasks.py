@@ -1,14 +1,20 @@
 import json
+import multiprocessing
 import os
+import typing
 import uuid
 from contextlib import contextmanager
+from json import JSONDecodeError
 
 import docker
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
+from docker.errors import ContainerError
 
+from evaluation.exceptions import TimeoutException, MethodContainerError, \
+    SubmissionError
 from evaluation.models import Job, Result
 from evaluation.utils import put_file
 
@@ -39,6 +45,9 @@ class Evaluator(object):
         self._eval_image_id = eval_image_id
 
         self._io_image = 'alpine:3.6'
+        self._mem_limit = '2g'
+        self._cpu_period = 100000
+        self._cpu_quota = 25000
 
         # TODO: error handling
         self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
@@ -59,12 +68,21 @@ class Evaluator(object):
         self._client.volumes.prune(filters=filter)
 
     def evaluate(self) -> dict:
-        # TODO - check that we're being run as part of a context manager
         self._pull_images()
         self._create_io_volumes()
-        self._provision_input_volume()
-        self._run_evaluation()
+        self._run(target=self._provision_input_volume, timeout=600)
+        self._run(target=self._run_evaluation, timeout=3600)
         return self._get_result()
+
+    def _run(self, *, target: typing.Callable, timeout: int = None):
+        p = multiprocessing.Process(target=target)
+
+        p.start()
+        p.join(timeout)
+
+        if p.is_alive():
+            p.terminate()
+            raise TimeoutException(f'{target} timed out after {timeout} s.')
 
     def _pull_images(self):
         if len(self._client.images.list(name=self._io_image)) == 0:
@@ -87,57 +105,85 @@ class Evaluator(object):
 
     def _provision_input_volume(self):
         dest_file = '/input/' + os.path.split(self._input_file.name)[1]
+        try:
+            with cleanup(self._client.containers.run(
+                    image=self._io_image,
+                    volumes={
+                        self._input_volume: {
+                            'bind': '/input/',
+                            'mode': 'rw'
+                        }
+                    },
+                    labels={'job_id': self._job_id},
+                    detach=True,
+                    tty=True,
+                    network_disabled=True,
+                    mem_limit=self._mem_limit,
+                    cpu_period=self._cpu_period,
+                    cpu_quota=self._cpu_quota,
+            )) as writer:
+                put_file(
+                    container=writer,
+                    src=self._input_file,
+                    dest=dest_file
+                )
 
-        # TODO: Add resource limits
-        with cleanup(self._client.containers.run(
-                image=self._io_image,
+                # Unzip the file in the container rather than in the python
+                # process. With resource limits this should provide some
+                # protection against zip bombs etc.
+                # TODO: Check that the top level directory is not duplicate
+                writer.exec_run(f'unzip {dest_file} -d /input')
+                writer.exec_run('rm {dest_file}')
+        except Exception as exc:
+            raise SubmissionError(str(exc))
+
+    def _run_evaluation(self):
+        try:
+            self._client.containers.run(
+                image=self._eval_image_id,
                 volumes={
                     self._input_volume: {
                         'bind': '/input/',
+                        'mode': 'ro'
+                    },
+                    self._output_volume: {
+                        'bind': '/output/',
                         'mode': 'rw'
                     }
                 },
                 labels={'job_id': self._job_id},
-                detach=True,
-                tty=True)) as writer:
-            put_file(container=writer, src=self._input_file, dest=dest_file)
-
-            # Unzip the file in the container rather than in the python process
-            # With resource limits this should provide some protection against
-            # zip bombs etc.
-            # TODO: Check that the top level directory is not duplicate
-            writer.exec_run(f'unzip {dest_file} -d /input')
-            writer.exec_run('rm {dest_file}')
-
-    def _run_evaluation(self):
-        # TODO: Add resource limits
-        self._client.containers.run(image=self._eval_image_id,
-                                    volumes={
-                                        self._input_volume: {
-                                            'bind': '/input/',
-                                            'mode': 'ro'
-                                        },
-                                        self._output_volume: {
-                                            'bind': '/output/',
-                                            'mode': 'rw'
-                                        }
-                                    },
-                                    labels={'job_id': self._job_id})
+                network_disabled=True,
+                mem_limit=self._mem_limit,
+                cpu_period=self._cpu_period,
+                cpu_quota=self._cpu_quota,
+            )
+        except ContainerError as exc:
+            raise MethodContainerError(exc.stderr)
 
     def _get_result(self) -> dict:
-        # TODO: Error handling
-        result = self._client.containers.run(
-            image=self._io_image,
-            volumes={
-                self._output_volume: {
-                    'bind': '/output/',
-                    'mode': 'ro'
-                }
-            },
-            labels={'job_id': self._job_id},
-            command='cat /output/metrics.json')
+        try:
+            result = self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._output_volume: {
+                        'bind': '/output/',
+                        'mode': 'ro'
+                    }
+                },
+                labels={'job_id': self._job_id},
+                command='cat /output/metrics.json',
+                network_disabled=True,
+                mem_limit=self._mem_limit,
+                cpu_period=self._cpu_period,
+                cpu_quota=self._cpu_quota,
+            )
+        except ContainerError as exc:
+            raise MethodContainerError(exc.stderr)
 
-        result = json.loads(result.decode())
+        try:
+            result = json.loads(result.decode())
+        except JSONDecodeError as exc:
+            raise MethodContainerError(exc.msg)
 
         return result
 
@@ -161,18 +207,29 @@ def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None) -> dict:
                         'arguments to evaluate_submission, not none or both.')
 
     if job_id:
-        job = Job.objects.get(id__exact=job_id)
+        job = Job.objects.get(id__exact=job_id)  # type: Job
 
-    # TODO: Error handling, update the job status
-    with Evaluator(job_id=job.id,
-                   input_file=job.submission.file,
-                   eval_image=job.method.image,
-                   eval_image_id=job.method.image_id) as e:
-        result = e.evaluate()
+    job.update_status(status=Job.STARTED)
 
-    Result.objects.create(user=job.submission.user,
-                          challenge=job.submission.challenge,
-                          method=job.method,
-                          metrics=result)
+    try:
+        with Evaluator(
+                job_id=job.id,
+                input_file=job.submission.file,
+                eval_image=job.method.image,
+                eval_image_id=job.method.image_id
+        ) as e:
+            result = e.evaluate()
+    except Exception as exc:
+        job.update_status(status=Job.FAILURE, output=str(exc))
+        raise exc
+
+    Result.objects.create(
+        user=job.submission.user,
+        challenge=job.submission.challenge,
+        method=job.method,
+        metrics=result
+    )
+
+    job.update_status(status=Job.SUCCESS)
 
     return result

@@ -172,3 +172,9 @@ class Job(UUIDModel):
     status_history = JSONField(default=dict)
 
     output = models.TextField()
+
+    def update_status(self, *, status: STATUS_CHOICES, output: str=None):
+        self.status = status
+        if output:
+            self.output=output
+        self.save()
