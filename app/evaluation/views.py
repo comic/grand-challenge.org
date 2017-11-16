@@ -1,6 +1,7 @@
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
+from django.views.generic import CreateView, ListView, DetailView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
@@ -44,13 +45,58 @@ class MethodViewSet(ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
+class MethodCreate(CreateView):
+    model = Method
+    fields = '__all__'
+
+class MethodList(ListView):
+    model = Method
+    fields = '__all__'
+
+class MethodDetail(DetailView):
+    model = Method
+    fields = '__all__'
+
+class SubmissionCreate(CreateView):
+    model = Submission
+    fields = '__all__'
+
+class SubmissionList(ListView):
+    model = Submission
+    fields = '__all__'
+
+class SubmissionDetail(DetailView):
+    model = Submission
+    fields = '__all__'
+
+class JobCreate(CreateView):
+    model = Job
+    fields = '__all__'
+
+class JobList(ListView):
+    model = Job
+    fields = '__all__'
+
+class JobDetail(DetailView):
+    model = Job
+    fields = '__all__'
+
+class ResultList(ListView):
+    model = Result
+    fields = '__all__'
+
+class ResultDetail(DetailView):
+    model = Result
+    fields = '__all__'
+
 
 def uploader_widget_test(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         test_form = UploadForm(request.POST)
         if test_form.is_valid():
             result = "Success!!!\n"
-            result += "\n".join(f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
+            result += "\n".join(
+                f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
         else:
             result = "Validation error:\n"
             result += "\n".join(f"  {e}" for e in test_form.errors)

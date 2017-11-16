@@ -52,6 +52,7 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
+    # TODO: check the server response for 200 OK
     command: >-
       dockerize -wait tcp://web:8000 -timeout 120s bash -c "
       celery -A comic worker -l info

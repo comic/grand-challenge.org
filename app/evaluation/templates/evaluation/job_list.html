@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Evaluation Jobs</h1>
+
+    {% for job in object_list %}
+        <li>{{ job }}</li>
+    {% empty %}
+        <li>No jobs yet</li>
+    {% endfor %}
+
+{% endblock %}
