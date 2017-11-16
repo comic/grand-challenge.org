@@ -244,50 +244,6 @@ class AjaxUploadWidget(Widget):
         return template.render(context=context)
 
 
-class IntervalMap:
-    def __init__(self):
-        self.__endpoints = []
-
-    def append_interval(self, length, label):
-        self.__endpoints.append((len(self) + length, label))
-        self.__endpoints.sort()
-
-    def __find_endpoint_index(self, i):
-        def find(start, end):
-            # use nested intervals to find correct label
-            if start == end:
-                return start
-            else:
-                mid = (start + end) // 2
-                if self.__endpoints[mid][0] > i:
-                    return find(start, mid)
-                else:
-                    return find(mid + 1, end)
-        if i >= len(self):
-            return None
-        else:
-            return find(0, len(self.__endpoints))
-
-    def get_offset(self, i):
-        endpoint_index = self.__find_endpoint_index(i)
-        if endpoint_index is None:
-            return None
-        elif endpoint_index == 0:
-            return 0
-        else:
-            return self.__endpoints[endpoint_index - 1][0]
-
-    def __getitem__(self, i):
-        endpoint_index = self.__find_endpoint_index(i)
-        if endpoint_index is None:
-            return None
-        else:
-            return self.__endpoints[endpoint_index][1]
-
-    def __len__(self):
-        return self.__endpoints[-1][0] if self.__endpoints else 0
-
-
 class OpenedStagedAjaxFile(IOBase):
     def __init__(self, _uuid):
         super(OpenedStagedAjaxFile, self).__init__()
