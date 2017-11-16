@@ -32,6 +32,7 @@ def cleanup_stale_files():
         file.delete()
 
 
+class NotFoundError(Exception): pass
 class InvalidRequestException(Exception): pass
 
 
@@ -223,8 +224,8 @@ class AjaxUploadWidget(Widget):
 
         return JsonResponse(result, safe=False)
 
+    template = get_template("widgets/uploader.html")
     def render(self, name, value, attrs=None):
-        template = get_template("widgets/uploader.html")
 
         if isinstance(value, Iterable):
             value = ",".join(str(x) for x in value)
@@ -400,15 +401,20 @@ class StagedAjaxFile:
             raise TypeError("uuid parameter must be uuid.UUID")
         self.__uuid = _uuid
 
+    def _raise_if_missing(self):
+        query = StagedFile.objects.filter(file_id=self.__uuid)
+        if not query.exists():
+            raise NotFoundError()
+        return query
+
     @property
     def uuid(self):
         return self.__uuid
 
     @property
     def name(self):
-        chunks = StagedFile.objects \
-            .filter(file_id=self.__uuid) \
-            .first().client_filename
+        chunks_query = self._raise_if_missing()
+        return chunks_query.first().client_filename
 
     @property
     def exists(self):
@@ -416,7 +422,10 @@ class StagedAjaxFile:
 
     @property
     def size(self):
-        chunks = StagedFile.objects.filter(file_id=self.__uuid).all()
+        chunks_query = self._raise_if_missing()
+        chunks = chunks_query.all()
+        if len(chunks) == 0:
+            raise NotFoundError()
 
         remaining_size = None
 
@@ -427,9 +436,7 @@ class StagedAjaxFile:
 
         current_size = 0
         for chunk in sorted(chunks, key=lambda x: x.start_byte):
-            print(chunk.start_byte, chunk.end_byte, remaining_size)
             if chunk.start_byte != current_size:
-                print("*" * 30, "Invalid end byte")
                 return None
             current_size = chunk.end_byte + 1
             if remaining_size is not None:
@@ -437,19 +444,24 @@ class StagedAjaxFile:
 
         if remaining_size is not None:
             if remaining_size != 0:
-                print("*" * 30, "Invalid remaining size:", remaining_size)
                 return None
 
         return current_size
 
     @property
     def is_complete(self):
+        if not StagedFile.objects.filter(file_id=self.__uuid).exists():
+            return False
         return self.size is not None
 
     def open(self):
         if not self.is_complete:
             raise IOError("incomplete upload")
         return OpenedStagedAjaxFile(self.__uuid)
+
+    def delete(self):
+        query = self._raise_if_missing()
+        query.delete()
 
 
 class UploadedAjaxFileList(forms.Field):
@@ -472,5 +484,6 @@ class UploadedAjaxFileList(forms.Field):
         return [StagedAjaxFile(uuid) for uuid in uuids]
 
     def prepare_value(self, value):
-        # convert value to be stuffed into the html
-        pass
+        # convert value to be stuffed into the html, this must be
+        # implemented if we want to pre-populate upload forms
+        return None
