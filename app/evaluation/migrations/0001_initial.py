@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import uuid
-from django.conf import settings
-import social_django.fields
-import django.db.models.deletion
 import evaluation.validators
+import uuid
 import evaluation.models
+from django.conf import settings
+import django.db.models.deletion
+import social_django.fields
 
 
 class Migration(migrations.Migration):
@@ -38,7 +38,8 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('container', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary',))], upload_to=evaluation.models.method_container_path)),
+                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary',)), evaluation.validators.ContainerImageValidator(single_image=True)], upload_to=evaluation.models.method_image_path)),
+                ('image_id', models.CharField(max_length=71, editable=False)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],

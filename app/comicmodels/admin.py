@@ -1,8 +1,6 @@
-import datetime
-
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.timezone import utc
+from django.utils import timezone
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 
@@ -123,8 +121,7 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
     def process_acceptance(self, request, obj):
         obj.status = RegistrationRequest.ACCEPTED
 
-        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
-        # obj.changed = datetime.datetime.today()
+        obj.changed = timezone.now()
         obj.save()
 
         obj.project.add_participant(obj.user)
@@ -136,8 +133,8 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
 
     def process_rejection(self, request, obj):
         obj.status = RegistrationRequest.REJECTED
-        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
-        # obj.changed = datetime.datetime.today()
+
+        obj.changed = timezone.now()
         obj.save()
 
         obj.project.remove_participant(obj.user)

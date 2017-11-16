@@ -1,10 +1,12 @@
+import json
+import tarfile
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
 from social_django.fields import JSONField
 
-from evaluation.validators import MimeTypeValidator
+from evaluation.validators import MimeTypeValidator, ContainerImageValidator
 
 
 class UUIDModel(models.Model):
@@ -55,9 +57,9 @@ class ResultScreenshot(UUIDModel):
     image = models.ImageField(upload_to=result_screenshot_path)
 
 
-def method_container_path(instance, filename):
+def method_image_path(instance, filename):
     return f'evaluation/{instance.challenge.id}/methods/' \
-           f'{instance.method.id}/{filename}'
+           f'{instance.id}/{filename}'
 
 
 class Method(UUIDModel):
@@ -71,16 +73,36 @@ class Method(UUIDModel):
                              null=True,
                              on_delete=models.SET_NULL)
 
-    container = models.FileField(upload_to=method_container_path,
-                                 validators=[MimeTypeValidator(
-                                     allowed_types=(
-                                         'application/x-tarbinary',))],
-                                 help_text='Tar archive of the container '
-                                           'image produced from the command '
-                                           '`docker save IMAGE > '
-                                           'IMAGE.tar`. See '
-                                           'https://docs.docker.com/engine/reference/commandline/save/',
-                                 )
+    image = models.FileField(upload_to=method_image_path,
+                             validators=[
+                                 MimeTypeValidator(allowed_types=(
+                                     'application/x-tarbinary',)),
+                                 ContainerImageValidator(single_image=True)],
+                             help_text='Tar archive of the container '
+                                       'image produced from the command '
+                                       '`docker save IMAGE > '
+                                       'IMAGE.tar`. See '
+                                       'https://docs.docker.com/engine/reference/commandline/save/',
+                             )
+
+    # TODO: Add a validator to make sure the form is sha256:{64}
+    image_id = models.CharField(editable=False,
+                                max_length=71)
+
+    def save(self, *args, **kwargs):
+        self.image_id = self._image_id
+        super(Method, self).save(*args, **kwargs)
+
+    @property
+    def _image_id(self) -> str:
+        with tarfile.open(fileobj=self.image, mode='r') as t:
+            member = dict(zip(t.getnames(), t.getmembers()))[
+                'manifest.json']
+            manifest = t.extractfile(member).read()
+
+        manifest = json.loads(manifest)
+        # TODO: Check if the encoding method is included in the manifest
+        return f"sha256:{manifest[0]['Config'][:64]}"
 
     class Meta:
         unique_together = (("challenge", "created"),)
@@ -104,6 +126,9 @@ class Submission(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
+    # Limitation for now: only accept zip files as these are expanded in
+    # evaluation.tasks.Evaluation. We could extend this first to csv file
+    # submission with some validation
     file = models.FileField(upload_to=challenge_submission_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
@@ -147,6 +172,12 @@ class Job(UUIDModel):
     status_history = JSONField(default=dict)
 
     output = models.TextField()
+
+    def update_status(self, *, status: STATUS_CHOICES, output: str=None):
+        self.status = status
+        if output:
+            self.output=output
+        self.save()
 
 
 class StagedFile(models.Model):

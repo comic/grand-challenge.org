@@ -16,18 +16,12 @@ services:
     links:
       - db:mysql
       - memcached
-    depends_on:
-      - db
-      - memcached
-      - dropbox
-      - celery_worker
     volumes:
       - static:/static/
+      - media:/www-media/
       - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
-    volumes_from:
-      - dropbox
 
   http:
     extends:
@@ -38,33 +32,14 @@ services:
       - "443:443"
     links:
       - web
-    depends_on:
-      - web
     volumes:
       - static:/srv/public/static/:ro
-      - ssl_certs:/etc/ssl/certs/
-      - ssl_private:/etc/ssl/private/
+      - media:/srv/public/media/:ro
 
   memcached:
     extends:
       file: docker-compose.common.yml
       service: memcached
-
-  dropbox:
-    extends:
-      file: docker-compose.common.yml
-      service: dropbox
-
-  registry:
-    extends:
-      file: docker-compose.common.yml
-      service: registry
-    ports:
-      - "5000:5000"
-    volumes:
-      - ssl_certs:/etc/ssl/certs/:ro
-      - ssl_private:/etc/ssl/private/:ro
-      - ./tests/auth:/auth/
 
   rabbitmq:
     extends:
@@ -77,12 +52,14 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
-    command: celery -A comic worker -l info
+    command: >-
+      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
+      celery -A comic worker -l info
+      "
     links:
       - db:mysql
       - rabbitmq
-    depends_on:
-      - rabbitmq
+      - web
     volumes:
       - ./app:/app/
       - /var/run/docker.sock:/var/run/docker.sock
@@ -91,12 +68,14 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
-    command: celery -A comic beat -l info
+    command: >-
+      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
+      celery -A comic beat -l info
+      "
     links:
       - db:mysql
       - rabbitmq
-    depends_on:
-      - rabbitmq
+      - web
     volumes:
       - ./app:/app/
 
@@ -110,8 +89,6 @@ services:
       - rabbitmq
     restart: always
 
-
 volumes:
   static:
-  ssl_certs:
-  ssl_private:
+  media:

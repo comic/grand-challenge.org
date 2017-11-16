@@ -1,9 +1,25 @@
 import io
 import os
 import tarfile
+from contextlib import contextmanager
 
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
+
+
+@contextmanager
+def cleanup(container: ContainerApiMixin):
+    """
+    Cleans up a docker container which is running in detached mode
+
+    :param container: An instance of a container
+    :return:
+    """
+    try:
+        yield container
+    finally:
+        container.stop()
+        container.remove(force=True)
 
 
 def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():

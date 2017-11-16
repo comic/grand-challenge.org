@@ -1,4 +1,6 @@
 import os
+import tempfile
+import zipfile
 
 import docker
 import factory
@@ -7,16 +9,14 @@ from django.conf import settings
 from django.db.models import signals
 
 from evaluation.tasks import evaluate_submission
-from evaluation.tests.factories import SubmissionFactory, JobFactory, MethodFactory
+from evaluation.tests.factories import SubmissionFactory, JobFactory, \
+    MethodFactory, UserFactory
 
 
-def create_test_evaluation_container() -> str:
+def create_test_evaluation_container(client) -> str:
     """
     Creates the example evaluation container
     """
-    outfile = '/tmp/test_evaluation.tar'
-
-    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
     im = client.images.build(
         path=os.path.join(os.path.split(__file__)[0], 'resources', 'docker'),
@@ -27,8 +27,10 @@ def create_test_evaluation_container() -> str:
     cli = docker.APIClient(base_url=settings.DOCKER_BASE_URL)
     image = cli.get_image('test_evaluation:latest')
 
-    with open(outfile, 'wb') as f:
+    with tempfile.NamedTemporaryFile(suffix='.tar', mode='wb',
+                                     delete=False) as f:
         f.write(image.data)
+        outfile = f.name
 
     client.images.remove(image=im.id)
 
@@ -41,15 +43,39 @@ def create_test_evaluation_container() -> str:
 @factory.django.mute_signals(signals.post_save)
 def test_submission_evaluation():
     # Upload a submission and create a job
-    testfile = os.path.join(os.path.split(__file__)[0], 'resources',
-                            'compressed.zip')
 
-    submission = SubmissionFactory(file__from_path=testfile)
+    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
-    eval_container = create_test_evaluation_container()
-    method = MethodFactory(container__from_path=eval_container)
+    with tempfile.NamedTemporaryFile(mode='r', suffix='.zip',
+                                     delete=False) as f:
+        testfile = f.name
+
+    z = zipfile.ZipFile(testfile, mode='w')
+    try:
+        z.write(os.path.join(os.path.split(__file__)[0], 'resources',
+                             'submission.csv'),
+                compress_type=zipfile.ZIP_DEFLATED,
+                arcname='submission.csv')
+    finally:
+        z.close()
+
+    user = UserFactory()
+
+    submission = SubmissionFactory(file__from_path=testfile, user=user)
+
+    eval_container = create_test_evaluation_container(client)
+    method = MethodFactory(image__from_path=eval_container)
 
     job = JobFactory(submission=submission, method=method)
 
+    num_containers_before = len(client.containers.list())
+    num_volumes_before = len(client.volumes.list())
+
     res = evaluate_submission(job=job)
-    assert res == 'hello world\n'
+
+    # The evaluation method should return the correct answer
+    assert res["acc"] == 0.5
+
+    # The evaluation method should clean up after itself
+    assert len(client.volumes.list()) == num_volumes_before
+    assert len(client.containers.list()) == num_containers_before
