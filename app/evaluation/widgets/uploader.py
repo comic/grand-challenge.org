@@ -1,17 +1,16 @@
 import re
-import datetime
-
-from collections import Iterable
 import uuid
-from pprint import pprint
+from collections import Iterable
+from datetime import timedelta
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBadRequest, \
-    HttpResponseServerError, JsonResponse, HttpResponseForbidden
+    JsonResponse, HttpResponseForbidden
 from django.template.loader import get_template
+from django.utils import timezone
 
 from evaluation.models import StagedFile
 
@@ -21,7 +20,7 @@ def cleanup_stale_files():
     Cleanup routine target function to be invoked repeatedly. It scans the
     database for stale uploaded files and deletes them.
     """
-    now = datetime.datetime.utcnow()
+    now = timezone.now()
     files_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
     for file in files_to_delete:
         print(f"Deleting {file.id}...")
@@ -80,7 +79,7 @@ class AjaxUploadWidget(Widget):
             raise ValueError("AJAX target path required")
 
         self.ajax_target_path = ajax_target_path
-        self.timeout = datetime.timedelta(hours=2)
+        self.timeout = timedelta(hours=2)
 
     def _handle_complete(self, request, csrf_token, uploaded_file):
         # csrf = models.CharField(max_length=128)
@@ -99,7 +98,7 @@ class AjaxUploadWidget(Widget):
             client_id=None,
 
             file_id=uuid.uuid4(),
-            timeout=datetime.datetime.utcnow() + self.timeout,
+            timeout=timezone.now() + self.timeout,
 
             file=uploaded_file,
             start_byte=0,
@@ -122,7 +121,8 @@ class AjaxUploadWidget(Widget):
         # https://tools.ietf.org/html/rfc7233#appendix-C
         range_header = request.META.get("HTTP_CONTENT_RANGE", None)
         if not range_header:
-            raise InvalidRequestException("Client did not supply Content-Range")
+            raise InvalidRequestException(
+                "Client did not supply Content-Range")
         range_match = re.match(
             r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
             range_header)
@@ -145,7 +145,8 @@ class AjaxUploadWidget(Widget):
                 "X-Upload-ID",
                 None))
         if not client_id:
-            raise InvalidRequestException("Client did not supply a X-Upload-ID")
+            raise InvalidRequestException(
+                "Client did not supply a X-Upload-ID")
         if len(client_id) > 128:
             raise InvalidRequestException("X-Upload-ID is too long")
 
@@ -174,7 +175,7 @@ class AjaxUploadWidget(Widget):
             client_id=client_id,
 
             file_id=file_id,
-            timeout=datetime.datetime.utcnow() + self.timeout,
+            timeout=timezone.now() + self.timeout,
 
             file=uploaded_file,
             start_byte=start_byte,

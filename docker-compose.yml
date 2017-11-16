@@ -16,10 +16,6 @@ services:
     links:
       - db:mysql
       - memcached
-    depends_on:
-      - db
-      - memcached
-      - celery_worker
     volumes:
       - static:/static/
       - media:/www-media/
@@ -35,8 +31,6 @@ services:
       - "80:80"
       - "443:443"
     links:
-      - web
-    depends_on:
       - web
     volumes:
       - static:/srv/public/static/:ro
@@ -58,12 +52,14 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
-    command: celery -A comic worker -l info
+    command: >-
+      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
+      celery -A comic worker -l info
+      "
     links:
       - db:mysql
       - rabbitmq
-    depends_on:
-      - rabbitmq
+      - web
     volumes:
       - ./app:/app/
       - /var/run/docker.sock:/var/run/docker.sock
@@ -72,12 +68,14 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
-    command: celery -A comic beat -l info
+    command: >-
+      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
+      celery -A comic beat -l info
+      "
     links:
       - db:mysql
       - rabbitmq
-    depends_on:
-      - rabbitmq
+      - web
     volumes:
       - ./app:/app/
 

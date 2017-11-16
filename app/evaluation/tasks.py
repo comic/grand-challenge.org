@@ -8,7 +8,6 @@ from json import JSONDecodeError
 
 import docker
 from celery import shared_task
-from celery.task.base import periodic_task
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
@@ -18,6 +17,7 @@ from evaluation.exceptions import TimeoutException, MethodContainerError, \
     SubmissionError
 from evaluation.models import Job, Result
 from evaluation.utils import put_file
+from evaluation.widgets.uploader import cleanup_stale_files
 
 
 @contextmanager
@@ -234,3 +234,8 @@ def evaluate_submission(*, job_id: uuid.UUID = None, job: Job = None) -> dict:
     job.update_status(status=Job.SUCCESS)
 
     return result
+
+
+@shared_task
+def cleanup_stale_uploads(*_):
+    cleanup_stale_files()
