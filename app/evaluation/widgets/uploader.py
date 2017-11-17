@@ -226,7 +226,7 @@ class AjaxUploadWidget(Widget):
 
     def render(self, name, value, attrs=None):
         template = get_template("widgets/uploader.html")
-        
+
         if isinstance(value, Iterable):
             value = ",".join(str(x) for x in value)
         elif value in (None, ""):

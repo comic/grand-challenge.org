@@ -2,7 +2,7 @@ import pytest
 
 from evaluation.widgets.utils import IntervalMap
 
-def test_interval_map():
+def test_interval_map_indexing_and_length():
     im = IntervalMap()
 
     im.append_interval(10, 1)
@@ -29,3 +29,27 @@ def test_interval_map():
 
     with pytest.raises(IndexError):
         im[1 * 10**32 + 20]
+
+def test_interval_map_get_offset():
+    im = IntervalMap()
+
+    im.append_interval(10, "a")
+    im.append_interval(5, "b")
+    im.append_interval(3, "c")
+
+    assert im.get_offset(0) == 0
+    assert im.get_offset(4) == 0
+    assert im.get_offset(9) == 0
+    assert im.get_offset(10) == 10
+    assert im.get_offset(14) == 10
+    assert im.get_offset(15) == 15
+    assert im.get_offset(16) == 15
+
+    with pytest.raises(IndexError):
+        im.get_offset(18)
+
+    with pytest.raises(IndexError):
+        im.get_offset(-1)
+
+    with pytest.raises(TypeError):
+        im.get_offset(-1.0)
