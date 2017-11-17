@@ -18,6 +18,7 @@ from django.utils import timezone
 
 
 from evaluation.models import StagedFile
+from evaluation.widgets.utils import IntervalMap
 
 
 def cleanup_stale_files():
@@ -284,14 +285,14 @@ class OpenedStagedAjaxFile(IOBase):
     def seekable(self, *args, **kwargs):
         return True
 
-    def read(self):
-        return self.read(1)[0]
-
-    def read(self, count):
+    def read(self, count=None):
         if self.closed:
             raise IOError('file closed')
         if not (0 <= self.__file_pointer < self.size):
             return EOFError('file ended')
+
+        if count is None:
+            count = self.size - self.__file_pointer
 
         result = b""
         while len(result) < count:
@@ -334,6 +335,11 @@ class OpenedStagedAjaxFile(IOBase):
             raise EOFError('new pointer outside file boundaries')
 
         self.__file_pointer = new_pointer
+
+        if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
+            self.__current_chunk.file.seek(
+                self.__file_pointer - self.__current_chunk.start_byte)
+
         return self.__file_pointer
 
     def tell(self, *args, **kwargs):
