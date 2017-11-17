@@ -71,5 +71,5 @@ def test_uploaded_file_assembly():
         assert file.read(l) == b"HelloWorld"
         assert file.read(l) == b"HelloWorld"
 
-        file.seek(0)
+        assert file.seek(0) == file.tell()
         assert file.read() == file_content
