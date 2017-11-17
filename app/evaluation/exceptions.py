@@ -24,3 +24,10 @@ class SubmissionError(EvaluationException):
     participant, challenge admin and site admin should be informed.
     """
     pass
+
+class NoMethodForChallengeError(EvaluationException):
+    """
+    A submission has been created but there are no methods for this
+    challenge yet, the challenge admin and site admin should be informed
+    """
+    pass

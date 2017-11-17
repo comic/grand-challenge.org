@@ -46,48 +46,59 @@ class MethodViewSet(ModelViewSet):
 
 
 class MethodCreate(CreateView):
+    # TODO: Challenge Admin Only
     model = Method
     fields = '__all__'
+
 
 class MethodList(ListView):
+    # TODO: Challenge Admin Only
     model = Method
-    fields = '__all__'
+
 
 class MethodDetail(DetailView):
+    # TODO: Challenge Admin Only
     model = Method
-    fields = '__all__'
+
 
 class SubmissionCreate(CreateView):
+    # TODO: Challenge Participant Only
     model = Submission
     fields = '__all__'
+
 
 class SubmissionList(ListView):
+    # TODO: Challenge Admin Only
     model = Submission
-    fields = '__all__'
+
 
 class SubmissionDetail(DetailView):
+    # TODO: Challenge Admin Only
     model = Submission
-    fields = '__all__'
+
 
 class JobCreate(CreateView):
+    # TODO: Challenge Admin Only
     model = Job
     fields = '__all__'
+
 
 class JobList(ListView):
+    # TODO: Challenge Admin Only
     model = Job
-    fields = '__all__'
+
 
 class JobDetail(DetailView):
+    # TODO: Challenge Admin Only
     model = Job
-    fields = '__all__'
+
 
 class ResultList(ListView):
     model = Result
-    fields = '__all__'
+
 
 class ResultDetail(DetailView):
     model = Result
-    fields = '__all__'
 
 
 def uploader_widget_test(request: HttpRequest) -> HttpResponse:

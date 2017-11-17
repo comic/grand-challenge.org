@@ -43,8 +43,8 @@ class Result(UUIDModel):
 
 
 def result_screenshot_path(instance, filename):
-    return f'evaluation/{instance.challenge.id}/screenshots/' \
-           f'{instance.result.id}/{filename}'
+    return f'evaluation/{instance.challenge.pk}/screenshots/' \
+           f'{instance.result.pk}/{filename}'
 
 
 class ResultScreenshot(UUIDModel):
@@ -58,8 +58,8 @@ class ResultScreenshot(UUIDModel):
 
 
 def method_image_path(instance, filename):
-    return f'evaluation/{instance.challenge.id}/methods/' \
-           f'{instance.id}/{filename}'
+    return f'evaluation/{instance.challenge.pk}/methods/' \
+           f'{instance.pk}/{filename}'
 
 
 class Method(UUIDModel):
@@ -86,15 +86,15 @@ class Method(UUIDModel):
                              )
 
     # TODO: Add a validator to make sure the form is sha256:{64}
-    image_id = models.CharField(editable=False,
+    image_sha256 = models.CharField(editable=False,
                                 max_length=71)
 
     def save(self, *args, **kwargs):
-        self.image_id = self._image_id
+        self.image_sha256 = self._image_sha256
         super(Method, self).save(*args, **kwargs)
 
     @property
-    def _image_id(self) -> str:
+    def _image_sha256(self) -> str:
         with tarfile.open(fileobj=self.image, mode='r') as t:
             member = dict(zip(t.getnames(), t.getmembers()))[
                 'manifest.json']
@@ -109,8 +109,8 @@ class Method(UUIDModel):
 
 
 def challenge_submission_path(instance, filename):
-    return f'evaluation/{instance.challenge.id}/submissions/' \
-           f'{instance.user.id}/' \
+    return f'evaluation/{instance.challenge.pk}/submissions/' \
+           f'{instance.user.pk}/' \
            f'{instance.created.strftime("%Y%m%d%H%M%S")}/' \
            f'{filename}'
 
