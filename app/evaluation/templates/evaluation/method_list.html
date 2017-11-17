@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Evaluation Methods</h1>
+
+    {% for method in object_list %}
+        <li>{{ method }}</li>
+    {% empty %}
+        <li>No methods yet</li>
+    {% endfor %}
+
+{% endblock %}

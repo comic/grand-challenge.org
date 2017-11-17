@@ -8,5 +8,5 @@ from evaluation.tasks import evaluate_submission
 @pytest.mark.skip
 @pytest.mark.integration
 def test_start_sibling_container():
-    res = evaluate_submission.delay(job_id=uuid.uuid4())
+    res = evaluate_submission.delay(job_pk=uuid.uuid4())
     assert res.get(timeout=15) == 'hello world\n'

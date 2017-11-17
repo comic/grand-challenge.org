@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Evaluation Results</h1>
+
+    {% for result in object_list %}
+        <li>{{ result }}</li>
+    {% empty %}
+        <li>No results yet</li>
+    {% endfor %}
+
+{% endblock %}

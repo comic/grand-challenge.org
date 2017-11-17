@@ -1,6 +1,7 @@
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
+from django.views.generic import CreateView, ListView, DetailView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
@@ -43,6 +44,61 @@ class MethodViewSet(ModelViewSet):
     serializer_class = MethodSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
+
+class MethodCreate(CreateView):
+    # TODO: Challenge Admin Only
+    model = Method
+    fields = '__all__'
+
+
+class MethodList(ListView):
+    # TODO: Challenge Admin Only
+    model = Method
+
+
+class MethodDetail(DetailView):
+    # TODO: Challenge Admin Only
+    model = Method
+
+
+class SubmissionCreate(CreateView):
+    # TODO: Challenge Participant Only
+    model = Submission
+    fields = '__all__'
+
+
+class SubmissionList(ListView):
+    # TODO: Challenge Admin Only
+    model = Submission
+
+
+class SubmissionDetail(DetailView):
+    # TODO: Challenge Admin Only
+    model = Submission
+
+
+class JobCreate(CreateView):
+    # TODO: Challenge Admin Only
+    model = Job
+    fields = '__all__'
+
+
+class JobList(ListView):
+    # TODO: Challenge Admin Only
+    model = Job
+
+
+class JobDetail(DetailView):
+    # TODO: Challenge Admin Only
+    model = Job
+
+
+class ResultList(ListView):
+    model = Result
+
+
+class ResultDetail(DetailView):
+    model = Result
 
 
 def uploader_widget_test(request: HttpRequest) -> HttpResponse:

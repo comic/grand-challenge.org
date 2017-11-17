@@ -17,13 +17,13 @@ from evaluation.exceptions import TimeoutException, SubmissionError, \
 
 class Evaluator(object):
     def __init__(self, *, job_id: uuid.UUID, input_file: File,
-                 eval_image: File, eval_image_id: str):
+                 eval_image: File, eval_image_sha256: str):
         super(Evaluator, self).__init__()
 
         self._job_id = str(job_id)
         self._input_file = input_file
         self._eval_image = eval_image
-        self._eval_image_id = eval_image_id
+        self._eval_image_sha256 = eval_image_sha256
 
         self._io_image = 'alpine:3.6'
         self._mem_limit = '2g'
@@ -69,8 +69,8 @@ class Evaluator(object):
         if len(self._client.images.list(name=self._io_image)) == 0:
             self._client.images.pull(name=self._io_image)
 
-        if self._eval_image_id not in [x.id for x in
-                                       self._client.images.list()]:
+        if self._eval_image_sha256 not in [x.id for x in
+                                           self._client.images.list()]:
             self._eval_image.open('rb')  # No context manager for Django Files
             try:
                 self._client.images.load(self._eval_image)
@@ -121,7 +121,7 @@ class Evaluator(object):
     def _run_evaluation(self):
         try:
             self._client.containers.run(
-                image=self._eval_image_id,
+                image=self._eval_image_sha256,
                 volumes={
                     self._input_volume: {
                         'bind': '/input/',

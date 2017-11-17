@@ -20,7 +20,7 @@ TOKEN_URL = '/evaluation/api-token-auth/'
      ("jobs", "Job List"),
      ("methods", "Method List")]
 )
-def test_result_list(client, test_input, expected):
+def test_api_pages(client, test_input, expected):
     # Check for the correct HTML view
     response = client.get('/evaluation/api/v1/%s/' % test_input,
                           HTTP_ACCEPT='text/html')

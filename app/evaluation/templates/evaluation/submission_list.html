@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Submissions</h1>
+
+    {% for submission in object_list %}
+        <li>{{ submission }}</li>
+    {% empty %}
+        <li>No submissions yet</li>
+    {% endfor %}
+
+{% endblock %}
