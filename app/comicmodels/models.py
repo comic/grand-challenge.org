@@ -416,7 +416,7 @@ class ComicSite(models.Model):
         if user.is_superuser:
             return True
 
-        if user.groups.filter(name=self.admin_group_name).count() > 0:
+        if user.groups.filter(name=self.admin_group_name()).count() > 0:
             return True
         else:
             return False
@@ -428,7 +428,7 @@ class ComicSite(models.Model):
         if user.is_superuser:
             return True
 
-        if user.groups.filter(name=self.participants_group_name).count() > 0:
+        if user.groups.filter(name=self.participants_group_name()).count() > 0:
             return True
         else:
             return False

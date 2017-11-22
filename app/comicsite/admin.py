@@ -14,7 +14,7 @@ from django.contrib.admin.options import InlineModelAdmin
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group, Permission, User
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch, clear_url_caches
 from django.db import models
 from django.forms import TextInput, Textarea
