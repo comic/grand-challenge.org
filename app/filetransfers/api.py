@@ -1,7 +1,7 @@
 import mimetypes
+from importlib import import_module
 
 from django.conf import settings
-from django.utils.importlib import import_module
 
 PREPARE_UPLOAD_BACKEND = getattr(settings,
                                  'PREPARE_UPLOAD_BACKEND',

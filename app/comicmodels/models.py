@@ -7,7 +7,8 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.storage import DefaultStorage
-from django.core.validators import validate_slug, MaxLengthValidator, MinLengthValidator
+from django.core.validators import validate_slug, MaxLengthValidator, \
+    MinLengthValidator
 from django.db import models
 from django.db.models import Max
 from django.db.models import Q
@@ -277,6 +278,10 @@ class ComicSite(models.Model):
 
     public_folder = "public_html"
 
+    creator = models.ForeignKey(User,
+                                null=True,
+                                on_delete=models.SET_NULL)
+
     short_name = models.SlugField(max_length=50, default="",
                                   help_text="short name used in url, specific css, files etc. No spaces allowed",
                                   validators=[validate_nounderscores, validate_slug, MinLengthValidator(1)],
@@ -346,6 +351,15 @@ class ComicSite(models.Model):
         """ clean method is called automatically for each save in admin"""
         pass
         # TODO check whether short name is really clean and short!
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            # Create the groups only on first save
+            # TODO: JM - should be a one to one field
+            Group.objects.create(name=self.admin_group_name())
+            Group.objects.create(name=self.participants_group_name())
+
+        super(ComicSite, self).save(*args, **kwargs)
 
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
@@ -515,7 +529,6 @@ class ComicSiteModel(models.Model):
     """An object which can be shown or used in the comicsite framework. This base class should handle common functions
      such as authorization.
     """
-    # user = models.ManyToManyField()
     title = models.SlugField(max_length=64, blank=False)
     comicsite = models.ForeignKey(ComicSite, help_text="To which comicsite does this object belong?")
 
@@ -538,11 +551,6 @@ class ComicSiteModel(models.Model):
     permission_lvl = models.CharField(max_length=3,
                                       choices=PERMISSIONS_CHOICES,
                                       default=ALL)
-
-    # = models.CharField(max_length=64, blank=True)
-
-
-
 
     def __str__(self):
         """ string representation for this object"""
@@ -594,27 +602,8 @@ class ComicSiteModel(models.Model):
             super(ComicSiteModel, self).save()
 
     def save(self, *args, **kwargs):
-        """ split save into common base part for all ComicSiteModels and default which can be overwritten """
-
-        if self.id:
-            firstcreation = False
-        else:
-            firstcreation = True
-
-        # common save functionality for all models
-        self._save_base()
-        self.save_default(firstcreation)
-        super(ComicSiteModel, self).save()
-
-    def _save_base(self):
-        """ common save functionality for all models """
-        # make sure this object gets the permissions set in the form
         self.setpermissions(self.permission_lvl)
-
-    def save_default(self, firstcreation):
-        """ overwrite this in child methods for custom save functionality
-            object is saved after this method so no explicit save needed"""
-        pass
+        super(ComicSiteModel, self).save()
 
     class Meta:
         abstract = True

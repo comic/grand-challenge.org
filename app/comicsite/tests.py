@@ -421,7 +421,7 @@ class ComicframeworkTestCase(TestCase):
         """ split this off from create_comicsite because sometimes you just
         want to assert that creation fails
         """
-        url = reverse("admin:comicmodels_comicsite_add")
+        url = reverse("challenge_create")
         factory = RequestFactory()
         storage = DefaultStorage()
         header_image = storage._open(settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg")

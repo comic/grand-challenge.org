@@ -1,6 +1,6 @@
 from django import forms
 
-from comicmodels.models import UploadModel
+from comicmodels.models import UploadModel, ComicSite
 
 
 class UploadForm(forms.ModelForm):
@@ -17,3 +17,9 @@ class UserUploadForm(forms.ModelForm):
     class Meta:
         model = UploadModel
         exclude = ['title', 'comicsite', 'permission_lvl', 'user']
+
+
+class ChallengeForm(forms.ModelForm):
+    class Meta:
+        model = ComicSite
+        exclude = ('creator',)

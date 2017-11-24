@@ -13,9 +13,9 @@ from django.contrib.admin.options import InlineModelAdmin
 # basically this is the only one import you'll need
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, User
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.urlresolvers import reverse, NoReverseMatch, clear_url_caches
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.forms import TextInput, Textarea
 from django.http import HttpResponseRedirect
@@ -26,28 +26,12 @@ from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from guardian.shortcuts import get_objects_for_user, assign_perm
-from six.moves import reload_module
 
 from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
 from comicmodels.models import Page, RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
 
 logger = logging.getLogger("django")
-
-
-def reload_url_conf():
-    """ urlpatterns for project admin in urls.py are generated based on je current
-    projects in the database. When a project gets added, the admin urls for the
-    new project are not in the imported urls.py. A reload is required
-    """
-    import comicsite.urls
-    import comic.urls
-    reload_module(comicsite.urls)
-    reload_module(comic.urls)
-
-
-def clear_url_resolver_cache():
-    clear_url_caches()
 
 
 def get_comicsite_shortnames_that_user_is_admin_for(user):
@@ -736,18 +720,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
                                   context, RequestContext(request, current_app=self.admin_site.name))
 
     def save_model(self, request, obj, form, change):
-        """ when saving for the first time, set object permissions; give all permissions to creator """
-
-        if obj.id is None:
-            self.set_base_permissions(request, obj)
-            reload_url_conf()
-            clear_url_resolver_cache()
-
-
-
-        else:
-            # if object already existed just save
-            obj.save()
+        if obj.pk is None:
+            obj.creator = request.user
+        super(ComicSiteAdmin, self).save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):
         """
@@ -759,24 +734,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
     def remove_related_groups(self, request, obj):
         Group.objects.get(name=obj.admin_group_name()).delete()
         Group.objects.get(name=obj.participants_group_name()).delete()
-
-    def set_base_permissions(self, request, obj):
-        """ if saving for the first time, create admin and participants permissions groups that go along with
-        this comicsite
-
-        """
-        admingroup = Group.objects.create(name=obj.admin_group_name())
-        participantsgroup = Group.objects.create(name=obj.participants_group_name())
-
-        # add object-level permission to the specific ComicSite so it shows up in admin
-        obj.save()
-        assign_perm("change_comicsite", admingroup, obj)
-        # add all permissions for pages, comicsites and filesystem dataset so these can be edited by admin group
-        add_standard_permissions(admingroup, "comicsite")
-        add_standard_permissions(admingroup, "page")
-
-        # add current user to admins for this site
-        request.user.groups.add(admingroup)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """
@@ -812,14 +769,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
 class AdminManageForm(forms.Form):
     admins = forms.CharField(required=False, widget=forms.SelectMultiple, help_text="All admins for this project")
     user = forms.ModelChoiceField(queryset=User.objects.all(), empty_label="<user to add>", required=False)
-
-
-def add_standard_permissions(group, objname):
-    """ Add delete_objname change_objname and add_objname to the given group"""
-    can_add_obj = Permission.objects.get(codename="add_" + objname)
-    can_change_obj = Permission.objects.get(codename="change_" + objname)
-    can_delete_obj = Permission.objects.get(codename="delete_" + objname)
-    group.permissions.add(can_add_obj, can_change_obj, can_delete_obj)
 
 
 # this variable is included in urls.py to get admin urls for each project in

@@ -3,6 +3,8 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
 
+from comicmodels.views import ChallengeCreate
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -42,6 +44,9 @@ urlpatterns = [
 
     # WYSIWYG editor for HTML
     url(r'^ckeditor/', include('ckeditor.urls')),
+
+    url(r'^create_challenge/$', ChallengeCreate.as_view(),
+        name='challenge_create'),
 
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
