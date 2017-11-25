@@ -1,6 +1,8 @@
+from crispy_forms.layout import Submit
 from django import forms
 
 from comicmodels.models import UploadModel, ComicSite
+from crispy_forms.helper import FormHelper
 
 
 class UploadForm(forms.ModelForm):
@@ -20,6 +22,11 @@ class UserUploadForm(forms.ModelForm):
 
 
 class ChallengeForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ChallengeForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'save'))
+
     class Meta:
         model = ComicSite
         exclude = ('creator',)

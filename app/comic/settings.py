@@ -275,6 +275,8 @@ INSTALLED_APPS = (
     'evaluation',
     'rest_framework',
     'rest_framework.authtoken',
+    # bootstrap forms
+    'crispy_forms',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -418,6 +420,9 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=60),
     }
 }
+
+# Set which template pack to use for forms
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Get *.conf from the directory this file is in and execute these in order. 
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the

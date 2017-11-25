@@ -317,16 +317,18 @@ def sanitize_django_items(string):
 @register.simple_tag
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
-    html_string = "<div class='metaFooterMenuItem'></div>"
+    html_string = ""
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
             url = reverse('comicsite.views.comicmain', kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
-            html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
+            # TODO: JM add class=active to the active link
+            # See https://getbootstrap.com/docs/3.3/components/#navbar
+            html_string += "<li><a class='metaFooterMenuItem' href='%s'>" % url
             html_string += p.display_title == "" and p.title or p.display_title
-            html_string += "</a>"
+            html_string += "</a></li>"
 
     return html_string
 

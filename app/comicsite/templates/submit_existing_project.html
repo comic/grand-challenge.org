@@ -4,15 +4,19 @@
 {% load admin_urls %}
 
 {% block pageName %} {{ site.short_name }} - Submit project link {% endblock %}
+
 {% block loginbutton %}
     {% if site.hide_signin %}
 
     {% else %}
         {% if user.is_authenticated %}
-            <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a>
+            <li><a class="metaFooterItem last"
+                   href="{% url 'userena_signout' %}?next=/">Signout</a></li>
         {% else %}
-            <a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in /
-                Register</a>
+            <li><a class="metaFooterItem last"
+                   href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign
+                in /
+                Register</a></li>
         {% endif %}
 
     {% endif %}

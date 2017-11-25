@@ -1,10 +1,6 @@
 {% extends "mainpage.html" %}
+{% load crispy_forms_tags %}
 
 {% block pagecontent %}
-
-    <form action="" method="post">{% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Save"/>
-    </form>
-
+    {% crispy form %}
 {% endblock %}
