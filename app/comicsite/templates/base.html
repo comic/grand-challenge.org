@@ -5,105 +5,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-{% block html_header %}
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-    <meta name="description"
-          content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms."/>
-    <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated"/>
+    {% block html_header %}
+        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+        <meta name="description"
+              content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms."/>
+        <meta name="keywords"
+              content="COMIC, open, science, medical, image, computing, validated"/>
 
-    <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
+        <script type="text/javascript"
+                src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
 
-    {% block jquery_js %}
-        <script src="https://code.jquery.com/jquery-1.12.4.min.js"
-                integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
-                integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
-        <!--Adds sorting and other features to html tables -->
-        <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
-    {% endblock %}
+        {% block jquery_js %}
+            <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+                    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+                    crossorigin="anonymous"></script>
+            <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
+                    integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw="
+                    crossorigin="anonymous"></script>
+            <script type="text/javascript"
+                    src="{% get_static_prefix %}js/jquery.cookie.js"></script>
+            <!--Adds sorting and other features to html tables -->
+            <script type="text/javascript" language="javascript"
+                    src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
+        {% endblock %}
 
-    {% block bootstrap %}
-        {# Latest compiled and minified CSS #}
-        <link rel="stylesheet"
-              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-              integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-              crossorigin="anonymous">
+        {% block bootstrap %}
+            {# Latest compiled and minified CSS #}
+            <link rel="stylesheet"
+                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+                  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+                  crossorigin="anonymous">
 
-        {# Optional theme #}
-        <link rel="stylesheet"
-              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
-              integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
-              crossorigin="anonymous">
+            {# Optional theme #}
+            <link rel="stylesheet"
+                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+                  integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+                  crossorigin="anonymous">
 
-        {# Latest compiled and minified JavaScript #}
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-                integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-                crossorigin="anonymous"></script>
-    {% endblock %}
+            {# Latest compiled and minified JavaScript #}
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+                    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+                    crossorigin="anonymous"></script>
 
-    {#  Custom CSS, must be included AFTER bootstrap  #}
-    <link href="{% get_static_prefix %}css/core.css" type="text/css"
-          rel="stylesheet">
+            <meta name="viewport"
+                  content="width=device-width, initial-scale=1">
+        {% endblock %}
 
-    {% block jquery_css %}
-        <!-- link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
+        {#  Custom CSS, must be included AFTER bootstrap  #}
+        <link href="{% get_static_prefix %}css/core.css" type="text/css"
+              rel="stylesheet">
+
+        {% block jquery_css %}
+            <!-- link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
               rel="Stylesheet"/ -->
-        <!-- link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet" -->
-    {% endblock %}
+            <!-- link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet" -->
+        {% endblock %}
 
-    <!-- link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' -->
+        <!-- link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' -->
 
-    {% block fontawesome %}
-        <link rel="stylesheet"
-              href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
-    {% endblock %}
+        {% block fontawesome %}
+            <link rel="stylesheet"
+                  href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+        {% endblock %}
 
-    <link href="{% get_static_prefix %}img/grand-challenge.ico"
-          rel="shortcut icon">
+        <link href="{% get_static_prefix %}img/grand-challenge.ico"
+              rel="shortcut icon">
 
-    <!--Put any site or page specific css here -->
-    <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
+        <!--Put any site or page specific css here -->
+        <link href="{% block stylesheet %} {% endblock %}" type="text/css"
+              rel="stylesheet">
 
-    <script>
-        //url prefix for API functions
-        API_PREFIX = "{% get_project_prefix %}api",
+        <script>
+            //url prefix for API functions
+            API_PREFIX = "{% get_project_prefix %}api",
 
-            $(document).ready(function () {
+                $(document).ready(function () {
 
-                // delete message on click
-                $(document).on('click', '.del-msg', function () {
-                    $('.messagelist').attr('style', 'display:none;');
+                    // delete message on click
+                    $(document).on('click', '.del-msg', function () {
+                        $('.messagelist').attr('style', 'display:none;');
+                    });
+                    // messages timeout
+                    setTimeout(function () {
+                        $('.messagelist').fadeOut('slow');
+                    }, 5000); // <-- time in milliseconds, 1000 =  1 sec
+
+                    $('table.sortable').dataTable({
+                        "bJQueryUI": true,
+                        "sPaginationType": "full_numbers",
+                        "bPaginate": false,
+                        "bLengthChange": false,
+                        "bFilter": false,
+                        "bInfo": false,
+                        "bAutoWidth": false
+                    });
                 });
-                // messages timeout
-                setTimeout(function () {
-                    $('.messagelist').fadeOut('slow');
-                }, 5000); // <-- time in milliseconds, 1000 =  1 sec
+        </script>
 
-                $('table.sortable').dataTable({
-                    "bJQueryUI": true,
-                    "sPaginationType": "full_numbers",
-                    "bPaginate": false,
-                    "bLengthChange": false,
-                    "bFilter": false,
-                    "bInfo": false,
-                    "bAutoWidth": false
-                });
-            });
-    </script>
+        <style>
+            {% block additionalCSS %}{% endblock %}
+        </style>
 
-    <style>
-        {% block additionalCSS %}{% endblock %}
-    </style>
-
-    <title> {% block pageName %} COMIC main portal {% endblock %} </title>
-{% endblock %}
+        <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+    {% endblock %}
 </head>
 <body>
 
 {% block topheader %}
     <nav class="navbar navbar-default navbar-fixed-top">
-        <div id="topheader" class="container">
+        <div id="topheader" class="container-fluid text-capitalize">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed"
                         data-toggle="collapse"
@@ -114,11 +124,12 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">Brand</a>
+                <a class="navbar-brand text-uppercase"
+                   href="/">{{ main_project_name }}</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse"
+            <div class="collapse navbar-collapse "
                  id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     {% metafooterpages %}
@@ -152,7 +163,7 @@
 <div id="messagescontainer" class="conatiner">
     {% block messages %}
         {% if messages %}
-            <div class="messagelist container">
+            <div class="messagelist">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.level_tag }}">
                         {% if 'safe' in message.tags %}
@@ -161,37 +172,61 @@
                             {{ message }}
                         {% endif %}
                     </div>
-            {% endfor %}
+                {% endfor %}
             </div>
         {% endif %}
     {% endblock messages %}
 </div>
 
-<div id="page" class="container">
-    <div id="header" class="jumbotron">
-        <div id="headerTitle">
+<div id="page">
+    <div id="header" class="container">
+        <div class="jumbotron">
 
-            {% block headerTitle %}
-                <div class="noimage"><a href="/">COMIC</a></div>  {% endblock %}
         </div>
-        <div id="navMenuContainer">
-            <div id="navMenu">
-                <ul>
-                    {% block topmenu %} {% endblock %}
-                </ul>
+    </div>
+
+    <div class="container">
+        <nav class="navbar navbar-default">
+            <div id="navMenuContainer" class="container-fluid text-capitalize">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed"
+                            data-toggle="collapse"
+                            data-target="#bs-example-navbar-collapse-2"
+                            aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <div id="headerTitle">
+                    {% block headerTitle %}
+                        <div class="noimage navbar-brand text-uppercase">
+                            <a href="/">{{ main_project_name }}</a>
+                        </div>
+                    {% endblock %}
+                    </div>
+                </div>
+
+                <div class="collapse navbar-collapse"
+                     id="bs-example-navbar-collapse-2">
+                    <div id="navMenu">
+                        <ul class="nav navbar-nav">
+                            {% block topmenu %} {% endblock %}
+                        </ul>
+                    </div>
+                    <div id="additionalNavigation">
+                        <ul class="nav navbar-nav navbar-right">
+                            {% block sitemenuloginbutton %} {% endblock %}
+                            {% block adminbutton %} {% endblock %}
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div id="additionalNavigation">
-                <ul>
+        </nav>
+    </div>
 
-                    {% block sitemenuloginbutton %} {% endblock %}
-                    {% block adminbutton %} {% endblock %}
 
-                </ul>
-            </div>
-        </div>
-    </div> <!-- end header -->
-
-    <div id="container">
+    <div id="container" class="container">
         <div id="mainContent">
             {% block content %} content {% endblock %}
         </div>
@@ -203,7 +238,8 @@
 {% block footer %}
     <footer id="metafooter" class="container text-center">
         <div id="copyrightNotice">
-            Consortium for Open Medical Image Computing &copy; 2012-{% now "Y" %}
+            Consortium for Open Medical Image Computing &copy;
+            2012-{% now "Y" %}
         </div>
     </footer>
 {% endblock %}

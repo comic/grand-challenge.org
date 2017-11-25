@@ -8,8 +8,8 @@
 
 {% block headerTitle %}
     {% if site.header_image == "" %}
-        <div class="noimage">
-            <a href="/">{{ site.short_name }}</a>
+        <div class="noimage text-uppercase">
+            <a class="navbar-brand" href="/">{{ site.short_name }}</a>
         </div>
     {% else %}
         <div class="image">

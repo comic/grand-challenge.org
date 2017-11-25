@@ -20,13 +20,13 @@
     {% else %}
         {{ block.super }}
     {% endif %}
-
 {% endblock topheader %}
 
 {% block headerTitle %}
     {% if site.header_image == "" %}
-        <div class="noimage">
-            <a href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a>
+        <div class="noimage text-uppercase">
+            <a class="navbar-brand"
+               href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a>
         </div>
     {% else %}
         <div class="image">
@@ -34,7 +34,6 @@
                     src="{% url 'project_serve_file' site.short_name site.header_image %}"></a>
         </div>
     {% endif %}
-
 {% endblock %}
 
 
@@ -43,10 +42,10 @@
     {% for page in pages %}
         {% if not page.hidden %}
             {% if not forloop.first %}
-                <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+                <li role="separator" class="divider"></li>
             {% endif %}
-            <li>
-                <a class="menuItem {% if page == currentpage %}	selected{% endif %}"
+            <li {% if page == currentpage %}class="active"{% endif %}>
+                <a class="menuItem"
                    href="{% url 'comicsite.views.page' site.short_name page.title %}">
                     {% if page.display_title == "" %}
                         {{ page.title }}
@@ -67,9 +66,12 @@
 
     {% else %}
         {% if user.is_authenticated %}
-            <li><a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a></li>
+            <li><a class="metaFooterItem last"
+                   href="{% url 'userena_signout' %}?next=/">Signout</a></li>
         {% else %}
-            <li><a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in /
+            <li><a class="metaFooterItem last"
+                   href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign
+                in /
                 Register</a></li>
         {% endif %}
     {% endif %}
@@ -82,7 +84,8 @@
     {% get_obj_perms user for site as "site_perms" %}
     {% if "change_comicsite" in site_perms or request.user.is_superuser %}
         {% if site.hide_footer %}
-            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+            <li class="menuBullet"><img
+                    src="{{ STATIC_URL }}img/menu_bullet.png"></li>
         {% endif %}
         <li><a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
 

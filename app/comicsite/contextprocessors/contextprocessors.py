@@ -38,4 +38,5 @@ def comic_site(request):
         # in a more appropriate location
         return {}
 
-    return {"site": site, "pages": pages, "metafooterpages": metafooterpages}
+    return {"site": site, "pages": pages, "metafooterpages": metafooterpages,
+            "main_project_name": settings.MAIN_PROJECT_NAME}
