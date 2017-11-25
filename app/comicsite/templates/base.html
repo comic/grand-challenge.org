@@ -10,7 +10,6 @@
     <meta name="description"
           content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms."/>
     <meta name="keywords" content="COMIC, open, science, medical, image, computing, validated"/>
-    <!-- link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet" -->
 
     <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
 
@@ -24,6 +23,29 @@
         <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
     {% endblock %}
 
+    {% block bootstrap %}
+        {# Latest compiled and minified CSS #}
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+              integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+              crossorigin="anonymous">
+
+        {# Optional theme #}
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+              integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+              crossorigin="anonymous">
+
+        {# Latest compiled and minified JavaScript #}
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+                integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+                crossorigin="anonymous"></script>
+    {% endblock %}
+
+    {#  Custom CSS, must be included AFTER bootstrap  #}
+    <link href="{% get_static_prefix %}css/core.css" type="text/css"
+          rel="stylesheet">
+
     {% block jquery_css %}
         <!-- link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
               rel="Stylesheet"/ -->
@@ -32,30 +54,13 @@
 
     <!-- link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' -->
 
-    <link href="{% get_static_prefix %}img/grand-challenge.ico" rel="shortcut icon">
     {% block fontawesome %}
         <link rel="stylesheet"
               href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
     {% endblock %}
 
-    {% block bootstrap %}
-        <!-- Latest compiled and minified CSS -->
-        <link rel="stylesheet"
-              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-              integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-              crossorigin="anonymous">
-
-        <!-- Optional theme -->
-        <link rel="stylesheet"
-              href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
-              integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
-              crossorigin="anonymous">
-
-        <!-- Latest compiled and minified JavaScript -->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-                integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-                crossorigin="anonymous"></script>
-    {% endblock %}
+    <link href="{% get_static_prefix %}img/grand-challenge.ico"
+          rel="shortcut icon">
 
     <!--Put any site or page specific css here -->
     <link href="{% block stylesheet %} {% endblock %}" type="text/css" rel="stylesheet">
@@ -143,26 +148,27 @@
     </nav>
 {% endblock topheader %}
 
-<div id="messagescontainer">
+
+<div id="messagescontainer" class="conatiner">
     {% block messages %}
         {% if messages %}
-            <ul class="messagelist">{% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
-                    {% if 'safe' in message.tags %}
-                        {{ message | safe }}
-                    {% else %}
-                        {{ message }}
-                    {% endif %}
-                    <div style="float: right; margin-right: 10px;"><a href="#" class="del-msg">&times;</a></div>
-                </li>
+            <div class="messagelist container">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.level_tag }}">
+                        {% if 'safe' in message.tags %}
+                            {{ message | safe }}
+                        {% else %}
+                            {{ message }}
+                        {% endif %}
+                    </div>
             {% endfor %}
-            </ul>
+            </div>
         {% endif %}
     {% endblock messages %}
 </div>
 
-<div id="page">
-    <div id="header">
+<div id="page" class="container">
+    <div id="header" class="jumbotron">
         <div id="headerTitle">
 
             {% block headerTitle %}
@@ -190,23 +196,18 @@
             {% block content %} content {% endblock %}
         </div>
     </div>
-    <div style="clear:both;"></div>
     <!-- container -->
-
 </div>
+
 <!-- page -->
 {% block footer %}
-    <div id="metafooter">
-
-
+    <footer id="metafooter" class="container text-center">
         <div id="copyrightNotice">
             Consortium for Open Medical Image Computing &copy; 2012-
             <script>document.write(new Date().getFullYear())</script>
-            <!2014>
         </div>
-
-    </div>
+    </footer>
 {% endblock %}
-<div style="clear:both;"></div>
+
 </body>
 </html>

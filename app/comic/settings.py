@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import six
 from celery.schedules import crontab
+from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
 # Default COMIC settings, to be included by settings.py
@@ -423,6 +424,11 @@ CELERY_BEAT_SCHEDULE = {
 
 # Set which template pack to use for forms
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+# When using bootstrap error messages need to be renamed to danger
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger'
+}
 
 # Get *.conf from the directory this file is in and execute these in order. 
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
