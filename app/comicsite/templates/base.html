@@ -4,6 +4,7 @@
 {% load firstof from future %}
 <html>
 <head>
+{% block html_header %}
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
     <meta name="description"
           content="The COMIC framework enables you to view and download medical image data, upload your own data and apply validated image processing algorithms."/>
@@ -11,21 +12,27 @@
     <link href="{% get_static_prefix %}css/base.css" type="text/css" rel="stylesheet">
 
     <script type="text/javascript" src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
-    <script src="https://code.jquery.com/jquery-1.12.4.min.js"
-            integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
-            integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
-    <!--For displaying jquery UI widgets -->
-    <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
-          rel="Stylesheet"/>
+
+    {% block jquery_js %}
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+                integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
+                integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="{% get_static_prefix %}js/jquery.cookie.js"></script>
+        <!--Adds sorting and other features to html tables -->
+        <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
+    {% endblock %}
+
+    {% block jquery_css %}
+        <link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
+              rel="Stylesheet"/>
+        <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
+    {% endblock %}
+
     <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-    <!--Adds sorting and other features to html tables -->
-    <script type="text/javascript" language="javascript" src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
 
     <link href="{% get_static_prefix %}img/grand-challenge.ico" rel="shortcut icon">
 
-    <link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
 
@@ -64,6 +71,7 @@
     </style>
 
     <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+{% endblock %}
 </head>
 <body>
 {% block topheader %}

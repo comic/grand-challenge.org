@@ -1,24 +1,25 @@
-<!DOCTYPE html>
+{% extends "site.html" %}
 
-<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title>Uploader widget test</title>
+{% block pageName %}Test comic page for uploader{% endblock %}
 
-		<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
-		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+{% block html_header %}
+	{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
+	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+	<!-- <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+{% endblock %}
 
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
-		<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
-	</head>
-	<body>
-		<form action="testwidget" method="post">
-			{% csrf_token %}
-			{{ testform }}
+{% block jquery_js %}
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
+{% endblock %}
 
-			<input type="submit">
-		</form>
-	</body>
-</html>
+{% block content %}
+	<form action="testwidget" method="post">
+		{% csrf_token %}
+		{{ testform }}
+
+		<input type="submit">
+	</form>
+{% endblock %}

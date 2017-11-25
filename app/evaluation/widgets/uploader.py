@@ -1,10 +1,14 @@
 import re
 import uuid
+
 from collections import Iterable
 from datetime import timedelta
 
+from io import IOBase
+
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBadRequest, \
@@ -12,7 +16,9 @@ from django.http.response import HttpResponseBadRequest, \
 from django.template.loader import get_template
 from django.utils import timezone
 
+
 from evaluation.models import StagedFile
+from evaluation.widgets.utils import IntervalMap
 
 
 def cleanup_stale_files():
@@ -27,6 +33,7 @@ def cleanup_stale_files():
         file.delete()
 
 
+class NotFoundError(Exception): pass
 class InvalidRequestException(Exception): pass
 
 
@@ -81,38 +88,36 @@ class AjaxUploadWidget(Widget):
         self.ajax_target_path = ajax_target_path
         self.timeout = timedelta(hours=2)
 
-    def _handle_complete(self, request, csrf_token, uploaded_file):
-        # csrf = models.CharField(max_length=128)
-        # client_id = models.CharField(max_length=128)
-        #
-        # file_id = models.UUIDField(blank=False)
-        # timeout = models.DateTimeField(blank=False)
-        #
-        # file = models.FileField(blank=False)
-        # start_byte = models.BigIntegerField(blank=False)
-        # end_byte = models.BigIntegerField(blank=False)
-        # total_size = models.BigIntegerField(blank=False)
-
+    def _handle_complete(
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         new_staged_file = StagedFile.objects.create(
             csrf=csrf_token,
             client_id=None,
+            client_filename=uploaded_file.name,
 
             file_id=uuid.uuid4(),
             timeout=timezone.now() + self.timeout,
 
             file=uploaded_file,
             start_byte=0,
-            end_byte=uploaded_file.size,
+            end_byte=uploaded_file.size - 1,
             total_size=uploaded_file.size,
         )
 
         return {
-            "filename": new_staged_file.file.name,
+            "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
             "extra_attrs": {},
         }
 
-    def _handle_chunked(self, request, csrf_token, uploaded_file):
+    def _handle_chunked(
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         # Only content ranges of the form
         #
         #   bytes-unit SP byte-range-resp
@@ -136,6 +141,8 @@ class AjaxUploadWidget(Widget):
             total_size = int(range_match.group("length"))
         if start_byte > end_byte:
             raise InvalidRequestException("Supplied invalid Content-Range")
+        if (total_size is not None) and (end_byte >= total_size):
+            raise InvalidRequestException("End byte exceeds total file size")
         if end_byte - start_byte + 1 != uploaded_file.size:
             raise InvalidRequestException("Invalid start-end byte range")
 
@@ -161,6 +168,12 @@ class AjaxUploadWidget(Widget):
             if chunk_intersects:
                 raise InvalidRequestException("Overlapping chunks")
 
+            inconsisent_filenames = other_chunks.exclude(
+                client_filename=uploaded_file.name).exists()
+            if inconsisent_filenames:
+                raise InvalidRequestException(
+                    "Chunks have inconsistent filenames")
+
             if total_size is not None:
                 inconsistent_total_size = other_chunks.exclude(
                     total_size=None).exclude(
@@ -173,6 +186,7 @@ class AjaxUploadWidget(Widget):
         new_staged_file = StagedFile.objects.create(
             csrf=csrf_token,
             client_id=client_id,
+            client_filename=uploaded_file.name,
 
             file_id=file_id,
             timeout=timezone.now() + self.timeout,
@@ -184,7 +198,7 @@ class AjaxUploadWidget(Widget):
         )
 
         return {
-            "filename": new_staged_file.file.name,
+            "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
             "extra_attrs": {},
         }
@@ -231,12 +245,193 @@ class AjaxUploadWidget(Widget):
         return template.render(context=context)
 
 
+class OpenedStagedAjaxFile(IOBase):
+    def __init__(self, _uuid):
+        super(OpenedStagedAjaxFile, self).__init__()
+
+        self.__uuid = _uuid
+
+        self.__chunks = list(
+            StagedFile.objects.filter(file_id=self.__uuid).all())
+        self.__chunks.sort(key=lambda x: x.start_byte)
+
+        self.__chunk_map = IntervalMap()
+        for chunk in self.__chunks:
+            self.__chunk_map.append_interval(
+                chunk.end_byte - chunk.start_byte + 1,
+                chunk)
+
+        self.__file_pointer = 0
+
+        self.__current_chunk = None
+
+    @property
+    def closed(self):
+        return self.__chunks is None
+
+    @property
+    def size(self):
+        if self.closed:
+            return None
+        else:
+            return len(self.__chunk_map)
+
+    def readable(self, *args, **kwargs):
+        return True
+
+    def writable(self, *args, **kwargs):
+        return False
+
+    def seekable(self, *args, **kwargs):
+        return True
+
+    def read(self, count=None):
+        if self.closed:
+            raise IOError('file closed')
+        if not (0 <= self.__file_pointer < self.size):
+            return EOFError('file ended')
+
+        if count is None:
+            count = self.size - self.__file_pointer
+
+        result = b""
+        while len(result) < count:
+            if self.__file_pointer >= len(self.__chunk_map):
+                break
+
+            this_chunk = self.__chunk_map[self.__file_pointer]
+            if this_chunk is not self.__current_chunk:
+                # we need to switch to a new chunk
+                if self.__current_chunk is not None:
+                    self.__current_chunk.file.close()
+                    self.__current_chunk = None
+
+                this_chunk.file.open('rb')
+                this_chunk.file.seek(
+                    self.__file_pointer - this_chunk.start_byte)
+                self.__current_chunk = this_chunk
+
+            read_size = min(
+                count - len(result),
+                self.__current_chunk.end_byte + 1 - self.__file_pointer)
+            result += self.__current_chunk.file.read(read_size)
+            self.__file_pointer += read_size
+
+        return result
+
+    def seek(self, offset, from_what=0):
+        if self.closed:
+            raise IOError('file closed')
+
+        new_pointer = None
+        if from_what == 0:
+            new_pointer = offset
+        elif from_what == 1:
+            new_pointer = self.__file_pointer + offset
+        elif from_what == 2:
+            new_pointer = self.size + offset
+
+        if not (0 <= new_pointer <= self.size):
+            raise EOFError('new pointer outside file boundaries')
+
+        self.__file_pointer = new_pointer
+
+        if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
+            self.__current_chunk.file.seek(
+                self.__file_pointer - self.__current_chunk.start_byte)
+
+        return self.__file_pointer
+
+    def tell(self, *args, **kwargs):
+        if self.closed:
+            raise IOError('file closed')
+        return self.__file_pointer
+
+    def close(self):
+        if not self.closed:
+            self.__chunks = None
+            if self.__current_chunk is not None:
+                self.__current_chunk.file.close()
+                self.__current_chunk = None
+
+
+class StagedAjaxFile:
+    def __init__(self, _uuid: uuid.UUID):
+        super(StagedAjaxFile, self).__init__()
+
+        if not isinstance(_uuid, uuid.UUID):
+            raise TypeError("uuid parameter must be uuid.UUID")
+        self.__uuid = _uuid
+
+    def _raise_if_missing(self):
+        query = StagedFile.objects.filter(file_id=self.__uuid)
+        if not query.exists():
+            raise NotFoundError()
+        return query
+
+    @property
+    def uuid(self):
+        return self.__uuid
+
+    @property
+    def name(self):
+        chunks_query = self._raise_if_missing()
+        return chunks_query.first().client_filename
+
+    @property
+    def exists(self):
+        return StagedFile.objects.filter(file_id=self.__uuid).exists()
+
+    @property
+    def size(self):
+        chunks_query = self._raise_if_missing()
+        chunks = chunks_query.all()
+        if len(chunks) == 0:
+            raise NotFoundError()
+
+        remaining_size = None
+
+        # Check if we want to verify some total size
+        total_sized_chunks = chunks.exclude(total_size=None)
+        if total_sized_chunks.exists():
+            remaining_size = total_sized_chunks.first().total_size
+
+        current_size = 0
+        for chunk in sorted(chunks, key=lambda x: x.start_byte):
+            if chunk.start_byte != current_size:
+                return None
+            current_size = chunk.end_byte + 1
+            if remaining_size is not None:
+                remaining_size -= chunk.end_byte - chunk.start_byte + 1
+
+        if remaining_size is not None:
+            if remaining_size != 0:
+                return None
+
+        return current_size
+
+    @property
+    def is_complete(self):
+        if not StagedFile.objects.filter(file_id=self.__uuid).exists():
+            return False
+        return self.size is not None
+
+    def open(self):
+        if not self.is_complete:
+            raise IOError("incomplete upload")
+        return OpenedStagedAjaxFile(self.__uuid)
+
+    def delete(self):
+        query = self._raise_if_missing()
+        query.delete()
+
+
 class UploadedAjaxFileList(forms.Field):
     def to_python(self, value):
         allowed_characters = '0123456789abcdefABCDEF-,'
         if any(c for c in value if c not in allowed_characters):
             raise ValidationError(
-                "UUID list includes invalid cahracters")
+                "UUID list includes invalid characters")
 
         split_items = value.split(",")
         uuids = []
@@ -248,8 +443,9 @@ class UploadedAjaxFileList(forms.Field):
                     "Not a valid UUID: %(string)s",
                     {"string": s})
 
-        return uuids
+        return [StagedAjaxFile(uuid) for uuid in uuids]
 
     def prepare_value(self, value):
-        # convert value to be stuffed into the html
-        pass
+        # convert value to be stuffed into the html, this must be
+        # implemented if we want to pre-populate upload forms
+        return None
