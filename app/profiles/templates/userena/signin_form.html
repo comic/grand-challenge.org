@@ -13,8 +13,12 @@
 
             <div id="signinlist">
                 <h2>Sign Up or Sign In with:</h2>
-                <form action="{% url 'social:begin' 'google-oauth2' %}?next={{ request.GET.next }}">
+                <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
                     <button class="btn btn-lg btn-primary btn-block"><i
                             class="fa fa-google"></i> Google
                     </button>
@@ -25,9 +29,13 @@
 
             <div class="containernews">
                 <h2>Register a new account:</h2>
-                <form action="{% url 'comicsite_signup' site.short_name %}?next={{ request.GET.next }}"
+                <form action="{% url 'comicsite_signup' site.short_name %}"
                       class="containernews">
                     {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
                     <button type="submit"
                             class="btn btn-lg btn-primary btn-block">Register
                     </button>
@@ -46,12 +54,16 @@
                     </button>
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
-                               value="{{ request.GET.next }}"/>{% endif %}
-
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
                 </form>
                 <br>
                 <form action="{% url 'userena_password_reset' %}">
                     {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
                     <button class="btn btn-lg btn-block" type="submit">Forgot
                         your password?
                     </button>
