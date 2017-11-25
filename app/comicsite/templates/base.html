@@ -203,8 +203,7 @@
 {% block footer %}
     <footer id="metafooter" class="container text-center">
         <div id="copyrightNotice">
-            Consortium for Open Medical Image Computing &copy; 2012-
-            <script>document.write(new Date().getFullYear())</script>
+            Consortium for Open Medical Image Computing &copy; 2012-{% now "Y" %}
         </div>
     </footer>
 {% endblock %}
