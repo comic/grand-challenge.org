@@ -142,13 +142,13 @@
                             </li>
                             <li role="separator" class="divider"></li>
                             <li><a class="metaFooterMenuItem last"
-                                   href="{% url 'userena_signout' %}?next=/">
+                                   href="{% url 'userena_signout' %}?next={{ subdomain_absolute_uri }}">
                                 Sign
                                 out</a></li>
                         {% else %}
                             {% block loginbutton %}
                                 <li><a class="metaFooterMenuItem last"
-                                       href="{% url 'userena_signin' %}?next=/">Sign
+                                       href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
                                     in / Register</a></li>
                             {% endblock %}
                         {% endif %}

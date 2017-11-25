@@ -11,10 +11,10 @@
     {% else %}
         {% if user.is_authenticated %}
             <li><a class="metaFooterItem last"
-                   href="{% url 'userena_signout' %}?next=/">Signout</a></li>
+                   href="{% url 'userena_signout' %}?next={{ subdomain_absolute_uri }}">Signout</a></li>
         {% else %}
             <li><a class="metaFooterItem last"
-                   href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign
+                   href="{% url 'comicsite_signin' site.short_name %}?next={{ subdomain_absolute_uri }}">Sign
                 in /
                 Register</a></li>
         {% endif %}
