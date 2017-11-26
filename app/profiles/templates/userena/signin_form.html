@@ -15,12 +15,13 @@
                 <h2>Sign Up or Sign In with:</h2>
                 <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
-                    {% if request.GET.next %}
-                        <input type="hidden" name="next"
-                               value="{{ request.GET.next }}"/>
-                    {% endif %}
-                    <button class="btn btn-lg btn-primary btn-block"><i
-                            class="fa fa-google"></i> Google
+                    <input type="hidden" name="sd"
+                           value="{{ request.GET.sd }}"/>
+                    <input type="hidden" name="loc"
+                           value="{{ request.GET.loc }}"/>
+                    <button type="submit"
+                            class="btn btn-lg btn-primary btn-block">
+                        <i class="fa fa-google"></i> Google
                     </button>
                 </form>
             </div>

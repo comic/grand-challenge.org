@@ -1,3 +1,7 @@
+from urllib.parse import urljoin
+
+from django.conf import settings
+from django.shortcuts import redirect
 from guardian.shortcuts import assign_perm
 from userena.managers import ASSIGNED_PERMISSIONS
 from userena.models import UserenaSignup
@@ -37,3 +41,24 @@ def set_project_permissions(user=None, profile=None, *args, **kwargs):
         # activate through email link before being able to log in at all.
         user.is_staff = True
         user.save()
+
+
+def redirect_subdomain(strategy, *args, **kwargs):
+    """
+    Special handling for redirects for social auth and SUBDOMAIN_IS_PROJECTNAME
+    """
+    if settings.SUBDOMAIN_IS_PROJECTNAME:
+        subdomain = strategy.session_get('sd')
+        location = strategy.session_get('loc')
+
+        protocol, domainname = settings.MAIN_HOST_NAME.split("//")
+        url = protocol + "//"
+
+        if len(subdomain) > 0:
+            url += subdomain + '.'
+
+        url += domainname
+
+        url = urljoin(url, location)
+
+        return redirect(url)

@@ -53,9 +53,9 @@ AUTH_PROFILE_MODULE = 'profiles.UserProfile'
 USERENA_USE_HTTPS = False
 LOGIN_URL = '/accounts/signin/'
 LOGOUT_URL = '/accounts/signout/'
-LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
+LOGIN_REDIRECT_URL = '/'
 # SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/accounts/profile/'
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/accounts/profile/edit/'
+SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
 # SOCIAL_AUTH_NEW_ASSOCIATION_REDIRECT_URL = '/accounts/profile/edit/'
 
 # Do not give message popups saying "you have been logged out". Users are expected
@@ -207,7 +207,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
     'comicsite.contextprocessors.contextprocessors.comic_site',
-    'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri'
+    'comicsite.contextprocessors.contextprocessors.redirect_absolute_uri'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -308,7 +308,11 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
+    'profiles.social_auth.pipeline.profile.redirect_subdomain'
 )
+
+# These are needed for subdomain redirects
+SOCIAL_AUTH_FIELDS_STORED_IN_SESSION = ['sd', 'loc']
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'

@@ -13,9 +13,9 @@
         {% if user.is_authenticated %}
             <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{ user.username }}</a></li>
             <li role="separator" class="divider"></li>
-            <li><a class="menuItem" href="{% url 'userena_signout' %}?next={{ subdomain_absolute_uri }}">Signout</a></li>
+            <li><a class="menuItem" href="{% url 'userena_signout' %}?next={{ redirect_absolute_uri }}&sd={{ redirect_subdomain }}&loc={{ redirect_rest }}">Signout</a></li>
         {% else %}
-            <li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={{ subdomain_absolute_uri }}">Sign In / Register</a>
+            <li><a class="menuItem" href="{% url 'comicsite_signin' site.short_name %}?next={{ redirect_absolute_uri }}&sd={{ redirect_subdomain }}&loc={{ redirect_rest }}">Sign In / Register</a>
             </li>
         {% endif %}
     {% endif %}
