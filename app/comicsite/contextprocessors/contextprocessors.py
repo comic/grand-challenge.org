@@ -42,36 +42,28 @@ def comic_site(request):
             "main_project_name": settings.MAIN_PROJECT_NAME}
 
 
-def redirect_absolute_uri(request):
+def subdomain_absolute_uri(request):
     """
     Total hack to get around SUBDOMAN_IS_PROJECTNAME for absolute urls
     """
     subdomain_absolute_uri = request.build_absolute_uri()
-
-    subdomain = ''
-    rest = ''
 
     if settings.SUBDOMAIN_IS_PROJECTNAME:
         try:
             m = re.search(
                 r'\/\/(?P<host>[^\/]+)\/site\/(?P<subdomain>[^\/]+)\/',
                 subdomain_absolute_uri + '/')
-
             host = m['host']
             subdomain = m['subdomain']
-            rest = subdomain_absolute_uri[m.end(0):]
-
             subdomain_absolute_uri = subdomain_absolute_uri[:m.start(0)] \
                                      + '//' \
                                      + subdomain \
                                      + '.' \
                                      + host \
                                      + '/' \
-                                     + rest
+                                     + subdomain_absolute_uri[m.end(0):]
         except TypeError:
             # nothing to rewrite
             pass
 
-    return {'redirect_absolute_uri': subdomain_absolute_uri,
-            'redirect_subdomain': subdomain,
-            'redirect_loc': rest}
+    return {'subdomain_absolute_uri': subdomain_absolute_uri}
