@@ -1,11 +1,9 @@
 from django.contrib import messages
 from django.shortcuts import redirect
 
-REDIRECT_FIELD_NAME = 'next'
-
-
-# FIXME: quick-n-dirty implementation to make things work for social-auth login redirect handling.
-
+def login_redirect(request):
+    next = request.GET.get('next', '/')
+    return redirect(next)
 
 def profile(request):
     """

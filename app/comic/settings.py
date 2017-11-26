@@ -53,10 +53,9 @@ AUTH_PROFILE_MODULE = 'profiles.UserProfile'
 USERENA_USE_HTTPS = False
 LOGIN_URL = '/accounts/signin/'
 LOGOUT_URL = '/accounts/signout/'
-LOGIN_REDIRECT_URL = '/accounts/%(username)s/'
-# SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/accounts/profile/'
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/accounts/profile/edit/'
-# SOCIAL_AUTH_NEW_ASSOCIATION_REDIRECT_URL = '/accounts/profile/edit/'
+
+LOGIN_REDIRECT_URL = '/accounts/login-redirect/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # Do not give message popups saying "you have been logged out". Users are expected
 # to know they have been logged out when they click the logout button
