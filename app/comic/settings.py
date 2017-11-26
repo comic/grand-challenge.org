@@ -310,6 +310,10 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.user_details',
 )
 
+# Do not sanitize redirects for social auth so we can redirect back to
+# other subdomains
+SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
