@@ -19,9 +19,15 @@
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
                     {% endif %}
-                    <button class="btn btn-lg btn-primary btn-block"><i
-                            class="fa fa-google"></i> Google
-                    </button>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-primary btn-block">
+                                <i class="fa fa-google"></i> Google
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
                 </form>
             </div>
 
@@ -35,10 +41,18 @@
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
+
                     {% endif %}
-                    <button type="submit"
-                            class="btn btn-lg btn-primary btn-block">Register
-                    </button>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button type="submit"
+                                    class="btn btn-lg btn-primary btn-block">
+                                Register
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
                 </form>
             </div>
 
@@ -48,14 +62,20 @@
                 <h2>Sign In to an existing account:</h2>
                 <form action="" method="post">
                     {% csrf_token %}
-                    {{ form  | crispy }}
-                    <button class="btn btn-lg btn-primary btn-block"
-                            type="submit">Login
-                    </button>
+                    {{ form | crispy }}
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
                     {% endif %}
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-primary btn-block"
+                                    type="submit">Login
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
                 </form>
                 <br>
                 <form action="{% url 'userena_password_reset' %}">
@@ -64,9 +84,16 @@
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
                     {% endif %}
-                    <button class="btn btn-lg btn-block" type="submit">Forgot
-                        your password?
-                    </button>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-block" type="submit">
+                                Forgot
+                                your password?
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
                 </form>
             </div>
         </div>
