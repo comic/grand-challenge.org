@@ -6,18 +6,23 @@
 {% block pageName %} {{ currentpage.comicsite.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
+{% block headerLink %}"/"{% endblock %}
+
 {% block headerTitle %}
     {% if site.header_image == "" %}
-        <div class="noimage text-uppercase">
-            <a class="navbar-brand" href="/">{{ site.short_name }}</a>
+        <div class="noimage">
+            {{ site.short_name }}
         </div>
     {% else %}
+        <style>
+            .jumbotron {
+                background-image: url('{% url 'project_serve_file' site.short_name site.header_image %}');
+            }
+        </style>
         <div class="image">
-            <a href="/"><img src="{% url 'project_serve_file' site.short_name site.header_image %}"/></a>
         </div>
     {% endif %}
 {% endblock %}
-
 
 {% block topmenu %}
 {% endblock %}
@@ -31,7 +36,8 @@
             <div class="disclaimer"
                  style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
 
-                <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
+                <p>{% autoescape off %}
+                    {{ site.disclaimer }}{% endautoescape %}</p>
             </div>
         {% endif %}
         <div>{{ currentpage.rawHTML }}</div>
@@ -41,7 +47,9 @@
         {% get_obj_perms user for site as "site_perms" %}
         {% if "change_comicsite" in site_perms or request.user.is_superuser %}
 
-            <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this page</a>
+            <a class="editPageLink"
+               href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit
+                this page</a>
         {% endif %}
 
 

@@ -22,16 +22,21 @@
     {% endif %}
 {% endblock topheader %}
 
+{% block headerLink %}"{% url 'comicsite.views.site' site.short_name %}"
+{% endblock %}
+
 {% block headerTitle %}
     {% if site.header_image == "" %}
-        <div class="noimage text-uppercase">
-            <a class="navbar-brand"
-               href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a>
+        <div class="noimage">
+            {{ site.short_name }}
         </div>
     {% else %}
+        <style>
+            .jumbotron {
+                background-image: url('{% url 'project_serve_file' site.short_name site.header_image %}');
+            }
+        </style>
         <div class="image">
-            <a href="{% url 'comicsite.views.site' site.short_name %}"><img
-                    src="{% url 'project_serve_file' site.short_name site.header_image %}"></a>
         </div>
     {% endif %}
 {% endblock %}
@@ -67,7 +72,8 @@
     {% else %}
         {% if user.is_authenticated %}
             <li><a class="metaFooterItem last"
-                   href="{% url 'userena_signout' %}?next={{ subdomain_absolute_uri }}">Signout</a></li>
+                   href="{% url 'userena_signout' %}?next={{ subdomain_absolute_uri }}">Signout</a>
+            </li>
         {% else %}
             <li><a class="metaFooterItem last"
                    href="{% url 'comicsite_signin' site.short_name %}?next={{ subdomain_absolute_uri }}">Sign
