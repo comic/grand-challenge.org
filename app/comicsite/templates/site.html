@@ -31,12 +31,9 @@
             {{ site.short_name }}
         </div>
     {% else %}
-        <style>
-            .jumbotron {
-                background-image: url('{% url 'project_serve_file' site.short_name site.header_image %}');
-            }
-        </style>
         <div class="image">
+            <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
+                 style="width: 100%;">
         </div>
     {% endif %}
 {% endblock %}
