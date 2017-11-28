@@ -1572,15 +1572,21 @@ class AllProjectLinksNode(template.Node):
         for year in years:
             yearheader = "<div class ='yearHeader' id ='{0}'><h2>{0}</h2></div>".format(
                 year[0])
-            # html += yearheader
-            # html += "\n".join([link.render_to_html() for link in year[1]])
-            projectlinks = "\n".join(
-                [self.render_to_html(link) for link in year[1]])
+            projectlinks = ""
+            for i, link in enumerate(year[1]):
+                projectlinks += self.render_to_html(link)
+                projectlinks += '<div class="clearfix visible-xs-block"></div>'
+                # We're displaying 3 items in a row on small, medium and large screens
+                if (i + 1) % 3 == 0:
+                    projectlinks += '<div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>'
+
             html += u"""
             <div class='projectlinksyearcontainer'>
                 {0}
-                <div class='row panel-group'>
+                <div class='row'>
+                  <div class='panel-group'>
                     {1}
+                  </div>
                 </div>
             </div>""".format(yearheader,projectlinks)
 
@@ -1624,7 +1630,7 @@ class AllProjectLinksNode(template.Node):
                      </div>
                      <div class="projectLinkName">
                        <h3>{projectname}</h3>
-                    </div>
+                     </div>
                    </div>
                    <div class="panel-body projectLinkBody">{description}</div>
                    <div class="panel-footer projectLinkFooter">{stats}</div>

@@ -10,7 +10,6 @@ body {
 }
 
 .projectLinkHeading {
-    height: 80px;
     overflow: hidden;
 }
 .projectLinkImage {
@@ -24,20 +23,16 @@ body {
 }
 .projectLinkImage img {
     flex-shrink:0;
-    min-width:100%;
-    min-height:100%
+    max-width:100%;
+    max-height:100%
 }
 .projectLinkName {
-    padding-left: 30%;
     height: 100%;
+    display: flex;
+    align-items: center;
 }
-.projectLinkBody {
-    height: 250px;
-    overflow: hidden;
-}
-.projectLinkFooter {
-    height: 80px;
-    overflow: hidden;
+.projectLinkName h3 {
+    margin: 0;
 }
 .projectLinkFilter {
     font-weight: bold;
