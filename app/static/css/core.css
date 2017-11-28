@@ -8,3 +8,37 @@ body {
     width: 100%;
     border-radius: 6px;
 }
+
+.projectLinkHeading {
+    height: 80px;
+    overflow: hidden;
+}
+.projectLinkImage {
+    width: 30%;
+    height: 100%;
+    display:flex;
+    padding: 0;
+    justify-content:center;
+    align-items:center;
+    float: left;
+}
+.projectLinkImage img {
+    flex-shrink:0;
+    min-width:100%;
+    min-height:100%
+}
+.projectLinkName {
+    padding-left: 30%;
+    height: 100%;
+}
+.projectLinkBody {
+    height: 250px;
+    overflow: hidden;
+}
+.projectLinkFooter {
+    height: 80px;
+    overflow: hidden;
+}
+.projectLinkFilter {
+    font-weight: bold;
+}

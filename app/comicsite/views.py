@@ -277,15 +277,6 @@ def getPageSourceIfAllowed(page_title, request, site):
     return currentpage
 
 
-def projectlinks(request):
-    """ Show an overview of all projects registered at comic or listed at
-    grand-challenge.org 
-    
-    """
-    response = render_to_response('projectlinks.html', context_instance=CurrentAppRequestContext(request))
-    return response
-
-
 def page(request, site_short_name, page_title):
     """ show a single page on a site """
 

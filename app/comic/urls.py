@@ -27,8 +27,6 @@ urlpatterns = [
 
     url(r'^site/', include('comicsite.urls'), name='site'),
 
-    url(r'^projectlinks/$', 'comicsite.views.projectlinks'),
-
     url(r'^filetransfers/', include('filetransfers.urls')),
 
     url(r'^evaluation/', include('evaluation.urls')),

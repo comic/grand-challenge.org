@@ -1,84 +1,46 @@
-<style>
-
-    #buttonbar {
-        width: 100%;
-        border-top: 1px solid #CCCCCC;
-        padding-top: 5px;
-    }
-
-    #buttonbar li {
-        list-style: none outside none;
-        float: left;
-    }
-
-    #buttonbar li label, #buttonbar li input {
-        cursor: pointer;
-    }
-
-    #buttonbar ul {
-        float: left;
-        margin-top: 0;
-    }
-
-    #buttonbar label {
-        width: 135px;
-    }
-
-    #buttonbar #title {
-        float: left;
-        width: 100px;
-    }
-
-    #projectfilterbuttons label {
-        float: right;
-        width: 236px;
-    }
-
-    #filterby {
-        width: 75px;
-        float: left;
-    }
-
-    #info {
-        margin-bottom: 6px;
-    }
-
-</style>
-
 <div id="projectfilterbuttons">
 
-    <div id="info">Showing <span class="counter" id="projectlink"></span> projects of <span class="counter"
-                                                                                            id="total"></span></div>
+    <div id="info">Showing <span class="counter" id="projectlink"></span>
+        projects of <span class="counter"
+                          id="total"></span></div>
     <div id="buttonbar">
 
         <div id="filterby">Filter by:</div>
 
-        <!--Hidden checkbox to display all projectlinks by default -->
-        <input type="checkbox" class="include" checked="true" id="projectlink" style="display:none;">
+        <div id="projectLinksFilters">
+            <form class="form-inline">
+                <!--Hidden checkbox to display all projectlinks by default -->
+                <label class="checkbox-inline no_indent projectLinkFilter">
+                    <input type="checkbox" class="include" checked disabled
+                           id="projectlink"
+                           style="display:none;">
+                </label>
 
-        <ul id="filters">
-            <li>
+                <label id="open" class="checkbox-inline no_indent projectLinkFilter"
+                       title="Show projects that accept new submissions">
+                    <input type="checkbox" class="filter" id="open">
+                    Open for submissions (<span
+                        class="counter" id="open"></span>)
+                </label>
 
-                <label id="open" title="Show projects that accept new submissions">Open for submissions (<span
-                        class="counter" id="open"></span>)</label>
-                <input type="checkbox" class="filter" id="open">
+                <label id="datadownload" class="checkbox-inline no_indent projectLinkFilter"
+                       title="Show projects that offer data download">
+                    <input type="checkbox" class="filter" id="datadownload">
+                    Data download (<span
+                        class="counter" id="datadownload"></span>)
+                </label>
 
-            </li>
-            <li>
-                <label id="datadownload" title="Show projects that offer data download">Data download (<span
-                        class="counter" id="datadownload"></span>)</label>
-                <input type="checkbox" class="filter" id="datadownload">
-            </li>
-            <li>
-                <label id="grand-challenge">Hosted on Grand-challenge (<span class="counter"
-                                                                             id="grand-challenge"></span>) </label>
-                <input type="checkbox" class="filter" id="grand-challenge">
-            </li>
-        </ul>
-        <div style="clear:both"></div>
+                <label id="grand-challenge" class="checkbox-inline no_indent projectLinkFilter">
+                    <input type="checkbox" class="filter" id="grand-challenge">
+                    Hosted on Grand-challenge (<span
+                        class="counter"
+                        id="grand-challenge"></span>)
+                </label>
+            </form>
+
+        </div>
     </div>
 </div>
-<div style="clear:both;"></div>
 
 <script>
     $(document).ready(function () {
@@ -89,70 +51,66 @@
 
         //the class that a projectlink always has. Used as selector to get all
         //projectlinks
-        var BASE_SELECTOR = "projectlink"
+        var BASE_SELECTOR = "projectlink";
+
+        var filterbuttons = $("#projectfilterbuttons input");
 
         init();
-
 
         function init() {
             // hook up each inputbox to filter items by the same name when
             // checked or unchecked
-            $("#projectfilterbuttons input").each(function (i, d) {
+
+            filterbuttons.each(function (i, d) {
                 log("hooking ." + d.id);
                 hookFilter(d.id);
             });
 
-            updateTotalCounter()
-            updateAll()
+            updateTotalCounter();
+            updateAll();
 
-
-        };
+        }
 
         function updateTotalCounter() {
             //Write the total number of projectlinks, invisible or visable, into
             //a span with class 'counter' and id 'total'
 
-            count = $("div." + BASE_SELECTOR).length;
+            var count = $("div." + BASE_SELECTOR).length;
             $("span.counter#total").html(count)
 
-        };
+        }
 
         function hookFilter(inputname) {
             // hook up the checkbox with id inputname so that checking it will
             // hide or show projectlink items with a class by the same name
+            var label = $("label#" + inputname);
             $("input#" + inputname).click(function () {
                 updateAll();
             });
-            $("label#" + inputname).click(function () {
-                $("input#" + inputname).click();
-
-            });
             //add a counter to show number of elements displayed next to label
-            $("label#" + inputname).append("<span class ='itemCount' id = '" + inputname + "'></span>")
+            label.append("<span class ='itemCount' id = '" + inputname + "'></span>")
 
-
-        };
+        }
 
 
         function updateAll() {
             //make sure what is shown is consistant with the state of the tickboxes
-            log("update: first load is now " + FIRST_LOAD)
+            log("update: first load is now " + FIRST_LOAD);
+            var fadetime = 400;
             if (FIRST_LOAD) {
                 fadetime = 0;
-            } else {
-                fadetime = 400;
             }
             //Make sure items shown correspond to checkboxes
             log("Refreshing all links");
             var projectlinks = {"show": $(), "hide": $()};
-            $("#projectfilterbuttons input").each(function (i, d) {
+            filterbuttons.each(function (i, d) {
                 log("updating according to " + d.id);
                 projectlinks = modifyCollection($(d), projectlinks)
-            })
+            });
 
             //after collection all modifications, apply these
-            show = projectlinks["show"];
-            hide = projectlinks["hide"];
+            var show = projectlinks["show"];
+            var hide = projectlinks["hide"];
             show = removeDuplicates(show, hide);
 
 
@@ -167,7 +125,7 @@
 
             // allow fancy effects after this
             FIRST_LOAD = false;
-        };
+        }
 
         function update() {
 
@@ -177,64 +135,26 @@
 
         }
 
-        function checkboxUpdate(checkbox, name, fadetime) {
-            // hide or show all projectlinks which have class 'name'
-            // based on html checkbox. Hide or show with 'fadetime' ms of
-            // fancy fading
-            if (typeof(fadetime) == "undefined") {
-                fadetime = 400;
-            }
-            if (checkbox.attr("class") == "filter") {
-                //filter checkbox will remove all others when checked
-                if (checkbox.is(':checked')) {
-                    log("hiding all non    '." + name + "'");
-                    $("div:not(." + name + ")").hide(fadetime);
-                }
-                else {
-                    log("filter on '." + name + "' released. doing nothing.");
-                }
-                ;
-
-            } else if (checkbox.attr("class") == "include") {
-                // include checkbox will include or exclude only the items with
-                // the same name
-                if (checkbox.is(':checked')) {
-                    log("showing ''." + name + "'");
-                    $("div." + name).show(fadetime);
-
-                }
-                else {
-                    log("hiding '." + name + "'");
-                    $("div." + name).hide(fadetime);
-                }
-                ;
-
-
-            } else {
-                log("WARNING, checkbox having class " + checkbox.attr("class") + " did not have a known class. I don't know what to do when this box is checked")
-            }
-        }
 
         function modifyCollection(checkbox, collection) {
             // Make sure the collection of link items is consistent with
             // the value of checkbox. This means add or remove items with same id
             // as checkbox based on it being checked or not
 
-            show = collection["show"];
-            hide = collection["hide"];
-            if (show == undefined || hide == undefined) {
+            var show = collection["show"];
+            var hide = collection["hide"];
+            if (show === undefined || hide === undefined) {
                 log("WARNING: input collections needs to be a dict with two elements, 'show' and 'hide', one of these was not found. Returning input collection unchanged");
             }
-            ;
 
 
-            name = checkbox.attr("id");
-            if (name == "") {
+            var name = checkbox.attr("id");
+            if (name === "") {
                 log("WARNING: checkbox " + checkbox + " did not have an id, I need this to do filtering. Return input collection unchanged.");
                 return collection;
             }
 
-            if (checkbox.attr("class") == "filter") {
+            if (checkbox.attr("class") === "filter") {
                 //filter checkbox will remove all others when checked
                 if (checkbox.is(':checked')) {
                     log("hiding all non '." + name + "'");
@@ -243,9 +163,8 @@
                 else {
                     log("filter on '." + name + "' released. doing nothing.");
                 }
-                ;
 
-            } else if (checkbox.attr("class") == "include") {
+            } else if (checkbox.attr("class") === "include") {
                 // include checkbox will include or exclude only the items with
                 // the same name
                 if (checkbox.is(':checked')) {
@@ -257,8 +176,6 @@
                     log("hiding '." + name + "'");
                     hide = hide.add(".projectlink." + name);
                 }
-                ;
-
 
             } else {
                 log("WARNING, checkbox having class " + checkbox.attr("class") + " did not have a known class. I don't know what to do when this box is checked")
@@ -273,10 +190,10 @@
             // update counters showing how many projectlinks are currently shown
             // for each category
 
-            $("#projectfilterbuttons input").each(function (i, d) {
+            filterbuttons.each(function (i, d) {
                 log("updating counters for " + d.id);
                 var inputname = d.id;
-                count = $("div." + inputname + ":visible").length;
+                var count = $("div." + inputname + ":visible").length;
                 $("span.counter#" + inputname).html(count)
             })
         }
@@ -285,7 +202,7 @@
             // Grey out labels for include buttons when not selected, because it
             // makes the most sense given their function
 
-            $("#projectfilterbuttons input").each(function (i, d) {
+            filterbuttons.each(function (i, d) {
                 log("updating labels for " + d.id);
                 var inputname = d.id;
                 if ($(d).is(':checked')) {
@@ -301,7 +218,7 @@
             $("div.yearHeader").each(function (i, d) {
                 var count = $(".projectlink." + d.id + ":visible").length;
                 log("finding $('.projectlink." + d.id + ":visible'");
-                if (count == 0) {
+                if (count === 0) {
                     log("hiding year" + d.id);
                     $(this).hide();
                 }
@@ -313,22 +230,20 @@
         }
 
         function removeDuplicates(collection1, collection2) {
-            if (collection2 == undefined) {
+            if (collection2 === undefined) {
                 log("WARNING: input Collection2 was not given");
             }
-            ;
 
             var filtered = $();
             //remove any element from collection1 which is also in collection2
             collection1.each(function (i, d) {
-                if (collection2.index(d) == -1) {
+                if (collection2.index(d) === -1) {
                     filtered = filtered.add(d);
                 }
-                ;
 
             });
             return filtered;
-        };
+        }
 
 
         function log(msg) {
@@ -342,4 +257,3 @@
     });
 
 </script>
-

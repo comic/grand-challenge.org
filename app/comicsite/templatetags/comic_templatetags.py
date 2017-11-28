@@ -1614,39 +1614,20 @@ class AllProjectLinksNode(template.Node):
     def render_to_html(self, projectlink):
         """ return html representation of projectlink """
 
-        """
-            <a id="{abreviation}">
-               <div class = "projectlink {link_class} {year} card">
-                 <div class ="top">
-                     <a href="{url}" class="card-img-top">
-                       <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
-                     </a>
-                     
-                     
-                     <div class="stats">{stats}</div>
-                 </div>                     
-                 <div class ="bottom card-block">
-                   <h3 class="projectname card-title">{projectname}</h3>
-                   <div class="description"><p class="card-text">{description}</p></div>
-                 </div>
-                 <div class ="bottom linktarget" onclick="location.href='{url}'">
-                   
-                 </div>
-               </div>
-        """
-
         html = u"""
                <div class="col-sm-4 projectlink {link_class} {year}">
-                <a href="{url}" style="display:block">
+                <a id="{abreviation}" href="{url}" style="display:block">
                  <div class="panel panel-default">
-                   <div class="panel-heading">
-                     <img alt="{projectname}" src="{thumb_image_url}">
+                   <div class="panel-heading projectLinkHeading">
+                     <div class="projectLinkImage">
+                       <img alt="" src="{thumb_image_url}">
+                     </div>
+                     <div class="projectLinkName">
+                       <h3>{projectname}</h3>
+                    </div>
                    </div>
-                   <div class="panel-body">
-                     <h3>{projectname}</h3>
-                     <p>{description}</p>
-                     <p>{stats}</p>
-                   </div>
+                   <div class="panel-body projectLinkBody">{description}</div>
+                   <div class="panel-footer projectLinkFooter">{stats}</div>
                  </div>
                 </a>
                </div>
