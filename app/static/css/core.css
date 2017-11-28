@@ -11,6 +11,10 @@ body {
 
 .projectLinkHeading {
     overflow: hidden;
+    background-color: #f5f5f5;
+}
+.projectLinkFooter {
+    border-top: none;
 }
 .projectLinkImage {
     width: 30%;
@@ -24,7 +28,8 @@ body {
 .projectLinkImage img {
     flex-shrink:0;
     max-width:100%;
-    max-height:100%
+    max-height:100%;
+    border-radius: 3px;
 }
 .projectLinkName {
     height: 100%;
@@ -32,7 +37,8 @@ body {
     align-items: center;
 }
 .projectLinkName h3 {
-    margin: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 .projectLinkFilter {
     font-weight: bold;

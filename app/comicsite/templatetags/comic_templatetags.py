@@ -1575,6 +1575,7 @@ class AllProjectLinksNode(template.Node):
             projectlinks = ""
             for i, link in enumerate(year[1]):
                 projectlinks += self.render_to_html(link)
+                # This is needed for proper card wrapping
                 projectlinks += '<div class="clearfix visible-xs-block"></div>'
                 # We're displaying 3 items in a row on small, medium and large screens
                 if (i + 1) % 3 == 0:
@@ -1584,9 +1585,7 @@ class AllProjectLinksNode(template.Node):
             <div class='projectlinksyearcontainer'>
                 {0}
                 <div class='row'>
-                  <div class='panel-group'>
                     {1}
-                  </div>
                 </div>
             </div>""".format(yearheader,projectlinks)
 
