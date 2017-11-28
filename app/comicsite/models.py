@@ -32,11 +32,6 @@ def set_project_admin_permissions(sender, **kwargs):
     projectadmingroup = get_or_create_projectadmingroup()
     user.groups.add(projectadmingroup)
 
-    # set staff status so user can access admin interface. User will still have to
-    # activate through email link before being able to log in at all.
-    user.is_staff = True
-    user.save()
-
 
 def get_or_create_projectadmingroup():
     """ create the group 'projectadmin' which should have class-level permissions for all

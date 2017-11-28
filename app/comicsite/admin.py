@@ -664,6 +664,9 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 admingroup = Group.objects.get(name=comicsite.admin_group_name())
                 # add current user to admins for this site
                 user.groups.add(admingroup)
+                # give them the staff bit
+                user.is_staff = True
+                user.save()
                 messages.add_message(request, messages.SUCCESS, 'User "' + user.username + '"\
                                      is now an admin for ' + comicsite.short_name)
 

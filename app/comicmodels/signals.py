@@ -53,6 +53,10 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
         # add current user to admins for this site
         try:
             instance.creator.groups.add(admingroup)
+
+            # Add the creator to the staff
+            instance.creator.is_staff = True
+            instance.creator.save()
         except AttributeError:
             # No creator set
             pass
