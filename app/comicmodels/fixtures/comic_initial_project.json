@@ -62,7 +62,7 @@
     "pk": 3,
     "model": "auth.group",
     "fields": {
-      "name": "testsite_admins",
+      "name": "fixturetestsite_admins",
       "permissions": []
     }
   },
@@ -70,7 +70,7 @@
     "pk": 4,
     "model": "auth.group",
     "fields": {
-      "name": "testsite_participants",
+      "name": "fixturetestsite_participants",
       "permissions": []
     }
   },
@@ -78,7 +78,7 @@
     "pk": 2,
     "model": "comicmodels.comicsite",
     "fields": {
-      "short_name": "testsite",
+      "short_name": "fixturetestsite",
       "description": "A site to test the framework",
       "hidden": false,
       "created_at": "2017-06-07T11:00:00+00:00"
@@ -88,7 +88,7 @@
     "pk": 4,
     "model": "comicmodels.page",
     "fields": {
-      "title": "testpage1",
+      "title": "testpage_all",
       "display_title": "View By All",
       "permission_lvl": "ALL",
       "html": " ",
@@ -100,7 +100,7 @@
     "pk": 5,
     "model": "comicmodels.page",
     "fields": {
-      "title": "testpage2",
+      "title": "testpage_reg",
       "display_title": "View By Participants",
       "permission_lvl": "REG",
       "html": " ",
@@ -112,7 +112,7 @@
     "pk": 6,
     "model": "comicmodels.page",
     "fields": {
-      "title": "testpage3",
+      "title": "testpage_adm",
       "display_title": "View By Admin",
       "permission_lvl": "ADM",
       "html": " ",

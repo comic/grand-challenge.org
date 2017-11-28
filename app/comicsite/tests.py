@@ -1,6 +1,7 @@
 import re
 from random import choice, randint
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
@@ -304,6 +305,12 @@ class ComicframeworkTestCase(TestCase):
             wide_end = min(span[1] + 200, len(response.content))
             wide_error = response.content[wide_start:wide_end]
             return wide_error
+        else:
+            # See if there are any new style errors
+            soup = BeautifulSoup(response.content, 'html.parser')
+            errors = soup.findAll('div', attrs={'class': 'has-error'})
+            if len(errors) > 0:
+                return str(errors)
 
         return ""
 
