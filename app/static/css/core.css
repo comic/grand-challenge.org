@@ -1,45 +1,56 @@
 html {
-  overflow-y: scroll;
+    overflow-y: scroll;
 }
+
 body {
     padding-top: 70px;
 }
-.headerImage{
+
+.headerImage {
     width: 100%;
     border-radius: 6px;
 }
 
 .projectLinkHeading {
     overflow: hidden;
+    padding: 10px 0;
     background-color: #f5f5f5;
 }
+
 .projectLinkFooter {
     border-top: none;
 }
+
 .projectLinkImage {
     width: 30%;
     height: 100%;
-    display:flex;
+    display: flex;
     padding: 0;
-    justify-content:center;
-    align-items:center;
+    justify-content: center;
+    align-items: center;
     float: left;
+    margin-left: 10px;
 }
+
 .projectLinkImage img {
-    flex-shrink:0;
-    max-width:100%;
-    max-height:100%;
+    flex-shrink: 0;
+    max-width: 100%;
+    max-height: 100%;
     border-radius: 3px;
 }
+
 .projectLinkName {
     height: 100%;
     display: flex;
     align-items: center;
 }
+
 .projectLinkName h3 {
     margin-top: 0;
     margin-bottom: 0;
+    margin-left: 10px;
 }
+
 .projectLinkFilter {
     font-weight: bold;
 }

@@ -1621,8 +1621,8 @@ class AllProjectLinksNode(template.Node):
 
         html = u"""
                <div class="col-sm-4 projectlink {link_class} {year}">
-                <a id="{abreviation}" href="{url}" style="display:block">
                  <div class="panel panel-default">
+                   <a id="{abreviation}" href="{url}" style="display:block">
                    <div class="panel-heading projectLinkHeading">
                      <div class="projectLinkImage">
                        <img alt="" src="{thumb_image_url}">
@@ -1631,10 +1631,10 @@ class AllProjectLinksNode(template.Node):
                        <h3>{projectname}</h3>
                      </div>
                    </div>
+                   </a>
                    <div class="panel-body projectLinkBody">{description}</div>
                    <div class="panel-footer projectLinkFooter">{stats}</div>
                  </div>
-                </a>
                </div>
                 """.format(link_class=self.get_link_classes(projectlink),
                            year=str(projectlink.params["year"]),
