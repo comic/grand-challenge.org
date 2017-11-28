@@ -600,8 +600,7 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_url_can_be_viewed(self.root, url)
 
         otheruser = self._create_random_user("other_")
-        # TODO: The permissions are not correct, https://github.com/comic/comic-django/issues/306
-        # self._test_url_can_not_be_viewed(otheruser,url)
+        self._test_url_can_not_be_viewed(otheruser,url)
 
     def test_page_change_view(self):
         """ Root can in admin see a page another user created while another
@@ -618,8 +617,7 @@ class ViewsTest(ComicframeworkTestCase):
 
         self._test_url_can_be_viewed(user, url)
         self._test_url_can_be_viewed(self.root, url)
-        # TODO: The permissions are not correct, https://github.com/comic/comic-django/issues/306
-        # self._test_url_can_not_be_viewed(anotheruser,url)
+        self._test_url_can_not_be_viewed(anotheruser,url)
 
     def test_page_view_permission(self):
         """ Check that a page with permissions set can be viewed by the correct
