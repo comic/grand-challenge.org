@@ -2,7 +2,6 @@ from django.conf.urls import url, include
 from django.views.generic import TemplateView
 
 from comicsite.admin import projectadminurls
-from profiles.forms import SignupFormExtra
 
 urlpatterns = [
 
@@ -20,6 +19,9 @@ urlpatterns = [
     url(r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
         TemplateView.as_view(template_name='robots.html'),
         name="comicsite_robots_txt"),
+
+    url(r'^(?P<challenge_short_name>[\w-]+)/evaluation/',
+        include('evaluation.urls', namespace='evaluation')),
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 

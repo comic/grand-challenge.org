@@ -2,6 +2,7 @@ from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic import CreateView, ListView, DetailView
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
@@ -27,9 +28,17 @@ class SubmissionViewSet(ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
+        # Validate that the challenge exists
+        try:
+            short_name = self.request.data.get('challenge')
+            challenge = ComicSite.objects.get(
+                short_name=short_name)
+        except ComicSite.DoesNotExist:
+            raise ValidationError(
+                f"Challenge {short_name} does not exist.")
+
         serializer.save(user=self.request.user,
-                        challenge=ComicSite.objects.get(
-                            short_name=self.request.data.get('challenge')),
+                        challenge=challenge,
                         file=self.request.data.get('file'))
 
 
@@ -106,7 +115,8 @@ def uploader_widget_test(request: HttpRequest) -> HttpResponse:
         test_form = UploadForm(request.POST)
         if test_form.is_valid():
             result = "Success!!!\n"
-            result += "\n".join(f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
+            result += "\n".join(
+                f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
 
             result += "\n\n"
 

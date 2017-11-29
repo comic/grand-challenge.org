@@ -28,6 +28,8 @@ def comic_site(request):
         sitename = resolution.kwargs["site_short_name"]
     elif "project_name" in resolution.kwargs:
         sitename = resolution.kwargs["project_name"]
+    elif "challenge_short_name" in resolution.kwargs:
+        sitename = resolution.kwargs["challenge_short_name"]
     else:
         sitename = settings.MAIN_PROJECT_NAME
 

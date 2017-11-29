@@ -5,7 +5,7 @@ from comicmodels.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
 
 
-class ComicSiteFactory(factory.DjangoModelFactory):
+class ChallengeFactory(factory.DjangoModelFactory):
     class Meta:
         model = ComicSite
 
@@ -29,7 +29,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
     class Meta:
         model = Submission
 
-    challenge = factory.SubFactory(ComicSiteFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
     file = factory.django.FileField()
 
 
@@ -42,7 +42,7 @@ class MethodFactory(factory.DjangoModelFactory):
     class Meta:
         model = Method
 
-    challenge = factory.SubFactory(ComicSiteFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
     image = factory.django.FileField()
 
 
