@@ -14,14 +14,16 @@ from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
-from userena import views as userena_views
 
-from comicmodels.models import ComicSite, Page, ErrorPage, ComicSiteModel, RegistrationRequest, \
+from comicmodels.models import ComicSite, Page, ErrorPage, ComicSiteModel, \
+    RegistrationRequest, \
     ProjectMetaData
 from comicsite.core.exceptions import ComicException
 from comicsite.core.urlresolvers import reverse
-from comicsite.models import send_existing_project_link_submission_notification_email
-from comicsite.template.context import ComicSiteRequestContext, CurrentAppRequestContext
+from comicsite.models import \
+    send_existing_project_link_submission_notification_email
+from comicsite.template.context import ComicSiteRequestContext, \
+    CurrentAppRequestContext
 from filetransfers.api import serve_file
 
 
@@ -564,67 +566,6 @@ def create_temp_page(title="temp_page", html=""):
     site.skin = ""
 
     return Page(comicsite=site, title=title, html=html)
-
-
-# ====================== Wrapping profiles views ================================
-# Profiles views shoudld be viewable in each project. Each view needs a
-# site_short_name or similar param. Therefore all needed views are wrapped here.
-# TODO: is there no less repetitive way of wrapping?
-
-def get_extra_context(site_short_name):
-    """ reduces duplication in signin signup methods below.
-    
-    """
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    if site.short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
-        pages = []
-    extra_context = {'site': site, "pages": pages}
-    return extra_context
-
-
-def signin(request, site_short_name, extra_context=None):
-    """ change userena signup so it shows the banner and layout of current
-    project. 
-    
-    Also do not show any pages for main project, because logging
-    in here should feel like a 'general' login and not like logging in to a
-    project 
-         
-    """
-    extra_context = get_extra_context(site_short_name)
-    # signup_form, template_name, success_url, extra_context    
-    response = userena_views.signin(request=request, extra_context=extra_context)
-    return response
-
-
-def signup(request, site_short_name, extra_context=None, **kwargs):
-    extra_context = get_extra_context(site_short_name)
-    # signup_form, template_name, success_url, extra_context
-
-    if "next" in request.GET:
-        success = request.GET["next"] + "?user_just_registered=True"
-    else:
-        success = reverse("comicsite_signup_complete", kwargs={"site_short_name": site_short_name})
-    response = userena_views.signup(request=request,
-                                    extra_context=extra_context,
-                                    success_url=success,
-                                    **kwargs)
-    return response
-
-
-def signup_complete(request, site_short_name, ):
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-
-    # currentpage needed to make templates not trip
-    currentpage = Page(comicsite=site, title="Signup_almost_complete", html="")
-    response = render_to_response('userena/signup_complete.html',
-                                  {'site': site,
-                                   "pages": pages,
-                                   "currentpage": currentpage,
-                                   "metafooterpages": metafooterpages},
-                                  context_instance=CurrentAppRequestContext(request))
-
-    return response
 
 
 class ProjectMetadataForm(forms.ModelForm):

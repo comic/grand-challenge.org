@@ -355,8 +355,7 @@ class ComicframeworkTestCase(TestCase):
         else:
             sitename = site.short_name
 
-        signin_page = self.client.post(reverse("comicsite.views.signup",
-                                               kwargs={"site_short_name": sitename}), data)
+        signin_page = self.client.post(reverse("profile_signup"), data)
 
         # check whether signin succeeded. If succeeded the response will be a
         # httpResponseRedirect object, which has a 'Location' key in its
@@ -1319,18 +1318,17 @@ class ProjectLoginTest(ComicframeworkTestCase):
         self._create_random_user(site=self.testproject)
 
         # see if views work and all urls can be found
-        login_url = reverse("comicsite_signin", kwargs={"site_short_name": self.testproject.short_name})
+        login_url = reverse("userena_signin")
         logout_url = reverse("userena_signout")
-        comicsite_signup_complete_url = reverse("comicsite_signup_complete",
-                                                kwargs={"site_short_name": self.testproject.short_name})
+        profile_signup_complete_url = reverse("profile_signup_complete")
 
         self._test_url_can_be_viewed(self.signedup_user, login_url)
         self._test_url_can_be_viewed(None, login_url)
         self._test_url_can_be_viewed(self.participant, logout_url)
         self._test_url_can_be_viewed(None, logout_url)
 
-        self._test_url_can_be_viewed(self.signedup_user, comicsite_signup_complete_url)
-        self._test_url_can_be_viewed(None, comicsite_signup_complete_url)
+        self._test_url_can_be_viewed(self.signedup_user, profile_signup_complete_url)
+        self._test_url_can_be_viewed(None, profile_signup_complete_url)
 
         # password reset is in the "forgot password?" link on the project 
         # based login page. Make sure this works right.

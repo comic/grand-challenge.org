@@ -3,9 +3,11 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% trans "Signup" %}{% endblock %}
+{% block pageName %}{% trans "Signup" %}{% endblock %}
 
 {% block content %}
+    <h2>Create an account on {{ main_project_name }}</h2>
+    <br/>
     <form action="" method="post">
         {% csrf_token %}
         {{ form | crispy }}

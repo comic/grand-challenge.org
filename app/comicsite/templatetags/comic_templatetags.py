@@ -246,8 +246,6 @@ class comic_URLNode(defaulttags.URLNode):
         if subdomain_is_projectname() and self.view_name.var in [
             "comicsite.views.site",
             "comicsite.views.page",
-            "comicsite_signin",
-            "comicsite_signup",
             "project_serve_file"]:
 
             # Interpret subdomain as a comicsite. What would normally be the

@@ -31,7 +31,7 @@
     "pk": 1,
     "model": "auth.user",
     "fields": {
-      "username": "test",
+      "username": "fixturetest",
       "password": "pbkdf2_sha256$20000$ddnct7JXwwHO$a6y4gsJxyMrAIAZzDclV+K5ohgAqkNDPWEdA6iRvVZk=",
       "is_active": true,
       "is_staff": false,

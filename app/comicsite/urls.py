@@ -23,17 +23,6 @@ urlpatterns = [
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
-    # these registration and account views are viewed in the context of a
-    # project
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signin/$',
-        'comicsite.views.signin',
-        name="comicsite_signin"),
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signup/$',
-        'comicsite.views.signup',
-        {'signup_form': SignupFormExtra}, name="comicsite_signup"),
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signup_complete/$',
-        'comicsite.views.signup_complete', name="comicsite_signup_complete"),
-
     url(r'^(?P<site_short_name>[\w-]+)/files/$',
         'comicmodels.views.upload_handler'),
 
