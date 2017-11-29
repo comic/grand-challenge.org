@@ -36,10 +36,6 @@ urlpatterns = [
     url(r'^accounts/', include('profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
 
-    # Submit a project for addition to the projects overview
-    url(r'^submit_existing_project/$',
-        'comicsite.views.submit_existing_project'),
-
     # WYSIWYG editor for HTML
     url(r'^ckeditor/', include('ckeditor.urls')),
 

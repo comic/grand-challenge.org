@@ -1,14 +1,8 @@
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 
 from comicmodels.models import UploadModel, ComicSite
-from crispy_forms.helper import FormHelper
-
-
-class UploadForm(forms.ModelForm):
-    class Meta:
-        model = UploadModel
-        fields = '__all__'
 
 
 class UserUploadForm(forms.ModelForm):

@@ -497,14 +497,6 @@ class ComicSiteAdminForm(forms.ModelForm):
         fields = '__all__'
 
 
-class ComicSiteManager(models.Manager):
-    """ Some extra table-level methods for getting ComicSites from database"""
-
-    def non_hidden(self):
-        """ like all(), but only return ComicSites for which hidden=false"""
-        return self.filter(hidden=False)
-
-
 class ComicSiteAdmin(admin.ModelAdmin):
     # Make sure regular template overrides work. GuardedModelAdmin disables this
     # With change_form_template = None templates in templates/admin/comicsite/page

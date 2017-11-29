@@ -33,9 +33,6 @@ urlpatterns = [
     url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
         'comicsite.views._register'),
 
-    url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$',
-        'comicsite.views.pagesource'),
-
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         'comicsite.api.get_public_results'),
 
