@@ -2,12 +2,12 @@
  Custom processors to pass variables to views rendering template tags 
  see http://www.djangobook.com/en/2.0/chapter09.html  
 """
-import re
 from django.conf import settings
 from django.core.urlresolvers import resolve
 from django.http import Http404
 
 from comicmodels.models import ComicSite
+from comicsite.utils import build_absolute_uri
 from comicsite.views import site_get_standard_vars
 
 
@@ -45,27 +45,7 @@ def comic_site(request):
 
 
 def subdomain_absolute_uri(request):
-    """
-    Total hack to get around SUBDOMAN_IS_PROJECTNAME for absolute urls
-    """
-    subdomain_absolute_uri = request.build_absolute_uri()
 
-    if settings.SUBDOMAIN_IS_PROJECTNAME:
-        try:
-            m = re.search(
-                r'\/\/(?P<host>[^\/]+)\/site\/(?P<subdomain>[^\/]+)\/',
-                subdomain_absolute_uri + '/')
-            host = m['host']
-            subdomain = m['subdomain']
-            subdomain_absolute_uri = subdomain_absolute_uri[:m.start(0)] \
-                                     + '//' \
-                                     + subdomain \
-                                     + '.' \
-                                     + host \
-                                     + '/' \
-                                     + subdomain_absolute_uri[m.end(0):]
-        except TypeError:
-            # nothing to rewrite
-            pass
+    uri = build_absolute_uri(request)
 
-    return {'subdomain_absolute_uri': subdomain_absolute_uri}
+    return {'subdomain_absolute_uri': uri}

@@ -6,7 +6,7 @@ from evaluation.forms import test_upload_widget, test_upload_widget2
 from evaluation.views import ResultViewSet, SubmissionViewSet, JobViewSet, \
     MethodViewSet, uploader_widget_test, MethodCreate, SubmissionCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
-    SubmissionDetail, JobDetail, ResultDetail
+    SubmissionDetail, JobDetail, ResultDetail, EvaluationAdmin
 
 router = routers.DefaultRouter()
 router.register(r'results', ResultViewSet)
@@ -24,6 +24,8 @@ api_patterns = [
 ]
 
 urlpatterns = [
+    url(r'^$', EvaluationAdmin.as_view(), name='home'),
+
     url(r'^methods/$', MethodList.as_view(), name='method-list'),
     url(r'^methods/create/$', MethodCreate.as_view(), name='method-create'),
     url(r'^methods/(?P<pk>[0-9a-fA-F-]+)/$', MethodDetail.as_view(),

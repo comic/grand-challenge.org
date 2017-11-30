@@ -1,13 +1,15 @@
+from auth_mixins import LoginRequiredMixin
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
-from django.views.generic import CreateView, ListView, DetailView
+from django.views.generic import CreateView, ListView, DetailView, TemplateView
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
 
 from comicmodels.models import ComicSite
+from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from evaluation.forms import UploadForm
 from evaluation.models import Result, Submission, Job, Method
 from evaluation.serializers import ResultSerializer, SubmissionSerializer, \
@@ -52,6 +54,11 @@ class MethodViewSet(ModelViewSet):
     queryset = Method.objects.all()
     serializer_class = MethodSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+
+class EvaluationAdmin(UserIsChallengeAdminMixin, TemplateView):
+    # TODO: Challenge Admin Only
+    template_name = "evaluation/admin.html"
 
 
 class MethodCreate(CreateView):
