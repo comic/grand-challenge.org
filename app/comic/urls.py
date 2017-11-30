@@ -3,7 +3,6 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
 
-from evaluation.urls import api_patterns
 from comicmodels.views import ChallengeCreate
 
 admin.autodiscover()
@@ -32,7 +31,7 @@ urlpatterns = [
 
     # Do not change the namespace without updating the view names in
     # evaluation.serializers
-    url(r'^api/', include(api_patterns, namespace='api')),
+    url(r'^api/', include('api.urls', namespace='api')),
 
     # Used for logging in and managing profiles. This is done on the framework
     # level because it is too hard to get this all under each project

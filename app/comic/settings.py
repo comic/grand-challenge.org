@@ -276,6 +276,7 @@ INSTALLED_APPS = (
     'evaluation',
     'rest_framework',
     'rest_framework.authtoken',
+    'api',
     # bootstrap forms
     'crispy_forms',
 )

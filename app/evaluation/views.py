@@ -1,111 +1,59 @@
-from auth_mixins import LoginRequiredMixin
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
-from rest_framework.exceptions import ValidationError
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.viewsets import ModelViewSet
 
-from comicmodels.models import ComicSite
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin
+from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
+    UserIsChallengeParticipantOrAdminMixin
 from evaluation.forms import UploadForm
 from evaluation.models import Result, Submission, Job, Method
-from evaluation.serializers import ResultSerializer, SubmissionSerializer, \
-    JobSerializer, MethodSerializer
 from evaluation.widgets.uploader import AjaxUploadWidget
 
 
-class ResultViewSet(ModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
-class SubmissionViewSet(ModelViewSet):
-    queryset = Submission.objects.all()
-    serializer_class = SubmissionSerializer
-    parser_classes = (MultiPartParser, FormParser,)
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-    def perform_create(self, serializer):
-        # Validate that the challenge exists
-        try:
-            short_name = self.request.data.get('challenge')
-            challenge = ComicSite.objects.get(
-                short_name=short_name)
-        except ComicSite.DoesNotExist:
-            raise ValidationError(
-                f"Challenge {short_name} does not exist.")
-
-        serializer.save(user=self.request.user,
-                        challenge=challenge,
-                        file=self.request.data.get('file'))
-
-
-class JobViewSet(ModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
-class MethodViewSet(ModelViewSet):
-    queryset = Method.objects.all()
-    serializer_class = MethodSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
 class EvaluationAdmin(UserIsChallengeAdminMixin, TemplateView):
-    # TODO: Challenge Admin Only
     template_name = "evaluation/admin.html"
 
 
-class MethodCreate(CreateView):
-    # TODO: Challenge Admin Only
+class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
     fields = '__all__'
 
 
-class MethodList(ListView):
-    # TODO: Challenge Admin Only
+class MethodList(UserIsChallengeAdminMixin, ListView):
     model = Method
 
 
-class MethodDetail(DetailView):
-    # TODO: Challenge Admin Only
+class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class SubmissionCreate(CreateView):
-    # TODO: Challenge Participant Only
+class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     model = Submission
     fields = '__all__'
 
 
-class SubmissionList(ListView):
-    # TODO: Challenge Admin Only
+class SubmissionList(UserIsChallengeAdminMixin, ListView):
+    # TODO - if participant: list only their submissions
     model = Submission
 
 
-class SubmissionDetail(DetailView):
-    # TODO: Challenge Admin Only
+class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
+    # TODO - if participant: list only their submissions
     model = Submission
 
 
-class JobCreate(CreateView):
-    # TODO: Challenge Admin Only
+class JobCreate(UserIsChallengeAdminMixin, CreateView):
     model = Job
     fields = '__all__'
 
 
-class JobList(ListView):
-    # TODO: Challenge Admin Only
+class JobList(UserIsChallengeAdminMixin, ListView):
+    # TODO - if participant: list only their jobs
     model = Job
 
 
-class JobDetail(DetailView):
-    # TODO: Challenge Admin Only
+class JobDetail(UserIsChallengeAdminMixin, DetailView):
+    # TODO - if participant: list only their jobs
     model = Job
 
 

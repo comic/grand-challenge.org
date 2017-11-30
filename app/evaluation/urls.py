@@ -1,27 +1,10 @@
-from django.conf.urls import url, include
-from rest_framework import routers
-from rest_framework.authtoken.views import obtain_auth_token
+from django.conf.urls import url
 
 from evaluation.forms import test_upload_widget, test_upload_widget2
-from evaluation.views import ResultViewSet, SubmissionViewSet, JobViewSet, \
-    MethodViewSet, uploader_widget_test, MethodCreate, SubmissionCreate, \
+from evaluation.views import uploader_widget_test, MethodCreate, \
+    SubmissionCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
     SubmissionDetail, JobDetail, ResultDetail, EvaluationAdmin
-
-router = routers.DefaultRouter()
-router.register(r'results', ResultViewSet)
-router.register(r'submissions', SubmissionViewSet)
-router.register(r'jobs', JobViewSet)
-router.register(r'methods', MethodViewSet)
-
-api_patterns = [
-    # Do not namespace the router.urls without updating the view names in
-    # evaluation.serializers
-    url(r'^v1/', include(router.urls)),
-    url(r'^authtoken/', obtain_auth_token, name='obtain-auth-token'),
-    url(r'^auth/', include('rest_framework.urls',
-                           namespace='rest_framework')),
-]
 
 urlpatterns = [
     url(r'^$', EvaluationAdmin.as_view(), name='home'),
