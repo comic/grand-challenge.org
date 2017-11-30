@@ -317,6 +317,10 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
+FIXTURE_DIRS = (
+    os.path.join(os.path.dirname(__file__), "fixtures"),
+)
+
 # buttons for WYSIWYG editor in page admin
 CKEDITOR_CONFIGS = {
     'default': {

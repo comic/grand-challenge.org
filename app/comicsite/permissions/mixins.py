@@ -1,13 +1,17 @@
 from auth_mixins import UserPassesTestMixin
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.views import redirect_to_login
+from django.http import HttpResponseForbidden
 
 from comicmodels.models import ComicSite
+from comicsite.utils import build_absolute_uri
 
 
 class UserAuthAndTestMixin(UserPassesTestMixin):
     """
     A mixin that is exactly like the UserPassesTest mixin, but ensures that
     the user is logged in too.
+
+    Requires that comicsite.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
@@ -16,13 +20,14 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
 
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated():
-            # Follow the default path, which is to login and try again
-            return self.handle_no_permission()
+            return redirect_to_login(build_absolute_uri(self.request),
+                                     self.get_login_url(),
+                                     self.get_redirect_field_name())
 
         user_test_result = self.get_test_func()()
 
         if not user_test_result:
-            raise PermissionDenied(self.get_permission_denied_message())
+            return HttpResponseForbidden(self.get_permission_denied_message())
 
         return super(UserAuthAndTestMixin, self).dispatch(request, *args,
                                                           **kwargs)
@@ -31,6 +36,8 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
 class UserIsChallengeAdminMixin(UserAuthAndTestMixin):
     """
     A mixin that determines if a user is an admin for this challenge
+
+    Requires that comicsite.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
@@ -45,6 +52,8 @@ class UserIsChallengeParticipantOrAdminMixin(UserAuthAndTestMixin):
     """
     A mixin that determines if a user is a participant or an admin for this
     challenge
+
+    Requires that comicsite.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
