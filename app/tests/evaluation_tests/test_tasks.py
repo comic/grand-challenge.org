@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import signals
 
 from evaluation.tasks import evaluate_submission
-from evaluation.tests.factories import SubmissionFactory, JobFactory, \
+from tests.factories import SubmissionFactory, JobFactory, \
     MethodFactory, UserFactory
 
 

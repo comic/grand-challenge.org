@@ -8,7 +8,7 @@ from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
 from evaluation.models import Submission
-from evaluation.tests.factories import UserFactory, ChallengeFactory
+from tests.factories import UserFactory, ChallengeFactory
 
 
 @pytest.mark.django_db
