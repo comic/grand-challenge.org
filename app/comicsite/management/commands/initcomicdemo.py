@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand
+from userena.models import UserenaSignup
 
 from comicmodels.models import ComicSite, Page
 
@@ -35,9 +35,9 @@ class Command(BaseCommand):
                 html="{% all_projectlinks %}",
             )
 
-            User = get_user_model()
-            demoadmin = User.objects.create_user(
-                username='demo', password='demo'
+            demoadmin = UserenaSignup.objects.create_user(
+                username='demo', email='demo@example.com', password='demo',
+                active=True
             )
 
             demo = ComicSite.objects.create(
@@ -64,4 +64,3 @@ class Command(BaseCommand):
                 title='adm',
                 permission_lvl='ADM'
             )
-

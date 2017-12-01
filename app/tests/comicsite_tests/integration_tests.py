@@ -1,12 +1,12 @@
 import re
 from random import choice, randint
 
+import django
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -17,6 +17,7 @@ from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from six import StringIO
 
+from userena.models import UserenaSignup
 from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
@@ -27,16 +28,6 @@ from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
-
-
-def get_or_create_user(username, password):
-    User = get_user_model()
-    query_result = User.objects.filter(username=username)
-    if query_result.exists():
-        return query_result[0]
-
-    else:
-        return
 
 
 def create_page_in_admin(comicsite, title, content="testcontent",
@@ -160,6 +151,7 @@ class ComicframeworkTestCase(TestCase):
     """
 
     def setUp(self):
+        call_command('check_permissions')
         self.setUp_base()
         self.setUp_extra()
 
@@ -188,28 +180,25 @@ class ComicframeworkTestCase(TestCase):
             main = ComicSite.objects.create(
                 short_name=settings.MAIN_PROJECT_NAME,
                 description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
-                )
+            )
 
             main.save()
 
         User = get_user_model()
         try:
-            self.root = User.objects.get(username='root')
-        except ObjectDoesNotExist:
+            self.root = User.objects.filter(username='root').exists()
+        except User.DoesNotExist:
             # A user who has created a project
 
-
-
-            root = User.objects.create_user('root',
-                                            'w.s.kerkstra@gmail.com',
-                                            'testpassword')
+            root = UserenaSignup.objects.create_user('root',
+                                                     'w.s.kerkstra@gmail.com',
+                                                     'testpassword',
+                                                     active=True)
             root.is_staff = True
             root.is_superuser = True
             root.save()
 
             self.root = root
-
-        call_command('check_permissions')
 
     def _create_dummy_project(self, projectname="testproject"):
         """ Create a project with some pages and users. In part this is 
@@ -291,8 +280,8 @@ class ComicframeworkTestCase(TestCase):
         response, username = self._view_url(user, url)
         self.assertNotEqual(response.status_code, 200, "could load restricted "
                                                        "page'%s' logged in as user '%s'" % (
-                            url,
-                            username))
+                                url,
+                                username))
         return response
 
     def _find_errors_in_page(self, response):
@@ -477,7 +466,7 @@ class ComicframeworkTestCase(TestCase):
 
         if errors:
             self.assertFalse(errors, "Error creating project '%s':\n %s" % (
-            short_name, errors))
+                short_name, errors))
 
         # ad.set_base_permissions(request,project)
         project = ComicSite.objects.get(short_name=short_name)
@@ -515,11 +504,11 @@ class ComicframeworkTestCase(TestCase):
             expected = email_expected[attr]
             self.assertTrue(
                 expected == found or is_subset(found, expected) or (
-                expected in found),
+                    expected in found),
                 "Expected to find '{0}' for email attribute \
                 '{1}' but found '{2}' instead".format(expected,
-                                                                  attr,
-                                                                  found))
+                                                      attr,
+                                                      found))
 
     def apply_standard_middleware(self, request):
         """ Some actions in the admin pages require certain middleware which is not
@@ -868,7 +857,7 @@ class UploadTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         if errors:
             self.assertFalse(errors, "Error uploading file '%s':\n %s" % (
-            testfilename, errors.group(1)))
+                testfilename, errors.group(1)))
 
         return response
 
