@@ -47,7 +47,8 @@ EMAIL_HOST = ''  # something like smtp.mydomain.com
 EMAIL_PORT = 25
 DEFAULT_FROM_EMAIL = 'noreply@comicframework.org'
 
-ANONYMOUS_USER_ID = -1
+ANONYMOUS_USER_NAME = 'AnonymousUser'
+EVERYONE_GROUP_NAME = 'everyone'
 
 AUTH_PROFILE_MODULE = 'profiles.UserProfile'
 USERENA_USE_HTTPS = False
@@ -317,10 +318,6 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
-
-FIXTURE_DIRS = (
-    os.path.join(os.path.dirname(__file__), "fixtures"),
-)
 
 # buttons for WYSIWYG editor in page admin
 CKEDITOR_CONFIGS = {

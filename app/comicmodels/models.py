@@ -83,7 +83,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
 def get_anonymous_user():
     """Anymous user is the default user for non logged in users. I is also the only member of group
       'everyone' for which permissions can be set """
-    return User.objects.get(username="AnonymousUser")
+    return User.objects.get(username=settings.ANONYMOUS_USER_NAME)
 
 
 def get_project_admin_instance_name(projectname):
@@ -441,7 +441,8 @@ class ComicSite(models.Model):
             are defined """
 
         groups = Group.objects.filter(
-            Q(name="everyone") | Q(name=self.admin_group_name()) | Q(
+            Q(name=settings.EVERYONE_GROUP_NAME) | Q(
+                name=self.admin_group_name()) | Q(
                 name=self.participants_group_name()))
         return groups
 
@@ -604,7 +605,7 @@ class ComicSiteModel(models.Model):
         admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
         participantsgroup = Group.objects.get(
             name=self.comicsite.participants_group_name())
-        everyonegroup = Group.objects.get(name="everyone")
+        everyonegroup = Group.objects.get(name=settings.EVERYONE_GROUP_NAME)
 
         self.persist_if_needed()
         if lvl == self.ALL:

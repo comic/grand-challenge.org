@@ -4,6 +4,7 @@ from random import choice, randint
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
@@ -158,8 +159,6 @@ class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """
 
-    fixtures = ['comic_initial_project', 'user_everyone']
-
     def setUp(self):
         self.setUp_base()
         self.setUp_extra()
@@ -189,15 +188,18 @@ class ComicframeworkTestCase(TestCase):
             main = ComicSite.objects.create(
                 short_name=settings.MAIN_PROJECT_NAME,
                 description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
-                skin="fakeskin.css"
                 )
 
             main.save()
 
+        User = get_user_model()
         try:
             self.root = User.objects.get(username='root')
         except ObjectDoesNotExist:
             # A user who has created a project
+
+
+
             root = User.objects.create_user('root',
                                             'w.s.kerkstra@gmail.com',
                                             'testpassword')
@@ -355,15 +357,9 @@ class ComicframeworkTestCase(TestCase):
                 'institution': 'test',
                 'department': 'test',
                 'country': 'NL',
-                'webproject': 'testwebproject'}
+                'website': 'testwebsite'}
 
-        # ,'comicsite':'testcomicwebproject'
         data.update(overwrite_data)  # overwrite any key in default if in data
-
-        if site is None:
-            sitename = settings.MAIN_PROJECT_NAME
-        else:
-            sitename = site.short_name
 
         signin_page = self.client.post(reverse("profile_signup"), data)
 
@@ -388,16 +384,16 @@ class ComicframeworkTestCase(TestCase):
         data = {'username': username,
                 'email': username + "@test.com"}
 
-        return self._create_user(data, site)
+        return self._create_user(data)
 
-    def _create_user(self, data, site=None):
+    def _create_user(self, data):
         """ Sign up user in a way as close to production as possible. Check a 
         lot of stuff. Data is a dictionary form_field:for_value pairs. Any
         unspecified values are given default values
         
         """
         username = data['username']
-        self._signup_user(data, site)
+        self._signup_user(data)
 
         validation_mail = mail.outbox[-1]
         self.assertTrue("signup" in validation_mail.subject,

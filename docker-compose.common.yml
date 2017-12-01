@@ -13,8 +13,8 @@ services:
       python manage.py collectstatic --noinput
       && envsubst < /tmp/google-analytics-tracking.js.template > /static/js/google-analytics-tracking.js
       && python manage.py migrate
-      && python manage.py loaddata comic_initial_project user_everyone
       && python manage.py check_permissions
+      && python manage.py initcomicdemo
       && gunicorn -b 0.0.0.0 comic.wsgi
       "
     restart: always

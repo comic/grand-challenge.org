@@ -37,5 +37,5 @@ def create_auth_token(sender: User, instance: User = None,
                       created: bool = False, **kwargs):
     # Ignore the anonymous user which is created by userena on initial
     # migration
-    if created and instance.pk != settings.ANONYMOUS_USER_ID:
+    if created and instance.username != settings.ANONYMOUS_USER_NAME:
         Token.objects.create(user=instance)
