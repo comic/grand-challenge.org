@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
@@ -31,6 +30,7 @@ PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
 def get_or_create_user(username, password):
+    User = get_user_model()
     query_result = User.objects.filter(username=username)
     if query_result.exists():
         return query_result[0]
@@ -431,6 +431,7 @@ class ComicframeworkTestCase(TestCase):
                               "validation link! Expected 200, got {} instead".format(
                 resp.status_code))
 
+        User = get_user_model()
         query_result = User.objects.filter(username=username)
         return query_result[0]
 
@@ -1290,6 +1291,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
         request_mail = mail.outbox[-1]
 
+        User = get_user_model()
         admins = User.objects.filter(
             groups__name=self.testproject.admin_group_name())
 

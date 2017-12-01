@@ -2,7 +2,8 @@ import logging
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Context
@@ -162,6 +163,7 @@ def send_file_uploaded_notification_email(sender, **kwargs):
     comicsite = kwargs['comicsite']
     site = kwargs['site']
     title = "New upload for %s: '%s' " % (comicsite.short_name, kwargs["filename"])
+    User = get_user_model()
     admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 
     if not admins:

@@ -1,5 +1,5 @@
 import factory
-from django.contrib.auth.models import User
+from django.conf import settings
 
 from comicmodels.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
@@ -14,7 +14,7 @@ class ChallengeFactory(factory.DjangoModelFactory):
 
 class UserFactory(factory.DjangoModelFactory):
     class Meta:
-        model = User
+        model = settings.AUTH_USER_MODEL
 
     username = factory.Sequence(lambda n: 'test_user_%s' % n)
     email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)

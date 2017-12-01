@@ -1,7 +1,7 @@
 from importlib import reload
 
 from django.conf import settings
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import clear_url_caches
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
@@ -64,7 +64,8 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_everyone_user_group(sender: User, instance: User = None,
+def create_everyone_user_group(sender: settings.AUTH_USER_MODEL,
+                               instance: settings.AUTH_USER_MODEL = None,
                                created: bool = False, **kwargs):
     # Create the everyone usergroup when the anonymoususer is created
     if created and instance.username == settings.ANONYMOUS_USER_NAME:

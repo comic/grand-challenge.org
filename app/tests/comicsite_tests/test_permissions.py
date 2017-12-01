@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 import pytest
 from django.conf import settings
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
@@ -27,7 +27,8 @@ class ParticipantOrAdminOnlyView(UserIsChallengeParticipantOrAdminMixin,
     pass
 
 
-def assert_status(code: int, user: User, view: View, challenge: ComicSite,
+def assert_status(code: int, user: settings.AUTH_USER_MODEL, view: View,
+                  challenge: ComicSite,
                   rf: RequestFactory):
     request = rf.get('/rand')
     request.projectname = challenge.short_name

@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
@@ -33,7 +32,8 @@ def execute_job(sender: Job, instance: Job = None, created: bool = False,
 
 # TODO: generate an auth token for all users
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender: User, instance: User = None,
+def create_auth_token(sender: settings.AUTH_USER_MODEL,
+                      instance: settings.AUTH_USER_MODEL = None,
                       created: bool = False, **kwargs):
     # Ignore the anonymous user which is created by userena on initial
     # migration

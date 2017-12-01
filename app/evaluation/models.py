@@ -2,7 +2,7 @@ import json
 import tarfile
 import uuid
 
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.db import models
 from social_django.fields import JSONField
 
@@ -26,7 +26,7 @@ class Result(UUIDModel):
     """
     Stores individual results for a challenges
     """
-    user = models.ForeignKey(User,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              null=True,
                              on_delete=models.SET_NULL)
 
@@ -69,7 +69,7 @@ class Method(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
-    user = models.ForeignKey(User,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              null=True,
                              on_delete=models.SET_NULL)
 
@@ -119,7 +119,7 @@ class Submission(UUIDModel):
     """
     Stores files for evaluation
     """
-    user = models.ForeignKey(User,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              null=True,
                              on_delete=models.SET_NULL)
 

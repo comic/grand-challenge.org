@@ -10,7 +10,8 @@ import traceback
 
 from django import template
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
@@ -2027,6 +2028,7 @@ class ProjectStatisticsNode(template.Node):
 
         # Get the users belonging to this project
         perm = Group.objects.get(name='{}_participants'.format(project_name))
+        User = get_user_model()
         if all_users:
             users = User.objects.all().distinct()
         else:

@@ -13,7 +13,8 @@ from django.contrib.admin.options import InlineModelAdmin
 # basically this is the only one import you'll need
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
@@ -40,6 +41,7 @@ def get_comicsite_shortnames_that_user_is_admin_for(user):
     :param user: The user
     :return: List of short comicsite names
     """
+    User = get_user_model()
     user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
     # Strip _admins from string
     short_names = [x.name[:-7] for x in user_admin_groups]
@@ -646,6 +648,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             extra_context = {}
 
         comicsite = get_object_or_404(ComicSite, id=object_pk)
+        User = get_user_model()
         admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 
         if request.method == 'POST' and 'submit_add_user' in request.POST:
@@ -744,6 +747,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         """
 
         comicsite = get_object_or_404(ComicSite, id=object_pk)
+        User = get_user_model()
         admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
 
         context = self.get_base_context(request, comicsite)
@@ -763,6 +767,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
 class AdminManageForm(forms.Form):
     admins = forms.CharField(required=False, widget=forms.SelectMultiple, help_text="All admins for this project")
+    User = get_user_model()
     user = forms.ModelChoiceField(queryset=User.objects.all(), empty_label="<user to add>", required=False)
 
 

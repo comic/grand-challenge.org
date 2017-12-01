@@ -4,7 +4,8 @@ import logging
 import os
 
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.storage import DefaultStorage
 from django.core.validators import validate_slug, MinLengthValidator
@@ -83,6 +84,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
 def get_anonymous_user():
     """Anymous user is the default user for non logged in users. I is also the only member of group
       'everyone' for which permissions can be set """
+    User = get_user_model()
     return User.objects.get(username=settings.ANONYMOUS_USER_NAME)
 
 
@@ -286,7 +288,7 @@ class ComicSite(models.Model):
 
     public_folder = "public_html"
 
-    creator = models.ForeignKey(User,
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL,
                                 null=True,
                                 on_delete=models.SET_NULL)
 
@@ -473,6 +475,7 @@ class ComicSite(models.Model):
     def get_admins(self):
         """ Return array of all users that are in this comicsites admin group, including superusers
         """
+        User = get_user_model()
         admins = User.objects.filter(
             Q(groups__name=self.admin_group_name()) | Q(
                 is_superuser=True)).distinct()
@@ -745,7 +748,8 @@ class ErrorPage(Page):
 class UploadModel(ComicSiteModel):
     file = models.FileField(max_length=255,
                             upload_to=giveFileUploadDestinationPath)
-    user = models.ForeignKey(User, help_text="which user uploaded this?")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             help_text="which user uploaded this?")
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -820,7 +824,7 @@ class RegistrationRequest(models.Model):
     """
     objects = RegistrationRequestManager()
 
-    user = models.ForeignKey(User,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              help_text="which user requested to participate?")
     project = models.ForeignKey(ComicSite,
                                 help_text="To which project does the user want to register?")

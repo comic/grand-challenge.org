@@ -462,3 +462,6 @@ if MEDIA_ROOT[-1] != "/":
 if DROPBOX_ROOT[-1] != "/":
     msg = "DROPBOX_ROOT setting should end in a slash. Found '" + DROPBOX_ROOT + "'. Please add a slash"
     raise ImproperlyConfigured(msg)
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
