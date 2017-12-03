@@ -1,4 +1,3 @@
-import io
 import json
 import tarfile
 from typing import Tuple
@@ -51,15 +50,13 @@ class ContainerImageValidator(object):
         value.open(mode='rb')
         try:
             with tarfile.open(fileobj=value, mode='r') as t:
-                names = t.getnames()
                 member = dict(zip(t.getnames(), t.getmembers()))[
                     'manifest.json']
                 manifest = t.extractfile(member).read()
         except KeyError:
             raise ValidationError('manifest.json not found at the root of the '
                                   'container image file. Was this created '
-                                  'with docker save? '
-                                  f'{names}')
+                                  'with docker save?')
 
         manifest = json.loads(manifest)
         if self.single_image and len(manifest) != 1:

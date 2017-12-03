@@ -5,7 +5,7 @@
     <h1>Evaluation Jobs</h1>
 
     {% for job in object_list %}
-        <li>{{ job }}</li>
+        <li><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></li>
     {% empty %}
         <li>No jobs yet</li>
     {% endfor %}

@@ -23,48 +23,6 @@ class UUIDModel(models.Model):
         abstract = True
 
 
-class Result(UUIDModel):
-    """
-    Stores individual results for a challenges
-    """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             null=True,
-                             on_delete=models.SET_NULL)
-
-    challenge = models.ForeignKey('comicmodels.ComicSite',
-                                  on_delete=models.CASCADE)
-
-    method = models.ForeignKey('Method',
-                               null=True,
-                               on_delete=models.SET_NULL)
-
-    metrics = JSONField(default=dict)
-
-    public = models.BooleanField(default=True)
-
-    def get_absolute_url(self):
-        return reverse('evaluation:result-detail',
-                       kwargs={
-                           'pk': self.pk,
-                           'challenge_short_name': self.challenge.short_name
-                       })
-
-
-def result_screenshot_path(instance, filename):
-    return f'evaluation/{instance.challenge.pk}/screenshots/' \
-           f'{instance.result.pk}/{filename}'
-
-
-class ResultScreenshot(UUIDModel):
-    """
-    Stores a screenshot that is generated during an evaluation
-    """
-    result = models.ForeignKey('Result',
-                               on_delete=models.CASCADE)
-
-    image = models.ImageField(upload_to=result_screenshot_path)
-
-
 def method_image_path(instance, filename):
     return f'evaluation/{instance.challenge.pk}/methods/' \
            f'{instance.pk}/{filename}'
@@ -74,12 +32,12 @@ class Method(UUIDModel):
     """
     Stores the methods for performing an evaluation
     """
-    challenge = models.ForeignKey('comicmodels.ComicSite',
-                                  on_delete=models.CASCADE)
-
     creator = models.ForeignKey(settings.AUTH_USER_MODEL,
                                 null=True,
                                 on_delete=models.SET_NULL)
+
+    challenge = models.ForeignKey('comicmodels.ComicSite',
+                                  on_delete=models.CASCADE)
 
     image = models.FileField(upload_to=method_image_path,
                              validators=[
@@ -126,10 +84,10 @@ class Method(UUIDModel):
         unique_together = (("challenge", "image_sha256"),)
 
 
-def challenge_submission_path(instance, filename):
+def submission_file_path(instance, filename):
     return f'evaluation/{instance.challenge.pk}/submissions/' \
-           f'{instance.user.pk}/' \
-           f'{instance.created.strftime("%Y%m%d%H%M%S")}/' \
+           f'{instance.creator.pk}/' \
+           f'{instance.pk}/' \
            f'{filename}'
 
 
@@ -137,9 +95,9 @@ class Submission(UUIDModel):
     """
     Stores files for evaluation
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             null=True,
-                             on_delete=models.SET_NULL)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                null=True,
+                                on_delete=models.SET_NULL)
 
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
@@ -147,7 +105,7 @@ class Submission(UUIDModel):
     # Limitation for now: only accept zip files as these are expanded in
     # evaluation.tasks.Evaluation. We could extend this first to csv file
     # submission with some validation
-    file = models.FileField(upload_to=challenge_submission_path,
+    file = models.FileField(upload_to=submission_file_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
 
@@ -184,12 +142,10 @@ class Job(UUIDModel):
     )
 
     submission = models.ForeignKey('Submission',
-                                   null=True,
-                                   on_delete=models.SET_NULL)
+                                   on_delete=models.CASCADE)
 
     method = models.ForeignKey('Method',
-                               null=True,
-                               on_delete=models.SET_NULL)
+                               on_delete=models.CASCADE)
 
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES,
                                               default=PENDING)
@@ -208,8 +164,41 @@ class Job(UUIDModel):
         return reverse('evaluation:job-detail',
                        kwargs={
                            'pk': self.pk,
-                           'challenge_short_name': self.challenge.short_name
+                           'challenge_short_name': self.submission.challenge.short_name
                        })
+
+
+class Result(UUIDModel):
+    """
+    Stores individual results for a challenges
+    """
+    job = models.OneToOneField('Job', on_delete=models.CASCADE)
+
+    metrics = JSONField(default=dict)
+
+    public = models.BooleanField(default=True)
+
+    def get_absolute_url(self):
+        return reverse('evaluation:result-detail',
+                       kwargs={
+                           'pk': self.pk,
+                           'challenge_short_name': self.job.submission.challenge.short_name
+                       })
+
+
+def result_screenshot_path(instance, filename):
+    return f'evaluation/{instance.challenge.pk}/screenshots/' \
+           f'{instance.result.pk}/{instance.pk}/{filename}'
+
+
+class ResultScreenshot(UUIDModel):
+    """
+    Stores a screenshot that is generated during an evaluation
+    """
+    result = models.ForeignKey('Result',
+                               on_delete=models.CASCADE)
+
+    image = models.ImageField(upload_to=result_screenshot_path)
 
 
 class StagedFile(models.Model):

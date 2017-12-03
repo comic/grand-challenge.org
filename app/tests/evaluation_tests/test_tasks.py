@@ -61,7 +61,7 @@ def test_submission_evaluation():
 
     user = UserFactory()
 
-    submission = SubmissionFactory(file__from_path=testfile, user=user)
+    submission = SubmissionFactory(file__from_path=testfile, creator=user)
 
     eval_container = create_test_evaluation_container(client)
     method = MethodFactory(image__from_path=eval_container)

@@ -37,21 +37,16 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
                 eval_image=job.method.image,
                 eval_image_sha256=job.method.image_sha256
         ) as e:
-            result = e.evaluate()
+            metrics = e.evaluate()
     except Exception as exc:
         job.update_status(status=Job.FAILURE, output=str(exc))
         raise exc
 
-    Result.objects.create(
-        user=job.submission.user,
-        challenge=job.submission.challenge,
-        method=job.method,
-        metrics=result
-    )
+    Result.objects.create(job=job, metrics=metrics)
 
     job.update_status(status=Job.SUCCESS)
 
-    return result
+    return metrics
 
 
 @shared_task

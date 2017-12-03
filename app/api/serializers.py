@@ -16,7 +16,8 @@ class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="api:submission-detail")
 
-    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    creator = serializers.SlugRelatedField(read_only=True,
+                                           slug_field='username')
     challenge = serializers.SlugRelatedField(read_only=True,
                                              slug_field='short_name')
 

@@ -21,8 +21,8 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.challenge = ComicSite.objects.get(pk=
-                                                        self.request.project_pk)
+        form.instance.challenge = ComicSite.objects.get(
+            pk=self.request.project_pk)
         return super(MethodCreate, self).form_valid(form)
 
 
@@ -36,7 +36,13 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
 
 class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     model = Submission
-    fields = '__all__'
+    fields = ['file']
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.challenge = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(SubmissionCreate,self).form_valid(form)
 
 
 class SubmissionList(UserIsChallengeAdminMixin, ListView):
