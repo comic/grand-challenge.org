@@ -4,6 +4,27 @@
 
     <h1>Job {{ object.id }}</h1>
 
-    {{ object.status }}
+    <div class="alert
+    {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+        alert-danger
+    {% elif object.status == object.RETRY %}
+        alert-warning
+    {% elif object.status == object.SUCCESS %}
+        alert-success
+    {% else %}
+        alert-info
+    {% endif %}">
+        {{ object.get_status_display }}
+    </div>
+
+    <p><strong>Submission:</strong> <a
+            href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>
+    </p>
+    <p><strong>Method:</strong> <a
+            href="{{ object.method.get_absolute_url }}">{{ object.method.pk }}</a>
+    </p>
+    <p><strong>Result:</strong> <a
+            href="{{ object.result.get_absolute_url }}">{{ object.result.pk }}</a>
+    </p>
 
 {% endblock %}

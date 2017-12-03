@@ -4,11 +4,50 @@
 
     <h1>Method {{ object.pk }}</h1>
 
-    <p><strong>Challenge:</strong> {{ object.challenge }}</p>
-    <p><strong>Creator:</strong> {{ object.creator }}</p>
+    <p><strong>Challenge:</strong> <a
+            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
+    </p>
+    <p><strong>Creator:</strong> <a
+            href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
+    </p>
     <p><strong>Created at:</strong> {{ object.created }}</p>
 
     <p><strong>Image:</strong> {{ object.image }}</p>
     <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
+
+    <h2>Evaluations for this method</h2>
+    <table>
+        <tr>
+            <th>Job</th>
+            <th>Submission</th>
+            <th>Status</th>
+            <th>Result</th>
+        </tr>
+        {% for job in object.job_set.all %}
+            <tr>
+                <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
+                <td>
+                    <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
+                </td>
+                <td>
+                    <div class="alert
+                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                        alert-danger
+                    {% elif job.status == job.RETRY %}
+                        alert-warning
+                    {% elif job.status == job.SUCCESS %}
+                        alert-success
+                    {% else %}
+                        alert-info
+                    {% endif %}">
+                        {{ job.get_status_display }}
+                    </div>
+                </td>
+                <td>
+                    <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
 
 {% endblock %}
