@@ -31,7 +31,7 @@ class SubmissionViewSet(ModelViewSet):
             raise ValidationError(
                 f"Challenge {short_name} does not exist.")
 
-        serializer.save(user=self.request.user,
+        serializer.save(creator=self.request.user,
                         challenge=challenge,
                         file=self.request.data.get('file'))
 
