@@ -48,37 +48,38 @@ services:
     ports:
       - "8080:15672"
 
-#  celery_worker:
-#    extends:
-#      file: docker-compose.common.yml
-#      service: web
-#    # TODO: check the server response for 200 OK
-#    command: >-
-#      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
-#      celery -A comic worker -l info
-#      "
-#    links:
-#      - db:mysql
-#      - rabbitmq
-#      - web
-#    volumes:
-#      - ./app:/app/
-#      - /var/run/docker.sock:/var/run/docker.sock
-#
-#  celery_beat:
-#    extends:
-#      file: docker-compose.common.yml
-#      service: web
-#    command: >-
-#      dockerize -wait tcp://web:8000 -timeout 120s bash -c "
-#      celery -A comic beat -l info
-#      "
-#    links:
-#      - db:mysql
-#      - rabbitmq
-#      - web
-#    volumes:
-#      - ./app:/app/
+  celery_worker:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    # TODO: check the server response for 200 OK
+    command: >-
+      dockerize -wait tcp://web:8000 -wait-retry-interval 30s -timeout 360s bash -c "
+      celery -A comic worker -l info
+      "
+    links:
+      - db:mysql
+      - rabbitmq
+      - web
+    volumes_from:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  celery_beat:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    command: >-
+      dockerize -wait tcp://web:8000 -wait-retry-interval 30s -timeout 360s bash -c "
+      celery -A comic beat -l info
+      "
+    links:
+      - db:mysql
+      - rabbitmq
+      - web
+    volumes_from:
+      - web
 
   flower:
     image: crgwbr/docker-celery-flower

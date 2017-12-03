@@ -419,6 +419,8 @@ REST_FRAMEWORK = {
 
 CELERY_BROKER_URL = 'amqp://rabbitmq'
 CELERY_RESULT_BACKEND = 'amqp://rabbitmq'
+CELERY_TASK_SOFT_TIME_LIMIT = 3600
+CELERY_TASK_TIME_LIMIT = 3660
 
 DOCKER_BASE_URL = 'unix://var/run/docker.sock'
 
