@@ -55,3 +55,8 @@ body {
 .projectLinkFilter {
     font-weight: bold;
 }
+
+#copyrightNotice {
+    padding-top: 50px;
+    padding-bottom: 50px;
+}

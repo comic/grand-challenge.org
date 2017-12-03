@@ -46,6 +46,7 @@
 
 
 {% block topmenu %}
+
     {% for page in pages %}
         {% if not page.hidden %}
             {% if not forloop.first %}
@@ -65,6 +66,15 @@
         {% endif %}
     {% endfor %}
 
+    {% if site.use_evaluation %}
+        <li role="separator" class="divider"></li>
+        <li><a href="{% url 'evaluation:submission-create' site.short_name %}">Submit</a>
+        </li>
+        <li role="separator" class="divider"></li>
+        <li><a href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
+        </li>
+    {% endif %}
+
 {% endblock %}
 
 
@@ -82,10 +92,15 @@
     {% get_obj_perms user for site as "site_perms" %}
     {% if "change_comicsite" in site_perms or request.user.is_superuser %}
         {% if site.hide_footer %}
-            <li class="menuBullet"><img
-                    src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+            <li role="separator" class="divider"></li>
         {% endif %}
         <li><a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
+        {% if site.use_evaluation %}
+            <li role="separator" class="divider"></li>
+            <li><a href="{% url 'evaluation:home' site.short_name %}">Evaluation</a>
+            </li>
+        {% endif %}
+
 
     {% endif %}
 

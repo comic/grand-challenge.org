@@ -44,6 +44,7 @@ class Command(BaseCommand):
                 short_name='demo',
                 description='demo project',
                 creator=demoadmin,
+                use_evaluation=True,
                 hidden=False
             )
 

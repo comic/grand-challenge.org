@@ -16,17 +16,8 @@
                 src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
 
         {% block jquery_js %}
-            <script src="https://code.jquery.com/jquery-1.12.4.min.js"
-                    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-                    crossorigin="anonymous"></script>
-            <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
-                    integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw="
-                    crossorigin="anonymous"></script>
             <script type="text/javascript"
-                    src="{% get_static_prefix %}js/jquery.cookie.js"></script>
-            <!--Adds sorting and other features to html tables -->
-            <script type="text/javascript" language="javascript"
-                    src="{% get_static_prefix %}js/jquery.dataTables.js"></script>
+                    src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
         {% endblock %}
 
         {% block bootstrap %}
@@ -51,22 +42,27 @@
                   content="width=device-width, initial-scale=1">
         {% endblock %}
 
-        {#  Custom CSS, must be included AFTER bootstrap  #}
-        <link href="{% get_static_prefix %}css/core.css" type="text/css"
-              rel="stylesheet">
+        {% block datatables %}
+            {% comment %}
+                Requires jquery from above, and uses bootstrap themes
+            {% endcomment %}
+            <link rel="stylesheet" type="text/css"
+                  href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.min.css"/>
 
-        {% block jquery_css %}
-            <!-- link type="text/css" href="{% get_static_prefix %}css/jqueryUI/smoothness/jquery-ui-1.8.21.custom.css"
-              rel="Stylesheet"/ -->
-            <!-- link href="{% get_static_prefix %}css/smoothness/jquery-ui-1.10.2.custom.css" rel="stylesheet" -->
+            <script type="text/javascript"
+                    src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+            <script type="text/javascript"
+                    src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
         {% endblock %}
-
-        <!-- link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' -->
 
         {% block fontawesome %}
             <link rel="stylesheet"
                   href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
         {% endblock %}
+
+        {#  Custom CSS, must be included AFTER bootstrap  #}
+        <link href="{% get_static_prefix %}css/core.css" type="text/css"
+              rel="stylesheet">
 
         <link href="{% get_static_prefix %}img/grand-challenge.ico"
               rel="shortcut icon">
@@ -91,7 +87,7 @@
                     }, 5000); // <-- time in milliseconds, 1000 =  1 sec
 
                     $('table.sortable').dataTable({
-                        "bJQueryUI": true,
+                        "bJQueryUI": false,
                         "sPaginationType": "full_numbers",
                         "bPaginate": false,
                         "bLengthChange": false,
@@ -181,59 +177,61 @@
 
 <div id="page">
 
-{% block jumbotron %}
-    <div id="header" class="container">
-        <a style="display:block" href={% block headerLink %}"/"{% endblock %}>
-        <div id="headerTitle" class="jumbotron text-uppercase">
-                <h1>
-                    {% block headerTitle %}
-                        <div class="noimage">
-                            {{ main_project_name }}
-                        </div>
-                    {% endblock %}
-                </h1>
+    {% block jumbotron %}
+        <div id="header" class="container">
+            <a style="display:block"
+               href={% block headerLink %}"/"{% endblock %}>
+                <div id="headerTitle" class="jumbotron text-uppercase">
+                    <h1>
+                        {% block headerTitle %}
+                            <div class="noimage">
+                                {{ main_project_name }}
+                            </div>
+                        {% endblock %}
+                    </h1>
+                </div>
+            </a>
         </div>
-        </a>
-    </div>
-{% endblock %}
+    {% endblock %}
 
-{% block challengeNav %}
+    {% block challengeNav %}
 
-    <div class="container">
-        <nav class="navbar navbar-default">
-            <div id="navMenuContainer" class="container-fluid text-capitalize">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed"
-                            data-toggle="collapse"
-                            data-target="#bs-example-navbar-collapse-2"
-                            aria-expanded="false">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
+        <div class="container">
+            <nav class="navbar navbar-default">
+                <div id="navMenuContainer"
+                     class="container-fluid text-capitalize">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed"
+                                data-toggle="collapse"
+                                data-target="#bs-example-navbar-collapse-2"
+                                aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
 
-                </div>
-
-                <div class="collapse navbar-collapse"
-                     id="bs-example-navbar-collapse-2">
-                    <div id="navMenu">
-                        <ul class="nav navbar-nav">
-                            {% block topmenu %} {% endblock %}
-                        </ul>
                     </div>
-                    <div id="additionalNavigation">
-                        <ul class="nav navbar-nav navbar-right">
-                            {% block sitemenuloginbutton %} {% endblock %}
-                            {% block adminbutton %} {% endblock %}
-                        </ul>
+
+                    <div class="collapse navbar-collapse"
+                         id="bs-example-navbar-collapse-2">
+                        <div id="navMenu">
+                            <ul class="nav navbar-nav">
+                                {% block topmenu %} {% endblock %}
+                            </ul>
+                        </div>
+                        <div id="additionalNavigation">
+                            <ul class="nav navbar-nav navbar-right">
+                                {% block sitemenuloginbutton %} {% endblock %}
+                                {% block adminbutton %} {% endblock %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </nav>
-    </div>
+            </nav>
+        </div>
 
-{% endblock %}
+    {% endblock %}
 
 
     <div id="container" class="container">

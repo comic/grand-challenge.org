@@ -12,13 +12,16 @@
     </p>
 
     <h2>Evaluations for this submission</h2>
-    <table>
+    <table class="table" id="evaluationTable">
+        <thead>
         <tr>
             <th>Job</th>
             <th>Method</th>
             <th>Status</th>
             <th>Result</th>
         </tr>
+        </thead>
+        <tbody>
         {% for job in object.job_set.all %}
             <tr>
                 <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
@@ -43,7 +46,16 @@
                     <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
                 </td>
             </tr>
+        {% empty %}
+            No jobs yet.
         {% endfor %}
+        </tbody>
     </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#evaluationTable').DataTable();
+        });
+    </script>
 
 {% endblock %}

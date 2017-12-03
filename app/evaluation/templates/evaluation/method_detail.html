@@ -16,13 +16,16 @@
     <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
 
     <h2>Evaluations for this method</h2>
-    <table>
+    <table class="table" id="evaluationTable">
+        <thead>
         <tr>
             <th>Job</th>
             <th>Submission</th>
             <th>Status</th>
             <th>Result</th>
         </tr>
+        </thead>
+        <tbody>
         {% for job in object.job_set.all %}
             <tr>
                 <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
@@ -47,7 +50,16 @@
                     <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
                 </td>
             </tr>
+        {% empty %}
+            No evaluations yet.
         {% endfor %}
+        </tbody>
     </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#evaluationTable').DataTable();
+        });
+    </script>
 
 {% endblock %}
