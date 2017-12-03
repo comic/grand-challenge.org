@@ -186,8 +186,8 @@ class ComicframeworkTestCase(TestCase):
 
         User = get_user_model()
         try:
-            self.root = User.objects.filter(username='root').exists()
-        except User.DoesNotExist:
+            self.root = User.objects.filter(username='root')[0]
+        except IndexError:
             # A user who has created a project
 
             root = UserenaSignup.objects.create_user('root',
