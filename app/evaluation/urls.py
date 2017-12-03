@@ -6,6 +6,7 @@ from evaluation.views import uploader_widget_test, MethodCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
     SubmissionDetail, JobDetail, ResultDetail, EvaluationAdmin
 
+
 urlpatterns = [
     url(r'^$', EvaluationAdmin.as_view(), name='home'),
 

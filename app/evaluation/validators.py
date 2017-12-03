@@ -1,3 +1,4 @@
+import io
 import json
 import tarfile
 from typing import Tuple
@@ -11,7 +12,7 @@ from django.utils.deconstruct import deconstructible
 class MimeTypeValidator(object):
     allowed_types = ()
 
-    def __init__(self, *, allowed_types: Tuple[str]):
+    def __init__(self, *, allowed_types: Tuple[str, ...]):
         self.allowed_types = tuple(x.lower() for x in allowed_types)
         super(MimeTypeValidator, self).__init__()
 
@@ -45,15 +46,20 @@ class ContainerImageValidator(object):
 
     def __call__(self, value):
         # value should be a tar archive with manifest.json at the root
+
+        # Reopen the file, but do not close as django opens it again later
+        value.open(mode='rb')
         try:
-            with tarfile.open(value, 'r') as t:
+            with tarfile.open(fileobj=value, mode='r') as t:
+                names = t.getnames()
                 member = dict(zip(t.getnames(), t.getmembers()))[
                     'manifest.json']
                 manifest = t.extractfile(member).read()
-        except:
+        except KeyError:
             raise ValidationError('manifest.json not found at the root of the '
-                                  'container image file. Was this created with'
-                                  'docker save?')
+                                  'container image file. Was this created '
+                                  'with docker save? '
+                                  f'{names}')
 
         manifest = json.loads(manifest)
         if self.single_image and len(manifest) != 1:

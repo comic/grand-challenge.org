@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from social_django.fields import JSONField
 
+from comicsite.core.urlresolvers import reverse
 from evaluation.validators import MimeTypeValidator, ContainerImageValidator
 
 
@@ -41,6 +42,13 @@ class Result(UUIDModel):
 
     public = models.BooleanField(default=True)
 
+    def get_absolute_url(self):
+        return reverse('evaluation:result-detail',
+                       kwargs={
+                           'pk': self.pk,
+                           'challenge_short_name': self.challenge.short_name
+                       })
+
 
 def result_screenshot_path(instance, filename):
     return f'evaluation/{instance.challenge.pk}/screenshots/' \
@@ -69,14 +77,15 @@ class Method(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             null=True,
-                             on_delete=models.SET_NULL)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                null=True,
+                                on_delete=models.SET_NULL)
 
     image = models.FileField(upload_to=method_image_path,
                              validators=[
                                  MimeTypeValidator(allowed_types=(
-                                     'application/x-tarbinary',)),
+                                     'application/x-tarbinary',
+                                     'application/x-tar',)),
                                  ContainerImageValidator(single_image=True)],
                              help_text='Tar archive of the container '
                                        'image produced from the command '
@@ -87,7 +96,7 @@ class Method(UUIDModel):
 
     # TODO: Add a validator to make sure the form is sha256:{64}
     image_sha256 = models.CharField(editable=False,
-                                max_length=71)
+                                    max_length=71)
 
     def save(self, *args, **kwargs):
         self.image_sha256 = self._image_sha256
@@ -95,6 +104,8 @@ class Method(UUIDModel):
 
     @property
     def _image_sha256(self) -> str:
+        # Open for reading but do not close as django opens it again later
+        self.image.open(mode='rb')
         with tarfile.open(fileobj=self.image, mode='r') as t:
             member = dict(zip(t.getnames(), t.getmembers()))[
                 'manifest.json']
@@ -104,8 +115,15 @@ class Method(UUIDModel):
         # TODO: Check if the encoding method is included in the manifest
         return f"sha256:{manifest[0]['Config'][:64]}"
 
+    def get_absolute_url(self):
+        return reverse('evaluation:method-detail',
+                       kwargs={
+                           'pk': self.pk,
+                           'challenge_short_name': self.challenge.short_name
+                       })
+
     class Meta:
-        unique_together = (("challenge", "created"),)
+        unique_together = (("challenge", "image_sha256"),)
 
 
 def challenge_submission_path(instance, filename):
@@ -132,6 +150,13 @@ class Submission(UUIDModel):
     file = models.FileField(upload_to=challenge_submission_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
+
+    def get_absolute_url(self):
+        return reverse('evaluation:submission-detail',
+                       kwargs={
+                           'pk': self.pk,
+                           'challenge_short_name': self.challenge.short_name
+                       })
 
 
 class Job(UUIDModel):
@@ -173,11 +198,18 @@ class Job(UUIDModel):
 
     output = models.TextField()
 
-    def update_status(self, *, status: STATUS_CHOICES, output: str=None):
+    def update_status(self, *, status: STATUS_CHOICES, output: str = None):
         self.status = status
         if output:
-            self.output=output
+            self.output = output
         self.save()
+
+    def get_absolute_url(self):
+        return reverse('evaluation:job-detail',
+                       kwargs={
+                           'pk': self.pk,
+                           'challenge_short_name': self.challenge.short_name
+                       })
 
 
 class StagedFile(models.Model):

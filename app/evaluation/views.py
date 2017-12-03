@@ -3,6 +3,7 @@ from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
+from comicmodels.models import ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
     UserIsChallengeParticipantOrAdminMixin
 from evaluation.forms import UploadForm
@@ -16,7 +17,13 @@ class EvaluationAdmin(UserIsChallengeAdminMixin, TemplateView):
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
-    fields = '__all__'
+    fields = ['image']
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.challenge = ComicSite.objects.get(pk=
+                                                        self.request.project_pk)
+        return super(MethodCreate, self).form_valid(form)
 
 
 class MethodList(UserIsChallengeAdminMixin, ListView):

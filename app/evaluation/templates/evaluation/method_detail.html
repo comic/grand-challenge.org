@@ -2,6 +2,13 @@
 
 {% block pagecontent %}
 
-    <h1>Method {{ object.id }}</h1>
+    <h1>Method {{ object.pk }}</h1>
+
+    <p><strong>Challenge:</strong> {{ object.challenge }}</p>
+    <p><strong>Creator:</strong> {{ object.creator }}</p>
+    <p><strong>Created at:</strong> {{ object.created }}</p>
+
+    <p><strong>Image:</strong> {{ object.image }}</p>
+    <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
 
 {% endblock %}
