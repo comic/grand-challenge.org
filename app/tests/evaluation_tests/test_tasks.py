@@ -41,10 +41,10 @@ def create_test_evaluation_container(client) -> str:
 
 @pytest.mark.django_db
 @factory.django.mute_signals(signals.post_save)
-def test_submission_evaluation():
+def test_submission_evaluation(client):
     # Upload a submission and create a job
 
-    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+    dockerclient = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
     with tempfile.NamedTemporaryFile(mode='r', suffix='.zip',
                                      delete=False) as f:
@@ -63,13 +63,17 @@ def test_submission_evaluation():
 
     submission = SubmissionFactory(file__from_path=testfile, creator=user)
 
-    eval_container = create_test_evaluation_container(client)
+    eval_container = create_test_evaluation_container(dockerclient)
     method = MethodFactory(image__from_path=eval_container)
+
+    # We should not be able to download methods
+    response = client.get(method.image.url)
+    assert response.status_code == 403
 
     job = JobFactory(submission=submission, method=method)
 
-    num_containers_before = len(client.containers.list())
-    num_volumes_before = len(client.volumes.list())
+    num_containers_before = len(dockerclient.containers.list())
+    num_volumes_before = len(dockerclient.volumes.list())
 
     res = evaluate_submission(job=job)
 
@@ -77,5 +81,5 @@ def test_submission_evaluation():
     assert res["acc"] == 0.5
 
     # The evaluation method should clean up after itself
-    assert len(client.volumes.list()) == num_volumes_before
-    assert len(client.containers.list()) == num_containers_before
+    assert len(dockerclient.volumes.list()) == num_volumes_before
+    assert len(dockerclient.containers.list()) == num_containers_before

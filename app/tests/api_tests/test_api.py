@@ -98,6 +98,11 @@ def test_upload_file(client, test_file, expected_response):
     else:
         assert len(submissions) == 0
 
+    # We should not be able to download submissions
+    for submission in Submission.objects.all():
+        response = client.get(submission.file.url)
+        assert response.status_code == 403
+
     # Cleanup
     for submission in submissions:
         filepath = submission.file.name

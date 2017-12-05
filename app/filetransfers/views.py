@@ -2,6 +2,7 @@ import os
 import posixpath
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
@@ -120,6 +121,14 @@ def _required_permission(user, path, project_name):
                                    "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
                                    " to your .conf file.")
 
+    if project_name.lower() == 'mugshots':
+        # Anyone can see mugshots
+        return ComicSiteModel.ALL
+
+    if project_name.lower() == 'evaluation':
+        # No one can download evaluation files
+        return 'nobody'
+
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
             return ComicSiteModel.ALL
@@ -173,14 +182,12 @@ def serve(request, project_name, path, document_root=None, override_permission="
     fullpath = os.path.join(document_root, project_name, newpath)
 
     storage = DefaultStorage()
+
     if not storage.exists(fullpath):
 
         # On case sensitive filesystems you can have problems if the project 
         # nameurl in the url is not exactly the same case as the filepath. 
         # find the correct case for projectname then.
-        # Also case sensitive file systems are weird.
-        # who would ever want to have a folder 'data' and 'Data' contain 
-        # different files?            
 
         projectlist = ComicSite.objects.filter(short_name=project_name)
         if not projectlist:

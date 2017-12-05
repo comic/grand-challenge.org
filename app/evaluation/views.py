@@ -49,7 +49,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         return super(SubmissionCreate,self).form_valid(form)
 
 
-class SubmissionList(UserIsChallengeAdminMixin, ListView):
+class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     # TODO - if participant: list only their submissions
     model = Submission
 

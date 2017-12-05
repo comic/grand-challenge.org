@@ -12,7 +12,7 @@
     </p>
     <p><strong>Created at:</strong> {{ object.created }}</p>
 
-    <p><strong>Image:</strong> {{ object.image }}</p>
+    <p><strong>Image:</strong> <a href="{{ object.image.url }}">{{ object.image.name }}</a></p>
     <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
 
     <h2>Evaluations for this method</h2>

@@ -7,13 +7,7 @@ PREPARE_UPLOAD_BACKEND = getattr(settings,
                                  'PREPARE_UPLOAD_BACKEND',
                                  'filetransfers.backends.default.prepare_upload')
 
-# xsendfile is only used on production server
-if settings.DEBUG:
-    SERVE_FILE_BACKEND = getattr(settings,
-                                 'SERVE_FILE_BACKEND',
-                                 'filetransfers.backends.default.serve_file')
-else:
-    SERVE_FILE_BACKEND = getattr(settings,
+SERVE_FILE_BACKEND = getattr(settings,
                                  'SERVE_FILE_BACKEND',
                                  'filetransfers.backends.xsendfile.serve_file')
 

@@ -50,16 +50,7 @@ urlpatterns = [
     # order
     url(r'^(?P<page_title>[\w-]+)/$', 'comicsite.views.comicmain'),
 
-]
+    url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$',
+                             'filetransfers.views.serve'),
 
-if settings.DEBUG:
-    # static files (images, css, javascript, etc.)
-    urlpatterns += patterns('',
-                            (r'^media/(?P<path>.*)$',
-                             'django.views.static.serve', {
-                                 'document_root': settings.MEDIA_ROOT}))
-else:
-    urlpatterns += patterns('',
-                            (r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$',
-                             'filetransfers.views.serve', {
-                                 'document_root': settings.MEDIA_ROOT}))
+]
