@@ -96,7 +96,7 @@ http {
     }
 
     location /static/ {
-      root /srv/public/static/;
+      root /srv/public/;
       rewrite ^/(.*)/$ /$1 break;
       try_files $uri =404;
     }
