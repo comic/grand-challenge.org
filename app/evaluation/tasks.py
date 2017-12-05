@@ -42,7 +42,7 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         job.update_status(status=Job.FAILURE, output=str(exc))
         raise exc
 
-    Result.objects.create(job=job, metrics=metrics)
+    Result.objects.create(job=job, metrics=metrics, challenge=job.challenge)
 
     job.update_status(status=Job.SUCCESS)
 

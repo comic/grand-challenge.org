@@ -2,18 +2,18 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import evaluation.validators
-import evaluation.models
-import uuid
-from django.conf import settings
-import social_django.fields
 import django.db.models.deletion
+import evaluation.models
+from django.conf import settings
+import uuid
+import evaluation.validators
+import social_django.fields
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comicmodels', '0010_delete_projectmetadata'),
+        ('comicmodels', '0011_comicsite_use_evaluation'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                 ('status', models.PositiveSmallIntegerField(default=0, choices=[(0, 'The task is waiting for execution'), (1, 'The task has been started'), (2, 'The task is to be retried, possibly because of failure'), (3, 'The task raised an exception, or has exceeded the retry limit'), (4, 'The task executed successfully'), (5, 'The task was cancelled')])),
                 ('status_history', social_django.fields.JSONField(default=dict)),
                 ('output', models.TextField()),
+                ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
             ],
             options={
                 'abstract': False,
@@ -52,7 +53,8 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('metrics', social_django.fields.JSONField(default=dict)),
                 ('public', models.BooleanField(default=True)),
-                ('job', models.OneToOneField(to='evaluation.Job')),
+                ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
+                ('job', models.OneToOneField(null=True, to='evaluation.Job')),
             ],
             options={
                 'abstract': False,

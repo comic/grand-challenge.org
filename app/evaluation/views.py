@@ -29,6 +29,10 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 class MethodList(UserIsChallengeAdminMixin, ListView):
     model = Method
 
+    def get_queryset(self):
+        queryset = super(MethodList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
+
 
 class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
@@ -49,6 +53,10 @@ class SubmissionList(UserIsChallengeAdminMixin, ListView):
     # TODO - if participant: list only their submissions
     model = Submission
 
+    def get_queryset(self):
+        queryset = super(SubmissionList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
+
 
 class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     # TODO - if participant: list only their submissions
@@ -64,6 +72,10 @@ class JobList(UserIsChallengeAdminMixin, ListView):
     # TODO - if participant: list only their jobs
     model = Job
 
+    def get_queryset(self):
+        queryset = super(JobList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
+
 
 class JobDetail(UserIsChallengeAdminMixin, DetailView):
     # TODO - if participant: list only their jobs
@@ -72,6 +84,10 @@ class JobDetail(UserIsChallengeAdminMixin, DetailView):
 
 class ResultList(ListView):
     model = Result
+
+    def get_queryset(self):
+        queryset = super(ResultList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
 
 
 class ResultDetail(DetailView):

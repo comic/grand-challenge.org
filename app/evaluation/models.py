@@ -3,6 +3,7 @@ import tarfile
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from social_django.fields import JSONField
 
@@ -141,6 +142,9 @@ class Job(UUIDModel):
         (CANCELLED, 'The task was cancelled')
     )
 
+    challenge = models.ForeignKey('comicmodels.ComicSite',
+                                  on_delete=models.CASCADE)
+
     submission = models.ForeignKey('Submission',
                                    on_delete=models.CASCADE)
 
@@ -154,6 +158,18 @@ class Job(UUIDModel):
 
     output = models.TextField()
 
+    def clean(self):
+        if self.submission.challenge != self.method.challenge:
+            raise ValidationError("The submission and method challenges should"
+                                  "be the same. You are trying to evaluate a"
+                                  f"submission for {self.submission.challenge}"
+                                  f"with a method for {self.method.challenge}")
+        super(Job, self).clean()
+
+    def save(self, *args, **kwargs):
+        self.challenge = self.submission.challenge
+        super(Job, self).save(*args, **kwargs)
+
     def update_status(self, *, status: STATUS_CHOICES, output: str = None):
         self.status = status
         if output:
@@ -164,7 +180,7 @@ class Job(UUIDModel):
         return reverse('evaluation:job-detail',
                        kwargs={
                            'pk': self.pk,
-                           'challenge_short_name': self.submission.challenge.short_name
+                           'challenge_short_name': self.challenge.short_name
                        })
 
 
@@ -172,7 +188,13 @@ class Result(UUIDModel):
     """
     Stores individual results for a challenges
     """
-    job = models.OneToOneField('Job', on_delete=models.CASCADE)
+
+    challenge = models.ForeignKey('comicmodels.ComicSite',
+                                  on_delete=models.CASCADE)
+
+    job = models.OneToOneField('Job',
+                               null=True,
+                               on_delete=models.CASCADE)
 
     metrics = JSONField(default=dict)
 
@@ -182,7 +204,7 @@ class Result(UUIDModel):
         return reverse('evaluation:result-detail',
                        kwargs={
                            'pk': self.pk,
-                           'challenge_short_name': self.job.submission.challenge.short_name
+                           'challenge_short_name': self.challenge.short_name
                        })
 
 

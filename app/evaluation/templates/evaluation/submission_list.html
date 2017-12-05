@@ -3,11 +3,29 @@
 {% block pagecontent %}
 
     <h1>Submissions</h1>
+    <table class="table" id="submissionsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>User</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for submission in object_list %}
+            <tr>
+                <td><a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a></td>
+                <td>{{ submission.created }}</td>
+                <td>{{ submission.creator }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
-    {% for submission in object_list %}
-        <li>{{ submission }}</li>
-    {% empty %}
-        <li>No submissions yet</li>
-    {% endfor %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#submissionsTable').DataTable();
+        });
+    </script>
 
 {% endblock %}

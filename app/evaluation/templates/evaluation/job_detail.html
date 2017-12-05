@@ -17,6 +17,9 @@
         {{ object.get_status_display }}
     </div>
 
+    <p><strong>Challenge:</strong> <a
+            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
+    </p>
     <p><strong>Submission:</strong> <a
             href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>
     </p>

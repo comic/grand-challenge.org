@@ -8,6 +8,7 @@
         <thead>
         <tr>
             <th>User</th>
+            <th>Date</th>
             <th>Metrics</th>
         </tr>
         </thead>
@@ -18,6 +19,7 @@
                     <td><a
                             href="{% url 'userena_profile_detail' result.job.submission.creator %}">
                         {{ result.job.submission.creator }}</a></td>
+                    <td>{{ result.created }}</td>
                     <td>{{ result.metrics }}</td>
                 </tr>
             {% endif %}

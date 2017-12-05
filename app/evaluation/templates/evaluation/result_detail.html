@@ -4,6 +4,9 @@
 
     <h1>Result {{ object.id }}</h1>
 
+    <p><strong>Challenge:</strong> <a
+            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
+    </p>
     <p><strong>Job:</strong> <a
             href="{{ object.job.get_absolute_url }}">{{ object.job.pk }}</a>
     </p>

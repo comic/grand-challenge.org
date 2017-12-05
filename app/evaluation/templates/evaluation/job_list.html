@@ -4,10 +4,53 @@
 
     <h1>Evaluation Jobs</h1>
 
-    {% for job in object_list %}
-        <li><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></li>
-    {% empty %}
-        <li>No jobs yet</li>
-    {% endfor %}
+    <table class="table" id="jobsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Submission</th>
+            <th>Status</th>
+            <th>Result</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for job in object_list %}
+            <tr>
+                <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
+                <td>{{ job.created }}</td>
+                <td>{{ job.modified }}</td>
+                <td>
+                    <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
+                </td>
+                <td>
+                    <span class="label
+                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                        label-danger
+                    {% elif job.status == job.RETRY %}
+                        label-warning
+                    {% elif job.status == job.SUCCESS %}
+                        label-success
+                    {% else %}
+                        label-info
+                    {% endif %}">
+                        {{ job.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
+                </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#jobsTable').DataTable();
+        });
+    </script>
 
 {% endblock %}
