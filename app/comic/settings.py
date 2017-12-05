@@ -341,7 +341,6 @@ CKEDITOR_CONFIGS = {
     }
 }
 
-CKEDITOR_UPLOAD_PATH = MEDIA_ROOT
 
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
@@ -456,6 +455,8 @@ for conf_file in conf_files:
     with open(conf_file) as f:
         code = compile(f.read(), conf_file, 'exec')
         six.exec_(code)
+
+CKEDITOR_UPLOAD_PATH = MEDIA_ROOT
 
 if MEDIA_ROOT[-1] != "/":
     msg = "MEDIA_ROOT setting should end in a slash. Found '" + MEDIA_ROOT + "'. Please add a slash"
