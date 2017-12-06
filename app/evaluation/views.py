@@ -11,7 +11,7 @@ from evaluation.models import Result, Submission, Job, Method
 from evaluation.widgets.uploader import AjaxUploadWidget
 
 
-class EvaluationAdmin(UserIsChallengeAdminMixin, TemplateView):
+class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
     template_name = "evaluation/admin.html"
 
 

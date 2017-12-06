@@ -538,7 +538,10 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': ('hidden', 'hide_signin', 'hide_footer')
         }),
-
+        ('Automated Evaluation', {
+            'classes': ('collapse',),
+            'fields': ('use_evaluation',)
+        }),
     )
     readonly_fields = ("manage_admin_link", "link", "manage_participation_request_link")
 

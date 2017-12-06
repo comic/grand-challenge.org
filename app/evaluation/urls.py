@@ -4,11 +4,11 @@ from evaluation.forms import test_upload_widget, test_upload_widget2
 from evaluation.views import uploader_widget_test, MethodCreate, \
     SubmissionCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
-    SubmissionDetail, JobDetail, ResultDetail, EvaluationAdmin
+    SubmissionDetail, JobDetail, ResultDetail, EvaluationManage
 
 
 urlpatterns = [
-    url(r'^$', EvaluationAdmin.as_view(), name='home'),
+    url(r'^manage/$', EvaluationManage.as_view(), name='manage'),
 
     url(r'^methods/$', MethodList.as_view(), name='method-list'),
     url(r'^methods/create/$', MethodCreate.as_view(), name='method-create'),

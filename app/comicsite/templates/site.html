@@ -97,7 +97,7 @@
         <li><a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
         {% if site.use_evaluation %}
             <li role="separator" class="divider"></li>
-            <li><a href="{% url 'evaluation:home' site.short_name %}">Evaluation</a>
+            <li><a href="{% url 'evaluation:manage' site.short_name %}">Evaluation</a>
             </li>
         {% endif %}
 

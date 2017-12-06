@@ -23,4 +23,7 @@ class ChallengeForm(forms.ModelForm):
 
     class Meta:
         model = ComicSite
-        exclude = ('creator',)
+        fields = ['short_name',
+                  'description',
+                  'require_participant_review',
+                  'use_evaluation']
