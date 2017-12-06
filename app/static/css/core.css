@@ -60,3 +60,9 @@ body {
     padding-top: 50px;
     padding-bottom: 50px;
 }
+
+.navbar-toggle {
+    margin-left: 15px;
+    float: left;
+    margin-right: 0;
+}
