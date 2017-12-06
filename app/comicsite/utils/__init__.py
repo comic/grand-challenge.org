@@ -7,26 +7,24 @@ def build_absolute_uri(request):
     """
     Total hack to get around SUBDOMAN_IS_PROJECTNAME for absolute urls
     """
-    return uri_to_url(request.build_absolute_uri())
+    subdomain_absolute_uri = request.build_absolute_uri()
 
-
-def uri_to_url(uri):
     if settings.SUBDOMAIN_IS_PROJECTNAME:
         try:
             m = re.search(
                 r'\/\/(?P<host>[^\/]+)\/site\/(?P<subdomain>[^\/]+)\/',
-                uri + '/')
+                subdomain_absolute_uri + '/')
             host = m['host']
             subdomain = m['subdomain']
-            uri = uri[:m.start(0)] \
-                  + '//' \
-                  + subdomain \
-                  + '.' \
-                  + host \
-                  + '/' \
-                  + uri[m.end(0):]
+            subdomain_absolute_uri = subdomain_absolute_uri[:m.start(0)] \
+                                     + '//' \
+                                     + subdomain \
+                                     + '.' \
+                                     + host \
+                                     + '/' \
+                                     + subdomain_absolute_uri[m.end(0):]
         except TypeError:
             # nothing to rewrite
             pass
 
-    return uri
+    return subdomain_absolute_uri
