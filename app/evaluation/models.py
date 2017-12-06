@@ -1,5 +1,3 @@
-import json
-import tarfile
 import uuid
 
 from django.conf import settings
@@ -8,7 +6,7 @@ from django.db import models
 from social_django.fields import JSONField
 
 from comicsite.core.urlresolvers import reverse
-from evaluation.validators import MimeTypeValidator, ContainerImageValidator
+from evaluation.validators import MimeTypeValidator
 
 
 class UUIDModel(models.Model):
@@ -40,12 +38,22 @@ class Method(UUIDModel):
     challenge = models.ForeignKey('comicmodels.ComicSite',
                                   on_delete=models.CASCADE)
 
+    # Validation for methods needs to be done asynchronously
+    ready = models.BooleanField(default=False,
+                                editable=False,
+                                help_text="Is this method ready to be used?")
+
+    status = models.TextField(editable=False)
+
     image = models.FileField(upload_to=method_image_path,
                              validators=[
-                                 MimeTypeValidator(allowed_types=(
-                                     'application/x-tarbinary',
-                                     'application/x-tar',)),
-                                 ContainerImageValidator(single_image=True)],
+                                 MimeTypeValidator(
+                                     allowed_types=(
+                                         'application/x-tarbinary',
+                                         'application/x-tar',
+                                     )
+                                 ),
+                             ],
                              help_text='Tar archive of the container '
                                        'image produced from the command '
                                        '`docker save IMAGE > '
@@ -53,26 +61,11 @@ class Method(UUIDModel):
                                        'https://docs.docker.com/engine/reference/commandline/save/',
                              )
 
-    # TODO: Add a validator to make sure the form is sha256:{64}
     image_sha256 = models.CharField(editable=False,
                                     max_length=71)
 
     def save(self, *args, **kwargs):
-        self.image_sha256 = self._image_sha256
         super(Method, self).save(*args, **kwargs)
-
-    @property
-    def _image_sha256(self) -> str:
-        # Open for reading but do not close as django opens it again later
-        self.image.open(mode='rb')
-        with tarfile.open(fileobj=self.image, mode='r') as t:
-            member = dict(zip(t.getnames(), t.getmembers()))[
-                'manifest.json']
-            manifest = t.extractfile(member).read()
-
-        manifest = json.loads(manifest)
-        # TODO: Check if the encoding method is included in the manifest
-        return f"sha256:{manifest[0]['Config'][:64]}"
 
     def get_absolute_url(self):
         return reverse('evaluation:method-detail',

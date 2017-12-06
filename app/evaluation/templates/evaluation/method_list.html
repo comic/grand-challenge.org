@@ -11,6 +11,8 @@
             <th>Created</th>
             <th>User</th>
             <th>SHA</th>
+            <th>Ready</th>
+            <th>Status</th>
         </tr>
         </thead>
         <tbody>
@@ -23,6 +25,8 @@
                         href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
                 </td>
                 <td>{{ method.image_sha256 }}</td>
+                <td>{{ method.ready }}</td>
+                <td>{{ method.status }}</td>
             </tr>
         {% endfor %}
         </tbody>
