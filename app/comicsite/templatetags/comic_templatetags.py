@@ -7,6 +7,7 @@ import random
 import re
 import string
 import traceback
+from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
@@ -244,10 +245,15 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
 
-        if subdomain_is_projectname() and self.view_name.var in [
-            "comicsite.views.site",
-            "comicsite.views.page",
-            "project_serve_file"]:
+        if subdomain_is_projectname() and (
+                    (
+                                self.view_name.var in [
+                                "comicsite.views.site",
+                                "comicsite.views.page",
+                                "project_serve_file"]
+                    ) or (
+                            "evaluation:" in self.view_name.var
+                )):
 
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
@@ -272,7 +278,7 @@ class comic_URLNode(defaulttags.URLNode):
                 scheme_subsite_and_host = reverse("comicsite.views.site",
                                                   args=[project]).lower()
 
-                return scheme_subsite_and_host + url
+                return urljoin(scheme_subsite_and_host,url)
 
         return url
 
@@ -1031,8 +1037,8 @@ class InsertGraphNode(template.Node):
             if RENDER_FRIENDLY_ERRORS:
                 return self.make_error_msg(str(
                     "Error in render funtion '%s()' : %s" % (
-                    render_function.__name__,
-                    traceback.format_exc(0))))
+                        render_function.__name__,
+                        traceback.format_exc(0))))
             else:
                 raise
         # self.get_graph_svg(table,headers)
@@ -1058,8 +1064,8 @@ def getrenderer(renderer_format):
     if renderer_format not in renderers:
         raise Exception(
             "reader for format '%s' not found. Available formats: %s" % (
-            renderer_format,
-            ",".join(renderers.keys())))
+                renderer_format,
+                ",".join(renderers.keys())))
 
     return renderers[renderer_format]
 
@@ -1393,8 +1399,8 @@ def parse_php_arrays(filename):
             if len(result.groups()) != 2:
                 msg = "Expected to find  varname and content,\
                       but regex '%s' found %d items:%s " % (
-                phpvar.pattern, len(result.groups()),
-                "[" + ",".join(result.groups()) + "]")
+                    phpvar.pattern, len(result.groups()),
+                    "[" + ",".join(result.groups()) + "]")
                 continue
 
             (varname, varcontent) = result.groups()
@@ -1586,7 +1592,7 @@ class AllProjectLinksNode(template.Node):
                 <div class='row'>
                     {1}
                 </div>
-            </div>""".format(yearheader,projectlinks)
+            </div>""".format(yearheader, projectlinks)
 
         return html
 
@@ -1692,7 +1698,7 @@ class AllProjectLinksNode(template.Node):
 
         if projectlink.params["submitted results"]:
             submissionstring = (
-            "results: " + str(projectlink.params["submitted results"]))
+                "results: " + str(projectlink.params["submitted results"]))
             if projectlink.params["last submission date"]:
                 submissionstring += ", Latest: " + self.format_date(
                     projectlink.params["last submission date"])
@@ -1837,7 +1843,7 @@ class AllProjectLinksNode(template.Node):
 
             logger.error("Could not read any projectlink information from"
                          " '%s' returning empty list. trace: %s " % (
-                         filepath, traceback.format_exc()))
+                             filepath, traceback.format_exc()))
             projectlinks = []
 
         projectlinks_clean = []
@@ -2016,7 +2022,8 @@ class ProjectStatisticsNode(template.Node):
         key = 'ProjectStatisticsNode.{}.{}'.format(project_name, all_users)
         content = cache.get(key)
         if content is None:
-            content = self._get_map(project_name, all_users, self.include_header)
+            content = self._get_map(project_name, all_users,
+                                    self.include_header)
             cache.set(key, content, 10 * 60)
         return content
 

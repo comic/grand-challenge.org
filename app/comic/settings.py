@@ -158,7 +158,7 @@ SUBDOMAIN_IS_PROJECTNAME = False
 # For links to basic comicframework content, for example the main comic help
 # page, django needs to know the hostname. This setting is only used when
 # SUBDOMAIN_IS_PROJECTNAME = True
-MAIN_HOST_NAME = "http://localhost:8000"
+MAIN_HOST_NAME = "https://localhost"
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
@@ -465,6 +465,9 @@ if MEDIA_ROOT[-1] != "/":
 if DROPBOX_ROOT[-1] != "/":
     msg = "DROPBOX_ROOT setting should end in a slash. Found '" + DROPBOX_ROOT + "'. Please add a slash"
     raise ImproperlyConfigured(msg)
+
+if MAIN_HOST_NAME[-1] == '/':
+    raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
