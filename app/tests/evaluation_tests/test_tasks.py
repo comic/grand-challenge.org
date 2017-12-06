@@ -1,6 +1,7 @@
 import os
 import tempfile
 import zipfile
+from typing import Tuple
 
 import docker
 import factory
@@ -13,7 +14,7 @@ from tests.factories import SubmissionFactory, JobFactory, \
     MethodFactory, UserFactory
 
 
-def create_test_evaluation_container(client) -> str:
+def create_test_evaluation_container(client) -> Tuple[str,str]:
     """
     Creates the example evaluation container
     """
@@ -36,7 +37,7 @@ def create_test_evaluation_container(client) -> str:
 
     assert im.id not in [x.id for x in client.images.list()]
 
-    return outfile
+    return (outfile, im.id)
 
 
 @pytest.mark.django_db
@@ -63,8 +64,10 @@ def test_submission_evaluation(client):
 
     submission = SubmissionFactory(file__from_path=testfile, creator=user)
 
-    eval_container = create_test_evaluation_container(dockerclient)
-    method = MethodFactory(image__from_path=eval_container)
+    eval_container, sha256 = create_test_evaluation_container(dockerclient)
+    method = MethodFactory(image__from_path=eval_container,
+                           image_sha256=sha256,
+                           ready=True)
 
     # We should not be able to download methods
     response = client.get(method.image.url)

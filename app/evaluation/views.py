@@ -12,7 +12,7 @@ from evaluation.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
-    template_name = "evaluation/admin.html"
+    template_name = "evaluation/manage.html"
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
@@ -49,7 +49,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         return super(SubmissionCreate,self).form_valid(form)
 
 
-class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class SubmissionList(UserIsChallengeAdminMixin, ListView):
     # TODO - if participant: list only their submissions
     model = Submission
 
