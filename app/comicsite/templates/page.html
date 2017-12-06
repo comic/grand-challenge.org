@@ -11,11 +11,26 @@
     {% if site.hide_signin %}
     {% elif site.hide_footer %}
         {% if user.is_authenticated %}
-            <li><a class="menuItem" href="{% url 'userena_profile_detail' user.username %}">{{ user.username }}</a></li>
-            <li role="separator" class="divider"></li>
-            <li><a class="menuItem" href="{% url 'userena_signout' %}?next=/">Signout</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle"
+                   data-toggle="dropdown" role="button"
+                   aria-haspopup="true"
+                   aria-expanded="false">{{ user.username }}
+                    <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a class="menuItem"
+                           href="{% url 'userena_profile_detail' user.username %}">My
+                        profile</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a class="menuItem"
+                           href="{% url 'userena_signout' %}?next=/">Signout</a>
+                    </li>
+                </ul>
+            </li>
         {% else %}
-            <li><a class="menuItem" href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign In / Register</a>
+            <li><a class="menuItem"
+                   href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
+                In / Register</a>
             </li>
         {% endif %}
     {% endif %}
@@ -38,7 +53,9 @@
         {% block editlink %}
             {% if currentpage.pk %}
                 {% if "change_comicsite" in site_perms or request.user.is_superuser %}
-                    <a class="editPageLink" href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit this
+                    <a class="editPageLink"
+                       href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit
+                        this
                         page</a>
 
                 {% else %}
