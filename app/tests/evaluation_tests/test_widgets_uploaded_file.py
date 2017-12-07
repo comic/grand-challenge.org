@@ -1,6 +1,5 @@
 import pytest
 
-import time
 import uuid
 from io import BytesIO
 
@@ -92,8 +91,11 @@ def test_file_cleanup():
     chunks = StagedFile.objects.filter(file_id=testee.uuid).all()
     assert len(chunks) > 0
 
-    # 200 ms > 100ms, time for cleaning!
-    time.sleep(.2)
+    # Force timeout and clean
+    now = timezone.now()
+    for chunk in chunks:
+        chunk.timeout = now - timedelta(hours=1)
+        chunk.save()
     cleanup_stale_files()
 
     assert not testee.exists
