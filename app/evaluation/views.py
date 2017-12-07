@@ -94,7 +94,7 @@ class ResultDetail(DetailView):
     model = Result
 
 
-def uploader_widget_test(request: HttpRequest) -> HttpResponse:
+def uploader_widget_test(request: HttpRequest, **kwargs) -> HttpResponse:
     if request.method == "POST":
         test_form = UploadForm(request.POST)
         if test_form.is_valid():
