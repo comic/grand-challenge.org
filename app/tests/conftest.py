@@ -1,6 +1,9 @@
+import os
 from collections import namedtuple
 
+import docker
 import pytest
+from django.conf import settings
 
 from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 
@@ -97,3 +100,33 @@ def challenge_set_with_evaluation(ChallengeSet):
         ChallengeSet,
         method
     )
+
+
+@pytest.fixture(scope='session')
+def evaluation_image(tmpdir_factory):
+    """
+    Creates the example evaluation container
+    """
+
+    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+
+    im = client.images.build(
+        path=os.path.join(os.path.split(__file__)[0], 'evaluation_tests',
+                          'resources', 'docker'),
+        tag='test_evaluation:latest')
+
+    assert im.id in [x.id for x in client.images.list()]
+
+    cli = docker.APIClient(base_url=settings.DOCKER_BASE_URL)
+    image = cli.get_image('test_evaluation:latest')
+
+    outfile = tmpdir_factory.mktemp('docker').join('evaluation-latest.tar')
+
+    with outfile.open(mode='wb') as f:
+        f.write(image.data)
+
+    client.images.remove(image=im.id)
+
+    assert im.id not in [x.id for x in client.images.list()]
+
+    return (outfile, im.id)

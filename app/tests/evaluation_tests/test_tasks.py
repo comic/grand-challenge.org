@@ -1,7 +1,6 @@
 import os
 import tempfile
 import zipfile
-from typing import Tuple
 
 import docker
 import factory
@@ -14,35 +13,9 @@ from tests.factories import SubmissionFactory, JobFactory, \
     MethodFactory, UserFactory
 
 
-def create_test_evaluation_container(client) -> Tuple[str,str]:
-    """
-    Creates the example evaluation container
-    """
-
-    im = client.images.build(
-        path=os.path.join(os.path.split(__file__)[0], 'resources', 'docker'),
-        tag='test_evaluation:latest')
-
-    assert im.id in [x.id for x in client.images.list()]
-
-    cli = docker.APIClient(base_url=settings.DOCKER_BASE_URL)
-    image = cli.get_image('test_evaluation:latest')
-
-    with tempfile.NamedTemporaryFile(suffix='.tar', mode='wb',
-                                     delete=False) as f:
-        f.write(image.data)
-        outfile = f.name
-
-    client.images.remove(image=im.id)
-
-    assert im.id not in [x.id for x in client.images.list()]
-
-    return (outfile, im.id)
-
-
 @pytest.mark.django_db
 @factory.django.mute_signals(signals.post_save)
-def test_submission_evaluation(client):
+def test_submission_evaluation(client, evaluation_image):
     # Upload a submission and create a job
 
     dockerclient = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
@@ -64,7 +37,7 @@ def test_submission_evaluation(client):
 
     submission = SubmissionFactory(file__from_path=testfile, creator=user)
 
-    eval_container, sha256 = create_test_evaluation_container(dockerclient)
+    eval_container, sha256 = evaluation_image
     method = MethodFactory(image__from_path=eval_container,
                            image_sha256=sha256,
                            ready=True)
