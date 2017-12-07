@@ -1,5 +1,6 @@
 import pytest
 
+import time
 import uuid
 from io import BytesIO
 
@@ -9,7 +10,8 @@ from django.core import files
 from django.utils import timezone
 
 from evaluation.models import StagedFile
-from evaluation.widgets.uploader import UploadedAjaxFileList, StagedAjaxFile
+from evaluation.widgets.uploader import UploadedAjaxFileList, StagedAjaxFile, \
+    cleanup_stale_files
 
 
 def create_uploaded_file(
@@ -73,3 +75,28 @@ def test_uploaded_file_assembly():
 
         assert file.seek(0) == file.tell()
         assert file.read() == file_content
+
+
+@pytest.mark.django_db
+def test_file_cleanup():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        [len(file_content)],
+        client_filename="bla",
+        timeout=timedelta(milliseconds=100))
+
+    testee = StagedAjaxFile(uploaded_file_uuid)
+
+    assert testee.exists
+    chunks = StagedFile.objects.filter(file_id=testee.uuid).all()
+    assert len(chunks) > 0
+
+    # 200 ms > 100ms, time for cleaning!
+    time.sleep(.2)
+    cleanup_stale_files()
+
+    assert not testee.exists
+
+    chunks = StagedFile.objects.filter(file_id=testee.uuid).all()
+    assert len(chunks) == 0
