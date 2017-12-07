@@ -20,4 +20,5 @@ xlrd==0.9.4
 # Dev Requirements
 pytest-django
 pytest-cov
+pytest-mock
 factory_boy

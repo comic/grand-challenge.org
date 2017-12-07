@@ -554,6 +554,14 @@ class ComicSite(models.Model):
         group = Group.objects.get(name=self.participants_group_name())
         user.groups.remove(group)
 
+    def add_admin(self, user):
+        group = Group.objects.get(name=self.admin_group_name())
+        user.groups.add(group)
+
+    def remove_admin(self, user):
+        group = Group.objects.get(name=self.admin_group_name())
+        user.groups.remove(group)
+
     class Meta:
         verbose_name = "challenge"
         verbose_name_plural = "challenges"

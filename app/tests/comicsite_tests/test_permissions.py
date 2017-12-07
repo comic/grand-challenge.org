@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -7,10 +5,10 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
 
-from comicmodels.models import ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
     UserIsChallengeParticipantOrAdminMixin
 from tests.factories import ChallengeFactory, UserFactory
+from tests.utils import assert_redirect, assert_status
 
 
 class EmptyResponseView(View):
@@ -27,59 +25,43 @@ class ParticipantOrAdminOnlyView(UserIsChallengeParticipantOrAdminMixin,
     pass
 
 
-def assert_status(code: int, user: settings.AUTH_USER_MODEL, view: View,
-                  challenge: ComicSite,
-                  rf: RequestFactory):
-    request = rf.get('/rand')
-    request.projectname = challenge.short_name
-
-    if user is not None:
-        request.user = user
-
-    view = view.as_view()
-    response = view(request)
-
-    assert response.status_code == code
-    return response
-
-
-def assert_redirect(uri: str, *args):
-    response = assert_status(302, *args)
-    redirect_url = list(urlparse(response.url))[2]
-    assert uri == redirect_url
-
-
 @pytest.mark.django_db
-def test_permissions_mixin(rf: RequestFactory, admin_user):
+def test_permissions_mixin(rf: RequestFactory, admin_user, mocker, ChallengeSet):
     # admin_user is a superuser, not a challenge admin
-    creator = UserFactory()
-    challenge = ChallengeFactory(creator=creator)
-    assert challenge.is_admin(creator) == True
-    assert challenge.is_participant(creator) == False
 
-    participant = UserFactory()
-    challenge.add_participant(participant)
-    assert challenge.is_admin(participant) == False
-    assert challenge.is_participant(participant) == True
+    creator = ChallengeSet.creator
+    challenge = ChallengeSet.challenge
+    participant = ChallengeSet.participant
+    non_participant = ChallengeSet.non_participant
 
-    non_participant = UserFactory()
-    assert challenge.is_admin(non_participant) == False
-    assert challenge.is_participant(non_participant) == False
+    # Messages need to be mocked when using request factory
+    mock_messages = mocker.patch(
+        'comicsite.permissions.mixins.messages').start()
+    mock_messages.INFO = "INFO"
 
     assert_status(200, admin_user, AdminOnlyView, challenge, rf)
     assert_status(200, creator, AdminOnlyView, challenge, rf)
     assert_status(403, participant, AdminOnlyView, challenge, rf)
     assert_status(403, non_participant, AdminOnlyView, challenge, rf)
-    assert_redirect(settings.LOGIN_URL, AnonymousUser(), AdminOnlyView,
-                    challenge, rf)
+    assert_redirect(
+        settings.LOGIN_URL,
+        AnonymousUser(),
+        AdminOnlyView,
+        challenge, rf
+    )
 
     assert_status(200, admin_user, ParticipantOrAdminOnlyView, challenge, rf)
     assert_status(200, creator, ParticipantOrAdminOnlyView, challenge, rf)
     assert_status(200, participant, ParticipantOrAdminOnlyView, challenge, rf)
     assert_status(403, non_participant, ParticipantOrAdminOnlyView, challenge,
                   rf)
-    assert_redirect(settings.LOGIN_URL, AnonymousUser(),
-                    ParticipantOrAdminOnlyView, challenge, rf)
+    assert_redirect(
+        settings.LOGIN_URL,
+        AnonymousUser(),
+        ParticipantOrAdminOnlyView,
+        challenge,
+        rf
+    )
 
     # Make a 2nd challenge and make sure that the admins and participants
     # here cannot see the first
