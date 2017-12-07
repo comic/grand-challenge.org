@@ -8,7 +8,8 @@ from django.test import Client
 
 from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
-from tests.factories import SUPER_SECURE_TEST_PASSWORD
+from tests.factories import SUPER_SECURE_TEST_PASSWORD, MethodFactory, \
+    SubmissionFactory, JobFactory, ResultFactory
 
 
 def assert_viewname_status(*,
@@ -45,8 +46,8 @@ def assert_viewname_status(*,
 def assert_viewname_redirect(*,
                              url: str,
                              **kwargs):
-    """ Asserts that a view redirects to the given url. See assert_viewname_status
-     for kwargs details """
+    """ Asserts that a view redirects to the given url. See
+    assert_viewname_status for kwargs details """
     response = assert_viewname_status(code=302, **kwargs)
     redirect_url = list(urlparse(response.url))[2]
     assert url == redirect_url
@@ -171,14 +172,17 @@ def test_method_create(client, TwoChallengeSets):
                              two_challenge_set=TwoChallengeSets,
                              client=client)
 
-# TODO: a method is needed
-@pytest.mark.skip
+
 @pytest.mark.django_db
 def test_method_detail(client, TwoChallengeSets):
+    method = MethodFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                           creator=TwoChallengeSets.ChallengeSet1.admin)
+
     validate_admin_only_view(viewname='evaluation:method-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=TwoChallengeSets.method.pk,
+                             pk=method.pk,
                              client=client)
+
 
 @pytest.mark.django_db
 def test_submission_list(client, TwoChallengeSets):
@@ -193,12 +197,16 @@ def test_submission_create(client, TwoChallengeSets):
                                        two_challenge_set=TwoChallengeSets,
                                        client=client)
 
-# TODO: we need a submission to test
-@pytest.mark.skip
+
 @pytest.mark.django_db
 def test_submission_detail(client, TwoChallengeSets):
+    submission = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+
     validate_admin_only_view(viewname='evaluation:submission-detail',
                              two_challenge_set=TwoChallengeSets,
+                             pk=submission.pk,
                              client=client)
 
 
@@ -215,12 +223,22 @@ def test_job_create(client, TwoChallengeSets):
                              two_challenge_set=TwoChallengeSets,
                              client=client)
 
-# TODO: we need a job to test
-@pytest.mark.skip
+
 @pytest.mark.django_db
 def test_job_detail(client, TwoChallengeSets):
+    method = MethodFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                           creator=TwoChallengeSets.ChallengeSet1.admin,
+                           ready=True)
+
+    submission = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+
+    job = JobFactory(method=method, submission=submission)
+
     validate_admin_only_view(viewname='evaluation:job-detail',
                              two_challenge_set=TwoChallengeSets,
+                             pk=job.pk,
                              client=client)
 
 
@@ -230,10 +248,12 @@ def test_result_list(client, EvalChallengeSet):
                        challenge_set=EvalChallengeSet.ChallengeSet,
                        client=client)
 
-# TODO: we need a result to test
-@pytest.mark.skip
+
 @pytest.mark.django_db
 def test_result_detail(client, EvalChallengeSet):
+    result = ResultFactory(challenge=EvalChallengeSet.ChallengeSet.challenge)
+
     validate_open_view(viewname='evaluation:result-detail',
                        challenge_set=EvalChallengeSet.ChallengeSet,
+                       pk=result.pk,
                        client=client)
