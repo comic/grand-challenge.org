@@ -50,7 +50,6 @@ class SubmissionFactory(factory.DjangoModelFactory):
         model = Submission
 
     challenge = factory.SubFactory(ChallengeFactory)
-    method = factory.SubFactory(MethodFactory)
     file = factory.django.FileField()
 
 
