@@ -21,7 +21,7 @@ def create_uploaded_file(
         client_filename="test_client_filename_{uuid}",
         timeout=timedelta(minutes=1)) -> uuid.UUID:
     if chunks is None:
-        chunks = [len(string)]
+        chunks = [len(content)]
 
     new_uuid = uuid.uuid4()
     client_filename = client_filename.format(uuid=new_uuid)
@@ -47,34 +47,57 @@ def create_uploaded_file(
 
         assert staged_file.file.size == chunk - start
 
-        start = chunk + 1
+        start = chunk
 
     return new_uuid
 
 
-@pytest.mark.django_db
-def test_uploaded_file_assembly():
-    file_content = b"HelloWorld" * 5
-    uploaded_file_uuid = create_uploaded_file(
-        file_content,
-        [len(file_content)],
-        client_filename="bla")
+def do_default_content_tests(uploaded_file, file_content):
+    l = 10
 
-    testee = StagedAjaxFile(uploaded_file_uuid)
+    assert uploaded_file.exists
+    assert uploaded_file.is_complete
+    assert uploaded_file.size == len(file_content)
 
-    assert testee.exists
-    assert testee.is_complete
-    assert testee.name == "bla"
-    assert testee.size == len(file_content)
-
-    with testee.open() as file:
-        l = len("HelloWorld")
-        assert file.read(l) == b"HelloWorld"
-        assert file.read(l) == b"HelloWorld"
+    with uploaded_file.open() as file:
+        assert file.read(l) == file_content[0:l]
+        assert file.read(l) == file_content[l:2*l]
 
         assert file.seek(0) == file.tell()
         assert file.read() == file_content
 
+        assert file.seek(-1, 1) == len(file_content) - 1
+        assert file.seek(-2, 2) == len(file_content) - 2
+        assert file.read(10) == file_content[-2:]
+
+@pytest.mark.django_db
+def test_uploaded_single_chunk_file():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        client_filename="bla")
+
+    testee = StagedAjaxFile(uploaded_file_uuid)
+    assert testee.name == "bla"
+
+    assert StagedFile.objects.filter(file_id=testee.uuid).count() == 1
+
+    do_default_content_tests(testee, file_content)
+
+@pytest.mark.django_db
+def test_uploaded_multi_chunk_file():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        chunks=[4, 8, 10, 11, len(file_content)],
+        client_filename="splittered")
+
+    testee = StagedAjaxFile(uploaded_file_uuid)
+    assert testee.name == "splittered"
+
+    assert StagedFile.objects.filter(file_id=testee.uuid).count() == 5
+
+    do_default_content_tests(testee, file_content)
 
 @pytest.mark.django_db
 def test_file_cleanup():
