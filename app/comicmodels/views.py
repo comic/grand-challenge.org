@@ -1,14 +1,16 @@
 # Create your views here.
 import ntpath
 
+from auth_mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
+from django.views.generic import CreateView
 
-from comicmodels.forms import UserUploadForm
-from comicmodels.models import UploadModel, Page
+from comicmodels.forms import UserUploadForm, ChallengeForm
+from comicmodels.models import UploadModel, Page, ComicSite
 from comicmodels.signals import file_uploaded
 from comicsite.template.context import CurrentAppRequestContext
 from comicsite.views import site_get_standard_vars, getSite, permissionMessage
@@ -77,3 +79,12 @@ def upload_handler(request, site_short_name):
                                'uploads': uploadsforcurrentsite, 'site': site, 'pages': pages,
                                'metafooterpages': metafooterpages},
                               context_instance=CurrentAppRequestContext(request))
+
+
+class ChallengeCreate(LoginRequiredMixin, CreateView):
+    model = ComicSite
+    form_class = ChallengeForm
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        return super(ChallengeCreate, self).form_valid(form)

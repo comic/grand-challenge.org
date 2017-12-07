@@ -7,10 +7,12 @@ import random
 import re
 import string
 import traceback
+from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
@@ -57,7 +59,8 @@ def parseKeyValueToken(token):
     args = split[1:]
 
     if "=" in "".join(args):
-        raise ValueError("Please use colon ':' instead of equals '=' to separate keys and values")
+        raise ValueError(
+            "Please use colon ':' instead of equals '=' to separate keys and values")
 
     return dict([param.split(":") for param in args])
 
@@ -140,7 +143,8 @@ def url(parser, token):
     """
 
     orgnode = defaulttags.url(parser, token)
-    return comic_URLNode(orgnode.view_name, orgnode.args, orgnode.kwargs, orgnode.asvar)
+    return comic_URLNode(orgnode.view_name, orgnode.args, orgnode.kwargs,
+                         orgnode.asvar)
 
 
 def filter_by_extension(filenames, extensions):
@@ -241,11 +245,15 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
 
-        if subdomain_is_projectname() and self.view_name.var in ["comicsite.views.site",
-                                                                 "comicsite.views.page",
-                                                                 "comicsite_signin",
-                                                                 "comicsite_signup",
-                                                                 "project_serve_file"]:
+        if subdomain_is_projectname() and (
+                    (
+                                self.view_name.var in [
+                                "comicsite.views.site",
+                                "comicsite.views.page",
+                                "project_serve_file"]
+                    ) or (
+                            "evaluation:" in self.view_name.var
+                )):
 
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
@@ -261,14 +269,16 @@ class comic_URLNode(defaulttags.URLNode):
                 return settings.MAIN_HOST_NAME + url
             else:
 
-                path_to_site = reverse_djangocore("comicsite.views.site", args=[project]).lower()
+                path_to_site = reverse_djangocore("comicsite.views.site",
+                                                  args=[project]).lower()
 
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
 
-                scheme_subsite_and_host = reverse("comicsite.views.site", args=[project]).lower()
+                scheme_subsite_and_host = reverse("comicsite.views.site",
+                                                  args=[project]).lower()
 
-                return scheme_subsite_and_host + url
+                return urljoin(scheme_subsite_and_host,url)
 
         return url
 
@@ -317,16 +327,19 @@ def sanitize_django_items(string):
 @register.simple_tag
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
-    html_string = "<div class='metaFooterMenuItem'></div>"
+    html_string = ""
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('comicsite.views.comicmain', kwargs={'page_title': p.title})
+            url = reverse('comicsite.views.comicmain',
+                          kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
-            html_string += "<a class='metaFooterMenuItem' href='%s'>" % url
+            # TODO: JM add class=active to the active link
+            # See https://getbootstrap.com/docs/3.3/components/#navbar
+            html_string += "<li><a class='metaFooterMenuItem' href='%s'>" % url
             html_string += p.display_title == "" and p.title or p.display_title
-            html_string += "</a>"
+            html_string += "</a></li>"
 
     return html_string
 
@@ -395,7 +408,8 @@ class ListDirNode(template.Node):
                                    kwargs={'project_name': project_name,
                                            'path': self.path + "/" + filename})
 
-            links.append("<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
+            links.append(
+                "<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
 
         htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
 
@@ -434,7 +448,8 @@ class ImageBrowserNode(template.Node):
         self.parser = parser
 
     def make_dataset_error_msg(self, msg):
-        logger.error("Error rendering Visualization '" + str(self.args) + ":" + msg)
+        logger.error(
+            "Error rendering Visualization '" + str(self.args) + ":" + msg)
         errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
@@ -456,7 +471,8 @@ class ImageBrowserNode(template.Node):
         from comicsite.api import get_public_results_by_project_name
 
         try:
-            public_results = get_public_results_by_project_name(context['site'].short_name)
+            public_results = get_public_results_by_project_name(
+                context['site'].short_name)
         except OSError as e:
             # if no results can be found just skip it
             public_results = []
@@ -465,7 +481,9 @@ class ImageBrowserNode(template.Node):
         # what url needs to go in front?  Thsi var can be used in javascript to
         # create links. Using dummyfile because django resolution does not except
         # explicit empty strings.
-        serve_file_prefix = reverse("project_serve_file", args=[context['site'].short_name, "dummyfile"])
+        serve_file_prefix = reverse("project_serve_file",
+                                    args=[context['site'].short_name,
+                                          "dummyfile"])
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see        
         # much wrong with it here. 
         serve_file_prefix = serve_file_prefix[:-10]
@@ -496,10 +514,13 @@ class ImageBrowserNode(template.Node):
 
         """.format(main_hostname=settings.MAIN_HOST_NAME,
                    path=path_resolved,
-                   viewer_id=random.randrange(100000, 999999),  # just 6 random numbers
-                   custom_options_include=self.get_custom_options_include(context),
+                   viewer_id=random.randrange(100000, 999999),
+                   # just 6 random numbers
+                   custom_options_include=self.get_custom_options_include(
+                       context),
                    project_info=json.dumps({"public_results": public_results,
-                                            "url_params": self.get_url_params(context)}),
+                                            "url_params": self.get_url_params(
+                                                context)}),
                    dg_options=json.dumps({"dirs": [path_resolved],
                                           "fileNames": filenames,
                                           "serve_file_prefix": serve_file_prefix}
@@ -518,7 +539,8 @@ class ImageBrowserNode(template.Node):
                                    kwargs={'project_name': project_name,
                                            'path': self.args["config"]})
 
-            return """<script type="text/javascript" src="{}"></script>""".format(downloadlink)
+            return """<script type="text/javascript" src="{}"></script>""".format(
+                downloadlink)
         else:
             return "<script> options = undefined; </script>"
 
@@ -600,11 +622,13 @@ def get_result_info(parser, token):
         ensure_args_length(2, args)
         ensure_key_in_args("id", args)
         ensure_key_in_args("type", args)
-        ensure_value_is_in_list(args["type"], ["folder_name", "description_file_path"])
+        ensure_value_is_in_list(args["type"],
+                                ["folder_name", "description_file_path"])
 
 
     except ValueError as e:
-        errormsg = "Error parsing {% " + token.contents + " %}: " + str(e) + " <br/> " + usagestr
+        errormsg = "Error parsing {% " + token.contents + " %}: " + str(
+            e) + " <br/> " + usagestr
         return TemplateErrorNode(errormsg)
 
     return GetResultInfoNode(args, parser)
@@ -618,7 +642,8 @@ class GetResultInfoNode(template.Node):
         self.parser = parser
 
     def make_resultsinfo_error_msg(self, msg):
-        errormsg = "Error rendering tag {% get_results_info %} with parameters'" + str(self.args) + "':" + msg
+        errormsg = "Error rendering tag {% get_results_info %} with parameters'" + str(
+            self.args) + "':" + msg
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
@@ -630,7 +655,8 @@ class GetResultInfoNode(template.Node):
 
         if result_folder is None:
             return """result folder starting with '{id}' could not be found. 
-            Searched {folder}""".format(id=self.args["id"], folder=result_folder)
+            Searched {folder}""".format(id=self.args["id"],
+                                        folder=result_folder)
 
         render_type = self.args["type"]
         if render_type == "folder_name":
@@ -638,7 +664,8 @@ class GetResultInfoNode(template.Node):
         elif render_type == "description_file_path":
             return "description file for {}".format(self.args["id"])
         else:
-            return self.make_resultsinfo_error_msg("unknown type '{}'. I don't know that to return.")
+            return self.make_resultsinfo_error_msg(
+                "unknown type '{}'. I don't know that to return.")
 
     def try_find_result_folder(self, context):
         results_folder = settings.COMIC_RESULTS_FOLDER_NAME
@@ -648,7 +675,9 @@ class GetResultInfoNode(template.Node):
 
         recursion_depth = 1
         try:
-            result_folder = find_dir_starting_with(str(self.args["id"]), results_path, recursion_depth)
+            result_folder = find_dir_starting_with(str(self.args["id"]),
+                                                   results_path,
+                                                   recursion_depth)
         except OSError as e:
             return self.make_resultsinfo_error_msg(str(e))
 
@@ -684,7 +713,8 @@ def find_dir_starting_with(startswith, path, max_depth, current_depth=0):
 
         for directory in dirs:
             subdirpath = os.path.join(path, directory)
-            subdir = find_dir_starting_with(startswith, subdirpath, max_depth, current_depth + 1)
+            subdir = find_dir_starting_with(startswith, subdirpath, max_depth,
+                                            current_depth + 1)
             if subdir is not None:
                 return subdir
 
@@ -700,7 +730,8 @@ def ensure_key_in_args(param_name, args):
     
     """
     if param_name not in args.keys():
-        raise ValueError("ensure_key_in_args: '" + param_name + "' argument is missing.")
+        raise ValueError(
+            "ensure_key_in_args: '" + param_name + "' argument is missing.")
 
 
 def ensure_args_length(length, args):
@@ -709,7 +740,8 @@ def ensure_args_length(length, args):
     """
 
     if len(args) != length:
-        raise ValueError("ensure_args_length: Expected " + str(length) + " arguments, found " + str(len(args)) + ".")
+        raise ValueError("ensure_args_length: Expected " + str(
+            length) + " arguments, found " + str(len(args)) + ".")
 
 
 def ensure_value_is_in_list(value, allowed_values):
@@ -717,8 +749,9 @@ def ensure_value_is_in_list(value, allowed_values):
     
     """
     if not value in allowed_values:
-        raise ValueError("ensure_value_is_in_list: Unknown value '" + value + "'. Expected one of [" + ",".join(
-            allowed_values) + "]")
+        raise ValueError(
+            "ensure_value_is_in_list: Unknown value '" + value + "'. Expected one of [" + ",".join(
+                allowed_values) + "]")
 
 
 @register.tag(name="get_project_prefix",
@@ -784,7 +817,8 @@ class InsertFileNode(template.Node):
         self.parser = parser
 
     def make_error_msg(self, msg):
-        logger.error("Error including file '" + "," + self.args["file"] + "': " + msg)
+        logger.error(
+            "Error including file '" + "," + self.args["file"] + "': " + msg)
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
@@ -819,14 +853,16 @@ class InsertFileNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name': currentpage.comicsite.short_name,
-                                                                   'page_title': currentpage.title,
-                                                                   'dropboxpath': "remove"})
+        base_url = reverse('comicsite.views.insertedpage', kwargs={
+            'site_short_name': currentpage.comicsite.short_name,
+            'page_title': currentpage.title,
+            'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(filename) + "/"  # path of currently inserted file
+        current_path = ntpath.dirname(
+            filename) + "/"  # path of currently inserted file
         replaced = self.replacer.replace_links(contents,
                                                base_url,
                                                current_path)
@@ -852,7 +888,8 @@ class InsertFileNode(template.Node):
         # when all rendering is done, check if the final path is still not getting
         # into places it should not go.
         if not self.is_inside_project_data_folder(filepath, context["site"]):
-            error_msg = "'{}' cannot be opened because it is outside the current project.".format(filepath)
+            error_msg = "'{}' cannot be opened because it is outside the current project.".format(
+                filepath)
             return self.make_error_msg(error_msg)
 
         storage = DefaultStorage()
@@ -911,7 +948,8 @@ def insert_graph(parser, token):
     all_args = split[1:]
 
     if len(all_args) > 2:
-        error_message = "Expected no more than 2 arguments, found " + str(len(all_args))
+        error_message = "Expected no more than 2 arguments, found " + str(
+            len(all_args))
         return TemplateErrorNode(error_message + "usage: \n" + usagestr)
 
     else:
@@ -932,14 +970,16 @@ class InsertGraphNode(template.Node):
         self.replacer = replacer
 
     def make_error_msg(self, msg):
-        logger.error("Error rendering graph from file '" + "," + self.args["file"] + "': " + msg)
+        logger.error("Error rendering graph from file '" + "," + self.args[
+            "file"] + "': " + msg)
         errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
 
         filename_raw = self.args['file']
-        filename_clean = substitute(filename_raw, context["request"].GET.items())
+        filename_clean = substitute(filename_raw,
+                                    context["request"].GET.items())
 
         # If any url parameters are still in filename they were not replaced. This filename
         # is missing information..
@@ -955,7 +995,8 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(error_msg)
 
         project_name = context.page.comicsite.short_name
-        filename = os.path.join(settings.DROPBOX_ROOT, project_name, filename_clean)
+        filename = os.path.join(settings.DROPBOX_ROOT, project_name,
+                                filename_clean)
 
         storage = DefaultStorage()
         try:
@@ -967,14 +1008,16 @@ class InsertGraphNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={'site_short_name': context.page.comicsite.short_name,
-                                                                   'page_title': context.page.title,
-                                                                   'dropboxpath': "remove"})
+        base_url = reverse('comicsite.views.insertedpage', kwargs={
+            'site_short_name': context.page.comicsite.short_name,
+            'page_title': context.page.title,
+            'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(filename_clean) + "/"  # path of currently inserted file
+        current_path = ntpath.dirname(
+            filename_clean) + "/"  # path of currently inserted file
 
         try:
             render_function = getrenderer(self.args["type"])
@@ -992,8 +1035,10 @@ class InsertGraphNode(template.Node):
 
         except Exception as e:
             if RENDER_FRIENDLY_ERRORS:
-                return self.make_error_msg(str("Error in render funtion '%s()' : %s" % (render_function.__name__,
-                                                                                        traceback.format_exc(0))))
+                return self.make_error_msg(str(
+                    "Error in render funtion '%s()' : %s" % (
+                        render_function.__name__,
+                        traceback.format_exc(0))))
             else:
                 raise
         # self.get_graph_svg(table,headers)
@@ -1017,8 +1062,10 @@ def getrenderer(renderer_format):
                  "anode09_table": render_anode09_table, }
 
     if renderer_format not in renderers:
-        raise Exception("reader for format '%s' not found. Available formats: %s" % (renderer_format,
-                                                                                     ",".join(renderers.keys())))
+        raise Exception(
+            "reader for format '%s' not found. Available formats: %s" % (
+                renderer_format,
+                ",".join(renderers.keys())))
 
     return renderers[renderer_format]
 
@@ -1065,7 +1112,9 @@ def parse_csv_table(has_header, f):
             i = i + 1
     except ValueError as e:  #
         # pdb.set_trace()
-        raise ParserException("Error parsing '{}' (item {} on row {}) in file '{}'".format(row[j], j, i, f))
+        raise ParserException(
+            "Error parsing '{}' (item {} on row {}) in file '{}'".format(
+                row[j], j, i, f))
 
     return table, headers
 
@@ -1098,7 +1147,8 @@ def render_FROC(filename):
     canvas = FigureCanvas(fig)
 
     for i in range(1, len(columns)):
-        fig.gca().plot(columns[0], columns[i], label=headers[i], gid=escaped_headers[i])
+        fig.gca().plot(columns[0], columns[i], label=headers[i],
+                       gid=escaped_headers[i])
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
     fig.gca().legend(loc='best', prop={'size': 10})
@@ -1133,7 +1183,8 @@ def render_table(filename):
 
     table_id = id_generator()
 
-    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="{}">""".format(table_id)
+    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="{}">""".format(
+        table_id)
 
     if has_header:
         tableHTML += "<thead>"
@@ -1204,7 +1255,8 @@ def render_anode09_result(filename):
     }
 
     for key, label in classes.items():
-        fig.gca().plot(variables["x"], variables[key + "y"], label=label, gid=key)
+        fig.gca().plot(variables["x"], variables[key + "y"], label=label,
+                       gid=key)
 
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
@@ -1270,13 +1322,20 @@ def render_anode09_table(filename):
         </tr></thead>""" % table_id
 
     tableHTML = tableHTML + "<tbody>"
-    tableHTML = tableHTML + array_to_table_row(["small nodules"] + variables["smallscore"])
-    tableHTML = tableHTML + array_to_table_row(["large nodules"] + variables["largescore"])
-    tableHTML = tableHTML + array_to_table_row(["isolated nodules"] + variables["isolatedscore"])
-    tableHTML = tableHTML + array_to_table_row(["vascular nodules"] + variables["vascularscore"])
-    tableHTML = tableHTML + array_to_table_row(["pleural nodules"] + variables["pleuralscore"])
-    tableHTML = tableHTML + array_to_table_row(["peri-fissural nodules"] + variables["fissurescore"])
-    tableHTML = tableHTML + array_to_table_row(["all nodules"] + variables["frocscore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["small nodules"] + variables["smallscore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["large nodules"] + variables["largescore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["isolated nodules"] + variables["isolatedscore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["vascular nodules"] + variables["vascularscore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["pleural nodules"] + variables["pleuralscore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["peri-fissural nodules"] + variables["fissurescore"])
+    tableHTML = tableHTML + array_to_table_row(
+        ["all nodules"] + variables["frocscore"])
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
 
@@ -1326,7 +1385,8 @@ def parse_php_arrays(filename):
             print("parsing %s into int arrays.. " % filename)
 
         # check wheteher this looks like a php var
-        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);", re.DOTALL)
+        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
+                            re.DOTALL)
         for var in phpvars:
             result = phpvar.search(var)
 
@@ -1338,8 +1398,9 @@ def parse_php_arrays(filename):
 
             if len(result.groups()) != 2:
                 msg = "Expected to find  varname and content,\
-                      but regex '%s' found %d items:%s " % (phpvar.pattern, len(result.groups()),
-                                                            "[" + ",".join(result.groups()) + "]")
+                      but regex '%s' found %d items:%s " % (
+                    phpvar.pattern, len(result.groups()),
+                    "[" + ",".join(result.groups()) + "]")
                 continue
 
             (varname, varcontent) = result.groups()
@@ -1379,7 +1440,8 @@ class UrlParameterNode(template.Node):
         self.args = args
 
     def make_error_msg(self, msg):
-        logger.error("Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg)
+        logger.error("Error in url_parameter tag: '" + ",".join(
+            self.args) + "': " + msg)
         errormsg = "Error in url_parameter tag"
         return makeErrorMsgHtml(errormsg)
 
@@ -1388,9 +1450,10 @@ class UrlParameterNode(template.Node):
         if self.args['url_parameter'] in context['request'].GET:
             return context['request'].GET[self.args['url_parameter']]
         else:
-            logger.error("Error rendering %s: Parameter '%s' not found in request URL" % (
-                "{%  " + self.args['token'].contents + "%}",
-                self.args['url_parameter']))
+            logger.error(
+                "Error rendering %s: Parameter '%s' not found in request URL" % (
+                    "{%  " + self.args['token'].contents + "%}",
+                    self.args['url_parameter']))
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
 
@@ -1413,9 +1476,10 @@ def render_all_projectlinks(parser, token):
     args = parseKeyValueToken(token)
 
     if len(args) > 1:
-        errormsg = "Error rendering {% {0} %}: expected at most one argument, but found [{1}]".format(token.contents,
-                                                                                                      ",".join(
-                                                                                                          args.keys()))
+        errormsg = "Error rendering {% {0} %}: expected at most one argument, but found [{1}]".format(
+            token.contents,
+            ",".join(
+                args.keys()))
         return TemplateErrorNode(errormsg)
 
     if len(args) == 1:
@@ -1451,7 +1515,8 @@ class AllProjectLinksNode(template.Node):
             projectlinks.append(project.to_projectlink())
 
         if self.args:
-            html = self.render_project_links(projectlinks, self.args["max_projects"])
+            html = self.render_project_links(projectlinks,
+                                             self.args["max_projects"])
         else:
             projectlinks += self.read_grand_challenge_projectlinks()
             html = self.render_project_links_per_year(projectlinks)
@@ -1463,11 +1528,10 @@ class AllProjectLinksNode(template.Node):
         html = u"""
                   {filter_buttons_HTML}
                   <div id='projectlinks'>
-                    <ul>{html}
-                        <div style='clear:both'></div>
-                    </ul>
-                  </div> """.format(filter_buttons_HTML=self.get_filter_buttons_HTML(),
-                                    html=html)
+                    {html}
+                  </div> """.format(
+            filter_buttons_HTML=self.get_filter_buttons_HTML(),
+            html=html)
         return html
 
     def get_filter_buttons_HTML(self):
@@ -1511,15 +1575,24 @@ class AllProjectLinksNode(template.Node):
 
         html = ""
         for year in years:
-            yearheader = "<div class ='yearHeader' id ='{0}'><a class ='yearHeaderAnchor'>{0}</a></div>".format(year[0])
-            # html += yearheader
-            # html += "\n".join([link.render_to_html() for link in year[1]])
-            projectlinks = "\n".join([self.render_to_html(link) for link in year[1]])
-            html += u"<div class=projectlinksyearcontainer \
-                    style='background-color:{0}'>{1}{2} <div style='clear:both;'>\
-                    </div></div>".format("none",
-                                         yearheader,
-                                         projectlinks)
+            yearheader = "<div class ='yearHeader' id ='{0}'><h2>{0}</h2></div>".format(
+                year[0])
+            projectlinks = ""
+            for i, link in enumerate(year[1]):
+                projectlinks += self.render_to_html(link)
+                # This is needed for proper card wrapping
+                projectlinks += '<div class="clearfix visible-xs-block"></div>'
+                # We're displaying 3 items in a row on small, medium and large screens
+                if (i + 1) % 3 == 0:
+                    projectlinks += '<div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>'
+
+            html += u"""
+            <div class='projectlinksyearcontainer'>
+                {0}
+                <div class='row'>
+                    {1}
+                </div>
+            </div>""".format(yearheader, projectlinks)
 
         return html
 
@@ -1552,22 +1625,20 @@ class AllProjectLinksNode(template.Node):
         """ return html representation of projectlink """
 
         html = u"""
-               <a id="{abreviation}">
-               <div class = "projectlink {link_class} {year}">
-                 <div class ="top">
-                     <a href="{url}">
-                       <img alt="" src="{thumb_image_url}" height="100" border="0" width="100">
-                     </a>
-                     
-                     
-                     <div class="stats">{stats} </div>
-                 </div>                     
-                 <div class ="bottom">
-                   <div class="projectname"> {projectname} </div>
-                   <div class="description"> {description} </div>
-                 </div>
-                 <div class ="bottom linktarget" onclick="location.href='{url}'">
-                   
+               <div class="col-sm-4 projectlink {link_class} {year}">
+                 <div class="panel panel-default">
+                   <a id="{abreviation}" href="{url}" style="display:block">
+                   <div class="panel-heading projectLinkHeading">
+                     <div class="projectLinkImage">
+                       <img alt="" src="{thumb_image_url}">
+                     </div>
+                     <div class="projectLinkName">
+                       <h3>{projectname}</h3>
+                     </div>
+                   </div>
+                   </a>
+                   <div class="panel-body projectLinkBody">{description}</div>
+                   <div class="panel-footer projectLinkFooter">{stats}</div>
                  </div>
                </div>
                 """.format(link_class=self.get_link_classes(projectlink),
@@ -1608,9 +1679,10 @@ class AllProjectLinksNode(template.Node):
         stats = []
 
         if projectlink.params["open for submission"] == "yes":
-            open_for_submissions_HTML = self.make_link(self.get_submission_link(projectlink),
-                                                       "Open for submissions",
-                                                       "submissionlink")
+            open_for_submissions_HTML = self.make_link(
+                self.get_submission_link(projectlink),
+                "Open for submissions",
+                "submissionlink")
             stats.append(open_for_submissions_HTML)
 
         if projectlink.params["data download"] == "yes":
@@ -1625,16 +1697,21 @@ class AllProjectLinksNode(template.Node):
             stats.append(data_download_HTML)
 
         if projectlink.params["submitted results"]:
-            submissionstring = ("results: " + str(projectlink.params["submitted results"]))
+            submissionstring = (
+                "results: " + str(projectlink.params["submitted results"]))
             if projectlink.params["last submission date"]:
-                submissionstring += ", Latest: " + self.format_date(projectlink.params["last submission date"])
+                submissionstring += ", Latest: " + self.format_date(
+                    projectlink.params["last submission date"])
             stats.append(submissionstring)
 
-        if projectlink.params["workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():
-            stats.append("workshop: " + self.format_date(projectlink.params["workshop date"]))
+        if projectlink.params[
+            "workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():
+            stats.append("workshop: " + self.format_date(
+                projectlink.params["workshop date"]))
 
         if projectlink.params["event name"]:
-            stats.append("Associated with: " + self.make_event_link(projectlink))
+            stats.append(
+                "Associated with: " + self.make_event_link(projectlink))
 
         if projectlink.params["overview article journal"]:
             stats.append("Article: " + self.make_article_link(projectlink))
@@ -1648,7 +1725,8 @@ class AllProjectLinksNode(template.Node):
             stats_caps.append(self.capitalize(string))
 
         # put divs around each statistic in the stats list
-        stats_html = "".join(["<div>{}</div>".format(stat) for stat in stats_caps])
+        stats_html = "".join(
+            ["<div>{}</div>".format(stat) for stat in stats_caps])
 
         return stats_html
 
@@ -1669,7 +1747,8 @@ class AllProjectLinksNode(template.Node):
         """
         if projectlink.params["event URL"]:
             return self.make_link(projectlink.params["event URL"],
-                                  projectlink.params["event name"], "eventlink")
+                                  projectlink.params["event name"],
+                                  "eventlink")
         else:
             return projectlink.params["event name"]
 
@@ -1716,7 +1795,8 @@ class AllProjectLinksNode(template.Node):
         else:
             link_class_HTML = "class=" + link_class
 
-        return "<a href='{0}' {1}>{2}</a>".format(link_url, link_class, link_text)
+        return "<a href='{0}' {1}>{2}</a>".format(link_url, link_class,
+                                                  link_text)
 
     def get_thumb_url(self, projectlink):
         """ For displaying a little thumbnail image for each project, in 
@@ -1729,7 +1809,8 @@ class AllProjectLinksNode(template.Node):
             thumb_image_url = reverse('project_serve_file',
                                       args=[settings.MAIN_PROJECT_NAME,
                                             "public_html/images/all_challenges/{0}.png".format(
-                                                projectlink.params["abreviation"])])
+                                                projectlink.params[
+                                                    "abreviation"])])
 
             # thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
 
@@ -1741,7 +1822,8 @@ class AllProjectLinksNode(template.Node):
         if subdomain_is_projectname():
             protocol, domainname = settings.MAIN_HOST_NAME.split("//")
             url = protocol + "//" + project.short_name + "." + domainname
-            html = comicsite.views.comic_site_to_grand_challenge_html(project, url)
+            html = comicsite.views.comic_site_to_grand_challenge_html(project,
+                                                                      url)
         else:
             html = comicsite.views.comic_site_to_grand_challenge_html(project)
 
@@ -1760,12 +1842,14 @@ class AllProjectLinksNode(template.Node):
         except IOError as e:
 
             logger.error("Could not read any projectlink information from"
-                         " '%s' returning empty list. trace: %s " % (filepath, traceback.format_exc()))
+                         " '%s' returning empty list. trace: %s " % (
+                             filepath, traceback.format_exc()))
             projectlinks = []
 
         projectlinks_clean = []
         for projectlink in projectlinks:
-            projectlinks_clean.append(self.clean_grand_challenge_projectlink(projectlink))
+            projectlinks_clean.append(
+                self.clean_grand_challenge_projectlink(projectlink))
 
         return projectlinks_clean
 
@@ -1782,11 +1866,13 @@ class AllProjectLinksNode(template.Node):
                 projectlink.params[key] = int(param)
 
         if projectlink.params["last submission date"]:
-            projectlink.params["last submission date"] = self.determine_project_date(
+            projectlink.params[
+                "last submission date"] = self.determine_project_date(
                 projectlink.params["last submission date"])
 
         if projectlink.params["workshop date"]:
-            projectlink.params["workshop date"] = self.determine_project_date(projectlink.params["workshop date"])
+            projectlink.params["workshop date"] = self.determine_project_date(
+                projectlink.params["workshop date"])
 
         return projectlink
 
@@ -1842,19 +1928,23 @@ class RegistrationFormNode(template.Node):
             return msg
 
     def get_signup_link(self, context, project):
-        register_url = reverse('comicsite.views._register', kwargs={'site_short_name': project.short_name})
+        register_url = reverse('comicsite.views._register',
+                               kwargs={'site_short_name': project.short_name})
         # nested if loops through the roof. What would uncle Bob say?
         # "nested if loops are a missed chance for inheritance."
         # TODO: possible way out: create some kind of registration request
         # manager which can be asked these things
         if project.require_participant_review:
-            pending = RegistrationRequest.objects.get_pending_registration_requests(context['user'], project)
+            pending = RegistrationRequest.objects.get_pending_registration_requests(
+                context['user'], project)
             if pending:
                 msg = pending[0].status_to_string()
             else:
-                msg = create_HTML_a(register_url, "Request to participate in " + project.short_name)
+                msg = create_HTML_a(register_url,
+                                    "Request to participate in " + project.short_name)
         else:
-            msg = create_HTML_a(register_url, "Participate in " + project.short_name)
+            msg = create_HTML_a(register_url,
+                                "Participate in " + project.short_name)
         return msg
 
 
@@ -1879,7 +1969,8 @@ def HTML_encode_django_chars(string):
 
 
 def makeErrorMsgHtml(text):
-    errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(text) + " </span></p>"
+    errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(
+        text) + " </span></p>"
     return errorMsgHTML
 
 
@@ -1901,16 +1992,24 @@ def display_project_statistics(parser, token):
                   of residence entered by each user of the framework when they signed up.
                   """
 
-    return ProjectStatisticsNode(allusers=True)
+    try:
+        _, include_header = token.split_contents()
+        if include_header.lower() == "false":
+            include_header = False
+    except ValueError:
+        include_header = True
+
+    return ProjectStatisticsNode(allusers=True, include_header=include_header)
 
 
 class ProjectStatisticsNode(template.Node):
-    def __init__(self, allusers=False):
+    def __init__(self, allusers=False, include_header=True):
         """
         Allusers is meant to be used on the main website, and does not filter for
         current project, but shows all registered users in the whole system
         """
         self.allusers = allusers
+        self.include_header = include_header
 
     def render(self, context):
         """
@@ -1923,28 +2022,32 @@ class ProjectStatisticsNode(template.Node):
         key = 'ProjectStatisticsNode.{}.{}'.format(project_name, all_users)
         content = cache.get(key)
         if content is None:
-            content = self._get_map(project_name, all_users)
+            content = self._get_map(project_name, all_users,
+                                    self.include_header)
             cache.set(key, content, 10 * 60)
         return content
 
     @classmethod
-    def _get_map(cls, project_name, all_users):
+    def _get_map(cls, project_name, all_users, include_header):
 
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
 
         # Get the users belonging to this project
         perm = Group.objects.get(name='{}_participants'.format(project_name))
+        User = get_user_model()
         if all_users:
             users = User.objects.all().distinct()
         else:
             users = User.objects.filter(groups=perm).distinct()
 
-        country_counts = UserProfile.objects.filter(user__in=users).values('country').annotate(dcount=Count('country'))
+        country_counts = UserProfile.objects.filter(user__in=users).values(
+            'country').annotate(dcount=Count('country'))
 
         chart_data = [['Country', '#Participants']]
         for country_count in country_counts:
-            chart_data.append([str(country_count['country']), country_count['dcount']])
+            chart_data.append(
+                [str(country_count['country']), country_count['dcount']])
 
         snippet_geochart = """
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -1961,16 +2064,17 @@ class ProjectStatisticsNode(template.Node):
                 chart.draw(data, options);
             }};
         </script>
-        <div id="chart_div" style="width: 100%; height: 170px;"></div>
+        <div id="chart_div"></div>
         """.format(data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY)
 
-        snippet = """
-        <h1>Statistics</h1><br>
+        snippet = ""
 
-        <p># of users: {num_users}</p>
+        if include_header:
+            snippet += "<h1>Statistics</h1><br/>\n"
 
+        snippet += """
+        <p>Number of users: {num_users}</p>
         {geochart}
-
         """.format(num_users=len(users), geochart=snippet_geochart)
 
         return snippet_header + snippet + snippet_footer

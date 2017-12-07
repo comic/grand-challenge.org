@@ -1,8 +1,11 @@
 beautifulsoup4==4.6.0
 celery==4.0.2
 django==1.8.18
+# ONLY REQUIRED FOR DJANGO 1.8
+django-auth-mixins==1.0.1
 django-countries==4.5
-django-userena==1.5.1
+django-crispy-forms==1.7.0
+django-userena-ce==3.0.2
 djangorestframework==3.6.3
 docker==2.4.2
 matplotlib==2.0.2
@@ -17,4 +20,5 @@ xlrd==0.9.4
 # Dev Requirements
 pytest-django
 pytest-cov
+pytest-mock
 factory_boy

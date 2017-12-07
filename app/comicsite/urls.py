@@ -2,7 +2,6 @@ from django.conf.urls import url, include
 from django.views.generic import TemplateView
 
 from comicsite.admin import projectadminurls
-from profiles.forms import SignupFormExtra
 
 urlpatterns = [
 
@@ -21,18 +20,10 @@ urlpatterns = [
         TemplateView.as_view(template_name='robots.html'),
         name="comicsite_robots_txt"),
 
-    url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
+    url(r'^(?P<challenge_short_name>[\w-]+)/evaluation/',
+        include('evaluation.urls', namespace='evaluation')),
 
-    # these registration and account views are viewed in the context of a
-    # project
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signin/$',
-        'comicsite.views.signin',
-        name="comicsite_signin"),
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signup/$',
-        'comicsite.views.signup',
-        {'signup_form': SignupFormExtra}, name="comicsite_signup"),
-    url(r'^(?P<site_short_name>[\w-]+)/accounts/signup_complete/$',
-        'comicsite.views.signup_complete', name="comicsite_signup_complete"),
+    url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
     url(r'^(?P<site_short_name>[\w-]+)/files/$',
         'comicmodels.views.upload_handler'),
@@ -43,9 +34,6 @@ urlpatterns = [
 
     url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
         'comicsite.views._register'),
-
-    url(r'^(?P<site_short_name>[\w-]+)/source/(?P<page_title>[\w-]+)/$',
-        'comicsite.views.pagesource'),
 
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         'comicsite.api.get_public_results'),

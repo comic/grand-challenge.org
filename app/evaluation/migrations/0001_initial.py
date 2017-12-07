@@ -2,19 +2,19 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-import evaluation.validators
+import django.db.models.deletion
+from django.conf import settings
 import uuid
 import evaluation.models
-from django.conf import settings
-import django.db.models.deletion
 import social_django.fields
+import evaluation.validators
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comicmodels', '0008_auto_20170623_1341'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('comicmodels', '0011_comicsite_use_evaluation'),
     ]
 
     operations = [
@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
                 ('status', models.PositiveSmallIntegerField(default=0, choices=[(0, 'The task is waiting for execution'), (1, 'The task has been started'), (2, 'The task is to be retried, possibly because of failure'), (3, 'The task raised an exception, or has exceeded the retry limit'), (4, 'The task executed successfully'), (5, 'The task was cancelled')])),
                 ('status_history', social_django.fields.JSONField(default=dict)),
                 ('output', models.TextField()),
+                ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
             ],
             options={
                 'abstract': False,
@@ -38,10 +39,12 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary',)), evaluation.validators.ContainerImageValidator(single_image=True)], upload_to=evaluation.models.method_image_path)),
+                ('ready', models.BooleanField(default=False, editable=False, help_text='Is this method ready to be used?')),
+                ('status', models.TextField(editable=False)),
+                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary', 'application/x-tar'))], upload_to=evaluation.models.method_image_path)),
                 ('image_sha256', models.CharField(max_length=71, editable=False)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
@@ -53,8 +56,7 @@ class Migration(migrations.Migration):
                 ('metrics', social_django.fields.JSONField(default=dict)),
                 ('public', models.BooleanField(default=True)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
-                ('method', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='evaluation.Method')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('job', models.OneToOneField(null=True, to='evaluation.Job')),
             ],
             options={
                 'abstract': False,
@@ -79,6 +81,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
                 ('csrf', models.CharField(max_length=128)),
                 ('client_id', models.CharField(max_length=128, null=True)),
+                ('client_filename', models.CharField(max_length=128)),
                 ('file_id', models.UUIDField()),
                 ('timeout', models.DateTimeField()),
                 ('file', models.FileField(upload_to='')),
@@ -93,9 +96,9 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/zip',))], upload_to=evaluation.models.challenge_submission_path)),
+                ('file', models.FileField(validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/zip',))], upload_to=evaluation.models.submission_file_path)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'abstract': False,
@@ -104,15 +107,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='job',
             name='method',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='evaluation.Method'),
+            field=models.ForeignKey(to='evaluation.Method'),
         ),
         migrations.AddField(
             model_name='job',
             name='submission',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='evaluation.Submission'),
+            field=models.ForeignKey(to='evaluation.Submission'),
         ),
         migrations.AlterUniqueTogether(
             name='method',
-            unique_together=set([('challenge', 'created')]),
+            unique_together=set([('challenge', 'image_sha256')]),
         ),
     ]

@@ -1,9 +1,11 @@
 {% extends "site.html" %}
+{% load crispy_forms_tags %}
 
 {% block pagecontent %}
 
-    <form action="" method="post">{% csrf_token %}
-        {{ form.as_p }}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form | crispy }}
         <input type="submit" value="Save"/>
     </form>
 

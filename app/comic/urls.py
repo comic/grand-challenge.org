@@ -3,6 +3,8 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.views.generic import TemplateView
 
+from comicmodels.views import ChallengeCreate
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -25,23 +27,22 @@ urlpatterns = [
 
     url(r'^site/', include('comicsite.urls'), name='site'),
 
-    url(r'^projectlinks/$', 'comicsite.views.projectlinks'),
-
     url(r'^filetransfers/', include('filetransfers.urls')),
 
-    url(r'^evaluation/', include('evaluation.urls')),
+    # Do not change the namespace without updating the view names in
+    # evaluation.serializers
+    url(r'^api/', include('api.urls', namespace='api')),
 
     # Used for logging in and managing profiles. This is done on the framework
     # level because it is too hard to get this all under each project
     url(r'^accounts/', include('profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
 
-    # Submit a project for addition to the projects overview
-    url(r'^submit_existing_project/$',
-        'comicsite.views.submit_existing_project'),
-
     # WYSIWYG editor for HTML
     url(r'^ckeditor/', include('ckeditor.urls')),
+
+    url(r'^create_challenge/$', ChallengeCreate.as_view(),
+        name='challenge_create'),
 
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
@@ -49,16 +50,7 @@ urlpatterns = [
     # order
     url(r'^(?P<page_title>[\w-]+)/$', 'comicsite.views.comicmain'),
 
-]
+    url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$',
+                             'filetransfers.views.serve'),
 
-if settings.DEBUG:
-    # static files (images, css, javascript, etc.)
-    urlpatterns += patterns('',
-                            (r'^media/(?P<path>.*)$',
-                             'django.views.static.serve', {
-                                 'document_root': settings.MEDIA_ROOT}))
-else:
-    urlpatterns += patterns('',
-                            (r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$',
-                             'filetransfers.views.serve', {
-                                 'document_root': settings.MEDIA_ROOT}))
+]

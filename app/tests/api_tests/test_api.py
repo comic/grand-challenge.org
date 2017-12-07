@@ -3,32 +3,32 @@ import os
 
 import pytest
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
 from evaluation.models import Submission
-from evaluation.tests.factories import UserFactory
-
-TOKEN_URL = '/evaluation/api-token-auth/'
+from tests.factories import UserFactory, ChallengeFactory
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "test_input, expected",
-    [("results", "Result List"),
-     ("submissions", "Submission List"),
-     ("jobs", "Job List"),
-     ("methods", "Method List")]
+    [("result", "Result List"),
+     ("submission", "Submission List"),
+     ("job", "Job List"),
+     ("method", "Method List")]
 )
 def test_api_pages(client, test_input, expected):
     # Check for the correct HTML view
-    response = client.get('/evaluation/api/v1/%s/' % test_input,
+    url = reverse(f'api:{test_input}-list')
+    response = client.get(url,
                           HTTP_ACCEPT='text/html')
     assert expected in force_text(response.content)
     assert response.status_code == 200
 
     # There should be no content, but we should be able to do json.loads
-    response = client.get('/evaluation/api/v1/%s/' % test_input,
+    response = client.get(url,
                           HTTP_ACCEPT='application/json')
     assert response.status_code == 200
     assert not json.loads(response.content)
@@ -36,13 +36,15 @@ def test_api_pages(client, test_input, expected):
 
 @pytest.mark.django_db
 def test_token_generation(client):
+    token_url = reverse('api:obtain-auth-token')
+
     # Check that we cannot get a token
-    response = client.get(TOKEN_URL)
+    response = client.get(token_url)
     assert response.status_code == 405
 
     # Check that we can get the token for a new user, using post
     user = UserFactory()
-    response = client.post(TOKEN_URL,
+    response = client.post(token_url,
                            {'username': user.username,
                             'password': 'testpasswd'})
 
@@ -62,15 +64,22 @@ def test_upload_file(client, test_file, expected_response):
                                    test_file)
     # Get the users token
     user = UserFactory()
-    response = client.post(TOKEN_URL,
+
+    challenge = ChallengeFactory()
+
+    token_url = reverse('api:obtain-auth-token')
+
+    response = client.post(token_url,
                            {'username': user.username,
                             'password': 'testpasswd'})
     token = response.data['token']
 
+    submission_url = reverse('api:submission-list')
+
     # Upload with token authorisation
     with open(submission_file, 'rb') as f:
-        response = client.post('/evaluation/api/v1/submissions/',
-                               {'file': f, 'challenge': 'comic'},
+        response = client.post(submission_url,
+                               {'file': f, 'challenge': challenge.short_name},
                                format='multipart',
                                HTTP_AUTHORIZATION='Token ' + token)
     assert response.status_code == expected_response
@@ -78,8 +87,8 @@ def test_upload_file(client, test_file, expected_response):
     # Upload with session authorisation
     client.login(username=user.username, password='testpasswd')
     with open(submission_file, 'rb') as f:
-        response = client.post('/evaluation/api/v1/submissions/',
-                               {'file': f, 'challenge': 'comic'},
+        response = client.post(submission_url,
+                               {'file': f, 'challenge': challenge.short_name},
                                format='multipart')
     assert response.status_code == expected_response
 
@@ -88,6 +97,11 @@ def test_upload_file(client, test_file, expected_response):
         assert len(submissions) == 2
     else:
         assert len(submissions) == 0
+
+    # We should not be able to download submissions
+    for submission in Submission.objects.all():
+        response = client.get(submission.file.url)
+        assert response.status_code == 403
 
     # Cleanup
     for submission in submissions:

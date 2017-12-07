@@ -2,12 +2,37 @@
 
 {% block pagecontent %}
 
-    <h1>Evaluation Results</h1>
+    <h1>Results</h1>
 
-    {% for result in object_list %}
-        <li>{{ result }}</li>
-    {% empty %}
-        <li>No results yet</li>
-    {% endfor %}
+    <table class="table" id="resultsTable">
+        <thead>
+        <tr>
+            <th>User</th>
+            <th>Date</th>
+            <th>Metrics</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for result in object_list %}
+            {% if result.public %}
+                <tr>
+                    <td><a
+                            href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                        {{ result.job.submission.creator }}</a></td>
+                    <td>{{ result.created }}</td>
+                    <td>{{ result.metrics }}</td>
+                </tr>
+            {% endif %}
+        {% empty %}
+            No results yet
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#resultsTable').DataTable();
+        });
+    </script>
 
 {% endblock %}

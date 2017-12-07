@@ -1,100 +1,93 @@
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
-from django.views.generic import CreateView, ListView, DetailView
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.viewsets import ModelViewSet
+from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
 from comicmodels.models import ComicSite
+from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
+    UserIsChallengeParticipantOrAdminMixin
 from evaluation.forms import UploadForm
 from evaluation.models import Result, Submission, Job, Method
-from evaluation.serializers import ResultSerializer, SubmissionSerializer, \
-    JobSerializer, MethodSerializer
 from evaluation.widgets.uploader import AjaxUploadWidget
 
 
-class ResultViewSet(ModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
+    template_name = "evaluation/manage.html"
 
 
-class SubmissionViewSet(ModelViewSet):
-    queryset = Submission.objects.all()
-    serializer_class = SubmissionSerializer
-    parser_classes = (MultiPartParser, FormParser,)
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user,
-                        challenge=ComicSite.objects.get(
-                            short_name=self.request.data.get('challenge')),
-                        file=self.request.data.get('file'))
-
-
-class JobViewSet(ModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
-class MethodViewSet(ModelViewSet):
-    queryset = Method.objects.all()
-    serializer_class = MethodSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
-class MethodCreate(CreateView):
-    # TODO: Challenge Admin Only
+class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
-    fields = '__all__'
+    fields = ['image']
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.challenge = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(MethodCreate, self).form_valid(form)
 
 
-class MethodList(ListView):
-    # TODO: Challenge Admin Only
+class MethodList(UserIsChallengeAdminMixin, ListView):
+    model = Method
+
+    def get_queryset(self):
+        queryset = super(MethodList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
+
+
+class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class MethodDetail(DetailView):
-    # TODO: Challenge Admin Only
-    model = Method
-
-
-class SubmissionCreate(CreateView):
-    # TODO: Challenge Participant Only
+class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     model = Submission
-    fields = '__all__'
+    fields = ['file']
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.challenge = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(SubmissionCreate,self).form_valid(form)
 
 
-class SubmissionList(ListView):
-    # TODO: Challenge Admin Only
-    model = Submission
-
-
-class SubmissionDetail(DetailView):
-    # TODO: Challenge Admin Only
+class SubmissionList(UserIsChallengeAdminMixin, ListView):
+    # TODO - if participant: list only their submissions
     model = Submission
 
+    def get_queryset(self):
+        queryset = super(SubmissionList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
 
-class JobCreate(CreateView):
-    # TODO: Challenge Admin Only
+
+class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
+    # TODO - if participant: list only their submissions
+    model = Submission
+
+
+class JobCreate(UserIsChallengeAdminMixin, CreateView):
     model = Job
     fields = '__all__'
 
 
-class JobList(ListView):
-    # TODO: Challenge Admin Only
+class JobList(UserIsChallengeAdminMixin, ListView):
+    # TODO - if participant: list only their jobs
     model = Job
 
+    def get_queryset(self):
+        queryset = super(JobList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
 
-class JobDetail(DetailView):
-    # TODO: Challenge Admin Only
+
+class JobDetail(UserIsChallengeAdminMixin, DetailView):
+    # TODO - if participant: list only their jobs
     model = Job
 
 
 class ResultList(ListView):
     model = Result
+
+    def get_queryset(self):
+        queryset = super(ResultList, self).get_queryset()
+        return queryset.filter(challenge__pk=self.request.project_pk)
 
 
 class ResultDetail(DetailView):
@@ -106,7 +99,8 @@ def uploader_widget_test(request: HttpRequest) -> HttpResponse:
         test_form = UploadForm(request.POST)
         if test_form.is_valid():
             result = "Success!!!\n"
-            result += "\n".join(f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
+            result += "\n".join(
+                f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
 
             result += "\n\n"
 

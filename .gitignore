@@ -81,5 +81,3 @@ docker-compose
 
 # Python cache
 .cache/
-!/app/evaluation/tests/resources/compressed.zip
-!/app/evaluation/tests/resources/compressed.7z

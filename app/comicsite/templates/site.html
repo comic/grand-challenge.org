@@ -20,33 +20,40 @@
     {% else %}
         {{ block.super }}
     {% endif %}
-
 {% endblock topheader %}
+
+{% block headerLink %}"{% url 'comicsite.views.site' site.short_name %}"
+{% endblock %}
 
 {% block headerTitle %}
     {% if site.header_image == "" %}
         <div class="noimage">
-            <a href="{% url 'comicsite.views.site' site.short_name %}">{{ site.short_name }}</a>
+            {{ site.short_name }}
         </div>
     {% else %}
+        <style>
+            #headerTitle {
+                padding: 0;
+            }
+        </style>
         <div class="image">
-            <a href="{% url 'comicsite.views.site' site.short_name %}"><img
-                    src="{% url 'project_serve_file' site.short_name site.header_image %}"></a>
+            <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
+                 class="headerImage">
         </div>
     {% endif %}
-
 {% endblock %}
 
 
 
 {% block topmenu %}
+
     {% for page in pages %}
         {% if not page.hidden %}
             {% if not forloop.first %}
-                <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+                <li role="separator" class="divider"></li>
             {% endif %}
-            <li>
-                <a class="menuItem {% if page == currentpage %}	selected{% endif %}"
+            <li {% if page == currentpage %}class="active"{% endif %}>
+                <a class="menuItem"
                    href="{% url 'comicsite.views.page' site.short_name page.title %}">
                     {% if page.display_title == "" %}
                         {{ page.title }}
@@ -59,19 +66,22 @@
         {% endif %}
     {% endfor %}
 
+    {% if site.use_evaluation %}
+        <li role="separator" class="divider"></li>
+        <li><a href="{% url 'evaluation:submission-create' site.short_name %}">Submit</a>
+        </li>
+        <li role="separator" class="divider"></li>
+        <li><a href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
+        </li>
+    {% endif %}
+
 {% endblock %}
 
 
 {% block loginbutton %}
     {% if site.hide_signin %}
-
     {% else %}
-        {% if user.is_authenticated %}
-            <a class="metaFooterItem last" href="{% url 'userena_signout' %}?next=/">Signout</a>
-        {% else %}
-            <a class="metaFooterItem last" href="{% url 'comicsite_signin' site.short_name %}?next=/">Sign in /
-                Register</a>
-        {% endif %}
+        {{ block.super }}
     {% endif %}
 {% endblock %}
 
@@ -82,9 +92,15 @@
     {% get_obj_perms user for site as "site_perms" %}
     {% if "change_comicsite" in site_perms or request.user.is_superuser %}
         {% if site.hide_footer %}
-            <li class="menuBullet"><img src="{{ STATIC_URL }}img/menu_bullet.png"></li>
+            <li role="separator" class="divider"></li>
         {% endif %}
         <li><a class="menuItem" href="{% url 'admin:index' %}">Admin</a></li>
+        {% if site.use_evaluation %}
+            <li role="separator" class="divider"></li>
+            <li><a href="{% url 'evaluation:manage' site.short_name %}">Evaluation</a>
+            </li>
+        {% endif %}
+
 
     {% endif %}
 
@@ -103,7 +119,6 @@
 
 {% block footer %}
     {% if site.hide_footer %}
-        <div style="height: 30px; width: 100%; float:left;"></div>
     {% else %}
         {{ block.super }}
     {% endif %}

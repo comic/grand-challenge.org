@@ -1,7 +1,5 @@
 import json
-import multiprocessing
 import os
-import typing
 import uuid
 from json import JSONDecodeError
 
@@ -11,8 +9,7 @@ from django.core.files import File
 from docker.errors import ContainerError
 
 from evaluation.backends.dockermachine.utils import cleanup, put_file
-from evaluation.exceptions import TimeoutException, SubmissionError, \
-    MethodContainerError
+from evaluation.exceptions import SubmissionError, MethodContainerError
 
 
 class Evaluator(object):
@@ -51,19 +48,9 @@ class Evaluator(object):
     def evaluate(self) -> dict:
         self._pull_images()
         self._create_io_volumes()
-        self._run(target=self._provision_input_volume, timeout=600)
-        self._run(target=self._run_evaluation, timeout=3600)
+        self._provision_input_volume()
+        self._run_evaluation()
         return self._get_result()
-
-    def _run(self, *, target: typing.Callable, timeout: int = None):
-        p = multiprocessing.Process(target=target)
-
-        p.start()
-        p.join(timeout)
-
-        if p.is_alive():
-            p.terminate()
-            raise TimeoutException(f'{target} timed out after {timeout} s.')
 
     def _pull_images(self):
         if len(self._client.images.list(name=self._io_image)) == 0:

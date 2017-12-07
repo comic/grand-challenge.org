@@ -1,27 +1,36 @@
+from urllib.parse import urljoin
+
 from django.conf import settings
 from django.core.urlresolvers import reverse as reverse_org
 
 
-def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None, current_app=None):
+def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
+            current_app=None):
     """ Reverse url, but try to use subdomain to designate site where possible.
     This means 'site1' will not get url 'hostname/site/site1' but rather 'projectname.hostname'
-    
-    I am not certain that this is the most elegant way to do this. However this will
-    currently solve the problem of links in projects overview being of the wrong kind 
     """
-    # TODO: The final clause in the if statement is a total hack. May posterity 
-    # forgive me for this method.
-    # What is needed is a clear and unanbiguous way to deal with subdomain as project name
-    # See for example the custom url template tag in comicsite.templatetags, which 
-    # does almost the same as this method but in an even more complex way. Both
-    # These methods should be refactored until they shine.  
 
-    from comicsite.templatetags.comic_templatetags import subdomain_is_projectname
-
-    if viewname == 'comicsite.views.site' and subdomain_is_projectname() and args[0] is not None:
-        protocol, domainname = settings.MAIN_HOST_NAME.split("//")
-        url = protocol + "//" + args[0] + "." + domainname
-
-        return url
+    if args is not None:
+        challenge_short_name = args[0]
+    elif 'challenge_short_name' in kwargs:
+        challenge_short_name = kwargs['challenge_short_name']
     else:
-        return reverse_org(viewname, urlconf, args, kwargs, prefix, current_app)
+        challenge_short_name = None
+
+    if settings.SUBDOMAIN_IS_PROJECTNAME and challenge_short_name:
+        protocol, domainname = settings.MAIN_HOST_NAME.split("//")
+        base_url = f"{protocol}//{challenge_short_name}.{domainname}".lower()
+
+        site_url = reverse_org('comicsite.views.site',
+                               args=[challenge_short_name]).lower()
+        target_url = reverse_org(viewname, urlconf, args, kwargs, prefix,
+                                 current_app).lower()
+
+        if target_url.startswith(site_url):
+            target_url = target_url.replace(site_url, "/")
+
+        return urljoin(base_url, target_url)
+
+    else:
+        return reverse_org(viewname, urlconf, args, kwargs, prefix,
+                           current_app)
