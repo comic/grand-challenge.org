@@ -79,6 +79,7 @@ class AjaxUploadWidget(Widget):
             self,
             *args,
             ajax_target_path: str = None,
+            multifile=True,
             **kwargs):
         super(AjaxUploadWidget, self).__init__(*args, **kwargs)
 
@@ -87,6 +88,8 @@ class AjaxUploadWidget(Widget):
 
         self.ajax_target_path = ajax_target_path
         self.timeout = timedelta(hours=2)
+
+        self.__multifile = multifile
 
     def _handle_complete(
             self,
@@ -240,6 +243,7 @@ class AjaxUploadWidget(Widget):
             "value": value,
             "name": name,
             "attrs": attrs,
+            "multi_upload": "true" if self.__multifile else "false",
         }
 
         return template.render(context=context)

@@ -22,6 +22,7 @@ function upload_fold_unfold(element) {
         var dropzone = upload_element;
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
+        var is_multiupload = upload_element.attr("multi_upload") === "true";
 
         var target_url = upload_element.attr("upload_target");
 
@@ -88,10 +89,16 @@ function upload_fold_unfold(element) {
         }
 
         function generate_uploaded_file_element(filename, uuid, extra_attributes) {
-            return $("<div>Uploaded: " + filename + "</div>")
+            return $("<div class='uploaded-file'>Uploaded: " + filename + "</div>")
         }
 
         var succeeded_uploads_list = [];
+        function clear_succeeded_list() {
+            succeeded_uploads_list = [];
+            upload_element.find("div.uploaded-file").remove();
+            update_hidden_form_element();
+        }
+
         function add_succeeded_upload(file_info_list) {
             for (var i = 0; i < file_info_list.length; i++) {
                 var file_info = file_info_list[i];
@@ -134,10 +141,16 @@ function upload_fold_unfold(element) {
 
 
         upload_element.on('fileuploaddone', function (e, data) {
+            if (!is_multiupload) {
+                clear_succeeded_list();
+            }
             add_succeeded_upload(data.result);
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
+            if (!is_multiupload) {
+                clear_succeeded_list();
+            }
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
                 add_failed_upload(file.name, "Sending failed.");
