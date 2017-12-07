@@ -246,6 +246,12 @@ class AjaxUploadWidget(Widget):
 
 
 class OpenedStagedAjaxFile(IOBase):
+    """
+    This class behaves like a file handle for a :class:`StagedAjaxFile`.
+    The file handle is strictly read-only. Under the hood, this class
+    reconstructs the contingent file from the file chunks that have been
+    uploaded.
+    """
     def __init__(self, _uuid):
         super(OpenedStagedAjaxFile, self).__init__()
 
@@ -356,6 +362,9 @@ class OpenedStagedAjaxFile(IOBase):
 
 
 class StagedAjaxFile:
+    """
+    File representation of otherwise loose chnks that belong to a single file.
+    """
     def __init__(self, _uuid: uuid.UUID):
         super(StagedAjaxFile, self).__init__()
 
@@ -371,19 +380,25 @@ class StagedAjaxFile:
 
     @property
     def uuid(self):
+        """ The uuid-representation of the file used in the actual form """
         return self.__uuid
 
     @property
     def name(self):
+        """ Returns the name specified by the clinet for the uploaded file
+        (might be unsafe!) """
         chunks_query = self._raise_if_missing()
         return chunks_query.first().client_filename
 
     @property
     def exists(self):
+        """ True if the file has not been cleaned up yet """
         return StagedFile.objects.filter(file_id=self.__uuid).exists()
 
     @property
     def size(self):
+        """ Total size of the file in bytes """
+
         chunks_query = self._raise_if_missing()
         chunks = chunks_query.all()
         if len(chunks) == 0:
@@ -412,11 +427,19 @@ class StagedAjaxFile:
 
     @property
     def is_complete(self):
+        """  False if the upload was incomplete or corrupted in another way """
         if not StagedFile.objects.filter(file_id=self.__uuid).exists():
             return False
         return self.size is not None
 
     def open(self):
+        """
+        Opens a file handle-like object for reading the file. Opens in read mode.
+
+        Returns
+        -------
+        :class:`OpenedStagedAjaxFile` represeting the opened file.
+        """
         if not self.is_complete:
             raise IOError("incomplete upload")
         return OpenedStagedAjaxFile(self.__uuid)
