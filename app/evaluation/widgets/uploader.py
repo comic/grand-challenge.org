@@ -206,7 +206,7 @@ class AjaxUploadWidget(Widget):
             "extra_attrs": {},
         }
 
-    def handle_ajax(self, request: HttpRequest):
+    def handle_ajax(self, request: HttpRequest, **kwargs):
         if request.method != "POST":
             return HttpResponseBadRequest()
 
