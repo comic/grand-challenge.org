@@ -2,11 +2,20 @@
      id="{{ attr.id }}"
      upload_target="{{ target }}"
      multi_upload="{{ multi_upload }}">
-    <input type="file" name="files[]" form="(null)"
-           {% if multi_upload == "true" %}multiple{% endif %}>
+
+    <span class="btn btn-success fileinput-button">
+        <i class="glyphicon glyphicon-plus"></i>
+        <span>Select files...</span>
+        <input type="file" name="files[]" form="(null)"
+               {% if multi_upload == "true" %}multiple{% endif %}>
+    </span>
+
+    <br>
+    <br>
 
     <div class="progress">
-        <div class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar"
+        <div class="progress-bar progress-bar-info progress-bar-striped active"
+             role="progressbar"
              style="width:0">
         </div>
     </div>
