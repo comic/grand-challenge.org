@@ -93,6 +93,7 @@ function upload_fold_unfold(element) {
         }
 
         var succeeded_uploads_list = [];
+
         function clear_succeeded_list() {
             succeeded_uploads_list = [];
             upload_element.find("div.uploaded-file").remove();
@@ -110,7 +111,7 @@ function upload_fold_unfold(element) {
                     )
                 );
                 succeeded_uploads_list.push(file_info);
-            };
+            }
             update_hidden_form_element();
         }
 
@@ -157,12 +158,19 @@ function upload_fold_unfold(element) {
             }
         });
 
-        var total_upload_progress_bar = upload_element.find("div.upload-bar");
+        var progress_div = upload_element.find("div.progress");
         upload_element.on('fileuploadprogressall', function (e, data) {
-            var percent = parseInt(data.loaded / data.total * 100, 10);
-            total_upload_progress_bar.progressbar({value: percent});
-            total_upload_progress_bar.find(".label").text("Uploading... " + percent + "%");
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            var progress_bar = progress_div.find('.progress-bar');
+            if (progress === parseInt(100, 10)) {
+                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
+            }
+            progress_bar.css(
+                'width',
+                progress + '%'
+            );
         });
+
     }
 
     $(function () {

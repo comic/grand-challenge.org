@@ -4,9 +4,13 @@
      multi_upload="{{ multi_upload }}">
     <input type="file" name="files[]" form="(null)"
            {% if multi_upload == "true" %}multiple{% endif %}>
-    <div class="upload-bar">
-        <div class="label"></div>
+
+    <div class="progress">
+        <div class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar"
+             style="width:0">
+        </div>
     </div>
+
     <div class="failed-list foldable folded">
         <p>
             <button form="null" onclick="upload_fold_unfold(this)"></button>
@@ -20,4 +24,8 @@
         <div>Drop files here</div>
     </div>
     <input name="{{ name }}" type="hidden" value="{{ value }}"/>
+
+
 </div>
+
+
