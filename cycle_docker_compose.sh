@@ -9,6 +9,8 @@ sleep 1
 
 while true ; do 
 	docker-compose up --build & cat 
-	docker-compose down
+	docker-compose restart web
+	docker-compose restart celery_worker
+	docker-compose restart celery_beat
 done
 
