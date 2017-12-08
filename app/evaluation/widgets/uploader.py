@@ -229,7 +229,10 @@ class AjaxUploadWidget(Widget):
         return JsonResponse(result, safe=False)
 
     def render(self, name, value, attrs=None):
-        template = get_template("widgets/uploader.html")
+        if self.__multifile:
+            template = get_template("widgets/multi_uploader.html")
+        else:
+            template = get_template("widgets/single_uploader.html")
 
         if isinstance(value, Iterable):
             value = ",".join(str(x) for x in value)

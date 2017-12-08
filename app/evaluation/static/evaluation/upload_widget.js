@@ -113,6 +113,10 @@ function upload_fold_unfold(element) {
                 succeeded_uploads_list.push(file_info);
             }
             update_hidden_form_element();
+
+            if (!is_multiupload) {
+                upload_element.parent().submit();
+            }
         }
 
         function update_hidden_form_element() {
@@ -134,23 +138,33 @@ function upload_fold_unfold(element) {
             return filename + '_' + rnd + '_' + date;
         }
 
+        var fileinput_button = upload_element.find("span.fileinput-button");
+        var progress_div = upload_element.find("div.progress");
+
         upload_element.on('fileuploadsubmit', function (e, data) {
+            if (!is_multiupload) {
+                fileinput_button.css("display","none");
+                progress_div.css("display", "block");
+            }
             data.formData = {
                 "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
             };
         });
 
+        var progress_bar = progress_div.find(".progress-bar");
 
         upload_element.on('fileuploaddone', function (e, data) {
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
+            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
             add_succeeded_upload(data.result);
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
             if (!is_multiupload) {
                 clear_succeeded_list();
+                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
             }
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
@@ -158,13 +172,8 @@ function upload_fold_unfold(element) {
             }
         });
 
-        var progress_div = upload_element.find("div.progress");
         upload_element.on('fileuploadprogressall', function (e, data) {
             var progress = parseInt(data.loaded / data.total * 100, 10);
-            var progress_bar = progress_div.find('.progress-bar');
-            if (progress === parseInt(100, 10)) {
-                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
-            }
             progress_bar.css(
                 'width',
                 progress + '%'
