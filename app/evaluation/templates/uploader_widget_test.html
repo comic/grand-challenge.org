@@ -6,14 +6,8 @@
 	{{ block.super }}
 	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
 	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
-	<!-- <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
 {% endblock %}
 
-{% block jquery_js %}
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
-{% endblock %}
 
 {% block content %}
 	<form action="" method="post">

@@ -47,21 +47,27 @@
                 Requires jquery from above, and uses bootstrap themes
             {% endcomment %}
             <link rel="stylesheet" type="text/css"
-                  href="{% get_static_prefix %}/DataTables-1.10.16/css/dataTables.bootstrap.min.css"
+                  href="{% get_static_prefix %}DataTables-1.10.16/css/dataTables.bootstrap.min.css"
                   crossorigin="anonymous"/>
 
             <script type="text/javascript"
-                    src="{% get_static_prefix %}/DataTables-1.10.16/js/jquery.dataTables.min.js"
+                    src="{% get_static_prefix %}DataTables-1.10.16/js/jquery.dataTables.min.js"
                     crossorigin="anonymous"></script>
 
             <script type="text/javascript"
-                    src="{% get_static_prefix %}/DataTables-1.10.16/js/dataTables.bootstrap.min.js"
+                    src="{% get_static_prefix %}DataTables-1.10.16/js/dataTables.bootstrap.min.js"
                     crossorigin="anonymous"></script>
         {% endblock %}
 
         {% block fontawesome %}
             <link rel="stylesheet"
                   href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+        {% endblock %}
+
+        {% block fileupload %}
+            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+            <script type="text/javascript"
+                    src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
         {% endblock %}
 
         {#  Custom CSS, must be included AFTER bootstrap  #}

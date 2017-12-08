@@ -30,9 +30,9 @@ urlpatterns = [
     url(r'^results/(?P<pk>[0-9a-fA-F-]+)/$', ResultDetail.as_view(),
         name='result-detail'),
 
-    url(f'^testwidget/{test_upload_widget.ajax_target_path}/$',
+    url(f'^{test_upload_widget.ajax_target_path}$',
         test_upload_widget.handle_ajax),
-    url(f'^testwidget/{test_upload_widget2.ajax_target_path}/$',
+    url(f'^{test_upload_widget2.ajax_target_path}$',
         test_upload_widget2.handle_ajax),
     url(r'^testwidget/$', uploader_widget_test),
 ]

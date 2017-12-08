@@ -7,7 +7,7 @@ function upload_fold_unfold(element) {
     element = $(element);
     while (!element.hasClass("foldable")) {
         element = element.parent();
-        if (element.length == 0) {
+        if (element.length === 0) {
             throw Error("No parent element with class 'foldable' found");
         }
     }
