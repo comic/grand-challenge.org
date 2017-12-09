@@ -1,15 +1,13 @@
-import pytest
-
 import uuid
+from datetime import timedelta
 from io import BytesIO
 
-from datetime import timedelta
-
+import pytest
 from django.core import files
 from django.utils import timezone
 
-from evaluation.models import StagedFile
-from evaluation.widgets.uploader import UploadedAjaxFileList, StagedAjaxFile, \
+from jqfileupload.models import StagedFile
+from jqfileupload.widgets.uploader import StagedAjaxFile, \
     cleanup_stale_files
 
 

@@ -1,11 +1,11 @@
 from django.conf.urls import url
 
-from evaluation.forms import test_upload_widget, test_upload_widget2
-from evaluation.views import uploader_widget_test, MethodCreate, \
+from evaluation.views import MethodCreate, \
     SubmissionCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
     SubmissionDetail, JobDetail, ResultDetail, EvaluationManage
-
+from jqfileupload.forms import test_upload_widget, test_upload_widget2
+from jqfileupload.views import uploader_widget_test
 
 urlpatterns = [
     url(r'^manage/$', EvaluationManage.as_view(), name='manage'),
@@ -30,9 +30,9 @@ urlpatterns = [
     url(r'^results/(?P<pk>[0-9a-fA-F-]+)/$', ResultDetail.as_view(),
         name='result-detail'),
 
-    url(f'^{test_upload_widget.ajax_target_path}$',
+    url(f'^testwidget/{test_upload_widget.ajax_target_path}$',
         test_upload_widget.handle_ajax),
-    url(f'^{test_upload_widget2.ajax_target_path}$',
+    url(f'^testwidget/{test_upload_widget2.ajax_target_path}$',
         test_upload_widget2.handle_ajax),
     url(r'^testwidget/$', uploader_widget_test),
 ]

@@ -1,14 +1,9 @@
-from django.http.request import HttpRequest
-from django.http.response import HttpResponse
-from django.shortcuts import render
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
 from comicmodels.models import ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
     UserIsChallengeParticipantOrAdminMixin
-from evaluation.forms import UploadForm
 from evaluation.models import Result, Submission, Job, Method
-from evaluation.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
@@ -92,33 +87,3 @@ class ResultList(ListView):
 
 class ResultDetail(DetailView):
     model = Result
-
-
-def uploader_widget_test(request: HttpRequest, **kwargs) -> HttpResponse:
-    if request.method == "POST":
-        test_form = UploadForm(request.POST)
-        if test_form.is_valid():
-            result = "Success!!!\n"
-            result += "\n".join(
-                f"  {k}: {v}" for k, v in test_form.cleaned_data.items())
-
-            result += "\n\n"
-
-            f1 = test_form.cleaned_data["upload_form"][0]
-            with f1.open() as f:
-                the_bytes = f.read(16)
-            result += f"""
-You uploaded {len(test_form.cleaned_data["upload_form"])} files in the first form.
-
-The first 16 bytes of the first file were: {the_bytes}
-            """
-        else:
-            result = "Validation error:\n"
-            result += "\n".join(f"  {e}" for e in test_form.errors)
-        return HttpResponse(result, content_type="text/plain")
-    else:
-        test_form = UploadForm()
-        return render(request, "uploader_widget_test.html", {
-            "testform": test_form,
-            "upload_widget": AjaxUploadWidget.TEMPLATE_ATTRS
-        })

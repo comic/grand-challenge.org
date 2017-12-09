@@ -1,6 +1,7 @@
 import pytest
 
-from evaluation.widgets.utils import IntervalMap
+from jqfileupload.widgets.utils import IntervalMap
+
 
 def test_interval_map_indexing_and_length():
     im = IntervalMap()

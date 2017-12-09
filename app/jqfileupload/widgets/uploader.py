@@ -1,9 +1,7 @@
 import re
 import uuid
-
 from collections import Iterable
 from datetime import timedelta
-
 from io import IOBase
 
 from django import forms
@@ -16,9 +14,8 @@ from django.http.response import HttpResponseBadRequest, \
 from django.template.loader import get_template
 from django.utils import timezone
 
-
-from evaluation.models import StagedFile
-from evaluation.widgets.utils import IntervalMap
+from jqfileupload.models import StagedFile
+from jqfileupload.widgets.utils import IntervalMap
 
 
 def cleanup_stale_files():
@@ -70,8 +67,8 @@ class AjaxUploadWidget(Widget):
     This widget will require updating when moving forward from django 1.8.
     """
 
-    CSS = "/static/evaluation/upload_widget_button.css"
-    JS = "/static/evaluation/upload_widget.js"
+    CSS = "/static/jqfileupload/css/upload_widget_button.css"
+    JS = "/static/jqfileupload/js/upload_widget.js"
 
     TEMPLATE_ATTRS = dict(JS=JS, CSS=CSS)
 

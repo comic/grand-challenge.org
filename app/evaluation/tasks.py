@@ -6,7 +6,6 @@ from celery import shared_task
 
 from evaluation.backends.dockermachine.evaluator import Evaluator
 from evaluation.models import Job, Result, Method
-from evaluation.widgets.uploader import cleanup_stale_files
 
 
 @shared_task
@@ -88,8 +87,3 @@ def validate_method_async(*, method_pk: uuid.UUID = None):
     instance.image_sha256 = f"sha256:{manifest[0]['Config'][:64]}"
     instance.ready = True
     instance.save()
-
-
-@shared_task
-def cleanup_stale_uploads():
-    cleanup_stale_files()
