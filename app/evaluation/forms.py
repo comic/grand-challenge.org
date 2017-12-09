@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from django import forms
 
 from evaluation.models import Method
+from evaluation.validators import ExtensionValidator
 from jqfileupload.widgets import uploader
 from jqfileupload.widgets.uploader import UploadedAjaxFileList
 
@@ -14,6 +15,13 @@ class MethodForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=method_upload_widget,
         label='Evaluation Method Container',
+        validators=[
+            ExtensionValidator(
+                allowed_extensions=(
+                    '.tar',
+                )
+            ),
+        ],
         help_text='Tar archive of the container '
                   'image produced from the command '
                   '`docker save IMAGE > '

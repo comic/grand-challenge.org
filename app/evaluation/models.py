@@ -6,7 +6,7 @@ from django.db import models
 from social_django.fields import JSONField
 
 from comicsite.core.urlresolvers import reverse
-from evaluation.validators import MimeTypeValidator
+from evaluation.validators import MimeTypeValidator, ExtensionValidator
 
 
 class UUIDModel(models.Model):
@@ -47,10 +47,9 @@ class Method(UUIDModel):
 
     image = models.FileField(upload_to=method_image_path,
                              validators=[
-                                 MimeTypeValidator(
-                                     allowed_types=(
-                                         'application/x-tarbinary',
-                                         'application/x-tar',
+                                 ExtensionValidator(
+                                     allowed_extensions=(
+                                         '.tar',
                                      )
                                  ),
                              ],

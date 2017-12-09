@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import url
 
 from evaluation.forms import method_upload_widget
@@ -33,9 +34,11 @@ urlpatterns = [
     url(r'^results/(?P<pk>[0-9a-fA-F-]+)/$', ResultDetail.as_view(),
         name='result-detail'),
 
-    url(f'^{test_upload_widget.ajax_target_path}$',
-        test_upload_widget.handle_ajax),
-    url(f'^{test_upload_widget2.ajax_target_path}$',
-        test_upload_widget2.handle_ajax),
-    url(r'^testwidget/$', uploader_widget_test),
 ]
+
+if settings.DEBUG:
+    urlpatterns.append(url(f'^{test_upload_widget.ajax_target_path}$',
+                           test_upload_widget.handle_ajax))
+    urlpatterns.append(url(f'^{test_upload_widget2.ajax_target_path}$',
+                           test_upload_widget2.handle_ajax))
+    urlpatterns.append(url(r'^testwidget/$', uploader_widget_test))

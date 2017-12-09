@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import evaluation.models
 import social_django.fields
-import django.db.models.deletion
-from django.conf import settings
 import uuid
 import evaluation.validators
+import django.db.models.deletion
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -41,11 +41,14 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('ready', models.BooleanField(default=False, editable=False, help_text='Is this method ready to be used?')),
                 ('status', models.TextField(editable=False)),
-                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/x-tarbinary', 'application/x-tar'))], upload_to=evaluation.models.method_image_path)),
+                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', validators=[evaluation.validators.ExtensionValidator(allowed_extensions=('.tar',))], upload_to=evaluation.models.method_image_path)),
                 ('image_sha256', models.CharField(max_length=71, editable=False)),
                 ('challenge', models.ForeignKey(to='comicmodels.ComicSite')),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
+            options={
+                'abstract': False,
+            },
         ),
         migrations.CreateModel(
             name='Result',
