@@ -1,9 +1,12 @@
+from django.core.files import File
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
 from comicmodels.models import ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
     UserIsChallengeParticipantOrAdminMixin
+from evaluation.forms import MethodForm
 from evaluation.models import Result, Submission, Job, Method
+from jqfileupload.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
@@ -12,12 +15,22 @@ class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
-    fields = ['image']
+    form_class = MethodForm
+
+    def get_context_data(self, **kwargs):
+        context = super(MethodCreate, self).get_context_data(**kwargs)
+        context["upload_widget"] = AjaxUploadWidget.TEMPLATE_ATTRS
+        return context
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
+
+        uploaded_file = form.cleaned_data['chunked_upload'][0]
+        with uploaded_file.open() as f:
+            form.instance.image.save(uploaded_file.name, File(f))
+
         return super(MethodCreate, self).form_valid(form)
 
 

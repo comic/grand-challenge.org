@@ -99,8 +99,4 @@ class Migration(migrations.Migration):
             name='submission',
             field=models.ForeignKey(to='evaluation.Submission'),
         ),
-        migrations.AlterUniqueTogether(
-            name='method',
-            unique_together=set([('challenge', 'image_sha256')]),
-        ),
     ]

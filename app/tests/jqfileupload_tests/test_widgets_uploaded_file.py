@@ -69,6 +69,22 @@ def do_default_content_tests(uploaded_file, file_content):
         assert file.read(10) == file_content[-2:]
 
 @pytest.mark.django_db
+def test_staged_file_to_django_file():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        client_filename="bla")
+
+    testee = StagedAjaxFile(uploaded_file_uuid)
+    assert testee.name == "bla"
+
+    with testee.open() as f:
+        djangofile = files.File(f)
+        assert djangofile.read() == file_content
+        assert djangofile.read(1) == b""
+
+
+@pytest.mark.django_db
 def test_uploaded_single_chunk_file():
     file_content = b"HelloWorld" * 5
     uploaded_file_uuid = create_uploaded_file(

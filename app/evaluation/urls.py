@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from evaluation.forms import method_upload_widget
 from evaluation.views import MethodCreate, \
     SubmissionCreate, \
     JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
@@ -12,6 +13,8 @@ urlpatterns = [
 
     url(r'^methods/$', MethodList.as_view(), name='method-list'),
     url(r'^methods/create/$', MethodCreate.as_view(), name='method-create'),
+    url(f'^methods/create/{method_upload_widget.ajax_target_path}$',
+        method_upload_widget.handle_ajax, name='method-upload-ajax'),
     url(r'^methods/(?P<pk>[0-9a-fA-F-]+)/$', MethodDetail.as_view(),
         name='method-detail'),
 
@@ -30,9 +33,9 @@ urlpatterns = [
     url(r'^results/(?P<pk>[0-9a-fA-F-]+)/$', ResultDetail.as_view(),
         name='result-detail'),
 
-    url(f'^testwidget/{test_upload_widget.ajax_target_path}$',
+    url(f'^{test_upload_widget.ajax_target_path}$',
         test_upload_widget.handle_ajax),
-    url(f'^testwidget/{test_upload_widget2.ajax_target_path}$',
+    url(f'^{test_upload_widget2.ajax_target_path}$',
         test_upload_widget2.handle_ajax),
     url(r'^testwidget/$', uploader_widget_test),
 ]

@@ -74,9 +74,6 @@ class Method(UUIDModel):
                            'challenge_short_name': self.challenge.short_name
                        })
 
-    class Meta:
-        unique_together = (("challenge", "image_sha256"),)
-
 
 def submission_file_path(instance, filename):
     return f'evaluation/{instance.challenge.pk}/submissions/' \

@@ -256,6 +256,9 @@ class OpenedStagedAjaxFile(IOBase):
     reconstructs the contingent file from the file chunks that have been
     uploaded.
     """
+    # TODO: This really should be an instance of BufferedIOBase and follow the
+    # specifications there.
+
     def __init__(self, _uuid):
         super(OpenedStagedAjaxFile, self).__init__()
 
@@ -298,7 +301,10 @@ class OpenedStagedAjaxFile(IOBase):
     def read(self, count=None):
         if self.closed:
             raise IOError('file closed')
-        if not (0 <= self.__file_pointer < self.size):
+        if self.size <= self.__file_pointer:
+            # Do not raise EOFError on read, follow convention of BytesIO
+            return b""
+        if not (0 <= self.__file_pointer):
             return EOFError('file ended')
 
         if count is None:

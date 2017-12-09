@@ -115,7 +115,7 @@ function upload_fold_unfold(element) {
             update_hidden_form_element();
 
             if (!is_multiupload) {
-                upload_element.parent().submit();
+                upload_element.closest('form').submit();
             }
         }
 
