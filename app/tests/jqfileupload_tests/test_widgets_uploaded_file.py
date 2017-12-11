@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.uploader import StagedAjaxFile, \
-    cleanup_stale_files, NotFoundError
+    cleanup_stale_files, NotFoundError, AjaxUploadWidget
 
 
 def create_uploaded_file(
@@ -281,7 +281,3 @@ def test_file_no_total_size():
     assert tested_file.exists
     assert not tested_file.is_complete
     assert tested_file.size is None
-
-@pytest.mark.django_db
-def test_rfc7233_implementation(rf: RequestFactory):
-    rf.get('/rand')
