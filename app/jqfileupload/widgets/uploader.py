@@ -425,8 +425,6 @@ class StagedAjaxFile:
 
         chunks_query = self._raise_if_missing()
         chunks = chunks_query.all()
-        if len(chunks) == 0:
-            raise NotFoundError()
 
         remaining_size = None
 

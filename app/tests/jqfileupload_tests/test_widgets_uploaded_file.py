@@ -4,11 +4,12 @@ from io import BytesIO
 
 import pytest
 from django.core import files
+from django.test import Client, RequestFactory
 from django.utils import timezone
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.uploader import StagedAjaxFile, \
-    cleanup_stale_files
+    cleanup_stale_files, NotFoundError
 
 
 def create_uploaded_file(
@@ -17,7 +18,8 @@ def create_uploaded_file(
         csrf="test_csrf",
         client_id="test_client_id",
         client_filename="test_client_filename_{uuid}",
-        timeout=timedelta(minutes=1)) -> uuid.UUID:
+        timeout=timedelta(minutes=1),
+        init_total_size=True) -> uuid.UUID:
     if chunks is None:
         chunks = [len(content)]
 
@@ -25,6 +27,14 @@ def create_uploaded_file(
     client_filename = client_filename.format(uuid=new_uuid)
 
     start = 0
+
+    if type(init_total_size) == int:
+        total_size = init_total_size
+    elif init_total_size:
+        total_size = len(content)
+    else:
+        total_size = None
+
     for chunk in chunks:
         staged_file = StagedFile(
             csrf=csrf,
@@ -34,7 +44,7 @@ def create_uploaded_file(
             timeout=timezone.now() + timeout,
             start_byte=start,
             end_byte=chunk - 1,
-            total_size=len(content),
+            total_size=total_size,
         )
 
         string_file = BytesIO(content[start:chunk])
@@ -121,10 +131,10 @@ def test_staged_file_to_django_file():
         file_content,
         client_filename="bla")
 
-    testee = StagedAjaxFile(uploaded_file_uuid)
-    assert testee.name == "bla"
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.name == "bla"
 
-    with testee.open() as f:
+    with tested_file.open() as f:
         djangofile = files.File(f)
         assert djangofile.read() == file_content
         assert djangofile.read(1) == b""
@@ -137,12 +147,12 @@ def test_uploaded_single_chunk_file():
         file_content,
         client_filename="bla")
 
-    testee = StagedAjaxFile(uploaded_file_uuid)
-    assert testee.name == "bla"
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.name == "bla"
 
-    assert StagedFile.objects.filter(file_id=testee.uuid).count() == 1
+    assert StagedFile.objects.filter(file_id=tested_file.uuid).count() == 1
 
-    do_default_content_tests(testee, file_content)
+    do_default_content_tests(tested_file, file_content)
 
 @pytest.mark.django_db
 def test_uploaded_multi_chunk_file():
@@ -152,12 +162,12 @@ def test_uploaded_multi_chunk_file():
         chunks=[4, 8, 10, 11, len(file_content)],
         client_filename="splittered")
 
-    testee = StagedAjaxFile(uploaded_file_uuid)
-    assert testee.name == "splittered"
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.name == "splittered"
 
-    assert StagedFile.objects.filter(file_id=testee.uuid).count() == 5
+    assert StagedFile.objects.filter(file_id=tested_file.uuid).count() == 5
 
-    do_default_content_tests(testee, file_content)
+    do_default_content_tests(tested_file, file_content)
 
 @pytest.mark.django_db
 def test_file_cleanup():
@@ -168,10 +178,10 @@ def test_file_cleanup():
         client_filename="bla",
         timeout=timedelta(milliseconds=100))
 
-    testee = StagedAjaxFile(uploaded_file_uuid)
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
 
-    assert testee.exists
-    chunks = StagedFile.objects.filter(file_id=testee.uuid).all()
+    assert tested_file.exists
+    chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
     assert len(chunks) > 0
 
     # Force timeout and clean
@@ -181,7 +191,97 @@ def test_file_cleanup():
         chunk.save()
     cleanup_stale_files()
 
-    assert not testee.exists
+    assert not tested_file.exists
 
-    chunks = StagedFile.objects.filter(file_id=testee.uuid).all()
+    chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
     assert len(chunks) == 0
+
+@pytest.mark.django_db
+def test_missing_file():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        [len(file_content)])
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.exists
+    assert tested_file.is_complete
+
+    chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
+    chunks.delete()
+
+    assert not tested_file.exists
+    assert not tested_file.is_complete
+    with pytest.raises(NotFoundError):
+        tested_file.name
+    with pytest.raises(NotFoundError):
+        tested_file.size
+    with pytest.raises(NotFoundError):
+        tested_file.delete()
+    with pytest.raises(IOError):
+        tested_file.open()
+
+@pytest.mark.django_db
+def test_file_missing_chunk():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        list(range(1, len(file_content) + 1)))
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.exists
+    assert tested_file.is_complete
+    assert tested_file.size == len(file_content)
+
+    # delete chunk
+    chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+    chunks[4].delete()
+
+    assert tested_file.exists
+    assert not tested_file.is_complete
+    assert tested_file.size is None
+
+@pytest.mark.django_db
+def test_file_overlapping_chunk():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        list(range(1, len(file_content) + 1)))
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+
+    chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+
+    chunk4 = chunks[4]
+    chunk4.pk = None
+    chunk4.start_byte = 0
+    chunk4.end_byte = 10
+    chunk4.save()
+
+    assert tested_file.exists
+    assert not tested_file.is_complete
+    assert tested_file.size is None
+
+@pytest.mark.django_db
+def test_file_no_total_size():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        list(range(1, len(file_content) + 1)),
+        init_total_size=False)
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.exists
+    assert tested_file.is_complete
+    assert tested_file.size == len(file_content)
+
+    chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+    chunks[4].delete()
+
+    assert tested_file.exists
+    assert not tested_file.is_complete
+    assert tested_file.size is None
+
+@pytest.mark.django_db
+def test_rfc7233_implementation(rf: RequestFactory):
+    rf.get('/rand')
