@@ -2,7 +2,7 @@ import re
 import uuid
 from collections import Iterable
 from datetime import timedelta
-from io import IOBase
+from io import BufferedIOBase
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -249,7 +249,7 @@ class AjaxUploadWidget(Widget):
         return template.render(context=context)
 
 
-class OpenedStagedAjaxFile(IOBase):
+class OpenedStagedAjaxFile(BufferedIOBase):
     """
     This class behaves like a file handle for a :class:`StagedAjaxFile`.
     The file handle is strictly read-only. Under the hood, this class
@@ -298,20 +298,27 @@ class OpenedStagedAjaxFile(IOBase):
     def seekable(self, *args, **kwargs):
         return True
 
-    def read(self, count=None):
-        if self.closed:
-            raise IOError('file closed')
-        if self.size <= self.__file_pointer:
-            # Do not raise EOFError on read, follow convention of BytesIO
-            return b""
-        if not (0 <= self.__file_pointer):
-            return EOFError('file ended')
+    def readinto(self, buffer):
+        read_bytes = self.read(len(buffer))
+        buffer[:len(read_bytes)] = read_bytes
+        return len(read_bytes)
 
-        if count is None:
-            count = self.size - self.__file_pointer
+    def read(self, size=-1):
+        if size < 0:
+            size = None
+
+        if self.closed:
+            raise ValueError('file closed')
+        if self.size <= self.__file_pointer:
+            return b""
+        if self.__file_pointer < 0:
+            raise IOError('invalid file pointer position')
+
+        if size is None:
+            size = self.size - self.__file_pointer
 
         result = b""
-        while len(result) < count:
+        while len(result) < size:
             if self.__file_pointer >= len(self.__chunk_map):
                 break
 
@@ -328,16 +335,22 @@ class OpenedStagedAjaxFile(IOBase):
                 self.__current_chunk = this_chunk
 
             read_size = min(
-                count - len(result),
+                size - len(result),
                 self.__current_chunk.end_byte + 1 - self.__file_pointer)
             result += self.__current_chunk.file.read(read_size)
             self.__file_pointer += read_size
 
         return result
 
+    def read1(self, size=-1):
+        return self.read(size=size)
+
+    def readinto1(self, buffer):
+        return self.readinto(buffer)
+
     def seek(self, offset, from_what=0):
         if self.closed:
-            raise IOError('file closed')
+            raise ValueError('file closed')
 
         new_pointer = None
         if from_what == 0:
@@ -347,20 +360,21 @@ class OpenedStagedAjaxFile(IOBase):
         elif from_what == 2:
             new_pointer = self.size + offset
 
-        if not (0 <= new_pointer <= self.size):
-            raise EOFError('new pointer outside file boundaries')
+        if new_pointer < 0:
+            raise IOError('invalid file pointer')
 
         self.__file_pointer = new_pointer
 
-        if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
-            self.__current_chunk.file.seek(
-                self.__file_pointer - self.__current_chunk.start_byte)
+        if self.__file_pointer < self.__chunk_map.len:
+            if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
+                self.__current_chunk.file.seek(
+                    self.__file_pointer - self.__current_chunk.start_byte)
 
         return self.__file_pointer
 
     def tell(self, *args, **kwargs):
         if self.closed:
-            raise IOError('file closed')
+            raise ValueError('file closed')
         return self.__file_pointer
 
     def close(self):

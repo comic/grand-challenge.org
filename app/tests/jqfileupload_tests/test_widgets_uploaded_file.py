@@ -12,7 +12,7 @@ from jqfileupload.widgets.uploader import StagedAjaxFile, \
 
 
 def create_uploaded_file(
-        content: str,
+        content: bytes,
         chunks=None,
         csrf="test_csrf",
         client_id="test_client_id",
@@ -67,6 +67,52 @@ def do_default_content_tests(uploaded_file, file_content):
         assert file.seek(-1, 1) == len(file_content) - 1
         assert file.seek(-2, 2) == len(file_content) - 2
         assert file.read(10) == file_content[-2:]
+
+        assert file.read(10) == b""
+        # Test if the correct names argument is used
+        assert file.read(size=10) == b""
+
+        # Test all read methods
+        file.seek(0); assert file.read(-12) == file_content
+        file.seek(0); assert file.read(l) == file_content[0:l]
+        file.seek(0); assert file.read1(l) == file_content[0:l]
+
+        byte_buffer = bytearray(b'0' * l)
+        file.seek(0)
+        assert file.readinto(byte_buffer) == l
+        assert byte_buffer == file_content[0:l]
+        file.seek(len(file_content) + 10)
+        assert file.readinto(byte_buffer) == 0
+        assert byte_buffer == file_content[0:l]
+
+        byte_buffer = bytearray(b'0' * l)
+        file.seek(0)
+        assert file.readinto1(byte_buffer) == l
+        assert byte_buffer == file_content[0:l]
+        file.seek(len(file_content) + 10)
+        assert file.readinto1(byte_buffer) == 0
+        assert byte_buffer == file_content[0:l]
+
+        assert file.readable()
+        assert not file.writable()
+        assert file.seekable()
+
+        with pytest.raises(IOError):
+            file.seek(-100)
+        file.seek(len(file_content) + 100)
+        assert file.read(10) == b""
+
+        file.close()
+
+        with pytest.raises(ValueError):
+            file.read()
+        with pytest.raises(ValueError):
+            file.seek(0)
+        with pytest.raises(ValueError):
+            file.tell()
+        assert file.size is None
+        assert file.closed
+
 
 @pytest.mark.django_db
 def test_staged_file_to_django_file():
