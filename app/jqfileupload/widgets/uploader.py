@@ -131,11 +131,11 @@ class AjaxUploadWidget(Widget):
         range_match = re.match(
             r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
             range_header)
-        if not range_header:
+        if not range_match:
             raise InvalidRequestException("Supplied invalid Content-Range")
         start_byte = int(range_match.group("start"))
         end_byte = int(range_match.group("end"))
-        if range_match.group("length") is None:
+        if (range_match.group("length") is None) or (range_match.group("length") == '*'):
             total_size = None
         else:
             total_size = int(range_match.group("length"))

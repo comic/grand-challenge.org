@@ -8,7 +8,8 @@ from datetime import timedelta
 
 import pytest
 
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponseForbidden, \
+    HttpResponseBadRequest
 from django.test.client import RequestFactory
 
 from jqfileupload.models import StagedFile
@@ -96,7 +97,7 @@ def create_partial_upload_file_request(
 
 
 @pytest.mark.django_db
-def test_one_big_upload(rf: RequestFactory):
+def test_single_chunk(rf: RequestFactory):
     widget = AjaxUploadWidget(ajax_target_path="/ajax")
     widget.timeout = timedelta(seconds=1)
 
@@ -147,3 +148,48 @@ def test_rfc7233_implementation(rf: RequestFactory):
         staged_content = f.read()
 
     assert staged_content == content
+
+@pytest.mark.django_db
+def test_wrong_upload_headers(rf: RequestFactory):
+    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget.timeout = timedelta(seconds=1)
+
+    post_request = create_upload_file_request(rf)
+    post_request.META["CSRF_COOKIE"] = None
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseForbidden)
+
+    post_request = create_upload_file_request(rf)
+    post_request.method = "PUT"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+@pytest.mark.django_db
+def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
+    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget.timeout = timedelta(seconds=1)
+
+    content = load_test_data()
+    upload_id = generate_new_upload_id(test_wrong_upload_headers_rfc7233, content)
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    assert isinstance(widget.handle_ajax(post_request), JsonResponse)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["X-Upload-ID"] = None
+    post_request.POST["X-Upload-ID"] = None
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["HTTP_CONTENT_RANGE"] = "corrupted data: 54343-3223/21323"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["HTTP_CONTENT_RANGE"] = "bytes 54343-3223/21323"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["HTTP_CONTENT_RANGE"] = "bytes 54343-3223/*"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
