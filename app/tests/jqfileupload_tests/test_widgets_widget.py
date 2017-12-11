@@ -193,3 +193,17 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
         rf, upload_id, content, 0, 10)
     post_request.META["HTTP_CONTENT_RANGE"] = "bytes 54343-3223/*"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+
+def test_render():
+    widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=True)
+    render_result = widget.render("some_name", None)
+    assert isinstance(render_result, str)
+    render_result = widget.render("some_name", (uuid.uuid4(), uuid.uuid4()))
+    assert isinstance(render_result, str)
+
+    widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=False)
+    render_result = widget.render("some_name", None)
+    assert isinstance(render_result, str)
+    render_result = widget.render("some_name", (uuid.uuid4(), uuid.uuid4()))
+    assert isinstance(render_result, str)
