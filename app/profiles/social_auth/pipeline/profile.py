@@ -3,7 +3,7 @@ from userena.managers import ASSIGNED_PERMISSIONS
 from userena.models import UserenaSignup
 from userena.utils import get_user_profile
 
-from comicsite.models import get_or_create_projectadmingroup
+from comicsite.models import set_project_admin_permissions
 
 
 def create_profile(user=None, is_new=False, *args, **kwargs):
@@ -30,10 +30,4 @@ def set_project_permissions(user=None, profile=None, *args, **kwargs):
         print("no user, or is not authenticated")
         return
     if profile:
-        projectadmingroup = get_or_create_projectadmingroup()
-        user.groups.add(projectadmingroup)
-
-        # set staff status so user can access admin interface. User will still have to
-        # activate through email link before being able to log in at all.
-        user.is_staff = True
-        user.save()
+        set_project_admin_permissions(None, user=user)

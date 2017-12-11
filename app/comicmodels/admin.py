@@ -1,13 +1,12 @@
-import datetime
-
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.timezone import utc
+from django.utils import timezone
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 
-from comicmodels.models import UploadModel, RegistrationRequest, ProjectMetaData
-from comicsite.models import send_participation_request_rejected_email, send_participation_request_accepted_email
+from comicmodels.models import UploadModel, RegistrationRequest
+from comicsite.models import send_participation_request_rejected_email, \
+    send_participation_request_accepted_email
 
 
 class ComicModelAdmin(GuardedModelAdmin):
@@ -59,7 +58,8 @@ class UploadModelAdmin(ComicModelAdmin):
         """ Overwrite this method in child classes to make sure instance of that class is passed to 
         get_objects_for_users """
 
-        return get_objects_for_user(request.user, self.permission_name, klass=UploadModel.objects)
+        return get_objects_for_user(request.user, self.permission_name,
+                                    klass=UploadModel.objects)
 
 
 class RegistrationRequestAdmin(admin.ModelAdmin):
@@ -69,10 +69,13 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
     permission_name = 'view_ComicSiteModel'
 
     list_display = (
-    'user', 'user_email', 'user_real_name', 'user_affiliation', 'project', 'created', 'changed', 'status')
+        'user', 'user_email', 'user_real_name', 'user_affiliation', 'project',
+        'created', 'changed', 'status')
     # list_display = ('email', 'first_name', 'last_name')
     # list_filter = ('is_staff', 'is_superuser', 'is_active')
-    readonly_fields = ("user", "project", 'created', 'changed', 'user_email', 'user_real_name', 'user_affiliation')
+    readonly_fields = (
+    "user", "project", 'created', 'changed', 'user_email', 'user_real_name',
+    'user_affiliation')
     actions = ['accept', 'reject']
 
     def save_model(self, request, obj, form, change):
@@ -81,7 +84,8 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
         """
 
         self.process_status_change(request, obj)
-        super(RegistrationRequestAdmin, self).save_model(request, obj, form, change)
+        super(RegistrationRequestAdmin, self).save_model(request, obj, form,
+                                                         change)
 
     def get_queryset(self, request):
         """ overwrite this method to return only pages comicsites to which current user has access 
@@ -118,17 +122,18 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
                 self.process_rejection(request, obj)
         else:
             messages.add_message(request, messages.INFO, 'Status of {0}\
-                                 did not change. No actions taken'.format(str(obj)))
+                                 did not change. No actions taken'.format(
+                str(obj)))
 
     def process_acceptance(self, request, obj):
         obj.status = RegistrationRequest.ACCEPTED
 
-        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
-        # obj.changed = datetime.datetime.today()
+        obj.changed = timezone.now()
         obj.save()
 
         obj.project.add_participant(obj.user)
-        messages.add_message(request, messages.SUCCESS, 'User "' + obj.user.username + '"\
+        messages.add_message(request, messages.SUCCESS,
+                             'User "' + obj.user.username + '"\
                                          is now a participant for ' + obj.project.short_name +
                              ". An email has been sent to notify the user")
 
@@ -136,12 +141,13 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
 
     def process_rejection(self, request, obj):
         obj.status = RegistrationRequest.REJECTED
-        obj.changed = datetime.datetime.utcnow().replace(tzinfo=utc)
-        # obj.changed = datetime.datetime.today()
+
+        obj.changed = timezone.now()
         obj.save()
 
         obj.project.remove_participant(obj.user)
-        messages.add_message(request, messages.WARNING, 'User "' + obj.user.username + '"\
+        messages.add_message(request, messages.WARNING,
+                             'User "' + obj.user.username + '"\
                                          has been rejected as a participant for ' + obj.project.short_name +
                              ". An email has been sent to notify the user")
 
@@ -166,4 +172,3 @@ class RegistrationRequestAdmin(admin.ModelAdmin):
 
 admin.site.register(RegistrationRequest, RegistrationRequestAdmin)
 admin.site.register(UploadModel, UploadModelAdmin)
-admin.site.register(ProjectMetaData)

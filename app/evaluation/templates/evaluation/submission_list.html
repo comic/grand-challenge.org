@@ -1,0 +1,36 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Submissions</h1>
+    <table class="table" id="submissionsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>User</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for submission in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a>
+                </td>
+                <td>{{ submission.created }}</td>
+                <td><a
+                        href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
+                </td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#submissionsTable').DataTable();
+        });
+    </script>
+
+{% endblock %}

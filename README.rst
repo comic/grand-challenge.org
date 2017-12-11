@@ -6,9 +6,8 @@ COMIC Django Frontend
 .. image:: https://codeclimate.com/github/comic/comic-django/badges/gpa.svg
    :target: https://codeclimate.com/github/comic/comic-django
    :alt: Code Climate
-.. image:: https://coveralls.io/repos/github/comic/comic-django/badge.svg?branch=master
-   :target: https://coveralls.io/github/comic/comic-django?branch=master
-
+.. image:: https://codecov.io/gh/comic/comic-django/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/comic/comic-django
 
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
 
@@ -39,7 +38,7 @@ The easiest way is to use the provided docker compose file. Simply invoke::
 
     docker-compose up --build
 
-You will then be able run comic at https://localhost:4443 - note that we generate a self signed certificate as part of the build so you will need to accept the unsafe to continue warning.
+You will then be able run comic at https://localhost - note that we generate a self signed certificate as part of the build so you will need to accept the unsafe to continue warning.
 
 Editing settings
 ----------------

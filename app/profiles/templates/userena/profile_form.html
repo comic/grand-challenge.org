@@ -1,5 +1,6 @@
 {% extends 'site_signin.html' %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block title %}{% trans "Account setup" %}{% endblock %}
 
@@ -21,7 +22,7 @@
             {% csrf_token %}
             <fieldset>
                 <legend>{% trans "Edit Profile" %}</legend>
-                {{ form.as_p }}
+                {{ form | crispy }}
             </fieldset>
             <input type="submit" value="{% trans "Save changes" %}"/>
         </form>

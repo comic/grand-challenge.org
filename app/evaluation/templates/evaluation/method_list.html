@@ -1,0 +1,41 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h1>Evaluation Methods</h1>
+
+    <table class="table" id="methodsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>User</th>
+            <th>SHA</th>
+            <th>Ready</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for method in object_list %}
+            <tr>
+                <td><a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
+                </td>
+                <td>{{ method.created }}</td>
+                <td><a
+                        href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
+                </td>
+                <td>{{ method.image_sha256 }}</td>
+                <td>{{ method.ready }}</td>
+                <td>{{ method.status }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#methodsTable').DataTable();
+        });
+    </script>
+
+{% endblock %}

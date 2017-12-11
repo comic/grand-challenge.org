@@ -16,39 +16,83 @@ services:
     links:
       - db:mysql
       - memcached
-    depends_on:
-      - db
-      - memcached
-      - dropbox
     volumes:
       - static:/static/
+      - media:/dbox/Dropbox/media/
       - ./app:/app/
-    volumes_from:
-      - dropbox
+      # The docker socket is only needed for testing
+      - /var/run/docker.sock:/var/run/docker.sock
 
   http:
     extends:
       file: docker-compose.common.yml
       service: http
     ports:
-      - "8000:80"
-      - "4443:443"
+      - "80:80"
+      - "443:443"
     links:
-      - web
-    depends_on:
       - web
     volumes:
       - static:/srv/public/static/:ro
+      - media:/dbox/Dropbox/media/:ro
 
   memcached:
     extends:
       file: docker-compose.common.yml
       service: memcached
 
-  dropbox:
+  rabbitmq:
     extends:
       file: docker-compose.common.yml
-      service: dropbox
+      service: rabbitmq
+    ports:
+      - "8080:15672"
+
+  celery_worker:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    # TODO: check the server response for 200 OK
+    command: >-
+      bash -c "
+      sleep 120
+      && celery -A comic worker -l info
+      "
+    links:
+      - db:mysql
+      - rabbitmq
+      - web
+    volumes_from:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  celery_beat:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    command: >-
+      bash -c "
+      sleep 120
+      && celery -A comic beat --pidfile= -l info
+      "
+    links:
+      - db:mysql
+      - rabbitmq
+      - web
+    volumes_from:
+      - web
+
+  flower:
+    image: crgwbr/docker-celery-flower
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "5555:5555"
+    links:
+      - rabbitmq
+    restart: always
 
 volumes:
   static:
+  media:

@@ -2,91 +2,123 @@
 {% load staticfiles %}
 {% load comic_templatetags %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
-{% block title %}{% trans "Signin" %}{% endblock %}
+{% block title %}{% trans "Sign In" %}{% endblock %}
 
 {% block content %}
 
     <div class="white-box">
-        <div id="signincontainer">
-            <ul id="signinlist">
-                <li>
-                    <a class="btn btn-lg" href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.GET.next }}">
-                        <i class="fa fa-google fa-pull-left fa-3x"></i> Sign in with<br>Google
-                    </a>
-                </li>
-            </ul>
-            <!--<div id="signinformcontainer" style="display: none;" >-->
-            <div id="signinformcontainer" style="display: block;">
-                <form action="" method="post">
+        <div id="signincontainer" class="">
+
+            <div id="signinlist">
+                <div class="row">
+                    <div class="col-sm-2"></div>
+                    <div class="col-sm-8">
+                        <h2>Sign Up or Sign In with:</h2>
+                    </div>
+                    <div class="col-sm-2"></div>
+                </div>
+                <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
-                    {{ form.non_field_errors }}
-                    {{ form.identification.errors }}
-                    {{ form.password.errors }}
-                    <input class="required" id="id_{{ form.identification.name }}" maxlength="75"
-                           name="{{ form.identification.name }}" type="text" value="{{ form.identification.label }}"/>
-                    <input class="required" id="id_fakepassword" name="fakepassword" type="text"
-                           value="{{ form.password.label }}"/>
-                    <input style="display: none;" class="required" id="id_{{ form.password.name }}"
-                           name="{{ form.password.name }}" type="password"/>
-                    <input type="submit" value="{% trans "Signin" %}"/>
                     {% if request.GET.next %}
-                        <input type="hidden" name="next" value="{{ request.GET.next }}"/>{% endif %}
-                    <p class="forgot-password"><a href='{% url 'userena_password_reset' %}'
-                                                  title="{% trans "Forgot your password?" %}">{% trans "Forgot your password?" %}</a>
-                    </p>
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-primary btn-block">
+                                <i class="fa fa-google"></i> Google
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
                 </form>
             </div>
 
             <div class="containernews">
-                <form action="{% url 'comicsite_signup' site.short_name %}?next={{ request.GET.next }}"
-                      class="containernews"><input type="submit" , value="Register as a new participant"></form>
-                <a class="buttonnews" href="/site/grand-challenges/Newsletter/">Subscribe to Newsletter</a>
+                <div class="row">
+                    <div class="col-sm-2"></div>
+                    <div class="col-sm-8">
+                        <hr/>
+                        <h2>Sign Up with your own email:</h2>
+                    </div>
+                    <div class="col-sm-2"></div>
+                </div>
+                <form action="{% url 'profile_signup' %}"
+                      class="containernews">
+                    {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button type="submit"
+                                    class="btn btn-lg btn-primary btn-block">
+                                Register
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="signinformcontainer">
+                <div class="row">
+                    <div class="col-sm-2"></div>
+                    <div class="col-sm-8">
+                        <hr/>
+                        <h2>Sign In to an existing account:</h2>
+                    </div>
+                    <div class="col-sm-2"></div>
+                </div>
+                <form action="" method="post">
+                    {% csrf_token %}
+                <div class="row">
+                    <div class="col-sm-2"></div>
+                    <div class="col-sm-8">
+                    {{ form | crispy }}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
+                    </div>
+                    <div class="col-sm-2"></div>
+                </div>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-primary btn-block"
+                                    type="submit">Login
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+                </form>
+                <br>
+                <form action="{% url 'userena_password_reset' %}">
+                    {% csrf_token %}
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next"
+                               value="{{ request.GET.next }}"/>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-lg btn-block" type="submit">
+                                Forgot
+                                your password?
+                            </button>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <script>
-        // $("#comicsignin").click(function() {
-        //     $("#signinformcontainer").slideDown(500);
-        // });
-        //
-        // if ('{{ form.non_field_errors }}' != '') {
-        //     $("#signinformcontainer").show();
-        // }
 
-        // Clear the default value of text inputs onFocus
-        $("#id_{{ form.identification.name }}").each(function () {
-            $(this).blur(function () {
-                // if input is empty, reset value to default
-                if (this.value.length == 0) {
-                    this.value = this.defaultValue;
-                    $(this).css("color", "lightgrey");
-                }
-            }).focus(function () {
-                // when input is focussed, clear its contents
-                if (this.value == this.defaultValue) {
-                    this.value = "";
-                    $(this).css("color", "black");
-                }
-            }).css("color", "lightgrey");
-        });
-
-        // Swap fakepassword field with the
-        $("#id_fakepassword").each(function () {
-            $(this).focus(function () {
-                $(this).hide();
-                $("#id_{{ form.password.name }}").show().focus();
-            });
-        }).css("color", "lightgrey");
-
-        $("#id_{{ form.password.name }}").each(function () {
-            $(this).blur(function () {
-                if (this.value.length == 0) {
-                    $(this).hide();
-                    $("#id_fakepassword").show()
-                }
-            });
-        });
-
-    </script>
 {% endblock %}

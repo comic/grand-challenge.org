@@ -2,7 +2,8 @@ import logging
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import Group, Permission, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader, Context
@@ -31,11 +32,6 @@ def set_project_admin_permissions(sender, **kwargs):
     # objects types in admin.
     projectadmingroup = get_or_create_projectadmingroup()
     user.groups.add(projectadmingroup)
-
-    # set staff status so user can access admin interface. User will still have to
-    # activate through email link before being able to log in at all.
-    user.is_staff = True
-    user.save()
 
 
 def get_or_create_projectadmingroup():
@@ -79,33 +75,6 @@ signup_complete.connect(set_project_admin_permissions, dispatch_uid="set_project
 
 
 # ======================================= sending notification emails ====================
-
-
-def send_existing_project_link_submission_notification_email(request, obj):
-    """ When someone has completed the form to submit a new existing challenge 
-    site for the overview, let this know to all admins of the main project    
-    params:
-    obj:         a ProjectMetaData object, which is the database object which 
-                 has just been created by submitting the form 
-                     
-    """
-
-    title = 'Existing project form submitted:"{0}"'.format(obj.title)
-    mainproject = ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
-
-    kwargs = {'obj': obj,
-              'site': get_current_site(request),
-              'mainproject': mainproject}
-    for admin in mainproject.get_admins():
-        if admin.email == '':
-            continue
-        kwargs["admin"] = admin
-        logger.info("Sending existing project submission notification email to '{}'".format(admin.email))
-        send_templated_email(title, "admin/emails/existing_project_link_submission_notification_email.txt", kwargs,
-                             [admin.email]
-                             , "noreply@" + get_current_site(request).domain, fail_silently=False, request=request)
-
-        # send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
 
 
 def send_participation_request_notification_email(request, obj):
@@ -194,6 +163,7 @@ def send_file_uploaded_notification_email(sender, **kwargs):
     comicsite = kwargs['comicsite']
     site = kwargs['site']
     title = "New upload for %s: '%s' " % (comicsite.short_name, kwargs["filename"])
+    User = get_user_model()
     admins = User.objects.filter(groups__name=comicsite.admin_group_name())
 
     if not admins:

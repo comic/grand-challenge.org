@@ -1,0 +1,12 @@
+{% extends "mainpage.html" %}
+{% load crispy_forms_tags %}
+
+{% block pagecontent %}
+    <h2>Create a new Challenge</h2>
+
+    <p>
+        Please fill out this form if you would like to set up your own challenge.
+    </p>
+
+    {% crispy form %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "site.html" %}
+
+{% block pageName %}Test comic page for uploader{% endblock %}
+
+{% block html_header %}
+	{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
+	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+{% endblock %}
+
+
+{% block content %}
+	<form action="" method="post">
+		{% csrf_token %}
+		{{ testform }}
+
+	</form>
+{% endblock %}
