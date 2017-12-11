@@ -281,3 +281,21 @@ def test_file_no_total_size():
     assert tested_file.exists
     assert not tested_file.is_complete
     assert tested_file.size is None
+
+@pytest.mark.django_db
+def test_file_deletion():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        list(range(1, len(file_content) + 1)),
+        init_total_size=False)
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.exists
+    assert tested_file.is_complete
+    assert tested_file.size == len(file_content)
+
+    tested_file.delete()
+
+    assert not tested_file.exists
+    assert not tested_file.is_complete
