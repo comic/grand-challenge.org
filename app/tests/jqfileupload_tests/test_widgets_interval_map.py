@@ -31,6 +31,7 @@ def test_interval_map_indexing_and_length():
     with pytest.raises(IndexError):
         im[1 * 10**32 + 20]
 
+
 def test_interval_map_get_offset():
     im = IntervalMap()
 
@@ -54,3 +55,26 @@ def test_interval_map_get_offset():
 
     with pytest.raises(TypeError):
         im.get_offset(-1.0)
+
+
+def test_invalid_types():
+    im = IntervalMap()
+
+    im.append_interval(10, "a")
+    im.append_interval(5, "b")
+    im.append_interval(3, "c")
+
+    with pytest.raises(TypeError):
+        im["wrong index"]
+    with pytest.raises(IndexError):
+        im[-1]
+    with pytest.raises(IndexError):
+        im[1000000]
+
+    with pytest.raises(TypeError):
+        im.get_offset("wrong index")
+    with pytest.raises(IndexError):
+        im.get_offset(-1)
+    with pytest.raises(IndexError):
+        im.get_offset(1000000)
+

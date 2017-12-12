@@ -1,10 +1,12 @@
+import os
 import re
 import uuid
 from collections import Iterable
 from datetime import timedelta
-from io import IOBase
+from io import BufferedIOBase
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
@@ -13,6 +15,7 @@ from django.http.response import HttpResponseBadRequest, \
     JsonResponse, HttpResponseForbidden
 from django.template.loader import get_template
 from django.utils import timezone
+from pip._vendor.distro import os_release_attr
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.utils import IntervalMap
@@ -24,10 +27,17 @@ def cleanup_stale_files():
     database for stale uploaded files and deletes them.
     """
     now = timezone.now()
-    files_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
-    for file in files_to_delete:
-        print(f"Deleting {file.id}...")
-        file.delete()
+    chunks_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
+    for chunk in chunks_to_delete:
+        print(f"Deleting {chunk.id}...")
+        dir_name = os.path.dirname(
+            os.path.join(settings.MEDIA_ROOT, chunk.file.name))
+        chunk.file.delete()
+        try:
+            os.rmdir(dir_name)
+        except IOError:
+            pass
+        chunk.delete()
 
 
 class NotFoundError(Exception): pass
@@ -131,11 +141,11 @@ class AjaxUploadWidget(Widget):
         range_match = re.match(
             r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
             range_header)
-        if not range_header:
+        if not range_match:
             raise InvalidRequestException("Supplied invalid Content-Range")
         start_byte = int(range_match.group("start"))
         end_byte = int(range_match.group("end"))
-        if range_match.group("length") is None:
+        if (range_match.group("length") is None) or (range_match.group("length") == '*'):
             total_size = None
         else:
             total_size = int(range_match.group("length"))
@@ -168,9 +178,9 @@ class AjaxUploadWidget(Widget):
             if chunk_intersects:
                 raise InvalidRequestException("Overlapping chunks")
 
-            inconsisent_filenames = other_chunks.exclude(
+            inconsistent_filenames = other_chunks.exclude(
                 client_filename=uploaded_file.name).exists()
-            if inconsisent_filenames:
+            if inconsistent_filenames:
                 raise InvalidRequestException(
                     "Chunks have inconsistent filenames")
 
@@ -249,7 +259,7 @@ class AjaxUploadWidget(Widget):
         return template.render(context=context)
 
 
-class OpenedStagedAjaxFile(IOBase):
+class OpenedStagedAjaxFile(BufferedIOBase):
     """
     This class behaves like a file handle for a :class:`StagedAjaxFile`.
     The file handle is strictly read-only. Under the hood, this class
@@ -298,20 +308,27 @@ class OpenedStagedAjaxFile(IOBase):
     def seekable(self, *args, **kwargs):
         return True
 
-    def read(self, count=None):
-        if self.closed:
-            raise IOError('file closed')
-        if self.size <= self.__file_pointer:
-            # Do not raise EOFError on read, follow convention of BytesIO
-            return b""
-        if not (0 <= self.__file_pointer):
-            return EOFError('file ended')
+    def readinto(self, buffer):
+        read_bytes = self.read(len(buffer))
+        buffer[:len(read_bytes)] = read_bytes
+        return len(read_bytes)
 
-        if count is None:
-            count = self.size - self.__file_pointer
+    def read(self, size=-1):
+        if size < 0:
+            size = None
+
+        if self.closed:
+            raise ValueError('file closed')
+        if self.size <= self.__file_pointer:
+            return b""
+        if self.__file_pointer < 0:
+            raise IOError('invalid file pointer position')
+
+        if size is None:
+            size = self.size - self.__file_pointer
 
         result = b""
-        while len(result) < count:
+        while len(result) < size:
             if self.__file_pointer >= len(self.__chunk_map):
                 break
 
@@ -328,16 +345,22 @@ class OpenedStagedAjaxFile(IOBase):
                 self.__current_chunk = this_chunk
 
             read_size = min(
-                count - len(result),
+                size - len(result),
                 self.__current_chunk.end_byte + 1 - self.__file_pointer)
             result += self.__current_chunk.file.read(read_size)
             self.__file_pointer += read_size
 
         return result
 
+    def read1(self, size=-1):
+        return self.read(size=size)
+
+    def readinto1(self, buffer):
+        return self.readinto(buffer)
+
     def seek(self, offset, from_what=0):
         if self.closed:
-            raise IOError('file closed')
+            raise ValueError('file closed')
 
         new_pointer = None
         if from_what == 0:
@@ -347,20 +370,21 @@ class OpenedStagedAjaxFile(IOBase):
         elif from_what == 2:
             new_pointer = self.size + offset
 
-        if not (0 <= new_pointer <= self.size):
-            raise EOFError('new pointer outside file boundaries')
+        if new_pointer < 0:
+            raise IOError('invalid file pointer')
 
         self.__file_pointer = new_pointer
 
-        if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
-            self.__current_chunk.file.seek(
-                self.__file_pointer - self.__current_chunk.start_byte)
+        if self.__file_pointer < self.__chunk_map.len:
+            if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
+                self.__current_chunk.file.seek(
+                    self.__file_pointer - self.__current_chunk.start_byte)
 
         return self.__file_pointer
 
     def tell(self, *args, **kwargs):
         if self.closed:
-            raise IOError('file closed')
+            raise ValueError('file closed')
         return self.__file_pointer
 
     def close(self):
@@ -411,8 +435,6 @@ class StagedAjaxFile:
 
         chunks_query = self._raise_if_missing()
         chunks = chunks_query.all()
-        if len(chunks) == 0:
-            raise NotFoundError()
 
         remaining_size = None
 
@@ -456,6 +478,17 @@ class StagedAjaxFile:
 
     def delete(self):
         query = self._raise_if_missing()
+        dir_name = None
+        for chunk in query:
+            if dir_name is None:
+                dir_name = os.path.dirname(
+                    os.path.join(settings.MEDIA_ROOT, chunk.file.name))
+            chunk.file.delete()
+        if dir_name and os.path.isdir(dir_name):
+            try:
+                os.rmdir(dir_name)
+            except IOError:
+                pass # Swallow all errors of rmdir
         query.delete()
 
 

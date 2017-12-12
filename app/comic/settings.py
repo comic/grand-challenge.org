@@ -11,6 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 # Default COMIC settings, to be included by settings.py
 # To overwrite these settings local-only, please add a file XX-local.conf.py in the same dir
 # and make XX higher then 00
+from matplotlib.dates import hours
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -428,7 +429,7 @@ DOCKER_BASE_URL = 'unix://var/run/docker.sock'
 CELERY_BEAT_SCHEDULE = {
     'cleanup_stale_uploads': {
         'task': 'jqfileupload.tasks.cleanup_stale_uploads',
-        'schedule': timedelta(seconds=60),
+        'schedule': timedelta(hours=1),
     }
 }
 
@@ -440,7 +441,9 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
 
-# Get *.conf from the directory this file is in and execute these in order. 
+JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
+
+# Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
 # current dir. XX should be a number which determines the order of execution. 
 # Executed last overwrites previous settings.  
@@ -473,3 +476,4 @@ if MAIN_HOST_NAME[-1] == '/':
 
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
