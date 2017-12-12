@@ -1,3 +1,4 @@
+import os
 import re
 import uuid
 from collections import Iterable
@@ -5,6 +6,7 @@ from datetime import timedelta
 from io import BufferedIOBase
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
@@ -13,6 +15,7 @@ from django.http.response import HttpResponseBadRequest, \
     JsonResponse, HttpResponseForbidden
 from django.template.loader import get_template
 from django.utils import timezone
+from pip._vendor.distro import os_release_attr
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.utils import IntervalMap
@@ -24,10 +27,17 @@ def cleanup_stale_files():
     database for stale uploaded files and deletes them.
     """
     now = timezone.now()
-    files_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
-    for file in files_to_delete:
-        print(f"Deleting {file.id}...")
-        file.delete()
+    chunks_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
+    for chunk in chunks_to_delete:
+        print(f"Deleting {chunk.id}...")
+        dir_name = os.path.dirname(
+            os.path.join(settings.MEDIA_ROOT, chunk.file.name))
+        chunk.file.delete()
+        try:
+            os.rmdir(dir_name)
+        except IOError:
+            pass
+        chunk.delete()
 
 
 class NotFoundError(Exception): pass
@@ -468,6 +478,17 @@ class StagedAjaxFile:
 
     def delete(self):
         query = self._raise_if_missing()
+        dir_name = None
+        for chunk in query:
+            if dir_name is None:
+                dir_name = os.path.dirname(
+                    os.path.join(settings.MEDIA_ROOT, chunk.file.name))
+            chunk.file.delete()
+        if dir_name and os.path.isdir(dir_name):
+            try:
+                os.rmdir(dir_name)
+            except IOError:
+                pass # Swallow all errors of rmdir
         query.delete()
 
 

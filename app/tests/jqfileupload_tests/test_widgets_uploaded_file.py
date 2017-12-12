@@ -189,6 +189,16 @@ def test_file_cleanup():
     chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
     assert len(chunks) > 0
 
+    assert os.path.isdir(os.path.join(
+        settings.MEDIA_ROOT,
+        settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+        str(uploaded_file_uuid)))
+    file_paths = [
+        os.path.join(settings.MEDIA_ROOT, chunk.file.name)
+        for chunk in chunks]
+    for path in file_paths:
+        assert os.path.exists(path)
+
     # Force timeout and clean
     now = timezone.now()
     for chunk in chunks:
@@ -200,6 +210,12 @@ def test_file_cleanup():
 
     chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
     assert len(chunks) == 0
+    assert not os.path.isdir(os.path.join(
+        settings.MEDIA_ROOT,
+        settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+        str(uploaded_file_uuid)))
+    for path in file_paths:
+        assert not os.path.exists(path)
 
 @pytest.mark.django_db
 def test_missing_file():
@@ -321,6 +337,10 @@ def test_file_deletion():
     assert tested_file.size == len(file_content)
 
     chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+    assert os.path.isdir(os.path.join(
+        settings.MEDIA_ROOT,
+        settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+        str(uploaded_file_uuid)))
     file_paths = [
         os.path.join(settings.MEDIA_ROOT, chunk.file.name)
         for chunk in chunks]
@@ -331,5 +351,9 @@ def test_file_deletion():
 
     assert not tested_file.exists
     assert not tested_file.is_complete
+    assert not os.path.isdir(os.path.join(
+        settings.MEDIA_ROOT,
+        settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+        str(uploaded_file_uuid)))
     for path in file_paths:
         assert not os.path.exists(path)
