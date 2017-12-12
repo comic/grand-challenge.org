@@ -1,4 +1,16 @@
+import os
+
 from django.db import models
+
+from django.conf import settings
+
+
+def generate_upload_filename(instance, filename):
+    return os.path.join(
+        settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+        f"{instance.file_id}",
+        filename)
+
 
 class StagedFile(models.Model):
     """
@@ -11,7 +23,9 @@ class StagedFile(models.Model):
     file_id = models.UUIDField(blank=False)
     timeout = models.DateTimeField(blank=False)
 
-    file = models.FileField(blank=False)
+    file = models.FileField(
+        blank=False,
+        upload_to=generate_upload_filename)
     start_byte = models.BigIntegerField(blank=False)
     end_byte = models.BigIntegerField(blank=False)
     total_size = models.BigIntegerField(null=True)

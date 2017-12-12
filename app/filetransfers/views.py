@@ -129,6 +129,10 @@ def _required_permission(user, path, project_name):
         # No one can download evaluation files
         return 'nobody'
 
+    if project_name.lower() == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY:
+        # No one can download evaluation files
+        return 'nobody'
+
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
             return ComicSiteModel.ALL
