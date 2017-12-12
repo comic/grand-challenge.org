@@ -1,11 +1,12 @@
+import os
 import uuid
 from datetime import timedelta
 from io import BytesIO
 
 import pytest
 from django.core import files
-from django.test import Client, RequestFactory
 from django.utils import timezone
+from django.conf import settings
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.uploader import StagedAjaxFile, \
@@ -319,7 +320,16 @@ def test_file_deletion():
     assert tested_file.is_complete
     assert tested_file.size == len(file_content)
 
+    chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+    file_paths = [
+        os.path.join(settings.MEDIA_ROOT, chunk.file.name)
+        for chunk in chunks]
+    for path in file_paths:
+        assert os.path.exists(path)
+
     tested_file.delete()
 
     assert not tested_file.exists
     assert not tested_file.is_complete
+    for path in file_paths:
+        assert not os.path.exists(path)
