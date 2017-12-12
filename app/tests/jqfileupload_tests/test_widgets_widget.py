@@ -216,6 +216,46 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request.POST["X-Upload-ID"] = "a" * 1000
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
+@pytest.mark.django_db
+def test_inconsistent_chunks_rfc7233(rf: RequestFactory):
+    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget.timeout = timedelta(seconds=1)
+
+    content = load_test_data()
+
+    # Overlapping chunks
+    upload_id = generate_new_upload_id(test_inconsistent_chunks_rfc7233, content)
+    part_1 = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    part_2 = create_partial_upload_file_request(
+        rf, upload_id, content, 5, 15)
+
+    widget.handle_ajax(part_1)
+    assert isinstance(widget.handle_ajax(part_2), HttpResponseBadRequest)
+
+    # Inconsistent filenames
+    upload_id += "x"
+    part_1 = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10, filename="a")
+    part_2 = create_partial_upload_file_request(
+        rf, upload_id, content, 10, 20, filename="b")
+
+    widget.handle_ajax(part_1)
+    assert isinstance(widget.handle_ajax(part_2), HttpResponseBadRequest)
+
+    # Inconsistent total size
+    upload_id += "x"
+    part_1 = create_partial_upload_file_request(
+        rf, upload_id, content[:20], 0, 10)
+    part_2 = create_partial_upload_file_request(
+        rf, upload_id, content[:20], 10, 20)
+    part_1.META["HTTP_CONTENT_RANGE"] = f"bytes 0-9/20"
+    part_2.META["HTTP_CONTENT_RANGE"] = f"bytes 10-19/30"
+
+    widget.handle_ajax(part_1)
+    assert isinstance(widget.handle_ajax(part_2), HttpResponseBadRequest)
+
+
 def test_render():
     widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=True)
     render_result = widget.render("some_name", None)

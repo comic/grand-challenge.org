@@ -246,6 +246,26 @@ def test_file_missing_chunk():
     assert tested_file.size is None
 
 @pytest.mark.django_db
+def test_file_missing_last_chunk():
+    file_content = b"HelloWorld" * 5
+    uploaded_file_uuid = create_uploaded_file(
+        file_content,
+        list(range(1, len(file_content) + 1)))
+
+    tested_file = StagedAjaxFile(uploaded_file_uuid)
+    assert tested_file.exists
+    assert tested_file.is_complete
+    assert tested_file.size == len(file_content)
+
+    # delete chunk
+    chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
+    chunks[len(chunks) - 1].delete()
+
+    assert tested_file.exists
+    assert not tested_file.is_complete
+    assert tested_file.size is None
+
+@pytest.mark.django_db
 def test_file_overlapping_chunk():
     file_content = b"HelloWorld" * 5
     uploaded_file_uuid = create_uploaded_file(
