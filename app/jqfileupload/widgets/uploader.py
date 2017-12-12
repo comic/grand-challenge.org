@@ -168,9 +168,9 @@ class AjaxUploadWidget(Widget):
             if chunk_intersects:
                 raise InvalidRequestException("Overlapping chunks")
 
-            inconsisent_filenames = other_chunks.exclude(
+            inconsistent_filenames = other_chunks.exclude(
                 client_filename=uploaded_file.name).exists()
-            if inconsisent_filenames:
+            if inconsistent_filenames:
                 raise InvalidRequestException(
                     "Chunks have inconsistent filenames")
 
