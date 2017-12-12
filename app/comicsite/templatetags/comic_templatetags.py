@@ -46,7 +46,7 @@ def parseKeyValueToken(token):
         token (django.base.Token): Object representing the string content of
             the template tag. Key values are expected to be of the format         
             key1:value1 key2:value2,...
-    
+
     Returns:
         A dictionary of key:value pairs
         
@@ -342,6 +342,14 @@ def metafooterpages():
             html_string += "</a></li>"
 
     return html_string
+
+@register.simple_tag
+def main_page_url():
+    """ Gets the url to the main page """
+    if settings.SUBDOMAIN_IS_PROJECTNAME:
+        return settings.MAIN_HOST_NAME
+    else:
+        return "/"
 
 
 @register.tag(name="listdir",
