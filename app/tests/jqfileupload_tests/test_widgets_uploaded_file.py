@@ -124,6 +124,10 @@ def do_default_content_tests(uploaded_file, file_content):
         assert file.closed
 
 
+def test_invalid_initialization():
+    with pytest.raises(TypeError):
+        StagedAjaxFile("blablalbal")
+
 @pytest.mark.django_db
 def test_staged_file_to_django_file():
     file_content = b"HelloWorld" * 5

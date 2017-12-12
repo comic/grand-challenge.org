@@ -98,6 +98,10 @@ def create_partial_upload_file_request(
     return post_request
 
 
+def test_invalid_initialization():
+    with pytest.raises(ValueError):
+        AjaxUploadWidget()
+
 @pytest.mark.django_db
 def test_single_chunk(rf: RequestFactory):
     widget = AjaxUploadWidget(ajax_target_path="/ajax")
@@ -196,6 +200,21 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request.META["HTTP_CONTENT_RANGE"] = "bytes 54343-3223/*"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["HTTP_CONTENT_RANGE"] = "bytes 1000-3000/2000"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["HTTP_CONTENT_RANGE"] = "bytes 1000-2000/*"
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
+    post_request = create_partial_upload_file_request(
+        rf, upload_id, content, 0, 10)
+    post_request.META["X-Upload-ID"] = "a" * 1000
+    post_request.POST["X-Upload-ID"] = "a" * 1000
+    assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
 def test_render():
     widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=True)
