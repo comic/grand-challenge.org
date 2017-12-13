@@ -1,4 +1,5 @@
 from django.core.files import File
+from django.db.models import Q
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
 from comicmodels.models import ComicSite
@@ -54,16 +55,23 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
-        return super(SubmissionCreate,self).form_valid(form)
+        return super(SubmissionCreate, self).form_valid(form)
 
 
-class SubmissionList(UserIsChallengeAdminMixin, ListView):
-    # TODO - if participant: list only their submissions
+class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Submission
 
     def get_queryset(self):
+        """ Admins see everything, participants just their submissions """
         queryset = super(SubmissionList, self).get_queryset()
-        return queryset.filter(challenge__pk=self.request.project_pk)
+
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+
+        if challenge.is_admin(self.request.user):
+            return queryset.filter(challenge__pk=self.request.project_pk)
+        else:
+            return queryset.filter(Q(challenge__pk=self.request.project_pk),
+                                   Q(creator__pk=self.request.user.pk))
 
 
 class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):

@@ -1,9 +1,11 @@
 from typing import Callable
 from urllib.parse import urlparse
 
+import factory
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import signals
 from django.test import Client
 
 from comicmodels.models import ComicSite
@@ -12,17 +14,16 @@ from tests.factories import SUPER_SECURE_TEST_PASSWORD, MethodFactory, \
     SubmissionFactory, JobFactory, ResultFactory
 
 
-def assert_viewname_status(*,
-                           code: int,
-                           viewname: str,
-                           challenge: ComicSite,
-                           client: Client,
-                           method: Callable,
-                           pk: str = None,
-                           user: settings.AUTH_USER_MODEL = None):
-    """ Asserts that a viewname for challenge_short_name and pk returns status
-    code `code` for a particular user """
-
+# TODO: Test creation with forms.
+# TODO: Test that the filters are working
+def get_view_for_user(*,
+                      viewname: str,
+                      challenge: ComicSite,
+                      client: Client,
+                      method: Callable,
+                      pk: str = None,
+                      user: settings.AUTH_USER_MODEL = None):
+    """ Returns the view for a particular user """
     kwargs = {'challenge_short_name': challenge.short_name}
 
     if pk:
@@ -38,6 +39,15 @@ def assert_viewname_status(*,
 
     if user:
         client.logout()
+
+    return response
+
+
+def assert_viewname_status(*, code: int, **kwargs):
+    """ Asserts that a viewname for challenge_short_name and pk returns status
+    code `code` for a particular user """
+
+    response = get_view_for_user(**kwargs)
 
     assert response.status_code == code
     return response
@@ -185,10 +195,64 @@ def test_method_detail(client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
+@factory.django.mute_signals(signals.post_save)
 def test_submission_list(client, TwoChallengeSets):
-    validate_admin_only_view(viewname='evaluation:submission-list',
-                             two_challenge_set=TwoChallengeSets,
-                             client=client)
+    validate_admin_or_participant_view(viewname='evaluation:submission-list',
+                                       two_challenge_set=TwoChallengeSets,
+                                       client=client)
+
+    p_s1 = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+    p_s2 = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+    p1_s1 = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant1)
+
+    p12_s1_c1 = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.participant12)
+    p12_s1_c2 = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet2.challenge,
+        creator=TwoChallengeSets.participant12)
+
+    # Participants should only be able to see their own submissions
+    response = get_view_for_user(viewname='evaluation:submission-list',
+                                 challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                                 client=client,
+                                 method=client.get,
+                                 user=TwoChallengeSets.ChallengeSet1.participant)
+    assert str(p_s1.pk) in response.rendered_content
+    assert str(p_s2.pk) in response.rendered_content
+    assert str(p1_s1.pk) not in response.rendered_content
+    assert str(p12_s1_c1.pk) not in response.rendered_content
+    assert str(p12_s1_c2.pk) not in response.rendered_content
+
+    # Admins should be able to see all submissions
+    response = get_view_for_user(viewname='evaluation:submission-list',
+                                 challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                                 client=client,
+                                 method=client.get,
+                                 user=TwoChallengeSets.ChallengeSet1.admin)
+    assert str(p_s1.pk) in response.rendered_content
+    assert str(p_s2.pk) in response.rendered_content
+    assert str(p1_s1.pk) in response.rendered_content
+    assert str(p12_s1_c1.pk) in response.rendered_content
+    assert str(p12_s1_c2.pk) not in response.rendered_content
+
+    # Only submissions relevant to this challenge should be listed
+    response = get_view_for_user(viewname='evaluation:submission-list',
+                                 challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                                 client=client,
+                                 method=client.get,
+                                 user=TwoChallengeSets.participant12)
+    assert str(p12_s1_c1.pk) in response.rendered_content
+    assert str(p12_s1_c2.pk) not in response.rendered_content
+    assert str(p_s1.pk) not in response.rendered_content
+    assert str(p_s2.pk) not in response.rendered_content
+    assert str(p1_s1.pk) not in response.rendered_content
 
 
 @pytest.mark.django_db
