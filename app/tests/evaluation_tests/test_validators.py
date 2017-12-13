@@ -1,7 +1,8 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from evaluation.validators import ExtensionValidator
+from evaluation.validators import ExtensionValidator, MimeTypeValidator
+
 
 class FakeFile(object):
     def __init__(self, name):
@@ -21,7 +22,7 @@ def test_extension_validator():
     # Happy cases
     assert zip_validator(FakeFile('test.zip')) is None
     assert zip_validator(FakeFile('test.zIp')) is None
-    assert zip_validator([FakeFile('test.zip')])
+    assert zip_validator([FakeFile('test.zip')]) is None
     assert zip_validator([FakeFile('test.zip'), FakeFile('test1.zip')]) is None
     assert zip_and_tar_validator(FakeFile('test.zip')) is None
     assert zip_and_tar_validator(FakeFile('test.tar')) is None
@@ -32,3 +33,14 @@ def test_extension_validator():
 
     with pytest.raises(ValidationError):
         zip_validator([FakeFile('test.zip'), FakeFile('test.tar')])
+
+def test_mimetype_validator():
+    json_validator = MimeTypeValidator(allowed_types=('application/json',))
+    json_validator1 = MimeTypeValidator(allowed_types=('application/json',))
+    text_validator = MimeTypeValidator(allowed_types=('text/plain',))
+
+    assert json_validator is not json_validator1
+    assert json_validator == json_validator1
+    assert json_validator != text_validator
+    assert hash(json_validator) == hash(json_validator1)
+    assert hash(json_validator) != hash(text_validator)
