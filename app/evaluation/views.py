@@ -84,13 +84,22 @@ class JobCreate(UserIsChallengeAdminMixin, CreateView):
     fields = '__all__'
 
 
-class JobList(UserIsChallengeAdminMixin, ListView):
-    # TODO - if participant: list only their jobs
+class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Job
 
     def get_queryset(self):
+        """ Admins see everything, participants just their jobs """
         queryset = super(JobList, self).get_queryset()
-        return queryset.filter(challenge__pk=self.request.project_pk)
+
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+
+        if challenge.is_admin(self.request.user):
+            return queryset.filter(challenge__pk=self.request.project_pk)
+        else:
+            return queryset.filter(
+                Q(challenge__pk=self.request.project_pk),
+                Q(submission__creator__pk=self.request.user.pk)
+            )
 
 
 class JobDetail(UserIsChallengeAdminMixin, DetailView):
