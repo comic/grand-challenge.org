@@ -1,41 +1,26 @@
-import os
-import tempfile
-import zipfile
-
 import docker
 import factory
 import pytest
 from django.conf import settings
 from django.db.models import signals
 
-from evaluation.tasks import evaluate_submission
+from evaluation.models import Method
+from evaluation.tasks import evaluate_submission, validate_method_async
 from tests.factories import SubmissionFactory, JobFactory, \
     MethodFactory, UserFactory
 
 
 @pytest.mark.django_db
 @factory.django.mute_signals(signals.post_save)
-def test_submission_evaluation(client, evaluation_image):
+def test_submission_evaluation(client, evaluation_image, submission_file):
     # Upload a submission and create a job
 
     dockerclient = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
-    with tempfile.NamedTemporaryFile(mode='r', suffix='.zip',
-                                     delete=False) as f:
-        testfile = f.name
-
-    z = zipfile.ZipFile(testfile, mode='w')
-    try:
-        z.write(os.path.join(os.path.split(__file__)[0], 'resources',
-                             'submission.csv'),
-                compress_type=zipfile.ZIP_DEFLATED,
-                arcname='submission.csv')
-    finally:
-        z.close()
-
     user = UserFactory()
 
-    submission = SubmissionFactory(file__from_path=testfile, creator=user)
+    submission = SubmissionFactory(file__from_path=submission_file,
+                                   creator=user)
 
     eval_container, sha256 = evaluation_image
     method = MethodFactory(image__from_path=eval_container,
@@ -59,3 +44,51 @@ def test_submission_evaluation(client, evaluation_image):
     # The evaluation method should clean up after itself
     assert len(dockerclient.volumes.list()) == num_volumes_before
     assert len(dockerclient.containers.list()) == num_containers_before
+
+
+@pytest.mark.django_db
+def test_method_validation(evaluation_image):
+    """ The validator should set the correct sha256 and set the ready bit """
+    container, sha256 = evaluation_image
+    method = MethodFactory(image__from_path=container)
+
+    # The method factory fakes the sha256 on creation
+    assert method.image_sha256 != sha256
+    assert method.ready == False
+
+    validate_method_async(method_pk=method.pk)
+
+    method = Method.objects.get(pk=method.pk)
+
+    assert method.image_sha256 == sha256
+    assert method.ready == True
+
+
+@pytest.mark.django_db
+def test_method_validation_invalid_dockefile(alpine_images):
+    """ Uploading two images in a tar archive should fail """
+    method = MethodFactory(image__from_path=alpine_images)
+
+    assert method.ready == False
+
+    validate_method_async(method_pk=method.pk)
+
+    method = Method.objects.get(pk=method.pk)
+
+    assert method.ready == False
+    assert 'should only have 1 image' in method.status
+
+
+@pytest.mark.django_db
+def test_method_validation_not_a_docker_tar(submission_file):
+    """ Upload something that isnt a docker file should be invalid """
+    method = MethodFactory(image__from_path=submission_file)
+
+    assert method.ready == False
+
+    validate_method_async(method_pk=method.pk)
+
+    method = Method.objects.get(pk=method.pk)
+
+    assert method.ready == False
+    assert 'manifest.json not found' in method.status
