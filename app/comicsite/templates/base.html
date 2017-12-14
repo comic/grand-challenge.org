@@ -72,6 +72,12 @@
                     src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
         {% endblock %}
 
+        {% block jqcookie %}
+            <script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
+                    integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
+                    crossorigin="anonymous"></script>
+        {% endblock %}
+
         {#  Custom CSS, must be included AFTER bootstrap  #}
         <link href="{% get_static_prefix %}css/core.css" type="text/css"
               rel="stylesheet">
@@ -132,7 +138,8 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand text-capitalize" href="{% main_page_url %}">
+                <a class="navbar-brand text-capitalize"
+                   href="{% main_page_url %}">
                     {{ main_project_name }}
                 </a>
             </div>

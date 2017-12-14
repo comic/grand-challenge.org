@@ -1,4 +1,5 @@
 import os
+import zipfile
 from collections import namedtuple
 
 import docker
@@ -129,4 +130,38 @@ def evaluation_image(tmpdir_factory):
 
     assert im.id not in [x.id for x in client.images.list()]
 
-    return (outfile, im.id)
+    return outfile, im.id
+
+@pytest.fixture(scope='session')
+def alpine_images(tmpdir_factory):
+    client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+    client.images.pull('alpine:3.6')
+    client.images.pull('alpine:3.7')
+
+    cli = docker.APIClient(base_url=settings.DOCKER_BASE_URL)
+
+    # get all images and put them in a tar archive
+    image = cli.get_image('alpine')
+    outfile = tmpdir_factory.mktemp('alpine').join('alpine.tar')
+
+    with outfile.open('wb') as f:
+        f.write(image.data)
+
+    return outfile
+
+@pytest.fixture(scope='session')
+def submission_file(tmpdir_factory):
+    testfile = tmpdir_factory.mktemp('submission').join('submission.zip')
+
+    z = zipfile.ZipFile(testfile, mode='w')
+    try:
+        z.write(os.path.join(os.path.split(__file__)[0],
+                             'evaluation_tests',
+                             'resources',
+                             'submission.csv'),
+                compress_type=zipfile.ZIP_DEFLATED,
+                arcname='submission.csv')
+    finally:
+        z.close()
+
+    return testfile

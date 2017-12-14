@@ -57,7 +57,7 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
 
 
 @shared_task()
-def validate_method_async(*, method_pk: uuid.UUID = None):
+def validate_method_async(*, method_pk: uuid.UUID):
     instance = Method.objects.get(pk=method_pk)
 
     instance.image.open(mode='rb')
@@ -67,7 +67,7 @@ def validate_method_async(*, method_pk: uuid.UUID = None):
             member = dict(zip(t.getnames(), t.getmembers()))[
                 'manifest.json']
             manifest = t.extractfile(member).read()
-    except KeyError:
+    except (KeyError, tarfile.ReadError):
         instance.status = 'manifest.json not found at the root of the ' \
                           'container image file. Was this created ' \
                           'with docker save?'
