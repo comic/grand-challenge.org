@@ -10,6 +10,10 @@ from tests.factories import ChallengeFactory
 def test_attach_challenge_groups():
     challenge = ChallengeFactory()
 
+    challenge.admins_group = None
+    challenge.participants_group = None
+    challenge.save()
+
     assert challenge.admins_group is None
     assert challenge.participants_group is None
 

@@ -42,18 +42,25 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
     clear_url_caches()
 
     if created:
-        admingroup = Group.objects.get(name=instance.admin_group_name())
+        # Create the groups only on first save
+        admins_group = Group.objects.create(name=instance.admin_group_name())
+        participants_group = Group.objects.create(
+            name=instance.participants_group_name())
 
-        assign_perm("change_comicsite", admingroup, instance)
+        instance.admins_group = admins_group
+        instance.participants_group = participants_group
+        instance.save()
+
+        assign_perm("change_comicsite", admins_group, instance)
 
         # add all permissions for pages and comicsites so
         # these can be edited by admin group
-        add_standard_permissions(admingroup, "comicsite")
-        add_standard_permissions(admingroup, "page")
+        add_standard_permissions(admins_group, "comicsite")
+        add_standard_permissions(admins_group, "page")
 
         # add current user to admins for this site
         try:
-            instance.creator.groups.add(admingroup)
+            instance.creator.groups.add(admins_group)
 
             # Add the creator to the staff
             instance.creator.is_staff = True
