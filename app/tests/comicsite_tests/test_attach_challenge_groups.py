@@ -1,9 +1,9 @@
 import pytest
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.core.management import call_command
 
 from comicmodels.models import ComicSite
-from tests.factories import ChallengeFactory
+from tests.factories import ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -27,3 +27,20 @@ def test_attach_challenge_groups():
 
     assert challenge.admins_group == admins_group
     assert challenge.participants_group == participants_group
+
+@pytest.mark.django_db
+def test_clean_staff(ChallengeSet):
+    superuser = UserFactory(is_staff=True, is_superuser=True)
+
+    ChallengeSet.participant.is_staff = True
+    ChallengeSet.participant.save()
+
+    assert ChallengeSet.creator.is_staff
+    assert ChallengeSet.participant.is_staff
+
+    call_command('clean_staff')
+
+    assert User.objects.get(pk=ChallengeSet.creator.pk).is_staff
+    assert not User.objects.get(pk=ChallengeSet.participant.pk).is_staff
+    assert User.objects.get(pk=superuser.pk).is_staff
+
