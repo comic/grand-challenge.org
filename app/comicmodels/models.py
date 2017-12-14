@@ -59,8 +59,8 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
             path = os.path.join(comicsite.public_upload_dir_rel(),
                                 os.path.join('%s' % uploadmodel.user,
                                              '%s_' % (
-                                             datetime.datetime.now().strftime(
-                                                 '%Y%m%d_%H%M%S')) + filename))
+                                                 datetime.datetime.now().strftime(
+                                                     '%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.public_upload_dir_rel(), filename)
@@ -70,8 +70,8 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
             path = os.path.join(comicsite.upload_dir_rel(),
                                 os.path.join('%s' % uploadmodel.user,
                                              '%s_' % (
-                                             datetime.datetime.now().strftime(
-                                                 '%Y%m%d_%H%M%S')) + filename))
+                                                 datetime.datetime.now().strftime(
+                                                     '%Y%m%d_%H%M%S')) + filename))
 
         else:
             path = os.path.join(comicsite.upload_dir_rel(), filename)
@@ -367,6 +367,24 @@ class ComicSite(models.Model):
     use_evaluation = models.BooleanField(default=False,
                                          help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
 
+    admins_group = models.OneToOneField(
+        Group,
+        blank=True,
+        null=True,
+        editable=False,
+        on_delete=models.CASCADE,
+        related_name='admins_of_challenge'
+    )
+
+    participants_group = models.OneToOneField(
+        Group,
+        blank=True,
+        null=True,
+        editable=False,
+        on_delete=models.CASCADE,
+        related_name='participants_of_challenge'
+    )
+
     objects = ComicSiteManager()
 
     def __str__(self):
@@ -381,9 +399,10 @@ class ComicSite(models.Model):
     def save(self, *args, **kwargs):
         if self.pk is None:
             # Create the groups only on first save
-            # TODO: JM - should be a one to one field
-            Group.objects.create(name=self.admin_group_name())
-            Group.objects.create(name=self.participants_group_name())
+            Group.objects.create(
+                name=self.admin_group_name())
+            Group.objects.create(
+                name=self.participants_group_name())
 
         super(ComicSite, self).save(*args, **kwargs)
 
@@ -536,7 +555,7 @@ class ComicSite(models.Model):
         if self.submission_page_name:
             if self.submission_page_name.startswith(
                     "http://") or self.submission_page_name.startswith(
-                    "https://"):
+                "https://"):
                 # the url in the submission page box is a full url
                 return self.submission_page_name
             else:
