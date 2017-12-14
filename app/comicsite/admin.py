@@ -725,17 +725,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
             obj.creator = request.user
         super(ComicSiteAdmin, self).save_model(request, obj, form, change)
 
-    def delete_model(self, request, obj):
-        """
-        Given a model instance delete it from the database.
-        """
-        self.remove_related_groups(request, obj)
-        obj.delete()
-
-    def remove_related_groups(self, request, obj):
-        Group.objects.get(name=obj.admin_group_name()).delete()
-        Group.objects.get(name=obj.participants_group_name()).delete()
-
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """
         if obj is None:
