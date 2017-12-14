@@ -15,3 +15,8 @@ class Command(BaseCommand):
                 print(f'Removing staff bit from {user.username}')
                 user.is_staff = False
                 user.save()
+            else:
+                print(f'{user.username} is admin for:')
+                for group in admin_groups:
+                    print(f'  - {group.admins_of_challenge.short_name}')
+
