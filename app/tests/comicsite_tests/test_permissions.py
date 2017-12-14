@@ -81,6 +81,9 @@ def test_permissions_mixin(rf: RequestFactory, admin_user, mocker,
 @pytest.mark.django_db
 def test_permissions_after_challenge_rename(rf: RequestFactory, admin_user,
                                             mocker, ChallengeSet):
+    """ Check that we can rename challenges.
+    Admin_user is superuser """
+
     creator = ChallengeSet.creator
     challenge = ChallengeSet.challenge
     participant = ChallengeSet.participant

@@ -658,9 +658,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
             if user_form.is_valid():
                 user = user_form.cleaned_data['user']
                 # add given user to admins group
-                admingroup = comicsite.admins_group
-                # add current user to admins for this site
-                user.groups.add(admingroup)
+                comicsite.add_admin(user)
+
                 # give them the staff bit
                 user.is_staff = True
                 user.save()
@@ -679,7 +678,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
             if user_form.is_valid():
 
                 # add given user to admins group
-                admingroup = comicsite.admins_group
                 usernames_to_remove = request.POST.getlist('admins')
                 removed = []
 
@@ -691,7 +689,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                     else:
 
                         user = User.objects.get(username=username)
-                        user.groups.remove(admingroup)
+                        comicsite.remove_admin(user)
                         removed.append(username)
 
                         # send signal to be picked up for example by email notifier
