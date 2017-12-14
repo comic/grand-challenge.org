@@ -460,8 +460,8 @@ class ComicSite(models.Model):
 
         groups = Group.objects.filter(
             Q(name=settings.EVERYONE_GROUP_NAME) | Q(
-                name=self.admin_group_name()) | Q(
-                name=self.participants_group_name()))
+                pk=self.admins_group.pk) | Q(
+                pk=self.participants_group.pk))
         return groups
 
     def is_admin(self, user):
@@ -471,7 +471,7 @@ class ComicSite(models.Model):
         if user.is_superuser:
             return True
 
-        if user.groups.filter(name=self.admin_group_name()).exists():
+        if user.groups.filter(pk=self.admins_group.pk).exists():
             return True
         else:
             return False
@@ -483,19 +483,18 @@ class ComicSite(models.Model):
         if user.is_superuser:
             return True
 
-        if user.groups.filter(name=self.participants_group_name()).exists():
+        if user.groups.filter(pk=self.participants_group.pk).exists():
             return True
         else:
             return False
 
     def get_admins(self):
-        """ Return array of all users that are in this comicsites admin group, including superusers
-        """
-        User = get_user_model()
-        admins = User.objects.filter(
-            Q(groups__name=self.admin_group_name()) | Q(
-                is_superuser=True)).distinct()
-        return admins
+        """ Return all users that are in this comicsites admin group """
+        return self.admins_group.user_set.all()
+
+    def get_participants(self):
+        """ Return all participants of this challenge """
+        return self.participants_group.all()
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
@@ -560,20 +559,16 @@ class ComicSite(models.Model):
         return URL
 
     def add_participant(self, user):
-        group = Group.objects.get(name=self.participants_group_name())
-        user.groups.add(group)
+        user.groups.add(self.participants_group)
 
     def remove_participant(self, user):
-        group = Group.objects.get(name=self.participants_group_name())
-        user.groups.remove(group)
+        user.groups.remove(self.participants_group)
 
     def add_admin(self, user):
-        group = Group.objects.get(name=self.admin_group_name())
-        user.groups.add(group)
+        user.groups.add(self.admins_group)
 
     def remove_admin(self, user):
-        group = Group.objects.get(name=self.admin_group_name())
-        user.groups.remove(group)
+        user.groups.remove(self.admins_group)
 
     class Meta:
         verbose_name = "challenge"
@@ -629,9 +624,8 @@ class ComicSiteModel(models.Model):
         """ Give the right groups permissions to this object
             object needs to be saved before setting perms"""
 
-        admingroup = Group.objects.get(name=self.comicsite.admin_group_name())
-        participantsgroup = Group.objects.get(
-            name=self.comicsite.participants_group_name())
+        admingroup = self.comicsite.admins_group
+        participantsgroup = self.comicsite.participants_group
         everyonegroup = Group.objects.get(name=settings.EVERYONE_GROUP_NAME)
 
         self.persist_if_needed()

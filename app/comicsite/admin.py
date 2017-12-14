@@ -307,8 +307,7 @@ class PageAdmin(ComicModelAdmin):
     def first_save(self, obj):
         # at page creation, set the correct object permissions
         # get admin group for the comicsite of this page
-        agn = obj.comicsite.admin_group_name()
-        admingroup = Group.objects.get(name=agn)
+        admingroup = obj.comicsite.admins_group
         # add change_page permission to the current page
         obj.save()
         assign_perm("change_page", admingroup, obj)
@@ -652,16 +651,15 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         comicsite = get_object_or_404(ComicSite, id=object_pk)
         User = get_user_model()
-        admins = User.objects.filter(groups__name=comicsite.admin_group_name())
+        admins = comicsite.get_admins()
 
         if request.method == 'POST' and 'submit_add_user' in request.POST:
             user_form = AdminManageForm(request.POST)
             if user_form.is_valid():
                 user = user_form.cleaned_data['user']
                 # add given user to admins group
-                admingroup = Group.objects.get(name=comicsite.admin_group_name())
-                # add current user to admins for this site
-                user.groups.add(admingroup)
+                comicsite.add_admin(user)
+
                 # give them the staff bit
                 user.is_staff = True
                 user.save()
@@ -680,7 +678,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
             if user_form.is_valid():
 
                 # add given user to admins group
-                admingroup = Group.objects.get(name=comicsite.admin_group_name())
                 usernames_to_remove = request.POST.getlist('admins')
                 removed = []
 
@@ -692,7 +689,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                     else:
 
                         user = User.objects.get(username=username)
-                        user.groups.remove(admingroup)
+                        comicsite.remove_admin(user)
                         removed.append(username)
 
                         # send signal to be picked up for example by email notifier
@@ -737,13 +734,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
     def registration_requests_view(self, request, object_pk):
         """ Used to view requests to participate in admin interface
         """
-
-        comicsite = get_object_or_404(ComicSite, id=object_pk)
-        User = get_user_model()
-        admins = User.objects.filter(groups__name=comicsite.admin_group_name(), is_superuser=False)
-
-        context = self.get_base_context(request, comicsite)
-
         from comicmodels.admin import RegistrationRequestAdmin
         from comicmodels.models import RegistrationRequest
 
@@ -751,10 +741,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return rra.changelist_view(request)
         # TODO: why is RegistrationRequestAdmin in a different class. This is
         # so confusing. Think about class responsibilities and fix this.
-
-
-        # return render_to_response(self.admin_manage_template,
-        #    context, RequestContext(request, current_app=self.admin_site.name))
 
 
 class AdminManageForm(forms.Form):

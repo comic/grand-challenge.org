@@ -163,8 +163,7 @@ def send_file_uploaded_notification_email(sender, **kwargs):
     comicsite = kwargs['comicsite']
     site = kwargs['site']
     title = "New upload for %s: '%s' " % (comicsite.short_name, kwargs["filename"])
-    User = get_user_model()
-    admins = User.objects.filter(groups__name=comicsite.admin_group_name())
+    admins = comicsite.get_admins()
 
     if not admins:
         admin_email_adresses = [x[1] for x in settings.ADMINS]

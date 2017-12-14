@@ -1280,9 +1280,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
         request_mail = mail.outbox[-1]
 
-        User = get_user_model()
-        admins = User.objects.filter(
-            groups__name=self.testproject.admin_group_name())
+        admins = self.testproject.get_admins()
 
         self.assertEmail(request_mail, {"to": admins[0].email,
                                         "subject": "New participation request",

@@ -94,8 +94,6 @@ def _register_after_approval(request, project):
         html = pending_or_accepted[0].status_to_string()
         pass  # do not add another request
     else:
-        participantsgroup = Group.objects.get(
-            name=project.participants_group_name())
         reg_request = RegistrationRequest()
         reg_request.project = project
         reg_request.user = request.user
