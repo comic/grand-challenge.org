@@ -369,7 +369,6 @@ class ComicSite(models.Model):
 
     admins_group = models.OneToOneField(
         Group,
-        blank=True,
         null=True,
         editable=False,
         on_delete=models.CASCADE,
@@ -378,7 +377,6 @@ class ComicSite(models.Model):
 
     participants_group = models.OneToOneField(
         Group,
-        blank=True,
         null=True,
         editable=False,
         on_delete=models.CASCADE,
@@ -395,16 +393,6 @@ class ComicSite(models.Model):
         """ clean method is called automatically for each save in admin"""
         pass
         # TODO check whether short name is really clean and short!
-
-    def save(self, *args, **kwargs):
-        if self.pk is None:
-            # Create the groups only on first save
-            Group.objects.create(
-                name=self.admin_group_name())
-            Group.objects.create(
-                name=self.participants_group_name())
-
-        super(ComicSite, self).save(*args, **kwargs)
 
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
