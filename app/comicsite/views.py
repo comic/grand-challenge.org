@@ -299,10 +299,6 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     if mimetype == "application/pdf" or mimetype == "application/zip":
         return inserted_file(request, site_short_name, dropboxpath)
 
-        # filename = path.join(settings.DROPBOX_ROOT,site_short_name,dropboxpath)
-        # return download_handler_file(request,filename)
-        # return offerdownload
-
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
 
     p = get_object_or_404(Page, comicsite__short_name=site.short_name,
@@ -329,7 +325,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
 def get_data_folder_path(project_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
-    return path.join(settings.DROPBOX_ROOT, project_name)
+    return path.join(settings.MEDIA_ROOT, project_name)
 
 
 def get_dirnames(path):

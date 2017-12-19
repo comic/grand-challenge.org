@@ -889,7 +889,7 @@ class InsertFileNode(template.Node):
             return self.make_error_msg("Path Resolution failed: {}".format(e))
 
         project_name = context["site"].short_name
-        filepath = os.path.join(settings.DROPBOX_ROOT, project_name, filename)
+        filepath = os.path.join(settings.MEDIA_ROOT, project_name, filename)
         filepath = os.path.abspath(filepath)
         filepath = self.make_canonical_path(filepath)
 
@@ -1003,7 +1003,7 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(error_msg)
 
         project_name = context.page.comicsite.short_name
-        filename = os.path.join(settings.DROPBOX_ROOT, project_name,
+        filename = os.path.join(settings.MEDIA_ROOT, project_name,
                                 filename_clean)
 
         storage = DefaultStorage()
@@ -1838,7 +1838,7 @@ class AllProjectLinksNode(template.Node):
         return html
 
     def read_grand_challenge_projectlinks(self):
-        filepath = os.path.join(settings.DROPBOX_ROOT,
+        filepath = os.path.join(settings.MEDIA_ROOT,
                                 settings.MAIN_PROJECT_NAME,
                                 settings.EXTERNAL_PROJECTS_FILE)
         reader = ProjectExcelReader(filepath, 'Challenges')

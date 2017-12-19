@@ -113,10 +113,6 @@ CACHES = {
     }
 }
 
-# root synched folder for dropbox. Tags like include_file read from this.
-# Should contain a folder for each project, e.g. /VESSEL12 /ANODE09
-DROPBOX_ROOT = MEDIA_ROOT
-
 # In each project there can be a single directory out of which files can be downloaded
 # without logging in. In this folder you can put website header images etc.
 # for security, only MEDIA_ROOT/<project_name>/COMIC_PUBLIC_FOLDER_NAME are served
@@ -141,14 +137,14 @@ MAIN_PROJECT_NAME = "comic"
 
 # An overview can be rendered of all projects in the framework. In addition,
 # external projects can be included from the file below. Relative to
-# DROPBOX_ROOT + MAIN_PROJECT_NAME
+# MEDIA_ROOT + MAIN_PROJECT_NAME
 EXTERNAL_PROJECTS_FILE = "challengestats.xls"
 
 # Each project in ALL_PROJECTS_FILE can have a 100x100 image thumbnail associated
 # with it. Thumbnail images are looked for in the folder below. Filenames should
 # <project_abbreviation>.jpg. For example, If a projects value in the "abreviation"
 # column 'ABC2013' then the framework will include the image 'ABD2013.png' from the
-# directory below. Directory is relative to DROPBOX_ROOT+MAIN_PROJECT_NAME
+# directory below. Directory is relative to MEDIA_ROOT+MAIN_PROJECT_NAME
 EXTERNAL_PROJECTS_IMAGE_FOLDER = "public_html/images/all_challenges/"
 
 # The url for a project in comic is /site/<projectname>. This is quite ugly. It
@@ -465,10 +461,6 @@ CKEDITOR_UPLOAD_PATH = MEDIA_ROOT
 
 if MEDIA_ROOT[-1] != "/":
     msg = "MEDIA_ROOT setting should end in a slash. Found '" + MEDIA_ROOT + "'. Please add a slash"
-    raise ImproperlyConfigured(msg)
-
-if DROPBOX_ROOT[-1] != "/":
-    msg = "DROPBOX_ROOT setting should end in a slash. Found '" + DROPBOX_ROOT + "'. Please add a slash"
     raise ImproperlyConfigured(msg)
 
 if MAIN_HOST_NAME[-1] == '/':

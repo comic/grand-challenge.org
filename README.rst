@@ -56,9 +56,6 @@ MAIN_HOST_NAME:
     If you use a hostname different from the initial "http://localhost" to call the framework,
     change the MAIN_HOST_NAME and ALLOWED_HOSTS settings
 
-DROPBOX_ROOT:
-    Each project on the framework can reference files like images, stylesheets and downloadble datasets.
-    These files are looked for in this location.
 
 Useful URLs
 -----------
