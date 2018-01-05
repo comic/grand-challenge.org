@@ -1,4 +1,5 @@
 {% extends "site.html" %}
+{% load evaluation_extras %}
 
 {% block pagecontent %}
 
@@ -7,9 +8,13 @@
     <table class="table" id="resultsTable">
         <thead>
         <tr>
+            {% comment %}
+                Update the column index of the order below if the position
+                of Score changes here.
+            {% endcomment %}
             <th>User</th>
             <th>Date</th>
-            <th>Metrics</th>
+            <th>Score</th>
         </tr>
         </thead>
         <tbody>
@@ -19,8 +24,8 @@
                     <td><a
                             href="{% url 'userena_profile_detail' result.job.submission.creator %}">
                         {{ result.job.submission.creator }}</a></td>
-                    <td>{{ result.created }}</td>
-                    <td>{{ result.metrics }}</td>
+                    <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+                    <td>{{ result.metrics|get:site.evaluation_score_fieldname }}</td>
                 </tr>
             {% endif %}
         {% empty %}
@@ -31,7 +36,14 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#resultsTable').DataTable();
+            $('#resultsTable').DataTable({
+                {% comment %}
+                    The column index of the default sort, must match the table
+                    set up.
+                {% endcomment %}
+                order: [[2, "{{ site.evaluation_score_default_sort }}" ]],
+                ordering: true
+            });
         });
     </script>
 

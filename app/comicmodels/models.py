@@ -36,7 +36,6 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
 
-
     if hasattr(uploadmodel, 'short_name'):
         is_comicsite = True
     else:
@@ -288,6 +287,15 @@ class ComicSite(models.Model):
 
     public_folder = "public_html"
 
+    # This must match the syntax used in jquery datatables
+    # https://datatables.net/reference/option/order
+    ASCENDING = 'asc'
+    DESCENDING = 'desc'
+    EVALUATION_SCORE_SORT_CHOICES = (
+        (ASCENDING, 'Ascending'),
+        (DESCENDING, 'Descending'),
+    )
+
     creator = models.ForeignKey(settings.AUTH_USER_MODEL,
                                 null=True,
                                 on_delete=models.SET_NULL)
@@ -367,12 +375,27 @@ class ComicSite(models.Model):
     use_evaluation = models.BooleanField(default=False,
                                          help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
 
+    evaluation_score_fieldname = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='The name of the field in metrics.json that will be used '
+                  'for the overall scores on the results page.',
+    )
+
+    evaluation_score_default_sort = models.CharField(
+        max_length=4,
+        choices=EVALUATION_SCORE_SORT_CHOICES,
+        default=DESCENDING,
+        help_text='The default sorting to use for the scores on the results '
+                  'page.',
+    )
+
     admins_group = models.OneToOneField(
         Group,
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='admins_of_challenge'
+        related_name='admins_of_challenge',
     )
 
     participants_group = models.OneToOneField(
@@ -380,7 +403,7 @@ class ComicSite(models.Model):
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='participants_of_challenge'
+        related_name='participants_of_challenge',
     )
 
     objects = ComicSiteManager()

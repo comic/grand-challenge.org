@@ -539,7 +539,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }),
         ('Automated Evaluation', {
             'classes': ('collapse',),
-            'fields': ('use_evaluation',)
+            'fields': (
+                'use_evaluation',
+                'evaluation_score_fieldname',
+                'evaluation_score_default_sort',
+            )
         }),
     )
     readonly_fields = ("manage_admin_link", "link", "manage_participation_request_link")
