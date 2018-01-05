@@ -172,3 +172,4 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+rst_epilog = '.. |project_name| replace:: %s' % project
