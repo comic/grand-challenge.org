@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='comicsite',
-            name='evaluation_score_fieldname',
-            field=models.CharField(max_length=255, blank=True, help_text='The name of the field in metrics.json that will be used for the overall scores on the results page.'),
+            name='evaluation_score_jsonpath',
+            field=models.CharField(max_length=255, blank=True, help_text='The jsonpath of the field in metrics.json that will be used for the overall scores on the results page. See http://goessner.net/articles/JsonPath/ for syntax.'),
         ),
     ]

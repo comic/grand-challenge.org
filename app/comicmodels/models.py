@@ -375,11 +375,12 @@ class ComicSite(models.Model):
     use_evaluation = models.BooleanField(default=False,
                                          help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
 
-    evaluation_score_fieldname = models.CharField(
+    evaluation_score_jsonpath = models.CharField(
         max_length=255,
         blank=True,
-        help_text='The name of the field in metrics.json that will be used '
-                  'for the overall scores on the results page.',
+        help_text='The jsonpath of the field in metrics.json that will be used'
+                  ' for the overall scores on the results page. See '
+                  'http://goessner.net/articles/JsonPath/ for syntax.',
     )
 
     evaluation_score_default_sort = models.CharField(

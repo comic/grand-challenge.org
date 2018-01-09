@@ -25,7 +25,7 @@
                             href="{% url 'userena_profile_detail' result.job.submission.creator %}">
                         {{ result.job.submission.creator }}</a></td>
                     <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
-                    <td>{{ result.metrics|get:site.evaluation_score_fieldname }}</td>
+                    <td>{{ result.metrics|get_jsonpath:site.evaluation_score_jsonpath }}</td>
                 </tr>
             {% endif %}
         {% empty %}
