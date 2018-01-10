@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from guardian.shortcuts import assign_perm, remove_perm
+from social_django.fields import JSONField
 
 import comicsite.utils.query
 from ckeditor.fields import RichTextField
@@ -378,9 +379,22 @@ class ComicSite(models.Model):
     evaluation_score_jsonpath = models.CharField(
         max_length=255,
         blank=True,
-        help_text='The jsonpath of the field in metrics.json that will be used'
-                  ' for the overall scores on the results page. See '
-                  'http://goessner.net/articles/JsonPath/ for syntax.',
+        help_text=(
+            'The jsonpath of the field in metrics.json that will be used '
+            'for the overall scores on the results page. See '
+            'http://goessner.net/articles/JsonPath/ for syntax. For example:'
+            '\n\ndice.mean'
+        ),
+    )
+
+    evaluation_score_title = models.CharField(
+        max_length=32,
+        blank=False,
+        default='Score',
+        help_text=(
+            'The name that will be displayed for the scores column, for '
+            'instance:\n\nScore (log-loss)'
+        )
     )
 
     evaluation_score_default_sort = models.CharField(
@@ -389,6 +403,19 @@ class ComicSite(models.Model):
         default=DESCENDING,
         help_text='The default sorting to use for the scores on the results '
                   'page.',
+    )
+
+    evaluation_extra_results_columns = JSONField(
+        default=dict,
+        help_text=(
+            'A JSON object that contains the extra columns from metrics.json '
+            'that will be displayed on the results page. '
+            'Where the KEYS contain the titles of the columns, '
+            'and the VALUES contain the JsonPath to the corresponding metric '
+            'in metrics.json. '
+            'For example:\n\n'
+            '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
+        )
     )
 
     admins_group = models.OneToOneField(

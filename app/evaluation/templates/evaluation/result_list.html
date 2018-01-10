@@ -16,6 +16,9 @@
             <th>User</th>
             <th>Date</th>
             <th>Score</th>
+            {% for col in site.evaluation_extra_results_columns %}
+                <th>{{ col }}</th>
+            {% endfor %}
         </tr>
         </thead>
         <tbody>
@@ -28,6 +31,9 @@
                         {{ result.job.submission.creator }}</a></td>
                     <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
                     <td>{{ result.metrics|get_jsonpath:site.evaluation_score_jsonpath }}</td>
+                    {% for _, jsonpath in site.evaluation_extra_results_columns.items %}
+                        <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
+                    {% endfor %}
                 </tr>
             {% endif %}
         {% empty %}

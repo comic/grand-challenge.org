@@ -543,6 +543,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 'use_evaluation',
                 'evaluation_score_jsonpath',
                 'evaluation_score_default_sort',
+                'evaluation_extra_results_columns',
             )
         }),
     )
