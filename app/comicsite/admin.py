@@ -542,6 +542,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'fields': (
                 'use_evaluation',
                 'evaluation_score_jsonpath',
+                'evaluation_score_title',
                 'evaluation_score_default_sort',
                 'evaluation_extra_results_columns',
             )
