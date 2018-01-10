@@ -12,6 +12,7 @@
                 Update the column index of the order below if the position
                 of Score changes here.
             {% endcomment %}
+            <th>Position</th>
             <th>User</th>
             <th>Date</th>
             <th>Score</th>
@@ -21,6 +22,7 @@
         {% for result in object_list %}
             {% if result.public %}
                 <tr>
+                    <td></td>
                     <td><a
                             href="{% url 'userena_profile_detail' result.job.submission.creator %}">
                         {{ result.job.submission.creator }}</a></td>
@@ -36,14 +38,28 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#resultsTable').DataTable({
+            var t = $('#resultsTable').DataTable({
                 {% comment %}
                     The column index of the default sort, must match the table
                     set up.
                 {% endcomment %}
-                order: [[2, "{{ site.evaluation_score_default_sort }}" ]],
+                order: [[3, "{{ site.evaluation_score_default_sort }}"]],
+                "columnDefs": [{
+                    "searchable": false,
+                    "orderable": false,
+                    "targets": 0
+                }],
                 ordering: true
             });
+
+
+            t.column(0, {
+                search: 'applied',
+                order: 'applied'
+            }).nodes().each(function (cell, i) {
+                cell.innerHTML = i + 1;
+            });
+
         });
     </script>
 
