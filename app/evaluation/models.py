@@ -23,8 +23,13 @@ class UUIDModel(models.Model):
 
 
 def method_image_path(instance, filename):
-    return f'evaluation/{instance.challenge.pk}/methods/' \
-           f'{instance.pk}/{filename}'
+    return (
+        f'evaluation/'
+        f'{instance.challenge.pk}/'
+        f'methods/'
+        f'{instance.pk}/'
+        f'{filename}'
+    )
 
 
 class Method(UUIDModel):
@@ -75,10 +80,14 @@ class Method(UUIDModel):
 
 
 def submission_file_path(instance, filename):
-    return f'evaluation/{instance.challenge.pk}/submissions/' \
-           f'{instance.creator.pk}/' \
-           f'{instance.pk}/' \
-           f'{filename}'
+    return (
+        f'evaluation/'
+        f'{instance.challenge.pk}/'
+        f'submissions/'
+        f'{instance.creator.pk}/'
+        f'{instance.pk}/'
+        f'{filename}'
+    )
 
 
 class Submission(UUIDModel):
@@ -198,8 +207,14 @@ class Result(UUIDModel):
 
 
 def result_screenshot_path(instance, filename):
-    return f'evaluation/{instance.challenge.pk}/screenshots/' \
-           f'{instance.result.pk}/{instance.pk}/{filename}'
+    return (
+        f'evaluation/'
+        f'{instance.challenge.pk}/'
+        f'screenshots/'
+        f'{instance.result.pk}/'
+        f'{instance.pk}/'
+        f'{filename}'
+    )
 
 
 class ResultScreenshot(UUIDModel):

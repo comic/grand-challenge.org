@@ -400,6 +400,7 @@ def test_result_list(client, EvalChallengeSet):
     validate_open_view(viewname='evaluation:result-list',
                        challenge_set=EvalChallengeSet.ChallengeSet,
                        client=client)
+    # TODO: test that private results cannot be seen
 
 
 @pytest.mark.django_db

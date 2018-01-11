@@ -3,8 +3,10 @@ from django.db.models import Q
 from django.views.generic import CreateView, ListView, DetailView, TemplateView
 
 from comicmodels.models import ComicSite
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
-    UserIsChallengeParticipantOrAdminMixin
+from comicsite.permissions.mixins import (
+    UserIsChallengeAdminMixin,
+    UserIsChallengeParticipantOrAdminMixin,
+)
 from evaluation.forms import MethodForm
 from evaluation.models import Result, Submission, Job, Method
 from jqfileupload.widgets.uploader import AjaxUploadWidget
@@ -112,7 +114,8 @@ class ResultList(ListView):
 
     def get_queryset(self):
         queryset = super(ResultList, self).get_queryset()
-        return queryset.filter(challenge__pk=self.request.project_pk)
+        return queryset.filter(Q(challenge__pk=self.request.project_pk),
+                               Q(public=True))
 
 
 class ResultDetail(DetailView):

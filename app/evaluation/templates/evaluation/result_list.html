@@ -23,19 +23,17 @@
         </thead>
         <tbody>
         {% for result in object_list %}
-            {% if result.public %}
-                <tr>
-                    <td></td>
-                    <td><a
-                            href="{% url 'userena_profile_detail' result.job.submission.creator %}">
-                        {{ result.job.submission.creator }}</a></td>
-                    <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
-                    <td>{{ result.metrics|get_jsonpath:site.evaluation_score_jsonpath }}</td>
-                    {% for _, jsonpath in site.evaluation_extra_results_columns.items %}
-                        <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
-                    {% endfor %}
-                </tr>
-            {% endif %}
+            <tr>
+                <td></td>
+                <td><a
+                        href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                    {{ result.job.submission.creator }}</a></td>
+                <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+                <td>{{ result.metrics|get_jsonpath:site.evaluation_score_jsonpath }}</td>
+                {% for _, jsonpath in site.evaluation_extra_results_columns.items %}
+                    <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
+                {% endfor %}
+            </tr>
         {% empty %}
             No results yet
         {% endfor %}

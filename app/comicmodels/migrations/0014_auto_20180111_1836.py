@@ -19,6 +19,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='comicsite',
+            name='evaluation_ranks',
+            field=social_django.fields.JSONField(default=dict, editable=False, help_text='Keeps track of the ranking of the evaluation results.'),
+        ),
+        migrations.AddField(
+            model_name='comicsite',
             name='evaluation_score_default_sort',
             field=models.CharField(max_length=4, default='desc', choices=[('asc', 'Ascending'), ('desc', 'Descending')], help_text='The default sorting to use for the scores on the results page.'),
         ),

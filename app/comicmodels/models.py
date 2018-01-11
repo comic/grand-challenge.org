@@ -418,6 +418,14 @@ class ComicSite(models.Model):
         )
     )
 
+    evaluation_ranks = JSONField(
+        default=dict,
+        editable=False,
+        help_text=(
+            'Keeps track of the ranking of the evaluation results.'
+        )
+    )
+
     admins_group = models.OneToOneField(
         Group,
         null=True,
