@@ -99,6 +99,11 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
                                           Q(public=True))
     challenge.evaluation_ranks = generate_rank_dict(
         queryset=valid_results,
-        metrics=(challenge.evaluation_score_jsonpath,)
+        metric_paths=(
+            challenge.evaluation_score_jsonpath,
+        ),
+        metric_reverse=(
+            challenge.evaluation_score_default_sort==challenge.DESCENDING,
+        ),
     )
     challenge.save()
