@@ -10,7 +10,7 @@
             <th>ID</th>
             <th>Created</th>
             <th>Updated</th>
-            <th>Submission</th>
+            <th>Submission ID</th>
             <th>Status</th>
             <th>Result</th>
         </tr>
@@ -18,12 +18,10 @@
         <tbody>
         {% for job in object_list %}
             <tr>
-                <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
+                <td>{{ job.id }}</td>
                 <td>{{ job.created }}</td>
                 <td>{{ job.modified }}</td>
-                <td>
-                    <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
-                </td>
+                <td>{{ job.submission.id }}</td>
                 <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
@@ -38,9 +36,7 @@
                         {{ job.get_status_display }}
                     </span>
                 </td>
-                <td>
-                    <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
-                </td>
+                <td>{{ job.result.metrics }}</td>
             </tr>
         {% endfor %}
 
@@ -49,7 +45,10 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#jobsTable').DataTable();
+            $('#jobsTable').DataTable({
+                    order: [[1, "desc"]]
+                }
+            );
         });
     </script>
 

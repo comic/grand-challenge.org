@@ -10,6 +10,7 @@ from django.views.generic import (
 )
 
 from comicmodels.models import ComicSite
+from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
@@ -71,15 +72,28 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
+class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
+                       SuccessMessageMixin, CreateView):
     model = Submission
     fields = ['file']
+    success_message = (
+        "Your submission was successful. "
+        "Please keep checking this page for your result."
+    )
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
         return super(SubmissionCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'evaluation:job-list',
+            kwargs={
+                'challenge_short_name': self.object.challenge.short_name
+            }
+        )
 
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
