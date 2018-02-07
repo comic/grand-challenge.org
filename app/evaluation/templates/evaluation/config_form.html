@@ -1,0 +1,14 @@
+{% extends "site.html" %}
+{% load crispy_forms_tags %}
+
+{% block pagecontent %}
+
+    <h1>{{ object.challenge.short_name }} Evaluation Configuration</h1>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="Save"/>
+    </form>
+
+{% endblock %}

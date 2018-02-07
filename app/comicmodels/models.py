@@ -288,15 +288,6 @@ class ComicSite(models.Model):
 
     public_folder = "public_html"
 
-    # This must match the syntax used in jquery datatables
-    # https://datatables.net/reference/option/order
-    ASCENDING = 'asc'
-    DESCENDING = 'desc'
-    EVALUATION_SCORE_SORT_CHOICES = (
-        (ASCENDING, 'Ascending'),
-        (DESCENDING, 'Descending'),
-    )
-
     creator = models.ForeignKey(settings.AUTH_USER_MODEL,
                                 null=True,
                                 on_delete=models.SET_NULL)
@@ -375,56 +366,6 @@ class ComicSite(models.Model):
 
     use_evaluation = models.BooleanField(default=False,
                                          help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
-
-    evaluation_score_jsonpath = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text=(
-            'The jsonpath of the field in metrics.json that will be used '
-            'for the overall scores on the results page. See '
-            'http://goessner.net/articles/JsonPath/ for syntax. For example:'
-            '\n\ndice.mean'
-        ),
-    )
-
-    evaluation_score_title = models.CharField(
-        max_length=32,
-        blank=False,
-        default='Score',
-        help_text=(
-            'The name that will be displayed for the scores column, for '
-            'instance:\n\nScore (log-loss)'
-        )
-    )
-
-    evaluation_score_default_sort = models.CharField(
-        max_length=4,
-        choices=EVALUATION_SCORE_SORT_CHOICES,
-        default=DESCENDING,
-        help_text='The default sorting to use for the scores on the results '
-                  'page.',
-    )
-
-    evaluation_extra_results_columns = JSONField(
-        default=dict,
-        help_text=(
-            'A JSON object that contains the extra columns from metrics.json '
-            'that will be displayed on the results page. '
-            'Where the KEYS contain the titles of the columns, '
-            'and the VALUES contain the JsonPath to the corresponding metric '
-            'in metrics.json. '
-            'For example:\n\n'
-            '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
-        )
-    )
-
-    evaluation_ranks = JSONField(
-        default=dict,
-        editable=False,
-        help_text=(
-            'Keeps track of the ranking of the evaluation results.'
-        )
-    )
 
     admins_group = models.OneToOneField(
         Group,

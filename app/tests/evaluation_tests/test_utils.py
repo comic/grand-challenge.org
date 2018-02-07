@@ -8,9 +8,14 @@ from tests.factories import ResultFactory, ChallengeFactory
 
 
 @pytest.mark.django_db
-@factory.django.mute_signals(signals.post_save)
-def test_calculate_ranks():
-    challenge = ChallengeFactory(evaluation_score_jsonpath='a')
+def test_calculate_ranks(mocker):
+    challenge = ChallengeFactory()
+
+    challenge.evaluation_config.score_jsonpath = 'a'
+    challenge.evaluation_config.save()
+
+    mocker.patch('evaluation.signals.recalculate_ranks').start()
+
     queryset = (
         ResultFactory(challenge=challenge, metrics={'a': 0.1}),
         ResultFactory(challenge=challenge, metrics={'a': 0.5}),
@@ -26,8 +31,8 @@ def test_calculate_ranks():
     challenge = assert_ranks(challenge, expected_ranks, queryset)
 
     # now test reverse order
-    challenge.evaluation_score_default_sort = challenge.ASCENDING
-    challenge.save()
+    challenge.evaluation_config.score_default_sort = challenge.evaluation_config.ASCENDING
+    challenge.evaluation_config.save()
 
     expected_ranks = [1, 2, 5, 4, 2, 5]
 
@@ -38,7 +43,7 @@ def assert_ranks(challenge, expected_ranks, queryset):
     # Execute calculate_ranks manually
     calculate_ranks(challenge_pk=challenge.pk)
     challenge = ComicSite.objects.get(pk=challenge.pk)
-    rank = challenge.evaluation_ranks
+    rank = challenge.evaluation_config.ranks
     for q, exp in zip(queryset, expected_ranks):
         assert rank[str(q.pk)]['a'] == exp
     return challenge

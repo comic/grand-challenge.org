@@ -18,12 +18,12 @@ def generate_rank_dict(queryset: Tuple[Result, ...],
 
     for (metric_path, reverse) in zip(metric_paths, metric_reverse):
         # Extract the value of the metric for this primary key and sort on the
-        # value of the mertic
+        # value of the metric
         pk_vals = [pk_val(str(res.pk), get_jsonpath(res.metrics, metric_path))
                    for res in queryset]
         pk_vals.sort(key=lambda x: x.val, reverse=reverse)
 
-        # Assign the ranks, the first element is always rank #1
+        # Assign the ranks
         current_val = pk_vals[0].val
         current_rank = 1
 

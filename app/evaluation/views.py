@@ -1,6 +1,13 @@
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
-from django.views.generic import CreateView, ListView, DetailView, TemplateView
+from django.views.generic import (
+    CreateView,
+    ListView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
 from comicmodels.models import ComicSite
 from comicsite.permissions.mixins import (
@@ -8,12 +15,27 @@ from comicsite.permissions.mixins import (
     UserIsChallengeParticipantOrAdminMixin,
 )
 from evaluation.forms import MethodForm
-from evaluation.models import Result, Submission, Job, Method
+from evaluation.models import Result, Submission, Job, Method, Config
 from jqfileupload.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
     template_name = "evaluation/manage.html"
+
+
+class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    model = Config
+    fields = (
+        'score_title',
+        'score_jsonpath',
+        'score_default_sort',
+        'extra_results_columns',
+    )
+    success_message = "Configuration successfully updated"
+
+    def get_object(self, queryset=None):
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        return challenge.evaluation_config
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
