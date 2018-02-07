@@ -15,7 +15,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from guardian.shortcuts import assign_perm, remove_perm
-from social_django.fields import JSONField
 
 import comicsite.utils.query
 from ckeditor.fields import RichTextField
