@@ -2,7 +2,7 @@
 
 {% block pagecontent %}
 
-    <h1>Job {{ object.id }}</h1>
+    <h2>Job {{ object.id }}</h2>
 
     <div class="alert
     {% if object.status == object.FAILURE or object.status == object.CANCELLED %}

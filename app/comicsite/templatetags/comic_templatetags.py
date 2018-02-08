@@ -1902,14 +1902,7 @@ class AllProjectLinksNode(template.Node):
 @register.tag(name="registration")
 def render_registration_form(parser, token):
     """ Render a registration form for the current site """
-
-    try:
-        projects = ComicSite.objects.all()
-    except ObjectDoesNotExist as e:
-        errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
-        return TemplateErrorNode(errormsg)
-
-    return RegistrationFormNode(projects)
+    return RegistrationFormNode()
 
 
 class RegistrationFormNode(template.Node):
@@ -1917,8 +1910,8 @@ class RegistrationFormNode(template.Node):
     Currently just links to registration
     """
 
-    def __init__(self, projects):
-        self.projects = projects
+    def __init__(self):
+        super(RegistrationFormNode, self).__init__()
 
     def render(self, context):
         project = context.page.comicsite

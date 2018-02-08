@@ -531,7 +531,12 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }),
         ('Users', {
             'classes': ('collapse',),
-            'fields': ('manage_admin_link', 'manage_participation_request_link', 'require_participant_review',)
+            'fields': (
+                'manage_admin_link',
+                'manage_participation_request_link',
+                'require_participant_review',
+                'registration_page_text',
+            )
         }),
         ('Advanced options', {
             'classes': ('collapse',),

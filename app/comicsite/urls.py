@@ -2,6 +2,7 @@ from django.conf.urls import url, include
 from django.views.generic import TemplateView
 
 from comicsite.admin import projectadminurls
+from comicsite.views import ParticipantRegistration
 
 urlpatterns = [
 
@@ -32,16 +33,18 @@ urlpatterns = [
         'filetransfers.views.serve',
         name="project_serve_file"),
 
-    url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
-        'comicsite.views._register'),
-
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         'comicsite.api.get_public_results'),
 
-    url(
-        r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/('
+    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/('
         r'?P<dropboxpath>.+)/$',
         'comicsite.views.insertedpage'),
+
+    url(r'^(?P<challenge_short_name>[\w-]+)/participant-registration/$',
+        ParticipantRegistration.as_view(), name='participant-registration'),
+
+    url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
+        'comicsite.views._register', name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$',

@@ -40,12 +40,16 @@ def comic_site(request):
         # in a more appropriate location
         return {}
 
-    return {"site": site, "pages": pages, "metafooterpages": metafooterpages,
-            "main_project_name": settings.MAIN_PROJECT_NAME}
+    return {
+        "site": site,
+        "user_is_participant": site.is_participant(request.user),
+        "pages": pages,
+        "metafooterpages": metafooterpages,
+        "main_project_name": settings.MAIN_PROJECT_NAME,
+    }
 
 
 def subdomain_absolute_uri(request):
-
     uri = build_absolute_uri(request)
 
     return {'subdomain_absolute_uri': uri}

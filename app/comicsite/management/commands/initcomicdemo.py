@@ -45,6 +45,11 @@ class Command(BaseCommand):
                 active=True,
             )
 
+            UserenaSignup.objects.create_user(
+                username='user', email='user@example.com', password='user',
+                active=True,
+            )
+
             demo = ComicSite.objects.create(
                 short_name='demo',
                 description='demo project',

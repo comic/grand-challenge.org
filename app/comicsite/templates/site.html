@@ -68,8 +68,16 @@
 
     {% if site.use_evaluation %}
         <li role="separator" class="divider"></li>
-        <li><a href="{% url 'evaluation:submission-create' site.short_name %}">Submit</a>
-        </li>
+
+        {% if user_is_participant %}
+            <li>
+                <a href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
+            </li>
+        {% else %}
+            <li>
+                <a href="{% url 'participant-registration' site.short_name %}"><b>Join</b></a>
+            </li>
+        {% endif %}
         <li role="separator" class="divider"></li>
         <li><a href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
         </li>
