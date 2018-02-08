@@ -1,4 +1,5 @@
 {% extends "site.html" %}
+{% load evaluation_extras %}
 
 {% block pagecontent %}
 
@@ -10,9 +11,9 @@
             <th>ID</th>
             <th>Created</th>
             <th>Updated</th>
-            <th>Submission ID</th>
             <th>Status</th>
             <th>Result</th>
+            <th>Output</th>
         </tr>
         </thead>
         <tbody>
@@ -21,7 +22,6 @@
                 <td>{{ job.id }}</td>
                 <td>{{ job.created }}</td>
                 <td>{{ job.modified }}</td>
-                <td>{{ job.submission.id }}</td>
                 <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
@@ -37,6 +37,7 @@
                     </span>
                 </td>
                 <td>{{ job.result.metrics }}</td>
+                <td>{{ job.output|user_error }}</td>
             </tr>
         {% endfor %}
 

@@ -7,6 +7,7 @@ from django.db.models import Q
 
 from comicmodels.models import ComicSite
 from evaluation.backends.dockermachine.evaluator import Evaluator
+from evaluation.exceptions import EvaluationException
 from evaluation.models import Job, Result, Method
 from evaluation.utils import generate_rank_dict
 
@@ -50,9 +51,9 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
                 eval_image_sha256=job.method.image_sha256
         ) as e:
             metrics = e.evaluate()
-    except Exception as exc:
-        job.update_status(status=Job.FAILURE, output=str(exc))
-        raise exc
+    except EvaluationException as exc:
+        job.update_status(status=Job.FAILURE, output=exc.message)
+        return {}
 
     Result.objects.create(job=job, metrics=metrics, challenge=job.challenge)
 

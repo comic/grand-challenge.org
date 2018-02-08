@@ -20,3 +20,11 @@ def get_jsonpath(obj: dict, jsonpath):
         return expr.find(obj)[0].value
     except (AttributeError, IndexError):
         return ''
+
+@register.filter
+def user_error(obj: str):
+    try:
+        lines = list(filter(None, obj.split('\n')))
+        return lines[-1]
+    except IndexError:
+        return obj

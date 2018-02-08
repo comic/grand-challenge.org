@@ -1,5 +1,7 @@
 class EvaluationException(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
+        super(EvaluationException, self).__init__()
 
 
 class TimeoutException(EvaluationException):
@@ -24,6 +26,7 @@ class SubmissionError(EvaluationException):
     participant, challenge admin and site admin should be informed.
     """
     pass
+
 
 class NoMethodForChallengeError(EvaluationException):
     """
