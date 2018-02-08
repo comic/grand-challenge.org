@@ -44,7 +44,6 @@ def validate_method(sender: Method, instance: Method = None,
         validate_method_async.apply_async(kwargs={'method_pk': instance.pk})
 
 
-@receiver(post_save, sender=Config)
 @receiver(post_save, sender=Result)
 def recalculate_ranks(sender: Result, instance: Union[Result, Config] = None,
                       created: bool = False, **kwargs):
