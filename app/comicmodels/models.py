@@ -365,6 +365,7 @@ class ComicSite(models.Model):
 
     registration_page_text = models.TextField(
         default='',
+        blank=True,
         help_text=(
             'The text to use on the registration page, you could include '
             'a data usage agreement here. You can use HTML markup here.'
