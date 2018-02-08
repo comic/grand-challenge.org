@@ -3,10 +3,17 @@
 
 {% block pagecontent %}
 
+    <h2>Create a new submission</h2>
+
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form | crispy }}
         <input type="submit" value="Save"/>
     </form>
+
+    <h2>View my current submissions</h2>
+
+    <p>Click <a href="{% url 'evaluation:job-list' site.short_name %}">here</a>
+        to view your current submissions to this challenge.</p>
 
 {% endblock %}

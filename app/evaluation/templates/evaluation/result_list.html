@@ -34,8 +34,6 @@
                     <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
                 {% endfor %}
             </tr>
-        {% empty %}
-            No results yet
         {% endfor %}
         </tbody>
     </table>
