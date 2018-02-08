@@ -37,7 +37,17 @@ class Command(BaseCommand):
 
             demoadmin = UserenaSignup.objects.create_user(
                 username='demo', email='demo@example.com', password='demo',
-                active=True
+                active=True,
+            )
+
+            demoparticipant = UserenaSignup.objects.create_user(
+                username='demop', email='demop@example.com', password='demop',
+                active=True,
+            )
+
+            UserenaSignup.objects.create_user(
+                username='user', email='user@example.com', password='user',
+                active=True,
             )
 
             demo = ComicSite.objects.create(
@@ -47,6 +57,8 @@ class Command(BaseCommand):
                 use_evaluation=True,
                 hidden=False
             )
+
+            demo.add_participant(demoparticipant)
 
             Page.objects.create(
                 comicsite=demo,

@@ -3,9 +3,12 @@ import tarfile
 import uuid
 
 from celery import shared_task
+from django.db.models import Q
 
+from comicmodels.models import ComicSite
 from evaluation.backends.dockermachine.evaluator import Evaluator
 from evaluation.models import Job, Result, Method
+from evaluation.utils import generate_rank_dict
 
 
 @shared_task
@@ -22,7 +25,7 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
     """
 
     if (job_pk is None and job is None) or (
-                    job_pk is not None and job is not None):
+            job_pk is not None and job is not None):
         raise TypeError('You need to provide either a job or a job_id as '
                         'arguments to evaluate_submission, not none or both.')
 
@@ -33,8 +36,10 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
 
     if not job.method.ready:
         # TODO: email admin
-        job.update_status(status=Job.FAILURE,
-                          output=f"Method {job.method.id} was not ready to be used.")
+        job.update_status(
+            status=Job.FAILURE,
+            output=f"Method {job.method.id} was not ready to be used.",
+        )
         return {}
 
     try:
@@ -68,18 +73,22 @@ def validate_method_async(*, method_pk: uuid.UUID):
                 'manifest.json']
             manifest = t.extractfile(member).read()
     except (KeyError, tarfile.ReadError):
-        instance.status = 'manifest.json not found at the root of the ' \
-                          'container image file. Was this created ' \
-                          'with docker save?'
+        instance.status = (
+            'manifest.json not found at the root of the '
+            'container image file. Was this created '
+            'with docker save?'
+        )
         instance.save()
         # TODO: email admin
         return
 
     manifest = json.loads(manifest)
     if len(manifest) != 1:
-        instance.status = 'The container image file should only have ' \
-                          '1 image. This file contains ' \
-                          f'{len(manifest)}.'
+        instance.status = (
+            'The container image file should only have '
+            '1 image. This file contains '
+            f'{len(manifest)}.'
+        )
         instance.save()
         # TODO: email admin
         return
@@ -87,3 +96,22 @@ def validate_method_async(*, method_pk: uuid.UUID):
     instance.image_sha256 = f"sha256:{manifest[0]['Config'][:64]}"
     instance.ready = True
     instance.save()
+
+
+@shared_task
+def calculate_ranks(*, challenge_pk: uuid.UUID):
+    challenge = ComicSite.objects.get(pk=challenge_pk)
+    valid_results = Result.objects.filter(Q(challenge__pk=challenge_pk),
+                                          Q(public=True))
+
+    challenge.evaluation_config.ranks = generate_rank_dict(
+        queryset=valid_results,
+        metric_paths=(
+            challenge.evaluation_config.score_jsonpath,
+        ),
+        metric_reverse=(
+            challenge.evaluation_config.score_default_sort == challenge.evaluation_config.DESCENDING,
+        ),
+    )
+
+    challenge.evaluation_config.save()

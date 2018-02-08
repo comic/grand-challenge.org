@@ -1,10 +1,16 @@
+from typing import Union
+
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
-from evaluation.models import Submission, Job, Method
-from evaluation.tasks import evaluate_submission, validate_method_async
+from evaluation.models import Submission, Job, Method, Result, Config
+from evaluation.tasks import (
+    evaluate_submission,
+    validate_method_async,
+    calculate_ranks,
+)
 
 
 @receiver(post_save, sender=Submission)
@@ -36,6 +42,14 @@ def validate_method(sender: Method, instance: Method = None,
                     created: bool = False, **kwargs):
     if created:
         validate_method_async.apply_async(kwargs={'method_pk': instance.pk})
+
+
+@receiver(post_save, sender=Config)
+@receiver(post_save, sender=Result)
+def recalculate_ranks(sender: Result, instance: Union[Result, Config] = None,
+                      created: bool = False, **kwargs):
+    """Recalculates the ranking on a new result"""
+    calculate_ranks.apply_async(kwargs={'challenge_pk': instance.challenge.pk})
 
 
 # TODO: do we really want to generate an API token for all users? Only admins surely

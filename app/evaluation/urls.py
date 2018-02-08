@@ -2,15 +2,28 @@ from django.conf import settings
 from django.conf.urls import url
 
 from evaluation.forms import method_upload_widget
-from evaluation.views import MethodCreate, \
-    SubmissionCreate, \
-    JobCreate, MethodList, SubmissionList, JobList, ResultList, MethodDetail, \
-    SubmissionDetail, JobDetail, ResultDetail, EvaluationManage
+from evaluation.views import (
+    MethodCreate,
+    SubmissionCreate,
+    JobCreate,
+    MethodList,
+    SubmissionList,
+    JobList,
+    ResultList,
+    MethodDetail,
+    SubmissionDetail,
+    JobDetail,
+    ResultDetail,
+    EvaluationManage,
+    ConfigUpdate,
+)
 from jqfileupload.forms import test_upload_widget, test_upload_widget2
 from jqfileupload.views import uploader_widget_test
 
 urlpatterns = [
     url(r'^manage/$', EvaluationManage.as_view(), name='manage'),
+
+    url(r'^config/$', ConfigUpdate.as_view(), name='config-update'),
 
     url(r'^methods/$', MethodList.as_view(), name='method-list'),
     url(r'^methods/create/$', MethodCreate.as_view(), name='method-create'),

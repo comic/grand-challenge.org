@@ -514,11 +514,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('short_name', 'description', 'logo')
+            'fields': ('description', 'logo',)
         }),
         ('Layout', {
             'classes': ('collapse',),
-            'fields': ('header_image', 'skin', 'disclaimer')
+            'fields': ('header_image', 'skin', 'disclaimer',)
         }),
         ('Metadata', {
             'classes': ('collapse',),
@@ -526,23 +526,30 @@ class ComicSiteAdmin(admin.ModelAdmin):
                        'is_open_for_submissions', 'submission_page_name', 'number_of_submissions',
                        'last_submission_date',
                        'offers_data_download', 'number_of_downloads',
-                       'publication_url', 'publication_journal_name'
+                       'publication_url', 'publication_journal_name',
                        )
         }),
         ('Users', {
             'classes': ('collapse',),
-            'fields': ('manage_admin_link', 'manage_participation_request_link', 'require_participant_review')
+            'fields': (
+                'manage_admin_link',
+                'manage_participation_request_link',
+                'require_participant_review',
+                'registration_page_text',
+            )
         }),
         ('Advanced options', {
             'classes': ('collapse',),
-            'fields': ('hidden', 'hide_signin', 'hide_footer')
+            'fields': ('hidden', 'hide_signin', 'hide_footer',)
         }),
         ('Automated Evaluation', {
             'classes': ('collapse',),
-            'fields': ('use_evaluation',)
+            'fields': (
+                'use_evaluation',
+            )
         }),
     )
-    readonly_fields = ("manage_admin_link", "link", "manage_participation_request_link")
+    readonly_fields = ("manage_admin_link", "link", "manage_participation_request_link",)
 
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'

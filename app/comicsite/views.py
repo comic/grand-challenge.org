@@ -2,8 +2,8 @@ import mimetypes
 from itertools import chain
 from os import path
 
+from auth_mixins import LoginRequiredMixin
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
@@ -11,12 +11,20 @@ from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
+from django.views.generic import TemplateView
 
-from comicmodels.models import ComicSite, Page, ErrorPage, ComicSiteModel, \
-    RegistrationRequest
+from comicmodels.models import (
+    ComicSite,
+    Page,
+    ErrorPage,
+    ComicSiteModel,
+    RegistrationRequest,
+)
 from comicsite.core.urlresolvers import reverse
-from comicsite.template.context import ComicSiteRequestContext, \
-    CurrentAppRequestContext
+from comicsite.template.context import (
+    ComicSiteRequestContext,
+    CurrentAppRequestContext,
+)
 from filetransfers.api import serve_file
 
 
@@ -24,6 +32,9 @@ def index(request):
     return HttpResponse("ComicSite index page.",
                         context_instance=CurrentAppRequestContext(request))
 
+
+class ParticipantRegistration(LoginRequiredMixin, TemplateView):
+    template_name = 'participant_registration.html'
 
 def _register(request, site_short_name):
     """ Register the current user for given comicsite """
@@ -68,7 +79,7 @@ def _register_directly(request, project):
         project.add_participant(request.user)
         title = "registration_successful"
         display_title = "registration successful"
-        html = "<p> You are now registered to " + project.short_name + "<p>"
+        html = "<p> You are now registered for " + project.short_name + "<p>"
     else:
         title = "registration_unsuccessful"
         display_title = "registration unsuccessful"

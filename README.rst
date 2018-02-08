@@ -8,6 +8,9 @@ COMIC Django Frontend
    :alt: Code Climate
 .. image:: https://codecov.io/gh/comic/comic-django/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/comic/comic-django
+.. image:: https://readthedocs.org/projects/comic-django/badge/?version=latest
+   :target: http://comic-django.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
 

@@ -1,17 +1,42 @@
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
-from django.views.generic import CreateView, ListView, DetailView, TemplateView
+from django.views.generic import (
+    CreateView,
+    ListView,
+    DetailView,
+    TemplateView,
+    UpdateView,
+)
 
 from comicmodels.models import ComicSite
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin, \
-    UserIsChallengeParticipantOrAdminMixin
+from comicsite.core.urlresolvers import reverse
+from comicsite.permissions.mixins import (
+    UserIsChallengeAdminMixin,
+    UserIsChallengeParticipantOrAdminMixin,
+)
 from evaluation.forms import MethodForm
-from evaluation.models import Result, Submission, Job, Method
+from evaluation.models import Result, Submission, Job, Method, Config
 from jqfileupload.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
     template_name = "evaluation/manage.html"
+
+
+class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    model = Config
+    fields = (
+        'score_title',
+        'score_jsonpath',
+        'score_default_sort',
+        'extra_results_columns',
+    )
+    success_message = "Configuration successfully updated"
+
+    def get_object(self, queryset=None):
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        return challenge.evaluation_config
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
@@ -47,15 +72,28 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
+class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
+                       SuccessMessageMixin, CreateView):
     model = Submission
     fields = ['file']
+    success_message = (
+        "Your submission was successful. "
+        "Please keep checking this page for your result."
+    )
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
         return super(SubmissionCreate, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'evaluation:job-list',
+            kwargs={
+                'challenge_short_name': self.object.challenge.short_name
+            }
+        )
 
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
@@ -112,7 +150,8 @@ class ResultList(ListView):
 
     def get_queryset(self):
         queryset = super(ResultList, self).get_queryset()
-        return queryset.filter(challenge__pk=self.request.project_pk)
+        return queryset.filter(Q(challenge__pk=self.request.project_pk),
+                               Q(public=True))
 
 
 class ResultDetail(DetailView):

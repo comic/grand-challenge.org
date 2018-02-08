@@ -36,7 +36,6 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
 
-
     if hasattr(uploadmodel, 'short_name'):
         is_comicsite = True
     else:
@@ -364,15 +363,24 @@ class ComicSite(models.Model):
     require_participant_review = models.BooleanField(default=False,
                                                      help_text="If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
 
-    use_evaluation = models.BooleanField(default=False,
-                                         help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
+    registration_page_text = models.TextField(
+        default='',
+        help_text=(
+            'The text to use on the registration page, you could include '
+            'a data usage agreement here. You can use HTML markup here.'
+        ),
+    )
+
+    use_evaluation = models.BooleanField(
+        default=False,
+        help_text="If true, use the automated evaluation system. See the evaluation page created in the Challenge site.")
 
     admins_group = models.OneToOneField(
         Group,
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='admins_of_challenge'
+        related_name='admins_of_challenge',
     )
 
     participants_group = models.OneToOneField(
@@ -380,7 +388,7 @@ class ComicSite(models.Model):
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='participants_of_challenge'
+        related_name='participants_of_challenge',
     )
 
     objects = ComicSiteManager()

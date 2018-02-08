@@ -81,3 +81,6 @@ docker-compose
 
 # Python cache
 .cache/
+
+# Docs build directory
+docs/_build/

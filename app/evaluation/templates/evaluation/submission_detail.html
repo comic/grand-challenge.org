@@ -2,7 +2,7 @@
 
 {% block pagecontent %}
 
-    <h1>Submission {{ object.id }}</h1>
+    <h2>Submission {{ object.id }}</h2>
 
     <p><strong>Challenge:</strong> <a
             href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
@@ -11,7 +11,7 @@
             href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
     </p>
 
-    <h2>Evaluations for this submission</h2>
+    <h3>Evaluations for this submission</h3>
     <table class="table" id="evaluationTable">
         <thead>
         <tr>

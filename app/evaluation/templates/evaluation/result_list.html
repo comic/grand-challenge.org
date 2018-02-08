@@ -1,37 +1,67 @@
 {% extends "site.html" %}
+{% load evaluation_extras %}
 
 {% block pagecontent %}
 
-    <h1>Results</h1>
+    <h2>Results</h2>
 
     <table class="table" id="resultsTable">
         <thead>
         <tr>
+            {% comment %}
+                Update the column index of the order below if the position
+                of Score changes here.
+            {% endcomment %}
+            <th>Position</th>
             <th>User</th>
             <th>Date</th>
-            <th>Metrics</th>
+            <th>{{ site.evaluation_config.score_title }}</th>
+            {% for col in site.evaluation_config.extra_results_columns %}
+                <th>{{ col }}</th>
+            {% endfor %}
         </tr>
         </thead>
         <tbody>
         {% for result in object_list %}
-            {% if result.public %}
-                <tr>
-                    <td><a
-                            href="{% url 'userena_profile_detail' result.job.submission.creator %}">
-                        {{ result.job.submission.creator }}</a></td>
-                    <td>{{ result.created }}</td>
-                    <td>{{ result.metrics }}</td>
-                </tr>
-            {% endif %}
-        {% empty %}
-            No results yet
+            <tr>
+                <td></td>
+                <td><a
+                        href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                    {{ result.job.submission.creator }}</a></td>
+                <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+                <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath }}</td>
+                {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
+                    <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
+                {% endfor %}
+            </tr>
         {% endfor %}
         </tbody>
     </table>
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#resultsTable').DataTable();
+            var t = $('#resultsTable').DataTable({
+                {% comment %}
+                    The column index of the default sort, must match the table
+                    set up.
+                {% endcomment %}
+                order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
+                "columnDefs": [{
+                    "searchable": false,
+                    "orderable": false,
+                    "targets": 0
+                }],
+                ordering: true
+            });
+
+
+            t.column(0, {
+                search: 'applied',
+                order: 'applied'
+            }).nodes().each(function (cell, i) {
+                cell.innerHTML = i + 1;
+            });
+
         });
     </script>
 

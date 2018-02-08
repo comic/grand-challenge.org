@@ -1,22 +1,28 @@
 import json
 from csv import DictReader
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import (
+    accuracy_score,
+    log_loss,
+    recall_score,
+)
+
 
 def get_classes(csvfile: str):
     output = []
     with open(csvfile, 'r') as f:
         reader = DictReader(f)
         for row in reader:
-            output.append(row['class'])
+            output.append(float(row['class']))
     return output
+
 
 def write_metrics(metrics: dict):
     with open('/output/metrics.json', 'w') as f:
         f.write(json.dumps(metrics, ensure_ascii=True, allow_nan=False))
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     # TODO
     # We need to define how the container will be launched (ie. write out the
     # concrete commands). Allow different filenames etc?
@@ -35,5 +41,11 @@ if __name__ == '__main__':
 
     # A dictionary is created of the metrics, which is then written to
     # /output/metrics.json
-    metrics = {'acc': acc}
+    metrics = {
+        'acc': acc,
+        'aggregates': {
+            'log_loss': log_loss(gt, preds),
+            'recall_score': recall_score(gt, preds),
+        },
+    }
     write_metrics(metrics)
