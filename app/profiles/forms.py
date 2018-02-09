@@ -1,11 +1,10 @@
+import userena.forms as userena_forms
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django_countries import countries
 
-from userena.forms import SignupForm
 
-
-class SignupFormExtra(SignupForm):
+class SignupFormExtra(userena_forms.SignupForm):
     first_name = forms.CharField(label=_(u'First Name'),
                                  max_length=30,
                                  required=True)
@@ -15,18 +14,21 @@ class SignupFormExtra(SignupForm):
     institution = forms.CharField(label=_(u'Institution'),
                                   max_length=100,
                                   required=True,
-                                  help_text=_(u'Institution you are affiliated to.'))
+                                  help_text=_(
+                                      u'Institution you are affiliated to.'))
     department = forms.CharField(label=_(u'Department'),
                                  max_length=100,
                                  required=True,
                                  help_text=_(u'Department you represent.'))
     country = forms.ChoiceField(label=_(u'Country'),
-                                choices=tuple([('00', _('-' * 9))] + list(countries)),
+                                choices=tuple(
+                                    [('00', _('-' * 9))] + list(countries)),
                                 required=True)
     website = forms.CharField(label=_(u'Website'),
                               max_length=150,
                               required=False,
-                              help_text=_(u'A website which describes you or your department'))
+                              help_text=_(
+                                  u'A website which describes you or your department'))
 
     def __init__(self, *args, **kw):
         super(SignupFormExtra, self).__init__(*args, **kw)
@@ -51,3 +53,9 @@ class SignupFormExtra(SignupForm):
         user_profile.save()
 
         return user
+
+
+class EditProfileForm(userena_forms.EditProfileForm):
+    def __init__(self, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        del self.fields['privacy']

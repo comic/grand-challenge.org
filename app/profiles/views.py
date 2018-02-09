@@ -3,6 +3,8 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, render
 from userena import views as userena_views
 
+from profiles.forms import EditProfileForm
+
 
 def login_redirect(request):
     next = request.GET.get('next', '/')
@@ -21,7 +23,7 @@ def profile(request):
         return redirect('/accounts/signin')
 
 
-def profile_edit(request):
+def profile_edit_redirect(request):
     """
     Redirect to the profile edit page of the currently signed in user.
     """
@@ -33,6 +35,11 @@ def profile_edit(request):
         return redirect('/accounts/' + request.user.username + '/edit')
     else:
         return redirect('accounts/signin')
+
+
+def profile_edit(*args, **kwargs):
+    kwargs['edit_profile_form'] = EditProfileForm
+    return userena_views.profile_edit(*args, **kwargs)
 
 
 def signup(request, extra_context=None, **kwargs):

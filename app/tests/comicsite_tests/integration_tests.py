@@ -389,11 +389,6 @@ class ComicframeworkTestCase(TestCase):
                         "There was no email"
                         " sent which had 'signup' in the subject line")
 
-        self.assertEqual(
-            self.client.get('/accounts/' + username + '/').status_code,
-            403, "Was not locked out of user account which was not"
-                 "yet validated with link!"),
-
         # validate the user with the link that was emailed
         pattern = '/example.com(.*)' + PI_LINE_END_REGEX
         validationlink_result = re.search(pattern,
