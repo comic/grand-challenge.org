@@ -72,7 +72,7 @@ class Evaluator(object):
             )
 
     def _provision_input_volume(self):
-        dest_file = '/input/' + os.path.split(self._input_file.name)[1]
+        dest_file = '/tmp/submission-src'
         try:
             with cleanup(self._client.containers.run(
                     image=self._io_image,
@@ -101,7 +101,6 @@ class Evaluator(object):
                 # protection against zip bombs etc.
                 # TODO: Check that the top level directory is not duplicate
                 writer.exec_run(f'unzip {dest_file} -d /input')
-                writer.exec_run('rm {dest_file}')
         except Exception as exc:
             raise SubmissionError(str(exc))
 
