@@ -514,7 +514,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('description', 'logo',)
+            'fields': ('title', 'description', 'logo',)
         }),
         ('Layout', {
             'classes': ('collapse',),
