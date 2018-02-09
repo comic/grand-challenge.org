@@ -304,6 +304,17 @@ class ComicSite(models.Model):
     description = models.CharField(max_length=1024, default="",
                                    blank=True, help_text="Short summary of "
                                                          "this project, max 1024 characters.")
+    title = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text=(
+            'The name of the challenge that is displayed on the All Challenges'
+            ' page. If this is blank the short name of the challenge will be '
+            'used.'
+        ),
+    )
+
     logo = models.CharField(max_length=255,
                             default=public_folder + "/logo.png",
                             help_text="100x100 pixel image file to use as logo"
@@ -521,7 +532,7 @@ class ComicSite(models.Model):
                                   args=[self.short_name, self.logo])
 
         args = {"abreviation": self.short_name,
-                "title": self.short_name,
+                "title": self.title if self.title else self.short_name,
                 "description": self.description,
                 "URL": reverse('comicsite.views.site', args=[self.short_name]),
                 "download URL": "",
