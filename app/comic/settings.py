@@ -53,6 +53,7 @@ EVERYONE_GROUP_NAME = 'everyone'
 
 AUTH_PROFILE_MODULE = 'profiles.UserProfile'
 USERENA_USE_HTTPS = False
+USERENA_DEFAULT_PRIVACY = 'open'
 LOGIN_URL = '/accounts/signin/'
 LOGOUT_URL = '/accounts/signout/'
 

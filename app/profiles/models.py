@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
 from userena.models import UserenaBaseProfile
 
+from comicmodels.models import ComicSite
+
 
 class UserProfile(UserenaBaseProfile):
     user = models.OneToOneField(User,
@@ -16,6 +18,10 @@ class UserProfile(UserenaBaseProfile):
     department = models.CharField(max_length=100)
     country = CountryField()
     website = models.CharField(max_length=150, blank=True)
+
+    def get_challenges_as_participant(self):
+        return ComicSite.objects.filter(
+            participants_group=self.user.groups.all())
 
 
 def create_user_profile(sender, instance, created, **kwargs):

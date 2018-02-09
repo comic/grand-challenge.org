@@ -6,7 +6,8 @@ from comicsite.views import ParticipantRegistration
 
 urlpatterns = [
 
-    url(r'^(?P<site_short_name>[\w-]+)/$', 'comicsite.views.site'),
+    url(r'^(?P<site_short_name>[\w-]+)/$', 'comicsite.views.site',
+        name='challenge-homepage'),
 
     # Include an admin url for each project in database. This stretches the
     # django
