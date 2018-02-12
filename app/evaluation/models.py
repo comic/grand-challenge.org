@@ -83,6 +83,13 @@ class Config(UUIDModel):
         ),
     )
 
+    allow_submission_comments = models.BooleanField(
+        default=False,
+        help_text=(
+            'Allow users to submit comments as part of their submission.'
+        ),
+    )
+
     ranks = JSONField(
         default=dict,
         editable=False,
@@ -186,6 +193,16 @@ class Submission(UUIDModel):
     file = models.FileField(upload_to=submission_file_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
+
+    comment = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text=(
+            'You can add a comment here to help you keep track of your '
+            'submissions.'
+        )
+    )
 
     def get_absolute_url(self):
         return reverse('evaluation:submission-detail',

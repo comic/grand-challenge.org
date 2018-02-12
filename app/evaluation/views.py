@@ -15,7 +15,7 @@ from comicsite.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
-from evaluation.forms import MethodForm
+from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
 from jqfileupload.widgets.uploader import AjaxUploadWidget
 
@@ -31,6 +31,7 @@ class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
         'score_jsonpath',
         'score_default_sort',
         'extra_results_columns',
+        'allow_submission_comments',
     )
     success_message = "Configuration successfully updated"
 
@@ -75,11 +76,21 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
 class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
                        SuccessMessageMixin, CreateView):
     model = Submission
-    fields = ['file']
+    form_class = SubmissionForm
     success_message = (
         "Your submission was successful. "
         "Please keep checking this page for your result."
     )
+
+    def get_form_kwargs(self):
+        kwargs = super(SubmissionCreate, self).get_form_kwargs()
+
+        config = Config.objects.get(challenge__pk=self.request.project_pk)
+
+        kwargs.update(
+            {'display_comment_field': config.allow_submission_comments})
+
+        return kwargs
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
