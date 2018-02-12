@@ -90,6 +90,21 @@ class Config(UUIDModel):
         ),
     )
 
+    def get_absolute_url(self):
+        return reverse('evaluation:manage',
+                       kwargs={
+                           'challenge_short_name': self.challenge.short_name
+                       })
+
+
+class Ranking(UUIDModel):
+    challenge = models.OneToOneField(
+        'comicmodels.ComicSite',
+        on_delete=models.CASCADE,
+        related_name='evaluation_ranking',
+        editable=False,
+    )
+
     ranks = JSONField(
         default=dict,
         editable=False,
@@ -97,12 +112,6 @@ class Config(UUIDModel):
             'Keeps track of the ranking of the evaluation results.'
         ),
     )
-
-    def get_absolute_url(self):
-        return reverse('evaluation:manage',
-                       kwargs={
-                           'challenge_short_name': self.challenge.short_name
-                       })
 
 
 def method_image_path(instance, filename):

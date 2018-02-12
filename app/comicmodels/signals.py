@@ -8,7 +8,7 @@ from django.dispatch import Signal, receiver
 from guardian.shortcuts import assign_perm
 
 from comicmodels.models import ComicSite
-from evaluation.models import Config
+from evaluation.models import Config, Ranking
 
 file_uploaded = Signal(providing_args=["uploader", "filename", "comicsite"])
 new_admin = Signal(providing_args=["adder", "new_admin", "comicsite"])
@@ -45,6 +45,7 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
     if created:
         # Create the evaluation config
         Config.objects.create(challenge=instance)
+        Ranking.objects.create(challenge=instance)
 
         # Create the groups only on first save
         admins_group = Group.objects.create(name=instance.admin_group_name())
