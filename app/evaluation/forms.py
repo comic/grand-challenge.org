@@ -63,10 +63,27 @@ class SubmissionForm(forms.ModelForm):
         if 'display_comment_field' in kwargs:
             del kwargs['display_comment_field']
 
+        require_supplementary_file = kwargs.get('require_supplementary_file',
+                                                False)
+        if 'require_supplementary_file' in kwargs:
+            del kwargs['require_supplementary_file']
+
+        supplementary_file_help_text = kwargs.get(
+            'supplementary_file_help_text', '')
+        if 'supplementary_file_help_text' in kwargs:
+            del kwargs['supplementary_file_help_text']
+
         super(SubmissionForm, self).__init__(*args, **kwargs)
 
         if not display_comment_field:
             del self.fields['comment']
+
+        if require_supplementary_file:
+            self.fields[
+                'supplementary_file'].help_text = supplementary_file_help_text
+            self.fields['supplementary_file'].required = True
+        else:
+            del self.fields['supplementary_file']
 
         self.helper = FormHelper(self)
 
@@ -74,5 +91,6 @@ class SubmissionForm(forms.ModelForm):
         model = Submission
         fields = (
             'comment',
+            'supplementary_file',
             'chunked_upload',
         )

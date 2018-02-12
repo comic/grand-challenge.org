@@ -32,6 +32,8 @@ class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
         'score_default_sort',
         'extra_results_columns',
         'allow_submission_comments',
+        'require_supplementary_file',
+        'supplementary_file_help_text',
     )
     success_message = "Configuration successfully updated"
 
@@ -92,8 +94,11 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
         config = Config.objects.get(challenge__pk=self.request.project_pk)
 
-        kwargs.update(
-            {'display_comment_field': config.allow_submission_comments})
+        kwargs.update({
+            'display_comment_field': config.allow_submission_comments,
+            'require_supplementary_file': config.require_supplementary_file,
+            'supplementary_file_help_text': config.supplementary_file_help_text,
+        })
 
         return kwargs
 
