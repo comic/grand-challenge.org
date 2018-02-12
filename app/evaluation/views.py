@@ -82,6 +82,11 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         "Please keep checking this page for your result."
     )
 
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionCreate, self).get_context_data(**kwargs)
+        context["upload_widget"] = AjaxUploadWidget.TEMPLATE_ATTRS
+        return context
+
     def get_form_kwargs(self):
         kwargs = super(SubmissionCreate, self).get_form_kwargs()
 
@@ -96,6 +101,11 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
+
+        uploaded_file = form.cleaned_data['chunked_upload'][0]
+        with uploaded_file.open() as f:
+            form.instance.file.save(uploaded_file.name, File(f))
+
         return super(SubmissionCreate, self).form_valid(form)
 
     def get_success_url(self):

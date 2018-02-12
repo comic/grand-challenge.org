@@ -22,11 +22,11 @@ class MethodForm(forms.ModelForm):
                 )
             ),
         ],
-        help_text='Tar archive of the container '
-                  'image produced from the command '
-                  '`docker save IMAGE > '
-                  'IMAGE.tar`. See '
-                  'https://docs.docker.com/engine/reference/commandline/save/',
+        help_text=(
+            'Tar archive of the container image produced from the command '
+            '`docker save IMAGE > IMAGE.tar`. See '
+            'https://docs.docker.com/engine/reference/commandline/save/'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +37,22 @@ class MethodForm(forms.ModelForm):
         model = Method
         fields = ['chunked_upload']
 
+
+submission_upload_widget = uploader.AjaxUploadWidget(
+    ajax_target_path="ajax/submission-upload/",
+    multifile=False,
+)
+
+
 class SubmissionForm(forms.ModelForm):
+    chunked_upload = UploadedAjaxFileList(
+        widget=submission_upload_widget,
+        label='Predictions File',
+        validators=[
+            ExtensionValidator(allowed_extensions=('.zip',))
+        ],
+    )
+
     def __init__(self, *args, **kwargs):
         """
         Conditionally render the comment field based on the
@@ -58,10 +73,6 @@ class SubmissionForm(forms.ModelForm):
     class Meta:
         model = Submission
         fields = (
-            'file',
             'comment',
+            'chunked_upload',
         )
-        labels = {
-            'file': 'Predictions File',
-        }
-
