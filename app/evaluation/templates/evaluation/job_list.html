@@ -12,8 +12,8 @@
             <th>Created</th>
             <th>Updated</th>
             <th>Status</th>
-            <th>Result</th>
             <th>Output</th>
+            <th>Comment</th>
         </tr>
         </thead>
         <tbody>
@@ -36,8 +36,14 @@
                         {{ job.get_status_display }}
                     </span>
                 </td>
-                <td>{{ job.result.metrics }}</td>
-                <td>{{ job.output|user_error }}</td>
+                {% if job.output %}
+                    <td>{{ job.output|user_error }}</td>
+                {% else %}
+                    <td>{{ job.result.metrics }}</td>
+                {% endif %}
+
+
+                <td>{{ job.submission.comment }}</td>
             </tr>
         {% endfor %}
 

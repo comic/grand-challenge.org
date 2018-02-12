@@ -105,7 +105,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     valid_results = Result.objects.filter(Q(challenge__pk=challenge_pk),
                                           Q(public=True))
 
-    challenge.evaluation_config.ranks = generate_rank_dict(
+    challenge.evaluation_ranking.ranks = generate_rank_dict(
         queryset=valid_results,
         metric_paths=(
             challenge.evaluation_config.score_jsonpath,
@@ -115,4 +115,4 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         ),
     )
 
-    challenge.evaluation_config.save()
+    challenge.evaluation_ranking.save()

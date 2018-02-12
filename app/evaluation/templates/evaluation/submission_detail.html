@@ -10,6 +10,7 @@
     <p><strong>Creator:</strong> <a
             href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
     </p>
+    <p><b>Comment:</b> {{ object.comment }}</p>
 
     <h3>Evaluations for this submission</h3>
     <table class="table" id="evaluationTable">
@@ -21,6 +22,7 @@
             <th>Method</th>
             <th>Status</th>
             <th>Result</th>
+            <th>Comment</th>
         </tr>
         </thead>
         <tbody>

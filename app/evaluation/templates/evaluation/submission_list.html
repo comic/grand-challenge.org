@@ -9,6 +9,7 @@
             <th>ID</th>
             <th>Created</th>
             <th>User</th>
+            <th>Comment</th>
         </tr>
         </thead>
         <tbody>
@@ -21,6 +22,7 @@
                 <td><a
                         href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
                 </td>
+                <td>{{ submission.comment }}</td>
 
             </tr>
         {% endfor %}

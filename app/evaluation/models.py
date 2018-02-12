@@ -83,11 +83,10 @@ class Config(UUIDModel):
         ),
     )
 
-    ranks = JSONField(
-        default=dict,
-        editable=False,
+    allow_submission_comments = models.BooleanField(
+        default=False,
         help_text=(
-            'Keeps track of the ranking of the evaluation results.'
+            'Allow users to submit comments as part of their submission.'
         ),
     )
 
@@ -96,6 +95,23 @@ class Config(UUIDModel):
                        kwargs={
                            'challenge_short_name': self.challenge.short_name
                        })
+
+
+class Ranking(UUIDModel):
+    challenge = models.OneToOneField(
+        'comicmodels.ComicSite',
+        on_delete=models.CASCADE,
+        related_name='evaluation_ranking',
+        editable=False,
+    )
+
+    ranks = JSONField(
+        default=dict,
+        editable=False,
+        help_text=(
+            'Keeps track of the ranking of the evaluation results.'
+        ),
+    )
 
 
 def method_image_path(instance, filename):
@@ -186,6 +202,16 @@ class Submission(UUIDModel):
     file = models.FileField(upload_to=submission_file_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
+
+    comment = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text=(
+            'You can add a comment here to help you keep track of your '
+            'submissions.'
+        )
+    )
 
     def get_absolute_url(self):
         return reverse('evaluation:submission-detail',
