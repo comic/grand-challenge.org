@@ -61,4 +61,7 @@ class SubmissionForm(forms.ModelForm):
             'file',
             'comment',
         )
+        labels = {
+            'file': 'Predictions File',
+        }
 
