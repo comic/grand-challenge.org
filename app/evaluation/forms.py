@@ -22,11 +22,11 @@ class MethodForm(forms.ModelForm):
                 )
             ),
         ],
-        help_text='Tar archive of the container '
-                  'image produced from the command '
-                  '`docker save IMAGE > '
-                  'IMAGE.tar`. See '
-                  'https://docs.docker.com/engine/reference/commandline/save/',
+        help_text=(
+            'Tar archive of the container image produced from the command '
+            '`docker save IMAGE > IMAGE.tar`. See '
+            'https://docs.docker.com/engine/reference/commandline/save/'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +37,22 @@ class MethodForm(forms.ModelForm):
         model = Method
         fields = ['chunked_upload']
 
+
+submission_upload_widget = uploader.AjaxUploadWidget(
+    ajax_target_path="ajax/submission-upload/",
+    multifile=False,
+)
+
+
 class SubmissionForm(forms.ModelForm):
+    chunked_upload = UploadedAjaxFileList(
+        widget=submission_upload_widget,
+        label='Predictions File',
+        validators=[
+            ExtensionValidator(allowed_extensions=('.zip',))
+        ],
+    )
+
     def __init__(self, *args, **kwargs):
         """
         Conditionally render the comment field based on the
@@ -48,20 +63,34 @@ class SubmissionForm(forms.ModelForm):
         if 'display_comment_field' in kwargs:
             del kwargs['display_comment_field']
 
+        require_supplementary_file = kwargs.get('require_supplementary_file',
+                                                False)
+        if 'require_supplementary_file' in kwargs:
+            del kwargs['require_supplementary_file']
+
+        supplementary_file_help_text = kwargs.get(
+            'supplementary_file_help_text', '')
+        if 'supplementary_file_help_text' in kwargs:
+            del kwargs['supplementary_file_help_text']
+
         super(SubmissionForm, self).__init__(*args, **kwargs)
 
         if not display_comment_field:
             del self.fields['comment']
+
+        if require_supplementary_file:
+            self.fields[
+                'supplementary_file'].help_text = supplementary_file_help_text
+            self.fields['supplementary_file'].required = True
+        else:
+            del self.fields['supplementary_file']
 
         self.helper = FormHelper(self)
 
     class Meta:
         model = Submission
         fields = (
-            'file',
             'comment',
+            'supplementary_file',
+            'chunked_upload',
         )
-        labels = {
-            'file': 'Predictions File',
-        }
-

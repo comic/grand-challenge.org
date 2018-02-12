@@ -90,6 +90,24 @@ class Config(UUIDModel):
         ),
     )
 
+    require_supplementary_file = models.BooleanField(
+        default=False,
+        help_text=(
+            'Force users to include a supplementary file with their '
+            'predictions file (eg, include a pdf description of the method).'
+        ),
+    )
+
+    supplementary_file_help_text = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text=(
+            'The help text to include on the submissions page to describe the '
+            'submissions file. Eg: "A PDF description of the method.".'
+        ),
+    )
+
     def get_absolute_url(self):
         return reverse('evaluation:manage',
                        kwargs={
@@ -202,6 +220,17 @@ class Submission(UUIDModel):
     file = models.FileField(upload_to=submission_file_path,
                             validators=[MimeTypeValidator(
                                 allowed_types=('application/zip',))])
+
+    supplementary_file = models.FileField(
+        upload_to=submission_file_path,
+        validators=[
+            MimeTypeValidator(allowed_types=(
+                'text/plain',
+                'application/pdf',
+            ))
+        ],
+        blank=True,
+    )
 
     comment = models.CharField(
         max_length=128,

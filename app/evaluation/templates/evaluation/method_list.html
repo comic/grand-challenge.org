@@ -20,7 +20,7 @@
             <tr>
                 <td><a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
                 </td>
-                <td>{{ method.created }}</td>
+                <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
                 <td><a
                         href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
                 </td>

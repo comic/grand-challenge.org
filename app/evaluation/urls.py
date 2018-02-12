@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls import url
 
-from evaluation.forms import method_upload_widget
+from evaluation.forms import method_upload_widget, submission_upload_widget
 from evaluation.views import (
     MethodCreate,
     SubmissionCreate,
@@ -35,6 +35,8 @@ urlpatterns = [
     url(r'^submissions/$', SubmissionList.as_view(), name='submission-list'),
     url(r'^submissions/create/$', SubmissionCreate.as_view(),
         name='submission-create'),
+    url(f'^submissions/create/{submission_upload_widget.ajax_target_path}$',
+        submission_upload_widget.handle_ajax, name='submission-upload-ajax'),
     url(r'^submissions/(?P<pk>[0-9a-fA-F-]+)/$', SubmissionDetail.as_view(),
         name='submission-detail'),
 
