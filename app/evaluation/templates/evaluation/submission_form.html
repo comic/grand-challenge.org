@@ -1,15 +1,17 @@
 {% extends "site.html" %}
 {% load crispy_forms_tags %}
 
+{% block html_header %}
+	{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
+	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+{% endblock %}
+
 {% block pagecontent %}
 
     <h2>Create a new submission</h2>
 
-    <form action="" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form | crispy }}
-        <input type="submit" value="Save"/>
-    </form>
+    {% crispy form %}
 
     <h2>View my current submissions</h2>
 
