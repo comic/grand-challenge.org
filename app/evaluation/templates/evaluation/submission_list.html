@@ -18,7 +18,7 @@
                 <td>
                     <a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a>
                 </td>
-                <td>{{ submission.created }}</td>
+                <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
                 <td><a
                         href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
                 </td>

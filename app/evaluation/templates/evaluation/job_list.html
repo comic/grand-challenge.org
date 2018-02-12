@@ -20,8 +20,8 @@
         {% for job in object_list %}
             <tr>
                 <td>{{ job.id }}</td>
-                <td>{{ job.created }}</td>
-                <td>{{ job.modified }}</td>
+                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
                 <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
