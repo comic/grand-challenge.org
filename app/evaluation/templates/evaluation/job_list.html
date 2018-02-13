@@ -2,9 +2,9 @@
 {% load evaluation_extras %}
 {% load guardian_tags %}
 
-{% get_obj_perms user for site as "site_perms" %}
-
 {% block pagecontent %}
+
+    {% get_obj_perms user for site as "site_perms" %}
 
     <h2>Evaluation Jobs</h2>
 
