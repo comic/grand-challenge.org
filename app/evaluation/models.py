@@ -370,6 +370,15 @@ class Result(UUIDModel):
 
     public = models.BooleanField(default=True)
 
+    def get_rank(self):
+        ranks = self.challenge.evaluation_ranking.ranks
+        score_jsonpath = self.challenge.evaluation_config.score_jsonpath
+
+        try:
+            return ranks[str(self.pk)][score_jsonpath]
+        except KeyError:
+            return
+
     def get_absolute_url(self):
         return reverse('evaluation:result-detail',
                        kwargs={

@@ -16,7 +16,10 @@
             <th>Updated</th>
             <th>Status</th>
             <th>Output</th>
-            <th>Comment</th>
+            <th>Position</th>
+            {% if site.evaluation_config.allow_submission_comments %}
+                <th>Comment</th>
+            {% endif %}
             {% if "change_comicsite" in site_perms or request.user.is_superuser %}
                 <th>Public/Private</th>
             {% endif %}
@@ -49,7 +52,15 @@
                     <td>{{ job.result.metrics }}</td>
                 {% endif %}
 
-                <td>{{ job.submission.comment }}</td>
+                <td>
+                    {% if job.result %}
+                        {{ job.result.get_rank }}
+                    {% endif %}
+                </td>
+
+                {% if site.evaluation_config.allow_submission_comments %}
+                    <td>{{ job.submission.comment }}</td>
+                {% endif %}
 
                 {% if "change_comicsite" in site_perms or request.user.is_superuser %}
                     <td>
