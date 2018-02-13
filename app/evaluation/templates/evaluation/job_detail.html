@@ -17,17 +17,21 @@
         {{ object.get_status_display }}
     </div>
 
-    <p><strong>Challenge:</strong> <a
+    <p><b>Challenge:</b> <a
             href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
     </p>
-    <p><strong>Submission:</strong> <a
+    <p><b>Submission:</b> <a
             href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>
     </p>
-    <p><strong>Method:</strong> <a
+    <p><b>Method:</b> <a
             href="{{ object.method.get_absolute_url }}">{{ object.method.pk }}</a>
     </p>
-    <p><strong>Result:</strong> <a
+    <p><b>Result:</b> <a
             href="{{ object.result.get_absolute_url }}">{{ object.result.pk }}</a>
     </p>
+    <p><b>Output:</b>
+        {{ object.output }}
+    </p>
+
 
 {% endblock %}
