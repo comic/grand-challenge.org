@@ -52,28 +52,9 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
 
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-        """Since we want this procedure only working for a specific Challenge (i.e., LUNA16) we put this flag. Hardcoding name of specific Challenge LUNA16"""
-
-        if str(uploadmodel.comicsite) == "LUNA16":
-            path = os.path.join(comicsite.public_upload_dir_rel(),
-                                os.path.join('%s' % uploadmodel.user,
-                                             '%s_' % (
-                                                 datetime.datetime.now().strftime(
-                                                     '%Y%m%d_%H%M%S')) + filename))
-
-        else:
-            path = os.path.join(comicsite.public_upload_dir_rel(), filename)
+        path = os.path.join(comicsite.public_upload_dir_rel(), filename)
     else:
-
-        if str(uploadmodel.comicsite) == "LUNA16":
-            path = os.path.join(comicsite.upload_dir_rel(),
-                                os.path.join('%s' % uploadmodel.user,
-                                             '%s_' % (
-                                                 datetime.datetime.now().strftime(
-                                                     '%Y%m%d_%H%M%S')) + filename))
-
-        else:
-            path = os.path.join(comicsite.upload_dir_rel(), filename)
+        path = os.path.join(comicsite.upload_dir_rel(), filename)
 
     path = path.replace("\\",
                         "/")  # replace remove double slashes because this can mess up django's url system
