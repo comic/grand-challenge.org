@@ -129,6 +129,10 @@ def _required_permission(user, path, project_name):
         # No one can download evaluation files
         return 'nobody'
 
+    if project_name.lower() == 'evaluation-supplementary':
+        # Anyone can download supplementary files
+        return ComicSiteModel.ALL
+
     if project_name.lower() == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY:
         # No one can download evaluation files
         return 'nobody'

@@ -19,6 +19,9 @@
             {% for col in site.evaluation_config.extra_results_columns %}
                 <th>{{ col }}</th>
             {% endfor %}
+            {% if site.evaluation_config.show_supplementary_file_link %}
+                <th>{{ site.evaluation_config.supplementary_file_label }}</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -33,6 +36,15 @@
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
                     <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
                 {% endfor %}
+                {% if site.evaluation_config.show_supplementary_file_link %}
+                    <th>
+                        {% if result.job.submission.supplementary_file %}
+                            <a href="{{ result.job.submission.supplementary_file.url }}">
+                                <i class="fa fa-file"></i>
+                            </a>
+                        {% endif %}
+                    </th>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
@@ -47,9 +59,13 @@
                 {% endcomment %}
                 order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
                 "columnDefs": [{
+                    {%  if site.evaluation_config.show_supplementary_file_link %}
+                        "targets": [-1, 0],
+                    {%  else %}
+                        "targets": 0,
+                    {% endif %}
                     "searchable": false,
-                    "orderable": false,
-                    "targets": 0
+                    "orderable": false
                 }],
                 ordering: true
             });

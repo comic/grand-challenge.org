@@ -68,6 +68,10 @@ class SubmissionForm(forms.ModelForm):
         if 'require_supplementary_file' in kwargs:
             del kwargs['require_supplementary_file']
 
+        supplementary_file_label = kwargs.get('supplementary_file_label', '')
+        if 'supplementary_file_label' in kwargs:
+            del kwargs['supplementary_file_label']
+
         supplementary_file_help_text = kwargs.get(
             'supplementary_file_help_text', '')
         if 'supplementary_file_help_text' in kwargs:
@@ -78,9 +82,14 @@ class SubmissionForm(forms.ModelForm):
         if not display_comment_field:
             del self.fields['comment']
 
-        if require_supplementary_file:
+        if supplementary_file_label:
+            self.fields['supplementary_file'].label = supplementary_file_label
+
+        if supplementary_file_help_text:
             self.fields[
                 'supplementary_file'].help_text = supplementary_file_help_text
+
+        if require_supplementary_file:
             self.fields['supplementary_file'].required = True
         else:
             del self.fields['supplementary_file']

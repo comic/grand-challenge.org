@@ -98,6 +98,16 @@ class Config(UUIDModel):
         ),
     )
 
+    supplementary_file_label = models.CharField(
+        max_length=32,
+        blank=True,
+        default='Supplementary File',
+        help_text=(
+            'The label that will be used on the submission and results page '
+            'for the supplementary file. For example: Algorithm Description.'
+        ),
+    )
+
     supplementary_file_help_text = models.CharField(
         max_length=128,
         blank=True,
@@ -106,6 +116,14 @@ class Config(UUIDModel):
             'The help text to include on the submissions page to describe the '
             'submissions file. Eg: "A PDF description of the method.".'
         ),
+    )
+
+    show_supplementary_file_link = models.BooleanField(
+        default=False,
+        help_text=(
+            'Show a link to download the supplementary file on the results '
+            'page.'
+        )
     )
 
     def get_absolute_url(self):
@@ -203,6 +221,16 @@ def submission_file_path(instance, filename):
     )
 
 
+def submission_supplementary_file_path(instance, filename):
+    return (
+        f'evaluation-supplementary/'
+        f'{instance.challenge.pk}/'
+        f'{instance.creator.pk}/'
+        f'{instance.pk}/'
+        f'{filename}'
+    )
+
+
 class Submission(UUIDModel):
     """
     Stores files for evaluation
@@ -222,7 +250,7 @@ class Submission(UUIDModel):
                                 allowed_types=('application/zip',))])
 
     supplementary_file = models.FileField(
-        upload_to=submission_file_path,
+        upload_to=submission_supplementary_file_path,
         validators=[
             MimeTypeValidator(allowed_types=(
                 'text/plain',
