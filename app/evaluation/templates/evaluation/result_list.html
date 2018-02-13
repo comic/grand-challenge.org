@@ -28,9 +28,16 @@
         {% for result in object_list %}
             <tr>
                 <td>{{ result.get_rank }}</td>
-                <td><a
-                        href="{% url 'userena_profile_detail' result.job.submission.creator %}">
-                    {{ result.job.submission.creator }}</a></td>
+                <td>
+                    <img class="mugshot"
+                         src="{{ result.job.submission.creator.user_profile.get_mugshot_url }}"
+                         alt="User Mugshot"
+                         style="height: 1.5em; vertical-align: middle;"/>
+                    <div style='vertical-align:middle; display:inline;'>
+                        <a href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                            {{ result.job.submission.creator }}</a>
+                    </div>
+                </td>
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
                 <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</td>
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
