@@ -59,27 +59,14 @@ class SubmissionForm(forms.ModelForm):
         display_comment_field kwarg
         """
 
-        display_comment_field = kwargs.get('display_comment_field', False)
-        if 'display_comment_field' in kwargs:
-            del kwargs['display_comment_field']
-
-        allow_supplementary_file = kwargs.get('allow_supplementary_file', False)
-        if 'allow_supplementary_file' in kwargs:
-            del kwargs['allow_supplementary_file']
-
-        require_supplementary_file = kwargs.get('require_supplementary_file',
+        display_comment_field = kwargs.pop('display_comment_field', False)
+        allow_supplementary_file = kwargs.pop('allow_supplementary_file',
+                                              False)
+        require_supplementary_file = kwargs.pop('require_supplementary_file',
                                                 False)
-        if 'require_supplementary_file' in kwargs:
-            del kwargs['require_supplementary_file']
-
-        supplementary_file_label = kwargs.get('supplementary_file_label', '')
-        if 'supplementary_file_label' in kwargs:
-            del kwargs['supplementary_file_label']
-
-        supplementary_file_help_text = kwargs.get(
+        supplementary_file_label = kwargs.pop('supplementary_file_label', '')
+        supplementary_file_help_text = kwargs.pop(
             'supplementary_file_help_text', '')
-        if 'supplementary_file_help_text' in kwargs:
-            del kwargs['supplementary_file_help_text']
 
         super(SubmissionForm, self).__init__(*args, **kwargs)
 
