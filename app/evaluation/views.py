@@ -32,6 +32,7 @@ class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
         'score_default_sort',
         'extra_results_columns',
         'allow_submission_comments',
+        'allow_supplementary_file',
         'require_supplementary_file',
         'supplementary_file_label',
         'supplementary_file_help_text',
@@ -98,6 +99,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
         kwargs.update({
             'display_comment_field': config.allow_submission_comments,
+            'allow_supplementary_file': config.allow_supplementary_file,
             'require_supplementary_file': config.require_supplementary_file,
             'supplementary_file_label': config.supplementary_file_label,
             'supplementary_file_help_text': config.supplementary_file_help_text,

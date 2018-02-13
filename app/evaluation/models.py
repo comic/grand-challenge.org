@@ -90,11 +90,21 @@ class Config(UUIDModel):
         ),
     )
 
+    allow_supplementary_file = models.BooleanField(
+        default=False,
+        help_text=(
+            'Show a supplementary file field on the submissions page so that '
+            'users can upload an additional file along with their predictions '
+            'file as part of their submission (eg, include a pdf description '
+            'of their method).'
+        ),
+    )
+
     require_supplementary_file = models.BooleanField(
         default=False,
         help_text=(
-            'Force users to include a supplementary file with their '
-            'predictions file (eg, include a pdf description of the method).'
+            'Force users to upload a supplementary file with their '
+            'predictions file.'
         ),
     )
 
