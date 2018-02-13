@@ -1,5 +1,8 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
+{% load guardian_tags %}
+
+{% get_obj_perms user for site as "site_perms" %}
 
 {% block pagecontent %}
 
@@ -14,6 +17,9 @@
             <th>Status</th>
             <th>Output</th>
             <th>Comment</th>
+            {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                <th>Public/Private</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -36,14 +42,35 @@
                         {{ job.get_status_display }}
                     </span>
                 </td>
+
                 {% if job.output %}
                     <td>{{ job.output|user_error }}</td>
                 {% else %}
                     <td>{{ job.result.metrics }}</td>
                 {% endif %}
 
-
                 <td>{{ job.submission.comment }}</td>
+
+                {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                    <td>
+                        {% if job.result %}
+                            <form method="post"
+                                  action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
+                                {% csrf_token %}
+                                {% if job.result.public %}
+                                    <input type="hidden" name="public"
+                                           value="false">
+                                    <button type="submit">Make Private</button>
+                                {% else %}
+                                    <input type="hidden" name="public"
+                                           value="true">
+                                    <button type="submit">Make Public</button>
+                                {% endif %}
+                            </form>
+                        {% endif %}
+                    </td>
+                {% endif %}
+
             </tr>
         {% endfor %}
 

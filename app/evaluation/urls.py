@@ -16,6 +16,7 @@ from evaluation.views import (
     ResultDetail,
     EvaluationManage,
     ConfigUpdate,
+    ResultUpdate,
 )
 from jqfileupload.forms import test_upload_widget, test_upload_widget2
 from jqfileupload.views import uploader_widget_test
@@ -48,7 +49,8 @@ urlpatterns = [
     url(r'^results/$', ResultList.as_view(), name='result-list'),
     url(r'^results/(?P<pk>[0-9a-fA-F-]+)/$', ResultDetail.as_view(),
         name='result-detail'),
-
+    url(r'^results/(?P<pk>[0-9a-fA-F-]+)/update/$', ResultUpdate.as_view(),
+        name='result-update'),
 ]
 
 if settings.DEBUG:
