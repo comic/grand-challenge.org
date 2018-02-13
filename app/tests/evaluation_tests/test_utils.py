@@ -43,7 +43,6 @@ def assert_ranks(challenge, expected_ranks, queryset):
     # Execute calculate_ranks manually
     calculate_ranks(challenge_pk=challenge.pk)
     challenge = ComicSite.objects.get(pk=challenge.pk)
-    rank = challenge.evaluation_ranking.ranks
     for q, exp in zip(queryset, expected_ranks):
-        assert rank[str(q.pk)]['a'] == exp
+        assert q.get_rank() == exp
     return challenge

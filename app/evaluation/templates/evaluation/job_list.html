@@ -1,7 +1,10 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
+{% load guardian_tags %}
 
 {% block pagecontent %}
+
+    {% get_obj_perms user for site as "site_perms" %}
 
     <h2>Evaluation Jobs</h2>
 
@@ -13,7 +16,13 @@
             <th>Updated</th>
             <th>Status</th>
             <th>Output</th>
-            <th>Comment</th>
+            <th>Position</th>
+            {% if site.evaluation_config.allow_submission_comments %}
+                <th>Comment</th>
+            {% endif %}
+            {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                <th>Public/Private</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -36,14 +45,43 @@
                         {{ job.get_status_display }}
                     </span>
                 </td>
+
                 {% if job.output %}
                     <td>{{ job.output|user_error }}</td>
                 {% else %}
                     <td>{{ job.result.metrics }}</td>
                 {% endif %}
 
+                <td>
+                    {% if job.result %}
+                        {{ job.result.get_rank }}
+                    {% endif %}
+                </td>
 
-                <td>{{ job.submission.comment }}</td>
+                {% if site.evaluation_config.allow_submission_comments %}
+                    <td>{{ job.submission.comment }}</td>
+                {% endif %}
+
+                {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                    <td>
+                        {% if job.result %}
+                            <form method="post"
+                                  action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
+                                {% csrf_token %}
+                                {% if job.result.public %}
+                                    <input type="hidden" name="public"
+                                           value="false">
+                                    <button type="submit">Make Private</button>
+                                {% else %}
+                                    <input type="hidden" name="public"
+                                           value="true">
+                                    <button type="submit">Make Public</button>
+                                {% endif %}
+                            </form>
+                        {% endif %}
+                    </td>
+                {% endif %}
+
             </tr>
         {% endfor %}
 

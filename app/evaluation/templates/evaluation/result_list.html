@@ -27,14 +27,14 @@
         <tbody>
         {% for result in object_list %}
             <tr>
-                <td></td>
+                <td>{{ result.get_rank }}</td>
                 <td><a
                         href="{% url 'userena_profile_detail' result.job.submission.creator %}">
                     {{ result.job.submission.creator }}</a></td>
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
-                <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath }}</td>
+                <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</td>
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
-                    <td>{{ result.metrics|get_jsonpath:jsonpath }}</td>
+                    <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
                 {% endfor %}
                 {% if site.evaluation_config.show_supplementary_file_link %}
                     <th>
@@ -52,7 +52,7 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            var t = $('#resultsTable').DataTable({
+            $('#resultsTable').DataTable({
                 {% comment %}
                     The column index of the default sort, must match the table
                     set up.
@@ -60,22 +60,12 @@
                 order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
                 "columnDefs": [{
                     {%  if site.evaluation_config.show_supplementary_file_link %}
-                        "targets": [-1, 0],
-                    {%  else %}
-                        "targets": 0,
+                        "targets": [-1],
                     {% endif %}
                     "searchable": false,
                     "orderable": false
                 }],
                 ordering: true
-            });
-
-
-            t.column(0, {
-                search: 'applied',
-                order: 'applied'
-            }).nodes().each(function (cell, i) {
-                cell.innerHTML = i + 1;
             });
 
         });

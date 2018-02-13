@@ -32,6 +32,7 @@ class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
         'score_default_sort',
         'extra_results_columns',
         'allow_submission_comments',
+        'allow_supplementary_file',
         'require_supplementary_file',
         'supplementary_file_label',
         'supplementary_file_help_text',
@@ -98,6 +99,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
         kwargs.update({
             'display_comment_field': config.allow_submission_comments,
+            'allow_supplementary_file': config.allow_supplementary_file,
             'require_supplementary_file': config.require_supplementary_file,
             'supplementary_file_label': config.supplementary_file_label,
             'supplementary_file_help_text': config.supplementary_file_help_text,
@@ -185,3 +187,16 @@ class ResultList(ListView):
 
 class ResultDetail(DetailView):
     model = Result
+
+class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    model = Result
+    fields = ('public',)
+    success_message = ('Result successfully updated.')
+
+    def get_success_url(self):
+        return reverse(
+            'evaluation:result-list',
+            kwargs={
+                'challenge_short_name': self.object.challenge.short_name
+            }
+        )

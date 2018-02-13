@@ -63,6 +63,10 @@ class SubmissionForm(forms.ModelForm):
         if 'display_comment_field' in kwargs:
             del kwargs['display_comment_field']
 
+        allow_supplementary_file = kwargs.get('allow_supplementary_file', False)
+        if 'allow_supplementary_file' in kwargs:
+            del kwargs['allow_supplementary_file']
+
         require_supplementary_file = kwargs.get('require_supplementary_file',
                                                 False)
         if 'require_supplementary_file' in kwargs:
@@ -91,7 +95,7 @@ class SubmissionForm(forms.ModelForm):
 
         if require_supplementary_file:
             self.fields['supplementary_file'].required = True
-        else:
+        elif not allow_supplementary_file:
             del self.fields['supplementary_file']
 
         self.helper = FormHelper(self)
