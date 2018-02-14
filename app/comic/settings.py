@@ -425,6 +425,10 @@ CELERY_BEAT_SCHEDULE = {
     }
 }
 
+CELERY_TASK_ROUTES = {
+    'evaluation.tasks.evaluate_submission': 'evaluation',
+}
+
 # Set which template pack to use for forms
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
