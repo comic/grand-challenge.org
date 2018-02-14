@@ -79,6 +79,7 @@
                     set up.
                 {% endcomment %}
                 order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
+                "pageLength": 50,
                 "columnDefs": [{
                     {%  if site.evaluation_config.show_supplementary_file_link %}
                         "targets": [-1],
