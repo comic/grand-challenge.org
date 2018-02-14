@@ -16,9 +16,15 @@
             <th>User</th>
             <th>Date</th>
             <th>{{ site.evaluation_config.score_title }}</th>
+
             {% for col in site.evaluation_config.extra_results_columns %}
                 <th>{{ col }}</th>
             {% endfor %}
+
+            {% if site.evaluation_config.allow_submission_comments %}
+                <th>Comment</th>
+            {% endif %}
+
             {% if site.evaluation_config.show_supplementary_file_link %}
                 <th>{{ site.evaluation_config.supplementary_file_label }}</th>
             {% endif %}
@@ -39,10 +45,17 @@
                     </div>
                 </td>
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+
                 <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</td>
+
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
                     <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
                 {% endfor %}
+
+                {% if site.evaluation_config.allow_submission_comments %}
+                    <td>{{ result.job.submission.comment }}</td>
+                {% endif %}
+
                 {% if site.evaluation_config.show_supplementary_file_link %}
                     <th>
                         {% if result.job.submission.supplementary_file %}
@@ -52,6 +65,7 @@
                         {% endif %}
                     </th>
                 {% endif %}
+
             </tr>
         {% endfor %}
         </tbody>
