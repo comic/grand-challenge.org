@@ -23,6 +23,13 @@ def get_jsonpath(obj: dict, jsonpath):
 
 @register.filter
 def user_error(obj: str):
+    """
+    Filter an error message to just return the last, none-empty line. Used
+    to return the last line of a traceback to a user.
+
+    :param obj: A string with newlines
+    :return: The last, none-empty line of obj
+    """
     try:
         lines = list(filter(None, obj.split('\n')))
         return lines[-1]

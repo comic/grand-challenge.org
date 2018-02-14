@@ -1,7 +1,7 @@
-from evaluation.templatetags.evaluation_extras import get_jsonpath
+from evaluation.templatetags.evaluation_extras import get_jsonpath, user_error
 
 
-def test_get():
+def test_get_jsonpath():
     obj = {
         'spam.eggs': 99,
         'spam': {
@@ -26,3 +26,11 @@ def test_get():
     assert get_jsonpath(obj=obj, jsonpath='spam') == obj['spam']
 
     assert get_jsonpath(obj=obj, jsonpath='') == ''
+
+def test_user_error():
+    assert user_error(obj='foo\n') == 'foo'
+    assert user_error(obj='foo') == 'foo'
+    assert user_error(obj='foo\n\n') == 'foo'
+    assert user_error(obj='foo\nbar') == 'bar'
+    assert user_error(obj='foo\nbar\n\n') == 'bar'
+    assert user_error(obj='') == ''

@@ -233,11 +233,6 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-
-    # FIXME: Path to template path. This might be temporary.
-    # At the moment some of the admin templates are overloaded here. I think the comicsite app is a better place to do that.
-    os.path.normpath(os.path.dirname(__file__) + '/templates'),
-
 )
 
 INSTALLED_APPS = (

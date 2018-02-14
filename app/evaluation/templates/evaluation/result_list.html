@@ -16,9 +16,15 @@
             <th>User</th>
             <th>Date</th>
             <th>{{ site.evaluation_config.score_title }}</th>
+
             {% for col in site.evaluation_config.extra_results_columns %}
                 <th>{{ col }}</th>
             {% endfor %}
+
+            {% if site.evaluation_config.allow_submission_comments %}
+                <th>Comment</th>
+            {% endif %}
+
             {% if site.evaluation_config.show_supplementary_file_link %}
                 <th>{{ site.evaluation_config.supplementary_file_label }}</th>
             {% endif %}
@@ -28,14 +34,28 @@
         {% for result in object_list %}
             <tr>
                 <td>{{ result.get_rank }}</td>
-                <td><a
-                        href="{% url 'userena_profile_detail' result.job.submission.creator %}">
-                    {{ result.job.submission.creator }}</a></td>
+                <td>
+                    <img class="mugshot"
+                         src="{{ result.job.submission.creator.user_profile.get_mugshot_url }}"
+                         alt="User Mugshot"
+                         style="height: 1.5em; vertical-align: middle;"/>
+                    <div style='vertical-align:middle; display:inline;'>
+                        <a href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                            {{ result.job.submission.creator }}</a>
+                    </div>
+                </td>
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+
                 <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</td>
+
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
                     <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
                 {% endfor %}
+
+                {% if site.evaluation_config.allow_submission_comments %}
+                    <td>{{ result.job.submission.comment }}</td>
+                {% endif %}
+
                 {% if site.evaluation_config.show_supplementary_file_link %}
                     <th>
                         {% if result.job.submission.supplementary_file %}
@@ -45,6 +65,7 @@
                         {% endif %}
                     </th>
                 {% endif %}
+
             </tr>
         {% endfor %}
         </tbody>
@@ -58,6 +79,7 @@
                     set up.
                 {% endcomment %}
                 order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
+                "pageLength": 50,
                 "columnDefs": [{
                     {%  if site.evaluation_config.show_supplementary_file_link %}
                         "targets": [-1],

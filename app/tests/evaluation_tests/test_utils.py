@@ -1,8 +1,7 @@
-import factory
 import pytest
-from django.db.models import signals
 
 from comicmodels.models import ComicSite
+from evaluation.models import Result
 from evaluation.tasks import calculate_ranks
 from tests.factories import ResultFactory, ChallengeFactory
 
@@ -42,7 +41,7 @@ def test_calculate_ranks(mocker):
 def assert_ranks(challenge, expected_ranks, queryset):
     # Execute calculate_ranks manually
     calculate_ranks(challenge_pk=challenge.pk)
-    challenge = ComicSite.objects.get(pk=challenge.pk)
     for q, exp in zip(queryset, expected_ranks):
-        assert q.get_rank() == exp
+        r = Result.objects.get(pk=q.pk)
+        assert r.get_rank() == exp
     return challenge
