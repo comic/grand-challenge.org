@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load crispy_forms_tags %}
+{% load comic_templatetags %}
 
 {% block html_header %}
 	{{ block.super }}
@@ -13,7 +14,7 @@
 
     {% crispy form %}
 
-    <h2>View my current submissions</h2>
+    <h2>View my submissions</h2>
 
     <p>Click <a href="{% url 'evaluation:job-list' site.short_name %}">here</a>
         to view your current submissions to this challenge.</p>
