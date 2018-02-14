@@ -52,11 +52,28 @@ services:
     extends:
       file: docker-compose.common.yml
       service: web
-    # TODO: check the server response for 200 OK
     command: >-
       bash -c "
       sleep 120
-      && celery -A comic worker -l info
+      && celery -A comic worker -l info -c 2
+      "
+    links:
+      - db:mysql
+      - rabbitmq
+      - web
+    volumes_from:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  celery_worker_evaluation:
+    extends:
+      file: docker-compose.common.yml
+      service: web
+    command: >-
+      bash -c "
+      sleep 120
+      && celery -A comic worker -l info -Q evaluation -c 2
       "
     links:
       - db:mysql
