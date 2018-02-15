@@ -16,6 +16,10 @@ def generate_rank_dict(queryset: Tuple[Result, ...],
     rank = defaultdict(dict)
     pk_val = namedtuple('pk_val', ['pk', 'val'])
 
+    if len(queryset) == 0:
+        # No results to calculate
+        return rank
+
     for (metric_path, reverse) in zip(metric_paths, metric_reverse):
         # Extract the value of the metric for this primary key and sort on the
         # value of the metric
