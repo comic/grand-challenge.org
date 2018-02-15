@@ -1,18 +1,21 @@
 {% extends "site.html" %}
+{% load static from staticfiles %}
 
 {% block pageName %}Test comic page for uploader{% endblock %}
 
 {% block html_header %}
-	{{ block.super }}
-	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
-	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css"
+          href="{% static "jqfileupload/css/upload_widget_button.css" %}">
+    <script type="text/javascript"
+            src="{% static "jqfileupload/js/upload_widget.js" %}"></script>
 {% endblock %}
 
 
 {% block content %}
-	<form action="" method="post">
-		{% csrf_token %}
-		{{ testform }}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ testform }}
 
-	</form>
+    </form>
 {% endblock %}

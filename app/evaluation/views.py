@@ -49,11 +49,6 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
     form_class = MethodForm
 
-    def get_context_data(self, **kwargs):
-        context = super(MethodCreate, self).get_context_data(**kwargs)
-        context["upload_widget"] = AjaxUploadWidget.TEMPLATE_ATTRS
-        return context
-
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = ComicSite.objects.get(
@@ -86,11 +81,6 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         "Your submission was successful. "
         "Please keep checking this page for your result."
     )
-
-    def get_context_data(self, **kwargs):
-        context = super(SubmissionCreate, self).get_context_data(**kwargs)
-        context["upload_widget"] = AjaxUploadWidget.TEMPLATE_ATTRS
-        return context
 
     def get_form_kwargs(self):
         kwargs = super(SubmissionCreate, self).get_form_kwargs()

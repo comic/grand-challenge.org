@@ -31,5 +31,4 @@ The first 16 bytes of the first file were: {the_bytes}
         test_form = UploadForm()
         return render(request, "uploader_widget_test.html", {
             "testform": test_form,
-            "upload_widget": AjaxUploadWidget.TEMPLATE_ATTRS
         })
