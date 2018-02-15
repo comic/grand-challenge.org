@@ -1,4 +1,7 @@
+import json
+
 from django import template
+from django.utils.safestring import mark_safe
 from jsonpath_rw import parse
 
 register = template.Library()
@@ -21,6 +24,7 @@ def get_jsonpath(obj: dict, jsonpath):
     except (AttributeError, IndexError):
         return ''
 
+
 @register.filter
 def user_error(obj: str):
     """
@@ -35,3 +39,17 @@ def user_error(obj: str):
         return lines[-1]
     except IndexError:
         return obj
+
+
+@register.filter
+def json_dumps(obj: dict):
+    """
+    Dumps a json object
+    :param obj: a dictionary
+    :return:
+    """
+    try:
+        return mark_safe(json.dumps(obj, indent=2, sort_keys=True))
+    except TypeError:
+        # Not json encodable
+        return str(obj)

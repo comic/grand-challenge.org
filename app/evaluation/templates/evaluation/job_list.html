@@ -48,8 +48,10 @@
 
                 {% if job.output %}
                     <td>{{ job.output|user_error }}</td>
+                {% elif job.result.metrics %}
+                    <td><a href="{{ job.result.get_absolute_url }}">Result</a></td>
                 {% else %}
-                    <td>{{ job.result.metrics }}</td>
+                    <td></td>
                 {% endif %}
 
                 <td>

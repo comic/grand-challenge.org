@@ -32,15 +32,15 @@
         </thead>
         <tbody>
         {% for result in object_list %}
-            <tr>
+            <tr class='clickable-row' data-url='{{ result.get_absolute_url }}'>
                 <td>{{ result.get_rank }}</td>
                 <td>
-                    <img class="mugshot"
-                         src="{{ result.job.submission.creator.user_profile.get_mugshot_url }}"
-                         alt="User Mugshot"
-                         style="height: 1.5em; vertical-align: middle;"/>
                     <div style='vertical-align:middle; display:inline;'>
                         <a href="{% url 'userena_profile_detail' result.job.submission.creator %}">
+                            <img class="mugshot"
+                                 src="{{ result.job.submission.creator.user_profile.get_mugshot_url }}"
+                                 alt="User Mugshot"
+                                 style="height: 1.5em; vertical-align: middle;"/>
                             {{ result.job.submission.creator }}</a>
                     </div>
                 </td>
@@ -88,6 +88,10 @@
                     "orderable": false
                 }],
                 ordering: true
+            });
+
+            $(".clickable-row").on('click', function () {
+                window.location = $(this).data('url');
             });
 
         });
