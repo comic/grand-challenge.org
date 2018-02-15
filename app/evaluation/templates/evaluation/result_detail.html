@@ -6,39 +6,51 @@
 
     <h2>Result</h2>
 
-    <div style='vertical-align:middle; display:inline;'>
-        <b>User:</b>
-        <a href="{% url 'userena_profile_detail' object.job.submission.creator %}">
-            <img class="mugshot"
-                 src="{{ object.job.submission.creator.user_profile.get_mugshot_url }}"
-                 alt="User Mugshot"
-                 style="height: 1em; vertical-align: middle;"/>
-            {{ object.job.submission.creator }}</a>
-    </div><br>
+    <dl>
 
-    <b>Challenge:</b> <a
-        href="{{ object.challenge.get_absolute_url }}">
-    {{ object.challenge.short_name }}</a><br>
+        <dt>User</dt>
+        <dd>
+            <div style='vertical-align:middle; display:inline;'>
+                <a href="{% url 'userena_profile_detail' object.job.submission.creator %}">
+                    <img class="mugshot"
+                         src="{{ object.job.submission.creator.user_profile.get_mugshot_url }}"
+                         alt="User Mugshot"
+                         style="height: 1em; vertical-align: middle;"/>
+                    {{ object.job.submission.creator }}</a>
+            </div>
+        </dd>
 
-    <b>Submission created:</b> {{ object.job.submission.created }}<br>
+        <dt>Challenge</dt>
+        <dd><a href="{{ object.challenge.get_absolute_url }}">
+            {{ object.challenge.short_name }}</a></dd>
 
-    <b>Position on leaderboard:</b>
-    {% if object.public %}
-        {{ object.get_rank }}
-    {% else %}
-        This result is not public
-    {% endif %}
-    <br>
+        <dt>Submission created</dt>
+        <dd>{{ object.job.submission.created }}</dd>
 
-    {% if site.evaluation_config.show_supplementary_file_link %}
-        <b>{{ site.evaluation_config.supplementary_file_label }}:</b>
-        {% if object.job.submission.supplementary_file %}
-            <a href="{{ object.job.submission.supplementary_file.url }}">
-                <i class="fa fa-file"></i>
-            </a>
+        <dt>Result created</dt>
+        <dd>{{ object.created }}</dd>
+
+        <dt>Position on leaderboard</dt>
+        <dd>
+            {% if object.public %}
+                {{ object.get_rank }}
+            {% else %}
+                This result has not been published on the leaderboard.
+            {% endif %}
+        </dd>
+
+        {% if site.evaluation_config.show_supplementary_file_link %}
+            <dt>{{ site.evaluation_config.supplementary_file_label }}:</dt>
+            <dd>
+                {% if object.job.submission.supplementary_file %}
+                    <a href="{{ object.job.submission.supplementary_file.url }}">
+                        <i class="fa fa-file"></i>
+                    </a>
+                {% endif %}
+            </dd>
         {% endif %}
-        <br>
-    {% endif %}
+
+    </dl>
 
     {% get_obj_perms user for site as "site_perms" %}
     {% if "change_comicsite" in site_perms or request.user.is_superuser %}
@@ -48,16 +60,22 @@
             {% if object.public %}
                 <input type="hidden" name="public"
                        value="false">
-                <button type="submit">Make Result Private</button>
+                <button type="submit" class="btn btn-danger">Remove result from
+                    leaderboard
+                </button>
             {% else %}
                 <input type="hidden" name="public"
                        value="true">
-                <button type="submit">Make Result Public</button>
+                <button type="submit" class="btn btn-primary">Publish result on
+                    leaderboard
+                </button>
             {% endif %}
         </form>
     {% endif %}
 
+
     <h3>Metrics</h3>
-    <pre>{{ object.metrics|json_dumps }}</pre> <br>
+    <pre>{{ object.metrics|json_dumps }}</pre>
+
 
 {% endblock %}

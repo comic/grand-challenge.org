@@ -3,9 +3,8 @@
      upload_target="{{ target }}"
      multi_upload="{{ multi_upload }}">
 
-    <span class="btn btn-success fileinput-button">
-        <i class="glyphicon glyphicon-plus"></i>
-        <span>Select a file...</span>
+    <span class="btn btn-primary fileinput-button">
+        <span>Choose File</span>
         <input type="file" name="files[]" form="(null)"
                {% if multi_upload == "true" %}multiple{% endif %}>
     </span>

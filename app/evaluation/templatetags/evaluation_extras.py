@@ -49,7 +49,7 @@ def json_dumps(obj: dict):
     :return:
     """
     try:
-        return mark_safe(json.dumps(obj, indent=2, sort_keys=True))
+        return mark_safe(json.dumps(obj, indent=2))
     except TypeError:
         # Not json encodable
         return str(obj)
