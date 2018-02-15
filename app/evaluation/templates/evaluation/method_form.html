@@ -1,12 +1,15 @@
 {% extends "site.html" %}
 {% load crispy_forms_tags %}
+{% load static from staticfiles %}
 
 {% block html_header %}
-	{{ block.super }}
-	<link rel="stylesheet" type="text/css" href="{{ upload_widget.CSS }}">
-	<script type="text/javascript" src="{{ upload_widget.JS }}"></script>
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css"
+          href="{% static "jqfileupload/css/upload_widget_button.css" %}">
+    <script type="text/javascript"
+            src="{% static "jqfileupload/js/upload_widget.js" %}"></script>
 {% endblock %}
 
 {% block pagecontent %}
-        {%  crispy form %}
+    {% crispy form %}
 {% endblock %}

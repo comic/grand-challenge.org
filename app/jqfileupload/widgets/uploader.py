@@ -77,11 +77,6 @@ class AjaxUploadWidget(Widget):
     This widget will require updating when moving forward from django 1.8.
     """
 
-    CSS = "/static/jqfileupload/css/upload_widget_button.css"
-    JS = "/static/jqfileupload/js/upload_widget.js"
-
-    TEMPLATE_ATTRS = dict(JS=JS, CSS=CSS)
-
     def __init__(
             self,
             *args,

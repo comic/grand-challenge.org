@@ -1,4 +1,4 @@
-{% load static %}
+{% load static from staticfiles %}
 {% load comic_templatetags %}
 {% load firstof from future %}
 <!DOCTYPE html>
@@ -13,7 +13,7 @@
               content="COMIC, open, science, medical, image, computing, validated"/>
 
         <script type="text/javascript"
-                src="{% get_static_prefix %}js/google-analytics-tracking.js"></script>
+                src="{% static "js/google-analytics-tracking.js" %}"></script>
 
         {% block jquery_js %}
             <script type="text/javascript"
@@ -47,15 +47,15 @@
                 Requires jquery from above, and uses bootstrap themes
             {% endcomment %}
             <link rel="stylesheet" type="text/css"
-                  href="{% get_static_prefix %}DataTables-1.10.16/css/dataTables.bootstrap.min.css"
+                  href="{% static "DataTables-1.10.16/css/dataTables.bootstrap.min.css" %}"
                   crossorigin="anonymous"/>
 
             <script type="text/javascript"
-                    src="{% get_static_prefix %}DataTables-1.10.16/js/jquery.dataTables.min.js"
+                    src="{% static "DataTables-1.10.16/js/jquery.dataTables.min.js" %}"
                     crossorigin="anonymous"></script>
 
             <script type="text/javascript"
-                    src="{% get_static_prefix %}DataTables-1.10.16/js/dataTables.bootstrap.min.js"
+                    src="{% static "DataTables-1.10.16/js/dataTables.bootstrap.min.js" %}"
                     crossorigin="anonymous"></script>
         {% endblock %}
 
@@ -79,10 +79,10 @@
         {% endblock %}
 
         {#  Custom CSS, must be included AFTER bootstrap  #}
-        <link href="{% get_static_prefix %}css/core.css" type="text/css"
+        <link href="{% static "css/core.css" %}" type="text/css"
               rel="stylesheet">
 
-        <link href="{% get_static_prefix %}img/grand-challenge.ico"
+        <link href="{% static "img/grand-challenge.ico" %}"
               rel="shortcut icon">
 
         <!--Put any site or page specific css here -->
