@@ -192,11 +192,3 @@ class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Result
     fields = ('public',)
     success_message = ('Result successfully updated.')
-
-    def get_success_url(self):
-        return reverse(
-            'evaluation:result-list',
-            kwargs={
-                'challenge_short_name': self.object.challenge.short_name
-            }
-        )

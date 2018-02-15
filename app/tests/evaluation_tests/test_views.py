@@ -405,7 +405,13 @@ def test_result_list(client, EvalChallengeSet):
 
 @pytest.mark.django_db
 def test_result_detail(client, EvalChallengeSet):
-    result = ResultFactory(challenge=EvalChallengeSet.ChallengeSet.challenge)
+
+    submission = SubmissionFactory(challenge=EvalChallengeSet.ChallengeSet.challenge,
+                                   creator=EvalChallengeSet.ChallengeSet.participant)
+    job = JobFactory(submission=submission)
+
+    result = ResultFactory(challenge=EvalChallengeSet.ChallengeSet.challenge,
+                           job=job)
 
     validate_open_view(viewname='evaluation:result-detail',
                        challenge_set=EvalChallengeSet.ChallengeSet,

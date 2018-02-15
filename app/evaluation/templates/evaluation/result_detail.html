@@ -1,16 +1,63 @@
 {% extends "site.html" %}
+{% load evaluation_extras %}
+{% load guardian_tags %}
 
 {% block pagecontent %}
 
-    <h2>Result {{ object.id }}</h2>
+    <h2>Result</h2>
 
-    <p><strong>Challenge:</strong> <a
-            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
-    </p>
-    <p><strong>Job:</strong> <a
-            href="{{ object.job.get_absolute_url }}">{{ object.job.pk }}</a>
-    </p>
-    <p><strong>Public:</strong> {{ object.public }}</p>
-    <p><strong>Metrics:</strong> {{ object.metrics }}</p>
+    <div style='vertical-align:middle; display:inline;'>
+        <b>User:</b>
+        <a href="{% url 'userena_profile_detail' object.job.submission.creator %}">
+            <img class="mugshot"
+                 src="{{ object.job.submission.creator.user_profile.get_mugshot_url }}"
+                 alt="User Mugshot"
+                 style="height: 1em; vertical-align: middle;"/>
+            {{ object.job.submission.creator }}</a>
+    </div><br>
+
+    <b>Challenge:</b> <a
+        href="{{ object.challenge.get_absolute_url }}">
+    {{ object.challenge.short_name }}</a><br>
+
+    <b>Submission created:</b> {{ object.job.submission.created }}<br>
+
+    <b>Position on leaderboard:</b>
+    {% if object.public %}
+        {{ object.get_rank }}
+    {% else %}
+        This result is not public
+    {% endif %}
+    <br>
+
+    {% if site.evaluation_config.show_supplementary_file_link %}
+        <b>{{ site.evaluation_config.supplementary_file_label }}:</b>
+        {% if object.job.submission.supplementary_file %}
+            <a href="{{ object.job.submission.supplementary_file.url }}">
+                <i class="fa fa-file"></i>
+            </a>
+        {% endif %}
+        <br>
+    {% endif %}
+
+    {% get_obj_perms user for site as "site_perms" %}
+    {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+        <form method="post"
+              action="{% url 'evaluation:result-update' site.short_name object.pk %}">
+            {% csrf_token %}
+            {% if object.public %}
+                <input type="hidden" name="public"
+                       value="false">
+                <button type="submit">Make Result Private</button>
+            {% else %}
+                <input type="hidden" name="public"
+                       value="true">
+                <button type="submit">Make Result Public</button>
+            {% endif %}
+        </form>
+    {% endif %}
+
+    <h3>Metrics</h3>
+    <pre>{{ object.metrics|json_dumps }}</pre> <br>
 
 {% endblock %}
