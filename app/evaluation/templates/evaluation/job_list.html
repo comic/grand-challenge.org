@@ -21,7 +21,7 @@
                 <th>Comment</th>
             {% endif %}
             {% if "change_comicsite" in site_perms or request.user.is_superuser %}
-                <th>Public/Private</th>
+                <th>Hide/Publish</th>
             {% endif %}
         </tr>
         </thead>
@@ -73,11 +73,11 @@
                                 {% if job.result.public %}
                                     <input type="hidden" name="public"
                                            value="false">
-                                    <button type="submit">Make Private</button>
+                                    <button type="submit" class="btn btn-xs btn-danger">Hide Result</button>
                                 {% else %}
                                     <input type="hidden" name="public"
                                            value="true">
-                                    <button type="submit">Make Public</button>
+                                    <button type="submit" class="btn btn-xs btn-primary">Publish Result</button>
                                 {% endif %}
                             </form>
                         {% endif %}

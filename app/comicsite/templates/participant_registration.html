@@ -8,26 +8,17 @@
         {{ site.registration_page_text|safe }}
     </p>
 
-    <div class="row">
-        <div class="col-sm-2"></div>
-        <div class="col-sm-8">
-            {% if user_is_participant %}
+    {% if user_is_participant %}
 
-                <button class="btn btn-success btn-block">
-                    You have already joined {{ site.short_name }}
-                </button>
+        <b>You have already joined {{ site.short_name }}.</b>
 
-            {% else %}
+    {% else %}
 
-                <a href="{% url 'participant-registration-request' site.short_name %}"
-                   class="btn btn-primary btn-block">
-                    Click here to join {{ site.short_name }}</a>
+        <a href="{% url 'participant-registration-request' site.short_name %}"
+           class="btn btn-primary">
+            Click here to join {{ site.short_name }}</a>
 
-            {% endif %}
+    {% endif %}
 
-        </div>
-
-        <div class="col-sm-2"></div>
-    </div>
 
 {% endblock %}
