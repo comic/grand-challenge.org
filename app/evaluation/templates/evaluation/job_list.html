@@ -55,8 +55,8 @@
                 {% endif %}
 
                 <td>
-                    {% if job.result %}
-                        {{ job.result.get_rank }}
+                    {% if job.result and job.result.rank > 0 %}
+                        {{ job.result.rank }}
                     {% endif %}
                 </td>
 

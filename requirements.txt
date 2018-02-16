@@ -5,6 +5,7 @@ django==1.8.18
 django-auth-mixins==1.0.1
 django-countries==4.5
 django-crispy-forms==1.7.0
+django-debug-toolbar==1.9.1
 django-userena-ce==3.0.2
 djangorestframework==3.6.3
 docker==2.4.2

@@ -143,23 +143,6 @@ class Config(UUIDModel):
                        })
 
 
-class Ranking(UUIDModel):
-    challenge = models.OneToOneField(
-        'comicmodels.ComicSite',
-        on_delete=models.CASCADE,
-        related_name='evaluation_ranking',
-        editable=False,
-    )
-
-    ranks = JSONField(
-        default=dict,
-        editable=False,
-        help_text=(
-            'Keeps track of the ranking of the evaluation results.'
-        ),
-    )
-
-
 def method_image_path(instance, filename):
     return (
         f'evaluation/'
@@ -370,14 +353,13 @@ class Result(UUIDModel):
 
     public = models.BooleanField(default=True)
 
-    def get_rank(self):
-        ranks = self.challenge.evaluation_ranking.ranks
-        score_jsonpath = self.challenge.evaluation_config.score_jsonpath
-
-        try:
-            return ranks[str(self.pk)][score_jsonpath]
-        except KeyError:
-            return
+    rank = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            'The position of this result on the leaderboard. If the value is '
+            'zero, then the result is unranked.'
+        ),
+    )
 
     def get_absolute_url(self):
         return reverse('evaluation:result-detail',

@@ -32,8 +32,8 @@
 
         <dt>Position on leaderboard</dt>
         <dd>
-            {% if object.public %}
-                {{ object.get_rank }}
+            {% if object.public and object.rank > 0 %}
+                {{ object.rank }}
             {% else %}
                 This result has not been published on the leaderboard.
             {% endif %}
