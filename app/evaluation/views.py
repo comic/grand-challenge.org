@@ -149,6 +149,7 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
         queryset = super(JobList, self).get_queryset()
+        queryset = queryset.select_related('result')
 
         challenge = ComicSite.objects.get(pk=self.request.project_pk)
 
@@ -171,6 +172,7 @@ class ResultList(ListView):
 
     def get_queryset(self):
         queryset = super(ResultList, self).get_queryset()
+        queryset = queryset.select_related('job__submission__creator__user_profile')
         return queryset.filter(Q(challenge__pk=self.request.project_pk),
                                Q(public=True))
 
