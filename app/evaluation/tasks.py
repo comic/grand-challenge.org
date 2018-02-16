@@ -105,7 +105,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     valid_results = Result.objects.filter(Q(challenge__pk=challenge_pk),
                                           Q(public=True))
 
-    challenge.evaluation_ranking.ranks = generate_rank_dict(
+    ranks = generate_rank_dict(
         queryset=valid_results,
         metric_paths=(
             challenge.evaluation_config.score_jsonpath,
@@ -115,4 +115,12 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         ),
     )
 
-    challenge.evaluation_ranking.save()
+    for res in Result.objects.filter(Q(challenge__pk=challenge_pk)):
+        try:
+            rank = ranks[str(res.pk)][
+                challenge.evaluation_config.score_jsonpath]
+        except KeyError:
+            rank = 0
+        Result.objects.filter(pk=res.pk).update(rank=rank)
+
+    return ranks

@@ -43,5 +43,5 @@ def assert_ranks(challenge, expected_ranks, queryset):
     calculate_ranks(challenge_pk=challenge.pk)
     for q, exp in zip(queryset, expected_ranks):
         r = Result.objects.get(pk=q.pk)
-        assert r.get_rank() == exp
+        assert r.rank == exp
     return challenge
