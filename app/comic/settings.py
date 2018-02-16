@@ -473,3 +473,15 @@ if MAIN_HOST_NAME[-1] == '/':
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
+    INSTALLED_APPS += (
+        'debug_toolbar',
+    )
+
+    MIDDLEWARE_CLASSES += (
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+    )
+
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
+    }
+
