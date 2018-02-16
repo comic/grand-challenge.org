@@ -207,7 +207,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
     'comicsite.contextprocessors.contextprocessors.comic_site',
-    'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri'
+    'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri',
+    'rollbar.contrib.django.context_processors.rollbar_settings',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -395,6 +396,7 @@ LOGGING = {
 # Rollbar Configuration
 ROLLBAR = {
     'access_token': os.environ.get('ROLLBAR_ACCESS_TOKEN', ''),
+    'client_access_token': os.environ.get('ROLLBAR_CLIENT_ACCESS_TOKEN', ''),
     'environment': 'development' if DEBUG else 'production',
     'branch': 'master',
     'root': os.path.abspath(os.getcwd()),

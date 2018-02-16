@@ -16,7 +16,7 @@ python-magic==0.4.13
 python-memcached==1.58
 pytz==2017.3
 social-auth-app-django==1.2.0
-rollbar==0.13.11
+rollbar==0.13.17
 xlrd==0.9.4
 # Dev Requirements
 pytest-django
