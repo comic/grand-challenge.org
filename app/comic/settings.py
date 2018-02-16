@@ -470,18 +470,21 @@ if MEDIA_ROOT[-1] != "/":
 if MAIN_HOST_NAME[-1] == '/':
     raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
+ENABLE_DEBUG_TOOLBAR = False
+
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
-    INSTALLED_APPS += (
-        'debug_toolbar',
-    )
+    if ENABLE_DEBUG_TOOLBAR:
+        INSTALLED_APPS += (
+            'debug_toolbar',
+        )
 
-    MIDDLEWARE_CLASSES += (
-        'debug_toolbar.middleware.DebugToolbarMiddleware',
-    )
+        MIDDLEWARE_CLASSES += (
+            'debug_toolbar.middleware.DebugToolbarMiddleware',
+        )
 
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
-    }
+        DEBUG_TOOLBAR_CONFIG = {
+            'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
+        }
 
