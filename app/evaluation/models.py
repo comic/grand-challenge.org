@@ -136,6 +136,14 @@ class Config(UUIDModel):
         )
     )
 
+    daily_submission_limit = models.PositiveIntegerField(
+        default=10,
+        help_text=(
+            'The limit on the number of times that a user can make a '
+            'submission in a 24 hour period.'
+        )
+    )
+
     def get_absolute_url(self):
         return reverse('evaluation:manage',
                        kwargs={

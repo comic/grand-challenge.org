@@ -28,7 +28,24 @@
 
     <h2>Create a new submission</h2>
 
-    {% crispy form %}
+    {% if remaining_submissions > 0 %}
+
+        <p>You can make {{ remaining_submissions }} more
+            {% if remaining_submissions == 1 %}
+                submission
+            {% else %}
+                submissions
+            {% endif %}
+            today.</p>
+
+        {% crispy form %}
+
+    {% else %}
+
+        <p>You have reached your submission limit for today. You can make
+            another submission in {{ next_submission_at|timeuntil }}.</p>
+
+    {% endif %}
 
     <h2>View my submissions</h2>
 

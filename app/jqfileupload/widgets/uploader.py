@@ -15,7 +15,6 @@ from django.http.response import HttpResponseBadRequest, \
     JsonResponse, HttpResponseForbidden
 from django.template.loader import get_template
 from django.utils import timezone
-from pip._vendor.distro import os_release_attr
 
 from jqfileupload.models import StagedFile
 from jqfileupload.widgets.utils import IntervalMap
