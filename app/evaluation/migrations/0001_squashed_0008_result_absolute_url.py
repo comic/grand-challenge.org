@@ -12,8 +12,6 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    replaces = [('evaluation', '0001_initial'), ('evaluation', '0002_config'), ('evaluation', '0003_auto_20180212_1205'), ('evaluation', '0004_auto_20180212_1629'), ('evaluation', '0005_auto_20180213_0928'), ('evaluation', '0006_auto_20180213_1406'), ('evaluation', '0007_auto_20180216_1516'), ('evaluation', '0008_result_absolute_url')]
-
     dependencies = [
         ('comicmodels', '0001_squashed_0016_comicsite_title'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

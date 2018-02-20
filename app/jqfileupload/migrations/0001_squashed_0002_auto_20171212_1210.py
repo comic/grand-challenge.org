@@ -7,8 +7,6 @@ import jqfileupload.models
 
 class Migration(migrations.Migration):
 
-    replaces = [('jqfileupload', '0001_initial'), ('jqfileupload', '0002_auto_20171212_1210')]
-
     dependencies = [
     ]
 
