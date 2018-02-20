@@ -1,10 +1,36 @@
 {% extends "site.html" %}
+{% load get_obj_perms from guardian_tags %}
+{% load url from comic_templatetags %}
 
 {% block pagecontent %}
 
+    <h2>{{ object.name }}</h2>
+
     <dl>
-        <dt>Team Name</dt>
-        <dd>{{ object.name }}</dd>
+        <dt>Challenge</dt>
+        <dd>{{ object.challenge }}</dd>
     </dl>
+
+    <h3>Team Members</h3>
+
+    {% for tm in object.teammember_set.all %}
+        <a href="{% url 'userena_profile_detail' tm.user %}">
+            <img class="mugshot"
+                 src="{{ tm.user.user_profile.get_mugshot_url }}"
+                 alt="User Mugshot"
+                 style="height: 1.5em; vertical-align: middle;"/>
+            {{ tm.user }}</a>
+    {% endfor %}
+
+    {% get_obj_perms user for object as "object_perms" %}
+    {% if "change_team" in object_perms %}
+
+        <h3>Settings</h3>
+
+        <p><a href="{% url 'teams:update' site.short_name object.pk %}">Edit
+            Team</a></p>
+
+    {% endif %}
+
 
 {% endblock %}

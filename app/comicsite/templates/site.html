@@ -73,6 +73,9 @@
             <li>
                 <a href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
             </li>
+            <li>
+                <a href="{% url 'teams:list' site.short_name %}">Teams</a>
+            </li>
         {% else %}
             <li>
                 <a href="{% url 'participant-registration' site.short_name %}"><b>Join</b></a>

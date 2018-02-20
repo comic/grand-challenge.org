@@ -1,13 +1,8 @@
 from django.conf import settings
 from django.db import models
 
-# Create your models here.
 from comicsite.core.urlresolvers import reverse
 from evaluation.models import UUIDModel
-
-
-class Config(models.Model):
-    pass
 
 
 class Team(models.Model):
@@ -19,6 +14,8 @@ class Team(models.Model):
     )
     logo = models.ImageField(blank=True)
     website = models.URLField(blank=True)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         return reverse('teams:detail',
@@ -34,4 +31,12 @@ class TeamMember(models.Model):
         on_delete=models.CASCADE,
     )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    is_admin = models.BooleanField()
+
+    class Meta:
+        unique_together = (
+            ('user', 'team'),
+        )
+
+    def validate_unique(self, exclude=None):
+        # TODO: make sure that user is only part of 1 team per challenge
+        super(TeamMember, self).validate_unique(exclude)

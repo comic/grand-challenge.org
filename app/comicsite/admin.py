@@ -546,6 +546,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': (
                 'use_evaluation',
+                'use_teams',
             )
         }),
     )
