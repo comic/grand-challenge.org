@@ -32,8 +32,10 @@
         </thead>
         <tbody>
         {% for result in object_list %}
-            <tr class='clickable-row' data-url='{{ result.get_absolute_url }}'>
+            <tr>
+
                 <td>{{ result.rank }}</td>
+
                 <td>
                     <div style='vertical-align:middle; display:inline;'>
                         <a href="{% url 'userena_profile_detail' result.job.submission.creator %}">
@@ -46,7 +48,7 @@
                 </td>
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
 
-                <td>{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</td>
+                <td><a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a></td>
 
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
                     <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
@@ -88,10 +90,6 @@
                     "orderable": false
                 }],
                 ordering: true
-            });
-
-            $(".clickable-row").on('click', function () {
-                window.location = $(this).data('url');
             });
 
         });
