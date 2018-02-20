@@ -25,6 +25,9 @@ urlpatterns = [
     url(r'^(?P<challenge_short_name>[\w-]+)/evaluation/',
         include('evaluation.urls', namespace='evaluation')),
 
+    url(r'^(?P<challenge_short_name>[\w-]+)/teams/',
+        include('teams.urls', namespace='teams')),
+
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
     url(r'^(?P<site_short_name>[\w-]+)/files/$',
