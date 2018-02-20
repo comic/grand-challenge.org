@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='result',
             name='absolute_url',
-            field=models.TextField(blank=True),
+            field=models.TextField(blank=True, editable=False),
         ),
     ]

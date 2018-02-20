@@ -364,7 +364,7 @@ class Result(UUIDModel):
     # Cache the url as this is slow on the results list page
     absolute_url = models.TextField(
         blank=True,
-        editable=True,
+        editable=False,
     )
 
     def get_absolute_url(self):
