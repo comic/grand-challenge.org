@@ -119,8 +119,16 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         else:
             next_sub_at = timezone.now()
 
-        context.update({'remaining_submissions': remaining_submissions,
-                        'next_submission_at': next_sub_at})
+        pending_jobs = Job.objects.filter(
+            submission__creator=self.request.user,
+            status=Job.PENDING,
+        ).count()
+
+        context.update({
+            'remaining_submissions': remaining_submissions,
+            'next_submission_at': next_sub_at,
+            'pending_jobs': pending_jobs,
+        })
 
         return context
 

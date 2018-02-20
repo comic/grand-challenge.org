@@ -28,7 +28,21 @@
 
     <h2>Create a new submission</h2>
 
-    {% if remaining_submissions > 0 %}
+    {% if pending_jobs %}
+
+        <p>You need to wait until all of your existing submissions have been
+            evaluated before you can make another submission. <a
+                    href="{% url 'evaluation:job-list' site.short_name %}">Click
+                here</a>
+            to see their status.
+        </p>
+
+    {% elif remaining_submissions <= 0 %}
+
+        <p>You have reached your submission limit for today. You can make
+            another submission in {{ next_submission_at|timeuntil }}.</p>
+
+    {% else %}
 
         <p>You can make {{ remaining_submissions }} more
             {% if remaining_submissions == 1 %}
@@ -39,11 +53,6 @@
             today.</p>
 
         {% crispy form %}
-
-    {% else %}
-
-        <p>You have reached your submission limit for today. You can make
-            another submission in {{ next_submission_at|timeuntil }}.</p>
 
     {% endif %}
 
