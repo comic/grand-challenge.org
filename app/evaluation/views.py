@@ -107,6 +107,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
         date_from = timezone.now() - timedelta(days=1)
         submissions = Submission.objects.filter(
+            challenge__pk=self.request.project_pk,
             creator=self.request.user,
             created__gte=date_from,
         ).order_by('created')
@@ -120,6 +121,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
             next_sub_at = timezone.now()
 
         pending_jobs = Job.objects.filter(
+            challenge__pk=self.request.project_pk,
             submission__creator=self.request.user,
             status=Job.PENDING,
         ).count()
