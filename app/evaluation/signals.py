@@ -52,6 +52,15 @@ def recalculate_ranks(sender: Result, instance: Union[Result, Config] = None,
     calculate_ranks.apply_async(kwargs={'challenge_pk': instance.challenge.pk})
 
 
+@receiver(post_save, sender=Result)
+def cache_absolute_url(sender: Result, instance: Result = None,
+                       created: bool = False, **kwargs):
+    """Cache the absolute url to speed up the results page, needs the pk of
+    the result so cannot so into a custom save method"""
+    Result.objects.filter(pk=instance.pk).update(
+        absolute_url=instance.get_absolute_url())
+
+
 # TODO: do we really want to generate an API token for all users? Only admins surely
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(sender: settings.AUTH_USER_MODEL,
