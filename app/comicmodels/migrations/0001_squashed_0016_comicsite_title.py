@@ -13,8 +13,6 @@ import re
 
 class Migration(migrations.Migration):
 
-    replaces = [('comicmodels', '0001_initial'), ('comicmodels', '0002_auto_20170606_1243'), ('comicmodels', '0003_auto_20170606_1321'), ('comicmodels', '0004_auto_20170607_1229'), ('comicmodels', '0005_auto_20170609_1253'), ('comicmodels', '0006_auto_20170613_1406'), ('comicmodels', '0007_auto_20170614_1134'), ('comicmodels', '0008_auto_20170623_1341'), ('comicmodels', '0009_comicsite_creator'), ('comicmodels', '0010_delete_projectmetadata'), ('comicmodels', '0011_comicsite_use_evaluation'), ('comicmodels', '0012_auto_20171214_1045'), ('comicmodels', '0013_auto_20171214_1238'), ('comicmodels', '0014_comicsite_registration_page_text'), ('comicmodels', '0015_auto_20180208_1523'), ('comicmodels', '0016_comicsite_title')]
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('auth', '0006_require_contenttypes_0002'),

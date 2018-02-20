@@ -10,8 +10,6 @@ import django_countries.fields
 
 class Migration(migrations.Migration):
 
-    replaces = [('profiles', '0001_initial'), ('profiles', '0002_auto_20170609_1253'), ('profiles', '0003_auto_20180209_1200')]
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

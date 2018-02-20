@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     ListView,
@@ -17,7 +20,6 @@ from comicsite.permissions.mixins import (
 )
 from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
-from jqfileupload.widgets.uploader import AjaxUploadWidget
 
 
 class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
@@ -27,6 +29,7 @@ class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Config
     fields = (
+        'daily_submission_limit',
         'score_title',
         'score_jsonpath',
         'score_default_sort',
@@ -96,6 +99,38 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         })
 
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionCreate, self).get_context_data(**kwargs)
+
+        config = Config.objects.get(challenge__pk=self.request.project_pk)
+
+        date_from = timezone.now() - timedelta(days=1)
+        submissions = Submission.objects.filter(
+            creator=self.request.user,
+            created__gte=date_from,
+        ).order_by('created')
+
+        remaining_submissions = config.daily_submission_limit - len(
+            submissions)
+
+        if remaining_submissions <= 0:
+            next_sub_at = submissions[0].created + timedelta(days=1)
+        else:
+            next_sub_at = timezone.now()
+
+        pending_jobs = Job.objects.filter(
+            submission__creator=self.request.user,
+            status=Job.PENDING,
+        ).count()
+
+        context.update({
+            'remaining_submissions': remaining_submissions,
+            'next_submission_at': next_sub_at,
+            'pending_jobs': pending_jobs,
+        })
+
+        return context
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -172,13 +207,15 @@ class ResultList(ListView):
 
     def get_queryset(self):
         queryset = super(ResultList, self).get_queryset()
-        queryset = queryset.select_related('job__submission__creator__user_profile')
+        queryset = queryset.select_related(
+            'job__submission__creator__user_profile')
         return queryset.filter(Q(challenge__pk=self.request.project_pk),
                                Q(public=True))
 
 
 class ResultDetail(DetailView):
     model = Result
+
 
 class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Result
