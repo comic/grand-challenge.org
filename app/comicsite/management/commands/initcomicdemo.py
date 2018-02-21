@@ -55,6 +55,7 @@ class Command(BaseCommand):
                 description='demo project',
                 creator=demoadmin,
                 use_evaluation=True,
+                use_teams=True,
                 hidden=False
             )
 
