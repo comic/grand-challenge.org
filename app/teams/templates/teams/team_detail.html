@@ -5,6 +5,7 @@
 {% block pagecontent %}
 
     {% get_obj_perms user for object as "object_perms" %}
+    {% get_obj_perms user for site as "site_perms" %}
 
     <h2>{{ object.name }}</h2>
 
@@ -37,7 +38,7 @@
             </li>
         {% endfor %}
     </ul>
-    {% if "change_team" in object_perms %}
+    {% if "change_team" in object_perms or "change_comicsite" in site_perms %}
         <h3>Settings</h3>
         <a href="{% url 'teams:update' site.short_name object.pk %}"
            class="btn btn-primary">Edit
