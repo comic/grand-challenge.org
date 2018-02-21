@@ -30,6 +30,7 @@ def test_admin_or_participant_permissions(client, TwoChallengeSets, view):
                                        two_challenge_set=TwoChallengeSets,
                                        client=client)
 
+
 # TODO: Team Update and Team Member delete permissions
 
 
@@ -61,3 +62,61 @@ def test_team_creation(client, TwoChallengeSets, team_name):
 
     assert response.status_code == 200
     assert team_name in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_team_member_addition(client, TwoChallengeSets):
+    team = TeamFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                       creator=TwoChallengeSets.ChallengeSet1.participant)
+
+    assert TwoChallengeSets.ChallengeSet1.participant in team.get_members()
+    assert TwoChallengeSets.ChallengeSet1.participant1 not in team.get_members()
+
+    # Participant1 requests to join team
+    response = get_view_for_user(
+        viewname='teams:member-create',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        client=client,
+        method=client.post,
+        user=TwoChallengeSets.ChallengeSet1.participant1,
+        pk=team.pk,
+    )
+
+    assert TwoChallengeSets.ChallengeSet1.participant1 in team.get_members()
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_unique_membership(client, TwoChallengeSets):
+    team = TeamFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                       creator=TwoChallengeSets.ChallengeSet1.participant)
+    TeamFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                creator=TwoChallengeSets.ChallengeSet1.participant1)
+
+    # Try to create a new team, should be denied
+    response = get_view_for_user(
+        viewname='teams:create',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        client=client,
+        method=client.post,
+        user=TwoChallengeSets.ChallengeSet1.participant,
+        data={'name': 'thisteamshouldnotbecreated'},
+    )
+
+    assert response.status_code == 200
+    assert 'You are already a member of another team for this challenge' in response.rendered_content
+
+    # Participant1 requests to join team, should be denied
+    response = get_view_for_user(
+        viewname='teams:member-create',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        client=client,
+        method=client.post,
+        user=TwoChallengeSets.ChallengeSet1.participant1,
+        pk=team.pk,
+    )
+
+    assert response.status_code == 200
+    assert 'You are already a member of another team for this challenge' in response.rendered_content
+
+    # participant12 should be able to create a team in their challenge and join another

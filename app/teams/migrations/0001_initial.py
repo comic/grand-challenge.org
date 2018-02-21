@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='Team',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
-                ('name', models.CharField(max_length=32, unique=True)),
+                ('name', models.CharField(max_length=32)),
                 ('logo', models.ImageField(blank=True, upload_to='')),
                 ('website', models.URLField(blank=True)),
                 ('challenge', models.ForeignKey(editable=False, to='comicmodels.ComicSite')),
@@ -36,5 +36,9 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name='teammember',
             unique_together=set([('user', 'team')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='team',
+            unique_together=set([('name', 'challenge')]),
         ),
     ]

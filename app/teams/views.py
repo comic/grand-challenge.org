@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, \
     DeleteView
 
@@ -21,7 +23,11 @@ class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
             pk=self.request.project_pk)
         form.instance.creator = self.request.user
 
-        return super(TeamCreate, self).form_valid(form)
+        try:
+            return super(TeamCreate, self).form_valid(form)
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super(TeamCreate, self).form_invalid(form)
 
 
 class TeamDetail(UserIsChallengeParticipantOrAdminMixin, DetailView):
@@ -61,7 +67,11 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         form.instance.user = self.request.user
         form.instance.team = Team.objects.get(pk=self.kwargs['pk'])
 
-        return super(TeamMemberCreate, self).form_valid(form)
+        try:
+            return super(TeamMemberCreate, self).form_valid(form)
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super(TeamMemberCreate, self).form_invalid(form)
 
     def get_success_url(self):
         return self.object.team.get_absolute_url()
