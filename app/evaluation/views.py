@@ -29,6 +29,7 @@ class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Config
     fields = (
+        'use_teams',
         'daily_submission_limit',
         'score_title',
         'score_jsonpath',
