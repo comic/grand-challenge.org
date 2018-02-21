@@ -26,9 +26,17 @@
     {% if "change_team" in object_perms %}
 
         <h3>Settings</h3>
-
-        <p><a href="{% url 'teams:update' site.short_name object.pk %}">Edit
-            Team</a></p>
+        <a href="{% url 'teams:update' site.short_name object.pk %}"
+           class="btn btn-primary">Edit
+            Team</a>
+        <form method="post"
+              action="{% url 'teams:delete' site.short_name object.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="btn btn-danger">
+                Delete Team
+            </button>
+        </form>
 
     {% endif %}
 

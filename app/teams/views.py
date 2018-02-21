@@ -1,19 +1,29 @@
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, \
+from django.views.generic import (
+    ListView,
+    CreateView,
+    UpdateView,
+    DetailView,
     DeleteView
+)
 
 from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeParticipantOrAdminMixin
 from teams.models import Team, TeamMember
-from teams.permissions.mixins import UserIsTeamAdminMixin
+from teams.permissions.mixins import (
+    UserIsTeamOwnerOrChallengeAdminMixin,
+    UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+)
 
 
 class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     model = Team
     fields = (
         'name',
+        'department',
+        'institution',
         'website',
         'logo',
     )
@@ -21,7 +31,7 @@ class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     def form_valid(self, form):
         form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
-        form.instance.creator = self.request.user
+        form.instance.owner = self.request.user
 
         try:
             return super(TeamCreate, self).form_valid(form)
@@ -50,13 +60,27 @@ class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
         return context
 
 
-class TeamUpdate(UserIsTeamAdminMixin, UpdateView):
+class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):
     model = Team
     fields = (
         'name',
         'website',
+        'department',
+        'institution',
         'logo',
     )
+
+
+class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
+    model = Team
+
+    def get_success_url(self):
+        return reverse(
+            'teams:list',
+            kwargs={
+                'challenge_short_name': self.object.challenge.short_name
+            }
+        )
 
 
 class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
@@ -77,7 +101,8 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         return self.object.team.get_absolute_url()
 
 
-class TeamMemberDelete(DeleteView):
+class TeamMemberDelete(UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+                       DeleteView):
     model = TeamMember
 
     def get_success_url(self):

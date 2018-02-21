@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import models
 
 from comicsite.core.urlresolvers import reverse
@@ -15,9 +15,11 @@ class Team(models.Model):
         editable=False,
     )
     logo = models.ImageField(blank=True)
+    department = models.CharField(max_length=64, blank=True)
+    institution = models.CharField(max_length=64, blank=True)
     website = models.URLField(blank=True)
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                on_delete=models.CASCADE)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL,
+                              on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
@@ -27,9 +29,9 @@ class Team(models.Model):
     def validate_unique(self, exclude=None):
         super(Team, self).validate_unique(exclude)
         if not any(x in exclude for x in
-                   ['challenge', 'creator']) and TeamMember.objects.filter(
+                   ['challenge', 'owner']) and TeamMember.objects.filter(
             team__challenge=self.challenge,
-            user=self.creator).exists():
+            user=self.owner).exists():
             raise ValidationError(
                 'You are already a member of another team for this challenge')
 
@@ -74,3 +76,8 @@ class TeamMember(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super(TeamMember, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.team.owner == self.user:
+            raise PermissionDenied('The team owner cannot be removed')
+        super(TeamMember, self).delete(*args, **kwargs)

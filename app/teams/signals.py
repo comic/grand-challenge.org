@@ -9,10 +9,10 @@ from teams.models import Team, TeamMember
 @receiver(post_save, sender=Team)
 def create_team_admin(sender: Team, instance: Team = None,
                       created: bool = False, **kwargs):
-    if created and instance.creator.username != settings.ANONYMOUS_USER_NAME:
+    if created and instance.owner.username != settings.ANONYMOUS_USER_NAME:
         TeamMember.objects.create(
-            user=instance.creator,
+            user=instance.owner,
             team=instance,
         )
 
-        assign_perm('change_team', instance.creator, instance)
+        assign_perm('change_team', instance.owner, instance)
