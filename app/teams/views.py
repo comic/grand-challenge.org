@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.views.generic import (
@@ -85,7 +84,6 @@ class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
     success_message = 'Team successfully deleted'
 
     def delete(self, request, *args, **kwargs):
-        obj = self.get_object()
         messages.success(self.request, self.success_message)
         return super(TeamDelete, self).delete(request, *args, **kwargs)
 
@@ -122,7 +120,6 @@ class TeamMemberDelete(UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
     success_message = 'User successfully removed from team'
 
     def delete(self, request, *args, **kwargs):
-        obj = self.get_object()
         messages.success(self.request, self.success_message)
         return super(TeamMemberDelete, self).delete(request, *args, **kwargs)
 

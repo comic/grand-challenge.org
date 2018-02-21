@@ -372,14 +372,6 @@ class ComicSite(models.Model):
         ),
     )
 
-    use_teams = models.BooleanField(
-        default=False,
-        help_text=(
-            'If true, users are able to form teams together to participate in '
-            'challenges.'
-        ),
-    )
-
     admins_group = models.OneToOneField(
         Group,
         null=True,
