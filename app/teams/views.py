@@ -80,14 +80,13 @@ class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):
     )
 
 
-class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, SuccessMessageMixin,
-                 DeleteView):
+class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
     model = Team
     success_message = 'Team successfully deleted'
 
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
-        messages.success(self.request, self.success_message % obj.__dict__)
+        messages.success(self.request, self.success_message)
         return super(TeamDelete, self).delete(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -118,14 +117,13 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
 
 
 class TeamMemberDelete(UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
-                       SuccessMessageMixin,
                        DeleteView):
     model = TeamMember
     success_message = 'User successfully removed from team'
 
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
-        messages.success(self.request, self.success_message % obj.__dict__)
+        messages.success(self.request, self.success_message)
         return super(TeamMemberDelete, self).delete(request, *args, **kwargs)
 
     def get_success_url(self):
