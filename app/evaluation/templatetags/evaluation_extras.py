@@ -4,6 +4,9 @@ from django import template
 from django.utils.safestring import mark_safe
 from jsonpath_rw import parse
 
+from evaluation.models import Result
+from teams.models import Team
+
 register = template.Library()
 
 
@@ -53,3 +56,15 @@ def json_dumps(obj: dict):
     except TypeError:
         # Not json encodable
         return str(obj)
+
+
+@register.filter
+def get_team_html(obj: Result):
+    try:
+        team = Team.objects.get(
+            challenge=obj.challenge,
+            teammember__user=obj.job.submission.creator,
+        )
+        return mark_safe(f'<a href="{team.get_absolute_url()}">{team.name}</a>')
+    except Exception:
+        return

@@ -39,6 +39,14 @@ class Config(UUIDModel):
         editable=False,
     )
 
+    use_teams = models.BooleanField(
+        default=False,
+        help_text=(
+            'If true, users are able to form teams together to participate in '
+            'challenges.'
+        ),
+    )
+
     score_jsonpath = models.CharField(
         max_length=255,
         blank=True,

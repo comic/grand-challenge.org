@@ -14,7 +14,6 @@ from django.contrib.admin.options import InlineModelAdmin
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models

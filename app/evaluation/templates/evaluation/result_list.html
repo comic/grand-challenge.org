@@ -8,12 +8,11 @@
     <table class="table" id="resultsTable">
         <thead>
         <tr>
-            {% comment %}
-                Update the column index of the order below if the position
-                of Score changes here.
-            {% endcomment %}
             <th>Position</th>
             <th>User</th>
+            {% if site.evaluation_config.use_teams %}
+                <th>Team</th>
+            {% endif %}
             <th>Date</th>
             <th>{{ site.evaluation_config.score_title }}</th>
 
@@ -46,6 +45,13 @@
                             {{ result.job.submission.creator }}</a>
                     </div>
                 </td>
+
+                {% if site.evaluation_config.use_teams %}
+                    <td>
+                        {{ result|get_team_html }}
+                    </td>
+                {% endif %}
+
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
 
                 <td><a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a></td>
@@ -80,7 +86,7 @@
                     The column index of the default sort, must match the table
                     set up.
                 {% endcomment %}
-                order: [[3, "{{ site.evaluation_config.score_default_sort }}"]],
+                order: [[0, "asc"]],
                 "pageLength": 50,
                 "columnDefs": [{
                     {%  if site.evaluation_config.show_supplementary_file_link %}

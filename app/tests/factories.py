@@ -5,6 +5,7 @@ from django.conf import settings
 
 from comicmodels.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
+from teams.models import Team, TeamMember
 
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 
@@ -67,3 +68,18 @@ class ResultFactory(factory.DjangoModelFactory):
         model = Result
 
     challenge = factory.SubFactory(ChallengeFactory)
+
+
+class TeamFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Team
+
+    name = factory.Sequence(lambda n: 'test_team_%s' % n)
+    challenge = factory.SubFactory(ChallengeFactory)
+
+
+class TeamMemberFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = TeamMember
+
+    team = factory.SubFactory(TeamFactory)

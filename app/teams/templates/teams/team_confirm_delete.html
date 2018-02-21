@@ -1,0 +1,11 @@
+{% extends "site.html" %}
+{% load get_obj_perms from guardian_tags %}
+{% load url from comic_templatetags %}
+
+{% block pagecontent %}
+
+    <h2>{{ object.name }}</h2>
+
+    Are you sure that you want to delete this team?
+
+{% endblock %}
