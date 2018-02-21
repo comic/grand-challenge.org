@@ -488,6 +488,9 @@ class StagedAjaxFile:
 
 class UploadedAjaxFileList(forms.Field):
     def to_python(self, value):
+        if value is None:
+            value = ''
+
         allowed_characters = '0123456789abcdefABCDEF-,'
         if any(c for c in value if c not in allowed_characters):
             raise ValidationError(
@@ -503,7 +506,7 @@ class UploadedAjaxFileList(forms.Field):
                     "Not a valid UUID: %(string)s",
                     {"string": s})
 
-        return [StagedAjaxFile(uuid) for uuid in uuids]
+        return [StagedAjaxFile(uid) for uid in uuids]
 
     def prepare_value(self, value):
         # convert value to be stuffed into the html, this must be
