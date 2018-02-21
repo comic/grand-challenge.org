@@ -36,7 +36,8 @@ class Team(models.Model):
                 'You are already a member of another team for this challenge')
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        if self.pk is None:
+            self.full_clean()
         super(Team, self).save(*args, **kwargs)
 
     def get_absolute_url(self):

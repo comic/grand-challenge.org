@@ -1,3 +1,5 @@
+from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.views.generic import (
@@ -25,7 +27,6 @@ class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
         'department',
         'institution',
         'website',
-        'logo',
     )
 
     def form_valid(self, form):
@@ -40,22 +41,31 @@ class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
             return super(TeamCreate, self).form_invalid(form)
 
 
-class TeamDetail(UserIsChallengeParticipantOrAdminMixin, DetailView):
+class TeamDetail(DetailView):
     model = Team
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamDetail, self).get_context_data(**kwargs)
+
+        context.update({
+            'user_is_member': self.request.user in self.object.get_members()
+        })
+
+        return context
 
 
 class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Team
 
     def get_context_data(self, **kwargs):
-        context = super(TeamList, self).get_context_data()
+        context = super(TeamList, self).get_context_data(**kwargs)
 
-        member_of = TeamMember.objects.filter(
+        users_teams = TeamMember.objects.filter(
             team__challenge=self.request.project_pk,
             user=self.request.user,
         )
 
-        context.update({'member_of': member_of})
+        context.update({'users_teams': users_teams})
 
         return context
 
@@ -67,12 +77,18 @@ class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):
         'website',
         'department',
         'institution',
-        'logo',
     )
 
 
-class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, DeleteView):
+class TeamDelete(UserIsTeamOwnerOrChallengeAdminMixin, SuccessMessageMixin,
+                 DeleteView):
     model = Team
+    success_message = 'Team successfully deleted'
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, self.success_message % obj.__dict__)
+        return super(TeamDelete, self).delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(
@@ -102,8 +118,15 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
 
 
 class TeamMemberDelete(UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+                       SuccessMessageMixin,
                        DeleteView):
     model = TeamMember
+    success_message = 'User successfully removed from team'
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.success(self.request, self.success_message % obj.__dict__)
+        return super(TeamMemberDelete, self).delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(

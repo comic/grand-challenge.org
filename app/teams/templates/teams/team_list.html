@@ -8,12 +8,12 @@
 
     <p>Teams are groups of users who compete together in a challenge.</p>
 
-    {% if member_of %}
+    {% if users_teams %}
 
         <p>You are already a member of the following teams: </p>
 
         <dl>
-            {% for tm in member_of %}
+            {% for tm in users_teams %}
                 <dt>Team</dt>
                 <dd>
                     <a href="{{ tm.team.get_absolute_url }}">{{ tm.team.name }}</a>
@@ -70,7 +70,7 @@
         <tr>
             <th>Team Name</th>
             <th>Number of Members</th>
-            {% if not member_of %}
+            {% if not users_teams %}
                 <th>Join Team</th>
             {% endif %}
         </tr>
@@ -82,7 +82,7 @@
                     <a href="{{ team.get_absolute_url }}">{{ team.name }}</a>
                 </td>
                 <td>{{ team.teammember_set.count }}</td>
-                {% if not member_of %}
+                {% if not users_teams %}
                     <td>
                         <form method="post"
                               action="{% url 'teams:member-create' site.short_name team.pk %}">
@@ -102,7 +102,10 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#teamsTable').DataTable();
+            $('#teamsTable').DataTable({
+                "bLengthChange": false,
+                "pageLength": 50
+            });
         });
     </script>
 

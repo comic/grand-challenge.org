@@ -5,7 +5,7 @@ from django.test import Client
 
 from tests.evaluation_tests.test_views import \
     validate_admin_or_participant_view, get_view_for_user, \
-    assert_viewname_redirect, assert_viewname_status
+    assert_viewname_redirect, assert_viewname_status, validate_open_view
 from tests.factories import TeamFactory, TeamMemberFactory
 
 
@@ -99,7 +99,6 @@ def validate_member_owner_or_admin_view(*,
     [
         'teams:list',
         'teams:create',
-        'teams:detail',
         'teams:member-create',
     ]
 )
@@ -116,6 +115,17 @@ def test_admin_or_participant_permissions(client, TwoChallengeSets, view):
                                        pk=pk,
                                        two_challenge_set=TwoChallengeSets,
                                        client=client)
+
+
+@pytest.mark.django_db
+def test_open_views(client, ChallengeSet):
+    team = TeamFactory(challenge=ChallengeSet.challenge,
+                       owner=ChallengeSet.participant)
+
+    validate_open_view(viewname='teams:detail',
+                       pk=team.pk,
+                       challenge_set=ChallengeSet,
+                       client=client)
 
 
 @pytest.mark.django_db
