@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
                 ('name', models.CharField(max_length=32)),
-                ('logo', models.ImageField(blank=True, upload_to='')),
                 ('department', models.CharField(max_length=64, blank=True)),
                 ('institution', models.CharField(max_length=64, blank=True)),
                 ('website', models.URLField(blank=True)),

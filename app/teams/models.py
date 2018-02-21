@@ -14,7 +14,6 @@ class Team(models.Model):
         on_delete=models.CASCADE,
         editable=False,
     )
-    logo = models.ImageField(blank=True)
     department = models.CharField(max_length=64, blank=True)
     institution = models.CharField(max_length=64, blank=True)
     website = models.URLField(blank=True)
