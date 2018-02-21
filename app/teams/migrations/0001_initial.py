@@ -8,8 +8,8 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('comicmodels', '0002_comicsite_use_teams'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('comicmodels', '0002_comicsite_use_teams'),
     ]
 
     operations = [
@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
             name='TeamMember',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('pending', models.BooleanField(default=True)),
                 ('team', models.ForeignKey(to='teams.Team')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],

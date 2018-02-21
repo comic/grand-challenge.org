@@ -31,6 +31,7 @@ class TeamMember(models.Model):
         on_delete=models.CASCADE,
     )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    pending = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (

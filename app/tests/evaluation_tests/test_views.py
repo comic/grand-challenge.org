@@ -66,25 +66,33 @@ def submissions_and_jobs(two_challenge_sets):
 
 
 def get_view_for_user(*,
-                      viewname: str,
-                      challenge: ComicSite,
+                      viewname: str = None,
+                      challenge: ComicSite = None,
                       client: Client,
                       method: Callable,
                       pk: str = None,
-                      user: settings.AUTH_USER_MODEL = None):
+                      user: settings.AUTH_USER_MODEL = None,
+                      url: str = None,
+                      **kwargs):
     """ Returns the view for a particular user """
-    kwargs = {'challenge_short_name': challenge.short_name}
+    if url is None:
 
-    if pk:
-        kwargs['pk'] = pk
+        reverse_kwargs = {'challenge_short_name': challenge.short_name}
 
-    url = reverse(viewname, kwargs=kwargs)
+        if pk is not None:
+            reverse_kwargs['pk'] = pk
+
+        url = reverse(viewname, kwargs=reverse_kwargs)
+
+    elif viewname:
+        raise AttributeError('You defined both a viewname and a url, only '
+                             'use one!')
 
     if user and not isinstance(user, AnonymousUser):
         client.login(username=user.username,
                      password=SUPER_SECURE_TEST_PASSWORD)
 
-    response = method(url)
+    response = method(url, **kwargs)
 
     if user:
         client.logout()
