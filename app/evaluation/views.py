@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
+from typing import Dict
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
@@ -106,34 +107,47 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
         config = Config.objects.get(challenge__pk=self.request.project_pk)
 
-        date_from = timezone.now() - timedelta(days=1)
-        submissions = Submission.objects.filter(
-            challenge__pk=self.request.project_pk,
-            creator=self.request.user,
-            created__gte=date_from,
-        ).order_by('created')
-
-        remaining_submissions = config.daily_submission_limit - len(
-            submissions)
-
-        if remaining_submissions <= 0:
-            next_sub_at = submissions[0].created + timedelta(days=1)
-        else:
-            next_sub_at = timezone.now()
+        context.update(
+            self.get_next_submission(max_subs=config.daily_submission_limit)
+        )
 
         pending_jobs = Job.objects.filter(
             challenge__pk=self.request.project_pk,
             submission__creator=self.request.user,
-            status=Job.PENDING,
+            status__in=(Job.PENDING, Job.STARTED),
         ).count()
 
         context.update({
-            'remaining_submissions': remaining_submissions,
-            'next_submission_at': next_sub_at,
             'pending_jobs': pending_jobs,
         })
 
         return context
+
+    def get_next_submission(self, *, max_subs: int,
+                            period: timedelta = timedelta(days=1),
+                            now: datetime = timezone.now()) -> Dict:
+        """
+        Determines the number of submissions left for the user in a given time
+        period, and when they can next submit.
+
+        :return: A dictionary containing remaining_submissions (int) and
+        next_submission_at (datetime)
+        """
+        subs = Submission.objects.filter(
+            challenge__pk=self.request.project_pk,
+            creator=self.request.user,
+            created__gte=now - period,
+        ).order_by('-created')
+
+        try:
+            next_sub_at = subs[max_subs - 1].created + period
+        except (IndexError, AssertionError):
+            next_sub_at = now
+
+        return {
+            'remaining_submissions': max_subs - len(subs),
+            'next_submission_at': next_sub_at,
+        }
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
