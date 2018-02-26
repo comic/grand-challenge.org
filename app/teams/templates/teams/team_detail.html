@@ -51,12 +51,15 @@
                         </button>
                     </form>
                 {% endif %}
+                {% if tm.user == object.owner %}
+                    (owner)
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
 
     {% if "change_team" in object_perms or "change_comicsite" in site_perms %}
-        <h3>Team Admin Settings</h3>
+        <h3>Team Owner Settings</h3>
         <a href="{% url 'teams:update' site.short_name object.pk %}"
            class="btn btn-primary">Edit
             Team</a>
@@ -70,12 +73,12 @@
         </form>
     {% endif %}
 
-    {% if user_is_member and "change_team" not in object_perms %}
+    {% if user_team and "change_team" not in object_perms %}
 
         <h3>Team Member Settings</h3>
 
         <form method="post"
-              action="{% url 'teams:member-delete' site.short_name user_teammember.pk %}">
+              action="{% url 'teams:member-delete' site.short_name user_team.pk %}">
             {% csrf_token %}
             <button type="submit"
                     class="btn btn-danger">

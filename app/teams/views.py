@@ -47,13 +47,19 @@ class TeamDetail(DetailView):
     def get_context_data(self, **kwargs):
         context = super(TeamDetail, self).get_context_data(**kwargs)
 
-        context.update({
-            'user_is_member': self.request.user in self.object.get_members(),
-            'user_teammember': TeamMember.objects.get(
+        try:
+            team = TeamMember.objects.get(
                 team__challenge__pk=self.request.project_pk,
-                user=self.request.user,
-            ),
+                user__pk=self.request.user.pk,
+            )
+        except TeamMember.DoesNotExist:
+            team = None
+
+        context.update({
+            'user_team': team,
         })
+
+
 
         return context
 
