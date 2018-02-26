@@ -125,7 +125,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
     def get_next_submission(self, *, max_subs: int,
                             period: timedelta = timedelta(days=1),
-                            now: datetime = timezone.now()) -> Dict:
+                            now: datetime = None) -> Dict:
         """
         Determines the number of submissions left for the user in a given time
         period, and when they can next submit.
@@ -133,6 +133,9 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         :return: A dictionary containing remaining_submissions (int) and
         next_submission_at (datetime)
         """
+        if now is None:
+            now = timezone.now()
+
         subs = Submission.objects.filter(
             challenge__pk=self.request.project_pk,
             creator=self.request.user,

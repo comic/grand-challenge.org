@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import timedelta
 from typing import Callable
 from urllib.parse import urlparse
 
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import signals
 from django.test import Client
+from django.utils import timezone
 
 from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
@@ -317,6 +319,40 @@ def test_submission_create(client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
+def test_submission_time_limit(client, TwoChallengeSets):
+    SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+
+    def get_submission_view():
+        return get_view_for_user(viewname='evaluation:submission-create',
+                                 challenge=TwoChallengeSets.ChallengeSet1.challenge,
+                                 client=client,
+                                 method=client.get,
+                                 user=TwoChallengeSets.ChallengeSet1.participant)
+
+    assert 'make 9 more' in get_submission_view().rendered_content
+
+    s = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+
+    s.created = timezone.now() - timedelta(hours=23)
+    s.save()
+
+    assert 'make 8 more' in get_submission_view().rendered_content
+
+    s = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant)
+
+    s.created = timezone.now() - timedelta(hours=25)
+    s.save()
+
+    assert 'make 8 more' in get_submission_view().rendered_content
+
+
+@pytest.mark.django_db
 def test_submission_detail(client, TwoChallengeSets):
     submission = SubmissionFactory(
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
@@ -413,9 +449,9 @@ def test_result_list(client, EvalChallengeSet):
 
 @pytest.mark.django_db
 def test_result_detail(client, EvalChallengeSet):
-
-    submission = SubmissionFactory(challenge=EvalChallengeSet.ChallengeSet.challenge,
-                                   creator=EvalChallengeSet.ChallengeSet.participant)
+    submission = SubmissionFactory(
+        challenge=EvalChallengeSet.ChallengeSet.challenge,
+        creator=EvalChallengeSet.ChallengeSet.participant)
     job = JobFactory(submission=submission)
 
     result = ResultFactory(challenge=EvalChallengeSet.ChallengeSet.challenge,
