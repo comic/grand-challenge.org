@@ -253,7 +253,7 @@ class comic_URLNode(defaulttags.URLNode):
                         "project_serve_file"
                     ]
                 ) or (
-                    self.view_name.var.split(':') in [
+                    self.view_name.var.split(':')[0] in [
                         'evaluation',
                         'teams',
                     ]
