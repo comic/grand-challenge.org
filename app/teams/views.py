@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import (
     ListView,
@@ -47,7 +48,11 @@ class TeamDetail(DetailView):
         context = super(TeamDetail, self).get_context_data(**kwargs)
 
         context.update({
-            'user_is_member': self.request.user in self.object.get_members()
+            'user_is_member': self.request.user in self.object.get_members(),
+            'user_teammember': TeamMember.objects.get(
+                team__challenge__pk=self.request.project_pk,
+                user=self.request.user,
+            ),
         })
 
         return context
@@ -67,6 +72,11 @@ class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
         context.update({'users_teams': users_teams})
 
         return context
+
+    def get_queryset(self):
+        queryset = super(TeamList, self).get_queryset()
+
+        return queryset.filter(Q(challenge__pk=self.request.project_pk))
 
 
 class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):

@@ -246,14 +246,19 @@ class comic_URLNode(defaulttags.URLNode):
         url = url.lower()
 
         if subdomain_is_projectname() and (
-                    (
-                                self.view_name.var in [
-                                "comicsite.views.site",
-                                "comicsite.views.page",
-                                "project_serve_file"]
-                    ) or (
-                            "evaluation:" in self.view_name.var
-                )):
+                (
+                    self.view_name.var in [
+                        "comicsite.views.site",
+                        "comicsite.views.page",
+                        "project_serve_file"
+                    ]
+                ) or (
+                    self.view_name.var.split(':') in [
+                        'evaluation',
+                        'teams',
+                    ]
+                )
+            ):
 
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
@@ -278,7 +283,7 @@ class comic_URLNode(defaulttags.URLNode):
                 scheme_subsite_and_host = reverse("comicsite.views.site",
                                                   args=[project]).lower()
 
-                return urljoin(scheme_subsite_and_host,url)
+                return urljoin(scheme_subsite_and_host, url)
 
         return url
 
@@ -342,6 +347,7 @@ def metafooterpages():
             html_string += "</a></li>"
 
     return html_string
+
 
 @register.simple_tag
 def main_page_url():
@@ -1706,7 +1712,7 @@ class AllProjectLinksNode(template.Node):
 
         if projectlink.params["submitted results"]:
             submissionstring = (
-                "results: " + str(projectlink.params["submitted results"]))
+                    "results: " + str(projectlink.params["submitted results"]))
             if projectlink.params["last submission date"]:
                 submissionstring += ", Latest: " + self.format_date(
                     projectlink.params["last submission date"])
