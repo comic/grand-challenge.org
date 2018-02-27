@@ -1,6 +1,7 @@
 import json
 
 from django import template
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from jsonpath_rw import parse
 
@@ -65,6 +66,8 @@ def get_team_html(obj: Result):
             challenge=obj.challenge,
             teammember__user=obj.job.submission.creator,
         )
-        return mark_safe(f'<a href="{team.get_absolute_url()}">{team.name}</a>')
+        return format_html('<a href="{}">{}</a>',
+                           team.get_absolute_url(),
+                           team.name)
     except Exception:
         return
