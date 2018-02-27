@@ -1,7 +1,7 @@
+import os
 from typing import Tuple
 
 import magic
-import os
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 
@@ -15,8 +15,7 @@ class MimeTypeValidator(object):
         super(MimeTypeValidator, self).__init__()
 
     def __call__(self, value):
-        mimetype = magic.from_buffer(value.read(1024), mime=True)
-        value.seek(0)
+        mimetype = get_file_mimetype(value)
 
         if mimetype.lower() not in self.allowed_types:
             raise ValidationError(f'File of type {mimetype} is not supported. '
@@ -25,8 +24,8 @@ class MimeTypeValidator(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, MimeTypeValidator) and
-            set(self.allowed_types) == set(other.allowed_types)
+                isinstance(other, MimeTypeValidator) and
+                set(self.allowed_types) == set(other.allowed_types)
         )
 
     def __ne__(self, other):
@@ -74,8 +73,8 @@ class ExtensionValidator(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, ExtensionValidator) and
-            set(self.allowed_extensions) == set(other.allowed_extensions)
+                isinstance(other, ExtensionValidator) and
+                set(self.allowed_extensions) == set(other.allowed_extensions)
         )
 
     def __ne__(self, other):
@@ -83,3 +82,10 @@ class ExtensionValidator(object):
 
     def __hash__(self):
         return hash(ExtensionValidator) + 7 * hash(self.allowed_extensions)
+
+
+def get_file_mimetype(f):
+    mimetype = magic.from_buffer(f.read(1024), mime=True)
+    f.seek(0)
+
+    return mimetype

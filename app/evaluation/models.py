@@ -254,9 +254,19 @@ class Submission(UUIDModel):
     # Limitation for now: only accept zip files as these are expanded in
     # evaluation.tasks.Evaluation. We could extend this first to csv file
     # submission with some validation
-    file = models.FileField(upload_to=submission_file_path,
-                            validators=[MimeTypeValidator(
-                                allowed_types=('application/zip',))])
+    file = models.FileField(
+        upload_to=submission_file_path,
+        validators=[
+            MimeTypeValidator(allowed_types=(
+                'application/zip',
+                'text/plain',
+            )),
+            ExtensionValidator(allowed_extensions=(
+                '.zip',
+                '.csv',
+            )),
+        ],
+    )
 
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,

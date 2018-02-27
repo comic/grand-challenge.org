@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import docker
 import factory
 import pytest
@@ -44,6 +46,17 @@ def test_submission_evaluation(client, evaluation_image, submission_file):
     # The evaluation method should clean up after itself
     assert len(dockerclient.volumes.list()) == num_volumes_before
     assert len(dockerclient.containers.list()) == num_containers_before
+
+
+    # Try with a csv file
+    submission = SubmissionFactory(file__from_path=Path(__file__).parent / 'resources' / 'submission.csv',
+                                   creator=user)
+
+    job = JobFactory(submission=submission, method=method)
+
+    res = evaluate_submission(job=job)
+
+    assert res["acc"] == 0.5
 
 
 @pytest.mark.django_db

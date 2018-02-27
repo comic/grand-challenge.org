@@ -15,8 +15,15 @@
                 <a href="#" class="dropdown-toggle"
                    data-toggle="dropdown" role="button"
                    aria-haspopup="true"
-                   aria-expanded="false">{{ user.username }}
-                    <span class="caret"></span></a>
+                   aria-expanded="false">
+                    <div style='vertical-align:middle; display:inline;'>
+                        <img class="mugshot"
+                             src="{{ user.user_profile.get_mugshot_url }}"
+                             alt="User Mugshot"
+                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                        <span class="caret"></span>
+                    </div>
+                </a>
                 <ul class="dropdown-menu">
                     <li><a class="menuItem"
                            href="{% url 'userena_profile_detail' user.username %}">My
