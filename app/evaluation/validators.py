@@ -24,8 +24,8 @@ class MimeTypeValidator(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, MimeTypeValidator) and
-            set(self.allowed_types) == set(other.allowed_types)
+                isinstance(other, MimeTypeValidator) and
+                set(self.allowed_types) == set(other.allowed_types)
         )
 
     def __ne__(self, other):
@@ -73,8 +73,8 @@ class ExtensionValidator(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, ExtensionValidator) and
-            set(self.allowed_extensions) == set(other.allowed_extensions)
+                isinstance(other, ExtensionValidator) and
+                set(self.allowed_extensions) == set(other.allowed_extensions)
         )
 
     def __ne__(self, other):
