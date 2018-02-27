@@ -1,5 +1,4 @@
 import json
-import os
 import uuid
 from json import JSONDecodeError
 
@@ -10,6 +9,7 @@ from docker.errors import ContainerError
 
 from evaluation.backends.dockermachine.utils import cleanup, put_file
 from evaluation.exceptions import SubmissionError, MethodContainerError
+from evaluation.validators import get_file_mimetype
 
 
 class Evaluator(object):
@@ -96,11 +96,21 @@ class Evaluator(object):
                     dest=dest_file
                 )
 
-                # Unzip the file in the container rather than in the python
-                # process. With resource limits this should provide some
-                # protection against zip bombs etc.
-                # TODO: Check that the top level directory is not duplicate
-                writer.exec_run(f'unzip {dest_file} -d /input')
+                try:
+                    self._input_file.open('rb')
+                    mimetype = get_file_mimetype(self._input_file)
+                finally:
+                    self._input_file.close()
+
+                if mimetype.lower() == 'application/zip':
+                    # Unzip the file in the container rather than in the python
+                    # process. With resource limits this should provide some
+                    # protection against zip bombs etc.
+                    writer.exec_run(f'unzip {dest_file} -d /input/')
+                else:
+                    # Not a zip file, so must be a csv
+                    writer.exec_run(f'mv {dest_file} /input/submission.csv')
+
         except Exception as exc:
             raise SubmissionError(str(exc))
 

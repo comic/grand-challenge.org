@@ -49,7 +49,7 @@ class SubmissionForm(forms.ModelForm):
         widget=submission_upload_widget,
         label='Predictions File',
         validators=[
-            ExtensionValidator(allowed_extensions=('.zip',))
+            ExtensionValidator(allowed_extensions=('.zip','.csv',))
         ],
     )
 
