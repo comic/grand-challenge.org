@@ -249,7 +249,7 @@ class comic_URLNode(defaulttags.URLNode):
                 (
                     self.view_name.var in [
                         "challenge-homepage",
-                        "comicsite.views.page",
+                        "challenge-page",
                         "project_serve_file"
                     ]
                 ) or (

@@ -54,7 +54,7 @@
             {% endif %}
             <li {% if page == currentpage %}class="active"{% endif %}>
                 <a class="menuItem"
-                   href="{% url 'comicsite.views.page' site.short_name page.title %}">
+                   href="{% url 'challenge-page' site.short_name page.title %}">
                     {% if page.display_title == "" %}
                         {{ page.title }}
                     {% else %}

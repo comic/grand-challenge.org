@@ -315,7 +315,7 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     p = get_object_or_404(Page, comicsite__short_name=site.short_name,
                           title=page_title)
 
-    baselink = reverse('comicsite.views.page',
+    baselink = reverse('challenge-page',
                        kwargs={'site_short_name': p.comicsite.short_name,
                                'page_title': p.title})
 

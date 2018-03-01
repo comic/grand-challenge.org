@@ -58,5 +58,5 @@ urlpatterns = [
 
     # If nothing specific matches, try to resolve the url as project/pagename
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$',
-        page),
+        page, name='challenge-page'),
 ]
