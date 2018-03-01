@@ -20,7 +20,7 @@ from filetransfers.api import prepare_upload
 def upload_handler(request, site_short_name):
     """ Upload a file to the given comicsite, display files previously uploaded"""
 
-    view_url = reverse('comicmodels.views.upload_handler', kwargs={'site_short_name': site_short_name})
+    view_url = reverse('challenge-upload-handler', kwargs={'site_short_name': site_short_name})
 
     if request.method == 'POST':
         # set values excluded from form here to make the model validate

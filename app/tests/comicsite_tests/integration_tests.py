@@ -806,7 +806,7 @@ class UploadTest(ComicframeworkTestCase):
         """ The /files page should show to admin, signedin and root, but not
         to others
         """
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": self.testproject.short_name})
         self._test_url_can_be_viewed(self.root, url)
         # self._test_url_can_be_viewed(self.root.username,url)
@@ -820,7 +820,7 @@ class UploadTest(ComicframeworkTestCase):
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
 
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": self.testproject.short_name})
 
         factory = RequestFactory()
@@ -911,7 +911,7 @@ class UploadTest(ComicframeworkTestCase):
         return response
 
     def get_uploadpage_response(self, user, project):
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": project.short_name})
         factory = RequestFactory()
         request = factory.get(url)

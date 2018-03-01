@@ -39,7 +39,8 @@ urlpatterns = [
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
-    url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler),
+    url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler,
+        name='challenge-upload-handler'),
 
     url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$', serve,
         name="project_serve_file"),

@@ -7,7 +7,8 @@ from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, \
+    HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from six.moves.urllib_parse import unquote
 
@@ -63,7 +64,7 @@ def delete_handler(request, pk):
             pass
             upload.delete()
 
-    return HttpResponseRedirect(reverse('comicmodels.views.upload_handler', kwargs={'site_short_name': comicsitename}))
+    return HttpResponseRedirect(reverse('challenge-upload-handler', kwargs={'site_short_name': comicsitename}))
 
 
 def can_access(user, path, project_name, override_permission=""):
