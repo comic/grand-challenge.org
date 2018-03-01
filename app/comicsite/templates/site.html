@@ -22,7 +22,7 @@
     {% endif %}
 {% endblock topheader %}
 
-{% block headerLink %}"{% url 'comicsite.views.site' site.short_name %}"
+{% block headerLink %}"{% url 'challenge-homepage' site.short_name %}"
 {% endblock %}
 
 {% block headerTitle %}
@@ -54,7 +54,7 @@
             {% endif %}
             <li {% if page == currentpage %}class="active"{% endif %}>
                 <a class="menuItem"
-                   href="{% url 'comicsite.views.page' site.short_name page.title %}">
+                   href="{% url 'challenge-page' site.short_name page.title %}">
                     {% if page.display_title == "" %}
                         {{ page.title }}
                     {% else %}

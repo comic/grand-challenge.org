@@ -1,7 +1,6 @@
 import re
 from random import choice, randint
 
-import django
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
@@ -16,8 +15,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from six import StringIO
-
 from userena.models import UserenaSignup
+
 from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
@@ -235,7 +234,7 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        url = reverse("comicsite.views._register",
+        url = reverse("participant-registration-request",
                       kwargs={"site_short_name": project.short_name})
         factory = RequestFactory()
         request = factory.get(url)
@@ -254,7 +253,7 @@ class ComicframeworkTestCase(TestCase):
                         " appear to be registered." % (user.username, url))
 
     def _test_page_can_be_viewed(self, user, page):
-        page_url = reverse('comicsite.views.page',
+        page_url = reverse('challenge-page',
                            kwargs={
                                "site_short_name": page.comicsite.short_name,
                                "page_title": page.title})
@@ -262,7 +261,7 @@ class ComicframeworkTestCase(TestCase):
         return self._test_url_can_be_viewed(user, page_url)
 
     def _test_page_can_not_be_viewed(self, user, page):
-        page_url = reverse('comicsite.views.page',
+        page_url = reverse('challenge-page',
                            kwargs={
                                "site_short_name": page.comicsite.short_name,
                                "page_title": page.title})
@@ -598,7 +597,7 @@ class ViewsTest(ComicframeworkTestCase):
         """
 
         testpage1 = Page.objects.filter(title='testpage1')
-        self.assert_(testpage1.exists(), "could not find page 'testpage1'")
+        self.assertTrue(testpage1.exists(), "could not find page 'testpage1'")
         self.assertEqual(len(testpage1), 1)
         url = reverse("admin:comicmodels_page_permissions",
                       args=[testpage1[0].pk])
@@ -680,7 +679,7 @@ class ViewsTest(ComicframeworkTestCase):
         https://github.com/comic/comic-django/issues/219
         
         """
-        page_url = reverse('comicsite.views.page',
+        page_url = reverse('challenge-page',
                            kwargs={
                                "site_short_name": self.testproject.short_name,
                                "page_title": "doesnotexistpage"})
@@ -698,7 +697,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         # main domain robots.txt
-        non_existant_url = reverse('comicsite.views.site',
+        non_existant_url = reverse('challenge-homepage',
                                    kwargs={
                                        "site_short_name": "nonexistingproject"})
 
@@ -807,7 +806,7 @@ class UploadTest(ComicframeworkTestCase):
         """ The /files page should show to admin, signedin and root, but not
         to others
         """
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": self.testproject.short_name})
         self._test_url_can_be_viewed(self.root, url)
         # self._test_url_can_be_viewed(self.root.username,url)
@@ -821,7 +820,7 @@ class UploadTest(ComicframeworkTestCase):
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
 
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": self.testproject.short_name})
 
         factory = RequestFactory()
@@ -912,7 +911,7 @@ class UploadTest(ComicframeworkTestCase):
         return response
 
     def get_uploadpage_response(self, user, project):
-        url = reverse("comicmodels.views.upload_handler",
+        url = reverse("challenge-upload-handler",
                       kwargs={"site_short_name": project.short_name})
         factory = RequestFactory()
         request = factory.get(url)
@@ -1136,8 +1135,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         # Sanity check: do two different pages give different urls?
-        content = "-url1-{% url 'comicsite.views.page' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
-        content += "-url2-{% url 'comicsite.views.page' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
+        content = "-url1-{% url 'challenge-page' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
+        content += "-url2-{% url 'challenge-page' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
         urlpage = create_page_in_admin(self.testproject, "testurltagpage",
                                        content)
 

@@ -1,12 +1,21 @@
 from django.conf.urls import url, include
 from django.views.generic import TemplateView
 
+from comicmodels.views import upload_handler
 from comicsite.admin import projectadminurls
-from comicsite.views import ParticipantRegistration
+from comicsite.api import get_public_results
+from comicsite.views import (
+    ParticipantRegistration,
+    site,
+    insertedpage,
+    _register,
+    page,
+)
+from filetransfers.views import serve
 
 urlpatterns = [
 
-    url(r'^(?P<site_short_name>[\w-]+)/$', 'comicsite.views.site',
+    url(r'^(?P<site_short_name>[\w-]+)/$', site,
         name='challenge-homepage'),
 
     # Include an admin url for each project in database. This stretches the
@@ -30,27 +39,25 @@ urlpatterns = [
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
-    url(r'^(?P<site_short_name>[\w-]+)/files/$',
-        'comicmodels.views.upload_handler'),
+    url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler,
+        name='challenge-upload-handler'),
 
-    url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$',
-        'filetransfers.views.serve',
+    url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$', serve,
         name="project_serve_file"),
 
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
-        'comicsite.api.get_public_results'),
+        get_public_results),
 
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/('
-        r'?P<dropboxpath>.+)/$',
-        'comicsite.views.insertedpage'),
+        r'?P<dropboxpath>.+)/$', insertedpage, name='challenge-insertedpage'),
 
     url(r'^(?P<challenge_short_name>[\w-]+)/participant-registration/$',
         ParticipantRegistration.as_view(), name='participant-registration'),
 
     url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
-        'comicsite.views._register', name='participant-registration-request'),
+        _register, name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$',
-        'comicsite.views.page'),
+        page, name='challenge-page'),
 ]

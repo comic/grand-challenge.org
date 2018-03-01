@@ -206,9 +206,9 @@ def resolve_path(path, parser, context):
 
     # If any {{parameters}} are still in filename they were not replaced.
     # This filename is missing information, show this as error text.
-    if re.search("{{\w+}}", str(filename)):
+    if re.search(r"{{\w+}}", str(filename)):
 
-        missed_parameters = re.findall("{{\w+}}", str(filename))
+        missed_parameters = re.findall(r"{{\w+}}", str(filename))
         found_parameters = context["request"].GET.items()
 
         if not found_parameters:
@@ -248,8 +248,8 @@ class comic_URLNode(defaulttags.URLNode):
         if subdomain_is_projectname() and (
                 (
                     self.view_name.var in [
-                        "comicsite.views.site",
-                        "comicsite.views.page",
+                        "challenge-homepage",
+                        "challenge-page",
                         "project_serve_file"
                     ]
                 ) or (
@@ -274,13 +274,13 @@ class comic_URLNode(defaulttags.URLNode):
                 return settings.MAIN_HOST_NAME + url
             else:
 
-                path_to_site = reverse_djangocore("comicsite.views.site",
+                path_to_site = reverse_djangocore("challenge-homepage",
                                                   args=[project]).lower()
 
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
 
-                scheme_subsite_and_host = reverse("comicsite.views.site",
+                scheme_subsite_and_host = reverse("challenge-homepage",
                                                   args=[project]).lower()
 
                 return urljoin(scheme_subsite_and_host, url)
@@ -336,7 +336,7 @@ def metafooterpages():
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('comicsite.views.comicmain',
+            url = reverse('mainproject-home',
                           kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
@@ -788,7 +788,7 @@ class RenderGetProjectPrefixNode(template.Node):
             projectname = context["site"].short_name
         except AttributeError:
             projectname = settings.MAIN_PROJECT_NAME
-        url = reverse("comicsite.views.site", args=[projectname])
+        url = reverse("challenge-homepage", args=[projectname])
         return url
 
 
@@ -867,7 +867,7 @@ class InsertFileNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={
+        base_url = reverse('challenge-insertedpage', kwargs={
             'site_short_name': currentpage.comicsite.short_name,
             'page_title': currentpage.title,
             'dropboxpath': "remove"})
@@ -997,9 +997,9 @@ class InsertGraphNode(template.Node):
 
         # If any url parameters are still in filename they were not replaced. This filename
         # is missing information..
-        if re.search("{{\w+}}", filename_clean):
+        if re.search(r"{{\w+}}", filename_clean):
 
-            missed_parameters = re.findall("{{\w+}}", filename_clean)
+            missed_parameters = re.findall(r"{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
 
             if not found_parameters:
@@ -1022,7 +1022,7 @@ class InsertGraphNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={
+        base_url = reverse('challenge-insertedpage', kwargs={
             'site_short_name': context.page.comicsite.short_name,
             'page_title': context.page.title,
             'dropboxpath': "remove"})
@@ -1387,7 +1387,7 @@ def parse_php_arrays(filename):
     with storage.open(filename, 'r') as f:
         content = f.read()
         content = content.replace("\n", "")
-        php = re.compile("\<\?php(.*?)\?\>", re.DOTALL)
+        php = re.compile(r"\<\?php(.*?)\?\>", re.DOTALL)
         s = php.search(content)
         assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
         phpcontent = s.group(1)
@@ -1398,8 +1398,8 @@ def parse_php_arrays(filename):
             print("found %d php variables in %s. " % (len(phpvars), filename))
             print("parsing %s into int arrays.. " % filename)
 
-        # check wheteher this looks like a php var
-        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
+        # check whether this looks like a php var
+        phpvar = re.compile(r"([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
                             re.DOTALL)
         for var in phpvars:
             result = phpvar.search(var)
@@ -1935,7 +1935,7 @@ class RegistrationFormNode(template.Node):
             return msg
 
     def get_signup_link(self, context, project):
-        register_url = reverse('comicsite.views._register',
+        register_url = reverse('participant-registration-request',
                                kwargs={'site_short_name': project.short_name})
         # nested if loops through the roof. What would uncle Bob say?
         # "nested if loops are a missed chance for inheritance."

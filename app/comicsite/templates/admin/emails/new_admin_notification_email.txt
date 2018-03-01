@@ -1,7 +1,7 @@
 {% autoescape off %}
 Dear {{ new_admin.username }},
 <br/>
-{{adder.username}} has just made you an admin of the project <a href ="http://{{site.domain }}{% url 'comicsite.views.site' comicsite.short_name %}"> {{comicsite.short_name}} </a>
+{{adder.username}} has just made you an admin of the project <a href ="http://{{site.domain }}{% url 'challenge-homepage' comicsite.short_name %}"> {{comicsite.short_name}} </a>
 on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.
 <br/>
 <br/>

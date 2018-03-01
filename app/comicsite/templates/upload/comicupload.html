@@ -1,7 +1,6 @@
 {% extends 'site.html' %}
 {% load filetransfers %}
 {% load guardian_tags %}
-{% load firstof from future %}
 
 {% block content %}
     <h1>Upload</h1>
@@ -21,7 +20,7 @@
             {% if not upload.localfileexists %}
                 <li class="filenotfound">
                     <span> {%  firstof upload.title 'unnamed' %} (local file not found, was it moved?)</span>
-                    <form method="post" action="{% url 'filetransfers.views.delete_handler' pk=upload.pk %}"
+                    <form method="post" action="{% url 'filetransfers:delete' pk=upload.pk %}"
                           style="display:inline">
                         {% csrf_token %}
                         <input type="submit" value="Delete from this list"/>
@@ -30,13 +29,13 @@
 
             {% else %}
                 <li>
-                    <a href="{% url 'filetransfers.views.download_handler' pk=upload.pk %}">{%  firstof upload.title 'unnamed' %}
+                    <a href="{% url 'filetransfers:download' pk=upload.pk %}">{% firstof upload.title 'unnamed' %}
                         {% if upload.filename != upload.title %}
                             - {{ upload.filename }}
                         {% endif %}
                     </a>
                     - uploaded {{ upload.created|date:"D d M Y H:m" }} by user "{{ upload.user.username }}"
-                    <form method="post" action="{% url 'filetransfers.views.delete_handler' pk=upload.pk %}"
+                    <form method="post" action="{% url 'filetransfers:delete' pk=upload.pk %}"
                           style="display:inline">
                         {% csrf_token %}
                         <!--<input type="submit" value="Delete" />-->

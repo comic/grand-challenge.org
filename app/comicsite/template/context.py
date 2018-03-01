@@ -3,7 +3,6 @@
  see http://www.djangobook.com/en/2.0/chapter09.html  
 """
 
-from django.core.exceptions import ImproperlyConfigured
 from django.template import RequestContext
 
 
@@ -38,19 +37,3 @@ class ComicSiteRequestContext(RequestContext):
         # add context url parameters (?var1=value) to context to be able to render
         # them in template
         self.update(request.GET)
-
-
-class CurrentAppRequestContext(RequestContext):
-    """ sets current_app in request so any reversing of admin urls goes right.
-    Project admin needs currentapp = '<projectname>admin' to refer to admin 
-    of that project. Without this request context, urls would reverse to main/root
-    admin instead of projectadmin """
-
-    def __init__(self, request, page=None, *args, **kwargs):
-        super(CurrentAppRequestContext, self).__init__(request, *args, **kwargs)
-
-        if not hasattr(request, "projectname"):
-            raise ImproperlyConfigured("CurrentAppRequestContext requires "
-                                       "project middleware to know which project the request is coming from")
-        from comicmodels.models import get_project_admin_instance_name
-        request.current_app = get_project_admin_instance_name(request.projectname)
