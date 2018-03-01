@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.views.generic import TemplateView
 
 from comicmodels.views import ChallengeCreate
+from comicsite.views import comicmain
+from filetransfers.views import serve
 
 admin.autodiscover()
 
@@ -13,7 +15,7 @@ urlpatterns = [
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # main page
-    url(r'^$', 'comicsite.views.comicmain', name='home'),
+    url(r'^$', comicmain, name='home'),
     # url(r'^Comic/$',ListView.as_view(model=ComicSite,
     # template_name='index.html'),name = 'home'),
 
@@ -48,15 +50,15 @@ urlpatterns = [
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
     # order
-    url(r'^(?P<page_title>[\w-]+)/$', 'comicsite.views.comicmain'),
+    url(r'^(?P<page_title>[\w-]+)/$', comicmain),
 
-    url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$',
-                             'filetransfers.views.serve'),
+    url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$', serve),
 
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
+
     urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+                      url(r'^__debug__/', include(debug_toolbar.urls)),
+                  ] + urlpatterns

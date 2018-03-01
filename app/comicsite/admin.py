@@ -5,7 +5,7 @@ import re
 from functools import update_wrapper
 
 from django import forms
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin.options import InlineModelAdmin
@@ -41,7 +41,8 @@ def get_comicsite_shortnames_that_user_is_admin_for(user):
     :return: List of short comicsite names
     """
     User = get_user_model()
-    user_admin_groups = User.objects.get(username=user).groups.all().filter(models.Q(name__endswith='_admins'))
+    user_admin_groups = User.objects.get(username=user).groups.all().filter(
+        models.Q(name__endswith='_admins'))
     # Strip _admins from string
     short_names = [x.name[:-7] for x in user_admin_groups]
     return short_names
@@ -103,7 +104,8 @@ class ProjectAdminSite2(AdminSite):
         for model, model_admin in six.iteritems(self._registry):
             # Wrap all modeladmin queryset methods so that they only return content
             # relevant for the current project
-            model_admin.get_queryset = self.queryset_wrapper(model_admin.get_queryset)
+            model_admin.get_queryset = self.queryset_wrapper(
+                model_admin.get_queryset)
 
             model_admin.add_view = self.add_view_wrapper(model_admin.add_view)
 
@@ -191,7 +193,8 @@ class ProjectAdminSite2(AdminSite):
 
             # certain standard admin urls cannot handle the extra_context var,
             # making an excpetion here
-            no_extra_context = ["jsi18n", "view_on_site", "logout", "password_change",
+            no_extra_context = ["jsi18n", "view_on_site", "logout",
+                                "password_change",
                                 "password_change_done"]
             if request.resolver_match.url_name in no_extra_context:
                 del kwargs["extra_context"]
@@ -215,7 +218,8 @@ class ProjectAdminSite2(AdminSite):
 
         comicsiteadmin = self._registry[ComicSite]
         extra_context["projectname"] = request.projectname
-        return comicsiteadmin.change_view(request, str(self.project.pk), "", extra_context)
+        return comicsiteadmin.change_view(request, str(self.project.pk), "",
+                                          extra_context)
 
     def has_permission(self, request):
         """ For projectadmin, in addition to standard django checks, check if requesting
@@ -252,10 +256,9 @@ class AllProjectAdminSites(object):
         urls = projectadminsite.get_urls()
         regex = r'^{}/admin/'.format(project.short_name.lower())
 
-        urlpatterns = patterns('',
-                               url(regex,
-                                   projectadminsite.urls)
-                               )
+        urlpatterns = [
+            url(regex, projectadminsite.urls)
+        ]
         return urlpatterns
 
 
@@ -347,31 +350,38 @@ class PageAdmin(ComicModelAdmin):
 
         pk_value = obj._get_pk_val()
 
-        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {'name': force_text(verbose_name),
-                                                                       'obj': force_text(obj)}
+        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {
+            'name': force_text(verbose_name),
+            'obj': force_text(obj)}
         if "_continue" in request.POST:
-            self.message_user(request, msg + ' ' + _("You may edit it again below."))
+            self.message_user(request,
+                              msg + ' ' + _("You may edit it again below."))
             if "_popup" in request.REQUEST:
                 return HttpResponseRedirect(request.path + "?_popup=1")
             else:
                 return HttpResponseRedirect(request.path)
         elif "_saveasnew" in request.POST:
-            msg = _('The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {
-                'name': force_text(verbose_name), 'obj': obj}
+            msg = _(
+                'The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {
+                      'name': force_text(verbose_name), 'obj': obj}
             self.message_user(request, msg)
             return HttpResponseRedirect(reverse('admin:%s_%s_change' %
                                                 (opts.app_label, module_name),
                                                 args=(pk_value,),
                                                 current_app=self.admin_site.name))
         elif "_addanother" in request.POST:
-            self.message_user(request, msg + ' ' + (_("You may add another %s below.") % force_text(verbose_name)))
+            self.message_user(request, msg + ' ' + (
+                    _("You may add another %s below.") % force_text(
+                verbose_name)))
             return HttpResponseRedirect(reverse('admin:%s_%s_add' %
                                                 (opts.app_label, module_name),
                                                 current_app=self.admin_site.name))
         # ========== elif added by Sjoerd ========
         elif "save_goto_page" in request.POST:
             # comicsite.views.page site.short_name page.title
-            return HttpResponseRedirect(reverse("comicsite.views.page", args=[obj.comicsite.short_name, obj.title]))
+            return HttpResponseRedirect(reverse("comicsite.views.page",
+                                                args=[obj.comicsite.short_name,
+                                                      obj.title]))
 
         # ========== below edited by Sjoerd ========
         else:
@@ -383,7 +393,8 @@ class PageAdmin(ComicModelAdmin):
             if self.has_change_permission(request, None):
 
                 post_url = reverse('admin:%s_%s_change' %
-                                   (obj.comicsite._meta.app_label, obj.comicsite._meta.model_name),
+                                   (obj.comicsite._meta.app_label,
+                                    obj.comicsite._meta.model_name),
                                    args=(obj.comicsite.pk,),
                                    current_app=self.admin_site.name)
             else:
@@ -391,7 +402,8 @@ class PageAdmin(ComicModelAdmin):
                                    current_app=self.admin_site.name)
             return HttpResponseRedirect(post_url)
 
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+    def render_change_form(self, request, context, add=False, change=False,
+                           form_url='', obj=None):
         """So I have a jquery WYSIWYG editor (ckedit) on the page source (field Html). This editor can also do
            'upload image' and I want the upload to go to a different folder based on the comicsite you are editing.
            This proved esceedingly and exasperatingly difficult.
@@ -406,12 +418,14 @@ class PageAdmin(ComicModelAdmin):
 
         elif "comicsite" in request.GET:
             # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages
-            site_short_name = ComicSite.objects.get(pk=request.GET["comicsite"]).short_name
+            site_short_name = ComicSite.objects.get(
+                pk=request.GET["comicsite"]).short_name
         else:
             # try to get current project by url TODO: This solution is too specific for page. Should be  a general
             # property of the admin site. But I can't get this right at projectadmin.
 
-            match = re.match(r"^/site/(?P<site_short_name>[\w-]+)/admin/.*", request.path)
+            match = re.match(r"^/site/(?P<site_short_name>[\w-]+)/admin/.*",
+                             request.path)
             if match:
                 site_short_name = match.group("site_short_name")
             else:
@@ -425,8 +439,9 @@ class PageAdmin(ComicModelAdmin):
         if 'html' in fields:
             fields['html'].widget.config['comicsite'] = site_short_name
 
-        template_response = super(ComicModelAdmin, self).render_change_form(request, context, add, change, form_url,
-                                                                            obj)
+        template_response = super(ComicModelAdmin, self).render_change_form(
+            request, context, add, change, form_url,
+            obj)
         return template_response
 
 
@@ -467,7 +482,8 @@ class PageInline(LinkedInline):
         # def page(request, site_short_name, page_title):
         """ Link to page directly so you can view it as regular user"""
         link_url = reverse('comicsite.views.page',
-                           kwargs={"site_short_name": obj.comicsite.short_name, "page_title": obj.title})
+                           kwargs={"site_short_name": obj.comicsite.short_name,
+                                   "page_title": obj.title})
         link_text = "view " + obj.title
         link_html = "<a href=\"" + link_url + "\">" + link_text + "</a>"
 
@@ -478,12 +494,14 @@ class PageInline(LinkedInline):
 
 class ComicSiteAdminForm(forms.ModelForm):
     description = forms.CharField(widget=forms.Textarea(attrs=
-                                                        {'rows': 4, 'cols': 80}),
+                                                        {'rows': 4,
+                                                         'cols': 80}),
                                   help_text="Short summary of this project,"
                                             " max 1024 characters.")
     disclaimer = forms.CharField(required=False,
                                  widget=forms.Textarea(attrs=
-                                                       {'rows': 4, 'cols': 120}),
+                                                       {'rows': 4,
+                                                        'cols': 120}),
                                  help_text="'Under construction'-like "
                                            "banner to show on each page")
 
@@ -504,7 +522,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
     change_form_template = None
 
     # make all textboxes wider because having them too small is stupid
-    formfield_overrides = {models.CharField: {'widget': TextInput(attrs={'size': '100%'})}, }
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size': '100%'})}, }
 
     list_display = ('short_name', 'link', 'hidden')
     # list_filter = ['comicsite']
@@ -522,7 +541,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
         ('Metadata', {
             'classes': ('collapse',),
             'fields': ('workshop_date', 'event_name', 'event_url',
-                       'is_open_for_submissions', 'submission_page_name', 'number_of_submissions',
+                       'is_open_for_submissions', 'submission_page_name',
+                       'number_of_submissions',
                        'last_submission_date',
                        'offers_data_download', 'number_of_downloads',
                        'publication_url', 'publication_journal_name',
@@ -548,7 +568,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
             )
         }),
     )
-    readonly_fields = ("manage_admin_link", "link", "manage_participation_request_link",)
+    readonly_fields = (
+        "manage_admin_link", "link", "manage_participation_request_link",)
 
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'
@@ -576,7 +597,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         url = reverse("admin:comicmodels_comicsite_admins", args=[instance.pk],
                       current_app=instance.get_project_admin_instance_name())
-        return "<a href={}>View, Add or Remove Administrators for this project</a>".format(url)
+        return "<a href={}>View, Add or Remove Administrators for this project</a>".format(
+            url)
 
     manage_admin_link.allow_tags = True  # allow links
     manage_admin_link.short_description = "Admins"
@@ -587,7 +609,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         url = reverse("admin:comicmodels_registrationrequest_changelist",
                       current_app=instance.get_project_admin_instance_name())
-        return "<a href=\'{}'>Approve or reject participation requests</a>".format(url)
+        return "<a href=\'{}'>Approve or reject participation requests</a>".format(
+            url)
 
     manage_participation_request_link.allow_tags = True  # allow links
     manage_participation_request_link.short_description = "Participation Requests"
@@ -599,7 +622,8 @@ class ComicSiteAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         else:
-            qs = get_objects_for_user(request.user, 'comicmodels.change_comicsite')
+            qs = get_objects_for_user(request.user,
+                                      'comicmodels.change_comicsite')
             qs = filter_projects_by_user_admin(qs, request.user)
             return qs
 
@@ -610,22 +634,23 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
         urls = super(ComicSiteAdmin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.model_name
-        myurls = patterns('',
-                          url(r'^(?P<object_pk>.+)/admins/$',
-                              view=self.admin_site.admin_view(self.admin_add_view),
-                              name='%s_%s_admins' % info),
-                          url(r'^(?P<object_pk>.+)/registration_requests/$',
-                              view=self.admin_site.admin_view(self.registration_requests_view),
-                              name='%s_%s_participantrequests' % info),
-                          # url(r'^(?P<object_pk>.+)/permissions/user-manage/(?P<user_id>\-?\d+)/$',
-                          #    view=self.admin_site.admin_view(
-                          #       self.obj_perms_manage_user_view),
-                          #    name='%s_%s_permissions_manage_user' % info),
-                          # url(r'^(?P<object_pk>.+)/permissions/group-manage/(?P<group_id>\-?\d+)/$',
-                          #    view=self.admin_site.admin_view(
-                          #        self.obj_perms_manage_group_view),
-                          #    name='%s_%s_permissions_manage_group' % info),
-                          )
+        myurls = [
+            url(r'^(?P<object_pk>.+)/admins/$',
+                view=self.admin_site.admin_view(self.admin_add_view),
+                name='%s_%s_admins' % info),
+            url(r'^(?P<object_pk>.+)/registration_requests/$',
+                view=self.admin_site.admin_view(
+                    self.registration_requests_view),
+                name='%s_%s_participantrequests' % info),
+            # url(r'^(?P<object_pk>.+)/permissions/user-manage/(?P<user_id>\-?\d+)/$',
+            #    view=self.admin_site.admin_view(
+            #       self.obj_perms_manage_user_view),
+            #    name='%s_%s_permissions_manage_user' % info),
+            # url(r'^(?P<object_pk>.+)/permissions/group-manage/(?P<group_id>\-?\d+)/$',
+            #    view=self.admin_site.admin_view(
+            #        self.obj_perms_manage_group_view),
+            #    name='%s_%s_permissions_manage_group' % info),
+        ]
         return myurls + urls
 
     def get_base_context(self, request, obj):
@@ -669,11 +694,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 # give them the staff bit
                 user.is_staff = True
                 user.save()
-                messages.add_message(request, messages.SUCCESS, 'User "' + user.username + '"\
+                messages.add_message(request, messages.SUCCESS,
+                                     'User "' + user.username + '"\
                                      is now an admin for ' + comicsite.short_name)
 
                 # send signal to be picked up for example by email notifier
-                new_admin.send(sender=self, adder=request.user, new_admin=user, comicsite=comicsite
+                new_admin.send(sender=self, adder=request.user, new_admin=user,
+                               comicsite=comicsite
                                , site=get_current_site(request))
 
 
@@ -699,10 +726,13 @@ class ComicSiteAdmin(admin.ModelAdmin):
                         removed.append(username)
 
                         # send signal to be picked up for example by email notifier
-                        removed_admin.send(sender=self, adder=request.user, removed_admin=user, comicsite=comicsite,
+                        removed_admin.send(sender=self, adder=request.user,
+                                           removed_admin=user,
+                                           comicsite=comicsite,
                                            site=get_current_site(request))
 
-                msg = "Removed users [" + ", ".join(removed) + "] from " + comicsite.short_name + \
+                msg = "Removed users [" + ", ".join(
+                    removed) + "] from " + comicsite.short_name + \
                       " admin group. " + msg2
                 messages.add_message(request, messages.SUCCESS, msg)
 
@@ -721,21 +751,25 @@ class ComicSiteAdmin(admin.ModelAdmin):
         context.update(extra_context)
 
         return render_to_response(self.admin_manage_template,
-                                  context, RequestContext(request, current_app=self.admin_site.name))
+                                  context, RequestContext(request,
+                                                          current_app=self.admin_site.name))
 
     def save_model(self, request, obj, form, change):
         if obj.pk is None:
             obj.creator = request.user
         super(ComicSiteAdmin, self).save_model(request, obj, form, change)
 
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+    def render_change_form(self, request, context, add=False, change=False,
+                           form_url='', obj=None):
         """ overwrite this to inject some useful info message at first creation """
         if obj is None:
             messages.info(request,
                           'Please fill out the form to create a new project. <b>Required fields are bold.</b> Please save your project before adding pages or admins.',
                           extra_tags='safe')
 
-        return super(ComicSiteAdmin, self).render_change_form(request, context, add, change, form_url, obj)
+        return super(ComicSiteAdmin, self).render_change_form(request, context,
+                                                              add, change,
+                                                              form_url, obj)
 
     def registration_requests_view(self, request, object_pk):
         """ Used to view requests to participate in admin interface
@@ -750,9 +784,11 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
 
 class AdminManageForm(forms.Form):
-    admins = forms.CharField(required=False, widget=forms.SelectMultiple, help_text="All admins for this project")
+    admins = forms.CharField(required=False, widget=forms.SelectMultiple,
+                             help_text="All admins for this project")
     User = get_user_model()
-    user = forms.ModelChoiceField(queryset=User.objects.all(), empty_label="<user to add>", required=False)
+    user = forms.ModelChoiceField(queryset=User.objects.all(),
+                                  empty_label="<user to add>", required=False)
 
 
 # this variable is included in urls.py to get admin urls for each project in
