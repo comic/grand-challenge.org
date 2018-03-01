@@ -20,7 +20,7 @@ from filetransfers.forms import UploadForm
 
 
 def upload_handler(request):
-    view_url = reverse('filetransfers.views.upload_handler')
+    view_url = reverse('filetransfers:upload')
     if request.method == 'POST':
         form = UploadForm(request.POST, request.FILES)
         if form.is_valid():

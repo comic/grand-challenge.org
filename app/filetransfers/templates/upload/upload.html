@@ -17,10 +17,10 @@
             <li>
 
 
-                <a href="{% url 'filetransfers.views.download_handler' pk=upload.pk %}">{% firstof upload.title 'unnamed' %}
+                <a href="{% url 'filetransfers:download' pk=upload.pk %}">{% firstof upload.title 'unnamed' %}
                     - {{ upload.filename }} </a>
                 ({{ upload.file.size|filesizeformat }})
-                <form method="post" action="{% url 'filetransfers.views.delete_handler' pk=upload.pk %}"
+                <form method="post" action="{% url 'filetransfers:delete' pk=upload.pk %}"
                       style="display:inline">
                     {% csrf_token %}
                     <input type="submit" value="Delete"/>

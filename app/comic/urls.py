@@ -29,7 +29,7 @@ urlpatterns = [
 
     url(r'^site/', include('comicsite.urls'), name='site'),
 
-    url(r'^filetransfers/', include('filetransfers.urls')),
+    url(r'^filetransfers/', include('filetransfers.urls', namespace='filetransfers')),
 
     # Do not change the namespace without updating the view names in
     # evaluation.serializers
