@@ -234,7 +234,7 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        url = reverse("comicsite.views._register",
+        url = reverse("participant-registration-request",
                       kwargs={"site_short_name": project.short_name})
         factory = RequestFactory()
         request = factory.get(url)
