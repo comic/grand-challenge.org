@@ -50,7 +50,7 @@ urlpatterns = [
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
     # order
-    url(r'^(?P<page_title>[\w-]+)/$', comicmain),
+    url(r'^(?P<page_title>[\w-]+)/$', comicmain, name='mainproject-home'),
 
     url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$', serve),
 

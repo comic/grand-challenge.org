@@ -336,7 +336,7 @@ def metafooterpages():
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('home',
+            url = reverse('mainproject-home',
                           kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
