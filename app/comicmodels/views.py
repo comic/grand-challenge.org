@@ -17,7 +17,9 @@ from filetransfers.api import prepare_upload
 
 
 def upload_handler(request, site_short_name):
-    """ Upload a file to the given comicsite, display files previously uploaded"""
+    """
+    Upload a file to the given comicsite, display files previously uploaded
+    """
 
     view_url = reverse('challenge-upload-handler',
                        kwargs={'site_short_name': site_short_name})
@@ -35,15 +37,25 @@ def upload_handler(request, site_short_name):
         if form.is_valid():
             form.save()
             filename = ntpath.basename(form.instance.file.file.name)
-            messages.success(request, "File '%s' sucessfully uploaded. An email has been sent to this\
-                                       projects organizers." % filename)
+            messages.success(
+                request,
+                (
+                    f"File '{filename}' sucessfully uploaded. "
+                    f"An email has been sent to this projects organizers."
+                )
+            )
 
-            # send signal to be picked up by email notifier 03/2013 - Sjoerd. I'm not sure that sending
-            # signals is the best way to do this. Why not just call the method directly?
-            # typical case for a refactoring round.                 
-            file_uploaded.send(sender=UploadModel, uploader=request.user,
-                               filename=filename, comicsite=site,
-                               site=get_current_site(request))
+            # send signal to be picked up by email notifier 03/2013 - Sjoerd.
+            # I'm not sure that sending signals is the best way to do this.
+            # Why not just call the method directly?
+            # typical case for a refactoring round.
+            file_uploaded.send(
+                sender=UploadModel,
+                uploader=request.user,
+                filename=filename,
+                comicsite=site,
+                site=get_current_site(request),
+            )
 
             return HttpResponseRedirect(view_url)
         else:
@@ -75,20 +87,24 @@ def upload_handler(request, site_short_name):
         return response
 
     if request.user.is_superuser or site.is_admin(request.user):
-        uploadsforcurrentsite = UploadModel.objects.filter(comicsite=site). \
-            order_by('modified').reverse()
+        uploadsforcurrentsite = UploadModel.objects.filter(
+            comicsite=site
+        ).order_by('modified').reverse()
     else:
-        uploadsforcurrentsite = UploadModel.objects.filter(user=request.user,
-                                                           comicsite=site). \
-            order_by('modified').reverse()
+        uploadsforcurrentsite = UploadModel.objects.filter(
+            user=request.user,
+            comicsite=site,
+        ).order_by('modified').reverse()
 
     return render(
         request,
         'upload/comicupload.html',
         {
-            'form': form, 'upload_url': upload_url,
+            'form': form,
+            'upload_url': upload_url,
             'upload_data': upload_data,
-            'uploads': uploadsforcurrentsite, 'site': site,
+            'uploads': uploadsforcurrentsite,
+            'site': site,
             'pages': pages,
             'metafooterpages': metafooterpages
         },
