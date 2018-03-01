@@ -1,5 +1,4 @@
 {% extends "page.html" %}
-{% load firstof from future %}
 {% block pageName %}{{ currentpage.comicsite.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} (Source) {% endblock %}
 {% block pagecontent %}
