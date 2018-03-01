@@ -77,7 +77,7 @@
 
 
                                 {% if inline_admin_form.show_url %}
-                                    <a href="../../../r/{{ inline_admin_form.original_content_type_id }}/{{ inline_admin_form.original.id }}/">{% trans "View on site" %}</a>{% endif %}
+                                    <a href="{{ inline_admin_form.absolute_url }}">{% trans "View on site" %}</a>{% endif %}
 
                                 {% if inline_admin_form.original.pk %}
 

@@ -8,7 +8,7 @@ from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 from django.views.generic import TemplateView
@@ -23,18 +23,17 @@ from comicmodels.models import (
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import (
     ComicSiteRequestContext,
-    CurrentAppRequestContext,
 )
 from filetransfers.api import serve_file
 
 
 def index(request):
-    return HttpResponse("ComicSite index page.",
-                        context_instance=CurrentAppRequestContext(request))
+    return HttpResponse("ComicSite index page.")
 
 
 class ParticipantRegistration(LoginRequiredMixin, TemplateView):
     template_name = 'participant_registration.html'
+
 
 def _register(request, site_short_name):
     """ Register the current user for given comicsite """
@@ -67,11 +66,15 @@ def _register(request, site_short_name):
             currentpage = Page(comicsite=site, title="please_log_in",
                                display_title="Please log in", html=html)
 
-    return render_to_response('page.html',
-                              {'site': site, 'currentpage': currentpage,
-                               "pages": pages},
-                              context_instance=CurrentAppRequestContext(
-                                  request))
+    return render(
+        request,
+        'page.html',
+        {
+            'site': site,
+            'currentpage': currentpage,
+            "pages": pages,
+        },
+    )
 
 
 def _register_directly(request, project):
@@ -142,12 +145,16 @@ def site(request, site_short_name):
         currentpage = pages[0]
 
     currentpage = getRenderedPageIfAllowed(currentpage, request, site)
-    # return render_to_response('page.html', {'site': site, 'currentpage': currentpage, "pages":pages, "metafooterpages":metafooterpages},context_instance=CurrentAppRequestContext(request))
-    return render_to_response('page.html',
-                              {'site': site, 'currentpage': currentpage,
-                               "pages": pages},
-                              context_instance=CurrentAppRequestContext(
-                                  request))
+
+    return render(
+        request,
+        'page.html',
+        {
+            'site': site,
+            'currentpage': currentpage,
+            "pages": pages,
+        },
+    )
 
 
 def site_get_standard_vars(site_short_name):
@@ -280,10 +287,7 @@ def page(request, site_short_name, page_title):
 
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
-    response = render_to_response('page.html',
-                                  {'currentpage': currentpage},
-                                  context_instance=CurrentAppRequestContext(
-                                      request))
+    response = render(request, 'page.html', {'currentpage': currentpage})
 
     # TODO: THis has code smell. If page has to be checked like this, is it 
     # ok to use a page object for error messages?
@@ -325,12 +329,16 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
 
     currentpage = getRenderedPageIfAllowed(p, request, site)
 
-    return render_to_response('dropboxpage.html',
-                              {'site': site, 'currentpage': currentpage,
-                               "pages": pages,
-                               "metafooterpages": metafooterpages},
-                              context_instance=CurrentAppRequestContext(
-                                  request))
+    return render(
+        request,
+        'dropboxpage.html',
+        {
+            'site': site,
+            'currentpage': currentpage,
+            "pages": pages,
+            "metafooterpages": metafooterpages
+        },
+    )
 
 
 def get_data_folder_path(project_name):
@@ -401,11 +409,14 @@ def comicmain(request, page_title=""):
                                            site_short_name,
                                            link_html)
         p = create_temp_page(title="no_pages_found", html=html)
-        return render_to_response('temppage.html',
-                                  {'site': p.comicsite,
-                                   'currentpage': p},
-                                  context_instance=CurrentAppRequestContext(
-                                      request))
+        return render(
+            request,
+            'temppage.html',
+            {
+                'site': p.comicsite,
+                'currentpage': p,
+            },
+        )
 
     pages = getPages(site_short_name)
 
@@ -421,11 +432,14 @@ def comicmain(request, page_title=""):
                               link_html)
 
         p = create_temp_page(title="no_pages_found", html=html)
-        return render_to_response('temppage.html',
-                                  {'site': p.comicsite,
-                                   'currentpage': p},
-                                  context_instance=CurrentAppRequestContext(
-                                      request))
+        return render(
+            request,
+            'temppage.html',
+            {
+                'site': p.comicsite,
+                'currentpage': p,
+            },
+        )
 
     elif page_title == "":
         # if no page title is given, just use the first page found
@@ -448,15 +462,16 @@ def comicmain(request, page_title=""):
     # general links
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
 
-    context = CurrentAppRequestContext(request)
-    # context.current_app = "VESSEL12admin"
-
-    return render_to_response('mainpage.html',
-                              {'site': p.comicsite,
-                               'currentpage': p,
-                               "pages": pages,
-                               "metafooterpages": metafooterpages},
-                              context_instance=context)
+    return render(
+        request,
+        'mainpage.html',
+        {
+            'site': p.comicsite,
+            'currentpage': p,
+            "pages": pages,
+            "metafooterpages": metafooterpages,
+        },
+    )
 
 
 # ======================================== not called directly from urls.py =========================================
