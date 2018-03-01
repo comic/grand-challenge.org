@@ -1,7 +1,6 @@
 import re
 from random import choice, randint
 
-import django
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
@@ -16,8 +15,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from six import StringIO
-
 from userena.models import UserenaSignup
+
 from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
@@ -698,7 +697,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         # main domain robots.txt
-        non_existant_url = reverse('comicsite.views.site',
+        non_existant_url = reverse('challenge-homepage',
                                    kwargs={
                                        "site_short_name": "nonexistingproject"})
 

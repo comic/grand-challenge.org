@@ -3,7 +3,7 @@
 Dear Admin,
 <br/>
 user {{uploader.username}} (email: {{uploader.email}}) has just uploaded file '{{filename}}' to {{comicsite.short_name}}. The file can be found in the 'uploads' folder of the {{comicsite.short_name}} dropbox. A list of uploads can also be found at    
-<a href ="http://{{site.domain }}{% url 'comicsite.views.site' comicsite.short_name %}files/"> http://{{site.domain }}{% url 'comicsite.views.site' comicsite.short_name %}files/ </a>
+<a href ="http://{{site.domain }}{% url 'challenge-homepage' comicsite.short_name %}files/"> http://{{site.domain }}{% url 'challenge-homepage' comicsite.short_name %}files/ </a>
 <br/>
 <br/>
 Regards,<br/>

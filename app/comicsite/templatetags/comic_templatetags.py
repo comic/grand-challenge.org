@@ -248,7 +248,7 @@ class comic_URLNode(defaulttags.URLNode):
         if subdomain_is_projectname() and (
                 (
                     self.view_name.var in [
-                        "comicsite.views.site",
+                        "challenge-homepage",
                         "comicsite.views.page",
                         "project_serve_file"
                     ]
@@ -274,13 +274,13 @@ class comic_URLNode(defaulttags.URLNode):
                 return settings.MAIN_HOST_NAME + url
             else:
 
-                path_to_site = reverse_djangocore("comicsite.views.site",
+                path_to_site = reverse_djangocore("challenge-homepage",
                                                   args=[project]).lower()
 
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
 
-                scheme_subsite_and_host = reverse("comicsite.views.site",
+                scheme_subsite_and_host = reverse("challenge-homepage",
                                                   args=[project]).lower()
 
                 return urljoin(scheme_subsite_and_host, url)
@@ -788,7 +788,7 @@ class RenderGetProjectPrefixNode(template.Node):
             projectname = context["site"].short_name
         except AttributeError:
             projectname = settings.MAIN_PROJECT_NAME
-        url = reverse("comicsite.views.site", args=[projectname])
+        url = reverse("challenge-homepage", args=[projectname])
         return url
 
 

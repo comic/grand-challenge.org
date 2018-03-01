@@ -504,7 +504,7 @@ class ComicSite(models.Model):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
 
-        url = reverse('comicsite.views.site', args=[self.short_name])
+        url = reverse('challenge-homepage', args=[self.short_name])
         return url
 
     def to_projectlink(self):
@@ -519,7 +519,7 @@ class ComicSite(models.Model):
         args = {"abreviation": self.short_name,
                 "title": self.title if self.title else self.short_name,
                 "description": self.description,
-                "URL": reverse('comicsite.views.site', args=[self.short_name]),
+                "URL": reverse('challenge-homepage', args=[self.short_name]),
                 "download URL": "",
                 "submission URL": self.get_submission_URL(),
                 "event name": self.event_name,
@@ -549,7 +549,7 @@ class ComicSite(models.Model):
 
     def get_submission_URL(self):
         """ What url can you go to to submit for this project? """
-        URL = reverse('comicsite.views.site', args=[self.short_name])
+        URL = reverse('challenge-homepage', args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
                     "http://") or self.submission_page_name.startswith(

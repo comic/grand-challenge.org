@@ -577,7 +577,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
     def link(self, obj):
         """ link to current project, so you can easily view project """
         try:
-            link_url = reverse('comicsite.views.site', args=[obj.short_name])
+            link_url = reverse('challenge-homepage', args=[obj.short_name])
             link_text = "view " + obj.short_name
             link_html = "<a href=\"" + link_url + "\">" + link_text + "</a>"
 

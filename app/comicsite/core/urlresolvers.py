@@ -21,7 +21,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
         protocol, domainname = settings.MAIN_HOST_NAME.split("//")
         base_url = f"{protocol}//{challenge_short_name}.{domainname}".lower()
 
-        site_url = reverse_org('comicsite.views.site',
+        site_url = reverse_org('challenge-homepage',
                                args=[challenge_short_name]).lower()
         target_url = reverse_org(viewname, urlconf, args, kwargs, prefix,
                                  current_app).lower()

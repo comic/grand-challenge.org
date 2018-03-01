@@ -491,7 +491,7 @@ def comic_site_to_grand_challenge_html(comic_site, link=""):
     """
 
     if link == "":
-        link = reverse('comicsite.views.site', args=[comic_site.short_name])
+        link = reverse('challenge-homepage', args=[comic_site.short_name])
 
     html = create_HTML_a(link, comic_site.short_name)
 
