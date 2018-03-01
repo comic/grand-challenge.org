@@ -128,9 +128,10 @@
         },
         "django-userena-ce": {
             "hashes": [
-                "sha256:62a33b1033adf38769bee4ad2cc5d00755d021542a491a3bd6a0d9654aaba117"
+                "sha256:305cc2bf352b62d4f05f996f493086be405488d9fa83d2a25e7e96d747060291",
+                "sha256:e4305f018eb7efb0a2f7a737bc97a5ffdd7fe0a5b528c016f3edf13935ac5270"
             ],
-            "version": "==3.0.2"
+            "version": "==3.1.0"
         },
         "djangorestframework": {
             "hashes": [
@@ -572,10 +573,10 @@
         },
         "pytest-mock": {
             "hashes": [
-                "sha256:23fd6bfb144d96c37441bced2a86ed5fee66fa5c05a13940866f1396628279fe",
-                "sha256:8ed6c9ac6b7565b226b4da2da48876c9198d76401ec8d9c5e4c69b45423e33f8"
+                "sha256:03a2fea79d0a83a8de2e77e92afe5f0a5ca99a58cc68f843f9a74de34800a943",
+                "sha256:b879dff61e31fcd4727c227c182f15f222a155293cc64ed5a02d55e0020cf949"
             ],
-            "version": "==1.7.0"
+            "version": "==1.7.1"
         },
         "python-dateutil": {
             "hashes": [
