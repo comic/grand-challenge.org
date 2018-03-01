@@ -336,7 +336,7 @@ def metafooterpages():
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('comicsite.views.comicmain',
+            url = reverse('home',
                           kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
@@ -867,7 +867,7 @@ class InsertFileNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={
+        base_url = reverse('challenge-insertedpage', kwargs={
             'site_short_name': currentpage.comicsite.short_name,
             'page_title': currentpage.title,
             'dropboxpath': "remove"})
@@ -1022,7 +1022,7 @@ class InsertGraphNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('comicsite.views.insertedpage', kwargs={
+        base_url = reverse('challenge-insertedpage', kwargs={
             'site_short_name': context.page.comicsite.short_name,
             'page_title': context.page.title,
             'dropboxpath': "remove"})

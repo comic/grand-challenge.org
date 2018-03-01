@@ -49,7 +49,7 @@ urlpatterns = [
         get_public_results),
 
     url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/('
-        r'?P<dropboxpath>.+)/$', insertedpage),
+        r'?P<dropboxpath>.+)/$', insertedpage, name='challenge-insertedpage'),
 
     url(r'^(?P<challenge_short_name>[\w-]+)/participant-registration/$',
         ParticipantRegistration.as_view(), name='participant-registration'),
