@@ -1,0 +1,38 @@
+[[source]]
+
+verify_ssl = true
+url = "https://pypi.python.org/simple"
+name = "pypi"
+
+
+[dev-packages]
+
+pytest-django = "*"
+pytest-cov = "*"
+pytest-mock = "*"
+factory-boy = "*"
+django-debug-toolbar = "*"
+
+
+[packages]
+
+"beautifulsoup4" = "*"
+celery = "*"
+django = "<1.9"
+django-auth-mixins = "*"
+django-countries = "*"
+django-crispy-forms = "*"
+django-userena-ce = "*"
+djangorestframework = "<3.7"
+docker = "<3"
+jsonpath-rw = "*"
+matplotlib = "*"
+mysqlclient = "*"
+"oauth2" = "*"
+python-magic = "*"
+python-memcached = "*"
+pytz = "*"
+social-auth-app-django = "*"
+rollbar = "*"
+xlrd = "*"
+gunicorn = "*"

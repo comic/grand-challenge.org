@@ -25,9 +25,11 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /app
 WORKDIR /app
 
-ADD requirements.txt /app/
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
+ARG PIPENV_DEV
+ADD Pipfile /app/
+ADD Pipfile.lock /app/
+RUN python -m pip install -U pipenv
+RUN pipenv install --system $PIPENV_DEV
 
 ADD ./app /app/
 
