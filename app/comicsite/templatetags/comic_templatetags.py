@@ -206,9 +206,9 @@ def resolve_path(path, parser, context):
 
     # If any {{parameters}} are still in filename they were not replaced.
     # This filename is missing information, show this as error text.
-    if re.search("{{\w+}}", str(filename)):
+    if re.search(r"{{\w+}}", str(filename)):
 
-        missed_parameters = re.findall("{{\w+}}", str(filename))
+        missed_parameters = re.findall(r"{{\w+}}", str(filename))
         found_parameters = context["request"].GET.items()
 
         if not found_parameters:
@@ -997,9 +997,9 @@ class InsertGraphNode(template.Node):
 
         # If any url parameters are still in filename they were not replaced. This filename
         # is missing information..
-        if re.search("{{\w+}}", filename_clean):
+        if re.search(r"{{\w+}}", filename_clean):
 
-            missed_parameters = re.findall("{{\w+}}", filename_clean)
+            missed_parameters = re.findall(r"{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
 
             if not found_parameters:
@@ -1387,7 +1387,7 @@ def parse_php_arrays(filename):
     with storage.open(filename, 'r') as f:
         content = f.read()
         content = content.replace("\n", "")
-        php = re.compile("\<\?php(.*?)\?\>", re.DOTALL)
+        php = re.compile(r"\<\?php(.*?)\?\>", re.DOTALL)
         s = php.search(content)
         assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
         phpcontent = s.group(1)
@@ -1398,8 +1398,8 @@ def parse_php_arrays(filename):
             print("found %d php variables in %s. " % (len(phpvars), filename))
             print("parsing %s into int arrays.. " % filename)
 
-        # check wheteher this looks like a php var
-        phpvar = re.compile("([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
+        # check whether this looks like a php var
+        phpvar = re.compile(r"([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
                             re.DOTALL)
         for var in phpvars:
             result = phpvar.search(var)
