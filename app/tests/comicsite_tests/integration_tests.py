@@ -597,7 +597,7 @@ class ViewsTest(ComicframeworkTestCase):
         """
 
         testpage1 = Page.objects.filter(title='testpage1')
-        self.assert_(testpage1.exists(), "could not find page 'testpage1'")
+        self.assertTrue(testpage1.exists(), "could not find page 'testpage1'")
         self.assertEqual(len(testpage1), 1)
         url = reverse("admin:comicmodels_page_permissions",
                       args=[testpage1[0].pk])

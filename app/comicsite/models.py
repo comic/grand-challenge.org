@@ -2,11 +2,10 @@ import logging
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
-from django.template import loader, Context
+from django.template import loader
 from django.utils.html import strip_tags
 from userena.signals import signup_complete
 
@@ -217,21 +216,20 @@ def send_templated_email(subject, email_template_name, email_context, recipients
 
     """
 
-    c = Context(email_context)
     # Add current app so {% url admin:index %} will resolve to project admin
     # like /site/vessel12/admin instead of /admin
     # if there is no project defined, do not add current app, which will render
     # email with links to main admin
-    if "project" in c and request is not None:
-        request.current_app = c['project'].get_project_admin_instance_name()
+    if "project" in email_context and request is not None:
+        request.current_app = email_context['project'].get_project_admin_instance_name()
 
     # We can only send mail from the DEFAULT_FROM_EMAIL now
     sender = settings.DEFAULT_FROM_EMAIL
 
     template = loader.get_template(email_template_name)
 
-    text_part = strip_tags(template.render(context=c, request=request))
-    html_part = template.render(context=c, request=request)
+    text_part = strip_tags(template.render(email_context, request=request))
+    html_part = template.render(email_context, request=request)
 
     if type(recipients) == str:
         if recipients.find(','):
