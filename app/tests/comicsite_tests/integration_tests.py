@@ -253,17 +253,17 @@ class ComicframeworkTestCase(TestCase):
                         " appear to be registered." % (user.username, url))
 
     def _test_page_can_be_viewed(self, user, page):
-        page_url = reverse('pages:page-detail',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.comicsite.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_be_viewed(user, page_url)
 
     def _test_page_can_not_be_viewed(self, user, page):
-        page_url = reverse('pages:page-detail',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.comicsite.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_not_be_viewed(user, page_url)
@@ -679,9 +679,9 @@ class ViewsTest(ComicframeworkTestCase):
         https://github.com/comic/comic-django/issues/219
         
         """
-        page_url = reverse('pages:page-detail',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": self.testproject.short_name,
+                               "challenge_short_name": self.testproject.short_name,
                                "page_title": "doesnotexistpage"})
 
         response, username = self._view_url(None, page_url)
@@ -1135,8 +1135,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         # Sanity check: do two different pages give different urls?
-        content = "-url1-{% url 'pages:page-detail' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
-        content += "-url2-{% url 'pages:page-detail' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
+        content = "-url1-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
+        content += "-url2-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
         urlpage = create_page_in_admin(self.testproject, "testurltagpage",
                                        content)
 

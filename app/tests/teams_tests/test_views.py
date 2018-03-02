@@ -3,10 +3,14 @@ import pytest
 from django.conf import settings
 from django.test import Client
 
-from tests.evaluation_tests.test_views import \
-    validate_admin_or_participant_view, get_view_for_user, \
-    assert_viewname_redirect, assert_viewname_status, validate_open_view
 from tests.factories import TeamFactory, TeamMemberFactory
+from tests.utils import (
+    get_view_for_user,
+    assert_viewname_status,
+    assert_viewname_redirect,
+    validate_admin_or_participant_view,
+    validate_open_view,
+)
 
 
 def validate_owner_or_admin_view(*,

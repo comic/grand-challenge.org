@@ -378,7 +378,7 @@ class PageAdmin(ComicModelAdmin):
                                                 current_app=self.admin_site.name))
         # ========== elif added by Sjoerd ========
         elif "save_goto_page" in request.POST:
-            return HttpResponseRedirect(reverse('pages:page-detail',
+            return HttpResponseRedirect(reverse('pages:detail',
                                                 args=[obj.comicsite.short_name,
                                                       obj.title]))
 
@@ -480,8 +480,8 @@ class PageInline(LinkedInline):
     def link(self, obj):
         # def page(request, site_short_name, page_title):
         """ Link to page directly so you can view it as regular user"""
-        link_url = reverse('pages:page-detail',
-                           kwargs={"site_short_name": obj.comicsite.short_name,
+        link_url = reverse('pages:detail',
+                           kwargs={"challenge_short_name": obj.comicsite.short_name,
                                    "page_title": obj.title})
         link_text = "view " + obj.title
         link_html = "<a href=\"" + link_url + "\">" + link_text + "</a>"

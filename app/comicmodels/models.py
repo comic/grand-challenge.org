@@ -742,7 +742,7 @@ class Page(ComicSiteModel):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
 
-        url = reverse('pages:page-detail',
+        url = reverse('pages:detail',
                       args=[self.comicsite.short_name, self.title])
         return url
 
