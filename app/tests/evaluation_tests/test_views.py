@@ -97,7 +97,7 @@ def test_method_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:method-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=method.pk,
+                             reverse_kwargs={'pk': method.pk},
                              client=client)
 
 
@@ -200,7 +200,7 @@ def test_submission_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:submission-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=submission.pk,
+                             reverse_kwargs={'pk': submission.pk},
                              client=client)
 
 
@@ -275,7 +275,7 @@ def test_job_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:job-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=job.pk,
+                             reverse_kwargs={'pk': job.pk},
                              client=client)
 
 
@@ -299,5 +299,5 @@ def test_result_detail(client, EvalChallengeSet):
 
     validate_open_view(viewname='evaluation:result-detail',
                        challenge_set=EvalChallengeSet.ChallengeSet,
-                       pk=result.pk,
+                       reverse_kwargs={'pk': result.pk},
                        client=client)
