@@ -8,7 +8,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, CreateView
 
-from comicmodels.models import Page
+from comicmodels.models import Page, ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import (
@@ -32,6 +32,10 @@ class PageCreate(UserIsChallengeAdminMixin, CreateView):
 
         return kwargs
 
+    def form_valid(self, form):
+        form.instance.comicsite = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(PageCreate, self).form_valid(form)
 
 
 class PageList(UserIsChallengeAdminMixin, ListView):

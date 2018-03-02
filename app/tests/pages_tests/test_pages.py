@@ -1,5 +1,6 @@
 import pytest
 
+from comicmodels.models import Page
 from tests.factories import PageFactory
 from tests.utils import (
     validate_admin_only_view,
@@ -50,3 +51,55 @@ def test_page_list_filter(client, TwoChallengeSets):
 
     assert p1.title not in response.rendered_content
     assert p2.title in response.rendered_content
+
+@pytest.mark.django_db
+def test_page_create(client, TwoChallengeSets):
+    page_html = '<h1>HELLO WORLD</h1>'
+    page_title = 'testpage1'
+
+    response = get_view_for_user(
+        viewname='pages:create',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.admin,
+        data={
+            'title': page_title,
+            'html': page_html,
+            'permission_lvl': Page.ALL,
+        }
+    )
+
+    assert response.status_code == 302
+
+    response = get_view_for_user(
+        url=response.url,
+        client=client,
+        method=client.get,
+    )
+
+    assert response.status_code == 200
+    assert page_html in str(response.content)
+
+    # Check that it was created in the correct challenge
+    response = get_view_for_user(
+        viewname='pages:detail',
+        client=client,
+        method=client.get,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        reverse_kwargs={'page_title': page_title}
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname='pages:detail',
+        client=client,
+        method=client.get,
+        challenge=TwoChallengeSets.ChallengeSet2.challenge,
+        reverse_kwargs={'page_title': page_title}
+    )
+
+    assert response.status_code == 404
+
+

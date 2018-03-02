@@ -41,19 +41,21 @@ def get_view_for_user(*,
                       challenge: ComicSite = None,
                       client: Client,
                       method: Callable,
-                      pk: str = None,
                       user: settings.AUTH_USER_MODEL = None,
                       url: str = None,
+                      reverse_kwargs: dict = None,
                       **kwargs):
     """ Returns the view for a particular user """
     if url is None:
 
-        reverse_kwargs = {'challenge_short_name': challenge.short_name}
+        extra_kwargs = {'challenge_short_name': challenge.short_name}
 
-        if pk is not None:
-            reverse_kwargs['pk'] = pk
+        if reverse_kwargs is not None:
+            for key, value in reverse_kwargs.items():
+                if value is not None:
+                    extra_kwargs.update({key: value})
 
-        url = reverse(viewname, kwargs=reverse_kwargs)
+        url = reverse(viewname, kwargs=extra_kwargs)
 
     elif viewname:
         raise AttributeError('You defined both a viewname and a url, only '
@@ -63,10 +65,11 @@ def get_view_for_user(*,
         client.login(username=user.username,
                      password=SUPER_SECURE_TEST_PASSWORD)
 
-    response = method(url, **kwargs)
-
-    if user:
-        client.logout()
+    try:
+        response = method(url, **kwargs)
+    finally:
+        if user:
+            client.logout()
 
     return response
 

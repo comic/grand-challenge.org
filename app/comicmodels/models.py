@@ -677,8 +677,7 @@ class Page(ComicSiteModel):
                                  help_text="Do not display this page in site menu")
     html = RichTextField()
 
-    def clean(self):
-        """ clean method is called automatically for each save in admin"""
+    def save(self, *args, **kwargs):
 
         # when saving for the first time only, put this page last in order
         if not self.id:
@@ -689,10 +688,12 @@ class Page(ComicSiteModel):
             except ObjectDoesNotExist:
                 max_order = None
 
-            if max_order["order__max"] is None:
-                self.order = 1
-            else:
+            try:
                 self.order = max_order["order__max"] + 1
+            except (TypeError):
+                self.order = 1
+
+        super(Page, self).save(*args, **kwargs)
 
     def rawHTML(self):
         """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
