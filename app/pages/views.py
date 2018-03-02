@@ -1,14 +1,18 @@
 import mimetypes
 from os import path
 
+from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from django.urls import reverse
 
-from comicmodels.models import Page, ComicSiteModel
-from comicsite.views import site_get_standard_vars, getRenderedPageIfAllowed, \
-    get_data_folder_path
+from comicmodels.models import Page
+from comicsite.core.urlresolvers import reverse
+from comicsite.views import (
+    site_get_standard_vars,
+    getRenderedPageIfAllowed,
+    get_data_folder_path,
+)
 from filetransfers.api import serve_file
 
 
@@ -85,13 +89,10 @@ def inserted_file(request, site_short_name, filepath=""):
     # can this location be served regularly (e.g. it is in public folder)?
     serve_allowed = can_access(request.user, filepath, site_short_name)
 
-    # if not, linking to anywhere should be possible because it is convenient
-    # and the security risk is not too great. TODO (is it not?)
     if not serve_allowed:
-        serve_allowed = can_access(request.user,
-                                   filepath,
-                                   site_short_name,
-                                   override_permission=ComicSiteModel.REGISTERED_ONLY)
+        raise PermissionDenied(
+            "You do not have the correct permissions to access this page."
+        )
 
     if serve_allowed:
         try:
@@ -103,5 +104,6 @@ def inserted_file(request, site_short_name, filepath=""):
         return serve_file(request, django_file)
 
     else:
-        return HttpResponseForbidden("This file is not available without "
-                                     "credentials")
+        return HttpResponseForbidden(
+            "This file is not available without credentials."
+        )
