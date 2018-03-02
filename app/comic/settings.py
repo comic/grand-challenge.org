@@ -274,6 +274,7 @@ INSTALLED_APPS = (
     # bootstrap forms
     'crispy_forms',
     'teams',
+    'pages',
 )
 
 AUTHENTICATION_BACKENDS = (

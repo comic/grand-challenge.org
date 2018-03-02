@@ -7,9 +7,7 @@ from comicsite.api import get_public_results
 from comicsite.views import (
     ParticipantRegistration,
     site,
-    insertedpage,
     _register,
-    page,
 )
 from filetransfers.views import serve
 
@@ -48,9 +46,6 @@ urlpatterns = [
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         get_public_results),
 
-    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/insert/('
-        r'?P<dropboxpath>.+)/$', insertedpage, name='challenge-insertedpage'),
-
     url(r'^(?P<challenge_short_name>[\w-]+)/participant-registration/$',
         ParticipantRegistration.as_view(), name='participant-registration'),
 
@@ -58,6 +53,6 @@ urlpatterns = [
         _register, name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
-    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$',
-        page, name='challenge-page'),
+    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/',
+        include('pages.urls')),
 ]

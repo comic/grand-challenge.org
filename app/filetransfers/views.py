@@ -67,21 +67,14 @@ def delete_handler(request, pk):
     return HttpResponseRedirect(reverse('challenge-upload-handler', kwargs={'site_short_name': comicsitename}))
 
 
-def can_access(user, path, project_name, override_permission=""):
+def can_access(user, path, project_name):
     """ Does this user have permission to access folder path which is part of
     project named project_name?
     Override permission can be used to make certain folders servable through
     code even though this would not be allowed otherwise
          
     """
-    if override_permission == "":
-        required = _required_permission(user, path, project_name)
-    else:
-        choices = [x[0] for x in ComicSiteModel.PERMISSIONS_CHOICES]
-        if not override_permission in choices:
-            raise Exception("input parameters should be one of [%s], "
-                           "found '%s' " % (",".join(choices), override_permission))
-        required = override_permission
+    required = _required_permission(user, path, project_name)
 
     if required == ComicSiteModel.ALL:
         return True
@@ -161,7 +154,7 @@ def startwith_any(path, start_options):
     return False
 
 
-def serve(request, project_name, path, document_root=None, override_permission=""):
+def serve(request, project_name, path, document_root=None):
     """
     Serve static file for a given project. 
     
@@ -208,7 +201,7 @@ def serve(request, project_name, path, document_root=None, override_permission="
     if not storage.exists(fullpath):
         raise Http404('"%(path)s" does not exist' % {'path': fullpath})
 
-    if can_access(request.user, path, project_name, override_permission):
+    if can_access(request.user, path, project_name):
         try:
             f = storage.open(fullpath, 'rb')
             file = File(f)  # create django file object
