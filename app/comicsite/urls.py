@@ -9,7 +9,6 @@ from comicsite.views import (
     site,
     insertedpage,
     _register,
-    page,
 )
 from filetransfers.views import serve
 
@@ -58,6 +57,6 @@ urlpatterns = [
         _register, name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
-    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/$',
-        page, name='challenge-page'),
+    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/',
+        include('pages.urls')),
 ]

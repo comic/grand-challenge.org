@@ -282,22 +282,6 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     return currentpage
 
 
-def page(request, site_short_name, page_title):
-    """ show a single page on a site """
-
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-    currentpage = getRenderedPageIfAllowed(page_title, request, site)
-    response = render(request, 'page.html', {'currentpage': currentpage})
-
-    # TODO: THis has code smell. If page has to be checked like this, is it 
-    # ok to use a page object for error messages?
-    if hasattr(currentpage, "is_error_page"):
-        if currentpage.is_error_page:
-            response.status_code = 403
-
-    return response
-
-
 def insertedpage(request, site_short_name, page_title, dropboxpath):
     """ show contents of a file from the local dropbox folder for this project
      
