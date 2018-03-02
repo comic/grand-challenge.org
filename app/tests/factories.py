@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from comicmodels.models import ComicSite
+from comicmodels.models import ComicSite, Page
 from evaluation.models import Submission, Job, Method, Result
 from teams.models import Team, TeamMember
 
@@ -15,6 +15,13 @@ class ChallengeFactory(factory.DjangoModelFactory):
         model = ComicSite
 
     short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
+
+
+class PageFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Page
+
+    comicsite = factory.SubFactory(ChallengeFactory)
 
 
 class UserFactory(factory.DjangoModelFactory):

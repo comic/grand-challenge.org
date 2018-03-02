@@ -3,6 +3,7 @@ from os import path
 
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
+from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView
@@ -21,6 +22,11 @@ from filetransfers.views import can_access
 
 class PageList(UserIsChallengeAdminMixin, ListView):
     model = Page
+
+    def get_queryset(self):
+        queryset = super(PageList, self).get_queryset()
+
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
 
 
 def page(request, challenge_short_name, page_title):
