@@ -24,6 +24,19 @@ def test_page_admin_permissions(view, client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
+def test_page_update_permissions(client, TwoChallengeSets):
+    p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                     title='challenge1page1permissiontest')
+
+    validate_admin_only_view(
+        viewname='pages:update',
+        two_challenge_set=TwoChallengeSets,
+        client=client,
+        reverse_kwargs={'page_title': p1.title},
+    )
+
+
+@pytest.mark.django_db
 def test_page_list_filter(client, TwoChallengeSets):
     """ Check that only pages related to this challenge are listed """
     p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
@@ -51,6 +64,7 @@ def test_page_list_filter(client, TwoChallengeSets):
 
     assert p1.title not in response.rendered_content
     assert p2.title in response.rendered_content
+
 
 @pytest.mark.django_db
 def test_page_create(client, TwoChallengeSets):
@@ -101,5 +115,3 @@ def test_page_create(client, TwoChallengeSets):
     )
 
     assert response.status_code == 404
-
-

@@ -39,14 +39,17 @@
                     <a href="{{ page.get_absolute_url }}">View {{ page.title }}</a>
                 </td>
                 <td>
-                    <i class="fa fa-edit" title="edit"></i>
+                    <a href="{% url 'pages:update' site.short_name page.title %}">
+                        <i class="fa fa-edit" title="edit"></i>
+                    </a>
                 </td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
-    <p><a class="btn btn-primary" href="{% url 'pages:create' site.short_name %}">
+    <p><a class="btn btn-primary"
+          href="{% url 'pages:create' site.short_name %}">
         <i class="fa fa-plus"></i> Add a new page
     </a></p>
 

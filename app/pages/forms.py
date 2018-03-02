@@ -6,16 +6,6 @@ from comicmodels.models import Page
 
 
 class PageCreateForm(forms.ModelForm):
-    move = forms.CharField(widget=forms.Select)
-    move.required = False
-    move.widget.choices = (
-        (BLANK_CHOICE_DASH[0]),
-        ('FIRST', 'First'),
-        ('UP', 'Up'),
-        ('DOWN', 'Down'),
-        ('LAST', 'Last'),
-    )
-
     def __init__(self, *args, **kwargs):
         challenge_name = kwargs.pop('challenge_short_name', None)
 
@@ -29,3 +19,16 @@ class PageCreateForm(forms.ModelForm):
     class Meta:
         model = Page
         fields = ('title', 'permission_lvl', 'display_title', 'hidden', 'html')
+
+
+class PageUpdateForm(PageCreateForm):
+    """ Like the page update form but you can also move the page """
+    move = forms.CharField(widget=forms.Select)
+    move.required = False
+    move.widget.choices = (
+        (BLANK_CHOICE_DASH[0]),
+        ('FIRST', 'First'),
+        ('UP', 'Up'),
+        ('DOWN', 'Down'),
+        ('LAST', 'Last'),
+    )

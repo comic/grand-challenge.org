@@ -46,15 +46,14 @@
         <br/>
 
         {% get_obj_perms user for site as "site_perms" %}
-        {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+        {% if "change_comicsite" in site_perms %}
 
             <a class="editPageLink"
-               href="{% url 'admin:comicmodels_page_change' currentpage.pk %}">Edit
-                this page</a>
+               href="{% url 'pages:update' currentpage.comicsite.short_name currentpage.title %}">
+                Edit this page
+            </a>
         {% endif %}
 
-
     {% endblock %}
-
 
 {% endblock %}
