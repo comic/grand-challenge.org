@@ -115,3 +115,49 @@ def test_page_create(client, TwoChallengeSets):
     )
 
     assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_page_update(client, ChallengeSet):
+    p1 = PageFactory(comicsite=ChallengeSet.challenge,
+                     title='challenge1page1updatetest',
+                     html='oldhtml')
+
+    response = get_view_for_user(
+        viewname='pages:update',
+        client=client,
+        method=client.get,
+        challenge=ChallengeSet.challenge,
+        user=ChallengeSet.admin,
+        reverse_kwargs={'page_title': p1.title}
+    )
+
+    assert response.status_code == 200
+    assert 'value=\"challenge1page1updatetest\"' in response.rendered_content
+
+    response = get_view_for_user(
+        viewname='pages:update',
+        client=client,
+        method=client.post,
+        challenge=ChallengeSet.challenge,
+        user=ChallengeSet.admin,
+        reverse_kwargs={'page_title': p1.title},
+        data={
+            'title': 'editedtitle',
+            'permission_lvl': Page.ALL,
+            'html': 'newhtml',
+        }
+    )
+
+    assert response.status_code == 302
+
+    response = get_view_for_user(
+        viewname='pages:detail',
+        client=client,
+        method=client.get,
+        challenge=ChallengeSet.challenge,
+        user=ChallengeSet.admin,
+        reverse_kwargs={'page_title': 'editedtitle'},
+    )
+
+    assert response.status_code == 200
+    assert 'newhtml' in str(response.content)

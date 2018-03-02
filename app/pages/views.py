@@ -50,6 +50,16 @@ class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
 
+    def get_form_kwargs(self):
+        kwargs = super(PageUpdate, self).get_form_kwargs()
+        kwargs.update({'challenge_short_name': self.request.projectname})
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.comicsite = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(PageUpdate, self).form_valid(form)
+
 
 def page(request, challenge_short_name, page_title):
     """ show a single page on a site """
