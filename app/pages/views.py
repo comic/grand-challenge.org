@@ -6,7 +6,7 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView
+from django.views.generic import ListView, CreateView
 
 from comicmodels.models import Page
 from comicsite.core.urlresolvers import reverse
@@ -18,6 +18,20 @@ from comicsite.views import (
 )
 from filetransfers.api import serve_file
 from filetransfers.views import can_access
+from pages.forms import PageCreateForm
+
+
+class PageCreate(UserIsChallengeAdminMixin, CreateView):
+    model = Page
+    form_class = PageCreateForm
+
+    def get_form_kwargs(self):
+        kwargs = super(PageCreate, self).get_form_kwargs()
+
+        kwargs.update({'challenge_short_name': self.request.projectname})
+
+        return kwargs
+
 
 
 class PageList(UserIsChallengeAdminMixin, ListView):

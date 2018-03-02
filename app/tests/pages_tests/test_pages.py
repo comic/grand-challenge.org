@@ -7,9 +7,16 @@ from tests.utils import (
 
 
 @pytest.mark.django_db
-def test_page_list_permissions(client, TwoChallengeSets):
+@pytest.mark.parametrize(
+    "view",
+    [
+        'pages:list',
+        'pages:create',
+    ]
+)
+def test_page_admin_permissions(view, client, TwoChallengeSets):
     validate_admin_only_view(
-        viewname='pages:list',
+        viewname=view,
         two_challenge_set=TwoChallengeSets,
         client=client
     )

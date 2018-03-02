@@ -46,6 +46,10 @@
         </tbody>
     </table>
 
+    <p><a class="btn btn-primary" href="{% url 'pages:create' site.short_name %}">
+        <i class="fa fa-plus"></i> Add a new page
+    </a></p>
+
     <script type="text/javascript">
         $(document).ready(function () {
             $('#pagesTable').DataTable({

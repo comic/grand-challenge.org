@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+{% load crispy from crispy_forms_tags %}
+
+{% block pagecontent %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.media }}
+        {{ form | crispy }}
+        <input type="submit" value="Save"/>
+    </form>
+
+{% endblock %}
