@@ -1,14 +1,12 @@
-import mimetypes
 from itertools import chain
 from os import path
 
 from auth_mixins import LoginRequiredMixin
 from django.conf import settings
-from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponse, Http404
+from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 from django.views.generic import TemplateView
@@ -17,14 +15,10 @@ from comicmodels.models import (
     ComicSite,
     Page,
     ErrorPage,
-    ComicSiteModel,
     RegistrationRequest,
 )
 from comicsite.core.urlresolvers import reverse
-from comicsite.template.context import (
-    ComicSiteRequestContext,
-)
-from filetransfers.api import serve_file
+from comicsite.template.context import ComicSiteRequestContext
 
 
 def index(request):
@@ -282,49 +276,6 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     return currentpage
 
 
-def insertedpage(request, site_short_name, page_title, dropboxpath):
-    """ show contents of a file from the local dropbox folder for this project
-     
-    """
-
-    (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
-
-    if mimetype is None:
-        mimetype = "NoneType"  # make the next statement not crash on non-existant mimetype
-
-    if mimetype.startswith("image"):
-        return inserted_file(request, site_short_name, dropboxpath)
-
-    if mimetype == "application/pdf" or mimetype == "application/zip":
-        return inserted_file(request, site_short_name, dropboxpath)
-
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
-
-    p = get_object_or_404(Page, comicsite__short_name=site.short_name,
-                          title=page_title)
-
-    baselink = reverse('challenge-page',
-                       kwargs={'site_short_name': p.comicsite.short_name,
-                               'page_title': p.title})
-
-    msg = "<div class=\"breadcrumbtrail\"> Displaying '" + dropboxpath + "' from local dropboxfolder, originally linked from\
-           page <a href=\"" + baselink + "\">" + p.title + "</a> </div>"
-    p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
-
-    currentpage = getRenderedPageIfAllowed(p, request, site)
-
-    return render(
-        request,
-        'dropboxpage.html',
-        {
-            'site': site,
-            'currentpage': currentpage,
-            "pages": pages,
-            "metafooterpages": metafooterpages
-        },
-    )
-
-
 def get_data_folder_path(project_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
@@ -340,42 +291,6 @@ def get_dirnames(path):
     dirnames = storage.listdir(path)[0]
     dirnames.sort()
     return dirnames
-
-
-def inserted_file(request, site_short_name, filepath=""):
-    """ Get image from local dropbox and serve. 
-        
-    """
-
-    from filetransfers.views import can_access
-
-    data_folder_root = get_data_folder_path(site_short_name)
-
-    filename = path.join(data_folder_root, filepath)
-
-    # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(request.user, filepath, site_short_name)
-
-    # if not, linking to anywhere should be possible because it is convenient
-    # and the security risk is not too great. TODO (is it not?)     
-    if not serve_allowed:
-        serve_allowed = can_access(request.user,
-                                   filepath,
-                                   site_short_name,
-                                   override_permission=ComicSiteModel.REGISTERED_ONLY)
-
-    if serve_allowed:
-        try:
-            file = open(filename, "rb")
-        except Exception:
-            raise Http404
-
-        django_file = File(file)
-        return serve_file(request, django_file)
-
-    else:
-        return HttpResponseForbidden("This file is not available without "
-                                     "credentials")
 
 
 def comicmain(request, page_title=""):
