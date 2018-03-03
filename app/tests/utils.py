@@ -40,7 +40,7 @@ def get_view_for_user(*,
                       viewname: str = None,
                       challenge: ComicSite = None,
                       client: Client,
-                      method: Callable,
+                      method: Callable = None,
                       user: settings.AUTH_USER_MODEL = None,
                       url: str = None,
                       reverse_kwargs: dict = None,
@@ -64,6 +64,9 @@ def get_view_for_user(*,
     if user and not isinstance(user, AnonymousUser):
         client.login(username=user.username,
                      password=SUPER_SECURE_TEST_PASSWORD)
+
+    if method is None:
+        method = client.get
 
     try:
         response = method(url, **kwargs)
@@ -106,7 +109,6 @@ def validate_admin_only_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -130,7 +132,6 @@ def validate_admin_only_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -148,7 +149,6 @@ def validate_admin_or_participant_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -172,7 +172,6 @@ def validate_admin_or_participant_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -195,7 +194,6 @@ def validate_open_view(*,
     for test in tests:
         assert_viewname_status(code=test[0],
                                challenge=challenge_set.challenge,
-                               method=client.get,
                                client=client,
                                user=test[1],
                                **kwargs)

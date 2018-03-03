@@ -57,7 +57,6 @@ def test_page_list_filter(client, TwoChallengeSets):
     response = get_view_for_user(
         viewname='pages:list',
         client=client,
-        method=client.get,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12)
 
@@ -67,7 +66,6 @@ def test_page_list_filter(client, TwoChallengeSets):
     response = get_view_for_user(
         viewname='pages:list',
         client=client,
-        method=client.get,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
         user=TwoChallengeSets.admin12
     )
@@ -99,7 +97,6 @@ def test_page_create(client, TwoChallengeSets):
     response = get_view_for_user(
         url=response.url,
         client=client,
-        method=client.get,
     )
 
     assert response.status_code == 200
@@ -109,7 +106,6 @@ def test_page_create(client, TwoChallengeSets):
     response = get_view_for_user(
         viewname='pages:detail',
         client=client,
-        method=client.get,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         reverse_kwargs={'page_title': page_title}
     )
@@ -119,7 +115,6 @@ def test_page_create(client, TwoChallengeSets):
     response = get_view_for_user(
         viewname='pages:detail',
         client=client,
-        method=client.get,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
         reverse_kwargs={'page_title': page_title}
     )
@@ -135,7 +130,6 @@ def test_page_update(client, ChallengeSet):
     response = get_view_for_user(
         viewname='pages:update',
         client=client,
-        method=client.get,
         challenge=ChallengeSet.challenge,
         user=ChallengeSet.admin,
         reverse_kwargs={'page_title': p1.title}
@@ -163,7 +157,6 @@ def test_page_update(client, ChallengeSet):
     response = get_view_for_user(
         viewname='pages:detail',
         client=client,
-        method=client.get,
         challenge=ChallengeSet.challenge,
         user=ChallengeSet.admin,
         reverse_kwargs={'page_title': 'editedtitle'},

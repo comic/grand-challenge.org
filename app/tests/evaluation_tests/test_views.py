@@ -116,7 +116,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant)
     assert str(p_s1.pk) in response.rendered_content
     assert str(p_s2.pk) in response.rendered_content
@@ -129,7 +128,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.admin)
     assert str(p_s1.pk) in response.rendered_content
     assert str(p_s2.pk) in response.rendered_content
@@ -142,7 +140,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.participant12)
     assert str(p12_s1_c1.pk) in response.rendered_content
     assert str(p12_s1_c2.pk) not in response.rendered_content
@@ -168,7 +165,6 @@ def test_submission_time_limit(client, TwoChallengeSets):
         return get_view_for_user(viewname='evaluation:submission-create',
                                  challenge=TwoChallengeSets.ChallengeSet1.challenge,
                                  client=client,
-                                 method=client.get,
                                  user=TwoChallengeSets.ChallengeSet1.participant)
 
     assert 'make 9 more' in get_submission_view().rendered_content
@@ -219,7 +215,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant)
     assert str(j_p_s1.pk) in response.rendered_content
     assert str(j_p_s2.pk) in response.rendered_content
@@ -232,7 +227,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.admin)
     assert str(j_p_s1.pk) in response.rendered_content
     assert str(j_p_s2.pk) in response.rendered_content
@@ -245,7 +239,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.participant12)
     assert str(j_p12_s1_c1.pk) in response.rendered_content
     assert str(j_p12_s1_c2.pk) not in response.rendered_content

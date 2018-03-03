@@ -24,7 +24,6 @@ def validate_owner_or_admin_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -48,7 +47,6 @@ def validate_owner_or_admin_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -66,7 +64,6 @@ def validate_member_owner_or_admin_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -90,7 +87,6 @@ def validate_member_owner_or_admin_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -187,7 +183,6 @@ def test_team_creation(client, TwoChallengeSets, team_name):
     response = get_view_for_user(
         url=response.url,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant,
     )
 
