@@ -11,9 +11,10 @@
             <th>Order</th>
             <th>Title</th>
             <th>Display Title</th>
-            <th>Visible?</th>
+            <th>Visibility</th>
             <th>View</th>
             <th>Edit</th>
+            <th>Delete</th>
         </tr>
         </thead>
         <tbody>
@@ -26,13 +27,19 @@
                     <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
                 </td>
                 <td>
-                    <a href="{{ page.get_absolute_url }}">{{ page.display_title }}</a>
+                    <a href="{{ page.get_absolute_url }}">
+                        {% if page.display_title %}
+                            {{ page.display_title }}
+                        {% else %}
+                            {{ page.title }}
+                        {% endif %}
+                    </a>
                 </td>
                 <td>
                     {% if page.hidden %}
-                        <i class="fa fa-eye-slash" title="hidden"></i>
+                        <i class="fa fa-eye-slash text-danger" title="Page is hidden"></i>
                     {% else %}
-                        <i class="fa fa-eye" title="visible"></i>
+                        <i class="fa fa-eye text-success" title="Page is visible"></i>
                     {% endif %}
                 </td>
                 <td>
@@ -40,7 +47,12 @@
                 </td>
                 <td>
                     <a href="{% url 'pages:update' site.short_name page.title %}">
-                        <i class="fa fa-edit" title="edit"></i>
+                        <i class="fa fa-edit" title="Edit Page"></i>
+                    </a>
+                </td>
+                <td>
+                    <a href="{% url 'pages:delete' site.short_name page.title %}">
+                        <i class="fa fa-trash text-danger" title="Delete Page"></i>
                     </a>
                 </td>
             </tr>

@@ -6,7 +6,7 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from comicmodels.models import Page, ComicSite
 from comicsite.core.urlresolvers import reverse
@@ -59,6 +59,12 @@ class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
         form.instance.comicsite = ComicSite.objects.get(
             pk=self.request.project_pk)
         return super(PageUpdate, self).form_valid(form)
+
+
+class PageDelete(UserIsChallengeAdminMixin, DeleteView):
+    model = Page
+    slug_url_kwarg = 'page_title'
+    slug_field = 'title'
 
 
 def page(request, challenge_short_name, page_title):

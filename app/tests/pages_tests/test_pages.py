@@ -13,13 +13,23 @@ from tests.utils import (
     [
         'pages:list',
         'pages:create',
+        'pages:delete',
     ]
 )
 def test_page_admin_permissions(view, client, TwoChallengeSets):
+
+    if view == 'pages:delete':
+        PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                    title='challenge1pagepermtest')
+        reverse_kwargs = {'page_title': 'challenge1pagepermtest'}
+    else:
+        reverse_kwargs = None
+
     validate_admin_only_view(
         viewname=view,
         two_challenge_set=TwoChallengeSets,
-        client=client
+        client=client,
+        reverse_kwargs=reverse_kwargs,
     )
 
 
