@@ -50,6 +50,7 @@ class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
     form_class = PageUpdateForm
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
+    template_name_suffix = '_form_update'
 
     def get_queryset(self):
         queryset = super(PageUpdate, self).get_queryset()
@@ -61,9 +62,9 @@ class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        form.instance.comicsite = ComicSite.objects.get(
-            pk=self.request.project_pk)
-        return super(PageUpdate, self).form_valid(form)
+        response = super(PageUpdate, self).form_valid(form)
+        self.object.move(form.cleaned_data['move'])
+        return response
 
 
 class PageDelete(UserIsChallengeAdminMixin, DeleteView):

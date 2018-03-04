@@ -27,8 +27,8 @@ class PageUpdateForm(PageCreateForm):
     move.required = False
     move.widget.choices = (
         (BLANK_CHOICE_DASH[0]),
-        ('FIRST', 'First'),
-        ('UP', 'Up'),
-        ('DOWN', 'Down'),
-        ('LAST', 'Last'),
+        (Page.FIRST, 'First'),
+        (Page.UP, 'Up'),
+        (Page.DOWN, 'Down'),
+        (Page.LAST, 'Last'),
     )

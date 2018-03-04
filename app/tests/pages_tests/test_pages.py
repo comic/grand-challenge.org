@@ -1,4 +1,5 @@
 import pytest
+from django.db.models import BLANK_CHOICE_DASH
 
 from comicmodels.models import Page
 from tests.factories import PageFactory
@@ -130,13 +131,14 @@ def test_page_update(client, TwoChallengeSets):
 
     # page with the same name in another challenge to check selection
     PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
-                title='page1updatetest')
+                title='page1updatetest',
+                html='oldhtml')
 
     response = get_view_for_user(
         viewname='pages:update',
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        user=TwoChallengeSets.ChallengeSet1.admin,
+        user=TwoChallengeSets.admin12,
         reverse_kwargs={'page_title': p1.title}
     )
 
@@ -148,7 +150,7 @@ def test_page_update(client, TwoChallengeSets):
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        user=TwoChallengeSets.ChallengeSet1.admin,
+        user=TwoChallengeSets.admin12,
         reverse_kwargs={'page_title': p1.title},
         data={
             'title': 'editedtitle',
@@ -163,12 +165,24 @@ def test_page_update(client, TwoChallengeSets):
         viewname='pages:detail',
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        user=TwoChallengeSets.ChallengeSet1.admin,
+        user=TwoChallengeSets.admin12,
         reverse_kwargs={'page_title': 'editedtitle'},
     )
 
     assert response.status_code == 200
     assert 'newhtml' in str(response.content)
+
+    # check that the other page is unaffected
+    response = get_view_for_user(
+        viewname='pages:detail',
+        client=client,
+        challenge=TwoChallengeSets.ChallengeSet2.challenge,
+        user=TwoChallengeSets.admin12,
+        reverse_kwargs={'page_title': 'page1updatetest'},
+    )
+
+    assert response.status_code == 200
+    assert 'oldhtml' in str(response.content)
 
 
 @pytest.mark.django_db
@@ -205,6 +219,55 @@ def test_page_delete(client, TwoChallengeSets):
     assert response.status_code == 200
 
 
-# TODO: Test page moving
+def assert_page_order(pages, expected):
+    for page, order in zip(pages, expected):
+        assert Page.objects.get(pk=page.pk).order == order
 
-# TODO: Remove the sortables on edit etc.
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "page_to_move,move_op,expected",
+    [
+        (2, Page.UP, [1, 3, 2, 4]),
+        (1, Page.DOWN, [1, 3, 2, 4]),
+        (2, Page.FIRST, [2, 3, 1, 4]),
+        (1, Page.LAST, [1, 4, 2, 3]),
+        (0, BLANK_CHOICE_DASH[0], [1, 2, 3, 4]),
+    ]
+)
+def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
+    pages = []
+    c2_pages = []
+
+    for i in range(4):
+        pages.append(
+            PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge))
+
+        # Same page name in challenge 2, make sure that these are unaffected
+        c2_pages.append(PageFactory(
+            comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+            title=pages[i].title
+        ))
+
+    assert_page_order(pages, [1, 2, 3, 4])
+    assert_page_order(c2_pages, [1, 2, 3, 4])
+
+    response = get_view_for_user(
+        viewname='pages:update',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.admin12,
+        reverse_kwargs={'page_title': pages[page_to_move].title},
+        data={
+            'title': pages[page_to_move].title,
+            'permission_lvl': pages[page_to_move].permission_lvl,
+            'html': pages[page_to_move].html,
+            'move': move_op,
+        }
+    )
+
+    assert response.status_code == 302
+
+    assert_page_order(pages, expected)
+    assert_page_order(c2_pages, [1, 2, 3, 4])

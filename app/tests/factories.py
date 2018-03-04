@@ -22,6 +22,8 @@ class PageFactory(factory.DjangoModelFactory):
         model = Page
 
     comicsite = factory.SubFactory(ChallengeFactory)
+    title = factory.Sequence(lambda n: f'page_{n}')
+    html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
 
 
 class UserFactory(factory.DjangoModelFactory):

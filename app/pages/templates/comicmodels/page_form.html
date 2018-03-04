@@ -3,11 +3,17 @@
 
 {% block pagecontent %}
 
+    <h2>
+        {% block pageHeading %}
+            Create Page
+        {% endblock %}
+    </h2>
+
+
     <form action="" method="post">
         {% csrf_token %}
         {{ form.media }}
         {{ form | crispy }}
-        <input type="submit" value="Save"/>
+        <input type="submit" value="Save" class="btn btn-primary"/>
     </form>
-
 {% endblock %}

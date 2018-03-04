@@ -669,6 +669,11 @@ class ComicSiteModel(models.Model):
 class Page(ComicSiteModel):
     """ A single editable page containing html and maybe special output plugins """
 
+    UP = 'UP'
+    DOWN = 'DOWN'
+    FIRST = 'FIRST'
+    LAST = 'LAST'
+
     order = models.IntegerField(editable=False, default=1,
                                 help_text="Determines order in which page appear in site menu")
     display_title = models.CharField(max_length=255, default="", blank=True,
@@ -701,27 +706,27 @@ class Page(ComicSiteModel):
         return mark_safe(self.html)
 
     def move(self, move):
-        if move == 'UP':
+        if move == self.UP:
             mm = Page.objects.get(comicsite=self.comicsite,
                                   order=self.order - 1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
-        if move == 'DOWN':
+        elif move == self.DOWN:
             mm = Page.objects.get(comicsite=self.comicsite,
                                   order=self.order + 1)
             mm.order -= 1
             mm.save()
             self.order += 1
             self.save()
-        if move == 'FIRST':
+        elif move == self.FIRST:
             pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages, self)
             pages[idx].order = pages[0].order - 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
-        if move == 'LAST':
+        elif move == self.LAST:
             pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages, self)
             pages[idx].order = pages[len(pages) - 1].order + 1
