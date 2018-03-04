@@ -22,60 +22,55 @@ from filetransfers.views import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 
 
-class PageCreate(UserIsChallengeAdminMixin, CreateView):
-    model = Page
-    form_class = PageCreateForm
+class ComicSiteFilteredQuerysetMixin(object):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
 
+
+class ChallengeFormKwargsMixin(object):
     def get_form_kwargs(self):
-        kwargs = super(PageCreate, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs.update({'challenge_short_name': self.request.projectname})
         return kwargs
+
+
+class PageCreate(UserIsChallengeAdminMixin, ChallengeFormKwargsMixin,
+                 CreateView):
+    model = Page
+    form_class = PageCreateForm
 
     def form_valid(self, form):
         form.instance.comicsite = ComicSite.objects.get(
             pk=self.request.project_pk)
-        return super(PageCreate, self).form_valid(form)
+        return super().form_valid(form)
 
 
-class PageList(UserIsChallengeAdminMixin, ListView):
+class PageList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+               ListView):
     model = Page
 
-    def get_queryset(self):
-        queryset = super(PageList, self).get_queryset()
-        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
 
-
-class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
+class PageUpdate(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+                 ChallengeFormKwargsMixin, UpdateView):
     model = Page
     form_class = PageUpdateForm
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
     template_name_suffix = '_form_update'
 
-    def get_queryset(self):
-        queryset = super(PageUpdate, self).get_queryset()
-        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
-
-    def get_form_kwargs(self):
-        kwargs = super(PageUpdate, self).get_form_kwargs()
-        kwargs.update({'challenge_short_name': self.request.projectname})
-        return kwargs
-
     def form_valid(self, form):
-        response = super(PageUpdate, self).form_valid(form)
+        response = super().form_valid(form)
         self.object.move(form.cleaned_data['move'])
         return response
 
 
-class PageDelete(UserIsChallengeAdminMixin, DeleteView):
+class PageDelete(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+                 DeleteView):
     model = Page
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
     success_message = 'Page was successfully deleted'
-
-    def get_queryset(self):
-        queryset = super(PageDelete, self).get_queryset()
-        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
 
     def get_success_url(self):
         return reverse('pages:list', kwargs={
@@ -83,7 +78,7 @@ class PageDelete(UserIsChallengeAdminMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
-        return super(PageDelete, self).delete(request, *args, **kwargs)
+        return super().delete(request, *args, **kwargs)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

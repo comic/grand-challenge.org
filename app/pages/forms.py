@@ -9,7 +9,7 @@ class PageCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         challenge_name = kwargs.pop('challenge_short_name', None)
 
-        super(PageCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if challenge_name is not None and 'html' in self.fields:
             self.fields['html'].widget.config['comicsite'] = challenge_name
