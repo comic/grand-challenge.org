@@ -1,23 +1,25 @@
 from collections import namedtuple
 from datetime import timedelta
-from typing import Callable
-from urllib.parse import urlparse
 
 import factory
 import pytest
-from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import signals
-from django.test import Client
 from django.utils import timezone
 
-from comicmodels.models import ComicSite
-from comicsite.core.urlresolvers import reverse
-from tests.factories import SUPER_SECURE_TEST_PASSWORD, MethodFactory, \
-    SubmissionFactory, JobFactory, ResultFactory
-
-
+from tests.factories import (
+    MethodFactory,
+    SubmissionFactory,
+    JobFactory,
+    ResultFactory,
+)
 # TODO: Test creation with forms.
+from tests.utils import (
+    get_view_for_user,
+    validate_admin_only_view,
+    validate_admin_or_participant_view,
+    validate_open_view,
+)
+
 
 def submission_and_job(*, challenge, creator):
     """ Creates a submission and a job for that submission """
@@ -67,168 +69,6 @@ def submissions_and_jobs(two_challenge_sets):
                               j_p12_s1_c2)
 
 
-def get_view_for_user(*,
-                      viewname: str = None,
-                      challenge: ComicSite = None,
-                      client: Client,
-                      method: Callable,
-                      pk: str = None,
-                      user: settings.AUTH_USER_MODEL = None,
-                      url: str = None,
-                      **kwargs):
-    """ Returns the view for a particular user """
-    if url is None:
-
-        reverse_kwargs = {'challenge_short_name': challenge.short_name}
-
-        if pk is not None:
-            reverse_kwargs['pk'] = pk
-
-        url = reverse(viewname, kwargs=reverse_kwargs)
-
-    elif viewname:
-        raise AttributeError('You defined both a viewname and a url, only '
-                             'use one!')
-
-    if user and not isinstance(user, AnonymousUser):
-        client.login(username=user.username,
-                     password=SUPER_SECURE_TEST_PASSWORD)
-
-    response = method(url, **kwargs)
-
-    if user:
-        client.logout()
-
-    return response
-
-
-def assert_viewname_status(*, code: int, **kwargs):
-    """ Asserts that a viewname for challenge_short_name and pk returns status
-    code `code` for a particular user """
-
-    response = get_view_for_user(**kwargs)
-
-    assert response.status_code == code
-    return response
-
-
-def assert_viewname_redirect(*,
-                             url: str,
-                             **kwargs):
-    """ Asserts that a view redirects to the given url. See
-    assert_viewname_status for kwargs details """
-    response = assert_viewname_status(code=302, **kwargs)
-    redirect_url = list(urlparse(response.url))[2]
-    assert url == redirect_url
-    return response
-
-
-def validate_admin_only_view(*,
-                             two_challenge_set,
-                             client: Client,
-                             **kwargs):
-    """ Assert that a view is only accessible to administrators for that
-    particular challenge """
-    # No user
-    assert_viewname_redirect(
-        url=settings.LOGIN_URL,
-        challenge=two_challenge_set.ChallengeSet1.challenge,
-        client=client,
-        method=client.get,
-        **kwargs
-    )
-
-    tests = [
-        (403, two_challenge_set.ChallengeSet1.non_participant),
-        (403, two_challenge_set.ChallengeSet1.participant),
-        (403, two_challenge_set.ChallengeSet1.participant1),
-        (200, two_challenge_set.ChallengeSet1.creator),
-        (200, two_challenge_set.ChallengeSet1.admin),
-        (403, two_challenge_set.ChallengeSet2.non_participant),
-        (403, two_challenge_set.ChallengeSet2.participant),
-        (403, two_challenge_set.ChallengeSet2.participant1),
-        (403, two_challenge_set.ChallengeSet2.creator),
-        (403, two_challenge_set.ChallengeSet2.admin),
-        (200, two_challenge_set.admin12),
-        (403, two_challenge_set.participant12),
-        (200, two_challenge_set.admin1participant2),
-    ]
-
-    for test in tests:
-        assert_viewname_status(
-            code=test[0],
-            challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
-            client=client,
-            user=test[1],
-            **kwargs
-        )
-
-
-def validate_admin_or_participant_view(*,
-                                       two_challenge_set,
-                                       client: Client,
-                                       **kwargs):
-    """ Assert that a view is only accessible to administrators or participants
-    of that particular challenge """
-    # No user
-    assert_viewname_redirect(
-        url=settings.LOGIN_URL,
-        challenge=two_challenge_set.ChallengeSet1.challenge,
-        client=client,
-        method=client.get,
-        **kwargs
-    )
-
-    tests = [
-        (403, two_challenge_set.ChallengeSet1.non_participant),
-        (200, two_challenge_set.ChallengeSet1.participant),
-        (200, two_challenge_set.ChallengeSet1.participant1),
-        (200, two_challenge_set.ChallengeSet1.creator),
-        (200, two_challenge_set.ChallengeSet1.admin),
-        (403, two_challenge_set.ChallengeSet2.non_participant),
-        (403, two_challenge_set.ChallengeSet2.participant),
-        (403, two_challenge_set.ChallengeSet2.participant1),
-        (403, two_challenge_set.ChallengeSet2.creator),
-        (403, two_challenge_set.ChallengeSet2.admin),
-        (200, two_challenge_set.admin12),
-        (200, two_challenge_set.participant12),
-        (200, two_challenge_set.admin1participant2),
-    ]
-
-    for test in tests:
-        assert_viewname_status(
-            code=test[0],
-            challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
-            client=client,
-            user=test[1],
-            **kwargs
-        )
-
-
-def validate_open_view(*,
-                       challenge_set,
-                       client: Client,
-                       **kwargs):
-    tests = [
-        (200, None),
-        (200, challenge_set.non_participant),
-        (200, challenge_set.participant),
-        (200, challenge_set.participant1),
-        (200, challenge_set.creator),
-        (200, challenge_set.admin)
-    ]
-
-    for test in tests:
-        assert_viewname_status(code=test[0],
-                               challenge=challenge_set.challenge,
-                               method=client.get,
-                               client=client,
-                               user=test[1],
-                               **kwargs)
-
-
 @pytest.mark.django_db
 def test_manage(client, TwoChallengeSets):
     validate_admin_only_view(viewname='evaluation:manage',
@@ -257,7 +97,7 @@ def test_method_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:method-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=method.pk,
+                             reverse_kwargs={'pk': method.pk},
                              client=client)
 
 
@@ -276,7 +116,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant)
     assert str(p_s1.pk) in response.rendered_content
     assert str(p_s2.pk) in response.rendered_content
@@ -289,7 +128,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.admin)
     assert str(p_s1.pk) in response.rendered_content
     assert str(p_s2.pk) in response.rendered_content
@@ -302,7 +140,6 @@ def test_submission_list(client, TwoChallengeSets):
         viewname='evaluation:submission-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.participant12)
     assert str(p12_s1_c1.pk) in response.rendered_content
     assert str(p12_s1_c2.pk) not in response.rendered_content
@@ -328,7 +165,6 @@ def test_submission_time_limit(client, TwoChallengeSets):
         return get_view_for_user(viewname='evaluation:submission-create',
                                  challenge=TwoChallengeSets.ChallengeSet1.challenge,
                                  client=client,
-                                 method=client.get,
                                  user=TwoChallengeSets.ChallengeSet1.participant)
 
     assert 'make 9 more' in get_submission_view().rendered_content
@@ -360,7 +196,7 @@ def test_submission_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:submission-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=submission.pk,
+                             reverse_kwargs={'pk': submission.pk},
                              client=client)
 
 
@@ -379,7 +215,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant)
     assert str(j_p_s1.pk) in response.rendered_content
     assert str(j_p_s2.pk) in response.rendered_content
@@ -392,7 +227,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.admin)
     assert str(j_p_s1.pk) in response.rendered_content
     assert str(j_p_s2.pk) in response.rendered_content
@@ -405,7 +239,6 @@ def test_job_list(client, TwoChallengeSets):
         viewname='evaluation:job-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.participant12)
     assert str(j_p12_s1_c1.pk) in response.rendered_content
     assert str(j_p12_s1_c2.pk) not in response.rendered_content
@@ -435,7 +268,7 @@ def test_job_detail(client, TwoChallengeSets):
 
     validate_admin_only_view(viewname='evaluation:job-detail',
                              two_challenge_set=TwoChallengeSets,
-                             pk=job.pk,
+                             reverse_kwargs={'pk': job.pk},
                              client=client)
 
 
@@ -459,5 +292,5 @@ def test_result_detail(client, EvalChallengeSet):
 
     validate_open_view(viewname='evaluation:result-detail',
                        challenge_set=EvalChallengeSet.ChallengeSet,
-                       pk=result.pk,
+                       reverse_kwargs={'pk': result.pk},
                        client=client)

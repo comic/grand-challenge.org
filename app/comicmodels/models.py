@@ -669,6 +669,11 @@ class ComicSiteModel(models.Model):
 class Page(ComicSiteModel):
     """ A single editable page containing html and maybe special output plugins """
 
+    UP = 'UP'
+    DOWN = 'DOWN'
+    FIRST = 'FIRST'
+    LAST = 'LAST'
+
     order = models.IntegerField(editable=False, default=1,
                                 help_text="Determines order in which page appear in site menu")
     display_title = models.CharField(max_length=255, default="", blank=True,
@@ -677,8 +682,7 @@ class Page(ComicSiteModel):
                                  help_text="Do not display this page in site menu")
     html = RichTextField()
 
-    def clean(self):
-        """ clean method is called automatically for each save in admin"""
+    def save(self, *args, **kwargs):
 
         # when saving for the first time only, put this page last in order
         if not self.id:
@@ -689,41 +693,40 @@ class Page(ComicSiteModel):
             except ObjectDoesNotExist:
                 max_order = None
 
-            if max_order["order__max"] is None:
-                self.order = 1
-            else:
+            try:
                 self.order = max_order["order__max"] + 1
+            except (TypeError):
+                self.order = 1
+
+        super(Page, self).save(*args, **kwargs)
 
     def rawHTML(self):
         """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
         # TODO : do checking for scripts and hacks here?
         return mark_safe(self.html)
 
-    def rawHTMLrendered(self):
-        """Display raw html, but render any template tags found using django's template system """
-
     def move(self, move):
-        if move == 'UP':
+        if move == self.UP:
             mm = Page.objects.get(comicsite=self.comicsite,
                                   order=self.order - 1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
-        if move == 'DOWN':
+        elif move == self.DOWN:
             mm = Page.objects.get(comicsite=self.comicsite,
                                   order=self.order + 1)
             mm.order -= 1
             mm.save()
             self.order += 1
             self.save()
-        if move == 'FIRST':
+        elif move == self.FIRST:
             pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages, self)
             pages[idx].order = pages[0].order - 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
-        if move == 'LAST':
+        elif move == self.LAST:
             pages = Page.objects.filter(comicsite=self.comicsite)
             idx = comicsite.utils.query.index(pages, self)
             pages[idx].order = pages[len(pages) - 1].order + 1
@@ -742,7 +745,7 @@ class Page(ComicSiteModel):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
 
-        url = reverse('challenge-page',
+        url = reverse('pages:detail',
                       args=[self.comicsite.short_name, self.title])
         return url
 

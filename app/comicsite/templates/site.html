@@ -54,11 +54,11 @@
             {% endif %}
             <li {% if page == currentpage %}class="active"{% endif %}>
                 <a class="menuItem"
-                   href="{% url 'challenge-page' site.short_name page.title %}">
-                    {% if page.display_title == "" %}
-                        {{ page.title }}
-                    {% else %}
+                   href="{{ page.get_absolute_url }}">
+                    {% if page.display_title %}
                         {{ page.display_title }}
+                    {% else %}
+                        {{ page.title }}
                     {% endif %}
                 </a>
             </li>
@@ -115,7 +115,11 @@
                aria-expanded="false">Admin<span
                     class="caret"></span></a>
             <ul class="dropdown-menu">
-                <li><a class="menuItem" href="{% url 'admin:index' %}">Challenge</a>
+                <li>
+                    <a class="menuItem" href="{% url 'admin:index' %}">Challenge</a>
+                </li>
+                <li>
+                    <a class="menuItem" href="{% url 'pages:list' site.short_name %}">Pages</a>
                 </li>
                 {% if site.use_evaluation %}
                     <li>

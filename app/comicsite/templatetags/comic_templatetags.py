@@ -249,13 +249,13 @@ class comic_URLNode(defaulttags.URLNode):
                 (
                     self.view_name.var in [
                         "challenge-homepage",
-                        "challenge-page",
-                        "project_serve_file"
+                        "project_serve_file",
                     ]
                 ) or (
                     self.view_name.var.split(':')[0] in [
                         'evaluation',
                         'teams',
+                        'pages',
                     ]
                 )
             ):
@@ -867,8 +867,8 @@ class InsertFileNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('challenge-insertedpage', kwargs={
-            'site_short_name': currentpage.comicsite.short_name,
+        base_url = reverse('pages:insert-detail', kwargs={
+            'challenge_short_name': currentpage.comicsite.short_name,
             'page_title': currentpage.title,
             'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
@@ -1022,8 +1022,8 @@ class InsertGraphNode(template.Node):
 
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('challenge-insertedpage', kwargs={
-            'site_short_name': context.page.comicsite.short_name,
+        base_url = reverse('pages:insert-detail', kwargs={
+            'challenge_short_name': context.page.comicsite.short_name,
             'page_title': context.page.title,
             'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage

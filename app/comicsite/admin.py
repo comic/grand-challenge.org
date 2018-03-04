@@ -116,7 +116,6 @@ class ProjectAdminSite2(AdminSite):
         
         """
         self.register(ComicSite, ComicSiteAdmin)
-        self.register(Page, PageAdmin)
         self.register(RegistrationRequest, RegistrationRequestAdmin)
 
     def queryset_wrapper(self, querysetfunction):
@@ -378,7 +377,7 @@ class PageAdmin(ComicModelAdmin):
                                                 current_app=self.admin_site.name))
         # ========== elif added by Sjoerd ========
         elif "save_goto_page" in request.POST:
-            return HttpResponseRedirect(reverse("challenge-page",
+            return HttpResponseRedirect(reverse('pages:detail',
                                                 args=[obj.comicsite.short_name,
                                                       obj.title]))
 
@@ -480,8 +479,8 @@ class PageInline(LinkedInline):
     def link(self, obj):
         # def page(request, site_short_name, page_title):
         """ Link to page directly so you can view it as regular user"""
-        link_url = reverse('challenge-page',
-                           kwargs={"site_short_name": obj.comicsite.short_name,
+        link_url = reverse('pages:detail',
+                           kwargs={"challenge_short_name": obj.comicsite.short_name,
                                    "page_title": obj.title})
         link_text = "view " + obj.title
         link_html = "<a href=\"" + link_url + "\">" + link_text + "</a>"
@@ -527,7 +526,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
     list_display = ('short_name', 'link', 'hidden')
     # list_filter = ['comicsite']
     form = ComicSiteAdminForm
-    inlines = [PageInline]
 
     fieldsets = (
         (None, {
@@ -795,4 +793,3 @@ class AdminManageForm(forms.Form):
 projectadminurls = AllProjectAdminSites()
 
 admin.site.register(ComicSite, ComicSiteAdmin)
-admin.site.register(Page, PageAdmin)

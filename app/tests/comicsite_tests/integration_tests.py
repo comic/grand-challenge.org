@@ -1,6 +1,7 @@
 import re
 from random import choice, randint
 
+import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
@@ -21,30 +22,23 @@ from ckeditor.views import upload_to_project
 from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
-from comicsite.admin import PageAdmin, ProjectAdminSite2
+from comicsite.admin import ProjectAdminSite2
 from comicsite.views import _register
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
+from tests.factories import PageFactory
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
-def create_page_in_admin(comicsite, title, content="testcontent",
-                         permission_lvl=""):
-    """ Create a Page object as if created through django admin interface.
-    
-    """
-
-    if permission_lvl == "":
+def create_page(comicsite, title, content="testcontent", permission_lvl=None):
+    if permission_lvl is None:
         permission_lvl = Page.ALL
 
-    page_admin = PageAdmin(Page, admin.site)
-    page = Page.objects.create(title=title,
-                               comicsite=comicsite,
-                               html=content,
-                               permission_lvl=permission_lvl)
-    page_admin.first_save(page)
-    return page
+    return PageFactory(title=title,
+                       comicsite=comicsite,
+                       html=content,
+                       permission_lvl=permission_lvl)
 
 
 def get_projectadmin(project):
@@ -217,8 +211,8 @@ class ComicframeworkTestCase(TestCase):
 
         testproject = self._create_comicsite_in_admin(projectadmin,
                                                       projectname)
-        create_page_in_admin(testproject, "testpage1")
-        create_page_in_admin(testproject, "testpage2")
+        create_page(testproject, "testpage1")
+        create_page(testproject, "testpage2")
 
         # a user who explicitly signed up to testproject
         participant = self._create_random_user("participant_")
@@ -253,17 +247,17 @@ class ComicframeworkTestCase(TestCase):
                         " appear to be registered." % (user.username, url))
 
     def _test_page_can_be_viewed(self, user, page):
-        page_url = reverse('challenge-page',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.comicsite.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_be_viewed(user, page_url)
 
     def _test_page_can_not_be_viewed(self, user, page):
-        page_url = reverse('challenge-page',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.comicsite.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_not_be_viewed(user, page_url)
@@ -498,7 +492,7 @@ class ComicframeworkTestCase(TestCase):
             expected = email_expected[attr]
             self.assertTrue(
                 expected == found or is_subset(found, expected) or (
-                    expected in found),
+                        expected in found),
                 "Expected to find '{0}' for email attribute \
                 '{1}' but found '{2}' instead".format(expected,
                                                       attr,
@@ -584,12 +578,13 @@ class ViewsTest(ComicframeworkTestCase):
         """
         user = self._create_user({"username": "user2", "email": "ab@cd.com"})
         testproject = self._create_comicsite_in_admin(user, "user1project")
-        testpage1 = create_page_in_admin(testproject, "testpage1")
-        testpage2 = create_page_in_admin(testproject, "testpage2")
+        testpage1 = create_page(testproject, "testpage1")
+        testpage2 = create_page(testproject, "testpage2")
 
         self._test_page_can_be_viewed(user, testpage1)
         self._test_page_can_be_viewed(self.root, testpage1)
 
+    @pytest.mark.skip  # Deprecated functionality
     def test_page_permissions_view(self):
         """ Test that the permissions page in admin does not crash: for root
         https://github.com/comic/comic-django/issues/180 
@@ -607,6 +602,7 @@ class ViewsTest(ComicframeworkTestCase):
         otheruser = self._create_random_user("other_")
         self._test_url_can_not_be_viewed(otheruser, url)
 
+    @pytest.mark.skip  # Deprecated functionality
     def test_page_change_view(self):
         """ Root can in admin see a page another user created while another
         regular user can not 
@@ -615,8 +611,8 @@ class ViewsTest(ComicframeworkTestCase):
         user = self._create_user({"username": "user3", "email": "de@cd.com"})
         anotheruser = self._create_random_user(startname="another_user_")
         testproject = self._create_comicsite_in_admin(user, "user3project")
-        testpage1 = create_page_in_admin(testproject, "testpage1")
-        testpage2 = create_page_in_admin(testproject, "testpage2")
+        testpage1 = create_page(testproject, "testpage1")
+        testpage2 = create_page(testproject, "testpage2")
         url = reverse("admin:comicmodels_page_change",
                       args=[testpage1.pk])
 
@@ -630,13 +626,13 @@ class ViewsTest(ComicframeworkTestCase):
                 
         """
 
-        adminonlypage = create_page_in_admin(self.testproject, "adminonlypage",
-                                             permission_lvl=Page.ADMIN_ONLY)
-        registeredonlypage = create_page_in_admin(self.testproject,
-                                                  "registeredonlypage",
-                                                  permission_lvl=Page.REGISTERED_ONLY)
-        publicpage = create_page_in_admin(self.testproject, "publicpage",
-                                          permission_lvl=Page.ALL)
+        adminonlypage = create_page(self.testproject, "adminonlypage",
+                                    permission_lvl=Page.ADMIN_ONLY)
+        registeredonlypage = create_page(self.testproject,
+                                         "registeredonlypage",
+                                         permission_lvl=Page.REGISTERED_ONLY)
+        publicpage = create_page(self.testproject, "publicpage",
+                                 permission_lvl=Page.ALL)
 
         self._test_page_can_be_viewed(self.projectadmin, adminonlypage)
         self._test_page_can_not_be_viewed(self.participant, adminonlypage)
@@ -679,9 +675,9 @@ class ViewsTest(ComicframeworkTestCase):
         https://github.com/comic/comic-django/issues/219
         
         """
-        page_url = reverse('challenge-page',
+        page_url = reverse('pages:detail',
                            kwargs={
-                               "site_short_name": self.testproject.short_name,
+                               "challenge_short_name": self.testproject.short_name,
                                "page_title": "doesnotexistpage"})
 
         response, username = self._view_url(None, page_url)
@@ -745,16 +741,15 @@ class LinkReplacerTest(ComicframeworkTestCase):
                                       "<notafile_slash><a href = '/faq/'>link</a><endnotafile_slash>")
 
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"
-        insertfiletagpage = create_page_in_admin(self.testproject,
-                                                 "testincludefiletagpage",
-                                                 content)
+        insertfiletagpage = create_page(self.testproject,
+                                        "testincludefiletagpage",
+                                        content)
 
         response = self._test_page_can_be_viewed(self.signedup_user,
                                                  insertfiletagpage)
 
         # Extract rendered content from included file, see if it has been rendered
         # In the correct way
-
 
         relative = find_text_between("<relativelink>", "<endrelativelink>",
                                      response.content)
@@ -1091,7 +1086,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # Path to browse is a special path for which Mockstorage will return some
         # file list even if it does not exist                     
         content = "Here are all the files in dir: {% listdir path:" + settings.COMIC_PUBLIC_FOLDER_NAME + " extensionFilter:.mhd %} text after "
-        page1 = create_page_in_admin(self.testproject, "listdirpage", content)
+        page1 = create_page(self.testproject, "listdirpage", content)
 
         # can everyone now view this?
         response1 = self._test_page_can_be_viewed(None, page1)
@@ -1107,8 +1102,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # Now check files listed in a restricted area. These should only be 
         # accessible tp registered users                              
         content = "Here are all the files in dir: {% listdir path:" + settings.COMIC_REGISTERED_ONLY_FOLDER_NAME + " extensionFilter:.mhd %} text after "
-        page2 = create_page_in_admin(self.testproject, "restrictedlistdirpage",
-                                     content)
+        page2 = create_page(self.testproject, "restrictedlistdirpage",
+                            content)
 
         # can everyone now view this page?           
         response5 = self._test_page_can_be_viewed(self.root, page2)
@@ -1124,8 +1119,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
         # are there gracefull errors for non existsing dirs?
         content = "Here are all the files in a non existing dir: {% listdir path:not_existing/ extensionFilter:.mhd %} text after "
-        page2 = create_page_in_admin(self.testproject,
-                                     "list_non_exisiting_dir_page", content)
+        page2 = create_page(self.testproject,
+                            "list_non_exisiting_dir_page", content)
         self._test_page_can_be_viewed(self.root, page2)
         self._test_page_can_be_viewed(self.signedup_user, page2)
 
@@ -1135,10 +1130,10 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         # Sanity check: do two different pages give different urls?
-        content = "-url1-{% url 'challenge-page' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
-        content += "-url2-{% url 'challenge-page' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
-        urlpage = create_page_in_admin(self.testproject, "testurltagpage",
-                                       content)
+        content = "-url1-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
+        content += "-url2-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
+        urlpage = create_page(self.testproject, "testurltagpage",
+                              content)
 
         # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
         with self.settings(SUBDOMAIN_IS_PROJECTNAME=False):
@@ -1170,9 +1165,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeinclude.html %}</toplevelcontent>"
-        insertfiletagpage = create_page_in_admin(self.testproject,
-                                                 "testincludefiletagpage",
-                                                 content)
+        insertfiletagpage = create_page(self.testproject,
+                                        "testincludefiletagpage",
+                                        content)
 
         response = self._test_page_can_be_viewed(self.signedup_user,
                                                  insertfiletagpage)
@@ -1207,9 +1202,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """ Overview showing short descriptions for all projects in the framework """
 
         content = "Here is a test overview of all projects : <allprojects> {% all_projectlinks %} </allprojects>"
-        testallprojectlinkspage = create_page_in_admin(self.testproject,
-                                                       "testallprojectlinkspage",
-                                                       content)
+        testallprojectlinkspage = create_page(self.testproject,
+                                              "testallprojectlinkspage",
+                                              content)
 
         # This overview should be viewable by anyone 
         self._test_page_can_be_viewed(self.signedup_user,
@@ -1231,8 +1226,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         content = "register here: <registration> {% registration %} </registration>"
 
-        registrationpage = create_page_in_admin(self.testproject,
-                                                "registrationpage", content)
+        registrationpage = create_page(self.testproject,
+                                       "registrationpage", content)
 
         # when you don't have to be approved, just following the link rendered by registration should do
         # register you
@@ -1316,9 +1311,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
                                            })
 
         # after acceptance, user should be able to access restricted pages.
-        registeredonlypage = create_page_in_admin(self.testproject,
-                                                  "registeredonlypage",
-                                                  permission_lvl=Page.REGISTERED_ONLY)
+        registeredonlypage = create_page(self.testproject,
+                                         "registeredonlypage",
+                                         permission_lvl=Page.REGISTERED_ONLY)
 
         self._test_page_can_be_viewed(self.signedup_user, registeredonlypage)
 
@@ -1490,13 +1485,9 @@ class AdminTest(ComicframeworkTestCase):
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_comicsite_changelist")
 
-    def test_project_admin_views(self):
-        """ Is javascript being included on admin pages correctly?
-        """
-
-        self._check_project_admin_view(self.testproject, "admin:index")
-
-        # check page add view    
+    @pytest.mark.skip  # Deprecated functionality
+    def test_project_page_views(self):
+        # check page add view
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_page_add")
 
@@ -1515,6 +1506,23 @@ class AdminTest(ComicframeworkTestCase):
         # check overview of all pages
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_page_changelist")
+
+        # see if adding a page crashes the admin
+        create_page_in_projectadmin(self.testproject,
+                                    "test_project_admin_page_add")
+
+        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
+        # set to the project this projectadmin is for. Test this by creating a
+        # page without a project.
+        create_page_in_projectadmin(self.testproject,
+                                    "test_project_admin_page_add_without_comicsite",
+                                    comicsite_for_page=None)
+
+    def test_project_admin_views(self):
+        """ Is javascript being included on admin pages correctly?
+        """
+
+        self._check_project_admin_view(self.testproject, "admin:index")
 
         # Do the same for registration requests: check of standard views do not crash
 
@@ -1542,16 +1550,5 @@ class AdminTest(ComicframeworkTestCase):
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_registrationrequest_changelist",
                                        user=self.root)
-
-        # see if adding a page crashes the admin
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add")
-
-        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
-        # set to the project this projectadmin is for. Test this by creating a
-        # page without a project. 
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add_without_comicsite",
-                                    comicsite_for_page=None)
 
         # check that expected links are present in main admin page

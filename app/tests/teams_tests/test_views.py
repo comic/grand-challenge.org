@@ -3,10 +3,14 @@ import pytest
 from django.conf import settings
 from django.test import Client
 
-from tests.evaluation_tests.test_views import \
-    validate_admin_or_participant_view, get_view_for_user, \
-    assert_viewname_redirect, assert_viewname_status, validate_open_view
 from tests.factories import TeamFactory, TeamMemberFactory
+from tests.utils import (
+    get_view_for_user,
+    assert_viewname_status,
+    assert_viewname_redirect,
+    validate_admin_or_participant_view,
+    validate_open_view,
+)
 
 
 def validate_owner_or_admin_view(*,
@@ -20,7 +24,6 @@ def validate_owner_or_admin_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -44,7 +47,6 @@ def validate_owner_or_admin_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -62,7 +64,6 @@ def validate_member_owner_or_admin_view(*,
         url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        method=client.get,
         **kwargs
     )
 
@@ -86,7 +87,6 @@ def validate_member_owner_or_admin_view(*,
         assert_viewname_status(
             code=test[0],
             challenge=two_challenge_set.ChallengeSet1.challenge,
-            method=client.get,
             client=client,
             user=test[1],
             **kwargs
@@ -112,7 +112,7 @@ def test_admin_or_participant_permissions(client, TwoChallengeSets, view):
         pk = None
 
     validate_admin_or_participant_view(viewname=view,
-                                       pk=pk,
+                                       reverse_kwargs={'pk': pk},
                                        two_challenge_set=TwoChallengeSets,
                                        client=client)
 
@@ -123,7 +123,7 @@ def test_open_views(client, ChallengeSet):
                        owner=ChallengeSet.participant)
 
     validate_open_view(viewname='teams:detail',
-                       pk=team.pk,
+                       reverse_kwargs={'pk': team.pk},
                        challenge_set=ChallengeSet,
                        client=client)
 
@@ -143,7 +143,7 @@ def test_team_update_delete_permissions(client, TwoChallengeSets, view):
                 owner=TwoChallengeSets.ChallengeSet1.participant1)
 
     validate_owner_or_admin_view(viewname=view,
-                                 pk=team.pk,
+                                 reverse_kwargs={'pk': team.pk},
                                  two_challenge_set=TwoChallengeSets,
                                  client=client)
 
@@ -156,7 +156,7 @@ def test_team_member_delete_permissions(client, TwoChallengeSets):
                                     user=TwoChallengeSets.ChallengeSet1.participant1)
 
     validate_member_owner_or_admin_view(viewname='teams:member-delete',
-                                        pk=team_member.pk,
+                                        reverse_kwargs={'pk': team_member.pk},
                                         two_challenge_set=TwoChallengeSets,
                                         client=client)
 
@@ -183,7 +183,6 @@ def test_team_creation(client, TwoChallengeSets, team_name):
     response = get_view_for_user(
         url=response.url,
         client=client,
-        method=client.get,
         user=TwoChallengeSets.ChallengeSet1.participant,
     )
 
@@ -206,7 +205,7 @@ def test_team_member_addition(client, TwoChallengeSets):
         client=client,
         method=client.post,
         user=TwoChallengeSets.ChallengeSet1.participant1,
-        pk=team.pk,
+        reverse_kwargs={'pk': team.pk},
     )
 
     assert TwoChallengeSets.ChallengeSet1.participant1 in team.get_members()
@@ -240,7 +239,7 @@ def test_unique_membership(client, TwoChallengeSets):
         client=client,
         method=client.post,
         user=TwoChallengeSets.ChallengeSet1.participant1,
-        pk=team.pk,
+        reverse_kwargs={'pk': team.pk},
     )
 
     assert response.status_code == 200
@@ -263,7 +262,7 @@ def test_unique_membership(client, TwoChallengeSets):
         client=client,
         method=client.post,
         user=TwoChallengeSets.participant12,
-        pk=team.pk,
+        reverse_kwargs={'pk': team.pk},
     )
 
     assert response.status_code == 302
@@ -275,7 +274,7 @@ def test_unique_membership(client, TwoChallengeSets):
         client=client,
         method=client.post,
         user=TwoChallengeSets.participant12,
-        pk=team1.pk,
+        reverse_kwargs={'pk': team1.pk},
     )
 
     assert response.status_code == 200

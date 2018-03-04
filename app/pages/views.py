@@ -1,25 +1,100 @@
 import mimetypes
 from os import path
 
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
+from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from comicmodels.models import Page
+from comicmodels.models import Page, ComicSite
 from comicsite.core.urlresolvers import reverse
+from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import (
     site_get_standard_vars,
     getRenderedPageIfAllowed,
     get_data_folder_path,
 )
 from filetransfers.api import serve_file
+from filetransfers.views import can_access
+from pages.forms import PageCreateForm, PageUpdateForm
 
 
-def page(request, site_short_name, page_title):
+class PageCreate(UserIsChallengeAdminMixin, CreateView):
+    model = Page
+    form_class = PageCreateForm
+
+    def get_form_kwargs(self):
+        kwargs = super(PageCreate, self).get_form_kwargs()
+        kwargs.update({'challenge_short_name': self.request.projectname})
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.comicsite = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super(PageCreate, self).form_valid(form)
+
+
+class PageList(UserIsChallengeAdminMixin, ListView):
+    model = Page
+
+    def get_queryset(self):
+        queryset = super(PageList, self).get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+
+
+class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
+    model = Page
+    form_class = PageUpdateForm
+    slug_url_kwarg = 'page_title'
+    slug_field = 'title'
+    template_name_suffix = '_form_update'
+
+    def get_queryset(self):
+        queryset = super(PageUpdate, self).get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+
+    def get_form_kwargs(self):
+        kwargs = super(PageUpdate, self).get_form_kwargs()
+        kwargs.update({'challenge_short_name': self.request.projectname})
+        return kwargs
+
+    def form_valid(self, form):
+        response = super(PageUpdate, self).form_valid(form)
+        self.object.move(form.cleaned_data['move'])
+        return response
+
+
+class PageDelete(UserIsChallengeAdminMixin, DeleteView):
+    model = Page
+    slug_url_kwarg = 'page_title'
+    slug_field = 'title'
+    success_message = 'Page was successfully deleted'
+
+    def get_queryset(self):
+        queryset = super(PageDelete, self).get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+
+    def get_success_url(self):
+        return reverse('pages:list', kwargs={
+            'challenge_short_name': self.request.projectname})
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(PageDelete, self).delete(request, *args, **kwargs)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Legacy methods, moved from comicsite/views.py
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def page(request, challenge_short_name, page_title):
     """ show a single page on a site """
 
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
     response = render(request, 'page.html', {'currentpage': currentpage})
 
@@ -32,7 +107,7 @@ def page(request, site_short_name, page_title):
     return response
 
 
-def insertedpage(request, site_short_name, page_title, dropboxpath):
+def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     """ show contents of a file from the local dropbox folder for this project
 
     """
@@ -43,18 +118,19 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
         mimetype = "NoneType"  # make the next statement not crash on non-existant mimetype
 
     if mimetype.startswith("image"):
-        return inserted_file(request, site_short_name, dropboxpath)
+        return inserted_file(request, challenge_short_name, dropboxpath)
 
     if mimetype == "application/pdf" or mimetype == "application/zip":
-        return inserted_file(request, site_short_name, dropboxpath)
+        return inserted_file(request, challenge_short_name, dropboxpath)
 
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
 
     p = get_object_or_404(Page, comicsite__short_name=site.short_name,
                           title=page_title)
 
-    baselink = reverse('challenge-page',
-                       kwargs={'site_short_name': p.comicsite.short_name,
+    baselink = reverse('pages:detail',
+                       kwargs={'challenge_short_name': p.comicsite.short_name,
                                'page_title': p.title})
 
     msg = "<div class=\"breadcrumbtrail\"> Displaying '" + dropboxpath + "' from local dropboxfolder, originally linked from\
@@ -75,19 +151,16 @@ def insertedpage(request, site_short_name, page_title, dropboxpath):
     )
 
 
-def inserted_file(request, site_short_name, filepath=""):
+def inserted_file(request, challenge_short_name, filepath=""):
     """ Get image from local dropbox and serve.
 
     """
-
-    from filetransfers.views import can_access
-
-    data_folder_root = get_data_folder_path(site_short_name)
+    data_folder_root = get_data_folder_path(challenge_short_name)
 
     filename = path.join(data_folder_root, filepath)
 
     # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(request.user, filepath, site_short_name)
+    serve_allowed = can_access(request.user, filepath, challenge_short_name)
 
     if not serve_allowed:
         raise PermissionDenied(

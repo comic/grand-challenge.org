@@ -12,6 +12,6 @@
 {% endblock %}
 
 {% block editlink %}
-    <a class="editPageLink" href="{% url 'challenge-page' currentpage.comicsite.short_name currentpage.title %}">Back
+    <a class="editPageLink" href="{% url 'pages:detail' currentpage.comicsite.short_name currentpage.title %}">Back
         to page</a>
 {% endblock %}

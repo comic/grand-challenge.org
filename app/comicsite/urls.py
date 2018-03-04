@@ -53,6 +53,6 @@ urlpatterns = [
         _register, name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
-    url(r'^(?P<site_short_name>[\w-]+)/(?P<page_title>[\w-]+)/',
-        include('pages.urls')),
+    url(r'^(?P<challenge_short_name>[\w-]+)/',
+        include('pages.urls', namespace='pages')),
 ]
