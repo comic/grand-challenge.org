@@ -51,6 +51,10 @@ class PageUpdate(UserIsChallengeAdminMixin, UpdateView):
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
 
+    def get_queryset(self):
+        queryset = super(PageUpdate, self).get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+
     def get_form_kwargs(self):
         kwargs = super(PageUpdate, self).get_form_kwargs()
         kwargs.update({'challenge_short_name': self.request.projectname})

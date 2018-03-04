@@ -123,28 +123,32 @@ def test_page_create(client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
-def test_page_update(client, ChallengeSet):
-    p1 = PageFactory(comicsite=ChallengeSet.challenge,
-                     title='challenge1page1updatetest',
+def test_page_update(client, TwoChallengeSets):
+    p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                     title='page1updatetest',
                      html='oldhtml')
+
+    # page with the same name in another challenge to check selection
+    PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+                title='page1updatetest')
 
     response = get_view_for_user(
         viewname='pages:update',
         client=client,
-        challenge=ChallengeSet.challenge,
-        user=ChallengeSet.admin,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.admin,
         reverse_kwargs={'page_title': p1.title}
     )
 
     assert response.status_code == 200
-    assert 'value=\"challenge1page1updatetest\"' in response.rendered_content
+    assert 'value=\"page1updatetest\"' in response.rendered_content
 
     response = get_view_for_user(
         viewname='pages:update',
         client=client,
         method=client.post,
-        challenge=ChallengeSet.challenge,
-        user=ChallengeSet.admin,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.admin,
         reverse_kwargs={'page_title': p1.title},
         data={
             'title': 'editedtitle',
@@ -158,8 +162,8 @@ def test_page_update(client, ChallengeSet):
     response = get_view_for_user(
         viewname='pages:detail',
         client=client,
-        challenge=ChallengeSet.challenge,
-        user=ChallengeSet.admin,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.admin,
         reverse_kwargs={'page_title': 'editedtitle'},
     )
 
