@@ -1,6 +1,7 @@
 import re
 from random import choice, randint
 
+import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib import admin
@@ -583,6 +584,7 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(user, testpage1)
         self._test_page_can_be_viewed(self.root, testpage1)
 
+    @pytest.mark.skip  # Deprecated functionality
     def test_page_permissions_view(self):
         """ Test that the permissions page in admin does not crash: for root
         https://github.com/comic/comic-django/issues/180 
@@ -600,6 +602,7 @@ class ViewsTest(ComicframeworkTestCase):
         otheruser = self._create_random_user("other_")
         self._test_url_can_not_be_viewed(otheruser, url)
 
+    @pytest.mark.skip  # Deprecated functionality
     def test_page_change_view(self):
         """ Root can in admin see a page another user created while another
         regular user can not 
@@ -1482,13 +1485,9 @@ class AdminTest(ComicframeworkTestCase):
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_comicsite_changelist")
 
-    def test_project_admin_views(self):
-        """ Is javascript being included on admin pages correctly?
-        """
-
-        self._check_project_admin_view(self.testproject, "admin:index")
-
-        # check page add view    
+    @pytest.mark.skip  # Deprecated functionality
+    def test_project_page_views(self):
+        # check page add view
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_page_add")
 
@@ -1507,6 +1506,23 @@ class AdminTest(ComicframeworkTestCase):
         # check overview of all pages
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_page_changelist")
+
+        # see if adding a page crashes the admin
+        create_page_in_projectadmin(self.testproject,
+                                    "test_project_admin_page_add")
+
+        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
+        # set to the project this projectadmin is for. Test this by creating a
+        # page without a project.
+        create_page_in_projectadmin(self.testproject,
+                                    "test_project_admin_page_add_without_comicsite",
+                                    comicsite_for_page=None)
+
+    def test_project_admin_views(self):
+        """ Is javascript being included on admin pages correctly?
+        """
+
+        self._check_project_admin_view(self.testproject, "admin:index")
 
         # Do the same for registration requests: check of standard views do not crash
 
@@ -1534,16 +1550,5 @@ class AdminTest(ComicframeworkTestCase):
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_registrationrequest_changelist",
                                        user=self.root)
-
-        # see if adding a page crashes the admin
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add")
-
-        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
-        # set to the project this projectadmin is for. Test this by creating a
-        # page without a project. 
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add_without_comicsite",
-                                    comicsite_for_page=None)
 
         # check that expected links are present in main admin page
