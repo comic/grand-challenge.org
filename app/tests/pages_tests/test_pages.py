@@ -17,7 +17,6 @@ from tests.utils import (
     ]
 )
 def test_page_admin_permissions(view, client, TwoChallengeSets):
-
     if view == 'pages:delete':
         PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
                     title='challenge1pagepermtest')
@@ -58,7 +57,8 @@ def test_page_list_filter(client, TwoChallengeSets):
         viewname='pages:list',
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        user=TwoChallengeSets.admin12)
+        user=TwoChallengeSets.admin12
+    )
 
     assert p1.title in response.rendered_content
     assert p2.title not in response.rendered_content
@@ -121,6 +121,7 @@ def test_page_create(client, TwoChallengeSets):
 
     assert response.status_code == 404
 
+
 @pytest.mark.django_db
 def test_page_update(client, ChallengeSet):
     p1 = PageFactory(comicsite=ChallengeSet.challenge,
@@ -164,3 +165,42 @@ def test_page_update(client, ChallengeSet):
 
     assert response.status_code == 200
     assert 'newhtml' in str(response.content)
+
+
+@pytest.mark.django_db
+def test_page_delete(client, TwoChallengeSets):
+    # Two pages with the same title, make sure the right one is deleted
+    c1p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                       title='page1')
+    c2p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+                       title='page1')
+
+    assert Page.objects.filter(pk=c1p1.pk).exists()
+    assert Page.objects.filter(pk=c2p1.pk).exists()
+
+    response = get_view_for_user(
+        viewname='pages:delete',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.admin12,
+        reverse_kwargs={'page_title': 'page1'},
+    )
+
+    assert response.status_code == 302
+
+    assert not Page.objects.filter(pk=c1p1.pk).exists()
+    assert Page.objects.filter(pk=c2p1.pk).exists()
+
+    response = get_view_for_user(
+        url=response.url,
+        client=client,
+        user=TwoChallengeSets.admin12,
+    )
+
+    assert response.status_code == 200
+
+
+# TODO: Test page moving
+
+# TODO: Remove the sortables on edit etc.

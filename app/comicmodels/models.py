@@ -700,9 +700,6 @@ class Page(ComicSiteModel):
         # TODO : do checking for scripts and hacks here?
         return mark_safe(self.html)
 
-    def rawHTMLrendered(self):
-        """Display raw html, but render any template tags found using django's template system """
-
     def move(self, move):
         if move == 'UP':
             mm = Page.objects.get(comicsite=self.comicsite,

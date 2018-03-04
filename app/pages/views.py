@@ -1,6 +1,7 @@
 import mimetypes
 from os import path
 
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db.models import Q
@@ -65,7 +66,24 @@ class PageDelete(UserIsChallengeAdminMixin, DeleteView):
     model = Page
     slug_url_kwarg = 'page_title'
     slug_field = 'title'
+    success_message = 'Page was successfully deleted'
 
+    def get_queryset(self):
+        queryset = super(PageDelete, self).get_queryset()
+        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+
+    def get_success_url(self):
+        return reverse('pages:list', kwargs={
+            'challenge_short_name': self.request.projectname})
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super(PageDelete, self).delete(request, *args, **kwargs)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Legacy methods, moved from comicsite/views.py
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def page(request, challenge_short_name, page_title):
     """ show a single page on a site """

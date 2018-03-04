@@ -116,7 +116,6 @@ class ProjectAdminSite2(AdminSite):
         
         """
         self.register(ComicSite, ComicSiteAdmin)
-        self.register(Page, PageAdmin)
         self.register(RegistrationRequest, RegistrationRequestAdmin)
 
     def queryset_wrapper(self, querysetfunction):
@@ -527,7 +526,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
     list_display = ('short_name', 'link', 'hidden')
     # list_filter = ['comicsite']
     form = ComicSiteAdminForm
-    inlines = [PageInline]
 
     fieldsets = (
         (None, {
@@ -795,4 +793,3 @@ class AdminManageForm(forms.Form):
 projectadminurls = AllProjectAdminSites()
 
 admin.site.register(ComicSite, ComicSiteAdmin)
-admin.site.register(Page, PageAdmin)
