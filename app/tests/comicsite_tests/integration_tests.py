@@ -602,24 +602,6 @@ class ViewsTest(ComicframeworkTestCase):
         otheruser = self._create_random_user("other_")
         self._test_url_can_not_be_viewed(otheruser, url)
 
-    @pytest.mark.skip  # Deprecated functionality
-    def test_page_change_view(self):
-        """ Root can in admin see a page another user created while another
-        regular user can not 
-        
-        """
-        user = self._create_user({"username": "user3", "email": "de@cd.com"})
-        anotheruser = self._create_random_user(startname="another_user_")
-        testproject = self._create_comicsite_in_admin(user, "user3project")
-        testpage1 = create_page(testproject, "testpage1")
-        testpage2 = create_page(testproject, "testpage2")
-        url = reverse("admin:comicmodels_page_change",
-                      args=[testpage1.pk])
-
-        self._test_url_can_be_viewed(user, url)
-        self._test_url_can_be_viewed(self.root, url)
-        self._test_url_can_not_be_viewed(anotheruser, url)
-
     def test_page_view_permission(self):
         """ Check that a page with permissions set can be viewed by the correct
         users only
@@ -1484,39 +1466,6 @@ class AdminTest(ComicframeworkTestCase):
     def test_admin_view_permissions(self):
         self._check_project_admin_view(self.testproject,
                                        "admin:comicmodels_comicsite_changelist")
-
-    @pytest.mark.skip  # Deprecated functionality
-    def test_project_page_views(self):
-        # check page add view
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_page_add")
-
-        # check page edit view for first page in project
-        firstpage = get_first_page(self.testproject)
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_page_change",
-                                       args=[firstpage.pk])
-
-        # check page history view for first page in project
-        firstpage = get_first_page(self.testproject)
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_page_history",
-                                       args=[firstpage.pk])
-
-        # check overview of all pages
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_page_changelist")
-
-        # see if adding a page crashes the admin
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add")
-
-        # Projectadminsite has the special feature that any 'comicsite' field in a form is automatically
-        # set to the project this projectadmin is for. Test this by creating a
-        # page without a project.
-        create_page_in_projectadmin(self.testproject,
-                                    "test_project_admin_page_add_without_comicsite",
-                                    comicsite_for_page=None)
 
     def test_project_admin_views(self):
         """ Is javascript being included on admin pages correctly?

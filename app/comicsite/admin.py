@@ -1,14 +1,12 @@
 import logging
 # ======================= testing creating of custom admin
 # Almost same import as in django.contrib.admin
-import re
 from functools import update_wrapper
 
 from django import forms
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib import messages
-from django.contrib.admin.options import InlineModelAdmin
 # NOTICE: that we are not importing site here!
 # basically this is the only one import you'll need
 # other imports required if you want easy replace standard admin package with yours
@@ -17,18 +15,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
-from django.forms import TextInput, Textarea
-from django.http import HttpResponseRedirect
+from django.forms import TextInput
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import six
-from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
-from guardian.shortcuts import get_objects_for_user, assign_perm
+from guardian.shortcuts import get_objects_for_user
 
-from comicmodels.admin import ComicModelAdmin, RegistrationRequestAdmin
-from comicmodels.models import Page, RegistrationRequest
+from comicmodels.admin import RegistrationRequestAdmin
+from comicmodels.models import RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
 
 logger = logging.getLogger("django")
@@ -72,21 +68,6 @@ def filter_projects_by_user_admin(qs, user):
 
     for s in get_comicsite_shortnames_that_user_is_admin_for(user):
         admin_projects |= models.Q(short_name=s)
-
-    return filter_if_not_empty(qs, admin_projects)
-
-
-def filter_pages_by_user_admin(qs, user):
-    """
-    Filters a queryset of pages by the user admin status
-    :param qs: A queryset containg pages
-    :param user: The user
-    :return: The pages this user can edit
-    """
-    admin_projects = models.Q()
-
-    for s in get_comicsite_shortnames_that_user_is_admin_for(user):
-        admin_projects |= models.Q(comicsite__short_name=s)
 
     return filter_if_not_empty(qs, admin_projects)
 
@@ -261,235 +242,6 @@ class AllProjectAdminSites(object):
         return urlpatterns
 
 
-class PageAdminForm(forms.ModelForm):
-    move = forms.CharField(widget=forms.Select)
-    move.required = False
-    move.widget.choices = (
-        (models.BLANK_CHOICE_DASH[0]),
-        ('FIRST', 'First'),
-        ('UP', 'Up'),
-        ('DOWN', 'Down'),
-        ('LAST', 'Last'),
-    )
-
-    class Meta:
-        model = Page
-        fields = '__all__'
-
-
-class PageAdmin(ComicModelAdmin):
-    """Define the admin interface for pages"""
-
-    form = PageAdminForm
-
-    # Make sure regular template overrides work. GuardedModelAdmin disables this
-    # With change_form_template = None templates in templates/admin/comicsite/page
-    # will be heeded again.
-    change_form_template = None
-
-    # Show these page params in admin overview list
-    list_display = ('title', 'comicsite', 'order')
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows': 40, 'cols': 80})},
-    }
-
-    def save_model(self, request, obj, form, change):
-
-        if obj.id is None:
-            self.first_save(obj)
-
-        obj.save()
-        move = form.cleaned_data['move']
-        obj.move(move)
-
-        permission_lvl = form.cleaned_data['permission_lvl']
-        obj.setpermissions(permission_lvl)
-
-    def first_save(self, obj):
-        # at page creation, set the correct object permissions
-        # get admin group for the comicsite of this page
-        admingroup = obj.comicsite.admins_group
-        # add change_page permission to the current page
-        obj.save()
-        assign_perm("change_page", admingroup, obj)
-
-    def get_queryset(self, request):
-        """ overwrite this method to return only pages comicsites to which current user has access
-            In Addition, if your are on a project-admin page, show only content associated with that
-            project
-        """
-
-        qs = get_objects_for_user(request.user, 'comicmodels.change_page')
-        if request.user.is_superuser:
-            return qs
-        else:
-            qs = filter_pages_by_user_admin(qs, request.user)
-
-        if request.is_projectadmin:  # this info is added by project middleware
-            qs = qs.filter(comicsite__short_name=request.projectname)
-
-        return qs
-
-    def response_change(self, request, obj, post_url_continue=None):
-        """This makes the response after adding go to another apps changelist for some model"""
-
-        # code below was completely pasted from django.contrib.admin.options I needed to make changes to the
-        # default response at the end, which I could not do without copying
-        # return super(PageAdmin,self).response_change(request,obj)
-        opts = obj._meta
-
-        # Handle proxy models automatically created by .only() or .defer().
-        # Refs #14529
-        verbose_name = opts.verbose_name
-        module_name = opts.model_name
-        if obj._deferred:
-            opts_ = opts.proxy_for_model._meta
-            verbose_name = opts_.verbose_name
-            module_name = opts_.model_name
-
-        pk_value = obj._get_pk_val()
-
-        msg = _('The %(name)s "%(obj)s" was changed successfully.') % {
-            'name': force_text(verbose_name),
-            'obj': force_text(obj)}
-        if "_continue" in request.POST:
-            self.message_user(request,
-                              msg + ' ' + _("You may edit it again below."))
-            if "_popup" in request.REQUEST:
-                return HttpResponseRedirect(request.path + "?_popup=1")
-            else:
-                return HttpResponseRedirect(request.path)
-        elif "_saveasnew" in request.POST:
-            msg = _(
-                'The %(name)s "%(obj)s" was added successfully. You may edit it again below.') % {
-                      'name': force_text(verbose_name), 'obj': obj}
-            self.message_user(request, msg)
-            return HttpResponseRedirect(reverse('admin:%s_%s_change' %
-                                                (opts.app_label, module_name),
-                                                args=(pk_value,),
-                                                current_app=self.admin_site.name))
-        elif "_addanother" in request.POST:
-            self.message_user(request, msg + ' ' + (
-                    _("You may add another %s below.") % force_text(
-                verbose_name)))
-            return HttpResponseRedirect(reverse('admin:%s_%s_add' %
-                                                (opts.app_label, module_name),
-                                                current_app=self.admin_site.name))
-        # ========== elif added by Sjoerd ========
-        elif "save_goto_page" in request.POST:
-            return HttpResponseRedirect(reverse('pages:detail',
-                                                args=[obj.comicsite.short_name,
-                                                      obj.title]))
-
-        # ========== below edited by Sjoerd ========
-        else:
-            self.message_user(request, msg)
-            # Figure out where to redirect. If the user has change permission,
-            # redirect to the change-list page for this object. Otherwise,
-            # redirect to the admin index.
-
-            if self.has_change_permission(request, None):
-
-                post_url = reverse('admin:%s_%s_change' %
-                                   (obj.comicsite._meta.app_label,
-                                    obj.comicsite._meta.model_name),
-                                   args=(obj.comicsite.pk,),
-                                   current_app=self.admin_site.name)
-            else:
-                post_url = reverse('admin:index',
-                                   current_app=self.admin_site.name)
-            return HttpResponseRedirect(post_url)
-
-    def render_change_form(self, request, context, add=False, change=False,
-                           form_url='', obj=None):
-        """So I have a jquery WYSIWYG editor (ckedit) on the page source (field Html). This editor can also do
-           'upload image' and I want the upload to go to a different folder based on the comicsite you are editing.
-           This proved esceedingly and exasperatingly difficult.
-           Solution now: just add the comicsite as attribute to each **** field.widget in the form. if possible
-           TODO: can this be different? This solution makes me cry but I see no other at the moment.
-           """
-
-        # find out in which project you are currently working/
-        if hasattr(obj, "comicsite"):
-            # editing a page, get comicsite from the object you're editing
-            site_short_name = obj.comicsite.short_name
-
-        elif "comicsite" in request.GET:
-            # you're starting a new page, obj does not exist. Get comicsite from url parameter which is passed for new pages
-            site_short_name = ComicSite.objects.get(
-                pk=request.GET["comicsite"]).short_name
-        else:
-            # try to get current project by url TODO: This solution is too specific for page. Should be  a general
-            # property of the admin site. But I can't get this right at projectadmin.
-
-            match = re.match(r"^/site/(?P<site_short_name>[\w-]+)/admin/.*",
-                             request.path)
-            if match:
-                site_short_name = match.group("site_short_name")
-            else:
-                raise KeyError(
-                    "Cannot determine to which project this page belongs. I don't know where to upload images which might be uploaded.")
-
-        # if current project was found, set appropriate things in the form:
-        # make sure ckedit knows where to upload if upload in editor is used
-
-        fields = context['adminform'].form.fields
-        if 'html' in fields:
-            fields['html'].widget.config['comicsite'] = site_short_name
-
-        template_response = super(ComicModelAdmin, self).render_change_form(
-            request, context, add, change, form_url,
-            obj)
-        return template_response
-
-
-class LinkedInline(InlineModelAdmin):
-    """ Show some info and link to complete model admin
-    Created to show all pages belonging to a site on site admin without having to edit pages
-    there in a cramped interface
-    """
-    template = 'admin/edit_inline/linked.html'
-
-    admin_model_path = None
-    can_delete = False
-
-    formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size': '40'})},
-        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 20})},
-    }
-
-    def __init__(self, *args):
-        super(LinkedInline, self).__init__(*args)
-        if self.admin_model_path is None:
-            self.admin_model_path = self.model.__name__.lower()
-
-
-class PageInline(LinkedInline):
-    model = Page
-    extra = 0
-
-    fields = ('title', 'html_trunc', 'link', 'hidden', 'order')
-    # make sure page is only displayed, not edited
-    # readonly_fields=("title","html")
-    readonly_fields = ('title', 'html_trunc', 'link', 'hidden', 'order')
-
-    def html_trunc(self, obj):
-        return obj.html[:300]
-
-    def link(self, obj):
-        # def page(request, site_short_name, page_title):
-        """ Link to page directly so you can view it as regular user"""
-        link_url = reverse('pages:detail',
-                           kwargs={"challenge_short_name": obj.comicsite.short_name,
-                                   "page_title": obj.title})
-        link_text = "view " + obj.title
-        link_html = "<a href=\"" + link_url + "\">" + link_text + "</a>"
-
-        return link_html
-
-    link.allow_tags = True
-
-
 class ComicSiteAdminForm(forms.ModelForm):
     description = forms.CharField(widget=forms.Textarea(attrs=
                                                         {'rows': 4,
@@ -639,14 +391,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
                 view=self.admin_site.admin_view(
                     self.registration_requests_view),
                 name='%s_%s_participantrequests' % info),
-            # url(r'^(?P<object_pk>.+)/permissions/user-manage/(?P<user_id>\-?\d+)/$',
-            #    view=self.admin_site.admin_view(
-            #       self.obj_perms_manage_user_view),
-            #    name='%s_%s_permissions_manage_user' % info),
-            # url(r'^(?P<object_pk>.+)/permissions/group-manage/(?P<group_id>\-?\d+)/$',
-            #    view=self.admin_site.admin_view(
-            #        self.obj_perms_manage_group_view),
-            #    name='%s_%s_permissions_manage_group' % info),
         ]
         return myurls + urls
 

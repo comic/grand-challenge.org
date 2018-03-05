@@ -271,3 +271,64 @@ def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
 
     assert_page_order(pages, expected)
     assert_page_order(c2_pages, [1, 2, 3, 4])
+
+
+@pytest.mark.django_db
+def test_create_page_with_same_title(client, TwoChallengeSets):
+    PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                title='page1')
+
+    # Creating a page with the same title should be denied
+    response = get_view_for_user(
+        viewname='pages:create',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.admin,
+        data={
+            'title': 'page1',
+            'html': 'hello',
+            'permission_lvl': Page.ALL,
+        }
+    )
+
+    assert response.status_code == 200
+    assert 'A page with that title already exists' in response.rendered_content
+
+    # Creating one in another challenge should work
+    response = get_view_for_user(
+        viewname='pages:create',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet2.challenge,
+        user=TwoChallengeSets.ChallengeSet2.admin,
+        data={
+            'title': 'page1',
+            'html': 'hello',
+            'permission_lvl': Page.ALL,
+        }
+    )
+
+    assert response.status_code == 302
+
+    # Check the updating
+    PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+                title='page2')
+
+    response = get_view_for_user(
+        viewname='pages:update',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.admin12,
+        reverse_kwargs={'page_title': 'page2'},
+        data={
+            'title': 'page1',
+            'html': ' ',
+            'permission_lvl': Page.ALL,
+            'move': BLANK_CHOICE_DASH[0],
+        }
+    )
+
+    assert response.status_code == 200
+    assert 'A page with that title already exists' in response.rendered_content
