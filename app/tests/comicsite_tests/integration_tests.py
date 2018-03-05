@@ -23,7 +23,7 @@ from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
 from comicsite.admin import ProjectAdminSite2
-from comicsite.views import _register
+from participants.views import _register
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory
 

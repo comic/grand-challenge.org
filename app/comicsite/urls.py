@@ -4,11 +4,7 @@ from django.views.generic import TemplateView
 from comicmodels.views import upload_handler
 from comicsite.admin import projectadminurls
 from comicsite.api import get_public_results
-from comicsite.views import (
-    ParticipantRegistration,
-    site,
-    _register,
-)
+from comicsite.views import site
 from filetransfers.views import serve
 
 urlpatterns = [
@@ -35,6 +31,9 @@ urlpatterns = [
     url(r'^(?P<challenge_short_name>[\w-]+)/teams/',
         include('teams.urls', namespace='teams')),
 
+    url(r'^(?P<challenge_short_name>[\w-]+)/participants/',
+        include('participants.urls')),
+
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
     url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler,
@@ -45,12 +44,6 @@ urlpatterns = [
 
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         get_public_results),
-
-    url(r'^(?P<challenge_short_name>[\w-]+)/participant-registration/$',
-        ParticipantRegistration.as_view(), name='participant-registration'),
-
-    url(r'^(?P<site_short_name>[\w-]+)/_request_participation/$',
-        _register, name='participant-registration-request'),
 
     # If nothing specific matches, try to resolve the url as project/pagename
     url(r'^(?P<challenge_short_name>[\w-]+)/',
