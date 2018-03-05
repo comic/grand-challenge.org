@@ -31,7 +31,10 @@ class ComicSiteFilteredQuerysetMixin(object):
 class ChallengeFormKwargsMixin(object):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({'challenge_short_name': self.request.projectname})
+        kwargs.update({
+            'challenge_short_name': self.request.projectname,
+            'challenge_pk': self.request.project_pk,
+        })
         return kwargs
 
 

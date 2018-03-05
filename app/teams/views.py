@@ -59,8 +59,6 @@ class TeamDetail(DetailView):
             'user_team': team,
         })
 
-
-
         return context
 
 
