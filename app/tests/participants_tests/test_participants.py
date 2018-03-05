@@ -10,11 +10,12 @@ from tests.utils import validate_admin_only_view, validate_logged_in_view
     [
         'participants:registration-list',
         'participants:registration-update',
+        'participants:list',
     ]
 )
 def test_registration_request_list(view, client, TwoChallengeSets):
     reverse_kwargs = {}
-    if view in ['participants:registration-update']:
+    if view in ('participants:registration-update',):
         rr = RegistrationRequestFactory(
             project=TwoChallengeSets.ChallengeSet1.challenge)
         reverse_kwargs.update({'pk': rr.pk})

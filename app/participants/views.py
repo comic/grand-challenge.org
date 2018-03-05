@@ -7,23 +7,29 @@ from django.views.generic import TemplateView, ListView, CreateView, UpdateView
 from comicmodels.models import Page, RegistrationRequest
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
+from profiles.models import UserProfile
 
 
 class ParticipantRegistration(LoginRequiredMixin, TemplateView):
     template_name = 'participant_registration.html'
 
+
 class RegistrationRequestCreate(LoginRequiredMixin, CreateView):
     model = RegistrationRequest
     fields = ('project', 'user',)
 
+
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
     model = RegistrationRequest
 
+
 class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
     model = RegistrationRequest
-    fields = ('status', )
+    fields = ('status',)
 
 
+class ParticipantsList(UserIsChallengeAdminMixin, ListView):
+    model = UserProfile
 
 
 def _register(request, challenge_short_name):
