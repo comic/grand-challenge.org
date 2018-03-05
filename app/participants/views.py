@@ -10,8 +10,8 @@ from comicsite.views import site_get_standard_vars
 from profiles.models import UserProfile
 
 
-class ParticipantRegistration(LoginRequiredMixin, TemplateView):
-    template_name = 'participant_registration.html'
+class ParticipantsList(UserIsChallengeAdminMixin, ListView):
+    model = UserProfile
 
 
 class RegistrationRequestCreate(LoginRequiredMixin, CreateView):
@@ -28,8 +28,14 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
     fields = ('status',)
 
 
-class ParticipantsList(UserIsChallengeAdminMixin, ListView):
-    model = UserProfile
+#################################################
+#
+# Legacy functions, moved from comicsite/views.py
+#
+#################################################
+
+class ParticipantRegistration(LoginRequiredMixin, TemplateView):
+    template_name = 'participant_registration.html'
 
 
 def _register(request, challenge_short_name):

@@ -121,6 +121,9 @@
                 <li>
                     <a class="menuItem" href="{% url 'pages:list' site.short_name %}">Pages</a>
                 </li>
+                <li>
+                    <a class="menuItem" href="{% url 'participants:list' site.short_name %}">Participants</a>
+                </li>
                 {% if site.use_evaluation %}
                     <li>
                         <a href="{% url 'evaluation:manage' site.short_name %}">Evaluation</a>

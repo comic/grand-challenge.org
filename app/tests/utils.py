@@ -198,8 +198,8 @@ def validate_open_view(*,
                                user=test[1],
                                **kwargs)
 
-def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
 
+def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
     assert_viewname_redirect(
         url=settings.LOGIN_URL,
         challenge=challenge_set.challenge,
@@ -221,3 +221,37 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
                                client=client,
                                user=test[1],
                                **kwargs)
+
+
+def validate_admin_only_text_in_page(*,
+                                     expected_text,
+                                     two_challenge_set,
+                                     client: Client,
+                                     **kwargs):
+    tests = [
+        (False, None),
+        (False, two_challenge_set.ChallengeSet1.non_participant),
+        (False, two_challenge_set.ChallengeSet1.participant),
+        (False, two_challenge_set.ChallengeSet1.participant1),
+        (True, two_challenge_set.ChallengeSet1.creator),
+        (True, two_challenge_set.ChallengeSet1.admin),
+        (False, two_challenge_set.ChallengeSet2.non_participant),
+        (False, two_challenge_set.ChallengeSet2.participant),
+        (False, two_challenge_set.ChallengeSet2.participant1),
+        (False, two_challenge_set.ChallengeSet2.creator),
+        (False, two_challenge_set.ChallengeSet2.admin),
+        (True, two_challenge_set.admin12),
+        (False, two_challenge_set.participant12),
+        (True, two_challenge_set.admin1participant2),
+    ]
+
+    for test in tests:
+        response = assert_viewname_status(
+            code=200,
+            challenge=two_challenge_set.ChallengeSet1.challenge,
+            client=client,
+            user=test[1],
+            **kwargs
+        )
+
+        assert (expected_text in str(response.content)) == test[0]
