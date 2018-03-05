@@ -197,3 +197,27 @@ def validate_open_view(*,
                                client=client,
                                user=test[1],
                                **kwargs)
+
+def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
+
+    assert_viewname_redirect(
+        url=settings.LOGIN_URL,
+        challenge=challenge_set.challenge,
+        client=client,
+        **kwargs
+    )
+
+    tests = [
+        (200, challenge_set.non_participant),
+        (200, challenge_set.participant),
+        (200, challenge_set.participant1),
+        (200, challenge_set.creator),
+        (200, challenge_set.admin)
+    ]
+
+    for test in tests:
+        assert_viewname_status(code=test[0],
+                               challenge=challenge_set.challenge,
+                               client=client,
+                               user=test[1],
+                               **kwargs)

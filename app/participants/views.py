@@ -2,7 +2,7 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, CreateView
 
 from comicmodels.models import Page, RegistrationRequest
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
@@ -12,9 +12,13 @@ from comicsite.views import site_get_standard_vars
 class ParticipantRegistration(LoginRequiredMixin, TemplateView):
     template_name = 'participant_registration.html'
 
+class RegistrationRequestCreate(LoginRequiredMixin, CreateView):
+    model = RegistrationRequest
+    fields = ('project', 'user',)
 
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
     model = RegistrationRequest
+
 
 
 def _register(request, challenge_short_name):
