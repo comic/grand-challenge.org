@@ -2,21 +2,29 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.shortcuts import render
-
-# Create your views here.
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 
 from comicmodels.models import Page, RegistrationRequest
+from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
 
 
-def _register(request, site_short_name):
+class ParticipantRegistration(LoginRequiredMixin, TemplateView):
+    template_name = 'participant_registration.html'
+
+
+class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
+    model = RegistrationRequest
+
+
+def _register(request, challenge_short_name):
     """ Register the current user for given comicsite """
 
     # TODO: check whether user is allowed to register, maybe wait for verification,
     # send email to admins of new registration
 
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
     if request.user.is_authenticated():
         if site.require_participant_review:
             currentpage = _register_after_approval(request, site)
@@ -96,7 +104,3 @@ def _register_after_approval(request, project):
     currentpage = Page(comicsite=project, title=title,
                        display_title=display_title, html=html)
     return currentpage
-
-
-class ParticipantRegistration(LoginRequiredMixin, TemplateView):
-    template_name = 'participant_registration.html'

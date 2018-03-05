@@ -32,7 +32,7 @@ urlpatterns = [
         include('teams.urls', namespace='teams')),
 
     url(r'^(?P<challenge_short_name>[\w-]+)/participants/',
-        include('participants.urls')),
+        include('participants.urls', namespace='participants')),
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 

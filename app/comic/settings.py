@@ -275,6 +275,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'teams',
     'pages',
+    'participants',
 )
 
 AUTHENTICATION_BACKENDS = (
