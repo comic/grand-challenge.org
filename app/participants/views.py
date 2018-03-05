@@ -2,7 +2,7 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, CreateView
+from django.views.generic import TemplateView, ListView, CreateView, UpdateView
 
 from comicmodels.models import Page, RegistrationRequest
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
@@ -18,6 +18,11 @@ class RegistrationRequestCreate(LoginRequiredMixin, CreateView):
 
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
     model = RegistrationRequest
+
+class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
+    model = RegistrationRequest
+    fields = ('status', )
+
 
 
 
