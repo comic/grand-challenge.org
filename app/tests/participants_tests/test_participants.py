@@ -1,7 +1,8 @@
 import pytest
 
+from comicmodels.models import RegistrationRequest
 from comicsite.core.urlresolvers import reverse
-from tests.factories import RegistrationRequestFactory
+from tests.factories import RegistrationRequestFactory, UserFactory
 from tests.utils import (
     validate_admin_only_view,
     validate_logged_in_view,
@@ -34,12 +35,48 @@ def test_registration_request_list(view, client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
-def test_registration_request_create(client, ChallengeSet):
+def test_registration_request_create_get(client, ChallengeSet):
     validate_logged_in_view(
         viewname='participants:registration-create',
         challenge_set=ChallengeSet,
         client=client,
     )
+
+    # Make sure the link to register is in the challenge page
+    url = reverse('challenge-homepage',
+                  args=[ChallengeSet.challenge.short_name])
+
+    response = get_view_for_user(url=url, client=client)
+
+    expected_link = reverse('participants:registration-create',
+                            args=[ChallengeSet.challenge.short_name])
+
+    assert f'"{expected_link}"' in str(response.content)
+
+
+@pytest.mark.django_db
+def test_registration_request_create_post(client, TwoChallengeSets):
+    user = UserFactory()
+
+    assert not RegistrationRequest.objects.filter(
+        user=user,
+        project=TwoChallengeSets.ChallengeSet1.challenge
+    ).exists()
+
+    response = get_view_for_user(
+        viewname='participants:registration-create',
+        client=client,
+        method=client.post,
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=user,
+    )
+
+    assert response.status_code == 302
+
+    assert RegistrationRequest.objects.filter(
+        user=user,
+        project=TwoChallengeSets.ChallengeSet1.challenge
+    ).exists()
 
 
 @pytest.mark.django_db
@@ -53,7 +90,7 @@ def test_admins_see_links(client, TwoChallengeSets):
 
     validate_admin_only_text_in_page(
         url=url,
-        expected_text=str(expected),
+        expected_text=f'"{str(expected)}"',
         two_challenge_set=TwoChallengeSets,
         client=client,
     )

@@ -20,7 +20,7 @@
             {% if site.evaluation_config.allow_submission_comments %}
                 <th>Comment</th>
             {% endif %}
-            {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+            {% if "change_comicsite" in site_perms %}
                 <th>Hide/Publish</th>
             {% endif %}
         </tr>
@@ -64,7 +64,7 @@
                     <td>{{ job.submission.comment }}</td>
                 {% endif %}
 
-                {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+                {% if "change_comicsite" in site_perms %}
                     <td>
                         {% if job.result %}
                             <form method="post"

@@ -1,13 +1,13 @@
 from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import render
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView
 
 from comicmodels.models import Page, RegistrationRequest, ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
-from profiles.models import UserProfile
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
@@ -16,9 +16,25 @@ class ParticipantsList(UserIsChallengeAdminMixin, ListView):
         return challenge.get_participants().select_related('user_profile')
 
 
-class RegistrationRequestCreate(LoginRequiredMixin, CreateView):
+class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
+                                CreateView):
     model = RegistrationRequest
-    fields = ('project', 'user',)
+    fields = ()
+    success_message = (
+        'You have requested to participate in this challenge. '
+        'You will receive an email when this has been reviewed by the '
+        'challenge organisers.'
+    )
+
+    def get_success_url(self):
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        return challenge.get_absolute_url()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.project = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        return super().form_valid(form)
 
 
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
@@ -32,12 +48,10 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
 
 #################################################
 #
-# Legacy functions, moved from comicsite/views.py
+# Legacy functions, moved from comicsite/views.py,
+# all use the template tag which should be removed
 #
 #################################################
-
-class ParticipantRegistration(LoginRequiredMixin, TemplateView):
-    template_name = 'participant_registration.html'
 
 
 def _register(request, challenge_short_name):

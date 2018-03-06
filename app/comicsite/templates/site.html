@@ -66,10 +66,17 @@
         {% endif %}
     {% endfor %}
 
-    {% if site.use_evaluation %}
-        <li role="separator" class="divider"></li>
+    <li role="separator" class="divider"></li>
+    <li>
+        <a href="{% url 'participants:registration-create' site.short_name %}"><b>Join</b></a>
+    </li>
 
-        {% if user_is_participant %}
+    {% if site.use_evaluation %}
+
+        {% get_obj_perms user for site as "site_perms" %}
+        {% if "change_comicsite" in site_perms or user_is_participant %}
+            <li role="separator" class="divider"></li>
+
             {% if site.evaluation_config.use_teams %}
                 <li>
                     <a href="{% url 'teams:list' site.short_name %}">Teams</a>
@@ -78,11 +85,9 @@
             <li>
                 <a href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
             </li>
-        {% else %}
-            <li>
-                <a href="{% url 'participants:registration' site.short_name %}"><b>Join</b></a>
-            </li>
+
         {% endif %}
+
         <li role="separator" class="divider"></li>
         <li>
             <a href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
@@ -104,7 +109,7 @@
 {% block adminbutton %}
 
     {% get_obj_perms user for site as "site_perms" %}
-    {% if "change_comicsite" in site_perms or request.user.is_superuser %}
+    {% if "change_comicsite" in site_perms %}
         {% if site.hide_footer %}
             <li role="separator" class="divider"></li>
         {% endif %}
@@ -119,10 +124,12 @@
                     <a class="menuItem" href="{% url 'admin:index' %}">Challenge</a>
                 </li>
                 <li>
-                    <a class="menuItem" href="{% url 'pages:list' site.short_name %}">Pages</a>
+                    <a class="menuItem"
+                       href="{% url 'pages:list' site.short_name %}">Pages</a>
                 </li>
                 <li>
-                    <a class="menuItem" href="{% url 'participants:list' site.short_name %}">Participants</a>
+                    <a class="menuItem"
+                       href="{% url 'participants:list' site.short_name %}">Participants</a>
                 </li>
                 {% if site.use_evaluation %}
                     <li>
