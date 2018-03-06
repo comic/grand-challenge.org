@@ -1,0 +1,79 @@
+{% extends "site.html" %}
+
+{% block pagecontent %}
+
+    <h2>Participants for {{ site.short_name }}</h2>
+
+    <table class="table" id="participantsTable">
+        <thead>
+        <tr>
+            <th>Username</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Institution</th>
+            <th>Department</th>
+            <th>Country</th>
+            <th>Website</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for user in object_list %}
+
+            <tr>
+                <td>
+                    <div style='vertical-align:middle; display:inline;'>
+                        <a href="{% url 'userena_profile_detail' user %}">
+                            <img class="mugshot"
+                                 src="{{ user.user_profile.get_mugshot_url }}"
+                                 alt="User Mugshot"
+                                 style="height: 1.5em; vertical-align: middle;"/>
+                            {{ user.username }}</a>
+                    </div>
+                </td>
+                <td>
+                    {{ user.first_name }}
+                </td>
+                <td>
+                    {{ user.last_name }}
+                </td>
+                <td>
+                    {{ user.email }}
+                </td>
+                <td>
+                    {{ user.user_profile.institution }}
+                </td>
+                <td>
+                    {{ user.user_profile.department }}
+                </td>
+                <td>
+                    {{ user.user_profile.country.name }}
+                </td>
+                <td>
+                    <a href="{{ user.user_profile.website }}">
+                        {{ user.user_profile.website }}
+                    </a>
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#participantsTable').DataTable({
+                "bLengthChange": false,
+                "pageLength": 50,
+                "columnDefs": [{
+                    "targets": [-1],
+                    "searchable": false,
+                    "orderable": false
+                }]
+            });
+        });
+    </script>
+{% endblock %}

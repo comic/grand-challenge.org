@@ -4,14 +4,16 @@ from auth_mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView
 
-from comicmodels.models import Page, RegistrationRequest
+from comicmodels.models import Page, RegistrationRequest, ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
 from profiles.models import UserProfile
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
-    model = UserProfile
+    def get_queryset(self):
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        return challenge.get_participants().select_related('user_profile')
 
 
 class RegistrationRequestCreate(LoginRequiredMixin, CreateView):

@@ -499,7 +499,7 @@ class ComicSite(models.Model):
 
     def get_participants(self):
         """ Return all participants of this challenge """
-        return self.participants_group.all()
+        return self.participants_group.user_set.all()
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
