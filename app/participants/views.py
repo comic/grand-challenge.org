@@ -2,6 +2,7 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Q
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView
 
@@ -40,18 +41,23 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
     model = RegistrationRequest
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(Q(project__pk=self.request.project_pk))
+        return queryset
+
 
 class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
     model = RegistrationRequest
     fields = ('status',)
 
 
-#################################################
+##################################################
 #
 # Legacy functions, moved from comicsite/views.py,
 # all use the template tag which should be removed
 #
-#################################################
+##################################################
 
 
 def _register(request, challenge_short_name):

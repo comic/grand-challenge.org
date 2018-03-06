@@ -80,11 +80,19 @@ def test_registration_request_create_post(client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
-def test_admins_see_links(client, TwoChallengeSets):
+@pytest.mark.parametrize(
+    "view",
+    [
+        'participants:registration-list',
+        'participants:list',
+    ]
+)
+def test_admins_see_links(view, client, TwoChallengeSets):
     url = reverse('challenge-homepage',
                   args=[TwoChallengeSets.ChallengeSet1.challenge.short_name])
+
     expected = reverse(
-        'participants:list',
+        view,
         args=[TwoChallengeSets.ChallengeSet1.challenge.short_name]
     )
 
@@ -124,3 +132,18 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
 
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
+
+@pytest.mark.django_db
+def test_registration_list_is_filtered(client, TwoChallengeSets):
+    r1 = RegistrationRequestFactory(project=TwoChallengeSets.ChallengeSet1.challenge)
+    r2 = RegistrationRequestFactory(project=TwoChallengeSets.ChallengeSet2.challenge)
+
+    response = get_view_for_user(
+        viewname='participants:registration-list',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        client=client,
+        user=TwoChallengeSets.admin12,
+    )
+
+    assert r1.user.username in response.rendered_content
+    assert r2.user.username not in response.rendered_content
