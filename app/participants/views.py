@@ -2,7 +2,8 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS, \
+    ObjectDoesNotExist
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.shortcuts import render
@@ -50,6 +51,21 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
             return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        try:
+            status = RegistrationRequest.objects.get(
+                project__pk=self.request.project_pk,
+                user=self.request.user,
+            ).status_to_string()
+        except ObjectDoesNotExist:
+            status = None
+
+        context.update({'existing_status': status})
+
+        return context
 
 
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
