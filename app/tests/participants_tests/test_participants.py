@@ -38,7 +38,7 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
         user=user,
         project=TwoChallengeSets.ChallengeSet1.challenge).exists()
 
-    RegistrationRequestFactory(
+    rr = RegistrationRequestFactory(
         user=user,
         project=TwoChallengeSets.ChallengeSet1.challenge
     )
@@ -56,8 +56,7 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
     )
 
     assert response.status_code == 200
-    assert ('Registration request with this '
-            'Project and User already exists') in response.rendered_content
+    assert rr.status_to_string() in response.rendered_content
 
     # Creating a request in another challenge should work
     assert not RegistrationRequest.objects.filter(
