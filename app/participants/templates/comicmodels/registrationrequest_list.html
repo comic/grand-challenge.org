@@ -59,12 +59,28 @@
                     {% endif %}
                 </td>
                 <td>
-                    <i class="fa fa-thumbs-up text-success"
-                       title="Accept Registration"></i>
-                    &nbsp;/&nbsp;
-                    <i class="fa fa-thumbs-down text-danger"
-                       title="Reject Registration"></i>
-
+                    {% if regrequest.status != regrequest.ACCEPTED %}
+                        <form method="post"
+                              action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="status"
+                                   value="{{ regrequest.ACCEPTED }}">
+                            <button type="submit"
+                                    class="btn btn-xs btn-success">Accept
+                            </button>
+                        </form>
+                    {% endif %}
+                    {% if regrequest.status != regrequest.REJECTED %}
+                        <form method="post"
+                              action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="status"
+                                   value="{{ regrequest.REJECTED }}">
+                            <button type="submit"
+                                    class="btn btn-xs btn-danger">Reject
+                            </button>
+                        </form>
+                    {% endif %}
                 </td>
             </tr>
 
