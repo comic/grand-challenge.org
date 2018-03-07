@@ -1,7 +1,6 @@
 from django.conf.urls import url
 
 from participants.views import (
-    _register,
     RegistrationRequestList,
     RegistrationRequestCreate,
     RegistrationRequestUpdate,
@@ -17,6 +16,4 @@ urlpatterns = [
         name='registration-create'),
     url(r'^registration/(?P<pk>\d+)/update/$',
         RegistrationRequestUpdate.as_view(), name='registration-update'),
-
-    url(r'^_register/$', _register, name='registration-request'),
 ]

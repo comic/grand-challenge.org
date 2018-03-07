@@ -4,7 +4,6 @@ from random import choice, randint
 import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files import File
@@ -19,13 +18,11 @@ from six import StringIO
 from userena.models import UserenaSignup
 
 from ckeditor.views import upload_to_project
-from comicmodels.admin import RegistrationRequestAdmin
-from comicmodels.models import Page, ComicSite, RegistrationRequest
+from comicmodels.models import Page, ComicSite
 from comicmodels.views import upload_handler
 from comicsite.admin import ProjectAdminSite2
-from participants.views import _register
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
-from tests.factories import PageFactory
+from tests.factories import PageFactory, RegistrationRequestFactory
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -228,23 +225,11 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        url = reverse("participants:registration-request",
-                      kwargs={"challenge_short_name": project.short_name})
-        factory = RequestFactory()
-        request = factory.get(url)
-        request.user = user
-        self.apply_standard_middleware(request)
-
-        response = _register(request, project.short_name)
-
-        self.assertEqual(response.status_code,
-                         200,
-                         "After registering as user %s at '%s', page did not"
-                         " load properly" % (user.username, url))
+        RegistrationRequestFactory(project=project, user=user)
 
         self.assertTrue(project.is_participant(user),
-                        "After registering as user %s at '%s', user does not "
-                        " appear to be registered." % (user.username, url))
+                        "After registering as user %s , user does not "
+                        " appear to be registered." % (user.username))
 
     def _test_page_can_be_viewed(self, user, page):
         page_url = reverse('pages:detail',
@@ -1201,129 +1186,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.assertTrue(allprojectsHTML != "",
                         "Nothing was rendered for projects overview")
 
-    def test_registration_request_tag(self):
-        """   Registration tags renders a link to register. Either directly of
-        after being approved by an admin 
-        
-        """
-        content = "register here: <registration> {% registration %} </registration>"
-
-        registrationpage = create_page(self.testproject,
-                                       "registrationpage", content)
-
-        # when you don't have to be approved, just following the link rendered by registration should do
-        # register you
-        self.testproject.require_participant_review = False
-        self.testproject.save()
-
-        response = self._test_page_can_be_viewed(self.signedup_user,
-                                                 registrationpage)
-        self.assertTextBetweenTags(response.content, "registration",
-                                   "Participate in",
-                                   "registering without review")
-
-        # when participant review is on, all admins will receive an email of a 
-        # new participant request, which they can approve or reject.  
-        self.testproject.require_participant_review = True
-        self.testproject.save()
-
-        # have a user request registration                             
-        response = self._test_page_can_be_viewed(self.signedup_user,
-                                                 registrationpage)
-        self.assertTextBetweenTags(response.content,
-                                   "registration",
-                                   "Request to participate in",
-                                   "registering with participation review")
-
-        registration_anchor = find_text_between('<registration>',
-                                                '</registration>',
-                                                response.content)
-        registration_link = extract_href_from_anchor(registration_anchor)
-
-        response = self._test_url_can_be_viewed(self.signedup_user,
-                                                registration_link)
-
-        # user should see some useful info after requestion registration                
-        self.assertText(response.content,
-                        "A participation request has been sent",
-                        "Checking message after user has requested participation")
-        # and admins should receive an email 
-
-        request_mail = mail.outbox[-1]
-
-        admins = self.testproject.get_admins()
-
-        self.assertEmail(request_mail, {"to": admins[0].email,
-                                        "subject": "New participation request",
-                                        "body": "has just requested to participate"
-                                        })
-
-        # link in this email should lead to admin overview of requests
-        link_in_email = find_text_between('href="', '">here',
-                                          self.get_mail_html_part(
-                                              request_mail).encode())
-        # TODO: create a function to check all links in the email.
-
-        reg_request = RegistrationRequest.objects.filter(
-            project=self.testproject)
-        self.assertTrue(reg_request != [],
-                        "User {0} clicked registration link, but no registrationRequest\
-                         object seems to have been created for project '{1}'".format(
-                            self.signedup_user,
-                            self.testproject))
-
-        factory = RequestFactory()
-        request = factory.get(
-            "/")  # just fake a request, we only need to add user
-        request.user = self.testproject.get_admins()[0]
-
-        self.apply_standard_middleware(request)
-
-        modeladmin = RegistrationRequestAdmin(RegistrationRequest, admin.site)
-        modeladmin.accept(request, reg_request)
-
-        # request.status = RegistrationRequest.ACCEPTED
-        # request.save()                        
-        # after acceptance, user should receive notification email
-        acceptance_mail = mail.outbox[-1]
-
-        self.assertEmail(acceptance_mail, {"to": self.signedup_user.email,
-                                           "subject": "participation request accepted",
-                                           "body": "has just accepted your request"
-                                           })
-
-        # after acceptance, user should be able to access restricted pages.
-        registeredonlypage = create_page(self.testproject,
-                                         "registeredonlypage",
-                                         permission_lvl=Page.REGISTERED_ONLY)
-
-        self._test_page_can_be_viewed(self.signedup_user, registeredonlypage)
-
-        # just to test, a random user should not be able to see this page
-        self._test_page_can_not_be_viewed(
-            self._create_random_user("not_registered"), registeredonlypage)
-
-        # check if admin can load the view to add a registration requests
-        admin_url = reverse('admin:comicmodels_registrationrequest_add')
-
-        self._test_url_can_be_viewed(self.projectadmin, admin_url)
-        # test whether the participationrequest is actually in the list in the admin
-        projectadmin_list = reverse(
-            'admin:comicmodels_registrationrequest_changelist',
-            current_app=self.testproject.get_project_admin_instance_name())
-
-        # check an admin can see the registration request that was just made by signup_user.
-        result = self._test_url_can_be_viewed(self.projectadmin,
-                                              projectadmin_list)
-        name = self.signedup_user.username
-
-        self.assertTrue(name in result.rendered_content,
-                        "An admin user in projectadmin should be able to see the participation"
-                        "request that was just made, but could not find the requesting users name '{}' anywhere in the content of"
-                        " page {}".format(name, projectadmin_list))
-
-        # self._test_page_can_be_viewed(self.projectadmin,registeredonlypage)
-
     def get_mail_html_part(self, mail):
         """ Extract html content from email sent with models.comicsite.send_templated_email
         
@@ -1470,28 +1332,4 @@ class AdminTest(ComicframeworkTestCase):
     def test_project_admin_views(self):
         """ Is javascript being included on admin pages correctly?
         """
-
         self._check_project_admin_view(self.testproject, "admin:index")
-
-        # Do the same for registration requests: check of standard views do not crash
-
-        # Create some registrationrequests 
-        rr1 = RegistrationRequest.objects.create(user=self.participant,
-                                                 project=self.testproject)
-
-        # Using root here because projectadmin cannot see objects created above. Don't know why but this is not tested here.
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_registrationrequest_change",
-                                       args=[rr1.pk],
-                                       user=self.root)
-
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_registrationrequest_history",
-                                       args=[rr1.pk],
-                                       user=self.root)
-
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_registrationrequest_changelist",
-                                       user=self.root)
-
-        # check that expected links are present in main admin page
