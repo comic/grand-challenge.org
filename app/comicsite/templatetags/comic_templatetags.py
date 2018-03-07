@@ -24,12 +24,11 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import comicsite.views
-from comicmodels.models import ComicSite, RegistrationRequest
+from comicmodels.models import ComicSite
 from comicsite.core.exceptions import ParserException, PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
 from comicsite.utils.html import escape_for_html_id
-from comicsite.views import create_HTML_a
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
@@ -256,9 +255,10 @@ class comic_URLNode(defaulttags.URLNode):
                         'evaluation',
                         'teams',
                         'pages',
+                        'participants',
                     ]
                 )
-            ):
+        ):
 
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
@@ -1903,56 +1903,6 @@ class AllProjectLinksNode(template.Node):
 
     def format_date(self, date):
         return date.strftime('%b %d, %Y')
-
-
-@register.tag(name="registration")
-def render_registration_form(parser, token):
-    """ Render a registration form for the current site """
-    return RegistrationFormNode()
-
-
-class RegistrationFormNode(template.Node):
-    """ return HTML form of registration, which links to main registration
-    Currently just links to registration
-    """
-
-    def __init__(self):
-        super(RegistrationFormNode, self).__init__()
-
-    def render(self, context):
-        project = context.page.comicsite
-
-        if not context['user'].is_authenticated():
-            return "<strong>You need to sign in before you can request participation in a challenge.</strong>"
-
-        else:
-
-            if project.is_participant(context['user']):
-                msg = "You are already participating in" + ' ' + project.short_name
-            else:
-                msg = self.get_signup_link(context, project)
-
-            return msg
-
-    def get_signup_link(self, context, project):
-        register_url = reverse('participants:registration-request',
-                               kwargs={'challenge_short_name': project.short_name})
-        # nested if loops through the roof. What would uncle Bob say?
-        # "nested if loops are a missed chance for inheritance."
-        # TODO: possible way out: create some kind of registration request
-        # manager which can be asked these things
-        if project.require_participant_review:
-            pending = RegistrationRequest.objects.get_pending_registration_requests(
-                context['user'], project)
-            if pending:
-                msg = pending[0].status_to_string()
-            else:
-                msg = create_HTML_a(register_url,
-                                    "Request to participate in " + project.short_name)
-        else:
-            msg = create_HTML_a(register_url,
-                                "Participate in " + project.short_name)
-        return msg
 
 
 class TemplateErrorNode(template.Node):

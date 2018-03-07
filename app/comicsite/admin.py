@@ -23,8 +23,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from guardian.shortcuts import get_objects_for_user
 
-from comicmodels.admin import RegistrationRequestAdmin
-from comicmodels.models import RegistrationRequest
 from comicmodels.signals import new_admin, removed_admin
 
 logger = logging.getLogger("django")
@@ -97,7 +95,6 @@ class ProjectAdminSite2(AdminSite):
         
         """
         self.register(ComicSite, ComicSiteAdmin)
-        self.register(RegistrationRequest, RegistrationRequestAdmin)
 
     def queryset_wrapper(self, querysetfunction):
         """ Modify queryset so it only show objects related to the current project
@@ -301,7 +298,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'fields': (
                 'manage_admin_link',
-                'manage_participation_request_link',
                 'use_registration_page',
                 'require_participant_review',
                 'registration_page_text',
@@ -319,7 +315,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = (
-        "manage_admin_link", "link", "manage_participation_request_link",)
+        "manage_admin_link", "link", )
 
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'
@@ -353,18 +349,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
     manage_admin_link.allow_tags = True  # allow links
     manage_admin_link.short_description = "Admins"
 
-    def manage_participation_request_link(self, instance):
-        """ HTML link to overview of all participation requests. Used in admin.
-        """
-
-        url = reverse("admin:comicmodels_registrationrequest_changelist",
-                      current_app=instance.get_project_admin_instance_name())
-        return "<a href=\'{}'>Approve or reject participation requests</a>".format(
-            url)
-
-    manage_participation_request_link.allow_tags = True  # allow links
-    manage_participation_request_link.short_description = "Participation Requests"
-
     def get_queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
         qs = super(ComicSiteAdmin, self).get_queryset(request)
@@ -387,11 +371,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         myurls = [
             url(r'^(?P<object_pk>.+)/admins/$',
                 view=self.admin_site.admin_view(self.admin_add_view),
-                name='%s_%s_admins' % info),
-            url(r'^(?P<object_pk>.+)/registration_requests/$',
-                view=self.admin_site.admin_view(
-                    self.registration_requests_view),
-                name='%s_%s_participantrequests' % info),
+                name='%s_%s_admins' % info)
         ]
         return myurls + urls
 
@@ -512,17 +492,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return super(ComicSiteAdmin, self).render_change_form(request, context,
                                                               add, change,
                                                               form_url, obj)
-
-    def registration_requests_view(self, request, object_pk):
-        """ Used to view requests to participate in admin interface
-        """
-        from comicmodels.admin import RegistrationRequestAdmin
-        from comicmodels.models import RegistrationRequest
-
-        rra = RegistrationRequestAdmin(RegistrationRequest, admin.site)
-        return rra.changelist_view(request)
-        # TODO: why is RegistrationRequestAdmin in a different class. This is
-        # so confusing. Think about class responsibilities and fix this.
 
 
 class AdminManageForm(forms.Form):

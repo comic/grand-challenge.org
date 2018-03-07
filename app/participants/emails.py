@@ -62,7 +62,7 @@ def send_participation_request_rejected_email(request, obj):
 
     """
 
-    title = obj.project.short_name + 'participation request rejected'
+    title = obj.project.short_name + ' participation request rejected'
     mainportal = get_current_site(request)
     kwargs = {'user': obj.user,
               'adder': request.user,
