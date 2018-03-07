@@ -3,7 +3,6 @@ import logging
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 from django.utils.html import strip_tags
@@ -76,69 +75,6 @@ signup_complete.connect(set_project_admin_permissions, dispatch_uid="set_project
 # ======================================= sending notification emails ====================
 
 
-def send_participation_request_notification_email(request, obj):
-    """ When a user requests to become a participant, let this know to all admins            
-    
-    request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-    
-    """
-
-    title = 'New participation request for {0}'.format(obj.project.short_name)
-    mainportal = get_current_site(request)
-    kwargs = {'user': obj.user,
-              'site': mainportal,
-              'project': obj.project}
-    for admin in obj.project.get_admins():
-        kwargs["admin"] = admin
-        send_templated_email(title, "admin/emails/participation_request_notification_email.txt", kwargs, [admin.email]
-                             , "noreply@" + mainportal.domain, fail_silently=False, request=request)
-        # send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
-
-
-def send_participation_request_accepted_email(request, obj):
-    """ When a users requests to become a participant is accepted, let the user know            
-    
-    request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-    
-    """
-
-    title = obj.project.short_name + ' participation request accepted'
-    mainportal = get_current_site(request)
-    kwargs = {'user': obj.user,
-              'adder': request.user,
-              'site': mainportal,
-              'project': obj.project}
-
-    # send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
-    send_templated_email(title, "admin/emails/participation_request_accepted_email.txt", kwargs, [obj.user.email]
-                         , "noreply@" + mainportal.domain, fail_silently=False, request=request)
-
-
-def send_participation_request_rejected_email(request, obj):
-    """ When a users requests to become a participant is rejected, let the user know            
-    
-    request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-    
-    """
-
-    title = obj.project.short_name + 'participation request rejected'
-    mainportal = get_current_site(request)
-    kwargs = {'user': obj.user,
-              'adder': request.user,
-              'site': mainportal,
-              'project': obj.project}
-
-    # send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
-    send_templated_email(title, "admin/emails/participation_request_rejected_email.txt", kwargs, [obj.user.email]
-                         , "noreply@" + mainportal.domain, fail_silently=False, request=request)
-
-
 # TODO: below: why these confusing signals. These functions are called from comicsite.admin,
 # just import them there and use them. Much less confusing.
 
@@ -148,9 +84,8 @@ def send_new_admin_notification_email(sender, **kwargs):
     site = kwargs['site']
     title = 'You are now admin for ' + comicsite.short_name
 
-    # send_mail(title, message, "noreply@"+site.domain ,[new_admin.email], fail_silently=False)
     send_templated_email(title, "admin/emails/new_admin_notification_email.txt", kwargs, [new_admin.email]
-                         , "noreply@" + site.domain, fail_silently=False)
+                         , fail_silently=False)
 
 
 # connect to signal
@@ -178,7 +113,7 @@ def send_file_uploaded_notification_email(sender, **kwargs):
 
     kwargs['project'] = comicsite
     send_templated_email(title, "admin/emails/file_uploaded_email.txt", kwargs,
-                         admin_email_adresses, "noreply@" + site.domain,
+                         admin_email_adresses,
                          fail_silently=False)
 
 
@@ -188,7 +123,7 @@ file_uploaded.connect(send_file_uploaded_notification_email,
 
 
 def send_templated_email(subject, email_template_name, email_context, recipients,
-                         sender=None, bcc=None, fail_silently=True, files=None, request=None):
+                         bcc=None, fail_silently=True, files=None, request=None):
     """
     send_templated_mail() is a wrapper around Django's e-mail routines that
     allows us to easily send multipart (text/plain & text/html) e-mails using

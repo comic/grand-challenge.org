@@ -12,6 +12,7 @@ from comicmodels.models import Page, RegistrationRequest, ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
+from participants.emails import send_participation_request_notification_email
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
@@ -38,7 +39,10 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
             pk=self.request.project_pk)
 
         try:
-            return super().form_valid(form)
+            redirect = super().form_valid(form)
+            send_participation_request_notification_email(self.request,
+                                                          self.object)
+            return redirect
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
             return super().form_invalid(form)
@@ -66,6 +70,13 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
                 'challenge_short_name': self.object.project.short_name,
             }
         )
+
+    def form_valid(self, form):
+        redirect = super().form_valid(form)
+
+        # if self.object.has_changed('status'):
+
+        return redirect
 
 
 ##################################################
@@ -154,7 +165,7 @@ def _register_after_approval(request, project):
         reg_request.project = project
         reg_request.user = request.user
         reg_request.save()
-        from comicsite.models import \
+        from participants.emails import \
             send_participation_request_notification_email
         send_participation_request_notification_email(request, reg_request)
 
