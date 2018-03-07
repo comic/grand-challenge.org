@@ -25,6 +25,8 @@ urlpatterns = [
         TemplateView.as_view(template_name='robots.html'),
         name="comicsite_robots_txt"),
 
+    # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
+
     url(r'^(?P<challenge_short_name>[\w-]+)/evaluation/',
         include('evaluation.urls', namespace='evaluation')),
 
