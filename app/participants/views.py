@@ -2,7 +2,9 @@ from itertools import chain
 
 from auth_mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db.models import Q
+from django.forms.utils import ErrorList
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView
 
@@ -36,7 +38,12 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
         form.instance.user = self.request.user
         form.instance.project = ComicSite.objects.get(
             pk=self.request.project_pk)
-        return super().form_valid(form)
+
+        try:
+            return super().form_valid(form)
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
 
 
 class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):

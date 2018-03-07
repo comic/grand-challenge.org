@@ -1478,12 +1478,6 @@ class AdminTest(ComicframeworkTestCase):
         # Create some registrationrequests 
         rr1 = RegistrationRequest.objects.create(user=self.participant,
                                                  project=self.testproject)
-        rr2 = RegistrationRequest.objects.create(user=self.participant,
-                                                 project=self.testproject,
-                                                 status=RegistrationRequest.REJECTED)
-        rr3 = RegistrationRequest.objects.create(user=self.participant,
-                                                 project=self.testproject,
-                                                 status=RegistrationRequest.ACCEPTED)
 
         # Using root here because projectadmin cannot see objects created above. Don't know why but this is not tested here.
         self._check_project_admin_view(self.testproject,

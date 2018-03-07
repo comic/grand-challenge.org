@@ -881,6 +881,10 @@ class RegistrationRequest(models.Model):
             self.user.username,
             self.project.short_name)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def status_to_string(self):
         status = "Your participation request for " + self.project.short_name + \
                  ", sent " + self.format_date(self.created)
@@ -906,3 +910,6 @@ class RegistrationRequest(models.Model):
     def user_affiliation(self):
         profile = self.user.user_profile
         return profile.institution + " - " + profile.department
+
+    class Meta:
+        unique_together = (('project', 'user'),)
