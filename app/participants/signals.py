@@ -14,3 +14,5 @@ def process_registration(instance: RegistrationRequest = None,
 
     if instance.status == RegistrationRequest.ACCEPTED:
         instance.project.add_participant(instance.user)
+    else:
+        instance.project.remove_participant(instance.user)
