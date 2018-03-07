@@ -12,7 +12,11 @@ from comicmodels.models import Page, RegistrationRequest, ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
-from participants.emails import send_participation_request_notification_email
+from participants.emails import (
+    send_participation_request_notification_email,
+    send_participation_request_accepted_email,
+send_participation_request_rejected_email,
+)
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
@@ -74,7 +78,15 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
     def form_valid(self, form):
         redirect = super().form_valid(form)
 
-        # if self.object.has_changed('status'):
+        # TODO: check if the status has actually changed
+
+        if self.object.status == RegistrationRequest.ACCEPTED:
+            send_participation_request_accepted_email(self.request,
+                                                      self.object)
+
+        if self.object.status == RegistrationRequest.REJECTED:
+            send_participation_request_rejected_email(self.request,
+                                                      self.object)
 
         return redirect
 

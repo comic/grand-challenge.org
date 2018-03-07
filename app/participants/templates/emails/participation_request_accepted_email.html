@@ -1,0 +1,17 @@
+{% autoescape off %}
+    Dear {{ user.username }},
+
+
+    <p>{{ adder.username }} has just accepted your request to participate in
+        <a href="http://
+                {{ site.domain }}{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}</a>
+        on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.</p>
+
+    <p>When logged in, you can now view participant-only pages on <a
+            href="http://
+                    {{ site.domain }}{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}</a>.
+    </p>
+
+    <p>Regards,<br/>
+        {{ site.name }}</p>
+{% endautoescape %}
