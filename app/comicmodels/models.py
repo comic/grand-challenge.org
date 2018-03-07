@@ -355,6 +355,13 @@ class ComicSite(models.Model):
     require_participant_review = models.BooleanField(default=False,
                                                      help_text="If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
 
+    use_registration_page = models.BooleanField(
+        default=True,
+        help_text=(
+            'If true, show a registration page on the challenge site.'
+        )
+    )
+
     registration_page_text = models.TextField(
         default='',
         blank=True,

@@ -66,10 +66,14 @@
         {% endif %}
     {% endfor %}
 
-    <li role="separator" class="divider"></li>
-    <li>
-        <a href="{% url 'participants:registration-create' site.short_name %}"><b>Join</b></a>
-    </li>
+    {% if site.use_registration_page %}
+
+        <li role="separator" class="divider"></li>
+        <li>
+            <a href="{% url 'participants:registration-create' site.short_name %}"><b>Join</b></a>
+        </li>
+
+    {% endif %}
 
     {% if site.use_evaluation %}
 
@@ -130,7 +134,8 @@
                     <a href="{% url 'participants:list' site.short_name %}">Participants</a>
                 </li>
                 <li>
-                    <a href="{% url 'participants:registration-list' site.short_name %}">Registration Requests</a>
+                    <a href="{% url 'participants:registration-list' site.short_name %}">Registration
+                        Requests</a>
                 </li>
                 {% if site.use_evaluation %}
                     <li>
