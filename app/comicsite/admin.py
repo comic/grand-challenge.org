@@ -316,7 +316,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = (
-        "manage_admin_link", "link", "manage_participation_request_link",)
+        "manage_admin_link", "link", )
 
     admin_manage_template = \
         'admin/comicmodels/admin_manage.html'
