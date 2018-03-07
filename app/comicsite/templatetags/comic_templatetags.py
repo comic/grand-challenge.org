@@ -256,6 +256,7 @@ class comic_URLNode(defaulttags.URLNode):
                         'evaluation',
                         'teams',
                         'pages',
+                        'participants',
                     ]
                 )
             ):
