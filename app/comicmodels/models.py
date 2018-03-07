@@ -856,7 +856,7 @@ class RegistrationRequest(models.Model):
                                 help_text="To which project does the user want to register?")
 
     created = models.DateTimeField(auto_now_add=True)
-    changed = models.DateTimeField(blank=True, null=True)
+    changed = models.DateTimeField(auto_now=True)
 
     PENDING = 'PEND'
     ACCEPTED = 'ACPT'
@@ -886,7 +886,7 @@ class RegistrationRequest(models.Model):
         super().save(*args, **kwargs)
 
     def status_to_string(self):
-        status = "Your participation request for " + self.project.short_name + \
+        status = "Your request to join " + self.project.short_name + \
                  ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:

@@ -24,15 +24,13 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
                                 CreateView):
     model = RegistrationRequest
     fields = ()
-    success_message = (
-        'You have requested to participate in this challenge. '
-        'You will receive an email when this has been reviewed by the '
-        'challenge organisers.'
-    )
 
     def get_success_url(self):
         challenge = ComicSite.objects.get(pk=self.request.project_pk)
         return challenge.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
 
     def form_valid(self, form):
         form.instance.user = self.request.user
