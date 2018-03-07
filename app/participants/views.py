@@ -7,6 +7,7 @@ from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView
 
 from comicmodels.models import Page, RegistrationRequest, ComicSite
+from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import site_get_standard_vars
 
@@ -47,9 +48,19 @@ class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
         return queryset
 
 
-class RegistrationRequestUpdate(UserIsChallengeAdminMixin, UpdateView):
+class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
+                                UpdateView):
     model = RegistrationRequest
     fields = ('status',)
+    success_message = 'Registration successfully updated'
+
+    def get_success_url(self):
+        return reverse(
+            'participants:registration-list',
+            kwargs={
+                'challenge_short_name': self.object.project.short_name,
+            }
+        )
 
 
 ##################################################
