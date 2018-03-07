@@ -1935,8 +1935,8 @@ class RegistrationFormNode(template.Node):
             return msg
 
     def get_signup_link(self, context, project):
-        register_url = reverse('participant-registration-request',
-                               kwargs={'site_short_name': project.short_name})
+        register_url = reverse('participants:registration-request',
+                               kwargs={'challenge_short_name': project.short_name})
         # nested if loops through the roof. What would uncle Bob say?
         # "nested if loops are a missed chance for inheritance."
         # TODO: possible way out: create some kind of registration request

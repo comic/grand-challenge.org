@@ -355,6 +355,13 @@ class ComicSite(models.Model):
     require_participant_review = models.BooleanField(default=False,
                                                      help_text="If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately")
 
+    use_registration_page = models.BooleanField(
+        default=True,
+        help_text=(
+            'If true, show a registration page on the challenge site.'
+        )
+    )
+
     registration_page_text = models.TextField(
         default='',
         blank=True,
@@ -499,7 +506,7 @@ class ComicSite(models.Model):
 
     def get_participants(self):
         """ Return all participants of this challenge """
-        return self.participants_group.all()
+        return self.participants_group.user_set.all()
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
@@ -856,7 +863,7 @@ class RegistrationRequest(models.Model):
                                 help_text="To which project does the user want to register?")
 
     created = models.DateTimeField(auto_now_add=True)
-    changed = models.DateTimeField(blank=True, null=True)
+    changed = models.DateTimeField(auto_now=True)
 
     PENDING = 'PEND'
     ACCEPTED = 'ACPT'
@@ -881,8 +888,12 @@ class RegistrationRequest(models.Model):
             self.user.username,
             self.project.short_name)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def status_to_string(self):
-        status = "Your participation request for " + self.project.short_name + \
+        status = "Your request to join " + self.project.short_name + \
                  ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:
@@ -906,3 +917,6 @@ class RegistrationRequest(models.Model):
     def user_affiliation(self):
         profile = self.user.user_profile
         return profile.institution + " - " + profile.department
+
+    class Meta:
+        unique_together = (('project', 'user'),)

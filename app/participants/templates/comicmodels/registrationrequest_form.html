@@ -1,0 +1,32 @@
+{% extends "site.html" %}
+{% load crispy_forms_tags %}
+
+{% block pagecontent %}
+
+    <h2>Join {{ site.short_name }}</h2>
+
+    <p>
+        {{ site.registration_page_text|safe }}
+    </p>
+
+    {% if existing_status %}
+
+        <p><b>{{ existing_status }}.</b></p>
+
+    {% elif user_is_participant %}
+
+        <p><b>You are already participating in {{ site.short_name }}.</b></p>
+
+    {% else %}
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ form | crispy }}
+            <input type="submit"
+                   value="Click here to join {{ site.short_name }}"
+                   class="btn btn-primary"/>
+        </form>
+
+    {% endif %}
+
+{% endblock %}

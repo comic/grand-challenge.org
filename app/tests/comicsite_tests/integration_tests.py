@@ -23,7 +23,7 @@ from comicmodels.admin import RegistrationRequestAdmin
 from comicmodels.models import Page, ComicSite, RegistrationRequest
 from comicmodels.views import upload_handler
 from comicsite.admin import ProjectAdminSite2
-from comicsite.views import _register
+from participants.views import _register
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory
 
@@ -228,8 +228,8 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        url = reverse("participant-registration-request",
-                      kwargs={"site_short_name": project.short_name})
+        url = reverse("participants:registration-request",
+                      kwargs={"challenge_short_name": project.short_name})
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
@@ -1478,12 +1478,6 @@ class AdminTest(ComicframeworkTestCase):
         # Create some registrationrequests 
         rr1 = RegistrationRequest.objects.create(user=self.participant,
                                                  project=self.testproject)
-        rr2 = RegistrationRequest.objects.create(user=self.participant,
-                                                 project=self.testproject,
-                                                 status=RegistrationRequest.REJECTED)
-        rr3 = RegistrationRequest.objects.create(user=self.participant,
-                                                 project=self.testproject,
-                                                 status=RegistrationRequest.ACCEPTED)
 
         # Using root here because projectadmin cannot see objects created above. Don't know why but this is not tested here.
         self._check_project_admin_view(self.testproject,

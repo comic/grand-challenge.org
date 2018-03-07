@@ -302,6 +302,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             'fields': (
                 'manage_admin_link',
                 'manage_participation_request_link',
+                'use_registration_page',
                 'require_participant_review',
                 'registration_page_text',
             )

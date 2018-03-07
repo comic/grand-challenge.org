@@ -5,8 +5,8 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import get_objects_for_user
 
 from comicmodels.models import UploadModel, RegistrationRequest
-from comicsite.models import send_participation_request_rejected_email, \
-    send_participation_request_accepted_email
+from participants.emails import send_participation_request_accepted_email, \
+    send_participation_request_rejected_email
 
 
 class ComicModelAdmin(GuardedModelAdmin):

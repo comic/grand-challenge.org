@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from comicmodels.models import ComicSite, Page
+from comicmodels.models import ComicSite, Page, RegistrationRequest
 from evaluation.models import Submission, Job, Method, Result
 from teams.models import Team, TeamMember
 
@@ -30,7 +30,7 @@ class UserFactory(factory.DjangoModelFactory):
     class Meta:
         model = settings.AUTH_USER_MODEL
 
-    username = factory.Sequence(lambda n: 'test_user_%s' % n)
+    username = factory.Sequence(lambda n: f'test_user_{n:04}')
     email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)
     password = factory.PostGenerationMethodCall('set_password',
                                                 SUPER_SECURE_TEST_PASSWORD)
@@ -38,6 +38,14 @@ class UserFactory(factory.DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
+
+
+class RegistrationRequestFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = RegistrationRequest
+
+    user = factory.SubFactory(UserFactory)
+    project = factory.SubFactory(ChallengeFactory)
 
 
 def hash_sha256(s):
