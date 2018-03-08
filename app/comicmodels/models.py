@@ -4,7 +4,6 @@ import logging
 import os
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.storage import DefaultStorage
@@ -15,6 +14,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from guardian.shortcuts import assign_perm, remove_perm
+from guardian.utils import get_anonymous_user
 
 import comicsite.utils.query
 from ckeditor.fields import RichTextField
@@ -58,14 +58,6 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     path = path.replace("\\",
                         "/")  # replace remove double slashes because this can mess up django's url system
     return path
-
-
-def get_anonymous_user():
-    """Anymous user is the default user for non logged in users. I is also the only member of group
-      'everyone' for which permissions can be set """
-    User = get_user_model()
-    return User.objects.get(username=settings.ANONYMOUS_USER_NAME)
-
 
 def get_project_admin_instance_name(projectname):
     """ Convention for naming the projectadmin interface for the given project
@@ -570,13 +562,19 @@ class ComicSite(models.Model):
         return URL
 
     def add_participant(self, user):
-        user.groups.add(self.participants_group)
+        if user != get_anonymous_user():
+            user.groups.add(self.participants_group)
+        else:
+            raise ValueError('You cannot add the anonymous user to this group')
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
 
     def add_admin(self, user):
-        user.groups.add(self.admins_group)
+        if user != get_anonymous_user():
+            user.groups.add(self.admins_group)
+        else:
+            raise ValueError('You cannot add the anonymous user to this group')
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)

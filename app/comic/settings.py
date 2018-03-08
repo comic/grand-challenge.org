@@ -275,6 +275,7 @@ INSTALLED_APPS = (
     'teams',
     'pages',
     'participants',
+    'admins',
 )
 
 AUTHENTICATION_BACKENDS = (

@@ -33,6 +33,8 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
 
+    assert 'Participants for ' in response.rendered_content
+
 
 @pytest.mark.django_db
 def test_registration_list_is_filtered(client, TwoChallengeSets):

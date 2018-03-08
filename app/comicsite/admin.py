@@ -12,18 +12,13 @@ from django.contrib import messages
 # other imports required if you want easy replace standard admin package with yours
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.forms import TextInput
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
 from django.utils import six
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 from guardian.shortcuts import get_objects_for_user
-
-from comicmodels.signals import new_admin, removed_admin
 
 logger = logging.getLogger("django")
 
@@ -297,7 +292,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         ('Users', {
             'classes': ('collapse',),
             'fields': (
-                'manage_admin_link',
                 'use_registration_page',
                 'require_participant_review',
                 'registration_page_text',
@@ -314,11 +308,7 @@ class ComicSiteAdmin(admin.ModelAdmin):
             )
         }),
     )
-    readonly_fields = (
-        "manage_admin_link", "link", )
-
-    admin_manage_template = \
-        'admin/comicmodels/admin_manage.html'
+    readonly_fields = ("link",)
 
     def link(self, obj):
         """ link to current project, so you can easily view project """
@@ -336,19 +326,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
 
     link.allow_tags = True
 
-    def manage_admin_link(self, instance):
-        """ HTML link to the overview of all admins for this project. Used in 
-        admin interface. 
-        """
-
-        url = reverse("admin:comicmodels_comicsite_admins", args=[instance.pk],
-                      current_app=instance.get_project_admin_instance_name())
-        return "<a href={}>View, Add or Remove Administrators for this project</a>".format(
-            url)
-
-    manage_admin_link.allow_tags = True  # allow links
-    manage_admin_link.short_description = "Admins"
-
     def get_queryset(self, request):
         """ overwrite this method to return only comicsites to which current user has access """
         qs = super(ComicSiteAdmin, self).get_queryset(request)
@@ -360,20 +337,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
                                       'comicmodels.change_comicsite')
             qs = filter_projects_by_user_admin(qs, request.user)
             return qs
-
-    def get_urls(self):
-        """
-        Extends standard admin model urls to manage admins and participants:
-        """
-
-        urls = super(ComicSiteAdmin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.model_name
-        myurls = [
-            url(r'^(?P<object_pk>.+)/admins/$',
-                view=self.admin_site.admin_view(self.admin_add_view),
-                name='%s_%s_admins' % info)
-        ]
-        return myurls + urls
 
     def get_base_context(self, request, obj):
         """
@@ -394,88 +357,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         }
         return context
 
-    def admin_add_view(self, request, object_pk, extra_context=None):
-        """
-        Show all users in admin_group for this comicsite, allow adding users
-        """
-
-        if extra_context is None:
-            extra_context = {}
-
-        comicsite = get_object_or_404(ComicSite, id=object_pk)
-        User = get_user_model()
-        admins = comicsite.get_admins()
-
-        if request.method == 'POST' and 'submit_add_user' in request.POST:
-            user_form = AdminManageForm(request.POST)
-            if user_form.is_valid():
-                user = user_form.cleaned_data['user']
-                # add given user to admins group
-                comicsite.add_admin(user)
-
-                # give them the staff bit
-                user.is_staff = True
-                user.save()
-                messages.add_message(request, messages.SUCCESS,
-                                     'User "' + user.username + '"\
-                                     is now an admin for ' + comicsite.short_name)
-
-                # send signal to be picked up for example by email notifier
-                new_admin.send(sender=self, adder=request.user, new_admin=user,
-                               comicsite=comicsite
-                               , site=get_current_site(request))
-
-
-
-        elif request.method == 'POST' and 'submit_delete_user' in request.POST:
-            user_form = AdminManageForm(request.POST)
-
-            if user_form.is_valid():
-
-                # add given user to admins group
-                usernames_to_remove = request.POST.getlist('admins')
-                removed = []
-
-                msg2 = ""
-                for username in usernames_to_remove:
-                    if username == request.user.username:
-                        msg2 = "Did not remove " + username + " because that's you."
-
-                    else:
-
-                        user = User.objects.get(username=username)
-                        comicsite.remove_admin(user)
-                        removed.append(username)
-
-                        # send signal to be picked up for example by email notifier
-                        removed_admin.send(sender=self, adder=request.user,
-                                           removed_admin=user,
-                                           comicsite=comicsite,
-                                           site=get_current_site(request))
-
-                msg = "Removed users [" + ", ".join(
-                    removed) + "] from " + comicsite.short_name + \
-                      " admin group. " + msg2
-                messages.add_message(request, messages.SUCCESS, msg)
-
-        else:
-            user_form = AdminManageForm()
-
-        # populate available admins. #FIXME: duplicate code with change_view.
-        # how to fill this amdin list without explicit filling?
-        choices = tuple([(user.username, user.username) for user in admins])
-        user_form.fields['admins'].widget.choices = choices
-
-        context = self.get_base_context(request, comicsite)
-        context['user_form'] = user_form
-        context['title'] = "Manage Admins"
-
-        context.update(extra_context)
-
-        return render_to_response(self.admin_manage_template,
-                                  context, RequestContext(request,
-                                                          current_app=self.admin_site.name))
-
     def save_model(self, request, obj, form, change):
         if obj.pk is None:
             obj.creator = request.user
@@ -492,14 +373,6 @@ class ComicSiteAdmin(admin.ModelAdmin):
         return super(ComicSiteAdmin, self).render_change_form(request, context,
                                                               add, change,
                                                               form_url, obj)
-
-
-class AdminManageForm(forms.Form):
-    admins = forms.CharField(required=False, widget=forms.SelectMultiple,
-                             help_text="All admins for this project")
-    User = get_user_model()
-    user = forms.ModelChoiceField(queryset=User.objects.all(),
-                                  empty_label="<user to add>", required=False)
 
 
 # this variable is included in urls.py to get admin urls for each project in
