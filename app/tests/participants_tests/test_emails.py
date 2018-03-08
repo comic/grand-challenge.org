@@ -8,8 +8,23 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_new_registration_email(client, ChallengeSet):
+@pytest.mark.parametrize(
+    "participant_review",
+    [
+        True,
+        False,
+    ]
+)
+def test_new_registration_email(participant_review, client, ChallengeSet):
     user = UserFactory()
+
+    ChallengeSet.challenge.require_participant_review = participant_review
+    ChallengeSet.challenge.save()
+
+    assert not RegistrationRequest.objects.filter(
+        user=user,
+        project=ChallengeSet.challenge
+    ).exists()
 
     response = get_view_for_user(
         viewname='participants:registration-create',
@@ -21,17 +36,26 @@ def test_new_registration_email(client, ChallengeSet):
 
     assert response.status_code == 302
 
-    email = mail.outbox[-1]
+    assert RegistrationRequest.objects.filter(
+        user=user,
+        project=ChallengeSet.challenge
+    ).exists()
 
-    RegistrationRequest.objects.get(user=user, project=ChallengeSet.challenge)
+    if participant_review:
+        email = mail.outbox[-1]
 
-    approval_link = reverse('participants:registration-list',
-                            args=[ChallengeSet.challenge.short_name])
+        approval_link = reverse('participants:registration-list',
+                                args=[ChallengeSet.challenge.short_name])
 
-    assert ChallengeSet.admin.email in email.to
-    assert 'New participation request' in email.subject
-    assert ChallengeSet.challenge.short_name in email.subject
-    assert approval_link in email.alternatives[0][0]
+        assert ChallengeSet.admin.email in email.to
+        assert 'New participation request' in email.subject
+        assert ChallengeSet.challenge.short_name in email.subject
+        assert approval_link in email.alternatives[0][0]
+    else:
+        with pytest.raises(IndexError):
+            # No emails if no review
+            # noinspection PyStatementEffect
+            mail.outbox[-1]
 
 
 @pytest.mark.django_db

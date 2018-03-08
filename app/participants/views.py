@@ -35,14 +35,20 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
         return self.object.status_to_string()
 
     def form_valid(self, form):
+        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+
         form.instance.user = self.request.user
-        form.instance.project = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.project = challenge
 
         try:
             redirect = super().form_valid(form)
-            send_participation_request_notification_email(self.request,
-                                                          self.object)
+
+            if challenge.require_participant_review:
+                # Note, sending an email here rather than in signals as
+                # the function requires the request.
+                send_participation_request_notification_email(self.request,
+                                                              self.object)
+
             return redirect
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
