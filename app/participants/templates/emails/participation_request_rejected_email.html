@@ -4,10 +4,10 @@
     <p>Dear {{ user.username }},</p>
 
     <p>{{ adder.username }} has rejected your request to participate in
-    <a href="http://{{ site.domain }}{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}</a>
-        on <a href="http://{{ site.domain }}">{{ site.domain }}</a>.</p>
+    <a href="{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}</a>
+        on {{ site.domain }}.</p>
 
-    <p>For more information, please contact the <a href="http://{{ site.domain }}{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}
+    <p>For more information, please contact the <a href="{% url 'challenge-homepage' project.short_name %}">{{ project.short_name }}
         organizers</a>.</p>
 
     <p>Regards,<br/>
