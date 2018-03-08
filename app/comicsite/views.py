@@ -3,7 +3,7 @@ from os import path
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
@@ -15,10 +15,6 @@ from comicmodels.models import (
 )
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
-
-
-def index(request):
-    return HttpResponse("ComicSite index page.")
 
 
 def site(request, site_short_name):

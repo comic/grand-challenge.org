@@ -18,7 +18,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 import comicsite.utils.query
 from ckeditor.fields import RichTextField
-from comicmodels.template.decorators import track_data
 from comicsite.core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
@@ -819,44 +818,11 @@ class UploadModel(ComicSiteModel):
         verbose_name_plural = "uploaded files"
 
 
-class RegistrationRequestManager(models.Manager):
-    """ adds some convenient queries to standard .objects()"""
-
-    def get_pending_registration_requests(self, user, site):
-        """ So people can be shown that they have already sent a request and to make
-        sure they don't (or some bot doesnt) request a 1000 times
-
-        Return: RegistrationRequest object if it already exists, empty list if it
-        does not
-        """
-
-        return self.filter(project=site,
-                           user=user,
-                           status=RegistrationRequest.PENDING)
-
-    def get_accepted_registration_requests(self, user, site):
-        """ So people can be shown that they have already sent a request and to make
-        sure they don't (or some bot doesnt) request a 1000 times
-
-        Return: RegistrationRequest object if it already exists, empty list if it
-        does not
-        """
-        return self.filter(project=site,
-                           user=user,
-                           status=RegistrationRequest.ACCEPTED)
-
-    def get_queryset(self):
-        return super(RegistrationRequestManager, self).get_queryset()
-
-
-@track_data('status')
 class RegistrationRequest(models.Model):
     """ When a user wants to join a project, admins have the option of reviewing
         each user before allowing or denying them. This class records the needed
         info for that.
     """
-    objects = RegistrationRequestManager()
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              help_text="which user requested to participate?")
     project = models.ForeignKey(ComicSite,
@@ -907,12 +873,6 @@ class RegistrationRequest(models.Model):
 
     def format_date(self, date):
         return date.strftime('%b %d, %Y at %H:%M')
-
-    def user_real_name(self):
-        return self.user.first_name + " " + self.user.last_name
-
-    def user_email(self):
-        return self.user.email
 
     def user_affiliation(self):
         profile = self.user.user_profile
