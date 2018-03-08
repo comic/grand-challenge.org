@@ -11,13 +11,8 @@ admin.autodiscover()
 
 urlpatterns = [
 
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
     # main page
     url(r'^$', comicmain, name='home'),
-    # url(r'^Comic/$',ListView.as_view(model=ComicSite,
-    # template_name='index.html'),name = 'home'),
 
     # tell nice bots what to do. TODO: using 'robots.txt' as a template name
     #  will

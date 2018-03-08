@@ -21,7 +21,7 @@ def send_participation_request_notification_email(request, obj):
         kwargs["admin"] = admin
         send_templated_email(
             title,
-            "emails/participation_request_notification_email.html",
+            "participants/emails/participation_request_notification_email.html",
             kwargs,
             [admin.email],
             request=request,
@@ -46,7 +46,7 @@ def send_participation_request_accepted_email(request, obj):
 
     send_templated_email(
         title,
-        "emails/participation_request_accepted_email.html",
+        "participants/emails/participation_request_accepted_email.html",
         kwargs,
         [obj.user.email],
         request=request,
@@ -71,7 +71,7 @@ def send_participation_request_rejected_email(request, obj):
 
     send_templated_email(
         title,
-        "emails/participation_request_rejected_email.html",
+        "participants/emails/participation_request_rejected_email.html",
         kwargs,
         [obj.user.email],
         request=request,

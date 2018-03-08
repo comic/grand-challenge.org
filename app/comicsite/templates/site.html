@@ -131,6 +131,9 @@
                     <a href="{% url 'pages:list' site.short_name %}">Pages</a>
                 </li>
                 <li>
+                    <a href="{% url 'admins:list' site.short_name %}">Admins</a>
+                </li>
+                <li>
                     <a href="{% url 'participants:list' site.short_name %}">Participants</a>
                 </li>
                 <li>
@@ -149,8 +152,10 @@
 {% endblock %}
 
 
-
 {% block content %}
+
+    {% block contentTitle %}
+    {% endblock %}
 
     {% block pagecontent %}
         <p>redirect to first page here.</p>

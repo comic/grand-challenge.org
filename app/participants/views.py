@@ -17,6 +17,8 @@ from participants.emails import (
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
+    template_name = 'participants/participants_list.html'
+
     def get_queryset(self):
         challenge = ComicSite.objects.get(pk=self.request.project_pk)
         return challenge.get_participants().select_related('user_profile')
