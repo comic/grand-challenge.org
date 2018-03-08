@@ -1,3 +1,5 @@
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
 from admins.forms import AdminsForm
@@ -22,9 +24,10 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
         return challenge.get_admins().select_related('user_profile')
 
 
-class AdminsUpdate(UserIsChallengeAdminMixin, FormView):
+class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
     form_class = AdminsForm
     template_name = 'admins/admins_form.html'
+    success_message = 'Admins successfully updated'
 
     def get_success_url(self):
         return reverse(
@@ -36,5 +39,8 @@ class AdminsUpdate(UserIsChallengeAdminMixin, FormView):
 
     def form_valid(self, form):
         challenge = ComicSite.objects.get(pk=self.request.project_pk)
-        form.add_or_remove_user(challenge)
+        form.add_or_remove_user(
+            challenge=challenge,
+            site=get_current_site(self.request)
+        )
         return super().form_valid(form)

@@ -9,7 +9,7 @@ from django.utils.html import strip_tags
 from userena.signals import signup_complete
 
 from comicmodels.models import ComicSite
-from comicmodels.signals import new_admin, file_uploaded
+from comicmodels.signals import file_uploaded
 
 logger = logging.getLogger("django")
 
@@ -37,7 +37,8 @@ def get_or_create_projectadmingroup():
     models a project admin can edit. E.g. add/change/delete comicsite, page,
     dropboxfolder. If group does not exists, recreate with default permissions.
     """
-    (projectadmins, created) = Group.objects.get_or_create(name='projectadmins')
+    (projectadmins, created) = Group.objects.get_or_create(
+        name='projectadmins')
 
     if created:
         # if projectadmins group did not exist, add default permissions.
@@ -57,7 +58,8 @@ def add_standard_perms(group, classname, app_label):
 
     """
 
-    can_add = Permission.objects.get(codename="add_" + classname, content_type__app_label=app_label)
+    can_add = Permission.objects.get(codename="add_" + classname,
+                                     content_type__app_label=app_label)
     can_change = Permission.objects.get(codename="change_" + classname,
                                         content_type__app_label=app_label)
     can_delete = Permission.objects.get(codename="delete_" + classname,
@@ -75,28 +77,12 @@ signup_complete.connect(set_project_admin_permissions, dispatch_uid="set_project
 # ======================================= sending notification emails ====================
 
 
-# TODO: below: why these confusing signals. These functions are called from comicsite.admin,
-# just import them there and use them. Much less confusing.
-
-def send_new_admin_notification_email(sender, **kwargs):
-    comicsite = kwargs['comicsite']
-    new_admin = kwargs['new_admin']
-    site = kwargs['site']
-    title = 'You are now admin for ' + comicsite.short_name
-
-    send_templated_email(title, "admin/emails/new_admin_notification_email.txt", kwargs, [new_admin.email]
-                         , fail_silently=False)
-
-
-# connect to signal
-new_admin.connect(send_new_admin_notification_email, dispatch_uid='send_new_admin_notification_email')
-
-
 def send_file_uploaded_notification_email(sender, **kwargs):
     uploader = kwargs['uploader']
     comicsite = kwargs['comicsite']
     site = kwargs['site']
-    title = "New upload for %s: '%s' " % (comicsite.short_name, kwargs["filename"])
+    title = "New upload for %s: '%s' " % (
+        comicsite.short_name, kwargs["filename"])
     admins = comicsite.get_admins()
 
     if not admins:
@@ -122,8 +108,10 @@ file_uploaded.connect(send_file_uploaded_notification_email,
                       dispatch_uid='send_file_uploaded_notification_email')
 
 
-def send_templated_email(subject, email_template_name, email_context, recipients,
-                         bcc=None, fail_silently=True, files=None, request=None):
+def send_templated_email(subject, email_template_name, email_context,
+                         recipients,
+                         bcc=None, fail_silently=True, files=None,
+                         request=None):
     """
     send_templated_mail() is a wrapper around Django's e-mail routines that
     allows us to easily send multipart (text/plain & text/html) e-mails using
@@ -156,7 +144,8 @@ def send_templated_email(subject, email_template_name, email_context, recipients
     # if there is no project defined, do not add current app, which will render
     # email with links to main admin
     if "project" in email_context and request is not None:
-        request.current_app = email_context['project'].get_project_admin_instance_name()
+        request.current_app = email_context[
+            'project'].get_project_admin_instance_name()
 
     # We can only send mail from the DEFAULT_FROM_EMAIL now
     sender = settings.DEFAULT_FROM_EMAIL

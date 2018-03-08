@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
 
+from admins.emails import send_new_admin_notification_email
 from comicmodels.models import ComicSite
 
 
@@ -41,8 +42,13 @@ class AdminsForm(forms.Form):
 
         return user
 
-    def add_or_remove_user(self, challenge: ComicSite):
+    def add_or_remove_user(self, *, challenge: ComicSite, site):
         if self.cleaned_data['action'] == AdminsForm.ADD:
             challenge.add_admin(self.cleaned_data['user'])
+            send_new_admin_notification_email(
+                challenge=challenge,
+                new_admin=self.cleaned_data['user'],
+                site=site,
+            )
         elif self.cleaned_data['action'] == AdminsForm.REMOVE:
             challenge.remove_admin(self.cleaned_data['user'])

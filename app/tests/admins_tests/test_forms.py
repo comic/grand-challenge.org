@@ -1,4 +1,5 @@
 import pytest
+from django.core import mail
 
 from admins.forms import AdminsForm
 from tests.factories import UserFactory
@@ -25,6 +26,11 @@ def test_admins_add(client, TwoChallengeSets):
     )
 
     assert response.status_code == 302
+
+    email = mail.outbox[-1]
+
+    assert TwoChallengeSets.ChallengeSet1.challenge.short_name in email.subject
+    assert user.email in email.to
 
     assert TwoChallengeSets.ChallengeSet1.challenge.is_admin(user=user)
     assert not TwoChallengeSets.ChallengeSet2.challenge.is_admin(user=user)
