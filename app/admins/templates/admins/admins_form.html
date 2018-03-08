@@ -1,0 +1,13 @@
+{% extends "site.html" %}
+{% load crispy_forms_tags %}
+
+{% block pagecontent %}
+
+    <h2>Add another admin to {{ site.short_name }}</h2>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="Save" class="btn btn-primary"/>
+    </form>
+{% endblock %}

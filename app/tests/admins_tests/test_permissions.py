@@ -8,6 +8,7 @@ from tests.utils import validate_admin_only_view
     "view",
     [
         'admins:list',
+        'admins:update',
     ]
 )
 def test_admins_list(view, client, TwoChallengeSets):

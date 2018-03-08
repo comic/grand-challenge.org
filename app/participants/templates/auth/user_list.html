@@ -17,6 +17,8 @@
             <th>Department</th>
             <th>Country</th>
             <th>Website</th>
+            {% block tableExtraHeaders %}
+            {% endblock tableExtraHeaders %}
         </tr>
         </thead>
         <tbody>
@@ -54,6 +56,8 @@
                         {{ user.user_profile.website }}
                     </a>
                 </td>
+                {% block tableExtraBody %}
+                {% endblock tableExtraBody %}
             </tr>
 
         {% endfor %}
@@ -68,7 +72,7 @@
                 "bLengthChange": false,
                 "pageLength": 50,
                 "columnDefs": [{
-                    "targets": [-1],
+                    "targets": [6],
                     "searchable": false,
                     "orderable": false
                 }]
