@@ -18,7 +18,7 @@ from comicsite.views import (
     get_data_folder_path,
 )
 from uploads.api import serve_file
-from uploads.views import can_access
+from comicmodels.permissions import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 
 
