@@ -44,6 +44,7 @@ class UserFactory(factory.DjangoModelFactory):
     is_staff = False
     is_superuser = False
 
+
 class UploadFactory(factory.DjangoModelFactory):
     class Meta:
         model = UploadModel
