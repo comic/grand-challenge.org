@@ -301,7 +301,6 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
     'profiles.social_auth.pipeline.profile.create_profile',
-    'profiles.social_auth.pipeline.profile.set_project_permissions',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
