@@ -21,7 +21,8 @@ def xsendfile(file, save_as, content_type):
     response = HttpResponse(content_type=content_type)
     response['X-Accel-Redirect'] = file.name
     if save_as:
-        response['Content-Disposition'] = smart_str(u'attachment; filename=%s' % save_as)
+        response['Content-Disposition'] = smart_str(
+            u'attachment; filename=%s' % save_as)
     if file.size is not None:
         response['Content-Length'] = file.size
     return response

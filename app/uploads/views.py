@@ -89,17 +89,19 @@ def serve(request, project_name, path, document_root=None):
                                      "credentials")
 
 
-def upload_handler(request, site_short_name):
+def upload_handler(request, challenge_short_name):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
 
-    view_url = reverse('challenge-upload-handler',
-                       kwargs={'site_short_name': site_short_name})
+    view_url = reverse(
+        'uploads:create',
+        kwargs={'challenge_short_name': challenge_short_name}
+    )
 
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
-        site = getSite(site_short_name)
+        site = getSite(challenge_short_name)
         uploadedFile = UploadModel(comicsite=site,
                                    permission_lvl=UploadModel.ADMIN_ONLY,
                                    user=request.user)
@@ -132,7 +134,7 @@ def upload_handler(request, site_short_name):
     else:
         form = UserUploadForm()
 
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(challenge_short_name)
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(comicsite=site, title="files")

@@ -19,10 +19,10 @@ from userena.models import UserenaSignup
 
 from ckeditor.views import upload_to_project
 from comicmodels.models import Page, ComicSite
-from uploads.views import upload_handler
 from comicsite.admin import ProjectAdminSite2
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
+from uploads.views import upload_handler
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -768,8 +768,10 @@ class UploadTest(ComicframeworkTestCase):
         """ The /files page should show to admin, signedin and root, but not
         to others
         """
-        url = reverse("challenge-upload-handler",
-                      kwargs={"site_short_name": self.testproject.short_name})
+        url = reverse(
+            "uploads:create",
+            kwargs={"challenge_short_name": self.testproject.short_name}
+        )
         self._test_url_can_be_viewed(self.root, url)
         # self._test_url_can_be_viewed(self.root.username,url)
 
@@ -782,8 +784,10 @@ class UploadTest(ComicframeworkTestCase):
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
 
-        url = reverse("challenge-upload-handler",
-                      kwargs={"site_short_name": self.testproject.short_name})
+        url = reverse(
+            "uploads:create",
+            kwargs={"challenge_short_name": self.testproject.short_name}
+        )
 
         factory = RequestFactory()
         request = factory.get(url)
