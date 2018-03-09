@@ -15,11 +15,11 @@ from django.views.generic import ListView
 
 from comicmodels.models import UploadModel, ComicSite, Page
 from comicmodels.permissions import can_access
-from comicmodels.signals import file_uploaded
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import getSite, site_get_standard_vars, permissionMessage
 from pages.views import ComicSiteFilteredQuerysetMixin
 from uploads.api import serve_file
+from uploads.emails import send_file_uploaded_notification_email
 from uploads.forms import UserUploadForm
 
 
@@ -118,12 +118,7 @@ def upload_handler(request, site_short_name):
                 )
             )
 
-            # send signal to be picked up by email notifier 03/2013 - Sjoerd.
-            # I'm not sure that sending signals is the best way to do this.
-            # Why not just call the method directly?
-            # typical case for a refactoring round.
-            file_uploaded.send(
-                sender=UploadModel,
+            send_file_uploaded_notification_email(
                 uploader=request.user,
                 filename=filename,
                 comicsite=site,
@@ -159,7 +154,7 @@ def upload_handler(request, site_short_name):
 
     return render(
         request,
-        'upload/comicupload.html',
+        'uploads/comicupload.html',
         {
             'form': form,
             'upload_url': view_url,
