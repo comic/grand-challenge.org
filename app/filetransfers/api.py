@@ -11,10 +11,6 @@ SERVE_FILE_BACKEND = getattr(settings,
                                  'SERVE_FILE_BACKEND',
                                  'filetransfers.backends.xsendfile.serve_file')
 
-PUBLIC_DOWNLOAD_URL_BACKEND = getattr(settings,
-                                      'PUBLIC_DOWNLOAD_URL_BACKEND',
-                                      'filetransfers.backends.default.public_download_url')
-
 _backends_cache = {}
 
 
@@ -36,12 +32,6 @@ def serve_file(request, file, backend=None, save_as=False, content_type=None):
         content_type = mimetypes.guess_type(filename)[0]
 
     return handler(request, file, save_as=save_as, content_type=content_type)
-
-
-def public_download_url(file, backend=None):
-    handler = _load_backend(backend, PUBLIC_DOWNLOAD_URL_BACKEND)
-    return handler(file)
-
 
 # Internal utilities
 def _load_backend(backend, default_backend):
