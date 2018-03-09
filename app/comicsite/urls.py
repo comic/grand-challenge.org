@@ -21,9 +21,14 @@ urlpatterns = [
     # see issue #181
     url(r'^', include(projectadminurls.allurls), name='projectadmin'),
 
-    url(r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
-        TemplateView.as_view(template_name='robots.html'),
-        name="comicsite_robots_txt"),
+    url(
+        r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
+        TemplateView.as_view(
+            template_name='robots.txt',
+            content_type='text/plain',
+        ),
+        name="comicsite_robots_txt",
+    ),
 
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
 
@@ -39,6 +44,14 @@ urlpatterns = [
     url(r'^(?P<challenge_short_name>[\w-]+)/admins/',
         include('admins.urls', namespace='admins')),
 
+    url(r'^(?P<challenge_short_name>[\w-]+)/uploads/',
+        include('uploads.urls', namespace='uploads')),
+
+    #################
+    #
+    # Legacy apps
+    #
+
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
     url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler,
@@ -49,6 +62,11 @@ urlpatterns = [
 
     url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
         get_public_results),
+
+    #
+    # End Legacy
+    #
+    #################
 
     # If nothing specific matches, try to resolve the url as project/pagename
     url(r'^(?P<challenge_short_name>[\w-]+)/',

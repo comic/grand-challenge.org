@@ -3,7 +3,12 @@ import hashlib
 import factory
 from django.conf import settings
 
-from comicmodels.models import ComicSite, Page, RegistrationRequest
+from comicmodels.models import (
+    ComicSite,
+    Page,
+    RegistrationRequest,
+    UploadModel,
+)
 from evaluation.models import Submission, Job, Method, Result
 from teams.models import Team, TeamMember
 
@@ -38,6 +43,16 @@ class UserFactory(factory.DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
+
+
+class UploadFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = UploadModel
+
+    comicsite = factory.SubFactory(ChallengeFactory)
+    file = factory.django.FileField()
+    user = factory.SubFactory(UserFactory)
+    title = factory.Sequence(lambda n: f'file_{n}')
 
 
 class RegistrationRequestFactory(factory.DjangoModelFactory):

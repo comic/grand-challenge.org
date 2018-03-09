@@ -276,6 +276,7 @@ INSTALLED_APPS = (
     'pages',
     'participants',
     'admins',
+    'uploads',
 )
 
 AUTHENTICATION_BACKENDS = (

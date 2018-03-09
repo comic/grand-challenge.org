@@ -16,7 +16,7 @@
             <th>Order</th>
             <th>Title (in URL)</th>
             <th>Display Title</th>
-            <th>Visibility</th>
+            <th>Visible to</th>
             <th>Edit</th>
             <th>Delete</th>
         </tr>
@@ -46,6 +46,13 @@
                     {% else %}
                         <i class="fa fa-eye text-success"
                            title="Page is visible"></i>
+                        {% if page.permission_lvl == page.ADMIN_ONLY %}
+                            <span class="label label-danger">Admins Only</span>
+                        {% elif page.permission_lvl == page.REGISTERED_ONLY %}
+                            <span class="label label-warning">Participants Only</span>
+                        {% elif page.permission_lvl == page.ALL %}
+                            <span class="label label-success">Everyone</span>
+                        {% endif %}
                     {% endif %}
                 </td>
                 <td>
