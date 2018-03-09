@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from six.moves.urllib_parse import urlparse, urlunparse
 
 from comic import settings
-from comicmodels.forms import UserUploadForm
+from uploads.forms import UserUploadForm
 from comicmodels.models import UploadModel
 from comicsite.views import getSite
 

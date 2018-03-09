@@ -19,7 +19,7 @@ from userena.models import UserenaSignup
 
 from ckeditor.views import upload_to_project
 from comicmodels.models import Page, ComicSite
-from comicmodels.views import upload_handler
+from uploads.views import upload_handler
 from comicsite.admin import ProjectAdminSite2
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
