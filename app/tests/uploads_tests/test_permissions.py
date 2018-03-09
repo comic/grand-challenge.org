@@ -10,7 +10,7 @@ from tests.utils import validate_admin_only_view
         'uploads:list',
     ]
 )
-def test_registration_request_list(view, client, TwoChallengeSets):
+def test_upload_list(view, client, TwoChallengeSets):
     reverse_kwargs = {}
 
     validate_admin_only_view(
