@@ -5,7 +5,7 @@ from django.views.generic import TemplateView
 
 from comicmodels.views import ChallengeCreate
 from comicsite.views import comicmain
-from filetransfers.views import serve
+from uploads.views import serve
 
 admin.autodiscover()
 
@@ -26,9 +26,6 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
 
     url(r'^site/', include('comicsite.urls'), name='site'),
-
-    url(r'^filetransfers/',
-        include('filetransfers.urls', namespace='filetransfers')),
 
     # Do not change the namespace without updating the view names in
     # evaluation.serializers

@@ -17,8 +17,8 @@ from comicsite.views import (
     getRenderedPageIfAllowed,
     get_data_folder_path,
 )
-from filetransfers.api import serve_file
-from filetransfers.views import can_access
+from uploads.api import serve_file
+from comicmodels.permissions import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 
 
@@ -172,7 +172,7 @@ def inserted_file(request, challenge_short_name, filepath=""):
             raise Http404
 
         django_file = File(file)
-        return serve_file(request, django_file)
+        return serve_file(django_file)
 
     else:
         return HttpResponseForbidden(

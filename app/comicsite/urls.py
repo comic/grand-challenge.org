@@ -1,11 +1,10 @@
 from django.conf.urls import url, include
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 
-from comicmodels.views import upload_handler
 from comicsite.admin import projectadminurls
 from comicsite.api import get_public_results
 from comicsite.views import site
-from filetransfers.views import serve
+from uploads.views import serve
 
 urlpatterns = [
 
@@ -54,8 +53,11 @@ urlpatterns = [
 
     url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor.urls')),
 
-    url(r'^(?P<site_short_name>[\w-]+)/files/$', upload_handler,
-        name='challenge-upload-handler'),
+    url(r'^(?P<challenge_short_name>[\w-]+)/files/$',
+        RedirectView.as_view(
+            pattern_name='uploads:create',
+            permanent=False,
+        )),
 
     url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$', serve,
         name="project_serve_file"),

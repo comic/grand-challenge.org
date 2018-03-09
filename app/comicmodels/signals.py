@@ -4,17 +4,11 @@ from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import clear_url_caches
 from django.db.models.signals import post_save
-from django.dispatch import Signal, receiver
+from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from comicmodels.models import ComicSite
 from evaluation.models import Config
-
-file_uploaded = Signal(providing_args=["uploader", "filename", "comicsite"])
-new_admin = Signal(providing_args=["adder", "new_admin", "comicsite"])
-new_participant = Signal(providing_args=["user", "comicsite"])
-new_submission = Signal(providing_args=["submission", "comicsite"])
-removed_admin = Signal(providing_args=["user", "removed_admin", "comicsite"])
 
 
 def reload_url_conf():
