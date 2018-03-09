@@ -1780,9 +1780,6 @@ class AllProjectLinksNode(template.Node):
             framework_name = "codalab.org"
             framework_URL = "http://codalab.org"
 
-        elif host_id == "midas":
-            framework_name = "Midas"
-            framework_URL = "http://midas.kitware.com"
         else:
             return ""
 
@@ -1799,8 +1796,6 @@ class AllProjectLinksNode(template.Node):
 
         if "codalab.org" in projectlink.params["URL"]:
             return "codalab"
-        if "midas.kitware" in projectlink.params["URL"]:
-            return "kitware"
         else:
             return "Unknown"
 
