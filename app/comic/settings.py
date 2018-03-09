@@ -423,7 +423,11 @@ CELERY_BEAT_SCHEDULE = {
     'cleanup_stale_uploads': {
         'task': 'jqfileupload.tasks.cleanup_stale_uploads',
         'schedule': timedelta(hours=1),
-    }
+    },
+    'clear_sessions': {
+        'task': 'comicsite.tasks.clear_sessions',
+        'schedule': timedelta(days=1),
+    },
 }
 
 CELERY_TASK_ROUTES = {

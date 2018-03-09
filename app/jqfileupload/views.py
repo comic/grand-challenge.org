@@ -2,7 +2,6 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from jqfileupload.forms import UploadForm
-from jqfileupload.widgets.uploader import AjaxUploadWidget
 
 
 def uploader_widget_test(request: HttpRequest, **kwargs) -> HttpResponse:
