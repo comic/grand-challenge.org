@@ -260,8 +260,6 @@ INSTALLED_APPS = (
     'easy_thumbnails',
     # social-auth provides authentication via social accounts using openid and oauth2
     'social_django',
-    # provides abstraction layer for file upload/download
-    'filetransfers',
     # html WYSIWYG editor
     'ckeditor',
     # automated evaluation

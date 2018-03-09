@@ -7,10 +7,6 @@ class ComicException(Exception):
     pass
 
 
-class ProjectAdminException(ComicException):
-    """Something went wrong in the project-centered admin interface"""
-
-
 class ParserException(ComicException):
     """ Error trying to parse some file included on a project page"""
 
