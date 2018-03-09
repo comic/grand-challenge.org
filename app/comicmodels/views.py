@@ -13,7 +13,6 @@ from comicmodels.forms import UserUploadForm, ChallengeForm
 from comicmodels.models import UploadModel, Page, ComicSite
 from comicmodels.signals import file_uploaded
 from comicsite.views import site_get_standard_vars, getSite, permissionMessage
-from filetransfers.api import prepare_upload
 
 
 def upload_handler(request, site_short_name):
@@ -64,8 +63,6 @@ def upload_handler(request, site_short_name):
     else:
         form = UserUploadForm()
 
-    upload_url, upload_data = prepare_upload(request, view_url)
-
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
@@ -86,24 +83,12 @@ def upload_handler(request, site_short_name):
         response.status_code = 403
         return response
 
-    if request.user.is_superuser or site.is_admin(request.user):
-        uploadsforcurrentsite = UploadModel.objects.filter(
-            comicsite=site
-        ).order_by('modified').reverse()
-    else:
-        uploadsforcurrentsite = UploadModel.objects.filter(
-            user=request.user,
-            comicsite=site,
-        ).order_by('modified').reverse()
-
     return render(
         request,
         'upload/comicupload.html',
         {
             'form': form,
-            'upload_url': upload_url,
-            'upload_data': upload_data,
-            'uploads': uploadsforcurrentsite,
+            'upload_url': view_url,
             'site': site,
             'pages': pages,
             'metafooterpages': metafooterpages

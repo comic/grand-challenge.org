@@ -1,25 +1,10 @@
 import mimetypes
-from importlib import import_module
 
-from django.conf import settings
-
-from filetransfers.backends.xsendfile import serve_file as xsendfile_serve
-
-PREPARE_UPLOAD_BACKEND = getattr(settings,
-                                 'PREPARE_UPLOAD_BACKEND',
-                                 'filetransfers.backends.default.prepare_upload')
-
-_backends_cache = {}
+from django.http import HttpResponse
+from django.utils.encoding import smart_str
 
 
-# Public API
-def prepare_upload(request, url, private=False, backend=None):
-    handler = _load_backend(backend, PREPARE_UPLOAD_BACKEND)
-    return handler(request, url, private=private)
-
-
-def serve_file(request, file, backend=None, save_as=False, content_type=None):
-    # Backends are responsible for handling range requests.
+def serve_file(file, save_as=False, content_type=None):
     filename = file.name.rsplit('/')[-1]
     filename = filename.rsplit('\\')[-1]
 
@@ -28,16 +13,15 @@ def serve_file(request, file, backend=None, save_as=False, content_type=None):
     if not content_type:
         content_type = mimetypes.guess_type(filename)[0]
 
-    return xsendfile_serve(request, file, save_as=save_as,
-                           content_type=content_type)
+    return xsendfile(file, save_as=save_as, content_type=content_type)
 
 
-# Internal utilities
-def _load_backend(backend, default_backend):
-    if backend is None:
-        backend = default_backend
-    if backend not in _backends_cache:
-        module_name, func_name = backend.rsplit('.', 1)
-        _backends_cache[backend] = getattr(import_module(module_name),
-                                           func_name)
-    return _backends_cache[backend]
+def xsendfile(file, save_as, content_type):
+    """Lets the web server serve the file using the X-Sendfile extension"""
+    response = HttpResponse(content_type=content_type)
+    response['X-Accel-Redirect'] = file.name
+    if save_as:
+        response['Content-Disposition'] = smart_str(u'attachment; filename=%s' % save_as)
+    if file.size is not None:
+        response['Content-Length'] = file.size
+    return response

@@ -157,7 +157,7 @@ def serve(request, project_name, path, document_root=None):
             return HttpResponseForbidden("This is not a file")
 
         # Do not offer to save images, but show them directly
-        return serve_file(request, file, save_as=True)
+        return serve_file(file, save_as=True)
     else:
         return HttpResponseForbidden("This file is not available without "
                                      "credentials")

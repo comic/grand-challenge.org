@@ -172,7 +172,7 @@ def inserted_file(request, challenge_short_name, filepath=""):
             raise Http404
 
         django_file = File(file)
-        return serve_file(request, django_file)
+        return serve_file(django_file)
 
     else:
         return HttpResponseForbidden(
