@@ -7,10 +7,11 @@
     <table class="table" id="uploadsTable">
         <thead>
         <tr>
-            <th>Uploaded</th>
+            <th>Created</th>
+            <th>User</th>
             <th>Title</th>
             <th>File</th>
-            <th>User</th>
+            <th>Visible to</th>
         </tr>
         </thead>
         <tbody>
@@ -18,14 +19,6 @@
             <tr>
                 <td data-order="{{ upload.created|date:"U" }}">
                     {{ upload.created }}
-                </td>
-                <td>
-                    {{ upload.title }}
-                </td>
-                <td>
-                    <a href="{{ upload.file.url }}">
-                        {{ upload.file }}
-                    </a>
                 </td>
                 <td>
                     <div style='vertical-align:middle; display:inline;'>
@@ -36,6 +29,23 @@
                                  style="height: 1.5em; vertical-align: middle;"/>
                             {{ upload.user.username }}</a>
                     </div>
+                </td>
+                <td>
+                    {{ upload.title }}
+                </td>
+                <td>
+                    <a href="{{ upload.file.url }}">
+                        {{ upload.file }}
+                    </a>
+                </td>
+                <td>
+                    {% if upload.permission_lvl == upload.ADMIN_ONLY %}
+                        <span class="label label-danger">Admins Only</span>
+                    {% elif upload.permission_lvl == upload.REGISTERED_ONLY %}
+                        <span class="label label-warning">Participants Only</span>
+                    {% elif upload.permission_lvl == upload.ALL %}
+                        <span class="label label-success">Everyone</span>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}
