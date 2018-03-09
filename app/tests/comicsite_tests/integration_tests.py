@@ -872,46 +872,6 @@ class UploadTest(ComicframeworkTestCase):
 
         return response
 
-    def get_uploadpage_response(self, user, project):
-        url = reverse("challenge-upload-handler",
-                      kwargs={"site_short_name": project.short_name})
-        factory = RequestFactory()
-        request = factory.get(url)
-        request.user = user
-        self.apply_standard_middleware(request)
-
-        response = upload_handler(request, project.short_name)
-        return response
-
-    def uploaded_files_are_all_shown_on_uploadpage(self, filenames, user):
-        """ Assert that all filenames in string array filenames are shown
-        on the testproject upload page, when viewed by user
-        
-        """
-
-        response = self.get_uploadpage_response(user, self.testproject)
-
-        for filename in filenames:
-            self.assertTrue(filename in response.content.decode(),
-                            "File '%s' was not "
-                            "visible on download page when viewed by user %s"
-                            % (filename, user.username))
-
-    def uploaded_files_are_not_shown_on_uploadpage(self, filenames, user):
-        """ Assert that none of the names in string array filenames are shown
-        on the testproject upload page, when viewed by user
-        
-        """
-
-        response = self.get_uploadpage_response(user, self.testproject)
-
-        for filename in filenames:
-            self.assertTrue(filename not in response.content.decode(),
-                            "Restricted file"
-                            " '%s' was visible on download page when viewed"
-                            " by user %s"
-                            % (filename, user.username))
-
     def giverandomfilename(self, user, postfix=""):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
@@ -920,7 +880,7 @@ class UploadTest(ComicframeworkTestCase):
                              str(randint(10000, 99999)),
                              "testfile%s.txt" % postfix)
 
-    def test_file_can_be_uploaded_and_viewed_by_correct_users(self):
+    def test_file_can_be_uploaded(self):
         """ Upload a fake file, see if correct users can see this file
         """
 
@@ -938,24 +898,6 @@ class UploadTest(ComicframeworkTestCase):
                                        name3)
         resp4 = self._upload_test_file(self.participant2, self.testproject,
                                        name4)
-
-        # root and projectadmin should see all files
-        self.uploaded_files_are_all_shown_on_uploadpage(
-            [name1, name2, name3, name4], self.root)
-        self.uploaded_files_are_all_shown_on_uploadpage(
-            [name1, name2, name3, name4], self.projectadmin)
-
-        # participant1 sees only his or her own file
-        self.uploaded_files_are_all_shown_on_uploadpage([name3],
-                                                        self.participant)
-        self.uploaded_files_are_not_shown_on_uploadpage([name1, name2, name4],
-                                                        self.participant)
-
-        # participant2 also sees only his or her own file
-        self.uploaded_files_are_all_shown_on_uploadpage([name4],
-                                                        self.participant2)
-        self.uploaded_files_are_not_shown_on_uploadpage([name1, name2, name3],
-                                                        self.participant2)
 
     def test_uploaded_files_from_editor(self):
         """ You can also upload files in ckeditor, while editing a page. See
@@ -984,12 +926,6 @@ class UploadTest(ComicframeworkTestCase):
         url = reverse("project_serve_file",
                       kwargs={"project_name": project.short_name,
                               "path": project.public_upload_dir_rel() + "/" + name1})
-
-    def get_public_url(self, project, filename):
-        """ Get a url where filename can be downloaded without credentials
-         
-        """
-        pass
 
 
 class TemplateTagsTest(ComicframeworkTestCase):

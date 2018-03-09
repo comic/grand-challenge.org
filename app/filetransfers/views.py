@@ -5,66 +5,12 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.http import HttpResponseRedirect, HttpResponse, \
-    HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from six.moves.urllib_parse import unquote
 
-from comicmodels.models import ComicSite, UploadModel, ComicSiteModel
-# FIXME : Sjoerd: comicmodels and filetransfers are being merged here. How to keep original Filetransfers seperate from this?
-# Right now I feel as though I am entangeling things.. come back to this later
-from filetransfers.api import prepare_upload, serve_file
-from filetransfers.forms import UploadForm
-
-
-def upload_handler(request):
-    view_url = reverse('filetransfers:upload')
-    if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-        return HttpResponseRedirect(view_url)
-
-    upload_url, upload_data = prepare_upload(request, view_url)
-    form = UploadForm()
-
-    # return direct_to_template(request, 'upload/upload.html',
-    return render(request, 'upload/upload.html',
-                  {'form': form, 'upload_url': upload_url, 'upload_data': upload_data,
-                   'uploads': UploadModel.objects.all()})
-
-
-def download_handler(request, pk):
-    upload = get_object_or_404(UploadModel, pk=pk)
-    return serve_file(request, upload.file, save_as=True)
-
-
-def uploadedfileserve_handler(request, pk):
-    """ Serve a file through django, for displaying images etc. """
-    upload = get_object_or_404(UploadModel, pk=pk)
-
-    # if request.user.has_perm("comicmodels.view_ComicSiteModel"):
-    if upload.can_be_viewed_by(request.user):
-        return serve_file(request, upload.file, save_as=False)
-    else:
-        return HttpResponse("You do not have permission to view this.")
-
-
-def delete_handler(request, pk):
-    if request.method == 'POST':
-        upload = get_object_or_404(UploadModel, pk=pk)
-        comicsitename = upload.comicsite.short_name
-        try:
-            upload.file.delete()  # if no file object can be found just continue
-        except:
-            pass
-        finally:
-            pass
-            upload.delete()
-
-    return HttpResponseRedirect(reverse('challenge-upload-handler', kwargs={'site_short_name': comicsitename}))
+from comicmodels.models import ComicSite, ComicSiteModel
+from filetransfers.api import serve_file
 
 
 def can_access(user, path, project_name):
@@ -74,7 +20,7 @@ def can_access(user, path, project_name):
     code even though this would not be allowed otherwise
          
     """
-    required = _required_permission(user, path, project_name)
+    required = _required_permission(path, project_name)
 
     if required == ComicSiteModel.ALL:
         return True
@@ -94,7 +40,7 @@ def can_access(user, path, project_name):
         return False
 
 
-def _required_permission(user, path, project_name):
+def _required_permission(path, project_name):
     """ Given a file path on local filesystem, which permission level is needed
     to view this?
      
@@ -104,16 +50,18 @@ def _required_permission(user, path, project_name):
     # called. It is too late to throw this error once a user clicks 
     # something.
     if not hasattr(settings, "COMIC_PUBLIC_FOLDER_NAME"):
-        raise ImproperlyConfigured("Don't know from which folder serving publiv files"
-                                   "is allowed. Please add a setting like "
-                                   "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
-                                   " to your .conf file.")
+        raise ImproperlyConfigured(
+            "Don't know from which folder serving publiv files"
+            "is allowed. Please add a setting like "
+            "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
+            " to your .conf file.")
 
     if not hasattr(settings, "COMIC_REGISTERED_ONLY_FOLDER_NAME"):
-        raise ImproperlyConfigured("Don't know from which folder serving protected files"
-                                   "is allowed. Please add a setting like "
-                                   "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
-                                   " to your .conf file.")
+        raise ImproperlyConfigured(
+            "Don't know from which folder serving protected files"
+            "is allowed. Please add a setting like "
+            "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
+            " to your .conf file.")
 
     if project_name.lower() == 'mugshots':
         # Anyone can see mugshots
