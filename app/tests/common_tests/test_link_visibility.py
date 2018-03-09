@@ -11,6 +11,7 @@ from tests.utils import validate_admin_only_text_in_page
         'participants:registration-list',
         'participants:list',
         'admins:list',
+        'uploads:list',
     ]
 )
 def test_admins_see_links(view, client, TwoChallengeSets):

@@ -137,8 +137,11 @@
                     <a href="{% url 'participants:list' site.short_name %}">Participants</a>
                 </li>
                 <li>
-                    <a href="{% url 'participants:registration-list' site.short_name %}">Registration
+                    <a href="{% url 'participants:registration-list' site.short_name %}">Participation
                         Requests</a>
+                </li>
+                <li>
+                    <a href="{% url 'uploads:list' site.short_name %}">Uploaded Files</a>
                 </li>
                 {% if site.use_evaluation %}
                     <li>
