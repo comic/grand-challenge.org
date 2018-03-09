@@ -199,7 +199,7 @@ def comicmain(request, page_title=""):
     site_short_name = settings.MAIN_PROJECT_NAME
 
     if ComicSite.objects.filter(short_name=site_short_name).count() == 0:
-        link = reverse('challenge_create')
+        link = reverse('challenges:create')
         link = link + "?short_name=%s" % site_short_name
         link_html = create_HTML_a(link,
                                   "Create project '%s'" % site_short_name)

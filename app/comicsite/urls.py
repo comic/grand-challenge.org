@@ -21,7 +21,7 @@ urlpatterns = [
     url(r'^', include(projectadminurls.allurls), name='projectadmin'),
 
     url(
-        r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
+        r'^(?P<challenge_short_name>[\w-]+)/robots\.txt/$',
         TemplateView.as_view(
             template_name='robots.txt',
             content_type='text/plain',

@@ -1,7 +1,7 @@
 from auth_mixins import LoginRequiredMixin
 from django.views.generic import CreateView
 
-from comicmodels.forms import ChallengeForm
+from challenges.forms import ChallengeForm
 from comicmodels.models import ComicSite
 
 

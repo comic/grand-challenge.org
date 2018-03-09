@@ -402,7 +402,7 @@ class ComicframeworkTestCase(TestCase):
         """ split this off from create_comicsite because sometimes you just
         want to assert that creation fails
         """
-        url = reverse("challenge_create")
+        url = reverse("challenges:create")
         factory = RequestFactory()
         storage = DefaultStorage()
         header_image = storage._open(
@@ -629,9 +629,12 @@ class ViewsTest(ComicframeworkTestCase):
 
         # robots.txt for each project, which by bots can be seen as seperate
         # domain beacuse we use dubdomains to designate projects
-        robots_url_project = reverse("comicsite_robots_txt",
-                                     kwargs={
-                                         "site_short_name": self.testproject.short_name})
+        robots_url_project = reverse(
+            "comicsite_robots_txt",
+            kwargs={
+                "challenge_short_name": self.testproject.short_name,
+            },
+        )
 
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in
         self._test_url_can_be_viewed(None,
