@@ -14,17 +14,21 @@ urlpatterns = [
     # main page
     url(r'^$', comicmain, name='home'),
 
-    # tell nice bots what to do. TODO: using 'robots.txt' as a template name
-    #  will
-    # give a 404.  WHY?
-    url(r'^robots\.txt/$', TemplateView.as_view(template_name='robots.html')),
+    url(
+        r'^robots\.txt/$',
+        TemplateView.as_view(
+            template_name='robots.txt',
+            content_type='text/plain',
+        ),
+    ),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
 
     url(r'^site/', include('comicsite.urls'), name='site'),
 
-    url(r'^filetransfers/', include('filetransfers.urls', namespace='filetransfers')),
+    url(r'^filetransfers/',
+        include('filetransfers.urls', namespace='filetransfers')),
 
     # Do not change the namespace without updating the view names in
     # evaluation.serializers

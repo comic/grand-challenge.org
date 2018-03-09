@@ -21,9 +21,14 @@ urlpatterns = [
     # see issue #181
     url(r'^', include(projectadminurls.allurls), name='projectadmin'),
 
-    url(r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
-        TemplateView.as_view(template_name='robots.html'),
-        name="comicsite_robots_txt"),
+    url(
+        r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
+        TemplateView.as_view(
+            template_name='robots.txt',
+            content_type='text/plain',
+        ),
+        name="comicsite_robots_txt",
+    ),
 
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
 
