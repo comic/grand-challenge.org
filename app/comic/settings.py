@@ -488,4 +488,3 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
         }
-
