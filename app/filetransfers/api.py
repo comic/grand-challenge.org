@@ -3,13 +3,11 @@ from importlib import import_module
 
 from django.conf import settings
 
+from filetransfers.backends.xsendfile import serve_file as xsendfile_serve
+
 PREPARE_UPLOAD_BACKEND = getattr(settings,
                                  'PREPARE_UPLOAD_BACKEND',
                                  'filetransfers.backends.default.prepare_upload')
-
-SERVE_FILE_BACKEND = getattr(settings,
-                                 'SERVE_FILE_BACKEND',
-                                 'filetransfers.backends.xsendfile.serve_file')
 
 _backends_cache = {}
 
@@ -22,7 +20,6 @@ def prepare_upload(request, url, private=False, backend=None):
 
 def serve_file(request, file, backend=None, save_as=False, content_type=None):
     # Backends are responsible for handling range requests.
-    handler = _load_backend(backend, SERVE_FILE_BACKEND)
     filename = file.name.rsplit('/')[-1]
     filename = filename.rsplit('\\')[-1]
 
@@ -31,7 +28,9 @@ def serve_file(request, file, backend=None, save_as=False, content_type=None):
     if not content_type:
         content_type = mimetypes.guess_type(filename)[0]
 
-    return handler(request, file, save_as=save_as, content_type=content_type)
+    return xsendfile_serve(request, file, save_as=save_as,
+                           content_type=content_type)
+
 
 # Internal utilities
 def _load_backend(backend, default_backend):
@@ -39,5 +38,6 @@ def _load_backend(backend, default_backend):
         backend = default_backend
     if backend not in _backends_cache:
         module_name, func_name = backend.rsplit('.', 1)
-        _backends_cache[backend] = getattr(import_module(module_name), func_name)
+        _backends_cache[backend] = getattr(import_module(module_name),
+                                           func_name)
     return _backends_cache[backend]
