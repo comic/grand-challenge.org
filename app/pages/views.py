@@ -17,8 +17,8 @@ from comicsite.views import (
     getRenderedPageIfAllowed,
     get_data_folder_path,
 )
-from filetransfers.api import serve_file
-from filetransfers.views import can_access
+from uploads.api import serve_file
+from uploads.views import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 
 

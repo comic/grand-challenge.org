@@ -5,7 +5,7 @@ from django.views.generic import TemplateView
 
 from comicmodels.views import ChallengeCreate
 from comicsite.views import comicmain
-from filetransfers.views import serve
+from uploads.views import serve
 
 admin.autodiscover()
 

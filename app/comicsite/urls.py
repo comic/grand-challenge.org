@@ -5,7 +5,7 @@ from comicmodels.views import upload_handler
 from comicsite.admin import projectadminurls
 from comicsite.api import get_public_results
 from comicsite.views import site
-from filetransfers.views import serve
+from uploads.views import serve
 
 urlpatterns = [
 
