@@ -19,6 +19,7 @@ from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
 from django.template import defaulttags
+from django.utils.html import format_html
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 from six import StringIO, iteritems
@@ -344,9 +345,11 @@ def metafooterpages():
                 url = settings.MAIN_HOST_NAME + url
             # TODO: JM add class=active to the active link
             # See https://getbootstrap.com/docs/3.3/components/#navbar
-            html_string += "<li><a class='metaFooterMenuItem' href='%s'>" % url
-            html_string += p.display_title == "" and p.title or p.display_title
-            html_string += "</a></li>"
+            html_string = format_html(
+                "<li><a class='metaFooterMenuItem' href='{}'>{}</a></li>",
+                url,
+                p.display_title if p.display_title else p.title,
+            )
 
     return html_string
 
