@@ -1,4 +1,5 @@
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
@@ -18,6 +19,7 @@ class PageCreateForm(forms.ModelForm):
             self.fields['html'].widget.config['comicsite'] = challenge_name
 
         self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'Save'))
 
     def clean_title(self):
         """ Ensure that page titles are not duplicated for a challenge """

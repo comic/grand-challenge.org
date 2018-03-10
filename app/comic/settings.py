@@ -241,14 +241,13 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     # Needed for userena
     'django.contrib.sites',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
     'comicmodels',
     # comicsite is the where main web portal of this framework lives
     'comicsite',
-    # placed admin below comicsite to be able to override standard admin templates
-    'django.contrib.admin',
     # profiles extends userena and gives functionality to manage user profiles
     # profiles needs to be loaded before userena
     'profiles',
@@ -275,6 +274,7 @@ INSTALLED_APPS = (
     'participants',
     'admins',
     'uploads',
+    'challenges',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -341,8 +341,8 @@ CKEDITOR_CONFIGS = {
 # This configuration writes WARNING and worse errors to an error log file, and
 # sends an email to all admins. It also writes INFO logmessages and worse to a
 # regular log file.
-LOG_FILEPATH = "django.log"
-LOG_FILEPATH_ERROR = "django_error.log"
+LOG_FILEPATH = "/tmp/django.log"
+LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -488,4 +488,3 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
         }
-

@@ -19,7 +19,6 @@ from userena.models import UserenaSignup
 
 from ckeditor.views import upload_to_project
 from comicmodels.models import Page, ComicSite
-from comicsite.admin import ProjectAdminSite2
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
 from uploads.views import upload_handler
@@ -36,51 +35,6 @@ def create_page(comicsite, title, content="testcontent", permission_lvl=None):
                        comicsite=comicsite,
                        html=content,
                        permission_lvl=permission_lvl)
-
-
-def get_projectadmin(project):
-    """ Return a django admin site centered on comicsite: will show only
-    objects for this comicsite, never from other comicsites.
-    """
-    name = project.get_project_admin_instance_name()
-    projectadminsite = ProjectAdminSite2(name=name, project=project)
-    projectadminsite.register_comicmodels()
-
-    return projectadminsite
-
-
-def create_page_in_projectadmin(comicsite, title, content="testcontent",
-                                permission_lvl="", comicsite_for_page=""):
-    """ Create a Page object as if created through django projectadmin interface.
-    
-    """
-    # to be able to test creating a page for a different comicsite from this admin
-    # should not be possible, but that's what tests are for
-    if comicsite_for_page == "":
-        comicsite_for_page = comicsite
-
-    # Rename, trying to call comicsite 'project' everywhere. Doing a full
-    # rename is very hard however 
-    project = comicsite
-
-    # Create the overarching admin interface for any single project    
-    projectadminsite = get_projectadmin(project)
-
-    # Each model in the admin interface has its own model admin, which is
-    # wrapped and modified by projectadminsite. Get this modified modeladmin
-    pageadmin = projectadminsite._registry[Page]
-
-    # Now create the page and save in the correct project-only modified object
-    # admin...
-    if permission_lvl == "":
-        permission_lvl = Page.ALL
-
-    page = Page.objects.create(title=title,
-                               comicsite=comicsite,
-                               html=content,
-                               permission_lvl=permission_lvl)
-    pageadmin.first_save(page)
-    return page
 
 
 def get_first_page(comicsite):
@@ -402,7 +356,7 @@ class ComicframeworkTestCase(TestCase):
         """ split this off from create_comicsite because sometimes you just
         want to assert that creation fails
         """
-        url = reverse("challenge_create")
+        url = reverse("challenges:create")
         factory = RequestFactory()
         storage = DefaultStorage()
         header_image = storage._open(
@@ -569,24 +523,6 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(user, testpage1)
         self._test_page_can_be_viewed(self.root, testpage1)
 
-    @pytest.mark.skip  # Deprecated functionality
-    def test_page_permissions_view(self):
-        """ Test that the permissions page in admin does not crash: for root
-        https://github.com/comic/comic-django/issues/180 
-        
-        """
-
-        testpage1 = Page.objects.filter(title='testpage1')
-        self.assertTrue(testpage1.exists(), "could not find page 'testpage1'")
-        self.assertEqual(len(testpage1), 1)
-        url = reverse("admin:comicmodels_page_permissions",
-                      args=[testpage1[0].pk])
-
-        self._test_url_can_be_viewed(self.root, url)
-
-        otheruser = self._create_random_user("other_")
-        self._test_url_can_not_be_viewed(otheruser, url)
-
     def test_page_view_permission(self):
         """ Check that a page with permissions set can be viewed by the correct
         users only
@@ -629,9 +565,12 @@ class ViewsTest(ComicframeworkTestCase):
 
         # robots.txt for each project, which by bots can be seen as seperate
         # domain beacuse we use dubdomains to designate projects
-        robots_url_project = reverse("comicsite_robots_txt",
-                                     kwargs={
-                                         "site_short_name": self.testproject.short_name})
+        robots_url_project = reverse(
+            "comicsite_robots_txt",
+            kwargs={
+                "challenge_short_name": self.testproject.short_name,
+            },
+        )
 
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in
         self._test_url_can_be_viewed(None,
@@ -1208,68 +1147,3 @@ class ProjectLoginTest(ComicframeworkTestCase):
 
         # The other userena urls are not realy tied up with project so I will 
         # leave to userena to test.
-
-
-class AdminTest(ComicframeworkTestCase):
-    """ Comic features a rather involved rewriting of the django interface, offering
-    a dedicated admin site for each project in the database. Is everything still working?
-        
-    """
-
-    def setUp_extra(self):
-        """ Called by ComicframeworkTestCase
-        """
-        [self.testproject,
-         self.root,
-         self.projectadmin,
-         self.participant,
-         self.registered_user] = self._create_dummy_project("admin-test")
-
-    def test_jsi18n(self):
-        """ Is javascript being included on admin pages correctly?
-        """
-
-        jspath = reverse("admin:jsi18n")
-        self._test_url_can_be_viewed(self.projectadmin, jspath)
-
-        ain = self.testproject.get_project_admin_instance_name()
-        jspathpa = reverse("admin:jsi18n",
-                           current_app=self.testproject.get_project_admin_instance_name())
-        self._test_url_can_be_viewed(self.projectadmin, jspath)
-
-        self.assertTrue(jspath != jspathpa,
-                        "Path to root admin should differ from "
-                        "path to project admin, but both resolve to '{}'".format(
-                            jspath))
-
-    def _check_project_admin_view(self, project, viewname, args=None,
-                                  user=None):
-
-        if args is None:
-            args = []
-
-        if user is None:
-            user = self.projectadmin
-
-        url = self._get_admin_url(viewname, args, project)
-        response = self._test_url_can_be_viewed(user, url)
-
-        expected_header = "<p>{} Admin</p>".format(project.short_name)
-
-        self.assertTrue(expected_header in response.content.decode(),
-                        "Did not find expected header '{}'in page source for "
-                        "project admin url {}. This header should be printed "
-                        "on top of the page".format(expected_header, url))
-
-    def _get_admin_url(self, viewname, args, project):
-        return reverse(viewname, args=args,
-                       current_app=project.get_project_admin_instance_name())
-
-    def test_admin_view_permissions(self):
-        self._check_project_admin_view(self.testproject,
-                                       "admin:comicmodels_comicsite_changelist")
-
-    def test_project_admin_views(self):
-        """ Is javascript being included on admin pages correctly?
-        """
-        self._check_project_admin_view(self.testproject, "admin:index")

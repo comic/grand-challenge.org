@@ -35,12 +35,12 @@ def test_clean_staff(ChallengeSet):
     ChallengeSet.participant.is_staff = True
     ChallengeSet.participant.save()
 
-    assert ChallengeSet.creator.is_staff
+    assert not ChallengeSet.creator.is_staff
     assert ChallengeSet.participant.is_staff
 
     call_command('clean_staff')
 
-    assert User.objects.get(pk=ChallengeSet.creator.pk).is_staff
+    assert not User.objects.get(pk=ChallengeSet.creator.pk).is_staff
     assert not User.objects.get(pk=ChallengeSet.participant.pk).is_staff
     assert User.objects.get(pk=superuser.pk).is_staff
 

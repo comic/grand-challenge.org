@@ -8,7 +8,8 @@ from jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 method_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/method-upload/",
-    multifile=False)
+    multifile=False,
+)
 
 
 class MethodForm(forms.ModelForm):
@@ -49,7 +50,7 @@ class SubmissionForm(forms.ModelForm):
         widget=submission_upload_widget,
         label='Predictions File',
         validators=[
-            ExtensionValidator(allowed_extensions=('.zip','.csv',))
+            ExtensionValidator(allowed_extensions=('.zip', '.csv',))
         ],
     )
 

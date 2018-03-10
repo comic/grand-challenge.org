@@ -1,26 +1,11 @@
-from importlib import reload
-
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
-from django.core.urlresolvers import clear_url_caches
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from comicmodels.models import ComicSite
 from evaluation.models import Config
-
-
-def reload_url_conf():
-    """
-    urlpatterns for project admin in urls.py are generated based on the current
-    projects in the database. When a project gets added, the admin urls for the
-    new project are not in the imported urls.py. A reload is required
-    """
-    import comicsite.urls
-    import comic.urls
-    reload(comicsite.urls)
-    reload(comic.urls)
 
 
 def add_standard_permissions(group, objname):
@@ -33,9 +18,6 @@ def add_standard_permissions(group, objname):
 @receiver(post_save, sender=ComicSite)
 def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
                            created: bool = False, **kwargs):
-    reload_url_conf()
-    clear_url_caches()
-
     if created:
         # Create the evaluation config
         Config.objects.create(challenge=instance)
@@ -60,9 +42,6 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
         try:
             instance.creator.groups.add(admins_group)
 
-            # Add the creator to the staff
-            instance.creator.is_staff = True
-            instance.creator.save()
         except AttributeError:
             # No creator set
             pass

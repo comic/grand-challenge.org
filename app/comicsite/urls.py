@@ -1,7 +1,6 @@
 from django.conf.urls import url, include
 from django.views.generic import TemplateView, RedirectView
 
-from comicsite.admin import projectadminurls
 from comicsite.api import get_public_results
 from comicsite.views import site
 from uploads.views import serve
@@ -11,17 +10,8 @@ urlpatterns = [
     url(r'^(?P<site_short_name>[\w-]+)/$', site,
         name='challenge-homepage'),
 
-    # Include an admin url for each project in database. This stretches the
-    # django
-    # Assumptions of urls being fixed a bit, but it is the only way to reuse
-    #  much
-    # of the automatic admin functionality whithout rewriting the whole
-    # interface
-    # see issue #181
-    url(r'^', include(projectadminurls.allurls), name='projectadmin'),
-
     url(
-        r'^(?P<site_short_name>[\w-]+)/robots\.txt/$',
+        r'^(?P<challenge_short_name>[\w-]+)/robots\.txt/$',
         TemplateView.as_view(
             template_name='robots.txt',
             content_type='text/plain',

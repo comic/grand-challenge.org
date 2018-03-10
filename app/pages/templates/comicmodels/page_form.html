@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load crispy from crispy_forms_tags %}
+{% load static from staticfiles %}
 
 {% block pagecontent %}
 
@@ -9,11 +10,7 @@
         {% endblock %}
     </h2>
 
+    {% crispy form %}
 
-    <form action="" method="post">
-        {% csrf_token %}
-        {{ form.media }}
-        {{ form | crispy }}
-        <input type="submit" value="Save" class="btn btn-primary"/>
-    </form>
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}
