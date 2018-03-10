@@ -25,7 +25,7 @@
                     <a href="{{ challenge.get_absolute_url }}">
                         {% firstof challenge.title challenge.short_name %}
                     </a>
-                    {% if not challenge.hidden %}
+                    {% if challenge.hidden %}
                         <i class="fa fa-eye-slash text-danger"
                            title="Challenge not listed on the all challenges page"></i>
                     {% endif %}
