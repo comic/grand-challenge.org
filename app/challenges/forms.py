@@ -9,7 +9,7 @@ class ChallengeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ChallengeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit('save', 'save'))
+        self.helper.layout.append(Submit('save', 'Save'))
 
     class Meta:
         model = ComicSite
