@@ -275,6 +275,7 @@ INSTALLED_APPS = (
     'participants',
     'admins',
     'uploads',
+    'challenges',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -341,8 +342,8 @@ CKEDITOR_CONFIGS = {
 # This configuration writes WARNING and worse errors to an error log file, and
 # sends an email to all admins. It also writes INFO logmessages and worse to a
 # regular log file.
-LOG_FILEPATH = "django.log"
-LOG_FILEPATH_ERROR = "django_error.log"
+LOG_FILEPATH = "/tmp/django.log"
+LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

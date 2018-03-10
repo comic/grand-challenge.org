@@ -21,7 +21,7 @@ def validate_owner_or_admin_view(*,
     of that particular challenge """
     # No user
     assert_viewname_redirect(
-        url=settings.LOGIN_URL,
+        redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
         **kwargs
@@ -61,7 +61,7 @@ def validate_member_owner_or_admin_view(*,
     of that particular challenge """
     # No user
     assert_viewname_redirect(
-        url=settings.LOGIN_URL,
+        redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
         **kwargs

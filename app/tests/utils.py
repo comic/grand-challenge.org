@@ -88,13 +88,12 @@ def assert_viewname_status(*, code: int, **kwargs):
 
 
 def assert_viewname_redirect(*,
-                             url: str,
+                             redirect_url: str,
                              **kwargs):
     """ Asserts that a view redirects to the given url. See
     assert_viewname_status for kwargs details """
     response = assert_viewname_status(code=302, **kwargs)
-    redirect_url = list(urlparse(response.url))[2]
-    assert url == redirect_url
+    assert list(urlparse(response.url))[2] == redirect_url
     return response
 
 
@@ -106,7 +105,7 @@ def validate_admin_only_view(*,
     particular challenge """
     # No user
     assert_viewname_redirect(
-        url=settings.LOGIN_URL,
+        redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
         **kwargs
@@ -146,7 +145,7 @@ def validate_admin_or_participant_view(*,
     of that particular challenge """
     # No user
     assert_viewname_redirect(
-        url=settings.LOGIN_URL,
+        redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
         **kwargs
@@ -201,7 +200,7 @@ def validate_open_view(*,
 
 def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
     assert_viewname_redirect(
-        url=settings.LOGIN_URL,
+        redirect_url=settings.LOGIN_URL,
         challenge=challenge_set.challenge,
         client=client,
         **kwargs

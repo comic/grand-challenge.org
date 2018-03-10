@@ -1,0 +1,49 @@
+{% extends 'mainpage.html' %}
+{% load url from comic_templatetags %}
+
+{% block pageName %}My Challenges{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>My Challenges</h2>
+
+    <p>This is a list of the challenges that you are participating in on
+    {{ site.short_name }}.</p>
+
+    <table class="table" id="challengesTable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for challenge in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ challenge.get_absolute_url }}">
+                        {% firstof challenge.title challenge.short_name %}
+                    </a>
+                    {% if not challenge.hidden %}
+                        <i class="fa fa-eye-slash text-danger"
+                           title="Challenge not listed on the all challenges page"></i>
+                    {% endif %}
+                </td>
+                <td>{{ challenge.description }}</td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#challengesTable').DataTable({
+                "bLengthChange": false,
+                "pageLength": 50
+            });
+        });
+    </script>
+
+{% endblock %}

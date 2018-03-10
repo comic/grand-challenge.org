@@ -12,7 +12,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
 
     if args is not None:
         challenge_short_name = args[0]
-    elif 'challenge_short_name' in kwargs:
+    elif kwargs is not None and 'challenge_short_name' in kwargs:
         challenge_short_name = kwargs['challenge_short_name']
     else:
         challenge_short_name = None

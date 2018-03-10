@@ -168,8 +168,9 @@
                                 <ul class="dropdown-menu">
                                     <li><a class="metaFooterMenuItem"
                                            href="{% url 'userena_profile_detail' user.username %}">My
-                                        profile</a>
+                                        Profile</a>
                                     </li>
+                                    <li><a href="{% url 'challenges:list' %}">My Challenges</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a class="metaFooterMenuItem last"
                                            href="{% url 'userena_signout' %}?next=/">

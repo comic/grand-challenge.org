@@ -5,7 +5,9 @@ from collections import namedtuple
 import docker
 import pytest
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
+from comicmodels.models import ComicSite
 from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 
 """ Defines fixtures than can be used across all of the tests """
@@ -34,6 +36,11 @@ def challenge_set():
     participant1 = UserFactory()
     challenge.add_participant(participant1)
     non_participant = UserFactory()
+
+    try:
+        ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
+    except ObjectDoesNotExist:
+        ChallengeFactory(short_name=settings.MAIN_PROJECT_NAME)
 
     return ChallengeSet(
         challenge,
@@ -132,6 +139,7 @@ def evaluation_image(tmpdir_factory):
 
     return outfile, im.id
 
+
 @pytest.fixture(scope='session')
 def alpine_images(tmpdir_factory):
     client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
@@ -148,6 +156,7 @@ def alpine_images(tmpdir_factory):
         f.write(image.data)
 
     return outfile
+
 
 @pytest.fixture(scope='session')
 def submission_file(tmpdir_factory):
