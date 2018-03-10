@@ -69,26 +69,29 @@ class CKEditorWidget(forms.Textarea):
                 raise ImproperlyConfigured('CKEDITOR_CONFIGS setting must be a\
                         dictionary type.')
 
-    def render(self, name, value=None, attrs=None):
+    def render(self, name, value=None, attrs=None, renderer=None):
         if value is None:
             value = ''
 
         if attrs is None:
             attrs = {}
 
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, {'name': name})
         # self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload')
 
         # self.config['comicsite'] is set in comicmodel.PageAdmin, ckeditor 
         # knows where to put uploads per project 
-        self.config['filebrowserUploadUrl'] = reverse('ckeditor_upload_to_project',
-                                                      kwargs={"site_short_name": self.config['comicsite']})
-        self.config['filebrowserBrowseUrl'] = reverse('ckeditor_browse_project',
-                                                      kwargs={"site_short_name": self.config['comicsite']})
-        return mark_safe(render_to_string('ckeditor/widget.html', {
-            'final_attrs': flatatt(final_attrs),
-            'value': conditional_escape(force_text(value)),
-            'id': final_attrs['id'],
-            'config': json_encode(self.config)
-        })
-                         )
+        self.config['filebrowserUploadUrl'] = reverse(
+            'ckeditor_upload_to_project',
+            kwargs={"site_short_name": self.config['comicsite']})
+        self.config['filebrowserBrowseUrl'] = reverse(
+            'ckeditor_browse_project',
+            kwargs={"site_short_name": self.config['comicsite']})
+        return mark_safe(
+            render_to_string('ckeditor/widget.html', {
+                'final_attrs': flatatt(final_attrs),
+                'value': conditional_escape(force_text(value)),
+                'id': final_attrs['id'],
+                'config': json_encode(self.config)
+            })
+        )
