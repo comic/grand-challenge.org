@@ -36,7 +36,7 @@ urlpatterns = [
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
 
     # WYSIWYG editor for HTML
-    url(r'^ckeditor/', include('ckeditor.urls')),
+    url(r'^ckeditor/', include('ckeditor_uploader.urls')),
 
     url(r'^challenges/', include('challenges.urls', namespace='challenges')),
 

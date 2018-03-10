@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c6bee1bae5036258c5e56bf7ea087d38810645f52158a447799bfa32cc664099"
+            "sha256": "1d7916e102d4db407dc9bec33162bdd8d57b696c17aa30a54ee31755defca34d"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -106,6 +106,12 @@
             ],
             "version": "==1.0.1"
         },
+        "django-ckeditor": {
+            "hashes": [
+                "sha256:b49eb630a260eb17dd225ea38b42d58fabc9a8dbbc898224c61f9a570c29e961"
+            ],
+            "version": "==5.4.0"
+        },
         "django-countries": {
             "hashes": [
                 "sha256:9f3323862590aac899c8f2b0b83583fe88a747bdc285008ef0330e42b91b1384",
@@ -126,6 +132,13 @@
                 "sha256:c3c0ab257c9d94ce154b9ee32994e3cff8b350c384040705514e14a9fb7c8191"
             ],
             "version": "==1.4.9"
+        },
+        "django-js-asset": {
+            "hashes": [
+                "sha256:bcd00d7dc67f86cad1dac4bf7b43fa4b75088c214d2c92002b8705c6a7362e7e",
+                "sha256:38fc1de7a93a2f667fe7ee34acc53d682bac5ce6c73ac6f0ecb4ff77d0f61f1b"
+            ],
+            "version": "==1.0.0"
         },
         "django-userena-ce": {
             "hashes": [

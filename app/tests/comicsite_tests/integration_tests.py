@@ -17,7 +17,7 @@ from django.test.utils import override_settings
 from six import StringIO
 from userena.models import UserenaSignup
 
-from ckeditor.views import upload_to_project
+from ckeditor_uploader.views import upload as upload_to_project
 from comicmodels.models import Page, ComicSite
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory

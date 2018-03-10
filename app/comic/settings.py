@@ -260,6 +260,7 @@ INSTALLED_APPS = (
     'social_django',
     # html WYSIWYG editor
     'ckeditor',
+    'ckeditor_uploader',
     # automated evaluation
     'evaluation',
     'jqfileupload',
@@ -461,7 +462,7 @@ for conf_file in conf_files:
         code = compile(f.read(), conf_file, 'exec')
         six.exec_(code)
 
-CKEDITOR_UPLOAD_PATH = MEDIA_ROOT
+CKEDITOR_UPLOAD_PATH = 'uploads/'
 
 if MEDIA_ROOT[-1] != "/":
     msg = "MEDIA_ROOT setting should end in a slash. Found '" + MEDIA_ROOT + "'. Please add a slash"
