@@ -30,30 +30,28 @@
 
 
 
-{% block content %}
-    {% block pagecontent %}
+{% block pagecontent %}
 
-        {% if site.disclaimer %}
-            <div class="disclaimer"
-                 style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
+    {% if site.disclaimer %}
+        <div class="disclaimer"
+             style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
 
-                <p>{% autoescape off %}
-                    {{ site.disclaimer }}{% endautoescape %}</p>
-            </div>
-        {% endif %}
-        <div>{{ currentpage.rawHTML }}</div>
+            <p>{% autoescape off %}
+                {{ site.disclaimer }}{% endautoescape %}</p>
+        </div>
+    {% endif %}
+    <div>{{ currentpage.rawHTML }}</div>
 
-        <br/>
+    <br/>
 
-        {% get_obj_perms user for site as "site_perms" %}
-        {% if "change_comicsite" in site_perms %}
+    {% get_obj_perms user for site as "site_perms" %}
+    {% if "change_comicsite" in site_perms %}
 
-            <a class="editPageLink"
-               href="{% url 'pages:update' currentpage.comicsite.short_name currentpage.title %}">
-                Edit this page
-            </a>
-        {% endif %}
-
-    {% endblock %}
+        <a class="editPageLink"
+           href="{% url 'pages:update' currentpage.comicsite.short_name currentpage.title %}">
+            Edit this page
+        </a>
+    {% endif %}
 
 {% endblock %}
+
