@@ -14,6 +14,7 @@
         <thead>
         <tr>
             <th>Name</th>
+            <th>Created</th>
             <th>Description</th>
         </tr>
         </thead>
@@ -29,6 +30,9 @@
                         <i class="fa fa-eye-slash text-danger"
                            title="Challenge not listed on the all challenges page"></i>
                     {% endif %}
+                </td>
+                <td data-order="{{ challenge.created_at|date:"U" }}">
+                    {{ challenge.created_at }}
                 </td>
                 <td>{{ challenge.description }}</td>
             </tr>
