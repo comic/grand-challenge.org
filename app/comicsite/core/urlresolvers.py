@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse as reverse_org
 
 
-def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
+def reverse(viewname, urlconf=None, args=None, kwargs=None,
             current_app=None):
     """ Reverse url, but try to use subdomain to designate site where possible.
     This means 'site1' will not get url 'hostname/site/site1' but rather 'projectname.hostname'
@@ -23,8 +23,13 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
 
         site_url = reverse_org('challenge-homepage',
                                args=[challenge_short_name]).lower()
-        target_url = reverse_org(viewname, urlconf, args, kwargs, prefix,
-                                 current_app).lower()
+        target_url = reverse_org(
+            viewname,
+            urlconf=urlconf,
+            args=args,
+            kwargs=kwargs,
+            current_app=current_app,
+        ).lower()
 
         if target_url.startswith(site_url):
             target_url = target_url.replace(site_url, "/")
@@ -32,5 +37,10 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
         return urljoin(base_url, target_url)
 
     else:
-        return reverse_org(viewname, urlconf, args, kwargs, prefix,
-                           current_app)
+        return reverse_org(
+            viewname,
+            urlconf=urlconf,
+            args=args,
+            kwargs=kwargs,
+            current_app=current_app,
+        )
