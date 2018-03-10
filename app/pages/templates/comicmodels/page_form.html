@@ -14,8 +14,7 @@
     <form action="" method="post">
         {% csrf_token %}
         {{ form.media }}
-        {{ form | crispy }}
-        <input type="submit" value="Save" class="btn btn-primary"/>
+        {% crispy form %}
     </form>
 
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>

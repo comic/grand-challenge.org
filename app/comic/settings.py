@@ -241,14 +241,13 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     # Needed for userena
     'django.contrib.sites',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
     'comicmodels',
     # comicsite is the where main web portal of this framework lives
     'comicsite',
-    # placed admin below comicsite to be able to override standard admin templates
-    'django.contrib.admin',
     # profiles extends userena and gives functionality to manage user profiles
     # profiles needs to be loaded before userena
     'profiles',

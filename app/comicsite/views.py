@@ -2,7 +2,6 @@ from os import path
 
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
@@ -221,7 +220,7 @@ def comicmain(request, page_title=""):
 
     if pages.count() == 0:
 
-        link = reverse('admin:comicmodels_comicsite_changelist')
+        link = reverse('pages:list', args=[site_short_name])
         link_html = create_HTML_a(link, "admin interface")
 
         html = """I'm trying to show the first page for main project '%s' here,
