@@ -10,12 +10,7 @@
         {% endblock %}
     </h2>
 
-
-    <form action="" method="post">
-        {% csrf_token %}
-        {{ form.media }}
-        {% crispy form %}
-    </form>
+    {% crispy form %}
 
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}
