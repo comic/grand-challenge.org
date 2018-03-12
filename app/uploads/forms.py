@@ -10,10 +10,11 @@ class UserUploadForm(forms.ModelForm):
 
     class Meta:
         model = UploadModel
-        exclude = ['title', 'comicsite', 'permission_lvl', 'user']
+        fields = ('file',)
 
 
 class CKUploadForm(forms.ModelForm):
+    """ This form is used from CKEditor as the file field is named upload """
     upload = forms.FileField()
 
     class Meta:
