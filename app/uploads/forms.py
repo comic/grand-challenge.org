@@ -11,3 +11,11 @@ class UserUploadForm(forms.ModelForm):
     class Meta:
         model = UploadModel
         exclude = ['title', 'comicsite', 'permission_lvl', 'user']
+
+
+class CKUploadForm(forms.ModelForm):
+    upload = forms.FileField()
+
+    class Meta:
+        model = UploadModel
+        fields = ('upload',)

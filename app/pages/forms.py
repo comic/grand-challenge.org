@@ -1,3 +1,4 @@
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
@@ -6,9 +7,12 @@ from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
 
 from comicmodels.models import Page
+from comicsite.core.urlresolvers import reverse
 
 
 class PageCreateForm(forms.ModelForm):
+    html = forms.CharField(widget=CKEditorUploadingWidget())
+
     def __init__(self, *args, **kwargs):
         challenge_name = kwargs.pop('challenge_short_name', None)
         self.challenge_pk = kwargs.pop('challenge_pk', None)
@@ -16,7 +20,16 @@ class PageCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if challenge_name is not None and 'html' in self.fields:
-            self.fields['html'].widget.config['comicsite'] = challenge_name
+            self.fields['html'].widget.config.update({
+                'filebrowserUploadUrl': reverse(
+                    'uploads:ck-create',
+                    kwargs={'challenge_short_name': challenge_name}
+                ),
+                'filebrowserBrowseUrl': reverse(
+                    'uploads:ck-browse',
+                    kwargs={'challenge_short_name': challenge_name}
+                ),
+            })
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit('save', 'Save'))
@@ -26,7 +39,7 @@ class PageCreateForm(forms.ModelForm):
         title = self.cleaned_data['title']
 
         queryset = Page.objects.filter(comicsite__pk=self.challenge_pk,
-                               title=title)
+                                       title=title)
 
         if self.instance is not None:
             queryset = queryset.exclude(pk=self.instance.pk)

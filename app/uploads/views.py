@@ -3,15 +3,22 @@ import os
 import posixpath
 from urllib.parse import unquote
 
+from ckeditor_uploader.views import browse
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import (
+    HttpResponseRedirect,
+    Http404,
+    HttpResponseForbidden,
+)
 from django.shortcuts import render
-from django.views.generic import ListView
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, CreateView
 
 from comicmodels.models import UploadModel, ComicSite, Page
 from comicmodels.permissions import can_access
@@ -20,12 +27,39 @@ from comicsite.views import getSite, site_get_standard_vars, permissionMessage
 from pages.views import ComicSiteFilteredQuerysetMixin
 from uploads.api import serve_file
 from uploads.emails import send_file_uploaded_notification_email
-from uploads.forms import UserUploadForm
+from uploads.forms import UserUploadForm, CKUploadForm
 
 
 class UploadList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
                  ListView):
     model = UploadModel
+
+
+# TODO: adapt this for ckeditor
+class CKUploadView(UserIsChallengeAdminMixin, CreateView):
+    model = UploadModel
+    form_class = CKUploadForm
+
+    # TODO: remove, unneeded once moved to ckeditor
+    def get_success_url(self):
+        return reverse('uploads:list', args=[self.request.projectname])
+
+    @method_decorator(csrf_exempt)  # Required by django-ckeditor
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.comicsite = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        form.instance.user = self.request.user
+        form.instance.file = form.cleaned_data['upload']
+
+        return super().form_valid(form)
+
+
+# TODO: permissions, limit by folder
+def ck_browse_uploads(request, challenge_short_name):
+    return browse(request)
 
 
 def serve(request, project_name, path, document_root=None):
@@ -134,7 +168,8 @@ def upload_handler(request, challenge_short_name):
     else:
         form = UserUploadForm()
 
-    [site, pages, metafooterpages] = site_get_standard_vars(challenge_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(comicsite=site, title="files")

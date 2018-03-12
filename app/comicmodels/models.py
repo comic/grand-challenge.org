@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 
+from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -17,7 +18,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
 import comicsite.utils.query
-from ckeditor.fields import RichTextField
 from comicsite.core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
@@ -58,6 +58,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     path = path.replace("\\",
                         "/")  # replace remove double slashes because this can mess up django's url system
     return path
+
 
 def get_project_admin_instance_name(projectname):
     """ Convention for naming the projectadmin interface for the given project
@@ -791,25 +792,6 @@ class UploadModel(ComicSiteModel):
     def localfileexists(self):
         storage = DefaultStorage()
         return storage.exists(self.file.path)
-
-    def clean(self):
-        # When no title is set, take the filename as title
-
-        if self.title == "":
-
-            if self.file.name:  # is a
-                # autofill title with the name the file is going to have
-                # Some confused code here to get the filename a file is going to get.
-                # We should have a custom storage class For Uploadmodels. The storage
-                # class should know to save objects to their respective project
-
-                validFilePath = self.file.storage.get_available_name(
-                    self.file.field.generate_filename(self, self.file.name))
-                self.title = os.path.basename(validFilePath)
-            else:
-
-                raise ValidationError(
-                    "No file given, I don't know what title to give this uploaded file.")
 
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"

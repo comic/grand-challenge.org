@@ -41,8 +41,6 @@ urlpatterns = [
     # Legacy apps
     #
 
-    url(r'^(?P<site_short_name>[\w-]+)/ckeditor/', include('ckeditor_uploader.urls')),
-
     url(r'^(?P<challenge_short_name>[\w-]+)/files/$',
         RedirectView.as_view(
             pattern_name='uploads:create',
