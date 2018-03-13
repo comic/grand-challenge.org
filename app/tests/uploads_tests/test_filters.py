@@ -16,5 +16,5 @@ def test_upload_list_is_filtered(client, TwoChallengeSets):
         user=TwoChallengeSets.admin12,
     )
 
-    assert u1.title in response.rendered_content
-    assert u2.title not in response.rendered_content
+    assert u1.file.name in response.rendered_content
+    assert u2.file.name not in response.rendered_content
