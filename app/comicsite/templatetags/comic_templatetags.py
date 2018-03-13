@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
 from django.template import defaulttags
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 from six import StringIO, iteritems
@@ -335,7 +336,7 @@ def sanitize_django_items(string):
 @register.simple_tag
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
-    html_string = ""
+    html_string = mark_safe("")
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
