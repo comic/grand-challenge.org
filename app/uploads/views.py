@@ -9,9 +9,18 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import (
+    HttpResponseRedirect,
+    Http404,
+    HttpResponseForbidden,
+    HttpResponse,
+    JsonResponse,
+)
 from django.shortcuts import render
-from django.views.generic import ListView
+from django.utils.decorators import method_decorator
+from django.utils.html import escape
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, CreateView, TemplateView
 
 from comicmodels.models import UploadModel, ComicSite, Page
 from comicmodels.permissions import can_access
@@ -20,12 +29,82 @@ from comicsite.views import getSite, site_get_standard_vars, permissionMessage
 from pages.views import ComicSiteFilteredQuerysetMixin
 from uploads.api import serve_file
 from uploads.emails import send_file_uploaded_notification_email
-from uploads.forms import UserUploadForm
+from uploads.forms import UserUploadForm, CKUploadForm
 
 
 class UploadList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
                  ListView):
     model = UploadModel
+
+
+class CKUploadView(UserIsChallengeAdminMixin, CreateView):
+    model = UploadModel
+    form_class = CKUploadForm
+
+    def get_success_url(self):
+        return reverse('uploads:list', args=[self.request.projectname])
+
+    @method_decorator(csrf_exempt)  # Required by django-ckeditor
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.comicsite = ComicSite.objects.get(
+            pk=self.request.project_pk)
+        form.instance.user = self.request.user
+        form.instance.file = form.cleaned_data['upload']
+
+        super().form_valid(form)
+
+        # Taken from ckeditor_uploader.views.ImageUploadView
+        # Note that this function is heavily tied to the response there,
+        # so check when updating django-ckeditor.
+        # TODO: Write a selenium test to check this.
+        ck_func_num = self.request.GET.get('CKEditorFuncNum')
+        if ck_func_num:
+            ck_func_num = escape(ck_func_num)
+
+        url = form.instance.file.url
+
+        if ck_func_num:
+            # Respond with Javascript sending ckeditor upload url.
+            return HttpResponse("""
+            <script type='text/javascript'>
+                window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
+            </script>""".format(ck_func_num, url))
+        else:
+            retdata = {'url': url, 'uploaded': '1',
+                       'fileName': form.instance.file.name}
+            return JsonResponse(retdata)
+
+
+class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
+    template_name = 'ckeditor/browse.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        uploaded_files = UploadModel.objects.filter(
+            comicsite__pk=self.request.project_pk,
+            permission_lvl=UploadModel.ALL,
+        )
+
+        files = []
+        for uf in uploaded_files:
+            src = uf.file.url
+            files.append({
+                'thumb': src,
+                'src': src,
+                'is_image': False,
+                'visible_filename': uf.file.name,
+            })
+
+        context.update({
+            'show_dirs': False,
+            'files': files,
+        })
+
+        return context
 
 
 def serve(request, project_name, path, document_root=None):
@@ -134,7 +213,8 @@ def upload_handler(request, challenge_short_name):
     else:
         form = UserUploadForm()
 
-    [site, pages, metafooterpages] = site_get_standard_vars(challenge_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(comicsite=site, title="files")

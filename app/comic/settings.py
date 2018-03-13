@@ -69,8 +69,7 @@ USERENA_USE_MESSAGES = False,
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-# TIME_ZONE = 'America/Chicago'
-TIME_ZONE = None
+TIME_ZONE = 'UTC'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -166,15 +165,6 @@ SESSION_COOKIE_DOMAIN = None
 # Serve files using django (debug only)
 STATIC_URL = '/static/'
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-
-    SITE_ROOT + "/" + "static",
-)
-
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -206,6 +196,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'comicsite.contextprocessors.contextprocessors.comic_site',
                 'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri',
+                'comicsite.contextprocessors.contextprocessors.google_analytics_id',
                 'rollbar.contrib.django.context_processors.rollbar_settings',
             ],
         },
@@ -261,6 +252,7 @@ INSTALLED_APPS = (
     'social_django',
     # html WYSIWYG editor
     'ckeditor',
+    'ckeditor_uploader',
     # automated evaluation
     'evaluation',
     'jqfileupload',
@@ -290,6 +282,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     'SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', '')
 
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', 'GA_TRACKING_ID')
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
@@ -334,7 +327,6 @@ CKEDITOR_CONFIGS = {
         'entities': False,
     }
 }
-
 
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
@@ -462,7 +454,7 @@ for conf_file in conf_files:
         code = compile(f.read(), conf_file, 'exec')
         six.exec_(code)
 
-CKEDITOR_UPLOAD_PATH = MEDIA_ROOT
+CKEDITOR_UPLOAD_PATH = 'uploads/'
 
 if MEDIA_ROOT[-1] != "/":
     msg = "MEDIA_ROOT setting should end in a slash. Found '" + MEDIA_ROOT + "'. Please add a slash"

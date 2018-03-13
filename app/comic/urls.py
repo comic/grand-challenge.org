@@ -35,9 +35,6 @@ urlpatterns = [
     url(r'^accounts/', include('profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
 
-    # WYSIWYG editor for HTML
-    url(r'^ckeditor/', include('ckeditor.urls')),
-
     url(r'^challenges/', include('challenges.urls', namespace='challenges')),
 
     # ========== catch all ====================

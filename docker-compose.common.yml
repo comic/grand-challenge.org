@@ -7,11 +7,10 @@ services:
       context: .
       dockerfile: ./dockerfiles/web/Dockerfile
     environment:
-      - GOOGLE_ANALYTICS_TRACKING_ID=UA-XXXXX-Y
+      - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
     command: >-
       dockerize -wait tcp://db:3306 -timeout 120s bash -c "
-      envsubst < /tmp/google-analytics-tracking.js.template > /app/static/js/google-analytics-tracking.js
-      && python manage.py collectstatic --noinput
+      python manage.py collectstatic --noinput
       && mkdir -p /dbox/Dropbox/media/
       && python manage.py migrate
       && python manage.py check_permissions

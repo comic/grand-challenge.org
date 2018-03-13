@@ -10,6 +10,5 @@ comic/settings/*_local.conf
 /*.db
 
 # google tracking code specific per instance
-/static/js/google-analytics-tracking.js
 /celerybeat-schedule
 /celerybeat.pid

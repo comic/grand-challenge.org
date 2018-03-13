@@ -1,21 +1,24 @@
-import os
-import uuid
-import random
 import json
+import os
+import random
 import time
-
+import uuid
 from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
-
-from django.http.response import JsonResponse, HttpResponseForbidden, \
-    HttpResponseBadRequest
+from django.http.response import (
+    JsonResponse,
+    HttpResponseForbidden,
+    HttpResponseBadRequest,
+)
 from django.test.client import RequestFactory
 
-from jqfileupload.models import StagedFile
-from jqfileupload.widgets.uploader import AjaxUploadWidget, StagedAjaxFile, \
-    UploadedAjaxFileList
+from jqfileupload.widgets.uploader import (
+    AjaxUploadWidget,
+    StagedAjaxFile,
+    UploadedAjaxFileList,
+)
 
 
 def load_test_data():
@@ -24,17 +27,19 @@ def load_test_data():
             'rb') as f:
         return f.read()
 
+
 def generate_new_upload_id(sender, content):
     return f"{id(sender)}_{hash(content)}_{time.time()}_{random.random()}"
 
+
 def create_upload_file_request(
         rf: RequestFactory,
-        filename: str="test.bin",
-        boundary: str="RandomBoundaryFTWBlablablablalba8923475278934578",
-        content: bytes=None,
-        csrf_token: str="tests_csrf_token",
-        extra_fields: dict={},
-        extra_headers: dict={}):
+        filename: str = "test.bin",
+        boundary: str = "RandomBoundaryFTWBlablablablalba8923475278934578",
+        content: bytes = None,
+        csrf_token: str = "tests_csrf_token",
+        extra_fields: dict = {},
+        extra_headers: dict = {}):
     if content is None:
         content = load_test_data()
 
@@ -98,9 +103,20 @@ def create_partial_upload_file_request(
     return post_request
 
 
+def force_post_update(request, key: str, value: object):
+    """Fix for Django 1.11 where POST objects are not mutable"""
+    swap = request.POST._mutable
+    request.POST._mutable = True
+    request.POST[key] = value
+    request.POST._mutable = swap
+
+    return request
+
+
 def test_invalid_initialization():
     with pytest.raises(ValueError):
         AjaxUploadWidget()
+
 
 @pytest.mark.django_db
 def test_single_chunk(rf: RequestFactory):
@@ -124,6 +140,7 @@ def test_single_chunk(rf: RequestFactory):
         staged_content = f.read()
 
     assert staged_content == load_test_data()
+
 
 @pytest.mark.django_db
 def test_rfc7233_implementation(rf: RequestFactory):
@@ -155,6 +172,7 @@ def test_rfc7233_implementation(rf: RequestFactory):
 
     assert staged_content == content
 
+
 @pytest.mark.django_db
 def test_wrong_upload_headers(rf: RequestFactory):
     widget = AjaxUploadWidget(ajax_target_path="/ajax")
@@ -168,13 +186,15 @@ def test_wrong_upload_headers(rf: RequestFactory):
     post_request.method = "PUT"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
+
 @pytest.mark.django_db
 def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     widget = AjaxUploadWidget(ajax_target_path="/ajax")
     widget.timeout = timedelta(seconds=1)
 
     content = load_test_data()
-    upload_id = generate_new_upload_id(test_wrong_upload_headers_rfc7233, content)
+    upload_id = generate_new_upload_id(test_wrong_upload_headers_rfc7233,
+                                       content)
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10)
     assert isinstance(widget.handle_ajax(post_request), JsonResponse)
@@ -182,12 +202,13 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10)
     post_request.META["X-Upload-ID"] = None
-    post_request.POST["X-Upload-ID"] = None
+    post_request = force_post_update(post_request, "X-Upload-ID", None)
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10)
-    post_request.META["HTTP_CONTENT_RANGE"] = "corrupted data: 54343-3223/21323"
+    post_request.META[
+        "HTTP_CONTENT_RANGE"] = "corrupted data: 54343-3223/21323"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
 
     post_request = create_partial_upload_file_request(
@@ -213,8 +234,9 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10)
     post_request.META["X-Upload-ID"] = "a" * 1000
-    post_request.POST["X-Upload-ID"] = "a" * 1000
+    post_request = force_post_update(post_request, "X-Upload-ID", "a" * 1000)
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
+
 
 @pytest.mark.django_db
 def test_inconsistent_chunks_rfc7233(rf: RequestFactory):
@@ -224,7 +246,8 @@ def test_inconsistent_chunks_rfc7233(rf: RequestFactory):
     content = load_test_data()
 
     # Overlapping chunks
-    upload_id = generate_new_upload_id(test_inconsistent_chunks_rfc7233, content)
+    upload_id = generate_new_upload_id(test_inconsistent_chunks_rfc7233,
+                                       content)
     part_1 = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10)
     part_2 = create_partial_upload_file_request(
@@ -274,8 +297,8 @@ def test_form_field_to_python():
     form_field = UploadedAjaxFileList()
 
     uuid_string = "4dec34db-930f-48be-bb65-d7f8319ff654," + \
-        "5d901b2c-7cd1-416e-9952-d30b6a0edcba," + \
-        "4a3c5731-0050-4489-8364-282278f7190f"
+                  "5d901b2c-7cd1-416e-9952-d30b6a0edcba," + \
+                  "4a3c5731-0050-4489-8364-282278f7190f"
     staged_files = form_field.to_python(uuid_string)
 
     assert ",".join(str(sf.uuid) for sf in staged_files) == uuid_string
