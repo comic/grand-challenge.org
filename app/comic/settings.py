@@ -328,7 +328,6 @@ CKEDITOR_CONFIGS = {
     }
 }
 
-
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
 # This configuration writes WARNING and worse errors to an error log file, and

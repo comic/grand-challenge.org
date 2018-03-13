@@ -14,9 +14,12 @@ from django.http import (
     HttpResponseRedirect,
     Http404,
     HttpResponseForbidden,
+    HttpResponse,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView
 
@@ -35,13 +38,10 @@ class UploadList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
     model = UploadModel
 
 
-# TODO: adapt this for ckeditor
-# TODO: test created filename
 class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     model = UploadModel
     form_class = CKUploadForm
 
-    # TODO: remove, unneeded once moved to ckeditor
     def get_success_url(self):
         return reverse('uploads:list', args=[self.request.projectname])
 
@@ -55,7 +55,28 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
         form.instance.user = self.request.user
         form.instance.file = form.cleaned_data['upload']
 
-        return super().form_valid(form)
+        super().form_valid(form)
+
+        # Taken from ckeditor_uploader.views.ImageUploadView
+        # Note that this function is heavily tied to the response there,
+        # so check when updating django-ckeditor.
+        # TODO: Write a selenium test to check this.
+        ck_func_num = self.request.GET.get('CKEditorFuncNum')
+        if ck_func_num:
+            ck_func_num = escape(ck_func_num)
+
+        url = form.instance.file.url
+
+        if ck_func_num:
+            # Respond with Javascript sending ckeditor upload url.
+            return HttpResponse("""
+            <script type='text/javascript'>
+                window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
+            </script>""".format(ck_func_num, url))
+        else:
+            retdata = {'url': url, 'uploaded': '1',
+                       'fileName': form.instance.file.name}
+            return JsonResponse(retdata)
 
 
 # TODO: permissions, limit by folder
