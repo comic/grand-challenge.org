@@ -30,6 +30,5 @@ ratings:
   - "**.py"
   - "**.rb"
 exclude_paths:
-  - app/static/**/*
-  - app/ckeditor/static/**/*
+  - app/comicsite/static/**/*
   - app/**/migrations/**/*
