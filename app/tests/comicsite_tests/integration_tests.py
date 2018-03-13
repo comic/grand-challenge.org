@@ -758,61 +758,6 @@ class UploadTest(ComicframeworkTestCase):
 
         return response
 
-    def _upload_test_file_ckeditor(self, user, project, testfilename=""):
-        """ Upload a very small test file in the html page editor. This is
-        mainly used for uploading images while creating a page 
-        
-        """
-
-        if testfilename == "":
-            testfilename = self.giverandomfilename(user)
-
-        url = reverse("uploads:ck-create",
-                      kwargs={"challenge_short_name": self.testproject.short_name})
-
-        factory = RequestFactory()
-        request = factory.get(url,
-                              {
-                                  "CKEditorFuncNum": "1234"})  # CKEditorFuncNum is
-        # used by ckeditor,
-        # normally filled by
-        # js but faked here.
-
-        request.user = user
-
-        fakefile = File(StringIO("some uploaded content for" + testfilename))
-
-        fakecontent = "some uploaded content for" + testfilename
-        request.FILES['upload'] = SimpleUploadedFile(name=testfilename,
-                                                     content=fakecontent.encode(
-                                                         'UTF-8'))
-
-        request.method = "POST"
-
-        # Some magic code to fix a bug with middleware not being found,
-        # don't know what this does but if fixes the bug.
-        from django.contrib.messages.storage.fallback import FallbackStorage
-        setattr(request, 'session', 'session')
-        messages = FallbackStorage(request)
-        setattr(request, '_messages', messages)
-
-        response = CKUploadView.as_view()(request, project.short_name)
-
-        self.assertEqual(response.status_code, 200, "Uploading file %s as "
-                                                    "user %s to project %s in ckeditor did not return expected result"
-                         % (testfilename, user.username, project.short_name))
-
-        errors = re.search('<ul class="errorlist">(.*)</ul>',
-                           response.content.decode(),
-                           re.IGNORECASE)
-
-        self.assertFalse("Uploading failed" in response.content.decode(),
-                         "Uploading file %s as user %s to project %s in "
-                         "ckeditor return javascript containing 'uploading failed'"
-                         % (testfilename, user.username, project.short_name))
-
-        return response
-
     def giverandomfilename(self, user, postfix=""):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
@@ -839,34 +784,6 @@ class UploadTest(ComicframeworkTestCase):
                                        name3)
         resp4 = self._upload_test_file(self.participant2, self.testproject,
                                        name4)
-
-    def test_uploaded_files_from_editor(self):
-        """ You can also upload files in ckeditor, while editing a page. See
-        whether this works correctly. 
-        
-        """
-        # TODO: If you upload you result to the site, someone else cannot guess the
-        # url and get this. Instead the user is barred from this.
-
-        project = self.testproject
-
-        name1 = self.giverandomfilename(self.root)
-        name2 = self.giverandomfilename(self.projectadmin)
-        name3 = self.giverandomfilename(self.participant)
-
-        resp1 = self._upload_test_file_ckeditor(self.root, self.testproject,
-                                                name1)
-        resp2 = self._upload_test_file_ckeditor(self.projectadmin,
-                                                self.testproject, name2)
-        resp3 = self._upload_test_file_ckeditor(self.participant,
-                                                self.testproject, name3)
-
-        # TODO: verify that files uploaded in editor can be served directly.
-        # This is not possible now because no files get saved, returning 
-        # HttpResponseNotFound for any url get.. Can we fake this somehow?
-        url = reverse("project_serve_file",
-                      kwargs={"project_name": project.short_name,
-                              "path": project.public_upload_dir_rel() + "/" + name1})
 
 
 class TemplateTagsTest(ComicframeworkTestCase):
