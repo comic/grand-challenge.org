@@ -1,7 +1,6 @@
 import re
 from random import choice, randint
 
-import pytest
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -17,11 +16,10 @@ from django.test.utils import override_settings
 from six import StringIO
 from userena.models import UserenaSignup
 
-from ckeditor_uploader.views import upload as upload_to_project
 from comicmodels.models import Page, ComicSite
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
-from uploads.views import upload_handler
+from uploads.views import upload_handler, CKUploadView
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -769,8 +767,8 @@ class UploadTest(ComicframeworkTestCase):
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
 
-        url = reverse("ckeditor_upload_to_project",
-                      kwargs={"site_short_name": self.testproject.short_name})
+        url = reverse("uploads:ck-create",
+                      kwargs={"challenge_short_name": self.testproject.short_name})
 
         factory = RequestFactory()
         request = factory.get(url,
@@ -798,7 +796,7 @@ class UploadTest(ComicframeworkTestCase):
         messages = FallbackStorage(request)
         setattr(request, '_messages', messages)
 
-        response = upload_to_project(request, project.short_name)
+        response = CKUploadView.as_view()(request, project.short_name)
 
         self.assertEqual(response.status_code, 200, "Uploading file %s as "
                                                     "user %s to project %s in ckeditor did not return expected result"

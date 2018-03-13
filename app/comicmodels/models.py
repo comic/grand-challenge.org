@@ -41,19 +41,19 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
         is_comicsite = False
 
     if is_comicsite:
-        comicsite = uploadmodel
+        challenge = uploadmodel
         # Any image uploaded as part of a comcisite is public. These images
         # are only headers and other public things
         permission_lvl = ComicSiteModel.ALL
     else:
-        comicsite = uploadmodel.comicsite
+        challenge = uploadmodel.comicsite
         permission_lvl = uploadmodel.permission_lvl
 
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-        path = os.path.join(comicsite.public_upload_dir_rel(), filename)
+        path = os.path.join(challenge.public_upload_dir_rel(), filename)
     else:
-        path = os.path.join(comicsite.upload_dir_rel(), filename)
+        path = os.path.join(challenge.upload_dir_rel(), filename)
 
     path = path.replace("\\",
                         "/")  # replace remove double slashes because this can mess up django's url system
@@ -398,11 +398,11 @@ class ComicSite(models.Model):
         pass
         # TODO check whether short name is really clean and short!
 
-    def delete(self, using=None):
+    def delete(self, using=None, keep_parents=False):
         """ Ensure that there are no orphans """
         self.admins_group.delete(using)
         self.participants_group.delete(using)
-        super(ComicSite, self).delete(using)
+        super().delete(using, keep_parents)
 
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project

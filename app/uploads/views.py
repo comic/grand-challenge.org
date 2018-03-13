@@ -36,6 +36,7 @@ class UploadList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
 
 
 # TODO: adapt this for ckeditor
+# TODO: test created filename
 class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     model = UploadModel
     form_class = CKUploadForm
