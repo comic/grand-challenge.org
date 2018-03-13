@@ -21,7 +21,7 @@ class UserProfile(UserenaBaseProfile):
 
     def get_challenges_as_participant(self):
         return ComicSite.objects.filter(
-            participants_group=self.user.groups.all())
+            participants_group__in=self.user.groups.all())
 
 
 def create_user_profile(sender, instance, created, **kwargs):
