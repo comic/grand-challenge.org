@@ -345,7 +345,7 @@ def metafooterpages():
                 url = settings.MAIN_HOST_NAME + url
             # TODO: JM add class=active to the active link
             # See https://getbootstrap.com/docs/3.3/components/#navbar
-            html_string = format_html(
+            html_string += format_html(
                 "<li><a class='metaFooterMenuItem' href='{}'>{}</a></li>",
                 url,
                 p.display_title if p.display_title else p.title,
