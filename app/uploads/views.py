@@ -3,7 +3,6 @@ import os
 import posixpath
 from urllib.parse import unquote
 
-from ckeditor_uploader.views import browse
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
@@ -21,7 +20,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, TemplateView
 
 from comicmodels.models import UploadModel, ComicSite, Page
 from comicmodels.permissions import can_access
@@ -79,9 +78,33 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
             return JsonResponse(retdata)
 
 
-# TODO: permissions, limit by folder
-def ck_browse_uploads(request, challenge_short_name):
-    return browse(request)
+class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
+    template_name = 'ckeditor/browse.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        uploaded_files = UploadModel.objects.filter(
+            comicsite__pk=self.request.project_pk,
+            permission_lvl=UploadModel.ALL,
+        )
+
+        files = []
+        for uf in uploaded_files:
+            src = uf.file.url
+            files.append({
+                'thumb': src,
+                'src': src,
+                'is_image': False,
+                'visible_filename': uf.file.name,
+            })
+
+        context.update({
+            'show_dirs': False,
+            'files': files,
+        })
+
+        return context
 
 
 def serve(request, project_name, path, document_root=None):

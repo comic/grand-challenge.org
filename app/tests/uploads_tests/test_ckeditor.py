@@ -1,32 +1,35 @@
 import json
+from io import BytesIO
 
 import pytest
+from PIL import Image
 
 from comicmodels.models import UploadModel
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_upload_with_ckeditor_json(client, tmpdir, TwoChallengeSets):
-    filename = 'hello.txt'
+def test_upload_with_ckeditor_json(client, TwoChallengeSets):
+    filename = 'hello.jpg'
 
-    p = tmpdir.mkdir("sub").join(filename)
-    p.write("content")
+    img = BytesIO()
+    Image.new('1', (1, 1)).save(img, format='jpeg')
+    img.seek(0)
+    img.name = filename
 
     num_files = UploadModel.objects.all().count()
 
-    with open(p, 'rb') as f:
-        response = get_view_for_user(
-            viewname='uploads:ck-create',
-            challenge=TwoChallengeSets.ChallengeSet1.challenge,
-            user=TwoChallengeSets.admin12,
-            client=client,
-            method=client.post,
-            data={
-                'upload': f,
-            },
-            format='multipart',
-        )
+    response = get_view_for_user(
+        viewname='uploads:ck-create',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.admin12,
+        client=client,
+        method=client.post,
+        data={
+            'upload': img,
+        },
+        format='multipart',
+    )
 
     retdata = json.loads(response.content)
 

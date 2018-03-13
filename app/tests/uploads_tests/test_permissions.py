@@ -9,6 +9,7 @@ from tests.utils import validate_admin_only_view
     [
         'uploads:list',
         'uploads:ck-create',
+        'uploads:ck-browse',
     ]
 )
 def test_upload_list(view, client, TwoChallengeSets):

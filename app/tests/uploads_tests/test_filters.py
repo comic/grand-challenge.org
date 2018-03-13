@@ -5,12 +5,19 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_upload_list_is_filtered(client, TwoChallengeSets):
+@pytest.mark.parametrize(
+    "view",
+    [
+        'uploads:list',
+        'uploads:ck-browse',
+    ]
+)
+def test_upload_list_is_filtered(view, client, TwoChallengeSets):
     u1 = UploadFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge)
     u2 = UploadFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge)
 
     response = get_view_for_user(
-        viewname='uploads:list',
+        viewname=view,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
         user=TwoChallengeSets.admin12,

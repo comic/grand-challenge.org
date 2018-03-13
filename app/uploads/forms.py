@@ -15,7 +15,7 @@ class UserUploadForm(forms.ModelForm):
 
 class CKUploadForm(forms.ModelForm):
     """ This form is used from CKEditor as the file field is named upload """
-    upload = forms.FileField()
+    upload = forms.ImageField()
 
     class Meta:
         model = UploadModel
