@@ -53,3 +53,7 @@ def subdomain_absolute_uri(request):
     uri = build_absolute_uri(request)
 
     return {'subdomain_absolute_uri': uri}
+
+
+def google_analytics_id(*_, **__):
+    return {'google_analytics_id': settings.GOOGLE_ANALYTICS_ID}

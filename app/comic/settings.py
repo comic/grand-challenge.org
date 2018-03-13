@@ -205,6 +205,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'comicsite.contextprocessors.contextprocessors.comic_site',
                 'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri',
+                'comicsite.contextprocessors.contextprocessors.google_analytics_id',
                 'rollbar.contrib.django.context_processors.rollbar_settings',
             ],
         },
@@ -290,6 +291,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     'SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', '')
 
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', 'GA_TRACKING_ID')
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (

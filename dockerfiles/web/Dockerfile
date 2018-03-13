@@ -33,6 +33,4 @@ RUN pipenv install --system $PIPENV_DEV
 
 ADD ./app /app/
 
-ADD ./dockerfiles/web/google-analytics-tracking.js.template /tmp/google-analytics-tracking.js.template
-
 RUN mkdir /static

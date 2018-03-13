@@ -11,8 +11,20 @@
         <meta name="keywords"
               content="COMIC, open, science, medical, image, computing, validated"/>
 
-        <script type="text/javascript"
-                src="{% static "js/google-analytics-tracking.js" %}"></script>
+        <!-- Global Site Tag (gtag.js) - Google Analytics -->
+        <script async
+                src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+
+            gtag('js', new Date());
+
+            gtag('config', "{{ google_analytics_id }}" );
+        </script>
 
         {% block jquery_js %}
             <script type="text/javascript"
@@ -170,7 +182,8 @@
                                            href="{% url 'userena_profile_detail' user.username %}">My
                                         Profile</a>
                                     </li>
-                                    <li><a href="{% url 'challenges:list' %}">My Challenges</a></li>
+                                    <li><a href="{% url 'challenges:list' %}">My
+                                        Challenges</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a class="metaFooterMenuItem last"
                                            href="{% url 'userena_signout' %}?next=/">
