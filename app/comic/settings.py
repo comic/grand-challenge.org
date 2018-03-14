@@ -335,49 +335,45 @@ LOG_FILEPATH = "/tmp/django.log"
 LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
+    'root': {
+        'level': 'WARNING',
+        'handlers': ['sentry'],
+    },
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s %(asctime)s %(module)s '
+                      '%(process)d %(thread)d %(message)s'
         },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
     },
     'handlers': {
-        'mail_admins': {
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
-            'formatter': 'verbose',
-            'level': 'WARNING'
+        'sentry': {
+            'level': 'ERROR', # To capture more than ERROR, change to WARNING, INFO, etc.
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
-        'write_to_logfile': {
-            'class': 'logging.FileHandler',
-            'filename': LOG_FILEPATH,
-            'formatter': 'verbose',
-            'level': 'INFO',
-        },
-        'write_to_error_logfile': {
-            'class': 'logging.FileHandler',
-            'filename': LOG_FILEPATH_ERROR,
-            'formatter': 'verbose',
-            'level': 'WARNING'
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
-        'django': {
-            'handlers': ['mail_admins', 'write_to_logfile',
-                         'write_to_error_logfile'],
-            'propagate': True,
-            'level': 'INFO',
+        'django.db.backends': {
+            'level': 'ERROR',
+            'handlers': ['console'],
+            'propagate': False,
         },
-
-    }
+        'raven': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+    },
 }
 
 RAVEN_CONFIG = {
