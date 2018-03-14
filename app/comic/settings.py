@@ -203,6 +203,8 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE_CLASSES = (
+    # Opbeat must be first
+    'opbeat.contrib.django.middleware.OpbeatAPMMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -210,7 +212,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'comicsite.middleware.subdomain.SubdomainMiddleware',
     'comicsite.middleware.project.ProjectMiddleware',
-    # 'comicsite.middleware.customhostnames.CustomHostnamesMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -231,6 +232,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # For monitoring with sentry
     'raven.contrib.django.raven_compat',
+    # For performance monitoring
+    'opbeat.contrib.django',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
@@ -378,6 +381,12 @@ LOGGING = {
 
 RAVEN_CONFIG = {
     'dsn': os.environ.get('DJANGO_SENTRY_DSN', ''),
+}
+
+OPBEAT = {
+    'ORGANIZATION_ID': os.environ.get('DJANGO_OPBEAT_ORGANIZATION_ID', ''),
+    'APP_ID': os.environ.get('DJANGO_OPBEAT_APP_ID', ''),
+    'SECRET_TOKEN': os.environ.get('DJANGO_OPBEAT_SECRET_TOKEN', ''),
 }
 
 REST_FRAMEWORK = {
