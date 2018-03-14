@@ -197,7 +197,6 @@ TEMPLATES = [
                 'comicsite.contextprocessors.contextprocessors.comic_site',
                 'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri',
                 'comicsite.contextprocessors.contextprocessors.google_analytics_id',
-                'rollbar.contrib.django.context_processors.rollbar_settings',
             ],
         },
     },
@@ -214,9 +213,6 @@ MIDDLEWARE_CLASSES = (
     # 'comicsite.middleware.customhostnames.CustomHostnamesMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # Rollbar needs to be last
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 )
 
 ROOT_URLCONF = 'comic.urls'
@@ -233,6 +229,8 @@ INSTALLED_APPS = (
     # Needed for userena
     'django.contrib.sites',
     'django.contrib.admin',
+    # For monitoring with sentry
+    'raven.contrib.django.raven_compat',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
@@ -382,13 +380,8 @@ LOGGING = {
     }
 }
 
-# Rollbar Configuration
-ROLLBAR = {
-    'access_token': os.environ.get('ROLLBAR_ACCESS_TOKEN', ''),
-    'client_access_token': os.environ.get('ROLLBAR_CLIENT_ACCESS_TOKEN', ''),
-    'environment': 'development' if DEBUG else 'production',
-    'branch': 'master',
-    'root': os.path.abspath(os.getcwd()),
+RAVEN_CONFIG = {
+    'dsn': os.environ.get('DJANGO_SENTRY_DSN', ''),
 }
 
 REST_FRAMEWORK = {

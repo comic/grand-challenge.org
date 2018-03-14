@@ -6,18 +6,6 @@
 {% block html_header %}
     {{ block.super }}
 
-    <script type="text/javascript">
-        window._rollbarConfig = {
-            accessToken: "{{ rollbar_settings.client_access_token }}",
-            captureUncaught: true,
-            captureUnhandledRejections: true,
-            payload: {
-                environment: "{{ rollbar_settings.environment }}"
-            }
-        };
-    </script>
-    <script type="text/javascript" src="{% static "js/rollbar.js" %}"></script>
-
     <link rel="stylesheet" type="text/css"
           href="{% static "jqfileupload/css/upload_widget_button.css" %}">
     <script type="text/javascript"
