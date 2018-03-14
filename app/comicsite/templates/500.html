@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Error</title>
+</head>
+<body>
+
+<h3>You've encountered an error, sorry!</h3>
+{% if request.sentry.id %}
+    <p>If you need assistance, you may reference this error as
+    <strong>{{ request.sentry.id }}</strong>.</p>
+{% endif %}
+
+</body>
+</html>

@@ -205,6 +205,9 @@ TEMPLATES = [
 MIDDLEWARE_CLASSES = (
     # Opbeat must be first
     'opbeat.contrib.django.middleware.OpbeatAPMMiddleware',
+    # Sentry 404 must be as close as possible to the top
+    'raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware',
+    'raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

@@ -1,12 +1,18 @@
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
 from comicsite.views import comicmain
 from uploads.views import serve
 
 admin.autodiscover()
+
+def handler500(request):
+    context = {'request': request}
+    template_name = '500.html'
+    return TemplateResponse(request, template_name, context, status=500)
 
 urlpatterns = [
 

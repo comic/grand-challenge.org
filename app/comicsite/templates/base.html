@@ -1,5 +1,6 @@
 {% load static %}
 {% load comic_templatetags %}
+{% load sentry_public_dsn from raven %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +11,9 @@
               content="{{ site.description }}"/>
         <meta name="keywords"
               content="COMIC, open, science, medical, image, computing, validated"/>
+
+        <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js" crossorigin="anonymous"></script>
+        <script>Raven.config('{% sentry_public_dsn %}').install()</script>
 
         <!-- Global Site Tag (gtag.js) - Google Analytics -->
         <script async
