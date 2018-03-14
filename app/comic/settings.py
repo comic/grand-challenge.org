@@ -237,8 +237,6 @@ INSTALLED_APPS = (
     'raven.contrib.django.raven_compat',
     # For performance monitoring
     'opbeat.contrib.django',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
     'comicmodels',
     # comicsite is the where main web portal of this framework lives
@@ -272,6 +270,8 @@ INSTALLED_APPS = (
     'uploads',
     'challenges',
 )
+
+ADMIN_URL = f'^{os.environ.get("DJANGO_ADMIN_URL", "admin")}/'
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
