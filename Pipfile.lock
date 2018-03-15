@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "411f5ae2f9ca9e8c32a027a89f04ff1d4c0f6ccab7b729e7dd8a1782d620652b"
+            "sha256": "73f67d6eecc2d7cbbf169b9b9c298de1d96924d851b6a2e04f99c5249e404b30"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -149,10 +149,10 @@
         },
         "djangorestframework": {
             "hashes": [
-                "sha256:0f9bfbac702f3376dfb2db4971ad8af4e066bfa35393b1b85e085f7e8b91189a",
-                "sha256:de8ac68b3cf6dd41b98e01dcc92dc0022a5958f096eafc181a17fa975d18ca42"
+                "sha256:1f6baf40ed456ed2af6bd1a4ff8bbc3503cebea16509993aea2b7085bc097766",
+                "sha256:9f9e94e8d22b100ed3a43cee8c47a7ff7b185e778a1f2da9ec5c73fc4e081b87"
             ],
-            "version": "==3.6.4"
+            "version": "==3.7.7"
         },
         "docker": {
             "hashes": [
