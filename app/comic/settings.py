@@ -237,6 +237,8 @@ INSTALLED_APPS = (
     'raven.contrib.django.raven_compat',
     # For performance monitoring
     'opbeat.contrib.django',
+    # For sending email asynchronously
+    'djcelery_email',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
     'comicmodels',
     # comicsite is the where main web portal of this framework lives

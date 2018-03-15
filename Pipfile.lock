@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9e0fcf2b44dc96110af95f34c0282bbae84138cc6af375249779c4e77c4915fc"
+            "sha256": "642f0c92e1f05dafdb7b64c5cc1999445b5e04cde0f7bee2b501c39e0a7e6a20"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -99,12 +99,26 @@
             ],
             "version": "==1.11.11"
         },
+        "django-appconf": {
+            "hashes": [
+                "sha256:ddab987d14b26731352c01ee69c090a4ebfc9141ed223bef039d79587f22acd9",
+                "sha256:6a4d9aea683b4c224d97ab8ee11ad2d29a37072c0c6c509896dd9857466fb261"
+            ],
+            "version": "==1.0.2"
+        },
         "django-auth-mixins": {
             "hashes": [
                 "sha256:18b859a58274b7352d7a79816d06ac3b8325a2337c152c5ce1ebc9517d595cf9",
                 "sha256:4361dc5f56e0c0ba3c7977b659cd1844d63aba66f5ee458937e6f26036571239"
             ],
             "version": "==1.0.1"
+        },
+        "django-celery-email": {
+            "hashes": [
+                "sha256:29894330d621a0794b2e82e63220ccc5f1dbd539f5cedd9e183616dc2f72f973",
+                "sha256:1d20120569edd233d7f5a22460b60410b4d8f7c0f1ef66889e1267762aeacbf5"
+            ],
+            "version": "==2.0.0"
         },
         "django-ckeditor": {
             "hashes": [
