@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
 
@@ -36,14 +37,7 @@
                 <td>{{ result.rank }}</td>
 
                 <td>
-                    <div style='vertical-align:middle; display:inline;'>
-                        <a href="{% url 'userena_profile_detail' result.job.submission.creator %}">
-                            <img class="mugshot"
-                                 src="{{ result.job.submission.creator.user_profile.get_mugshot_url }}"
-                                 alt="User Mugshot"
-                                 style="height: 1.5em; vertical-align: middle;"/>
-                            {{ result.job.submission.creator }}</a>
-                    </div>
+                    {{ result.job.submission.creator|user_profile_link }}
                 </td>
 
                 {% if site.evaluation_config.use_teams %}

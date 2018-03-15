@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
 {% load guardian_tags %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
 
@@ -10,14 +11,7 @@
 
         <dt>User</dt>
         <dd>
-            <div style='vertical-align:middle; display:inline;'>
-                <a href="{% url 'userena_profile_detail' object.job.submission.creator %}">
-                    <img class="mugshot"
-                         src="{{ object.job.submission.creator.user_profile.get_mugshot_url }}"
-                         alt="User Mugshot"
-                         style="height: 1em; vertical-align: middle;"/>
-                    {{ object.job.submission.creator }}</a>
-            </div>
+            {{ object.job.submission.creator|user_profile_link }}
         </dd>
 
         <dt>Challenge</dt>

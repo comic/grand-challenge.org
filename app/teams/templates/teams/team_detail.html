@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load get_obj_perms from guardian_tags %}
 {% load url from comic_templatetags %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
 
@@ -35,12 +36,7 @@
     <ul>
         {% for tm in object.teammember_set.all %}
             <li>
-                <a href="{% url 'userena_profile_detail' tm.user %}">
-                    <img class="mugshot"
-                         src="{{ tm.user.user_profile.get_mugshot_url }}"
-                         alt="User Mugshot"
-                         style="height: 1.5em; vertical-align: middle;"/>
-                    {{ tm.user }}</a>
+                {{ tm.user|user_profile_link }}
                 {% if "change_team" in object_perms and tm.user != object.owner %}
                     <form method="post"
                           action="{% url 'teams:member-delete' site.short_name tm.pk %}">

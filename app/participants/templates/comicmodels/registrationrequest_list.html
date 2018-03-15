@@ -1,4 +1,5 @@
 {% extends "site.html" %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
 
@@ -29,14 +30,7 @@
                     {{ regrequest.changed }}
                 </td>
                 <td>
-                    <div style='vertical-align:middle; display:inline;'>
-                        <a href="{% url 'userena_profile_detail' regrequest.user %}">
-                            <img class="mugshot"
-                                 src="{{ regrequest.user.user_profile.get_mugshot_url }}"
-                                 alt="User Mugshot"
-                                 style="height: 1.5em; vertical-align: middle;"/>
-                            {{ regrequest.user.username }}</a>
-                    </div>
+                    {{ regrequest.user|user_profile_link }}
                 </td>
                 <td>
                     {{ regrequest.user.get_full_name }}

@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load url from comic_templatetags %}
 {% load get_obj_perms from guardian_tags %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
 
@@ -69,7 +70,7 @@
         <thead>
         <tr>
             <th>Team Name</th>
-            <th>Number of Members</th>
+            <th>Team Members</th>
             {% if not users_teams %}
                 <th>Join Team</th>
             {% endif %}
@@ -81,7 +82,11 @@
                 <td>
                     <a href="{{ team.get_absolute_url }}">{{ team.name }}</a>
                 </td>
-                <td>{{ team.teammember_set.count }}</td>
+                <td>
+                    {% for tm in team.teammember_set.all %}
+                        {{ tm.user|user_profile_link }}<br/>
+                    {% endfor %}
+                </td>
                 {% if not users_teams %}
                     <td>
                         <form method="post"

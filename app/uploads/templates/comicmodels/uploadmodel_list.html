@@ -1,5 +1,6 @@
 {% extends 'site.html' %}
 {% load url from comic_templatetags %}
+{% load user_profile_link from profiles %}
 
 {% block pagecontent %}
     <h2>Uploads for {{ site.short_name }}</h2>
@@ -21,14 +22,7 @@
                     {{ upload.created }}
                 </td>
                 <td>
-                    <div style='vertical-align:middle; display:inline;'>
-                        <a href="{% url 'userena_profile_detail' upload.user %}">
-                            <img class="mugshot"
-                                 src="{{ upload.user.user_profile.get_mugshot_url }}"
-                                 alt="User Mugshot"
-                                 style="height: 1.5em; vertical-align: middle;"/>
-                            {{ upload.user.username }}</a>
-                    </div>
+                    {{ upload.user|user_profile_link }}
                 </td>
                 <td>
                     {{ upload.title }}
