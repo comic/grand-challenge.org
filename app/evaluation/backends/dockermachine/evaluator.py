@@ -54,7 +54,7 @@ class Evaluator(object):
 
     def _pull_images(self):
         if len(self._client.images.list(name=self._io_image)) == 0:
-            self._client.images.pull(name=self._io_image)
+            self._client.images.pull(repository=self._io_image)
 
         if self._eval_image_sha256 not in [x.id for x in
                                            self._client.images.list()]:
