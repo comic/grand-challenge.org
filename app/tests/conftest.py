@@ -118,7 +118,7 @@ def evaluation_image(tmpdir_factory):
 
     client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
-    im = client.images.build(
+    im, _ = client.images.build(
         path=os.path.join(os.path.split(__file__)[0], 'evaluation_tests',
                           'resources', 'docker'),
         tag='test_evaluation:latest')
@@ -131,7 +131,8 @@ def evaluation_image(tmpdir_factory):
     outfile = tmpdir_factory.mktemp('docker').join('evaluation-latest.tar')
 
     with outfile.open(mode='wb') as f:
-        f.write(image.data)
+        for chunk in image:
+            f.write(chunk)
 
     client.images.remove(image=im.id)
 
@@ -153,7 +154,8 @@ def alpine_images(tmpdir_factory):
     outfile = tmpdir_factory.mktemp('alpine').join('alpine.tar')
 
     with outfile.open('wb') as f:
-        f.write(image.data)
+        for chunk in image:
+            f.write(chunk)
 
     return outfile
 
