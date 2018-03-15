@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "73f67d6eecc2d7cbbf169b9b9c298de1d96924d851b6a2e04f99c5249e404b30"
+            "sha256": "2aaec0751ab35beb6eeb994f1ef9b5ad40dc2cde28b81dd334188021d3217ea3"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -89,7 +89,6 @@
                 "sha256:702a91ade2968a82beb0db1e0766a6a273f33d4616a6ce8cde475d8e09853b20",
                 "sha256:24d7f2f94f7f3cb6061acb215685e5125fbcdc40a857eff9de22518820b0a4f4"
             ],
-            "markers": "python_version >= '3.0'",
             "version": "==0.5.0"
         },
         "django": {
@@ -478,11 +477,11 @@
         },
         "social-auth-app-django": {
             "hashes": [
-                "sha256:25295c94375d28062f65d0b3cd4b7e304c7e2fb7bac1ec51b40650a654c352f4",
-                "sha256:4e34d86709bfa51fd2938307e00f12f4e1dfef8a8ed6bfbfe9aeb4e69d57148f",
-                "sha256:b7c28bef8fbd11ff357ddd885cb219cdb55565e01109c709dd28569e0bfb0dea"
+                "sha256:babc03c024ce719808af534167b9f5b76bb8b0aa0adfd1db01b124542ab906e1",
+                "sha256:c853c15bf287e8400c687340b11278539838c1d2b911df264a38e60add0ac6f3",
+                "sha256:3476aa7463ca821d1b1d8381d46b4c186b2b874d0e55541b087be596b2413acb"
             ],
-            "version": "==2.1.0"
+            "version": "==1.2.0"
         },
         "social-auth-core": {
             "hashes": [
