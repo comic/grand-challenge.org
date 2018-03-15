@@ -17,7 +17,7 @@ def user_profile_link(user: AbstractUser) -> str:
          '    {2}'
          '  </a>'
          '</div>'),
-        reverse('userena_profile_detail', args=[user]),
+        reverse('userena_profile_detail', kwargs={'username': user.username}),
         user.user_profile.get_mugshot_url(),
         user.username,
     )
