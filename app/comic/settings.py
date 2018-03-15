@@ -39,9 +39,7 @@ DATABASES = {
     }
 }
 
-# console.EmailBackend will print all emails to console, which is useful in development.
-# For actually sending emails, set EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
 EMAIL_HOST = ''  # something like smtp.mydomain.com
 EMAIL_PORT = 25
 DEFAULT_FROM_EMAIL = 'noreply@comicframework.org'
