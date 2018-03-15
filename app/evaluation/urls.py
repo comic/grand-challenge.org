@@ -14,7 +14,6 @@ from evaluation.views import (
     SubmissionDetail,
     JobDetail,
     ResultDetail,
-    EvaluationManage,
     ConfigUpdate,
     ResultUpdate,
 )
@@ -22,8 +21,6 @@ from jqfileupload.forms import test_upload_widget, test_upload_widget2
 from jqfileupload.views import uploader_widget_test
 
 urlpatterns = [
-    url(r'^manage/$', EvaluationManage.as_view(), name='manage'),
-
     url(r'^config/$', ConfigUpdate.as_view(), name='config-update'),
 
     url(r'^methods/$', MethodList.as_view(), name='method-list'),

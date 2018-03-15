@@ -70,13 +70,6 @@ def submissions_and_jobs(two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_manage(client, TwoChallengeSets):
-    validate_admin_only_view(viewname='evaluation:manage',
-                             two_challenge_set=TwoChallengeSets,
-                             client=client)
-
-
-@pytest.mark.django_db
 def test_method_list(client, TwoChallengeSets):
     validate_admin_only_view(viewname='evaluation:method-list',
                              two_challenge_set=TwoChallengeSets,

@@ -23,10 +23,6 @@ from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
 
 
-class EvaluationManage(UserIsChallengeAdminMixin, TemplateView):
-    template_name = "evaluation/manage.html"
-
-
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Config
     fields = (

@@ -125,7 +125,8 @@
                     class="caret"></span></a>
             <ul class="dropdown-menu">
                 <li>
-                    <a href="{% url 'challenges:update' site.short_name %}">Challenge</a>
+                    <a href="{% url 'challenges:update' site.short_name %}">Challenge
+                        Settings</a>
                 </li>
                 <li>
                     <a href="{% url 'pages:list' site.short_name %}">Pages</a>
@@ -141,12 +142,36 @@
                         Requests</a>
                 </li>
                 <li>
-                    <a href="{% url 'uploads:list' site.short_name %}">Uploaded Files</a>
+                    <a href="{% url 'uploads:list' site.short_name %}">Uploaded
+                        Files</a>
                 </li>
                 {% if site.use_evaluation %}
+                    <li role="separator" class="divider"></li>
+
                     <li>
-                        <a href="{% url 'evaluation:manage' site.short_name %}">Evaluation</a>
+                        <a href="{% url 'evaluation:config-update' site.short_name %}">
+                            Evaluation Settings
+                        </a>
                     </li>
+
+                    <li>
+                        <a href="{% url 'evaluation:method-list' site.short_name %}">
+                            Evaluation Methods
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'evaluation:submission-list' site.short_name %}">
+                            Evaluation Submissions
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'evaluation:job-list' site.short_name %}">
+                            Evaluation Jobs
+                        </a>
+                    </li>
+
                 {% endif %}
             </ul>
         </li>

@@ -3,6 +3,14 @@
 {% block pagecontent %}
 
     <h2>Submissions</h2>
+
+    <p>
+    <a class="btn btn-primary"
+       href="{% url 'evaluation:submission-create' site.short_name %}">
+                <i class="fas fa-plus"></i> Add a new submission
+            </a>
+    </p>
+
     <table class="table" id="submissionsTable">
         <thead>
         <tr>
