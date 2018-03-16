@@ -1,6 +1,5 @@
 import pytest
 
-from comicmodels.models import ComicSite
 from evaluation.models import Result
 from evaluation.tasks import calculate_ranks
 from tests.factories import ResultFactory, ChallengeFactory
@@ -14,6 +13,7 @@ def test_calculate_ranks(mocker):
     challenge.evaluation_config.save()
 
     mocker.patch('evaluation.signals.recalculate_ranks').start()
+    mocker.patch('evaluation.signals.result_created_email').start()
 
     queryset = (
         ResultFactory(challenge=challenge, metrics={'a': 0.1}),
