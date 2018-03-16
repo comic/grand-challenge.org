@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
+from evaluation.emails import send_new_result_email
 from evaluation.models import Submission, Job, Method, Result, Config
 from evaluation.tasks import (
     evaluate_submission,
@@ -14,8 +15,8 @@ from evaluation.tasks import (
 
 
 @receiver(post_save, sender=Submission)
-def create_evaluation_job(sender: Submission, instance: Submission = None,
-                          created: bool = False, **kwargs):
+def create_evaluation_job(instance: Submission = None,
+                          created: bool = False, *_, **__):
     if created:
         method = Method.objects.filter(
             challenge__pk=instance.challenge.pk).order_by('-created').first()
@@ -29,8 +30,7 @@ def create_evaluation_job(sender: Submission, instance: Submission = None,
 
 
 @receiver(post_save, sender=Job)
-def execute_job(sender: Job, instance: Job = None, created: bool = False,
-                **kwargs):
+def execute_job(instance: Job = None, created: bool = False, *_, **__):
     if created:
         # TODO: Create Timeout tests
         evaluate_submission.apply_async(task_id=str(instance.pk),
@@ -38,34 +38,36 @@ def execute_job(sender: Job, instance: Job = None, created: bool = False,
 
 
 @receiver(post_save, sender=Method)
-def validate_method(sender: Method, instance: Method = None,
-                    created: bool = False, **kwargs):
+def validate_method(instance: Method = None, created: bool = False, *_, **__):
     if created:
         validate_method_async.apply_async(kwargs={'method_pk': instance.pk})
 
 
 @receiver(post_save, sender=Config)
 @receiver(post_save, sender=Result)
-def recalculate_ranks(sender: Result, instance: Union[Result, Config] = None,
-                      created: bool = False, **kwargs):
+def recalculate_ranks(instance: Union[Result, Config] = None, *_, **__):
     """Recalculates the ranking on a new result"""
     calculate_ranks.apply_async(kwargs={'challenge_pk': instance.challenge.pk})
 
 
 @receiver(post_save, sender=Result)
-def cache_absolute_url(sender: Result, instance: Result = None,
-                       created: bool = False, **kwargs):
+def cache_absolute_url(instance: Result = None, *_, **__):
     """Cache the absolute url to speed up the results page, needs the pk of
     the result so cannot so into a custom save method"""
     Result.objects.filter(pk=instance.pk).update(
         absolute_url=instance.get_absolute_url())
 
 
+@receiver(post_save, sender=Result)
+def result_created_email(instance: Result, created: bool = False, *_, **__):
+    if created:
+        send_new_result_email(instance)
+
+
 # TODO: do we really want to generate an API token for all users? Only admins surely
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender: settings.AUTH_USER_MODEL,
-                      instance: settings.AUTH_USER_MODEL = None,
-                      created: bool = False, **kwargs):
+def create_auth_token(instance: settings.AUTH_USER_MODEL = None,
+                      created: bool = False, *_, **__):
     # Ignore the anonymous user which is created by userena on initial
     # migration
     if created and instance.username != settings.ANONYMOUS_USER_NAME:

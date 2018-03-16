@@ -6,6 +6,7 @@ from django.db import models
 from social_django.fields import JSONField
 
 from comicsite.core.urlresolvers import reverse
+from evaluation.emails import send_failed_job_email
 from evaluation.validators import MimeTypeValidator, ExtensionValidator
 
 
@@ -353,7 +354,11 @@ class Job(UUIDModel):
         self.status = status
         if output:
             self.output = output
+
         self.save()
+
+        if self.status == self.FAILURE:
+            send_failed_job_email(self)
 
     def get_absolute_url(self):
         return reverse('evaluation:job-detail',
