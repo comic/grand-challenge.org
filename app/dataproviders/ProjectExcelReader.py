@@ -17,18 +17,6 @@ class ProjectExcelReader(object):
         self.path = path
         self.sheetname = sheetname
 
-    def write_link_html(self, path=""):
-        items = self.get_excel_items(self.sheet)
-        links = self.get_project_links().encode("utf-8")
-
-        if path == "":
-            path = "D:/temp/links.html"
-
-        f = open(path, "w")
-        print("* wrote HTML for all projects to " + path)
-        f.write(links)
-        f.close()
-
     def get_project_links(self):
         """ Read excel file and with challenge listings and return an array of
         projectlinks describing each 
@@ -37,7 +25,6 @@ class ProjectExcelReader(object):
         book = open_workbook(self.path)
         sheet = book.sheet_by_name(self.sheetname)
 
-        html = ""
         items = self.get_excel_items(sheet)
         projectlinks = []
 
@@ -48,19 +35,6 @@ class ProjectExcelReader(object):
 
         book.unload_sheet(self.sheetname)
         return projectlinks
-
-    def get_project_links_html(self):
-        """ Read excel file and output html to show all challenge links
-        listed there 
-        """
-
-        html = ""
-        projectlinks = self.get_project_links()
-
-        for projectlink in projectlinks:
-            html += projectlink.render_to_html()
-
-        return html
 
     def get_excel_items(self, sheet):
         """ Treat each row in excel sheet as an item. First row in sheet should
