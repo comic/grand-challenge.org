@@ -19,20 +19,20 @@ def send_failed_job_email(job):
         f'Submission ID: {job.submission.pk}'
     )
 
-    recipient_list = [o.email for o in job.challenge.get_admins()]
-    recipient_list.append(job.submission.creator.email)
+    recipient_emails = [o.email for o in job.challenge.get_admins()]
+    recipient_emails.append(job.submission.creator.email)
 
-    for r in recipient_list:
+    for email in recipient_emails:
         send_mail(
             subject='Evaluation Failed',
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[r.email],
+            recipient_list=[email],
         )
 
 
 def send_new_result_email(result):
-    recipient_list = [o.email for o in result.challenge.get_admins()]
+    recipient_emails = [o.email for o in result.challenge.get_admins()]
 
     message = (
         f'There is a new result for {result.challenge.short_name} from '
@@ -54,17 +54,17 @@ def send_new_result_email(result):
             f'{leaderboard_url}'
         )
 
-        recipient_list.append(result.job.submission.creator.email)
+        recipient_emails.append(result.job.submission.creator.email)
     else:
         message += (
             f'You can publish the result on the leaderboard here: '
             f'{result.get_absolute_url()}'
         )
 
-    for r in recipient_list:
+    for email in recipient_emails:
         send_mail(
             subject=f'New Result for {result.challenge.short_name}',
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[r.email],
+            recipient_list=[email],
         )

@@ -156,7 +156,7 @@ class ComicframeworkTestCase(TestCase):
         # to maximize test coverage.                
 
         # A user who has created a project
-        projectadmin = self._create_random_user("projectadmin_")
+        projectadmin = self._create_random_user("projectadmin")
 
         testproject = self._create_comicsite_in_admin(projectadmin,
                                                       projectname)
@@ -164,11 +164,11 @@ class ComicframeworkTestCase(TestCase):
         create_page(testproject, "testpage2")
 
         # a user who explicitly signed up to testproject
-        participant = self._create_random_user("participant_")
+        participant = self._create_random_user("participant")
         self._register(participant, testproject)
 
         # a user who only signed up but did not register to any project
-        registered_user = self._create_random_user("comicregistered_")
+        registered_user = self._create_random_user("comicregistered")
 
         # TODO: How to do this gracefully?
         return [testproject, root, projectadmin, participant, registered_user]
@@ -276,7 +276,7 @@ class ComicframeworkTestCase(TestCase):
                 'institution': 'test',
                 'department': 'test',
                 'country': 'NL',
-                'website': 'testwebsite'}
+                'website': 'http://www.example.com'}
 
         data.update(overwrite_data)  # overwrite any key in default if in data
 
@@ -464,7 +464,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         # to maximize test coverage.        
 
         # A user who has created a project
-        self.projectadmin = self._create_random_user("projectadmin_")
+        self.projectadmin = self._create_random_user("projectadmin")
 
         # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
         project_name = "under_score"
@@ -698,7 +698,7 @@ class UploadTest(ComicframeworkTestCase):
          self.participant,
          self.signedup_user] = self._create_dummy_project("test-project")
 
-        self.participant2 = self._create_random_user("participant2_")
+        self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
     def test_file_upload_page_shows(self):
@@ -802,7 +802,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
          self.participant,
          self.signedup_user] = self._create_dummy_project("test-project")
 
-        self.participant2 = self._create_random_user("participant2_")
+        self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
         from django.core.files.storage import default_storage
@@ -1033,7 +1033,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
          self.participant,
          self.signedup_user] = self._create_dummy_project("test-project")
 
-        self.participant2 = self._create_random_user("participant2_")
+        self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
     def test_project_login(self):

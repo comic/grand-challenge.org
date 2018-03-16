@@ -1,4 +1,6 @@
 import pytest
+from django.db.models.signals import post_save
+from factory.django import mute_signals
 
 from evaluation.models import Result
 from evaluation.tasks import calculate_ranks
@@ -12,17 +14,16 @@ def test_calculate_ranks(mocker):
     challenge.evaluation_config.score_jsonpath = 'a'
     challenge.evaluation_config.save()
 
-    mocker.patch('evaluation.signals.recalculate_ranks').start()
-    mocker.patch('evaluation.signals.result_created_email').start()
+    with mute_signals(post_save):
+        queryset = (
+            ResultFactory(challenge=challenge, metrics={'a': 0.1}),
+            ResultFactory(challenge=challenge, metrics={'a': 0.5}),
+            ResultFactory(challenge=challenge, metrics={'a': 1.0}),
+            ResultFactory(challenge=challenge, metrics={'a': 0.7}),
+            ResultFactory(challenge=challenge, metrics={'a': 0.5}),
+            ResultFactory(challenge=challenge, metrics={'a': 1.0}),
+        )
 
-    queryset = (
-        ResultFactory(challenge=challenge, metrics={'a': 0.1}),
-        ResultFactory(challenge=challenge, metrics={'a': 0.5}),
-        ResultFactory(challenge=challenge, metrics={'a': 1.0}),
-        ResultFactory(challenge=challenge, metrics={'a': 0.7}),
-        ResultFactory(challenge=challenge, metrics={'a': 0.5}),
-        ResultFactory(challenge=challenge, metrics={'a': 1.0}),
-    )
     # An alternative implementation could be [4, 3, 1, 2, 3, 1] as there are
     # only 4 unique values, the current implementation is harsh on poor results
     expected_ranks = [6, 4, 1, 3, 4, 1]

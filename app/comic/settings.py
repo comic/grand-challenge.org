@@ -332,6 +332,21 @@ CKEDITOR_CONFIGS = {
     }
 }
 
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
 # This configuration writes WARNING and worse errors to an error log file, and
