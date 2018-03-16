@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
+from comicmodels.emails import send_challenge_created_email
 from comicmodels.models import ComicSite
 from evaluation.models import Config
 
@@ -42,6 +43,7 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
         try:
             instance.creator.groups.add(admins_group)
 
+            send_challenge_created_email(instance)
         except AttributeError:
             # No creator set
             pass

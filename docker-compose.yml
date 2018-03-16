@@ -48,6 +48,7 @@ services:
     extends:
       file: docker-compose.common.yml
       service: rabbitmq
+    hostname: rabbit
     ports:
       - "8080:15672"
 
