@@ -1,6 +1,8 @@
+import uuid
+
 import pytest
 from django.template import Template, Context, RequestContext
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 
 from tests.factories import ChallengeFactory, PageFactory
 
@@ -19,6 +21,9 @@ def test_taglist():
 
 
 @pytest.mark.django_db
+# Override the settings so we can use the test file in dataproviders
+@override_settings(MEDIA_ROOT='/app/tests/dataproviders_tests/')
+@override_settings(MAIN_PROJECT_NAME='resources')
 def test_all_projectlinks():
     c = ChallengeFactory(hidden=False)
     hidden = ChallengeFactory(hidden=True)
@@ -36,7 +41,8 @@ def test_all_projectlinks():
 
 @pytest.mark.django_db
 def test_allusers_statistics():
-    p = PageFactory()
+    c = ChallengeFactory(short_name=str(uuid.uuid4()))
+    p = PageFactory(comicsite=c)
 
     template = Template(
         '{% load allusers_statistics from comic_templatetags %}'
@@ -53,7 +59,8 @@ def test_allusers_statistics():
 
 @pytest.mark.django_db
 def test_project_statistics():
-    p = PageFactory()
+    c = ChallengeFactory(short_name=str(uuid.uuid4()))
+    p = PageFactory(comicsite=c)
 
     template = Template(
         '{% load project_statistics from comic_templatetags %}'
