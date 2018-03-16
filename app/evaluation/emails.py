@@ -4,10 +4,9 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from comicsite.core.urlresolvers import reverse
-from evaluation.models import Result, Job
 
 
-def send_failed_job_email(job: Job):
+def send_failed_job_email(job):
     message = (
         f'Unfortunately the evaluation for the submission to '
         f'{job.challenge.short_name} failed with an error. The error message '
@@ -32,7 +31,7 @@ def send_failed_job_email(job: Job):
         )
 
 
-def send_new_result_email(result: Result):
+def send_new_result_email(result):
     recipient_list = [o.email for o in result.challenge.get_admins()]
 
     message = (
