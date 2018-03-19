@@ -91,9 +91,29 @@ def test_url_parameter(rf: RequestFactory):
 
     assert rendered == 'john'
 
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+def test_insert_graph_anode09(rf: RequestFactory):
+    c = ChallengeFactory(short_name='testproj1734621')
+    p = PageFactory(comicsite=c)
+
+    r = rf.get('/Result/?id=4')
+
+    template = Template(
+        '{% load insert_graph from comic_templatetags %}'
+        '{% insert_graph 4.php type:anode09 %}'
+    )
+
+    context = RequestContext(request=r)
+    context.page = p
+
+    rendered = template.render(context)
+
+    assert "pageError" not in rendered
+    assert "Error rendering graph from file" not in rendered
+    assert "Created with matplotlib" in rendered
+
 # {% image_browser path:string - path relative to current project
 #                  config:string - path relative to current project %}
 
 # get_result_info
-
-# insert_graph
