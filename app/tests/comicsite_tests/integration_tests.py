@@ -19,7 +19,7 @@ from userena.models import UserenaSignup
 from comicmodels.models import Page, ComicSite
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
-from uploads.views import upload_handler, CKUploadView
+from uploads.views import upload_handler
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -597,9 +597,12 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         # main domain robots.txt
-        non_existant_url = reverse('challenge-homepage',
-                                   kwargs={
-                                       "site_short_name": "nonexistingproject"})
+        non_existant_url = reverse(
+            'challenge-homepage',
+            kwargs={
+                "challenge_short_name": "nonexistingproject"
+            }
+        )
 
         response, username = self._view_url(None, non_existant_url)
 

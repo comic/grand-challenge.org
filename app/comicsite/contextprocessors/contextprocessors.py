@@ -24,9 +24,7 @@ def comic_site(request):
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
 
-    if "site_short_name" in resolution.kwargs:
-        sitename = resolution.kwargs["site_short_name"]
-    elif "project_name" in resolution.kwargs:
+    if "project_name" in resolution.kwargs:
         sitename = resolution.kwargs["project_name"]
     elif "challenge_short_name" in resolution.kwargs:
         sitename = resolution.kwargs["challenge_short_name"]

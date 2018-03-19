@@ -26,9 +26,7 @@ class ProjectMiddleware:
         """
         try:
             resolution = resolve(request.path)
-            if "site_short_name" in resolution.kwargs:
-                projectname = resolution.kwargs["site_short_name"]
-            elif "project_name" in resolution.kwargs:
+            if "project_name" in resolution.kwargs:
                 projectname = resolution.kwargs["project_name"]
             elif "challenge_short_name" in resolution.kwargs:
                 projectname = resolution.kwargs["challenge_short_name"]

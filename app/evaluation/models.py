@@ -156,7 +156,7 @@ class Config(UUIDModel):
     def get_absolute_url(self):
         return reverse('challenge-homepage',
                        kwargs={
-                           'site_short_name': self.challenge.short_name
+                           'challenge_short_name': self.challenge.short_name
                        })
 
 

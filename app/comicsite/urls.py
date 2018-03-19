@@ -7,7 +7,7 @@ from uploads.views import serve
 
 urlpatterns = [
 
-    url(r'^(?P<site_short_name>[\w-]+)/$', site,
+    url(r'^(?P<challenge_short_name>[\w-]+)/$', site,
         name='challenge-homepage'),
 
     url(
