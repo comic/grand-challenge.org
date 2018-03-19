@@ -5,7 +5,7 @@ from teams.models import Team, TeamMember
 
 class UserIsTeamOwnerOrChallengeAdminMixin(UserAuthAndTestMixin):
     def test_func(self):
-        challenge = ComicSite.objects.get(short_name=self.request.projectname)
+        challenge = self.request.challenge
 
         team = Team.objects.get(pk=self.kwargs['pk'])
 
@@ -16,7 +16,7 @@ class UserIsTeamOwnerOrChallengeAdminMixin(UserAuthAndTestMixin):
 class UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin(
     UserAuthAndTestMixin):
     def test_func(self):
-        challenge = ComicSite.objects.get(short_name=self.request.projectname)
+        challenge = self.request.challenge
 
         team_member = TeamMember.objects.get(pk=self.kwargs['pk'])
 

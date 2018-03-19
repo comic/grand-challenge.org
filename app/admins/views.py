@@ -33,7 +33,7 @@ class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
         return reverse(
             'admins:list',
             kwargs={
-                'challenge_short_name': self.request.projectname
+                'challenge_short_name': self.request.challenge.short_name
             }
         )
 

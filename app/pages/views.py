@@ -31,10 +31,7 @@ class ChallengeFilteredQuerysetMixin(object):
 class ChallengeFormKwargsMixin(object):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({
-            'challenge_short_name': self.request.projectname,
-            'challenge': self.request.challenge,
-        })
+        kwargs.update({'challenge': self.request.challenge})
         return kwargs
 
 
@@ -76,7 +73,8 @@ class PageDelete(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
 
     def get_success_url(self):
         return reverse('pages:list', kwargs={
-            'challenge_short_name': self.request.projectname})
+            'challenge_short_name': self.request.challenge.short_name,
+        })
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)

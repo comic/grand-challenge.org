@@ -24,7 +24,7 @@ def assert_status(code: int,
                   challenge: ComicSite,
                   rf: RequestFactory):
     request = rf.get('/rand')
-    request.projectname = challenge.short_name
+    request.challenge = challenge
 
     if user is not None:
         request.user = user

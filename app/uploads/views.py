@@ -42,7 +42,9 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     form_class = CKUploadForm
 
     def get_success_url(self):
-        return reverse('uploads:list', args=[self.request.projectname])
+        return reverse('uploads:list', kwargs={
+            'challenge_short_name': self.request.challenge.short_name,
+        })
 
     @method_decorator(csrf_exempt)  # Required by django-ckeditor
     def dispatch(self, request, *args, **kwargs):

@@ -7,7 +7,8 @@ from django.core.urlresolvers import reverse as reverse_org
 def reverse(viewname, urlconf=None, args=None, kwargs=None,
             current_app=None):
     """ Reverse url, but try to use subdomain to designate site where possible.
-    This means 'site1' will not get url 'hostname/site/site1' but rather 'projectname.hostname'
+    This means 'site1' will not get url 'hostname/site/site1' but rather
+    'challenge.hostname'
     """
 
     if args is not None:
