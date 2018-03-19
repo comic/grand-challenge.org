@@ -12,7 +12,7 @@ def test_registration_no_review_workflow(ChallengeSet):
     ChallengeSet.challenge.require_participant_review = False
     ChallengeSet.challenge.save()
 
-    RegistrationRequestFactory(project=ChallengeSet.challenge, user=user)
+    RegistrationRequestFactory(challenge=ChallengeSet.challenge, user=user)
 
     assert ChallengeSet.challenge.is_participant(user)
 
@@ -32,7 +32,8 @@ def test_registration_review_workflow(choice, expected, client, ChallengeSet):
     ChallengeSet.challenge.require_participant_review = True
     ChallengeSet.challenge.save()
 
-    rr = RegistrationRequestFactory(project=ChallengeSet.challenge, user=user)
+    rr = RegistrationRequestFactory(challenge=ChallengeSet.challenge,
+                                    user=user)
 
     assert not ChallengeSet.challenge.is_participant(user)
     assert rr.status == RegistrationRequest.PENDING
@@ -59,7 +60,8 @@ def test_registration_admin_changed_mind(client, ChallengeSet):
     ChallengeSet.challenge.require_participant_review = False
     ChallengeSet.challenge.save()
 
-    rr = RegistrationRequestFactory(project=ChallengeSet.challenge, user=user)
+    rr = RegistrationRequestFactory(challenge=ChallengeSet.challenge,
+                                    user=user)
 
     assert ChallengeSet.challenge.is_participant(user)
     assert rr.status == RegistrationRequest.ACCEPTED

@@ -14,20 +14,19 @@ class PageCreateForm(forms.ModelForm):
     html = forms.CharField(widget=CKEditorUploadingWidget())
 
     def __init__(self, *args, **kwargs):
-        challenge_name = kwargs.pop('challenge_short_name', None)
-        self.challenge_pk = kwargs.pop('challenge_pk', None)
+        self.challenge = kwargs.pop('challenge', None)
 
         super().__init__(*args, **kwargs)
 
-        if challenge_name is not None and 'html' in self.fields:
+        if self.challenge is not None and 'html' in self.fields:
             self.fields['html'].widget.config.update({
                 'filebrowserUploadUrl': reverse(
                     'uploads:ck-create',
-                    kwargs={'challenge_short_name': challenge_name}
+                    kwargs={'challenge_short_name': self.challenge.short_name}
                 ),
                 'filebrowserBrowseUrl': reverse(
                     'uploads:ck-browse',
-                    kwargs={'challenge_short_name': challenge_name}
+                    kwargs={'challenge_short_name': self.challenge.short_name}
                 ),
             })
 
@@ -38,7 +37,7 @@ class PageCreateForm(forms.ModelForm):
         """ Ensure that page titles are not duplicated for a challenge """
         title = self.cleaned_data['title']
 
-        queryset = Page.objects.filter(comicsite__pk=self.challenge_pk,
+        queryset = Page.objects.filter(challenge=self.challenge,
                                        title=title)
 
         if self.instance is not None:

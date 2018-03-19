@@ -17,8 +17,8 @@ from django.utils.safestring import mark_safe
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-import comicsite.utils.query
 from comicsite.core.urlresolvers import reverse
+from comicsite.utils.query import index
 
 logger = logging.getLogger("django")
 
@@ -46,7 +46,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
         # are only headers and other public things
         permission_lvl = ComicSiteModel.ALL
     else:
-        challenge = uploadmodel.comicsite
+        challenge = uploadmodel.challenge
         permission_lvl = uploadmodel.permission_lvl
 
     # If permission is ALL, upload this file to the public_html folder
@@ -58,32 +58,6 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     path = path.replace("\\",
                         "/")  # replace remove double slashes because this can mess up django's url system
     return path
-
-
-def get_project_admin_instance_name(projectname):
-    """ Convention for naming the projectadmin interface for the given project
-    Defining this here so it can be used from anywhere without needing a 
-    ComicSite Instance.
-    """
-
-    return "{}admin".format(projectname.lower())
-
-
-def get_projectname(project_admin_instance_name):
-    """ Return lowercase projectname for an admin instance admin instance name.
-    For example for 'caddementiaadmin' return project name 'caddementia'
-    
-    In some places, for example middleware/project.py, the project_admin_instance_name
-    is the only lead we have for determining which project the request is associated with.
-    In those place you want to get the project name back from the admin_instance_name
-    
-    """
-    if not "admin" in project_admin_instance_name:
-        raise ValueError(
-            "expected an admin site instance name ending in 'admin',"
-            " but did not find this in value '{}'".format(
-                project_admin_instance_name))
-    return project_admin_instance_name[:-5]
 
 
 class ComicSiteManager(models.Manager):
@@ -435,20 +409,6 @@ class ComicSite(models.Model):
         """
         return os.path.join(self.short_name, settings.COMIC_PUBLIC_FOLDER_NAME)
 
-    def get_project_admin_instance_name(self):
-        """ Each comicsite has a dedicated django admin instance. Return the
-        name for this instance. This can be used in reverse() like this:
-        
-        # will return url to root admin instance (shows all projects/objects)
-        reverse("admin:index") 
-        
-        # will return url to admin specific to this project (shows only objects 
-        # for this project)
-        reverse("admin:index", name = self.get_project_admin_instance_name())
-        """
-
-        return get_project_admin_instance_name(self.short_name)
-
     def admin_group_name(self):
         """ returns the name of the admin group which should have all rights to this ComicSite instance"""
         return self.short_name + "_admins"
@@ -590,7 +550,7 @@ class ComicSiteModel(models.Model):
      such as authorization.
     """
     title = models.SlugField(max_length=64, blank=False)
-    comicsite = models.ForeignKey(ComicSite,
+    challenge = models.ForeignKey(ComicSite,
                                   help_text="To which comicsite does this object belong?")
 
     ALL = 'ALL'
@@ -634,8 +594,8 @@ class ComicSiteModel(models.Model):
         """ Give the right groups permissions to this object
             object needs to be saved before setting perms"""
 
-        admingroup = self.comicsite.admins_group
-        participantsgroup = self.comicsite.participants_group
+        admingroup = self.challenge.admins_group
+        participantsgroup = self.challenge.participants_group
         everyonegroup = Group.objects.get(name=settings.EVERYONE_GROUP_NAME)
 
         self.persist_if_needed()
@@ -694,7 +654,7 @@ class Page(ComicSiteModel):
             # get max value of order for current pages.
             try:
                 max_order = Page.objects.filter(
-                    comicsite__pk=self.comicsite.pk).aggregate(Max('order'))
+                    challenge=self.challenge).aggregate(Max('order'))
             except ObjectDoesNotExist:
                 max_order = None
 
@@ -712,28 +672,28 @@ class Page(ComicSiteModel):
 
     def move(self, move):
         if move == self.UP:
-            mm = Page.objects.get(comicsite=self.comicsite,
+            mm = Page.objects.get(challenge=self.challenge,
                                   order=self.order - 1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
         elif move == self.DOWN:
-            mm = Page.objects.get(comicsite=self.comicsite,
+            mm = Page.objects.get(challenge=self.challenge,
                                   order=self.order + 1)
             mm.order -= 1
             mm.save()
             self.order += 1
             self.save()
         elif move == self.FIRST:
-            pages = Page.objects.filter(comicsite=self.comicsite)
-            idx = comicsite.utils.query.index(pages, self)
+            pages = Page.objects.filter(challenge=self.challenge)
+            idx = index(pages, self)
             pages[idx].order = pages[0].order - 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
         elif move == self.LAST:
-            pages = Page.objects.filter(comicsite=self.comicsite)
-            idx = comicsite.utils.query.index(pages, self)
+            pages = Page.objects.filter(challenge=self.challenge)
+            idx = index(pages, self)
             pages[idx].order = pages[len(pages) - 1].order + 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
@@ -751,17 +711,17 @@ class Page(ComicSiteModel):
         """ With this method, admin will show a 'view on site' button """
 
         url = reverse('pages:detail',
-                      args=[self.comicsite.short_name, self.title])
+                      args=[self.challenge.short_name, self.title])
         return url
 
     class Meta(ComicSiteModel.Meta):
         """special class holding meta info for this class"""
         # make sure a single site never has two pages with the same name because page names
         # are used as keys in urls
-        unique_together = (("comicsite", "title"),)
+        unique_together = (("challenge", "title"),)
 
         # when getting a list of these objects this ordering is used
-        ordering = ['comicsite', 'order']
+        ordering = ['challenge', 'order']
 
 
 class ErrorPage(Page):
@@ -805,8 +765,8 @@ class RegistrationRequest(models.Model):
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              help_text="which user requested to participate?")
-    project = models.ForeignKey(ComicSite,
-                                help_text="To which project does the user want to register?")
+    challenge = models.ForeignKey(ComicSite,
+                                  help_text="To which project does the user want to register?")
 
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)
@@ -832,14 +792,14 @@ class RegistrationRequest(models.Model):
         """
         return "{1} registration request by user {0}".format(
             self.user.username,
-            self.project.short_name)
+            self.challenge.short_name)
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
     def status_to_string(self):
-        status = "Your request to join " + self.project.short_name + \
+        status = "Your request to join " + self.challenge.short_name + \
                  ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:
@@ -859,4 +819,4 @@ class RegistrationRequest(models.Model):
         return profile.institution + " - " + profile.department
 
     class Meta:
-        unique_together = (('project', 'user'),)
+        unique_together = (('challenge', 'user'),)

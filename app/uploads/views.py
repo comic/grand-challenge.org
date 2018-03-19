@@ -26,13 +26,13 @@ from comicmodels.models import UploadModel, ComicSite, Page
 from comicmodels.permissions import can_access
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import getSite, site_get_standard_vars, permissionMessage
-from pages.views import ComicSiteFilteredQuerysetMixin
+from pages.views import ChallengeFilteredQuerysetMixin
 from uploads.api import serve_file
 from uploads.emails import send_file_uploaded_notification_email
 from uploads.forms import UserUploadForm, CKUploadForm
 
 
-class UploadList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+class UploadList(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
                  ListView):
     model = UploadModel
 
@@ -42,15 +42,16 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     form_class = CKUploadForm
 
     def get_success_url(self):
-        return reverse('uploads:list', args=[self.request.projectname])
+        return reverse('uploads:list', kwargs={
+            'challenge_short_name': self.request.challenge.short_name,
+        })
 
     @method_decorator(csrf_exempt)  # Required by django-ckeditor
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.comicsite = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
         form.instance.user = self.request.user
         form.instance.file = form.cleaned_data['upload']
 
@@ -85,7 +86,7 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         uploaded_files = UploadModel.objects.filter(
-            comicsite__pk=self.request.project_pk,
+            challenge=self.request.challenge,
             permission_lvl=UploadModel.ALL,
         )
 
@@ -107,7 +108,7 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
         return context
 
 
-def serve(request, project_name, path, document_root=None):
+def serve(request, challenge_short_name, path, document_root=None):
     """
     Serve static file for a given project.
 
@@ -134,7 +135,7 @@ def serve(request, project_name, path, document_root=None):
         newpath = os.path.join(newpath, part).replace('\\', '/')
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)
-    fullpath = os.path.join(document_root, project_name, newpath)
+    fullpath = os.path.join(document_root, challenge_short_name, newpath)
 
     storage = DefaultStorage()
 
@@ -144,17 +145,17 @@ def serve(request, project_name, path, document_root=None):
         # nameurl in the url is not exactly the same case as the filepath.
         # find the correct case for projectname then.
 
-        projectlist = ComicSite.objects.filter(short_name=project_name)
+        projectlist = ComicSite.objects.filter(short_name=challenge_short_name)
         if not projectlist:
-            raise Http404("project '%s' does not exist" % project_name)
+            raise Http404("project '%s' does not exist" % challenge_short_name)
 
-        project_name = projectlist[0].short_name
-        fullpath = os.path.join(document_root, project_name, newpath)
+        challenge_short_name = projectlist[0].short_name
+        fullpath = os.path.join(document_root, challenge_short_name, newpath)
 
     if not storage.exists(fullpath):
         raise Http404('"%(path)s" does not exist' % {'path': fullpath})
 
-    if can_access(request.user, path, project_name):
+    if can_access(request.user, path, challenge_short_name):
         try:
             f = storage.open(fullpath, 'rb')
             file = File(f)  # create django file object
@@ -181,7 +182,7 @@ def upload_handler(request, challenge_short_name):
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
         site = getSite(challenge_short_name)
-        uploadedFile = UploadModel(comicsite=site,
+        uploadedFile = UploadModel(challenge=site,
                                    permission_lvl=UploadModel.ADMIN_ONLY,
                                    user=request.user)
         # ADMIN_ONLY
@@ -202,7 +203,7 @@ def upload_handler(request, challenge_short_name):
             send_file_uploaded_notification_email(
                 uploader=request.user,
                 filename=filename,
-                comicsite=site,
+                challenge=site,
                 site=get_current_site(request),
             )
 
@@ -217,7 +218,7 @@ def upload_handler(request, challenge_short_name):
         challenge_short_name)
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
-        p = Page(comicsite=site, title="files")
+        p = Page(challenge=site, title="files")
         currentpage = permissionMessage(request, site, p)
 
         response = render(

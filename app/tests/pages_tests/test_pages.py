@@ -19,7 +19,7 @@ from tests.utils import (
 )
 def test_page_admin_permissions(view, client, TwoChallengeSets):
     if view == 'pages:delete':
-        PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+        PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                     title='challenge1pagepermtest')
         reverse_kwargs = {'page_title': 'challenge1pagepermtest'}
     else:
@@ -35,7 +35,7 @@ def test_page_admin_permissions(view, client, TwoChallengeSets):
 
 @pytest.mark.django_db
 def test_page_update_permissions(client, TwoChallengeSets):
-    p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    p1 = PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                      title='challenge1page1permissiontest')
 
     validate_admin_only_view(
@@ -49,9 +49,9 @@ def test_page_update_permissions(client, TwoChallengeSets):
 @pytest.mark.django_db
 def test_page_list_filter(client, TwoChallengeSets):
     """ Check that only pages related to this challenge are listed """
-    p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    p1 = PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                      title='challenge1page1')
-    p2 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+    p2 = PageFactory(challenge=TwoChallengeSets.ChallengeSet2.challenge,
                      title='challenge2page1')
 
     response = get_view_for_user(
@@ -125,12 +125,12 @@ def test_page_create(client, TwoChallengeSets):
 
 @pytest.mark.django_db
 def test_page_update(client, TwoChallengeSets):
-    p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    p1 = PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                      title='page1updatetest',
                      html='oldhtml')
 
     # page with the same name in another challenge to check selection
-    PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+    PageFactory(challenge=TwoChallengeSets.ChallengeSet2.challenge,
                 title='page1updatetest',
                 html='oldhtml')
 
@@ -188,9 +188,9 @@ def test_page_update(client, TwoChallengeSets):
 @pytest.mark.django_db
 def test_page_delete(client, TwoChallengeSets):
     # Two pages with the same title, make sure the right one is deleted
-    c1p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    c1p1 = PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                        title='page1')
-    c2p1 = PageFactory(comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+    c2p1 = PageFactory(challenge=TwoChallengeSets.ChallengeSet2.challenge,
                        title='page1')
 
     assert Page.objects.filter(pk=c1p1.pk).exists()
@@ -241,11 +241,11 @@ def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
 
     for i in range(4):
         pages.append(
-            PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge))
+            PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge))
 
         # Same page name in challenge 2, make sure that these are unaffected
         c2_pages.append(PageFactory(
-            comicsite=TwoChallengeSets.ChallengeSet2.challenge,
+            challenge=TwoChallengeSets.ChallengeSet2.challenge,
             title=pages[i].title
         ))
 
@@ -275,7 +275,7 @@ def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
 
 @pytest.mark.django_db
 def test_create_page_with_same_title(client, TwoChallengeSets):
-    PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                 title='page1')
 
     # Creating a page with the same title should be denied
@@ -312,7 +312,7 @@ def test_create_page_with_same_title(client, TwoChallengeSets):
     assert response.status_code == 302
 
     # Check the updating
-    PageFactory(comicsite=TwoChallengeSets.ChallengeSet1.challenge,
+    PageFactory(challenge=TwoChallengeSets.ChallengeSet1.challenge,
                 title='page2')
 
     response = get_view_for_user(

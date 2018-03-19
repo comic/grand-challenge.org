@@ -41,7 +41,7 @@ class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     success_message = "Configuration successfully updated"
 
     def get_object(self, queryset=None):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
         return challenge.evaluation_config
 
 
@@ -51,8 +51,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.challenge = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
 
         uploaded_file = form.cleaned_data['chunked_upload'][0]
         with uploaded_file.open() as f:
@@ -66,7 +65,7 @@ class MethodList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         queryset = super(MethodList, self).get_queryset()
-        return queryset.filter(challenge__pk=self.request.project_pk)
+        return queryset.filter(challenge=self.request.challenge)
 
 
 class MethodDetail(UserIsChallengeAdminMixin, DetailView):
@@ -85,7 +84,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
     def get_form_kwargs(self):
         kwargs = super(SubmissionCreate, self).get_form_kwargs()
 
-        config = Config.objects.get(challenge__pk=self.request.project_pk)
+        config = Config.objects.get(challenge=self.request.challenge)
 
         kwargs.update({
             'display_comment_field': config.allow_submission_comments,
@@ -100,14 +99,14 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
     def get_context_data(self, **kwargs):
         context = super(SubmissionCreate, self).get_context_data(**kwargs)
 
-        config = Config.objects.get(challenge__pk=self.request.project_pk)
+        config = Config.objects.get(challenge=self.request.challenge)
 
         context.update(
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
 
         pending_jobs = Job.objects.filter(
-            challenge__pk=self.request.project_pk,
+            challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
@@ -132,7 +131,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
             now = timezone.now()
 
         subs = Submission.objects.filter(
-            challenge__pk=self.request.project_pk,
+            challenge=self.request.challenge,
             creator=self.request.user,
             created__gte=now - period,
         ).order_by('-created')
@@ -149,8 +148,7 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.challenge = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
 
         uploaded_file = form.cleaned_data['chunked_upload'][0]
         with uploaded_file.open() as f:
@@ -174,12 +172,12 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
         """ Admins see everything, participants just their submissions """
         queryset = super(SubmissionList, self).get_queryset()
 
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
 
         if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge__pk=self.request.project_pk)
+            return queryset.filter(challenge=self.request.challenge)
         else:
-            return queryset.filter(Q(challenge__pk=self.request.project_pk),
+            return queryset.filter(Q(challenge=self.request.challenge),
                                    Q(creator__pk=self.request.user.pk))
 
 
@@ -201,13 +199,13 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         queryset = super(JobList, self).get_queryset()
         queryset = queryset.select_related('result')
 
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
 
         if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge__pk=self.request.project_pk)
+            return queryset.filter(challenge=self.request.challenge)
         else:
             return queryset.filter(
-                Q(challenge__pk=self.request.project_pk),
+                Q(challenge=self.request.challenge),
                 Q(submission__creator__pk=self.request.user.pk)
             )
 
@@ -224,7 +222,7 @@ class ResultList(ListView):
         queryset = super(ResultList, self).get_queryset()
         queryset = queryset.select_related(
             'job__submission__creator__user_profile')
-        return queryset.filter(Q(challenge__pk=self.request.project_pk),
+        return queryset.filter(Q(challenge=self.request.challenge),
                                Q(public=True))
 
 

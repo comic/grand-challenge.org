@@ -20,7 +20,7 @@ class ParticipantsList(UserIsChallengeAdminMixin, ListView):
     template_name = 'participants/participants_list.html'
 
     def get_queryset(self):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
         return challenge.get_participants().select_related('user_profile')
 
 
@@ -30,17 +30,17 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
     fields = ()
 
     def get_success_url(self):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
         return challenge.get_absolute_url()
 
     def get_success_message(self, cleaned_data):
         return self.object.status_to_string()
 
     def form_valid(self, form):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
 
         form.instance.user = self.request.user
-        form.instance.project = challenge
+        form.instance.challenge = challenge
 
         try:
             redirect = super().form_valid(form)
@@ -61,7 +61,7 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
 
         try:
             status = RegistrationRequest.objects.get(
-                project__pk=self.request.project_pk,
+                challenge=self.request.challenge,
                 user=self.request.user,
             ).status_to_string()
         except ObjectDoesNotExist:
@@ -77,7 +77,7 @@ class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(Q(project__pk=self.request.project_pk))
+        queryset = queryset.filter(Q(challenge=self.request.challenge))
         return queryset
 
 
@@ -91,7 +91,7 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
         return reverse(
             'participants:registration-list',
             kwargs={
-                'challenge_short_name': self.object.project.short_name,
+                'challenge_short_name': self.object.challenge.short_name,
             }
         )
 

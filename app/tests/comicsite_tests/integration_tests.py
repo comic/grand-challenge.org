@@ -19,7 +19,7 @@ from userena.models import UserenaSignup
 from comicmodels.models import Page, ComicSite
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from tests.factories import PageFactory, RegistrationRequestFactory
-from uploads.views import upload_handler, CKUploadView
+from uploads.views import upload_handler
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -30,7 +30,7 @@ def create_page(comicsite, title, content="testcontent", permission_lvl=None):
         permission_lvl = Page.ALL
 
     return PageFactory(title=title,
-                       comicsite=comicsite,
+                       challenge=comicsite,
                        html=content,
                        permission_lvl=permission_lvl)
 
@@ -38,7 +38,7 @@ def create_page(comicsite, title, content="testcontent", permission_lvl=None):
 def get_first_page(comicsite):
     """ Get the first page of comicsite, saves some typing..
     """
-    return Page.objects.filter(comicsite=comicsite)[0]
+    return Page.objects.filter(challenge=comicsite)[0]
 
 
 def extract_form_errors(html):
@@ -177,7 +177,7 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        RegistrationRequestFactory(project=project, user=user)
+        RegistrationRequestFactory(challenge=project, user=user)
 
         self.assertTrue(project.is_participant(user),
                         "After registering as user %s , user does not "
@@ -186,7 +186,7 @@ class ComicframeworkTestCase(TestCase):
     def _test_page_can_be_viewed(self, user, page):
         page_url = reverse('pages:detail',
                            kwargs={
-                               "challenge_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.challenge.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_be_viewed(user, page_url)
@@ -194,7 +194,7 @@ class ComicframeworkTestCase(TestCase):
     def _test_page_can_not_be_viewed(self, user, page):
         page_url = reverse('pages:detail',
                            kwargs={
-                               "challenge_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.challenge.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_not_be_viewed(user, page_url)
@@ -467,32 +467,32 @@ class CreateProjectTest(ComicframeworkTestCase):
         self.projectadmin = self._create_random_user("projectadmin")
 
         # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
-        project_name = "under_score"
+        challenge_short_name = "under_score"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
-        project_name = "project with spaces"
+        challenge_short_name = "project with spaces"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
-        project_name = "project-with-w#$%^rd-items"
+        challenge_short_name = "project-with-w#$%^rd-items"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
 
 class ViewsTest(ComicframeworkTestCase):
@@ -597,9 +597,12 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         # main domain robots.txt
-        non_existant_url = reverse('challenge-homepage',
-                                   kwargs={
-                                       "site_short_name": "nonexistingproject"})
+        non_existant_url = reverse(
+            'challenge-homepage',
+            kwargs={
+                "challenge_short_name": "nonexistingproject"
+            }
+        )
 
         response, username = self._view_url(None, non_existant_url)
 
@@ -981,7 +984,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
                         "Nothing was rendered for projects overview")
 
     def get_mail_html_part(self, mail):
-        """ Extract html content from email sent with models.comicsite.send_templated_email
+        """ Extract html content from email sent with models.challenge.send_templated_email
         
         """
         return mail.alternatives[0][0]

@@ -47,7 +47,7 @@ class UserIsChallengeAdminMixin(UserAuthAndTestMixin):
     """
 
     def test_func(self):
-        challenge = ComicSite.objects.get(short_name=self.request.projectname)
+        challenge = self.request.challenge
         return challenge.is_admin(self.request.user)
 
 
@@ -64,5 +64,5 @@ class UserIsChallengeParticipantOrAdminMixin(UserAuthAndTestMixin):
 
     def test_func(self):
         user = self.request.user
-        challenge = ComicSite.objects.get(short_name=self.request.projectname)
+        challenge = self.request.challenge
         return challenge.is_admin(user) or challenge.is_participant(user)

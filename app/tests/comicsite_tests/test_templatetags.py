@@ -41,7 +41,7 @@ def test_all_projectlinks():
 @pytest.mark.django_db
 def test_allusers_statistics():
     c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(comicsite=c)
+    p = PageFactory(challenge=c)
 
     template = Template(
         '{% load allusers_statistics from comic_templatetags %}'
@@ -59,7 +59,7 @@ def test_allusers_statistics():
 @pytest.mark.django_db
 def test_project_statistics():
     c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(comicsite=c)
+    p = PageFactory(challenge=c)
 
     template = Template(
         '{% load project_statistics from comic_templatetags %}'
@@ -102,7 +102,7 @@ def test_url_parameter(rf: RequestFactory):
 @override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
 def test_insert_graph(rf: RequestFactory, view_type):
     c = ChallengeFactory(short_name='testproj1734621')
-    p = PageFactory(comicsite=c)
+    p = PageFactory(challenge=c)
 
     r = rf.get('/Result/?id=4')
 
@@ -130,7 +130,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
 @override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
 def test_image_browser(rf: RequestFactory):
     c = ChallengeFactory(short_name='testproj-image-browser')
-    p = PageFactory(comicsite=c)
+    p = PageFactory(challenge=c)
 
     template = Template(
         '{% load image_browser from comic_templatetags %}'

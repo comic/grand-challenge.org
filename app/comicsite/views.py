@@ -16,7 +16,7 @@ from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
 
 
-def site(request, site_short_name):
+def site(request, challenge_short_name):
     # TODO: Doing two calls to getSite here. (second one in site_get_standard_vars)
     # How to handle not found nicely? Throwing exception in site_get_standard_vars
     # seems like a nice start, but this function is called throughout the code
@@ -24,14 +24,15 @@ def site(request, site_short_name):
     # result in server error..
 
     try:
-        site = getSite(site_short_name)
+        site = getSite(challenge_short_name)
     except ComicSite.DoesNotExist:
-        raise Http404("Project %s does not exist" % site_short_name)
+        raise Http404("Project %s does not exist" % challenge_short_name)
 
-    [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
+    [site, pages, metafooterpages] = site_get_standard_vars(
+        challenge_short_name)
 
     if len(pages) == 0:
-        page = ErrorPage(comicsite=site, title="no_pages_found",
+        page = ErrorPage(challenge=site, title="no_pages_found",
                          html="No pages found for this site. Please log in and use the admin button to add pages.")
         currentpage = page
     else:
@@ -50,7 +51,7 @@ def site(request, site_short_name):
     )
 
 
-def site_get_standard_vars(site_short_name):
+def site_get_standard_vars(challenge_short_name):
     """ When rendering a site you need to pass the current site, all pages for this site, and footer pages.
     Get all this info and return a dictionary ready to pass to render_to_response. Convenience method
     to save typing.
@@ -58,8 +59,8 @@ def site_get_standard_vars(site_short_name):
     """
 
     try:
-        site = getSite(site_short_name)
-        pages = getPages(site_short_name)
+        site = getSite(challenge_short_name)
+        pages = getPages(challenge_short_name)
         metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
 
 
@@ -142,7 +143,7 @@ def permissionMessage(request, site, p):
     else:
         msg = "The page '" + p.title + "' can only be viewed by registered users. Please sign in to view this page."
         title = p.title
-    page = ErrorPage(comicsite=site, title=title, html=msg)
+    page = ErrorPage(challenge=site, title=title, html=msg)
     currentpage = page
     return currentpage
 
@@ -158,7 +159,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     if isinstance(page_or_page_title, str):
         page_title = page_or_page_title
         try:
-            p = Page.objects.get(comicsite__short_name=site.short_name,
+            p = Page.objects.get(challenge__short_name=site.short_name,
                                  title=page_title)
         except Page.DoesNotExist:
             raise Http404
@@ -175,10 +176,10 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     return currentpage
 
 
-def get_data_folder_path(project_name):
+def get_data_folder_path(challenge_short_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
-    return path.join(settings.MEDIA_ROOT, project_name)
+    return path.join(settings.MEDIA_ROOT, challenge_short_name)
 
 
 def get_dirnames(path):
@@ -195,38 +196,38 @@ def get_dirnames(path):
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the main project """
 
-    site_short_name = settings.MAIN_PROJECT_NAME
+    challenge_short_name = settings.MAIN_PROJECT_NAME
 
-    if ComicSite.objects.filter(short_name=site_short_name).count() == 0:
+    if ComicSite.objects.filter(short_name=challenge_short_name).count() == 0:
         link = reverse('challenges:create')
-        link = link + "?short_name=%s" % site_short_name
+        link = link + "?short_name=%s" % challenge_short_name
         link_html = create_HTML_a(link,
-                                  "Create project '%s'" % site_short_name)
+                                  "Create project '%s'" % challenge_short_name)
         html = """I'm trying to show the first page for main project '%s' here,
-        but '%s' does not exist. %s.""" % (site_short_name,
-                                           site_short_name,
+        but '%s' does not exist. %s.""" % (challenge_short_name,
+                                           challenge_short_name,
                                            link_html)
         p = create_temp_page(title="no_pages_found", html=html)
         return render(
             request,
             'temppage.html',
             {
-                'site': p.comicsite,
+                'site': p.challenge,
                 'currentpage': p,
             },
         )
 
-    pages = getPages(site_short_name)
+    pages = getPages(challenge_short_name)
 
     if pages.count() == 0:
 
-        link = reverse('pages:list', args=[site_short_name])
+        link = reverse('pages:list', args=[challenge_short_name])
         link_html = create_HTML_a(link, "admin interface")
 
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' contains no pages. Please add
-        some in the %s.""" % (site_short_name,
-                              site_short_name,
+        some in the %s.""" % (challenge_short_name,
+                              challenge_short_name,
                               link_html)
 
         p = create_temp_page(title="no_pages_found", html=html)
@@ -234,7 +235,7 @@ def comicmain(request, page_title=""):
             request,
             'temppage.html',
             {
-                'site': p.comicsite,
+                'site': p.challenge,
                 'currentpage': p,
             },
         )
@@ -246,7 +247,7 @@ def comicmain(request, page_title=""):
 
     else:
         try:
-            p = Page.objects.get(comicsite__short_name=site_short_name,
+            p = Page.objects.get(challenge__short_name=challenge_short_name,
                                  title=page_title)
         except Page.DoesNotExist:
             raise Http404
@@ -264,7 +265,7 @@ def comicmain(request, page_title=""):
         request,
         'mainpage.html',
         {
-            'site': p.comicsite,
+            'site': p.challenge,
             'currentpage': p,
             "pages": pages,
             "metafooterpages": metafooterpages,
@@ -274,24 +275,24 @@ def comicmain(request, page_title=""):
 
 # ======================================== not called directly from urls.py =========================================
 
-def getSite(site_short_name):
-    project = ComicSite.objects.get(short_name=site_short_name)
+def getSite(challenge_short_name):
+    project = ComicSite.objects.get(short_name=challenge_short_name)
     return project
 
 
-def getPages(site_short_name):
+def getPages(challenge_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(comicsite__short_name=site_short_name)
+        pages = Page.objects.filter(challenge__short_name=challenge_short_name)
     except Page.DoesNotExist:
-        raise Http404("Page '%s' not found" % site_short_name)
+        raise Http404("Page '%s' not found" % challenge_short_name)
     return pages
 
 
 # trying to follow pep 0008 here, finally.
-def site_exists(site_short_name):
+def site_exists(challenge_short_name):
     try:
-        site = ComicSite.objects.get(short_name=site_short_name)
+        site = ComicSite.objects.get(short_name=challenge_short_name)
         return True
     except ComicSite.DoesNotExist:
         return False
@@ -330,7 +331,7 @@ def create_HTML_a_img(link_url, image_url):
 
 
 def copy_page(page):
-    return Page(comicsite=page.comicsite, title=page.title, html=page.html)
+    return Page(challenge=page.challenge, title=page.title, html=page.html)
 
 
 def create_temp_page(title="temp_page", html=""):
@@ -343,4 +344,4 @@ def create_temp_page(title="temp_page", html=""):
     site.name = "Temporary page"
     site.skin = ""
 
-    return Page(comicsite=site, title=title, html=html)
+    return Page(challenge=site, title=title, html=html)

@@ -34,15 +34,6 @@ def send_templated_email(subject, email_template_name, email_context,
         eg ('/tmp/file1.txt', '/tmp/image.png')
 
     """
-
-    # Add current app so {% url admin:index %} will resolve to project admin
-    # like /site/vessel12/admin instead of /admin
-    # if there is no project defined, do not add current app, which will render
-    # email with links to main admin
-    if "project" in email_context and request is not None:
-        request.current_app = email_context[
-            'project'].get_project_admin_instance_name()
-
     # We can only send mail from the DEFAULT_FROM_EMAIL now
     sender = settings.DEFAULT_FROM_EMAIL
 

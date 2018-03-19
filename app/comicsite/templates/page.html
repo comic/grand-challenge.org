@@ -2,7 +2,7 @@
 {% load guardian_tags %}
 {% load comic_templatetags %}
 
-{% block pageName %} {{ currentpage.comicsite.short_name }} -
+{% block pageName %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 
@@ -60,7 +60,7 @@
             {% if currentpage.pk %}
                 {% if "change_comicsite" in site_perms %}
                     <a class="editPageLink"
-                       href="{% url 'pages:update' currentpage.comicsite.short_name currentpage.title %}">Edit
+                       href="{% url 'pages:update' currentpage.challenge.short_name currentpage.title %}">Edit
                         this
                         page</a>
 

@@ -143,8 +143,8 @@ EXTERNAL_PROJECTS_FILE = "challengestats.xls"
 # directory below. Directory is relative to MEDIA_ROOT+MAIN_PROJECT_NAME
 EXTERNAL_PROJECTS_IMAGE_FOLDER = "public_html/images/all_challenges/"
 
-# The url for a project in comic is /site/<projectname>. This is quite ugly. It
-# would be nicer to be able to use <projectname>.examplehost.com/, like blogger
+# The url for a project in comic is /site/<challenge>. This is quite ugly. It
+# would be nicer to be able to use <challenge>.examplehost.com/, like blogger
 # does.
 # True: Changes links on pages where possible to use subdomain.
 SUBDOMAIN_IS_PROJECTNAME = False

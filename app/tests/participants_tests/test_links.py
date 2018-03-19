@@ -22,7 +22,7 @@ def test_join_page_links(client, ChallengeSet):
         assert test[1] in response.rendered_content
 
         rr = RegistrationRequestFactory(user=test[0],
-                                        project=ChallengeSet.challenge)
+                                        challenge=ChallengeSet.challenge)
 
         response = get_view_for_user(
             viewname='participants:registration-create',
