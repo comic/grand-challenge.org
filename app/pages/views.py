@@ -9,7 +9,6 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from comicmodels.models import Page
 from comicmodels.permissions import can_access
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
@@ -17,6 +16,7 @@ from comicsite.views import (
     site_get_standard_vars, getRenderedPageIfAllowed, get_data_folder_path
 )
 from pages.forms import PageCreateForm, PageUpdateForm
+from pages.models import Page
 from uploads.api import serve_file
 
 

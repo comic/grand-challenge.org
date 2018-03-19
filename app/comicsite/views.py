@@ -7,9 +7,10 @@ from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 
-from comicmodels.models import (ComicSite, Page, ErrorPage)
+from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.template.context import ComicSiteRequestContext
+from pages.models import Page, ErrorPage
 
 
 def site(request, challenge_short_name):

@@ -4,9 +4,10 @@ import factory
 from django.conf import settings
 
 from comicmodels.models import (
-    ComicSite, Page, RegistrationRequest, UploadModel
+    ComicSite, RegistrationRequest, UploadModel
 )
 from evaluation.models import Submission, Job, Method, Result
+from pages.models import Page
 from teams.models import Team, TeamMember
 
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
