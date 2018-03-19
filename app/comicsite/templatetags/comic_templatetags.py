@@ -1485,31 +1485,9 @@ def render_all_projectlinks(parser, token):
 
     """
 
-    usagestr = """Tag usage: {% all_projectlinks max_projects:int,comic_only=1|0}
-                  max_projects is an optional parameter.
-                  max_projects: show at most this number of projects.
-                                if set, do not group projects per year but show all
-                                also, show only projects hosted on comic, not
-                                external links                                
-                  """
+    usagestr = "Tag usage: {% all_projectlinks %}"
 
     args = parseKeyValueToken(token)
-
-    if len(args) > 1:
-        errormsg = "Error rendering {% {0} %}: expected at most one argument, but found [{1}]".format(
-            token.contents,
-            ",".join(
-                args.keys()))
-        return TemplateErrorNode(errormsg)
-
-    if len(args) == 1:
-        if args.keys()[0] != "max_projects":
-            errormsg = "Error rendering {% {0} %}: expected argument 'max_projects' but found '{1}' instead".format(
-                token.contents,
-                args.keys()[0])
-            return TemplateErrorNode(errormsg)
-        else:
-            args["max_projects"] = int(args["max_projects"])
 
     try:
         projects = ComicSite.objects.non_hidden()
@@ -1534,12 +1512,8 @@ class AllProjectLinksNode(template.Node):
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
 
-        if self.args:
-            html = self.render_project_links(projectlinks,
-                                             self.args["max_projects"])
-        else:
-            projectlinks += self.read_grand_challenge_projectlinks()
-            html = self.render_project_links_per_year(projectlinks)
+        projectlinks += self.read_grand_challenge_projectlinks()
+        html = self.render_project_links_per_year(projectlinks)
 
         # html = ""
         # for projectlink in projectlinks:
@@ -1560,20 +1534,6 @@ class AllProjectLinksNode(template.Node):
         """
         from django.template import loader
         return loader.render_to_string('all_projectlinks_filter.html')
-
-    def render_project_links(self, projectlinks, max_projects):
-        """ Show all projectlinks in one big list, sorted by date, most recent first
-        
-        @param max_projects: int show only this number   
-        :param projectlinks: 
-        """
-        projectlinks = sorted(projectlinks, key=lambda x: x.date, reverse=True)
-        if max_projects:
-            projectlinks = projectlinks[0:max_projects]
-
-        html = "\n".join([self.render_to_html(p) for p in projectlinks])
-
-        return html
 
     def render_project_links_per_year(self, projectlinks):
         """ Create html to show each projectlink with subheadings per year sorted
@@ -1615,31 +1575,6 @@ class AllProjectLinksNode(template.Node):
             </div>""".format(yearheader, projectlinks)
 
         return html
-
-    def get_background_color(self, idx=-1):
-        """ Each year has a different background returns color of css format
-        rgb(xxx,xxx,xxx) """
-
-        colors = [(207, 229, 222),
-                  (240, 100, 100),
-                  (208, 153, 131),
-                  (138, 148, 175),
-                  (186, 217, 226),
-                  (138, 148, 175),
-                  (208, 153, 131),
-                  (200, 210, 230),
-                  (3, 100, 104),
-                  (100, 160, 100)
-                  ]
-
-        # random.seed(int(seed))
-        # idx = random.randint(0,9)
-        if idx == -1:
-            idx = idx = random.randint(0, len(colors))
-        idx = idx % len(colors)
-        css_color = "rgb({},{},{})".format(*colors[idx])
-
-        return css_color
 
     def render_to_html(self, projectlink):
         """ return html representation of projectlink """
@@ -1830,19 +1765,6 @@ class AllProjectLinksNode(template.Node):
             # thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
 
         return thumb_image_url
-
-    def project_summary_html(self, project):
-        """ get a link to this project """
-
-        if subdomain_is_projectname():
-            protocol, domainname = settings.MAIN_HOST_NAME.split("//")
-            url = protocol + "//" + project.short_name + "." + domainname
-            html = comicsite.views.comic_site_to_grand_challenge_html(project,
-                                                                      url)
-        else:
-            html = comicsite.views.comic_site_to_grand_challenge_html(project)
-
-        return html
 
     def read_grand_challenge_projectlinks(self):
         filepath = os.path.join(settings.MEDIA_ROOT,

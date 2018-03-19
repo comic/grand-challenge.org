@@ -92,8 +92,15 @@ def test_url_parameter(rf: RequestFactory):
     assert rendered == 'john'
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "view_type",
+    [
+        'anode09',
+        'anode09_table',
+    ]
+)
 @override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
-def test_insert_graph_anode09(rf: RequestFactory):
+def test_insert_graph_anode09(rf: RequestFactory, view_type):
     c = ChallengeFactory(short_name='testproj1734621')
     p = PageFactory(comicsite=c)
 
@@ -101,7 +108,9 @@ def test_insert_graph_anode09(rf: RequestFactory):
 
     template = Template(
         '{% load insert_graph from comic_templatetags %}'
-        '{% insert_graph 4.php type:anode09 %}'
+        '{% insert_graph 4.php type:'
+        f'{view_type}'
+        ' %}'
     )
 
     context = RequestContext(request=r)
@@ -111,7 +120,12 @@ def test_insert_graph_anode09(rf: RequestFactory):
 
     assert "pageError" not in rendered
     assert "Error rendering graph from file" not in rendered
-    assert "Created with matplotlib" in rendered
+    if view_type == 'anode09':
+        assert "Created with matplotlib" in rendered
+    else:
+        assert "comictablecontainer" in rendered
+
+
 
 # {% image_browser path:string - path relative to current project
 #                  config:string - path relative to current project %}
