@@ -11,7 +11,6 @@ def test_admins_list_is_filtered(client, TwoChallengeSets):
         client=client,
         user=TwoChallengeSets.admin12,
     )
-
     tests = [
         (False, TwoChallengeSets.ChallengeSet1.non_participant),
         (False, TwoChallengeSets.ChallengeSet1.participant),
@@ -27,8 +26,6 @@ def test_admins_list_is_filtered(client, TwoChallengeSets):
         (False, TwoChallengeSets.participant12),
         (True, TwoChallengeSets.admin1participant2),
     ]
-
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
-
     assert 'Admins for ' in response.rendered_content

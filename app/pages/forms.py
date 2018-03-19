@@ -15,34 +15,33 @@ class PageCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.challenge = kwargs.pop('challenge', None)
-
         super().__init__(*args, **kwargs)
-
         if self.challenge is not None and 'html' in self.fields:
-            self.fields['html'].widget.config.update({
-                'filebrowserUploadUrl': reverse(
-                    'uploads:ck-create',
-                    kwargs={'challenge_short_name': self.challenge.short_name}
-                ),
-                'filebrowserBrowseUrl': reverse(
-                    'uploads:ck-browse',
-                    kwargs={'challenge_short_name': self.challenge.short_name}
-                ),
-            })
-
+            self.fields['html'].widget.config.update(
+                {
+                    'filebrowserUploadUrl': reverse(
+                        'uploads:ck-create',
+                        kwargs={
+                            'challenge_short_name': self.challenge.short_name
+                        },
+                    ),
+                    'filebrowserBrowseUrl': reverse(
+                        'uploads:ck-browse',
+                        kwargs={
+                            'challenge_short_name': self.challenge.short_name
+                        },
+                    ),
+                }
+            )
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit('save', 'Save'))
 
     def clean_title(self):
         """ Ensure that page titles are not duplicated for a challenge """
         title = self.cleaned_data['title']
-
-        queryset = Page.objects.filter(challenge=self.challenge,
-                                       title=title)
-
+        queryset = Page.objects.filter(challenge=self.challenge, title=title)
         if self.instance is not None:
             queryset = queryset.exclude(pk=self.instance.pk)
-
         if queryset.exists():
             raise ValidationError(
                 gettext(

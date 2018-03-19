@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView
 
-from comicmodels.models import RegistrationRequest, ComicSite
+from comicmodels.models import RegistrationRequest
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from participants.emails import (
@@ -24,8 +24,9 @@ class ParticipantsList(UserIsChallengeAdminMixin, ListView):
         return challenge.get_participants().select_related('user_profile')
 
 
-class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
-                                CreateView):
+class RegistrationRequestCreate(
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
+):
     model = RegistrationRequest
     fields = ()
 
@@ -38,37 +39,31 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
 
     def form_valid(self, form):
         challenge = self.request.challenge
-
         form.instance.user = self.request.user
         form.instance.challenge = challenge
-
         try:
             redirect = super().form_valid(form)
-
             if challenge.require_participant_review:
                 # Note, sending an email here rather than in signals as
                 # the function requires the request.
-                send_participation_request_notification_email(self.request,
-                                                              self.object)
-
+                send_participation_request_notification_email(
+                    self.request, self.object
+                )
             return redirect
+
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
             return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         try:
             status = RegistrationRequest.objects.get(
-                challenge=self.request.challenge,
-                user=self.request.user,
+                challenge=self.request.challenge, user=self.request.user
             ).status_to_string()
         except ObjectDoesNotExist:
             status = None
-
         context.update({'existing_status': status})
-
         return context
 
 
@@ -81,8 +76,9 @@ class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
         return queryset
 
 
-class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
-                                UpdateView):
+class RegistrationRequestUpdate(
+    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+):
     model = RegistrationRequest
     fields = ('status',)
     success_message = 'Registration successfully updated'
@@ -90,22 +86,18 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
     def get_success_url(self):
         return reverse(
             'participants:registration-list',
-            kwargs={
-                'challenge_short_name': self.object.challenge.short_name,
-            }
+            kwargs={'challenge_short_name': self.object.challenge.short_name},
         )
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-
         # TODO: check if the status has actually changed
-
         if self.object.status == RegistrationRequest.ACCEPTED:
-            send_participation_request_accepted_email(self.request,
-                                                      self.object)
-
+            send_participation_request_accepted_email(
+                self.request, self.object
+            )
         if self.object.status == RegistrationRequest.REJECTED:
-            send_participation_request_rejected_email(self.request,
-                                                      self.object)
-
+            send_participation_request_rejected_email(
+                self.request, self.object
+            )
         return redirect

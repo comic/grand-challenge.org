@@ -4,10 +4,16 @@ from django.template import loader
 from django.utils.html import strip_tags
 
 
-def send_templated_email(subject, email_template_name, email_context,
-                         recipients,
-                         bcc=None, fail_silently=True, files=None,
-                         request=None):
+def send_templated_email(
+    subject,
+    email_template_name,
+    email_context,
+    recipients,
+    bcc=None,
+    fail_silently=True,
+    files=None,
+    request=None,
+):
     """
     send_templated_mail() is a wrapper around Django's e-mail routines that
     allows us to easily send multipart (text/plain & text/html) e-mails using
@@ -36,34 +42,24 @@ def send_templated_email(subject, email_template_name, email_context,
     """
     # We can only send mail from the DEFAULT_FROM_EMAIL now
     sender = settings.DEFAULT_FROM_EMAIL
-
     template = loader.get_template(email_template_name)
-
     text_part = strip_tags(template.render(email_context, request=request))
     html_part = template.render(email_context, request=request)
-
     if type(recipients) == str:
         if recipients.find(','):
             recipients = recipients.split(',')
     elif type(recipients) != list:
-        recipients = [recipients, ]
-
+        recipients = [recipients]
     recipients = remove_empty(recipients)
-
-    msg = EmailMultiAlternatives(subject,
-                                 text_part,
-                                 sender,
-                                 recipients,
-                                 bcc=bcc)
+    msg = EmailMultiAlternatives(
+        subject, text_part, sender, recipients, bcc=bcc
+    )
     msg.attach_alternative(html_part, "text/html")
-
     if files:
         if type(files) != list:
-            files = [files, ]
-
+            files = [files]
         for file in files:
             msg.attach_file(file)
-
     return msg.send(fail_silently)
 
 
@@ -76,5 +72,4 @@ def remove_empty(adresses):
     for adress in adresses:
         if adress != "":
             cleaned.append(adress)
-
     return cleaned

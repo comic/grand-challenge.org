@@ -24,17 +24,17 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         serialise Job objects to JSON.
     :return:
     """
-
     if (job_pk is None and job is None) or (
-            job_pk is not None and job is not None):
-        raise TypeError('You need to provide either a job or a job_id as '
-                        'arguments to evaluate_submission, not none or both.')
+        job_pk is not None and job is not None
+    ):
+        raise TypeError(
+            'You need to provide either a job or a job_id as '
+            'arguments to evaluate_submission, not none or both.'
+        )
 
     if job_pk:
         job = Job.objects.get(pk=job_pk)  # type: Job
-
     job.update_status(status=Job.STARTED)
-
     if not job.method.ready:
         # TODO: email admin
         job.update_status(
@@ -45,10 +45,10 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
 
     try:
         with Evaluator(
-                job_id=job.pk,
-                input_file=job.submission.file,
-                eval_image=job.method.image,
-                eval_image_sha256=job.method.image_sha256
+            job_id=job.pk,
+            input_file=job.submission.file,
+            eval_image=job.method.image,
+            eval_image_sha256=job.method.image_sha256,
         ) as e:
             metrics = e.evaluate()
     except EvaluationException as exc:
@@ -56,22 +56,17 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         return {}
 
     Result.objects.create(job=job, metrics=metrics, challenge=job.challenge)
-
     job.update_status(status=Job.SUCCESS)
-
     return metrics
 
 
 @shared_task()
 def validate_method_async(*, method_pk: uuid.UUID):
     instance = Method.objects.get(pk=method_pk)
-
     instance.image.open(mode='rb')
-
     try:
         with tarfile.open(fileobj=instance.image, mode='r') as t:
-            member = dict(zip(t.getnames(), t.getmembers()))[
-                'manifest.json']
+            member = dict(zip(t.getnames(), t.getmembers()))['manifest.json']
             manifest = t.extractfile(member).read()
     except (KeyError, tarfile.ReadError):
         instance.status = (
@@ -102,25 +97,23 @@ def validate_method_async(*, method_pk: uuid.UUID):
 @shared_task
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = ComicSite.objects.get(pk=challenge_pk)
-    valid_results = Result.objects.filter(Q(challenge=challenge),
-                                          Q(public=True))
-
+    valid_results = Result.objects.filter(
+        Q(challenge=challenge), Q(public=True)
+    )
     ranks = generate_rank_dict(
         queryset=valid_results,
-        metric_paths=(
-            challenge.evaluation_config.score_jsonpath,
-        ),
+        metric_paths=(challenge.evaluation_config.score_jsonpath,),
         metric_reverse=(
-            challenge.evaluation_config.score_default_sort == challenge.evaluation_config.DESCENDING,
+            challenge.evaluation_config.score_default_sort ==
+            challenge.evaluation_config.DESCENDING,
         ),
     )
-
     for res in Result.objects.filter(Q(challenge=challenge)):
         try:
             rank = ranks[str(res.pk)][
-                challenge.evaluation_config.score_jsonpath]
+                challenge.evaluation_config.score_jsonpath
+            ]
         except KeyError:
             rank = 0
         Result.objects.filter(pk=res.pk).update(rank=rank)
-
     return ranks

@@ -16,9 +16,14 @@ urlpatterns = [
     url(r'^t/(?P<pk>[0-9]+)/$', TeamDetail.as_view(), name='detail'),
     url(r'^t/(?P<pk>[0-9]+)/update/$', TeamUpdate.as_view(), name='update'),
     url(r'^t/(?P<pk>[0-9]+)/delete/$', TeamDelete.as_view(), name='delete'),
-
-    url(r'^t/(?P<pk>[0-9]+)/create-member/$', TeamMemberCreate.as_view(),
-        name='member-create'),
-    url(r'^m/(?P<pk>[0-9]+)/delete/$',
-        TeamMemberDelete.as_view(), name='member-delete'),
+    url(
+        r'^t/(?P<pk>[0-9]+)/create-member/$',
+        TeamMemberCreate.as_view(),
+        name='member-create',
+    ),
+    url(
+        r'^m/(?P<pk>[0-9]+)/delete/$',
+        TeamMemberDelete.as_view(),
+        name='member-delete',
+    ),
 ]

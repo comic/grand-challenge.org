@@ -32,8 +32,9 @@ from uploads.emails import send_file_uploaded_notification_email
 from uploads.forms import UserUploadForm, CKUploadForm
 
 
-class UploadList(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
-                 ListView):
+class UploadList(
+    UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, ListView
+):
     model = UploadModel
 
 
@@ -42,9 +43,10 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     form_class = CKUploadForm
 
     def get_success_url(self):
-        return reverse('uploads:list', kwargs={
-            'challenge_short_name': self.request.challenge.short_name,
-        })
+        return reverse(
+            'uploads:list',
+            kwargs={'challenge_short_name': self.request.challenge.short_name},
+        )
 
     @method_decorator(csrf_exempt)  # Required by django-ckeditor
     def dispatch(self, request, *args, **kwargs):
@@ -54,9 +56,7 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
         form.instance.challenge = self.request.challenge
         form.instance.user = self.request.user
         form.instance.file = form.cleaned_data['upload']
-
         super().form_valid(form)
-
         # Taken from ckeditor_uploader.views.ImageUploadView
         # Note that this function is heavily tied to the response there,
         # so check when updating django-ckeditor.
@@ -64,18 +64,22 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
         ck_func_num = self.request.GET.get('CKEditorFuncNum')
         if ck_func_num:
             ck_func_num = escape(ck_func_num)
-
         url = form.instance.file.url
-
         if ck_func_num:
             # Respond with Javascript sending ckeditor upload url.
-            return HttpResponse("""
+            return HttpResponse(
+                """
             <script type='text/javascript'>
                 window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
-            </script>""".format(ck_func_num, url))
+            </script>""".format(ck_func_num, url)
+            )
+
         else:
-            retdata = {'url': url, 'uploaded': '1',
-                       'fileName': form.instance.file.name}
+            retdata = {
+                'url': url,
+                'uploaded': '1',
+                'fileName': form.instance.file.name,
+            }
             return JsonResponse(retdata)
 
 
@@ -84,27 +88,21 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         uploaded_files = UploadModel.objects.filter(
-            challenge=self.request.challenge,
-            permission_lvl=UploadModel.ALL,
+            challenge=self.request.challenge, permission_lvl=UploadModel.ALL
         )
-
         files = []
         for uf in uploaded_files:
             src = uf.file.url
-            files.append({
-                'thumb': src,
-                'src': src,
-                'is_image': False,
-                'visible_filename': uf.file.name,
-            })
-
-        context.update({
-            'show_dirs': False,
-            'files': files,
-        })
-
+            files.append(
+                {
+                    'thumb': src,
+                    'src': src,
+                    'is_image': False,
+                    'visible_filename': uf.file.name,
+                }
+            )
+        context.update({'show_dirs': False, 'files': files})
         return context
 
 
@@ -116,10 +114,8 @@ def serve(request, challenge_short_name, path, document_root=None):
     'django.views.static.serve' way of serving files under /media urls.
 
     """
-
     if document_root is None:
         document_root = settings.MEDIA_ROOT
-
     path = posixpath.normpath(unquote(path))
     path = path.lstrip('/')
     newpath = ''
@@ -127,31 +123,29 @@ def serve(request, challenge_short_name, path, document_root=None):
         if not part:
             # Strip empty path components.
             continue
+
         drive, part = os.path.splitdrive(part)
         head, part = os.path.split(part)
         if part in (os.curdir, os.pardir):
             # Strip '.' and '..' in path.
             continue
+
         newpath = os.path.join(newpath, part).replace('\\', '/')
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)
+
     fullpath = os.path.join(document_root, challenge_short_name, newpath)
-
     storage = DefaultStorage()
-
     if not storage.exists(fullpath):
-
         # On case sensitive filesystems you can have problems if the project
         # nameurl in the url is not exactly the same case as the filepath.
         # find the correct case for projectname then.
-
         projectlist = ComicSite.objects.filter(short_name=challenge_short_name)
         if not projectlist:
             raise Http404("project '%s' does not exist" % challenge_short_name)
 
         challenge_short_name = projectlist[0].short_name
         fullpath = os.path.join(document_root, challenge_short_name, newpath)
-
     if not storage.exists(fullpath):
         raise Http404('"%(path)s" does not exist' % {'path': fullpath})
 
@@ -164,31 +158,32 @@ def serve(request, challenge_short_name, path, document_root=None):
 
         # Do not offer to save images, but show them directly
         return serve_file(file, save_as=True)
+
     else:
-        return HttpResponseForbidden("This file is not available without "
-                                     "credentials")
+        return HttpResponseForbidden(
+            "This file is not available without " "credentials"
+        )
 
 
 def upload_handler(request, challenge_short_name):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
-
     view_url = reverse(
-        'uploads:create',
-        kwargs={'challenge_short_name': challenge_short_name}
+        'uploads:create', kwargs={'challenge_short_name': challenge_short_name}
     )
-
     if request.method == 'POST':
         # set values excluded from form here to make the model validate
         site = getSite(challenge_short_name)
-        uploadedFile = UploadModel(challenge=site,
-                                   permission_lvl=UploadModel.ADMIN_ONLY,
-                                   user=request.user)
+        uploadedFile = UploadModel(
+            challenge=site,
+            permission_lvl=UploadModel.ADMIN_ONLY,
+            user=request.user,
+        )
         # ADMIN_ONLY
-
-        form = UserUploadForm(request.POST, request.FILES,
-                              instance=uploadedFile)
+        form = UserUploadForm(
+            request.POST, request.FILES, instance=uploadedFile
+        )
         if form.is_valid():
             form.save()
             filename = ntpath.basename(form.instance.file.file.name)
@@ -197,30 +192,27 @@ def upload_handler(request, challenge_short_name):
                 (
                     f"File '{filename}' sucessfully uploaded. "
                     f"An email has been sent to this projects organizers."
-                )
+                ),
             )
-
             send_file_uploaded_notification_email(
                 uploader=request.user,
                 filename=filename,
                 challenge=site,
                 site=get_current_site(request),
             )
-
             return HttpResponseRedirect(view_url)
+
         else:
             # continue to showing errors
             pass
     else:
         form = UserUploadForm()
-
     [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name)
-
+        challenge_short_name
+    )
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(challenge=site, title="files")
         currentpage = permissionMessage(request, site, p)
-
         response = render(
             request,
             'page.html',
@@ -228,10 +220,9 @@ def upload_handler(request, challenge_short_name):
                 'site': site,
                 'currentpage': currentpage,
                 "pages": pages,
-                "metafooterpages": metafooterpages
+                "metafooterpages": metafooterpages,
             },
         )
-
         response.status_code = 403
         return response
 
@@ -243,6 +234,6 @@ def upload_handler(request, challenge_short_name):
             'upload_url': view_url,
             'site': site,
             'pages': pages,
-            'metafooterpages': metafooterpages
+            'metafooterpages': metafooterpages,
         },
     )

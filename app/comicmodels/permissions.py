@@ -12,21 +12,25 @@ def can_access(user, path, challenge_short_name):
 
     """
     required = _required_permission(path, challenge_short_name)
-
     if required == ComicSiteModel.ALL:
         return True
+
     elif required == ComicSiteModel.REGISTERED_ONLY:
         project = ComicSite.objects.get(short_name=challenge_short_name)
         if project.is_participant(user):
             return True
+
         else:
             return False
+
     elif required == ComicSiteModel.ADMIN_ONLY:
         project = ComicSite.objects.get(short_name=challenge_short_name)
         if project.is_admin(user):
             return True
+
         else:
             return False
+
     else:
         return False
 
@@ -45,14 +49,16 @@ def _required_permission(path, challenge_short_name):
             "Don't know from which folder serving publiv files"
             "is allowed. Please add a setting like "
             "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
-            " to your .conf file.")
+            " to your .conf file."
+        )
 
     if not hasattr(settings, "COMIC_REGISTERED_ONLY_FOLDER_NAME"):
         raise ImproperlyConfigured(
             "Don't know from which folder serving protected files"
             "is allowed. Please add a setting like "
             "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
-            " to your .conf file.")
+            " to your .conf file."
+        )
 
     if challenge_short_name.lower() == 'mugshots':
         # Anyone can see mugshots
@@ -76,8 +82,10 @@ def _required_permission(path, challenge_short_name):
 
     if path.startswith(settings.COMIC_PUBLIC_FOLDER_NAME):
         return ComicSiteModel.ALL
+
     elif path.startswith(settings.COMIC_REGISTERED_ONLY_FOLDER_NAME):
         return ComicSiteModel.REGISTERED_ONLY
+
     else:
         return ComicSiteModel.ADMIN_ONLY
 

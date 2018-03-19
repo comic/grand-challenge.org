@@ -4,10 +4,7 @@ import factory
 from django.conf import settings
 
 from comicmodels.models import (
-    ComicSite,
-    Page,
-    RegistrationRequest,
-    UploadModel,
+    ComicSite, Page, RegistrationRequest, UploadModel
 )
 from evaluation.models import Submission, Job, Method, Result
 from teams.models import Team, TeamMember
@@ -16,6 +13,7 @@ SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 
 
 class ChallengeFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = ComicSite
 
@@ -23,6 +21,7 @@ class ChallengeFactory(factory.DjangoModelFactory):
 
 
 class PageFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Page
 
@@ -32,20 +31,22 @@ class PageFactory(factory.DjangoModelFactory):
 
 
 class UserFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = settings.AUTH_USER_MODEL
 
     username = factory.Sequence(lambda n: f'test_user_{n:04}')
     email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)
-    password = factory.PostGenerationMethodCall('set_password',
-                                                SUPER_SECURE_TEST_PASSWORD)
-
+    password = factory.PostGenerationMethodCall(
+        'set_password', SUPER_SECURE_TEST_PASSWORD
+    )
     is_active = True
     is_staff = False
     is_superuser = False
 
 
 class UploadFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = UploadModel
 
@@ -56,6 +57,7 @@ class UploadFactory(factory.DjangoModelFactory):
 
 
 class RegistrationRequestFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = RegistrationRequest
 
@@ -70,6 +72,7 @@ def hash_sha256(s):
 
 
 class MethodFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Method
 
@@ -79,6 +82,7 @@ class MethodFactory(factory.DjangoModelFactory):
 
 
 class SubmissionFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Submission
 
@@ -87,6 +91,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
 
 
 class JobFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Job
 
@@ -96,6 +101,7 @@ class JobFactory(factory.DjangoModelFactory):
 
 
 class ResultFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Result
 
@@ -103,6 +109,7 @@ class ResultFactory(factory.DjangoModelFactory):
 
 
 class TeamFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = Team
 
@@ -111,6 +118,7 @@ class TeamFactory(factory.DjangoModelFactory):
 
 
 class TeamMemberFactory(factory.DjangoModelFactory):
+
     class Meta:
         model = TeamMember
 

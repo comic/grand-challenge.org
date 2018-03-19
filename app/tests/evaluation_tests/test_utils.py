@@ -10,10 +10,8 @@ from tests.factories import ResultFactory, ChallengeFactory
 @pytest.mark.django_db
 def test_calculate_ranks(mocker):
     challenge = ChallengeFactory()
-
     challenge.evaluation_config.score_jsonpath = 'a'
     challenge.evaluation_config.save()
-
     with mute_signals(post_save):
         queryset = (
             ResultFactory(challenge=challenge, metrics={'a': 0.1}),
@@ -23,19 +21,14 @@ def test_calculate_ranks(mocker):
             ResultFactory(challenge=challenge, metrics={'a': 0.5}),
             ResultFactory(challenge=challenge, metrics={'a': 1.0}),
         )
-
     # An alternative implementation could be [4, 3, 1, 2, 3, 1] as there are
     # only 4 unique values, the current implementation is harsh on poor results
     expected_ranks = [6, 4, 1, 3, 4, 1]
-
     challenge = assert_ranks(challenge, expected_ranks, queryset)
-
     # now test reverse order
     challenge.evaluation_config.score_default_sort = challenge.evaluation_config.ASCENDING
     challenge.evaluation_config.save()
-
     expected_ranks = [1, 2, 5, 4, 2, 5]
-
     assert_ranks(challenge, expected_ranks, queryset)
 
 

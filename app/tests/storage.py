@@ -18,32 +18,29 @@ class MockStorage(FileSystemStorage):
     """
     For testing, A storage class which does not write anything to disk.
     """
-
-    # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES         
-    FAKE_DIRS = ["fake_test_dir",
-                 settings.COMIC_PUBLIC_FOLDER_NAME,
-                 settings.COMIC_REGISTERED_ONLY_FOLDER_NAME
-                 ]
-
-    # 
-    FAKE_FILES = [fake_file("fakefile1.txt"),
-                  fake_file("fakefile2.jpg"),
-                  fake_file("fakefile3.exe"),
-                  fake_file("fakefile4.mhd"),
-                  fake_file("fakecss.css", "body {width:300px;}")
-                  ]
+    # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES
+    FAKE_DIRS = [
+        "fake_test_dir",
+        settings.COMIC_PUBLIC_FOLDER_NAME,
+        settings.COMIC_REGISTERED_ONLY_FOLDER_NAME,
+    ]
+    #
+    FAKE_FILES = [
+        fake_file("fakefile1.txt"),
+        fake_file("fakefile2.jpg"),
+        fake_file("fakefile3.exe"),
+        fake_file("fakefile4.mhd"),
+        fake_file("fakecss.css", "body {width:300px;}"),
+    ]
 
     def __init__(self):
         super(FileSystemStorage, self).__init__()
         self.saved_files = {}
 
     def _save(self, name, content):
-
         mockfile = File(content)
         mockfile.name = name
-
         self.saved_files[name] = mockfile
-
         return name
 
     def _open(self, path, mode='rb'):
@@ -52,33 +49,32 @@ class MockStorage(FileSystemStorage):
         
         """
         if not self.exists(path):
-            raise OSError("Mockstorage: '%s' No such file or directory." % path)
+            raise OSError(
+                "Mockstorage: '%s' No such file or directory." % path
+            )
 
         if path in self.saved_files.keys():
             return self.saved_files[path]
 
-        if os.path.splitext(path)[1].lower() in [".jpg", ".png", ".gif", ".bmp"]:
+        if os.path.splitext(path)[1].lower() in [
+            ".jpg", ".png", ".gif", ".bmp"
+        ]:
             # 1px test image
             binary_image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
-
             img = BytesIO(binary_image_data)
             mockfile = File(img)
             mockfile.name = "MOCKED_IMAGE_" + path
         else:
-
             content = "mock content"
-            # If a predefined fake file is asked for, return predefined content            
+            # If a predefined fake file is asked for, return predefined content
             filename = os.path.split(path)[1]
             for content_name in self.FAKE_FILES:
                 mockfilename = content_name['filename']
                 mockcontent = content_name['content']
-
                 if filename == mockfilename:
                     content = mockcontent
-
             mockfile = File(StringIO(content))
             mockfile.name = "MOCKED_FILE_" + path
-
         return mockfile
 
     def add_fake_file(self, filename, content):
@@ -95,7 +91,6 @@ class MockStorage(FileSystemStorage):
         """ Any file exists if one of the FAKE_DIRS are in its 
         path. And its name is one of FAKE_FILES         
         """
-
         if name in self.saved_files.keys():
             return True
 
@@ -104,7 +99,10 @@ class MockStorage(FileSystemStorage):
         directory, file_or_folder = os.path.split(name)
         if "." in file_or_folder:  # input was a file path
             filenames = [x["filename"] for x in self.FAKE_FILES]
-            return self.is_in_fake_test_dir(directory) and (file_or_folder in filenames)
+            return self.is_in_fake_test_dir(directory) and (
+                file_or_folder in filenames
+            )
+
         else:  # input was a directory path
             return self.is_in_fake_test_dir(directory)
 
@@ -127,8 +125,11 @@ class MockStorage(FileSystemStorage):
 
     def size(self, name):
         filenames = [x["filename"] for x in self.FAKE_FILES]
-        if self.is_in_fake_test_dir(name) & (os.path.split(name)[1] in filenames):
+        if self.is_in_fake_test_dir(name) & (
+            os.path.split(name)[1] in filenames
+        ):
             return 10000
+
         else:
             return 0
 

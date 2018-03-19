@@ -23,18 +23,17 @@ class ChallengeList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
                 Q(participants_group__in=self.request.user.groups.all()) |
                 Q(admins_group__in=self.request.user.groups.all())
             )
-
         return queryset
 
 
-class ChallengeUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
-                      UpdateView):
+class ChallengeUpdate(
+    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+):
     model = ComicSite
     slug_field = 'short_name'
     slug_url_kwarg = 'challenge_short_name'

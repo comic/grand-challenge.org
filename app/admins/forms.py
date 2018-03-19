@@ -10,12 +10,7 @@ from comicmodels.models import ComicSite
 class AdminsForm(forms.Form):
     ADD = 'ADD'
     REMOVE = 'REMOVE'
-
-    CHOICES = (
-        (ADD, 'Add admin'),
-        (REMOVE, 'Remove admin'),
-    )
-
+    CHOICES = ((ADD, 'Add admin'), (REMOVE, 'Remove admin'))
     user = forms.ModelChoiceField(
         queryset=get_user_model().objects.all().order_by('username'),
         help_text=(
@@ -26,17 +21,12 @@ class AdminsForm(forms.Form):
         ),
         required=True,
     )
-
     action = forms.ChoiceField(
-        choices=CHOICES,
-        required=True,
-        widget=forms.HiddenInput(),
-        initial=ADD,
+        choices=CHOICES, required=True, widget=forms.HiddenInput(), initial=ADD
     )
 
     def clean_user(self):
         user = self.cleaned_data['user']
-
         if user == get_anonymous_user():
             raise ValidationError('You cannot add this user as an admin!')
 

@@ -12,17 +12,16 @@ from tests.utils import validate_admin_only_text_in_page
         'participants:list',
         'admins:list',
         'uploads:list',
-    ]
+    ],
 )
 def test_admins_see_links(view, client, TwoChallengeSets):
-    url = reverse('challenge-homepage',
-                  args=[TwoChallengeSets.ChallengeSet1.challenge.short_name])
-
-    expected = reverse(
-        view,
-        args=[TwoChallengeSets.ChallengeSet1.challenge.short_name]
+    url = reverse(
+        'challenge-homepage',
+        args=[TwoChallengeSets.ChallengeSet1.challenge.short_name],
     )
-
+    expected = reverse(
+        view, args=[TwoChallengeSets.ChallengeSet1.challenge.short_name]
+    )
     validate_admin_only_text_in_page(
         url=url,
         expected_text=f'"{str(expected)}"',

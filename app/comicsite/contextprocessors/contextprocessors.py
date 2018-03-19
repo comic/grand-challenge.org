@@ -16,19 +16,16 @@ def comic_site(request):
     figure it out. Use main project. 
     
     """
-
     try:
         resolution = resolve(request.path)
     except Http404 as e:
         # fail silently beacuse any exeception here will cause a 500 server error
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
-
     if "challenge_short_name" in resolution.kwargs:
         sitename = resolution.kwargs["challenge_short_name"]
     else:
         sitename = settings.MAIN_PROJECT_NAME
-
     try:
         [site, pages, metafooterpages] = site_get_standard_vars(sitename)
     except ComicSite.DoesNotExist:
@@ -47,7 +44,6 @@ def comic_site(request):
 
 def subdomain_absolute_uri(request):
     uri = build_absolute_uri(request)
-
     return {'subdomain_absolute_uri': uri}
 
 

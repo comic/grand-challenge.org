@@ -16,13 +16,12 @@ framework.
 import os
 import sys
 
-SITE_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-
+SITE_ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+)
 sys.path.append(SITE_ROOT)
 sys.path.append(os.path.join(SITE_ROOT, "comic"))
-
 os.environ.setdefault("PYTHON_EGG_CACHE", "/tmp/")
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
 
 # This application object is used by any WSGI server configured to use this
@@ -31,7 +30,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "comic.settings")
 from django.core.wsgi import get_wsgi_application
 
 application = get_wsgi_application()
-
 # Apply WSGI middleware here.
 # from helloworld.wsgi import HelloWorldApplication
 # application = HelloWorldApplication(application)

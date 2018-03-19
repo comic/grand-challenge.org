@@ -1,11 +1,7 @@
 import json
 from csv import DictReader
 
-from sklearn.metrics import (
-    accuracy_score,
-    log_loss,
-    recall_score,
-)
+from sklearn.metrics import (accuracy_score, log_loss, recall_score)
 
 
 def get_classes(csvfile: str):
@@ -26,19 +22,15 @@ if __name__ == '__main__':
     # TODO
     # We need to define how the container will be launched (ie. write out the
     # concrete commands). Allow different filenames etc?
-
     # Requirement: The ground truth must be part of the container
     gt = get_classes('ground_truth.csv')
-
     # The challenge organizer is free to define the input from the participants
     # What the user uploads will be placed directly in /input/, but the admin
     # is free to determine the file type. The only limitation is that this will
     # be a single file.
     preds = get_classes('/input/submission.csv')
-
     # The evaluation algorithm computes the scores of this submission
     acc = accuracy_score(gt, preds)
-
     # A dictionary is created of the metrics, which is then written to
     # /output/metrics.json
     metrics = {

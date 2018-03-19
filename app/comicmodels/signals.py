@@ -17,32 +17,28 @@ def add_standard_permissions(group, objname):
 
 
 @receiver(post_save, sender=ComicSite)
-def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
-                           created: bool = False, **kwargs):
+def setup_challenge_groups(
+    instance: ComicSite = None, created: bool = False, *_, **__
+):
     if created:
         # Create the evaluation config
         Config.objects.create(challenge=instance)
-
         # Create the groups only on first save
         admins_group = Group.objects.create(name=instance.admin_group_name())
         participants_group = Group.objects.create(
-            name=instance.participants_group_name())
-
+            name=instance.participants_group_name()
+        )
         instance.admins_group = admins_group
         instance.participants_group = participants_group
         instance.save()
-
         assign_perm("change_comicsite", admins_group, instance)
-
         # add all permissions for pages and comicsites so
         # these can be edited by admin group
         add_standard_permissions(admins_group, "comicsite")
         add_standard_permissions(admins_group, "page")
-
         # add current user to admins for this site
         try:
             instance.creator.groups.add(admins_group)
-
             send_challenge_created_email(instance)
         except AttributeError:
             # No creator set
@@ -50,11 +46,12 @@ def setup_challenge_groups(sender: ComicSite, instance: ComicSite = None,
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_everyone_user_group(sender: settings.AUTH_USER_MODEL,
-                               instance: settings.AUTH_USER_MODEL = None,
-                               created: bool = False, **kwargs):
+def create_everyone_user_group(
+    instance: settings.AUTH_USER_MODEL = None, created: bool = False, *_, **__
+):
     # Create the everyone usergroup when the anonymoususer is created
     if created and instance.username == settings.ANONYMOUS_USER_NAME:
         group, _ = Group.objects.get_or_create(
-            name=settings.EVERYONE_GROUP_NAME)
+            name=settings.EVERYONE_GROUP_NAME
+        )
         instance.groups.add(group)

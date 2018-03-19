@@ -4,8 +4,7 @@ from evaluation.models import Result, Submission, Job, Method
 
 
 class ResultSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name="api:result-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="api:result-detail")
 
     class Meta:
         model = Result
@@ -14,12 +13,14 @@ class ResultSerializer(serializers.HyperlinkedModelSerializer):
 
 class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="api:submission-detail")
-
-    creator = serializers.SlugRelatedField(read_only=True,
-                                           slug_field='username')
-    challenge = serializers.SlugRelatedField(read_only=True,
-                                             slug_field='short_name')
+        view_name="api:submission-detail"
+    )
+    creator = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+    )
+    challenge = serializers.SlugRelatedField(
+        read_only=True, slug_field='short_name'
+    )
 
     class Meta:
         model = Submission
@@ -27,8 +28,7 @@ class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class JobSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name="api:job-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="api:job-detail")
 
     class Meta:
         model = Job
@@ -36,8 +36,7 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MethodSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name="api:method-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="api:method-detail")
 
     class Meta:
         model = Method

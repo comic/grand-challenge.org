@@ -26,7 +26,6 @@ class HtmlLinkReplacer:
         soup = BeautifulSoup(html, "html.parser")
         soup = self.replace_a(soup, baseURL, currentpath)
         soup = self.replace_img(soup, baseURL, currentpath)
-
         return soup.renderContents()
 
     def replace_a(self, soup, baseURL, currentpath):
@@ -40,19 +39,20 @@ class HtmlLinkReplacer:
         return soup
 
     def refers_to_file(self, url):
-
         (start, ext) = os.path.splitext(url)
         if ext:
             return True
+
         else:
             return False
 
     def get_url(self, a):
-
         if a.has_attr('src'):
             return a['src']
+
         elif a.has_attr('href'):
             return a['href']
+
         else:
             return ""
 
@@ -60,9 +60,7 @@ class HtmlLinkReplacer:
         """ Only rewrite links to files, links to paths are never an included
         file and just be used as is. 
         """
-
         url = self.get_url(a)
-
         if url and self.refers_to_file(url):
             return self.replace_url(a, baseURL, currentpath)
 
@@ -94,60 +92,63 @@ class HtmlLinkReplacer:
         handles root-relative url (e.g "/admin/index.html") and regular relative url
         (e.g. "images/test.png") correctly   
         """
-
         if a.has_attr('src'):
             url = a['src']
         elif a.has_attr('href'):
             url = a['href']
         else:
-            raise AttributeError("Trying to replace a link which has no src and no href"
-                                 "attribute. This should never happen.")
+            raise AttributeError(
+                "Trying to replace a link which has no src and no href"
+                "attribute. This should never happen."
+            )
 
         # leave absolute links alone
         if re.match('http://', url) or re.match('https://', url):
             pass
-
         # for root-relative links
         elif re.match('/', url):
             url = baseURL + url
-
         # regular relative links
-        elif re.match('\w', url):  # match matches start of string, \w = any alphanumeric
+        elif re.match(
+            '\w', url
+        ):  # match matches start of string, \w = any alphanumeric
             url = baseURL + currentpath + url
-
-
         # go up path if ../ are in link
         else:
             if currentpath.endswith("/"):
-                currentpath = currentpath[:-1]  # remove trailing slash to make first path.dirname actually go
-                # up one dir
-                # while re.match('\.\.',url):
-                # remove "../"
-                #   url = url[3:]
-                # go up one in currentpath
-                #  if currentpath == "":
-                #     pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
-                # throw some kind of outsidescope error?
-                # else:
-                #   currentpath = os.path.dirname(currentpath)
-
+                currentpath = currentpath[
+                    :-1
+                ]  # remove trailing slash to make first path.dirname actually go
+            # up one dir
+            # while re.match('\.\.',url):
+            # remove "../"
+            #   url = url[3:]
+            # go up one in currentpath
+            #  if currentpath == "":
+            #     pass # going up the path would go outside COMIC dropbox bounds. TODO: maybe
+            # throw some kind of outsidescope error?
+            # else:
+            #   currentpath = os.path.dirname(currentpath)
             if currentpath.endswith("/"):
                 pass
             else:
                 if not currentpath == "":
                     currentpath = currentpath + "/"
             url = baseURL + currentpath + url
-
-        url = url.replace("//", "/")  # remove double slashes because this can mess up django's url system
-        url = re.sub("http:/(?=\w)", "http://", url)  # but this also removes double slashes in http://.  Reverse this.
-
+        url = url.replace(
+            "//", "/"
+        )  # remove double slashes because this can mess up django's url system
+        url = re.sub(
+            "http:/(?=\w)", "http://", url
+        )  # but this also removes double slashes in http://.  Reverse this.
         if a.has_attr('src'):
             a['src'] = url
         elif a.has_attr('href'):
             a['href'] = url
         else:
-            logger.warning("Trying to replace a link which has no src and no href"
-                           "attribute. This should never happen.")
+            logger.warning(
+                "Trying to replace a link which has no src and no href"
+                "attribute. This should never happen."
+            )
             pass
-
         return a
