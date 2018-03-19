@@ -177,7 +177,7 @@ class ComicframeworkTestCase(TestCase):
         """ Register user for the given project, follow actual signup as
         closely as possible.
         """
-        RegistrationRequestFactory(project=project, user=user)
+        RegistrationRequestFactory(challenge=project, user=user)
 
         self.assertTrue(project.is_participant(user),
                         "After registering as user %s , user does not "

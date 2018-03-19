@@ -38,8 +38,12 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
 
 @pytest.mark.django_db
 def test_registration_list_is_filtered(client, TwoChallengeSets):
-    r1 = RegistrationRequestFactory(project=TwoChallengeSets.ChallengeSet1.challenge)
-    r2 = RegistrationRequestFactory(project=TwoChallengeSets.ChallengeSet2.challenge)
+    r1 = RegistrationRequestFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge
+    )
+    r2 = RegistrationRequestFactory(
+        challenge=TwoChallengeSets.ChallengeSet2.challenge
+    )
 
     response = get_view_for_user(
         viewname='participants:registration-list',

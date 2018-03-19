@@ -60,7 +60,7 @@ class RegistrationRequestFactory(factory.DjangoModelFactory):
         model = RegistrationRequest
 
     user = factory.SubFactory(UserFactory)
-    project = factory.SubFactory(ChallengeFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
 
 
 def hash_sha256(s):

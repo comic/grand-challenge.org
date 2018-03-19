@@ -805,8 +805,8 @@ class RegistrationRequest(models.Model):
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              help_text="which user requested to participate?")
-    project = models.ForeignKey(ComicSite,
-                                help_text="To which project does the user want to register?")
+    challenge = models.ForeignKey(ComicSite,
+                                  help_text="To which project does the user want to register?")
 
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)
@@ -832,14 +832,14 @@ class RegistrationRequest(models.Model):
         """
         return "{1} registration request by user {0}".format(
             self.user.username,
-            self.project.short_name)
+            self.challenge.short_name)
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
     def status_to_string(self):
-        status = "Your request to join " + self.project.short_name + \
+        status = "Your request to join " + self.challenge.short_name + \
                  ", sent " + self.format_date(self.created)
 
         if self.status == self.PENDING:
@@ -859,4 +859,4 @@ class RegistrationRequest(models.Model):
         return profile.institution + " - " + profile.department
 
     class Meta:
-        unique_together = (('project', 'user'),)
+        unique_together = (('challenge', 'user'),)

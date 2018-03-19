@@ -40,7 +40,7 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
         challenge = ComicSite.objects.get(pk=self.request.project_pk)
 
         form.instance.user = self.request.user
-        form.instance.project = challenge
+        form.instance.challenge = challenge
 
         try:
             redirect = super().form_valid(form)
@@ -61,7 +61,7 @@ class RegistrationRequestCreate(LoginRequiredMixin, SuccessMessageMixin,
 
         try:
             status = RegistrationRequest.objects.get(
-                project__pk=self.request.project_pk,
+                challenge__pk=self.request.project_pk,
                 user=self.request.user,
             ).status_to_string()
         except ObjectDoesNotExist:
@@ -77,7 +77,7 @@ class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(Q(project__pk=self.request.project_pk))
+        queryset = queryset.filter(Q(challenge__pk=self.request.project_pk))
         return queryset
 
 
@@ -91,7 +91,7 @@ class RegistrationRequestUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin,
         return reverse(
             'participants:registration-list',
             kwargs={
-                'challenge_short_name': self.object.project.short_name,
+                'challenge_short_name': self.object.challenge.short_name,
             }
         )
 

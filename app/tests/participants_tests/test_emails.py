@@ -23,7 +23,7 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
 
     assert not RegistrationRequest.objects.filter(
         user=user,
-        project=ChallengeSet.challenge
+        challenge=ChallengeSet.challenge
     ).exists()
 
     response = get_view_for_user(
@@ -38,7 +38,7 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
 
     assert RegistrationRequest.objects.filter(
         user=user,
-        project=ChallengeSet.challenge
+        challenge=ChallengeSet.challenge
     ).exists()
 
     if participant_review:
@@ -67,7 +67,7 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
     ]
 )
 def test_registration_updated_email(new_state, client, ChallengeSet):
-    rr = RegistrationRequestFactory(project=ChallengeSet.challenge)
+    rr = RegistrationRequestFactory(challenge=ChallengeSet.challenge)
 
     response = get_view_for_user(
         viewname='participants:registration-update',

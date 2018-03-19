@@ -26,7 +26,6 @@ ratings:
   - "**.js"
   - "**.jsx"
   - "**.module"
-  - "**.php"
   - "**.py"
   - "**.rb"
 exclude_paths:

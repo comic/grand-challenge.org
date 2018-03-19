@@ -11,7 +11,7 @@ def test_registration_request_create_post(client, TwoChallengeSets):
 
     assert not RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet1.challenge
+        challenge=TwoChallengeSets.ChallengeSet1.challenge
     ).exists()
 
     response = get_view_for_user(
@@ -26,7 +26,7 @@ def test_registration_request_create_post(client, TwoChallengeSets):
 
     assert RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet1.challenge
+        challenge=TwoChallengeSets.ChallengeSet1.challenge
     ).exists()
 
 
@@ -36,16 +36,16 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
 
     assert not RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet1.challenge).exists()
+        challenge=TwoChallengeSets.ChallengeSet1.challenge).exists()
 
     rr = RegistrationRequestFactory(
         user=user,
-        project=TwoChallengeSets.ChallengeSet1.challenge
+        challenge=TwoChallengeSets.ChallengeSet1.challenge
     )
 
     assert RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet1.challenge).exists()
+        challenge=TwoChallengeSets.ChallengeSet1.challenge).exists()
 
     response = get_view_for_user(
         viewname='participants:registration-create',
@@ -61,7 +61,7 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
     # Creating a request in another challenge should work
     assert not RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet2.challenge).exists()
+        challenge=TwoChallengeSets.ChallengeSet2.challenge).exists()
 
     response = get_view_for_user(
         viewname='participants:registration-create',
@@ -74,4 +74,4 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(
         user=user,
-        project=TwoChallengeSets.ChallengeSet2.challenge).exists()
+        challenge=TwoChallengeSets.ChallengeSet2.challenge).exists()

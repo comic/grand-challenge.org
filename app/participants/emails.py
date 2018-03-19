@@ -12,12 +12,12 @@ def send_participation_request_notification_email(request, obj):
 
     """
 
-    title = 'New participation request for {0}'.format(obj.project.short_name)
+    title = 'New participation request for {0}'.format(obj.challenge.short_name)
     mainportal = get_current_site(request)
     kwargs = {'user': obj.user,
               'site': mainportal,
-              'project': obj.project}
-    for admin in obj.project.get_admins():
+              'challenge': obj.challenge}
+    for admin in obj.challenge.get_admins():
         kwargs["admin"] = admin
         send_templated_email(
             title,
@@ -37,12 +37,12 @@ def send_participation_request_accepted_email(request, obj):
 
     """
 
-    title = obj.project.short_name + ' participation request accepted'
+    title = obj.challenge.short_name + ' participation request accepted'
     mainportal = get_current_site(request)
     kwargs = {'user': obj.user,
               'adder': request.user,
               'site': mainportal,
-              'project': obj.project}
+              'challenge': obj.challenge}
 
     send_templated_email(
         title,
@@ -62,12 +62,12 @@ def send_participation_request_rejected_email(request, obj):
 
     """
 
-    title = obj.project.short_name + ' participation request rejected'
+    title = obj.challenge.short_name + ' participation request rejected'
     mainportal = get_current_site(request)
     kwargs = {'user': obj.user,
               'adder': request.user,
               'site': mainportal,
-              'project': obj.project}
+              'challenge': obj.challenge}
 
     send_templated_email(
         title,
