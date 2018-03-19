@@ -16,7 +16,6 @@ def test_taglist():
     rendered = template.render(Context({}))
 
     assert '<td>listdir</td>' in rendered
-    assert '<td>get_result_info</td>' in rendered
     assert '<td>get_project_prefix</td>' in rendered
 
 
@@ -125,9 +124,5 @@ def test_insert_graph_anode09(rf: RequestFactory, view_type):
     else:
         assert "comictablecontainer" in rendered
 
-
-
 # {% image_browser path:string - path relative to current project
 #                  config:string - path relative to current project %}
-
-# get_result_info

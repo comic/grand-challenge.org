@@ -618,162 +618,6 @@ def in_list(needles, haystack):
     return False
 
 
-@register.tag(name="get_result_info",
-              usagestr="""Tag usage: {% get_result_info id:<resultID>, type:<item> %}
-                  <resultID>: string containing the first characters of the folder
-                      containing the results. Results are searched for only in the
-                      /results folder. Folders are searched for in alphabetical order,
-                  the first is returned
-                  <item>: what type of info should be returned? one of the following
-                      strings:
-                         * "folder_name"           - the full name of this results' folder
-                         * "description_file_path" - full path to the file describing
-                                                    this result, from this project's
-                                                    root.                                                              
-                  
-                  """)
-def get_result_info(parser, token):
-    """ Get a string of information regarding a certain result """
-
-    usagestr = get_usagestr("get_result_info")
-
-    try:
-        args = parseKeyValueToken(token)
-        ensure_args_length(2, args)
-        ensure_key_in_args("id", args)
-        ensure_key_in_args("type", args)
-        ensure_value_is_in_list(args["type"],
-                                ["folder_name", "description_file_path"])
-
-
-    except ValueError as e:
-        errormsg = "Error parsing {% " + token.contents + " %}: " + str(
-            e) + " <br/> " + usagestr
-        return TemplateErrorNode(errormsg)
-
-    return GetResultInfoNode(args, parser)
-
-
-class GetResultInfoNode(template.Node):
-    usagestr = get_usagestr("get_result_info")
-
-    def __init__(self, args, parser):
-        self.args = args
-        self.parser = parser
-
-    def make_resultsinfo_error_msg(self, msg):
-        errormsg = "Error rendering tag {% get_results_info %} with parameters'" + str(
-            self.args) + "':" + msg
-        return makeErrorMsgHtml(errormsg)
-
-    def render(self, context):
-
-        # path can contain variables like "/results/{{resultId}}/screenshots/"
-        self.args["id"] = resolve_path(self.args["id"], self.parser, context)
-
-        result_folder = self.try_find_result_folder(context)
-
-        if result_folder is None:
-            return """result folder starting with '{id}' could not be found. 
-            Searched {folder}""".format(id=self.args["id"],
-                                        folder=result_folder)
-
-        render_type = self.args["type"]
-        if render_type == "folder_name":
-            return result_folder
-        elif render_type == "description_file_path":
-            return "description file for {}".format(self.args["id"])
-        else:
-            return self.make_resultsinfo_error_msg(
-                "unknown type '{}'. I don't know that to return.")
-
-    def try_find_result_folder(self, context):
-        results_folder = settings.COMIC_RESULTS_FOLDER_NAME
-
-        project_name = context.page.comicsite.short_name
-        results_path = os.path.join(project_name, results_folder)
-
-        recursion_depth = 1
-        try:
-            result_folder = find_dir_starting_with(str(self.args["id"]),
-                                                   results_path,
-                                                   recursion_depth)
-        except OSError as e:
-            return self.make_resultsinfo_error_msg(str(e))
-
-        return result_folder
-
-
-def find_dir_starting_with(startswith, path, max_depth, current_depth=0):
-    """Return the first directory which starts with startswith.
-         
-    Searches path a-z first, then subdirs a-z in order
-    
-    Params:
-        startswith (string)
-        path : full path the directory on disk
-        depth: search subdirectories up to this depth
-    
-    Returns:
-        Full path to the first directory found to start with given string 
-        empty string otherwise
-    
-    Raises:
-        OSError if path does not exist
-              
-    """
-
-    storage = DefaultStorage()
-    dirs = storage.listdir(path)[0]
-
-    while current_depth <= max_depth:
-        for directory in dirs:
-            if directory.startswith(startswith):
-                return directory
-
-        for directory in dirs:
-            subdirpath = os.path.join(path, directory)
-            subdir = find_dir_starting_with(startswith, subdirpath, max_depth,
-                                            current_depth + 1)
-            if subdir is not None:
-                return subdir
-
-        return None
-
-    return None
-
-
-def ensure_key_in_args(param_name, args):
-    """Raise a descriptive error when a key is not in the given dict
-    
-    Used to save typing during input checking for django template tags 
-    
-    """
-    if param_name not in args.keys():
-        raise ValueError(
-            "ensure_key_in_args: '" + param_name + "' argument is missing.")
-
-
-def ensure_args_length(length, args):
-    """Raise a descriptive error when dictionary is not of expected length
-    
-    """
-
-    if len(args) != length:
-        raise ValueError("ensure_args_length: Expected " + str(
-            length) + " arguments, found " + str(len(args)) + ".")
-
-
-def ensure_value_is_in_list(value, allowed_values):
-    """Raise descriptive ValueError when value is not one of allowed values
-    
-    """
-    if not value in allowed_values:
-        raise ValueError(
-            "ensure_value_is_in_list: Unknown value '" + value + "'. Expected one of [" + ",".join(
-                allowed_values) + "]")
-
-
 @register.tag(name="get_project_prefix",
               usagestr="""Tag usage: {% get_api_prefix %}
                   Get the base url for this project as string, with trailing slash
@@ -953,10 +797,7 @@ def insert_graph(parser, token):
 
     usagestr = """Tag usage: {% insert_graph <file> type:<type>%}
                   <file>: filepath relative to project dropboxfolder.
-                  <type>: how should the file be parsed and rendered? default
-                      is to render an FROC curve for a an csv with first column
-                      for x and subsequent columns for y, first row for short
-                      var names, second row for verbose names.
+                  <type>: how should the file be parsed and rendered?
                   Example: {% insert_graph results/test.txt %}
                   You can use url parameters in <file> by using {{curly braces}}.
                   Example: {% inster_graphfile {{id}}/result.txt %} called with ?id=1234
@@ -977,7 +818,7 @@ def insert_graph(parser, token):
         if len(all_args) == 2:
             args["type"] = all_args[1].split(":")[1]
         else:
-            args["type"] = "csv"  # default
+            args["type"] = "anode09"  # default
 
     replacer = HtmlLinkReplacer()
 
@@ -1076,9 +917,7 @@ def getrenderer(renderer_format):
     By using this function we can easily list all available renderers and provide some safety:
     only functions listed here can be called from the template tag render_graph.
     """
-    renderers = {"csv": render_FROC,
-                 "table": render_table,
-                 "anode09": render_anode09_result,
+    renderers = {"anode09": render_anode09_result,
                  "anode09_table": render_anode09_table, }
 
     if renderer_format not in renderers:
@@ -1104,121 +943,6 @@ def canvas_to_svg(canvas):
     imgdata.close()
 
     return svg_data
-
-
-# readers for graph data.
-
-def parse_csv_table(has_header, f):
-    table = []
-    csvreader = csv.reader(f)
-    i = 0
-    j = 0
-    row = ''
-    headers = []
-    try:
-        for row in csvreader:
-            if not has_header or i > 0:
-                for j, cell in enumerate(row):
-                    try:
-                        row[j] = float(cell)
-                    except ValueError:
-                        row[j] = str(cell)
-
-                table.append(row)
-            elif has_header:
-                headers = row
-                # nonFloatColumns = [x % len(headers) for x in nonFloatColumns]
-                # print nonFloatColumns
-            i = i + 1
-    except ValueError as e:  #
-        # pdb.set_trace()
-        raise ParserException(
-            "Error parsing '{}' (item {} on row {}) in file '{}'".format(
-                row[j], j, i, f))
-
-    return table, headers
-
-
-def render_FROC(filename):
-    """ Read in csv file with the following format:
-        x_value,        all nodules,    peri-fissural nodules, ...N
-        0.02,           0.31401,        0.0169492,             ...N
-
-        First column must be x values, subsequent columns can be any number of y
-        values, one for each line to plot.
-        First column should be header names to return with each column.
-
-        Returns: string containing html/svg instruction to render an FROC curve
-        of all the variables found in file
-    """
-    has_header = True
-
-    storage = DefaultStorage()
-    f = storage.open(filename, 'r')
-
-    table, headers = parse_csv_table(has_header, f)
-
-    f.close()
-
-    columns = zip(*table)
-    escaped_headers = [escape_for_html_id(x) for x in headers]
-
-    fig = Figure(facecolor='white')
-    canvas = FigureCanvas(fig)
-
-    for i in range(1, len(columns)):
-        fig.gca().plot(columns[0], columns[i], label=headers[i],
-                       gid=escaped_headers[i])
-    fig.gca().set_xlim([10 ** -2, 10 ** 2])
-    fig.gca().set_ylim([0, 1])
-    fig.gca().legend(loc='best', prop={'size': 10})
-    fig.gca().grid()
-    fig.gca().grid(which='minor')
-    fig.gca().set_xlabel('False positives/image')
-    fig.gca().set_ylabel('Sensitivity')
-
-    fig.gca().set_xscale("log")
-    fig.set_size_inches(8, 6)
-
-    return canvas_to_svg(canvas)
-
-
-def render_table(filename):
-    """ Read in a csv file and output HTML to render as HTML table.
-    Adds class='sortable' so the JS lib 'datatables' can be called upon this
-    table to make it sortable interactively.
-    
-    First line of the csv is interpreted as header 
-    """
-    # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
-    has_header = True
-    storage = DefaultStorage()
-    f = storage.open(filename, 'r')
-    table, headers = parse_csv_table(has_header, f)
-
-    f.close()
-
-    columns = zip(*table)
-    escaped_headers = [escape_for_html_id(x) for x in headers]
-
-    table_id = id_generator()
-
-    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="{}">""".format(
-        table_id)
-
-    if has_header:
-        tableHTML += "<thead>"
-        tableHTML += array_to_table_row(headers)
-        tableHTML += "</thead>"
-
-    tableHTML += "<tbody>"
-    for tablerow in table:
-        tableHTML += array_to_table_row(tablerow)
-
-    tableHTML = tableHTML + "</tbody>"
-    tableHTML = tableHTML + "</table>"
-
-    return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
 def render_anode09_result(filename):
