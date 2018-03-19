@@ -50,9 +50,9 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
         path = os.path.join(challenge.public_upload_dir_rel(), filename)
     else:
         path = os.path.join(challenge.upload_dir_rel(), filename)
-    path = path.replace(
-        "\\", "/"
-    )  # replace remove double slashes because this can mess up django's url system
+    # replace remove double slashes because this can mess up django's url
+    # system
+    path = path.replace("\\", "/")
     return path
 
 
@@ -68,13 +68,13 @@ class ComicSiteManager(models.Manager):
 
 
 class ProjectLink(object):
-    """ Metadata about a single project: url, event etc. Used as the shared class
-    for both external challenges and projects hosted on comic so they can be
-    shown on the projectlinks overview page
+    """ Metadata about a single project: url, event etc. Used as the shared
+    class for both external challenges and projects hosted on comic so they can
+    be shown on the projectlinks overview page
 
     """
-    # Using dict instead of giving a lot of fields to this object because the former
-    # is easier to work with
+    # Using dict instead of giving a lot of fields to this object because the
+    # former is easier to work with
     defaults = {
         "abreviation": "",
         "title": "",
@@ -126,8 +126,8 @@ class ProjectLink(object):
                 date = ""
         else:
             datestr = self.params["workshop date"]
-            # this happens when excel says its a number. I dont want to force the
-            # excel file to be clean, so deal with it here.
+            # this happens when excel says its a number. I dont want to force
+            # the excel file to be clean, so deal with it here.
             if type(datestr) == float:
                 datestr = str(datestr)[0:8]
             try:
@@ -135,9 +135,10 @@ class ProjectLink(object):
                     datetime.datetime.strptime(datestr, "%Y%m%d"),
                     timezone.get_default_timezone(),
                 )
-            except ValueError as e:
+            except ValueError:
                 logger.warning(
-                    "could not parse date '%s' from xls line starting with '%s'. Returning default date 2013-01-01" %
+                    "could not parse date '%s' from xls line starting with "
+                    "'%s'. Returning default date 2013-01-01" %
                     (datestr, self.params["abreviation"])
                 )
                 date = ""
@@ -147,8 +148,8 @@ class ProjectLink(object):
             if self.params["hosted on comic"]:
                 return self.params["created at"]
 
-            # If you cannot find the exact date, try to get at least the year right.
-            # again do not throw errors, excel can be dirty
+            # If you cannot find the exact date, try to get at least the year
+            # right. again do not throw errors, excel can be dirty
             year = int(self.params["year"])
             try:
                 date = timezone.make_aware(
@@ -157,7 +158,8 @@ class ProjectLink(object):
                 )
             except ValueError:
                 logger.warning(
-                    "could not parse year '%f' from xls line starting with '%s'. Returning default date 2013-01-01" %
+                    "could not parse year '%f' from xls line starting with "
+                    "'%s'. Returning default date 2013-01-01" %
                     (year, self.params["abreviation"])
                 )
                 date = timezone.make_aware(
@@ -177,7 +179,7 @@ class ProjectLink(object):
 
         """
         linkclass = ComicSite.CHALLENGE_ACTIVE
-        # for project hosted on comic, try to find upcoming/active automatically
+        # for project hosted on comic, try to find upcoming automatically
         if self.params["hosted on comic"]:
             linkclass = self.params["project type"]
             if self.date > self.to_datetime(datetime.datetime.today()):
@@ -195,9 +197,10 @@ class ProjectLink(object):
                 linkclass = ComicSite.DATA_PUB
         return linkclass
 
-    def to_datetime(self, date):
+    @staticmethod
+    def to_datetime(date):
         """ add midnight to a date to make it a datetime because I cannot
-        ompare these two types directly. Also add offset awareness to easily
+        compare these two types directly. Also add offset awareness to easily
         compare with other django datetimes.
         """
         dt = datetime.datetime(date.year, date.month, date.day)
@@ -211,12 +214,16 @@ def validate_nounderscores(value):
     if "_" in value:
         raise ValidationError(
             u"underscores not allowed. The url \
-            '{0}.{1}' would not be valid, please use hyphens (-).".format(value, settings.MAIN_PROJECT_NAME)
+            '{0}.{1}' would not be valid, "
+            u"please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
 
 
 class ComicSite(models.Model):
-    """ A collection of HTML pages using a certain skin. Pages can be browsed and edited."""
+    """
+    A collection of HTML pages using a certain skin. Pages can be browsed and
+    edited.
+    """
     public_folder = "public_html"
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -224,7 +231,10 @@ class ComicSite(models.Model):
     short_name = models.SlugField(
         max_length=50,
         default="",
-        help_text="short name used in url, specific css, files etc. No spaces allowed",
+        help_text=(
+            "short name used in url, specific css, files etc. "
+            "No spaces allowed"
+        ),
         validators=[
             validate_nounderscores, validate_slug, MinLengthValidator(1)
         ],
@@ -278,20 +288,28 @@ class ComicSite(models.Model):
     )
     hide_footer = models.BooleanField(
         default=False,
-        help_text="Do not show the general links or the grey divider line in page footers",
+        help_text=(
+            "Do not show the general links or "
+            "the grey divider line in page footers"
+        ),
     )
     disclaimer = models.CharField(
         max_length=2048,
         default="",
         blank=True,
         null=True,
-        help_text="Optional text to show on each page in the project. For showing 'under construction' type messages",
+        help_text=(
+            "Optional text to show on each page in the project. "
+            "For showing 'under construction' type messages"
+        ),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     workshop_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Date on which the workshop belonging to this project will be held",
+        help_text=(
+            "Date on which the workshop belonging to this project will be held"
+        ),
     )
     event_name = models.CharField(
         max_length=1024,
@@ -310,18 +328,28 @@ class ComicSite(models.Model):
     DATA_PUB = 'data_pub'
     is_open_for_submissions = models.BooleanField(
         default=False,
-        help_text="This project currently accepts new submissions. Affects listing in projects overview",
+        help_text=(
+            "This project currently accepts new submissions. "
+            "Affects listing in projects overview"
+        ),
     )
     submission_page_name = models.CharField(
         blank=True,
         null=True,
         max_length=255,
-        help_text="If the project allows submissions, there will be a link in projects overview going directly to you project/<submission_page_name>/. If empty, the projects main page will be used instead",
+        help_text=(
+            "If the project allows submissions, there will be a link in "
+            "projects overview going directly to you "
+            "project/<submission_page_name>/. If empty, the projects main "
+            "page will be used instead"
+        ),
     )
     number_of_submissions = models.IntegerField(
         blank=True,
         null=True,
-        help_text="The number of submissions have been evalutated for this project",
+        help_text=(
+            "The number of submissions have been evalutated for this project"
+        ),
     )
     last_submission_date = models.DateField(
         null=True,
@@ -330,12 +358,17 @@ class ComicSite(models.Model):
     )
     offers_data_download = models.BooleanField(
         default=False,
-        help_text="This project currently accepts new submissions. Affects listing in projects overview",
+        help_text=(
+            "This project currently accepts new submissions. Affects listing "
+            "in projects overview"
+        ),
     )
     number_of_downloads = models.IntegerField(
         blank=True,
         null=True,
-        help_text="How often has the dataset for this project been downloaded?",
+        help_text=(
+            "How often has the dataset for this project been downloaded?"
+        ),
     )
     publication_url = models.URLField(
         blank=True,
@@ -346,16 +379,24 @@ class ComicSite(models.Model):
         max_length=225,
         blank=True,
         null=True,
-        help_text="If publication was in a journal, please list the journal name here"
-        " We use <a target='new' href='https://www.ncbi.nlm.nih.gov/nlmcatalog/journals'>PubMed journal abbreviations</a> format",
+        help_text=(
+            "If publication was in a journal, please list the journal name "
+            "here We use <a target='new' "
+            "href='https://www.ncbi.nlm.nih.gov/nlmcatalog/journals'>PubMed "
+            "journal abbreviations</a> format"
+        ),
     )
     require_participant_review = models.BooleanField(
         default=False,
-        help_text="If ticked, new participants need to be approved by project admins before they can access restricted pages. If not ticked, new users are allowed access immediately",
+        help_text=(
+            "If ticked, new participants need to be approved by project "
+            "admins before they can access restricted pages. If not ticked, "
+            "new users are allowed access immediately"
+        ),
     )
     use_registration_page = models.BooleanField(
         default=True,
-        help_text=('If true, show a registration page on the challenge site.'),
+        help_text='If true, show a registration page on the challenge site.',
     )
     registration_page_text = models.TextField(
         default='',
@@ -434,17 +475,25 @@ class ComicSite(models.Model):
         return os.path.join(self.short_name, settings.COMIC_PUBLIC_FOLDER_NAME)
 
     def admin_group_name(self):
-        """ returns the name of the admin group which should have all rights to this ComicSite instance"""
+        """
+        returns the name of the admin group which should have all rights to
+        this ComicSite instance
+        """
         return self.short_name + "_admins"
 
     def participants_group_name(self):
-        """ returns the name of the participants group, which should have some rights to this ComicSite instance"""
+        """
+        returns the name of the participants group, which should have some
+        rights to this ComicSite instance
+        """
         return self.short_name + "_participants"
 
     def get_relevant_perm_groups(self):
-        """ Return all auth groups which are directly relevant for this ComicSite.
-            This method is used for showin permissions for these groups, even if none
-            are defined """
+        """
+        Return all auth groups which are directly relevant for this ComicSite.
+        This method is used for showin permissions for these groups, even
+        if none are defined
+        """
         groups = Group.objects.filter(
             Q(name=settings.EVERYONE_GROUP_NAME) |
             Q(pk=self.admins_group.pk) |
@@ -453,8 +502,9 @@ class ComicSite(models.Model):
         return groups
 
     def is_admin(self, user):
-        """ is user in the admins group for the comicsite to which this object belongs? superuser always passes
-
+        """
+        is user in the admins group for the comicsite to which this object
+        belongs? superuser always passes
         """
         if user.is_superuser:
             return True
@@ -466,8 +516,9 @@ class ComicSite(models.Model):
             return False
 
     def is_participant(self, user):
-        """ is user in the participants group for the comicsite to which this object belong? superuser always passes
-
+        """
+        is user in the participants group for the comicsite to which this
+        object belong? superuser always passes
         """
         if user.is_superuser:
             return True
@@ -492,9 +543,9 @@ class ComicSite(models.Model):
         return url
 
     def to_projectlink(self):
-        """ Return a ProjectLink representation of this comicsite, to show in an
+        """
+        Return a ProjectLink representation of this comicsite, to show in an
         overview page listing all projects
-
         """
         thumb_image_url = reverse(
             'project_serve_file', args=[self.short_name, self.logo]
@@ -505,7 +556,7 @@ class ComicSite(models.Model):
             "description": self.description,
             "URL": reverse('challenge-homepage', args=[self.short_name]),
             "download URL": "",
-            "submission URL": self.get_submission_URL(),
+            "submission URL": self.get_submission_url(),
             "event name": self.event_name,
             "year": "",
             "event URL": self.event_url,
@@ -530,9 +581,9 @@ class ComicSite(models.Model):
         projectlink = ProjectLink(args)
         return projectlink
 
-    def get_submission_URL(self):
+    def get_submission_url(self):
         """ What url can you go to to submit for this project? """
-        URL = reverse('challenge-homepage', args=[self.short_name])
+        url = reverse('challenge-homepage', args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
                 "http://"
@@ -546,8 +597,8 @@ class ComicSite(models.Model):
                 page = self.submission_page_name
                 if not page.endswith("/"):
                     page += "/"
-                URL += page
-        return URL
+                url += page
+        return url
 
     def add_participant(self, user):
         if user != get_anonymous_user():
@@ -573,8 +624,9 @@ class ComicSite(models.Model):
 
 
 class ComicSiteModel(models.Model):
-    """An object which can be shown or used in the comicsite framework. This base class should handle common functions
-     such as authorization.
+    """
+    An object which can be shown or used in the comicsite framework.
+    This base class should handle common functions such as authorization.
     """
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
@@ -599,14 +651,15 @@ class ComicSiteModel(models.Model):
 
     def can_be_viewed_by(self, user):
         """ boolean, is user allowed to view this? """
-        # check whether everyone is allowed to view this. Anymous user is the only member of group
-        # 'everyone' for which permissions can be set
-        anonymousUser = get_anonymous_user()
-        if anonymousUser.has_perm("view_ComicSiteModel", self):
+        # check whether everyone is allowed to view this. Anymous user is the
+        # only member of group 'everyone' for which permissions can be set
+        anonymous_user = get_anonymous_user()
+        if anonymous_user.has_perm("view_ComicSiteModel", self):
             return True
 
         else:
-            # if not everyone has access, check whether given user has permissions
+            # if not everyone has access,
+            # check whether given user has permissions
             return user.has_perm("view_ComicSiteModel", self)
 
     def setpermissions(self, lvl):
@@ -630,13 +683,14 @@ class ComicSiteModel(models.Model):
             remove_perm("view_ComicSiteModel", everyonegroup, self)
         else:
             raise ValueError(
-                "Unknown permissions level '" +
-                lvl +
-                "'. I don't know which groups to give permissions to this object"
+                f"Unknown permissions level '{lvl}'. "
+                "I don't know which groups to give permissions to this object"
             )
 
     def persist_if_needed(self):
-        """ setting permissions needs a persisted object. This method makes sure."""
+        """
+        setting permissions needs a persisted object. This method makes sure.
+        """
         if not self.id:
             super(ComicSiteModel, self).save()
 
@@ -650,7 +704,9 @@ class ComicSiteModel(models.Model):
 
 
 class Page(ComicSiteModel):
-    """ A single editable page containing html and maybe special output plugins """
+    """
+    A single editable page containing html and maybe special output plugins
+    """
     UP = 'UP'
     DOWN = 'DOWN'
     FIRST = 'FIRST'
@@ -664,7 +720,10 @@ class Page(ComicSiteModel):
         max_length=255,
         default="",
         blank=True,
-        help_text="On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used",
+        help_text=(
+            "On pages and in menu items, use this text. Spaces and special "
+            "chars allowed here. Optional field. If emtpy, title is used"
+        ),
     )
     hidden = models.BooleanField(
         default=False, help_text="Do not display this page in site menu"
@@ -685,12 +744,15 @@ class Page(ComicSiteModel):
                 max_order = None
             try:
                 self.order = max_order["order__max"] + 1
-            except (TypeError):
+            except TypeError:
                 self.order = 1
         super(Page, self).save(*args, **kwargs)
 
-    def rawHTML(self):
-        """Display html of this page as html. This uses the mark_safe django method to allow direct html rendering"""
+    def raw_html(self):
+        """
+        Display html of this page as html. This uses the mark_safe django
+        method to allow direct html rendering
+        """
         # TODO : do checking for scripts and hacks here?
         return mark_safe(self.html)
 
@@ -724,13 +786,14 @@ class Page(ComicSiteModel):
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
 
-    def normalize_page_order(self, pages):
+    @staticmethod
+    def normalize_page_order(pages):
         """Make sure order in pages Queryset starts at 1 and increments 1 at
         every page. Saves all pages
          
         """
-        for index, page in enumerate(pages):
-            page.order = index + 1
+        for idx, page in enumerate(pages):
+            page.order = idx + 1
             page.save()
 
     def get_absolute_url(self):
@@ -742,15 +805,18 @@ class Page(ComicSiteModel):
 
     class Meta(ComicSiteModel.Meta):
         """special class holding meta info for this class"""
-        # make sure a single site never has two pages with the same name because page names
-        # are used as keys in urls
+        # make sure a single site never has two pages with the same name
+        # because page names are used as keys in urls
         unique_together = (("challenge", "title"),)
         # when getting a list of these objects this ordering is used
         ordering = ['challenge', 'order']
 
 
 class ErrorPage(Page):
-    """ Just the same as a Page, just that it does not display an edit button as admin"""
+    """
+    Just the same as a Page, just that it does not display an edit button as
+    admin
+    """
     is_error_page = True
 
     def can_be_viewed_by(self, user):
@@ -758,7 +824,7 @@ class ErrorPage(Page):
         return True
 
     class Meta:
-        abstract = True  # error pages should only be generated on the fly currently.
+        abstract = True  # error pages should only be generated on the fly
 
 
 class UploadModel(ComicSiteModel):
@@ -786,9 +852,10 @@ class UploadModel(ComicSiteModel):
 
 
 class RegistrationRequest(models.Model):
-    """ When a user wants to join a project, admins have the option of reviewing
-        each user before allowing or denying them. This class records the needed
-        info for that.
+    """
+    When a user wants to join a project, admins have the option of reviewing
+    each user before allowing or denying them. This class records the needed
+    info for that.
     """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -822,8 +889,9 @@ class RegistrationRequest(models.Model):
         super().save(*args, **kwargs)
 
     def status_to_string(self):
-        status = "Your request to join " + self.challenge.short_name + ", sent " + self.format_date(
-            self.created
+        status = (
+            f"Your request to join {self.challenge.short_name}, "
+            f"sent {self.format_date(self.created)}"
         )
         if self.status == self.PENDING:
             status += ", is awaiting review"
@@ -833,7 +901,8 @@ class RegistrationRequest(models.Model):
             status += ", was rejected at " + self.format_date(self.changed)
         return status
 
-    def format_date(self, date):
+    @staticmethod
+    def format_date(date):
         return date.strftime('%b %d, %Y at %H:%M')
 
     def user_affiliation(self):
