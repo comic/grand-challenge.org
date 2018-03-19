@@ -31,3 +31,4 @@ ratings:
 exclude_paths:
   - app/comicsite/static/**/*
   - app/**/migrations/**/*
+  - app/tests/comicsite_tests/resources/**/*
