@@ -15,7 +15,7 @@ class PageCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         challenge_name = kwargs.pop('challenge_short_name', None)
-        self.challenge_pk = kwargs.pop('challenge_pk', None)
+        self.challenge = kwargs.pop('challenge', None)
 
         super().__init__(*args, **kwargs)
 
@@ -38,7 +38,7 @@ class PageCreateForm(forms.ModelForm):
         """ Ensure that page titles are not duplicated for a challenge """
         title = self.cleaned_data['title']
 
-        queryset = Page.objects.filter(challenge__pk=self.challenge_pk,
+        queryset = Page.objects.filter(challenge=self.challenge,
                                        title=title)
 
         if self.instance is not None:

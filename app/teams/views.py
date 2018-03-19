@@ -30,8 +30,7 @@ class TeamCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
     )
 
     def form_valid(self, form):
-        form.instance.challenge = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
         form.instance.owner = self.request.user
 
         try:
@@ -49,7 +48,7 @@ class TeamDetail(DetailView):
 
         try:
             team = TeamMember.objects.get(
-                team__challenge__pk=self.request.project_pk,
+                team__challenge=self.request.challenge,
                 user__pk=self.request.user.pk,
             )
         except TeamMember.DoesNotExist:
@@ -69,7 +68,7 @@ class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
         context = super(TeamList, self).get_context_data(**kwargs)
 
         users_teams = TeamMember.objects.filter(
-            team__challenge=self.request.project_pk,
+            team__challenge=self.request.challenge,
             user=self.request.user,
         )
 
@@ -80,7 +79,7 @@ class TeamList(UserIsChallengeParticipantOrAdminMixin, ListView):
     def get_queryset(self):
         queryset = super(TeamList, self).get_queryset()
 
-        return queryset.filter(Q(challenge__pk=self.request.project_pk))
+        return queryset.filter(Q(challenge=self.request.challenge))
 
 
 class TeamUpdate(UserIsTeamOwnerOrChallengeAdminMixin, UpdateView):

@@ -49,8 +49,7 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.challenge = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
         form.instance.user = self.request.user
         form.instance.file = form.cleaned_data['upload']
 
@@ -85,7 +84,7 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         uploaded_files = UploadModel.objects.filter(
-            challenge__pk=self.request.project_pk,
+            challenge=self.request.challenge,
             permission_lvl=UploadModel.ALL,
         )
 

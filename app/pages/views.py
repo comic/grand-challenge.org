@@ -25,7 +25,7 @@ from pages.forms import PageCreateForm, PageUpdateForm
 class ChallengeFilteredQuerysetMixin(object):
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(Q(challenge__pk=self.request.project_pk))
+        return queryset.filter(Q(challenge=self.request.challenge))
 
 
 class ChallengeFormKwargsMixin(object):
@@ -33,7 +33,7 @@ class ChallengeFormKwargsMixin(object):
         kwargs = super().get_form_kwargs()
         kwargs.update({
             'challenge_short_name': self.request.projectname,
-            'challenge_pk': self.request.project_pk,
+            'challenge': self.request.challenge,
         })
         return kwargs
 
@@ -44,8 +44,7 @@ class PageCreate(UserIsChallengeAdminMixin, ChallengeFormKwargsMixin,
     form_class = PageCreateForm
 
     def form_valid(self, form):
-        form.instance.challenge = ComicSite.objects.get(
-            pk=self.request.project_pk)
+        form.instance.challenge = self.request.challenge
         return super().form_valid(form)
 
 

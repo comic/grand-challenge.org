@@ -22,10 +22,8 @@ class ProjectMiddleware:
             request.challenge = ComicSite.objects.get(
                 short_name=request.projectname
             )
-            request.project_pk = request.challenge.pk
         except ComicSite.DoesNotExist:
             request.challenge = None
-            request.project_pk = -1
 
     def get_challenge_name(self, request):
         """ Tries to infer the name of the project this project is regarding

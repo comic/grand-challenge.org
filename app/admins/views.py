@@ -20,7 +20,7 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
         return context
 
     def get_queryset(self):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
         return challenge.get_admins().select_related('user_profile')
 
 
@@ -38,7 +38,7 @@ class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
         )
 
     def form_valid(self, form):
-        challenge = ComicSite.objects.get(pk=self.request.project_pk)
+        challenge = self.request.challenge
         form.add_or_remove_user(
             challenge=challenge,
             site=get_current_site(self.request)

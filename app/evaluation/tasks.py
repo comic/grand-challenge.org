@@ -102,7 +102,7 @@ def validate_method_async(*, method_pk: uuid.UUID):
 @shared_task
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = ComicSite.objects.get(pk=challenge_pk)
-    valid_results = Result.objects.filter(Q(challenge__pk=challenge_pk),
+    valid_results = Result.objects.filter(Q(challenge=challenge),
                                           Q(public=True))
 
     ranks = generate_rank_dict(
@@ -115,7 +115,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         ),
     )
 
-    for res in Result.objects.filter(Q(challenge__pk=challenge_pk)):
+    for res in Result.objects.filter(Q(challenge=challenge)):
         try:
             rank = ranks[str(res.pk)][
                 challenge.evaluation_config.score_jsonpath]
