@@ -19,7 +19,7 @@ def create_evaluation_job(instance: Submission = None,
                           created: bool = False, *_, **__):
     if created:
         method = Method.objects.filter(
-            challenge__pk=instance.challenge.pk).order_by('-created').first()
+            challenge=instance.challenge).order_by('-created').first()
 
         if method is None:
             # TODO: Email here, do not raise
@@ -64,7 +64,7 @@ def result_created_email(instance: Result, created: bool = False, *_, **__):
         send_new_result_email(instance)
 
 
-# TODO: do we really want to generate an API token for all users? Only admins surely
+# TODO: do we really want to generate an API token for all users? Only admins?
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_auth_token(instance: settings.AUTH_USER_MODEL = None,
                       created: bool = False, *_, **__):

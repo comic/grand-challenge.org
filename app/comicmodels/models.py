@@ -654,7 +654,7 @@ class Page(ComicSiteModel):
             # get max value of order for current pages.
             try:
                 max_order = Page.objects.filter(
-                    challenge__pk=self.challenge.pk).aggregate(Max('order'))
+                    challenge=self.challenge).aggregate(Max('order'))
             except ObjectDoesNotExist:
                 max_order = None
 
