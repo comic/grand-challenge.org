@@ -90,6 +90,7 @@ def test_url_parameter(rf: RequestFactory):
 
     assert rendered == 'john'
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view_type",
@@ -99,7 +100,7 @@ def test_url_parameter(rf: RequestFactory):
     ]
 )
 @override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
-def test_insert_graph_anode09(rf: RequestFactory, view_type):
+def test_insert_graph(rf: RequestFactory, view_type):
     c = ChallengeFactory(short_name='testproj1734621')
     p = PageFactory(comicsite=c)
 
@@ -124,5 +125,28 @@ def test_insert_graph_anode09(rf: RequestFactory, view_type):
     else:
         assert "comictablecontainer" in rendered
 
-# {% image_browser path:string - path relative to current project
-#                  config:string - path relative to current project %}
+
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+def test_image_browser(rf: RequestFactory):
+    c = ChallengeFactory(short_name='testproj-image-browser')
+    p = PageFactory(comicsite=c)
+
+    template = Template(
+        '{% load image_browser from comic_templatetags %}'
+        '{% image_browser path:public_html '
+        'config:public_html/promise12_viewer_config_new.js %}'
+    )
+
+    context = RequestContext(request=rf.get(
+        '/results/?id=CBA&folder=20120627202920_304_CBA_Results'
+    ))
+    context.page = p
+    context.update({'site': c})
+
+    rendered = template.render(context)
+
+    assert "pageError" not in rendered
+    assert "Error rendering Visualization" not in rendered
+    assert "20120627202920_304_CBA_Results" in rendered
+    assert "Results viewer" in rendered

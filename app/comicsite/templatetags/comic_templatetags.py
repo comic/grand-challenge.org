@@ -1,4 +1,3 @@
-import csv
 import datetime
 import logging
 import ntpath
@@ -27,10 +26,9 @@ from six import StringIO, iteritems
 
 import comicsite.views
 from comicmodels.models import ComicSite
-from comicsite.core.exceptions import ParserException, PathResolutionException
+from comicsite.core.exceptions import PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
-from comicsite.utils.html import escape_for_html_id
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
