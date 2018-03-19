@@ -35,5 +35,4 @@ class ProjectMiddleware:
                 name = settings.MAIN_PROJECT_NAME
         except Resolver404:
             name = settings.MAIN_PROJECT_NAME
-
         return name

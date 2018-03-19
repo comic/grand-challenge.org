@@ -8,24 +8,14 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "participant_review",
-    [
-        True,
-        False,
-    ]
-)
+@pytest.mark.parametrize("participant_review", [True, False])
 def test_new_registration_email(participant_review, client, ChallengeSet):
     user = UserFactory()
-
     ChallengeSet.challenge.require_participant_review = participant_review
     ChallengeSet.challenge.save()
-
     assert not RegistrationRequest.objects.filter(
-        user=user,
-        challenge=ChallengeSet.challenge
+        user=user, challenge=ChallengeSet.challenge
     ).exists()
-
     response = get_view_for_user(
         viewname='participants:registration-create',
         client=client,
@@ -33,20 +23,16 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
         user=user,
         challenge=ChallengeSet.challenge,
     )
-
     assert response.status_code == 302
-
     assert RegistrationRequest.objects.filter(
-        user=user,
-        challenge=ChallengeSet.challenge
+        user=user, challenge=ChallengeSet.challenge
     ).exists()
-
     if participant_review:
         email = mail.outbox[-1]
-
-        approval_link = reverse('participants:registration-list',
-                                args=[ChallengeSet.challenge.short_name])
-
+        approval_link = reverse(
+            'participants:registration-list',
+            args=[ChallengeSet.challenge.short_name],
+        )
         assert ChallengeSet.admin.email in email.to
         assert 'New participation request' in email.subject
         assert ChallengeSet.challenge.short_name in email.subject
@@ -60,15 +46,10 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "new_state",
-    [
-        RegistrationRequest.REJECTED,
-        RegistrationRequest.ACCEPTED,
-    ]
+    "new_state", [RegistrationRequest.REJECTED, RegistrationRequest.ACCEPTED]
 )
 def test_registration_updated_email(new_state, client, ChallengeSet):
     rr = RegistrationRequestFactory(challenge=ChallengeSet.challenge)
-
     response = get_view_for_user(
         viewname='participants:registration-update',
         client=client,
@@ -76,13 +57,10 @@ def test_registration_updated_email(new_state, client, ChallengeSet):
         user=ChallengeSet.admin,
         challenge=ChallengeSet.challenge,
         reverse_kwargs={'pk': rr.pk},
-        data={'status': new_state}
+        data={'status': new_state},
     )
-
     assert response.status_code == 302
-
     email = mail.outbox[-1]
-
     assert rr.user.email in email.to
     if new_state == RegistrationRequest.ACCEPTED:
         assert 'request accepted' in email.subject

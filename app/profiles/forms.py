@@ -9,12 +9,11 @@ class SignupFormExtra(userena_forms.SignupForm):
     username = forms.RegexField(
         regex=r'^[a-zA-Z0-9]+$',
         max_length=30,
-        widget=forms.TextInput(
-            attrs=userena_forms.attrs_dict),
+        widget=forms.TextInput(attrs=userena_forms.attrs_dict),
         label=_("Username"),
-        error_messages={'invalid': _(
-            'Username must contain only letters and numbers.')
-        }
+        error_messages={
+            'invalid': _('Username must contain only letters and numbers.')
+        },
     )
     first_name = forms.CharField(
         label=_(u'First Name'),
@@ -35,22 +34,23 @@ class SignupFormExtra(userena_forms.SignupForm):
             RegexValidator(
                 regex=r'^[a-zA-Z-\s]+$',
                 message=_(
-                    u"Last name must only contain the characters a-z, spaces or hypens."),
-            ),
+                    u"Last name must only contain the characters a-z, spaces or hypens."
+                ),
+            )
         ],
     )
     institution = forms.CharField(
         label=_(u'Institution'),
         max_length=100,
         required=True,
-        help_text=_(
-            u'Institution you are affiliated to.'),
+        help_text=_(u'Institution you are affiliated to.'),
         validators=[
             RegexValidator(
                 regex=r'^[a-zA-Z-\s]+$',
                 message=_(
-                    u"Institution must only contain the characters a-z, spaces or hypens."),
-            ),
+                    u"Institution must only contain the characters a-z, spaces or hypens."
+                ),
+            )
         ],
     )
     department = forms.CharField(
@@ -62,20 +62,21 @@ class SignupFormExtra(userena_forms.SignupForm):
             RegexValidator(
                 regex=r'^[a-zA-Z-\s]+$',
                 message=_(
-                    u"Department must only contain the characters a-z, spaces or hypens."),
-            ),
+                    u"Department must only contain the characters a-z, spaces or hypens."
+                ),
+            )
         ],
     )
-    country = forms.ChoiceField(label=_(u'Country'),
-                                choices=tuple(
-                                    [('00', _('-' * 9))] + list(countries)),
-                                required=True)
+    country = forms.ChoiceField(
+        label=_(u'Country'),
+        choices=tuple([('00', _('-' * 9))] + list(countries)),
+        required=True,
+    )
     website = forms.URLField(
         label=_(u'Website'),
         max_length=150,
         required=False,
-        help_text=_(
-            u'A website which describes you or your department')
+        help_text=_(u'A website which describes you or your department'),
     )
 
     def __init__(self, *args, **kw):
@@ -87,6 +88,7 @@ class SignupFormExtra(userena_forms.SignupForm):
         country = self.cleaned_data['country']
         if country == '00':
             raise forms.ValidationError("Please choose a valid country.")
+
         return country
 
     def save(self):
@@ -99,11 +101,11 @@ class SignupFormExtra(userena_forms.SignupForm):
         user_profile.department = self.cleaned_data['department']
         user_profile.country = self.cleaned_data['country']
         user_profile.save()
-
         return user
 
 
 class EditProfileForm(userena_forms.EditProfileForm):
+
     def __init__(self, *args, **kwargs):
         super(EditProfileForm, self).__init__(*args, **kwargs)
         del self.fields['privacy']

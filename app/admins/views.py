@@ -3,7 +3,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
 from admins.forms import AdminsForm
-from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 
@@ -13,10 +12,12 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({
-            'this_admin_pk': self.request.user.pk,
-            'admin_remove_action': AdminsForm.REMOVE,
-        })
+        context.update(
+            {
+                'this_admin_pk': self.request.user.pk,
+                'admin_remove_action': AdminsForm.REMOVE,
+            }
+        )
         return context
 
     def get_queryset(self):
@@ -32,15 +33,12 @@ class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
     def get_success_url(self):
         return reverse(
             'admins:list',
-            kwargs={
-                'challenge_short_name': self.request.challenge.short_name
-            }
+            kwargs={'challenge_short_name': self.request.challenge.short_name},
         )
 
     def form_valid(self, form):
         challenge = self.request.challenge
         form.add_or_remove_user(
-            challenge=challenge,
-            site=get_current_site(self.request)
+            challenge=challenge, site=get_current_site(self.request)
         )
         return super().form_valid(form)

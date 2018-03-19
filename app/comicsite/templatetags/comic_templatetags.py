@@ -34,7 +34,6 @@ from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
-
 logger = logging.getLogger("django")
 
 
@@ -56,10 +55,10 @@ def parseKeyValueToken(token):
     split = token.split_contents()
     tag = split[0]
     args = split[1:]
-
     if "=" in "".join(args):
         raise ValueError(
-            "Please use colon ':' instead of equals '=' to separate keys and values")
+            "Please use colon ':' instead of equals '=' to separate keys and values"
+        )
 
     return dict([param.split(":") for param in args])
 
@@ -69,21 +68,20 @@ def get_usagestr(function_name):
     Return usage string for a registered template tag function. For displaying
     this info in errors or tag overviews
     """
-
     if function_name in register.usagestrings:
         usagestr = register.usagestrings[function_name]
     else:
         usagestr = ""
-
     return sanitize_django_items(usagestr)
 
 
-@register.tag(name="taglist",
-              usagestr="""
+@register.tag(
+    name="taglist",
+    usagestr="""
               <% taglist %> :
               show all available tags
-                       """
-              )
+                       """,
+)
 def get_taglist(parser, token):
     return TagListNode()
 
@@ -92,9 +90,7 @@ def subdomain_is_projectname():
     """ Check whether this setting is true in settings. Return false if not found
 
     """
-
     is_projectname = False
-
     if hasattr(settings, "SUBDOMAIN_IS_PROJECTNAME"):
         is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
         if is_projectname and not hasattr(settings, "MAIN_HOST_NAME"):
@@ -140,10 +136,10 @@ def url(parser, token):
     base domain to also make it possible to use dots in the base domain.
 
     """
-
     orgnode = defaulttags.url(parser, token)
-    return comic_URLNode(orgnode.view_name, orgnode.args, orgnode.kwargs,
-                         orgnode.asvar)
+    return comic_URLNode(
+        orgnode.view_name, orgnode.args, orgnode.kwargs, orgnode.asvar
+    )
 
 
 def filter_by_extension(filenames, extensions):
@@ -181,9 +177,7 @@ def resolve_path(path, parser, context):
         :param path: 
                 
     """
-
     # Find out what type it is:
-
     # If it contains any / or {{ resolving as django var
     # is going to throw an error. Prevent unneeded exception, just skip
     # rendering as var in that case.
@@ -191,29 +185,25 @@ def resolve_path(path, parser, context):
     if not in_list(["{", "}", "\\", "/"], path):
         compiled_filter = parser.compile_filter(strip_quotes(path))
         path_resolved = compiled_filter.resolve(context)
-
     # if resolved filename is empty, resolution failed, just treat this
     # param as a filepath
     if path_resolved == "":
         filename = strip_quotes(path)
     else:
         filename = path_resolved
-
     # if there are {{}}'s in there, try to substitute this with url
     # parameter given in the url
     filename = substitute(filename, context["request"].GET.items())
-
     # If any {{parameters}} are still in filename they were not replaced.
     # This filename is missing information, show this as error text.
     if re.search(r"{{\w+}}", str(filename)):
-
         missed_parameters = re.findall(r"{{\w+}}", str(filename))
         found_parameters = context["request"].GET.items()
-
         if not found_parameters:
             found_parameters = "None"
-        error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " \
-                    "" % (missed_parameters, found_parameters)
+        error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " "" % (
+            missed_parameters, found_parameters
+        )
         raise PathResolutionException(error_msg)
 
     return filename
@@ -228,14 +218,13 @@ def substitute(string, substitutions):
     substitute("my name is {{name}}.",{version:1,name=John})
     > "my name is John"
     """
-
     for key, value in substitutions:
         string = re.sub("{{" + key + "}}", value, string)
-
     return string
 
 
 class comic_URLNode(defaulttags.URLNode):
+
     def __init__(self, *args, **kwargs):
         super(comic_URLNode, self).__init__(*args, **kwargs)
 
@@ -243,14 +232,13 @@ class comic_URLNode(defaulttags.URLNode):
         # get the url the default django method would give.
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
-
         if subdomain_is_projectname() and (
             (
                 self.view_name.var in [
-                    "challenge-homepage",
-                    "project_serve_file",
+                    "challenge-homepage", "project_serve_file"
                 ]
-            ) or (
+            )
+            or (
                 self.view_name.var.split(':')[0] in [
                     'evaluation',
                     'teams',
@@ -261,30 +249,26 @@ class comic_URLNode(defaulttags.URLNode):
                 ]
             )
         ):
-
             # Interpret subdomain as a comicsite. What would normally be the
             # path to this comicsite?
-
             args = [arg.resolve(context) for arg in self.args]
             project = args[0]
-
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
                 # in that case hardcode the domain to make sure the sub-
                 # domain is gone after following this link
                 return settings.MAIN_HOST_NAME + url
+
             else:
-
-                path_to_site = reverse_djangocore("challenge-homepage",
-                                                  args=[project]).lower()
-
+                path_to_site = reverse_djangocore(
+                    "challenge-homepage", args=[project]
+                ).lower()
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
-
-                scheme_subsite_and_host = reverse("challenge-homepage",
-                                                  args=[project]).lower()
-
+                scheme_subsite_and_host = reverse(
+                    "challenge-homepage", args=[project]
+                ).lower()
                 return urljoin(scheme_subsite_and_host, url)
 
         return url
@@ -299,20 +283,19 @@ class TagListNode(template.Node):
 
     def render(self, context):
         html_out = "<table class =\"comictable taglist\">"
-
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
         for key, val in iteritems(register.usagestrings):
             if not val == "":
                 html_out = html_out + "<tr class=\"%s\"><td>%s</td><td>%s</td></tr>\
-                        " % (rowclass, key, sanitize_django_items(val))
+                        " % (
+                    rowclass, key, sanitize_django_items(val)
+                )
                 if rowclass == "odd":
                     rowclass = "even"
                 else:
                     rowclass = "odd"
-
         html_out = html_out + "</table>"
-
         return html_out
 
 
@@ -338,8 +321,7 @@ def metafooterpages():
     pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('mainproject-home',
-                          kwargs={'page_title': p.title})
+            url = reverse('mainproject-home', kwargs={'page_title': p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
             # TODO: JM add class=active to the active link
@@ -349,7 +331,6 @@ def metafooterpages():
                 url,
                 p.display_title if p.display_title else p.title,
             )
-
     return html_string
 
 
@@ -358,22 +339,22 @@ def main_page_url():
     """ Gets the url to the main page """
     if settings.SUBDOMAIN_IS_PROJECTNAME:
         return settings.MAIN_HOST_NAME
+
     else:
         return "/"
 
 
-@register.tag(name="listdir",
-              usagestr="""Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}
+@register.tag(
+    name="listdir",
+    usagestr="""Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}
 
               path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.
               extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-              """
-              )
+              """,
+)
 def listdir(parser, token):
     """ show all files in dir as a downloadable list"""
-
     usagestr = get_usagestr("listdir")
-
     try:
         args = parseKeyValueToken(token)
     except ValueError:
@@ -390,7 +371,6 @@ def listdir(parser, token):
 class ListDirNode(template.Node):
     """ Show list of linked files for given directory
     """
-
     usagestr = get_usagestr("listdir")
 
     def __init__(self, args):
@@ -403,34 +383,36 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-
         challenge_short_name = context.page.challenge.short_name
         projectpath = challenge_short_name + "/" + self.path
         storage = DefaultStorage()
-
         try:
             filenames = storage.listdir(projectpath)[1]
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
 
         filenames.sort()
-
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():
             extensions = self.args['extensionFilter'].split(",")
             filenames = filter_by_extension(filenames, extensions)
-
         links = []
         for filename in filenames:
-            downloadlink = reverse('project_serve_file',
-                                   kwargs={'challenge_short_name': challenge_short_name,
-                                           'path': self.path + "/" + filename})
-
+            downloadlink = reverse(
+                'project_serve_file',
+                kwargs={
+                    'challenge_short_name': challenge_short_name,
+                    'path': self.path + "/" + filename,
+                },
+            )
             links.append(
-                "<li><a href=\"" + downloadlink + "\">" + filename + " </a></li>")
-
+                "<li><a href=\"" +
+                downloadlink +
+                "\">" +
+                filename +
+                " </a></li>"
+            )
         htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
-
         return htmlOut
 
 
@@ -439,7 +421,6 @@ def render_image_browser(parser, token):
     """Given a folder and project, render a browser so you can skip through them in browser
     
     """
-
     usagestr = """Tag usage: {% image_browser path:string - path relative to current project
                                               config:string - path relative to current project %}
                   """
@@ -467,7 +448,8 @@ class ImageBrowserNode(template.Node):
 
     def make_dataset_error_msg(self, msg):
         logger.error(
-            "Error rendering Visualization '" + str(self.args) + ":" + msg)
+            "Error rendering Visualization '" + str(self.args) + ":" + msg
+        )
         errormsg = "Error rendering Visualization"
         return makeErrorMsgHtml(errormsg)
 
@@ -475,10 +457,8 @@ class ImageBrowserNode(template.Node):
         import json
 
         # Get variables used in rendering html below.
-
         # path can contain variables like "/results/{{resultId}}/screenshots/"
         path_resolved = resolve_path(self.args["path"], self.parser, context)
-
         try:
             filenames = self.get_filenames(context, path_resolved)
         except OSError as e:
@@ -490,22 +470,22 @@ class ImageBrowserNode(template.Node):
 
         try:
             public_results = get_public_results_by_challenge_name(
-                context['site'].short_name)
+                context['site'].short_name
+            )
         except OSError as e:
             # if no results can be found just skip it
             public_results = []
-
-            # Url relative to hostname. To serve /foo/file.txt from project datafolder,
+        # Url relative to hostname. To serve /foo/file.txt from project datafolder,
         # what url needs to go in front?  Thsi var can be used in javascript to
         # create links. Using dummyfile because django resolution does not except
         # explicit empty strings.
-        serve_file_prefix = reverse("project_serve_file",
-                                    args=[context['site'].short_name,
-                                          "dummyfile"])
+        serve_file_prefix = reverse(
+            "project_serve_file",
+            args=[context['site'].short_name, "dummyfile"],
+        )
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see        
-        # much wrong with it here. 
+        # much wrong with it here.
         serve_file_prefix = serve_file_prefix[:-10]
-
         htmlOut = """
           <h3>Results viewer</h3>
             <div id="resultViewer">
@@ -530,35 +510,44 @@ class ImageBrowserNode(template.Node):
             viewer{viewer_id}.loadAllScreenshots();
         </script> 
 
-        """.format(main_hostname=settings.MAIN_HOST_NAME,
-                   path=path_resolved,
-                   viewer_id=random.randrange(100000, 999999),
-                   # just 6 random numbers
-                   custom_options_include=self.get_custom_options_include(
-                       context),
-                   project_info=json.dumps({"public_results": public_results,
-                                            "url_params": self.get_url_params(
-                                                context)}),
-                   dg_options=json.dumps({"dirs": [path_resolved],
-                                          "fileNames": filenames,
-                                          "serve_file_prefix": serve_file_prefix}
-                                         )
-                   )
-
+        """.format(
+            main_hostname=settings.MAIN_HOST_NAME,
+            path=path_resolved,
+            viewer_id=random.randrange(100000, 999999),
+            # just 6 random numbers
+            custom_options_include=self.get_custom_options_include(context),
+            project_info=json.dumps(
+                {
+                    "public_results": public_results,
+                    "url_params": self.get_url_params(context),
+                }
+            ),
+            dg_options=json.dumps(
+                {
+                    "dirs": [path_resolved],
+                    "fileNames": filenames,
+                    "serve_file_prefix": serve_file_prefix,
+                }
+            ),
+        )
         return htmlOut
 
     def get_custom_options_include(self, context):
         """ The viewer options and behaviour can be custimized by passing along a piece of 
         javascript."""
-
         challenge_short_name = context.page.challenge.short_name
         if "config" in self.args:
-            downloadlink = reverse('project_serve_file',
-                                   kwargs={'challenge_short_name': challenge_short_name,
-                                           'path': self.args["config"]})
-
+            downloadlink = reverse(
+                'project_serve_file',
+                kwargs={
+                    'challenge_short_name': challenge_short_name,
+                    'path': self.args["config"],
+                },
+            )
             return """<script type="text/javascript" src="{}"></script>""".format(
-                downloadlink)
+                downloadlink
+            )
+
         else:
             return "<script> options = undefined; </script>"
 
@@ -568,7 +557,6 @@ class ImageBrowserNode(template.Node):
         # convert tuples to dictionary because this is easier to read
         for (key, value) in url_params:
             params[key] = value
-
         return params
 
     def get_filenames(self, context, path):
@@ -580,14 +568,11 @@ class ImageBrowserNode(template.Node):
         projectpath = challenge_short_name + "/" + path
         storage = DefaultStorage()
         filenames = storage.listdir(projectpath)[1]
-
         filenames.sort()
-
         # if extensionsFilter is given,  show only filenames with those extensions
         if 'extensionFilter' in self.args.keys():
             extensions = self.args['extensionFilter'].split(",")
             filenames = filter_by_extension(filenames, extensions)
-
         return filenames
 
 
@@ -603,6 +588,7 @@ def strip_quotes(s: str = ''):
     """
     if len(s) >= 2 and (s[0] == s[-1]) and s[0] in ("'", '"'):
         return s[1:-1]
+
     return s
 
 
@@ -613,18 +599,20 @@ def in_list(needles, haystack):
     for needle in needles:
         if needle in haystack:
             return True
+
     return False
 
 
-@register.tag(name="get_project_prefix",
-              usagestr="""Tag usage: {% get_api_prefix %}
+@register.tag(
+    name="get_project_prefix",
+    usagestr="""Tag usage: {% get_api_prefix %}
                   Get the base url for this project as string, with trailing slash
-                  """)
+                  """,
+)
 def get_project_prefix(parser, token):
     """Get the base url for this project as string, with trailing slash.
     Created this originally to be able to use for project-specific api calls in
     javascript"""
-
     return RenderGetProjectPrefixNode()
 
 
@@ -646,7 +634,6 @@ def insert_file(parser, token):
     current project
         
     """
-
     usagestr = """Tag usage: {% insertfile <file> %}
                   <file>: filepath relative to project dropboxfolder.
                   Example: {% insertfile results/test.txt %}
@@ -654,25 +641,23 @@ def insert_file(parser, token):
                   Example: {% insterfile {{id}}/result.txt %} called with ?id=1234
                   appended to the url will show the contents of "1234/result.txt".
                   """
-
     split = token.split_contents()
     tag = split[0]
     all_args = split[1:]
-
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
+
     else:
         args = {}
         filename = all_args[0]
-
         args["file"] = add_quotes(filename)
-
     replacer = HtmlLinkReplacer()
     return InsertFileNode(args, replacer, parser)
 
 
 class InsertFileNode(template.Node):
+
     def __init__(self, args, replacer, parser):
         self.args = args
         self.replacer = replacer
@@ -680,7 +665,8 @@ class InsertFileNode(template.Node):
 
     def make_error_msg(self, msg):
         logger.error(
-            "Error including file '" + "," + self.args["file"] + "': " + msg)
+            "Error including file '" + "," + self.args["file"] + "': " + msg
+        )
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
@@ -696,6 +682,7 @@ class InsertFileNode(template.Node):
         data_folder = self.make_canonical_path(data_folder)
         if folder.startswith(data_folder):
             return True
+
         else:
             return False
 
@@ -712,46 +699,49 @@ class InsertFileNode(template.Node):
         still point to the right place 
         
         """
-
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('pages:insert-detail', kwargs={
-            'challenge_short_name': currentpage.challenge.short_name,
-            'page_title': currentpage.title,
-            'dropboxpath': "remove"})
+        base_url = reverse(
+            'pages:insert-detail',
+            kwargs={
+                'challenge_short_name': currentpage.challenge.short_name,
+                'page_title': currentpage.title,
+                'dropboxpath': "remove",
+            },
+        )
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
         current_path = ntpath.dirname(
-            filename) + "/"  # path of currently inserted file
-        replaced = self.replacer.replace_links(contents,
-                                               base_url,
-                                               current_path)
+            filename
+        ) + "/"  # path of currently inserted file
+        replaced = self.replacer.replace_links(
+            contents, base_url, current_path
+        )
         html_out = replaced
-
         return html_out
 
     def render(self, context):
-
         # text typed in the tag
         token = self.args['file']
-
         try:
             filename = resolve_path(token, self.parser, context)
         except PathResolutionException as e:
             return self.make_error_msg("Path Resolution failed: {}".format(e))
 
         challenge_short_name = context["site"].short_name
-        filepath = os.path.join(settings.MEDIA_ROOT, challenge_short_name, filename)
+        filepath = os.path.join(
+            settings.MEDIA_ROOT, challenge_short_name, filename
+        )
         filepath = os.path.abspath(filepath)
         filepath = self.make_canonical_path(filepath)
-
         # when all rendering is done, check if the final path is still not getting
         # into places it should not go.
         if not self.is_inside_project_data_folder(filepath, context["site"]):
             error_msg = "'{}' cannot be opened because it is outside the current project.".format(
-                filepath)
+                filepath
+            )
             return self.make_error_msg(error_msg)
 
         storage = DefaultStorage()
@@ -761,10 +751,8 @@ class InsertFileNode(template.Node):
             return self.make_error_msg("error opening file:" + str(e))
 
         # TODO check content safety
-
         # For some special pages like login and signup, there is no current page
         # In that case just don't try any link rewriting
-
         # TODO: here confused coding comes to light: I need to have the page
         # object that this template tag is on in order to process it properly.
         # I use both the element .page, added by
@@ -779,20 +767,17 @@ class InsertFileNode(template.Node):
             currentpage = context.page
         else:
             currentpage = None
-
         if currentpage and os.path.splitext(filename)[1] != ".css":
             html_out = self.replace_links(filename, contents, currentpage)
-            # rewrite relative links
+        # rewrite relative links
         else:
             html_out = contents
-
         return html_out
 
 
 @register.tag(name="insert_graph")
 def insert_graph(parser, token):
     """ Render a csv file from the local dropbox to a graph """
-
     usagestr = """Tag usage: {% insert_graph <file> type:<type>%}
                   <file>: filepath relative to project dropboxfolder.
                   <type>: how should the file be parsed and rendered?
@@ -801,14 +786,13 @@ def insert_graph(parser, token):
                   Example: {% inster_graphfile {{id}}/result.txt %} called with ?id=1234
                   appended to the url will show the contents of "1234/result.txt".
                   """
-
     split = token.split_contents()
     tag = split[0]
     all_args = split[1:]
-
     if len(all_args) > 2:
         error_message = "Expected no more than 2 arguments, found " + str(
-            len(all_args))
+            len(all_args)
+        )
         return TemplateErrorNode(error_message + "usage: \n" + usagestr)
 
     else:
@@ -817,46 +801,48 @@ def insert_graph(parser, token):
             args["type"] = all_args[1].split(":")[1]
         else:
             args["type"] = "anode09"  # default
-
     replacer = HtmlLinkReplacer()
-
     return InsertGraphNode(args, replacer)
 
 
 class InsertGraphNode(template.Node):
+
     def __init__(self, args, replacer):
         self.args = args
         self.replacer = replacer
 
     def make_error_msg(self, msg):
-        logger.error("Error rendering graph from file '" + "," + self.args[
-            "file"] + "': " + msg)
+        logger.error(
+            "Error rendering graph from file '" +
+            "," +
+            self.args["file"] +
+            "': " +
+            msg
+        )
         errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-
         filename_raw = self.args['file']
-        filename_clean = substitute(filename_raw,
-                                    context["request"].GET.items())
-
+        filename_clean = substitute(
+            filename_raw, context["request"].GET.items()
+        )
         # If any url parameters are still in filename they were not replaced. This filename
         # is missing information..
         if re.search(r"{{\w+}}", filename_clean):
-
             missed_parameters = re.findall(r"{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
-
             if not found_parameters:
                 found_parameters = "None"
-            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " \
-                        "" % (missed_parameters, found_parameters)
+            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " "" % (
+                missed_parameters, found_parameters
+            )
             return self.make_error_msg(error_msg)
 
         challenge_short_name = context.page.challenge.short_name
-        filename = os.path.join(settings.MEDIA_ROOT, challenge_short_name,
-                                filename_clean)
-
+        filename = os.path.join(
+            settings.MEDIA_ROOT, challenge_short_name, filename_clean
+        )
         storage = DefaultStorage()
         try:
             contents = storage.open(filename, "r").read()
@@ -864,23 +850,26 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(str(e))
 
         # TODO check content safety
-
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
-        base_url = reverse('pages:insert-detail', kwargs={
-            'challenge_short_name': context.page.challenge.short_name,
-            'page_title': context.page.title,
-            'dropboxpath': "remove"})
+        base_url = reverse(
+            'pages:insert-detail',
+            kwargs={
+                'challenge_short_name': context.page.challenge.short_name,
+                'page_title': context.page.title,
+                'dropboxpath': "remove",
+            },
+        )
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
         current_path = ntpath.dirname(
-            filename_clean) + "/"  # path of currently inserted file
-
+            filename_clean
+        ) + "/"  # path of currently inserted file
         try:
             render_function = getrenderer(self.args["type"])
-            # (table,headers) = read_function(filename)
+        # (table,headers) = read_function(filename)
         except Exception as e:
             return self.make_error_msg("getrenderer: %s" % e)
 
@@ -891,22 +880,22 @@ class InsertGraphNode(template.Node):
         #                   debug page
         try:
             svg_data = render_function(filename)
-
         except Exception as e:
             if RENDER_FRIENDLY_ERRORS:
-                return self.make_error_msg(str(
-                    "Error in render funtion '%s()' : %s" % (
-                        render_function.__name__,
-                        traceback.format_exc(0))))
+                return self.make_error_msg(
+                    str(
+                        "Error in render funtion '%s()' : %s" %
+                        (render_function.__name__, traceback.format_exc(0))
+                    )
+                )
+
             else:
                 raise
-        # self.get_graph_svg(table,headers)
 
+        # self.get_graph_svg(table,headers)
         # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
         html_out = svg_data
-
         # rewrite relative links
-
         return html_out
 
 
@@ -915,14 +904,14 @@ def getrenderer(renderer_format):
     By using this function we can easily list all available renderers and provide some safety:
     only functions listed here can be called from the template tag render_graph.
     """
-    renderers = {"anode09": render_anode09_result,
-                 "anode09_table": render_anode09_table, }
-
+    renderers = {
+        "anode09": render_anode09_result, "anode09_table": render_anode09_table
+    }
     if renderer_format not in renderers:
         raise Exception(
-            "reader for format '%s' not found. Available formats: %s" % (
-                renderer_format,
-                ",".join(renderers.keys())))
+            "reader for format '%s' not found. Available formats: %s" %
+            (renderer_format, ",".join(renderers.keys()))
+        )
 
     return renderers[renderer_format]
 
@@ -934,12 +923,9 @@ def canvas_to_svg(canvas):
     """
     imgdata = StringIO()
     imgdata.seek(0, os.SEEK_END)
-
     canvas.print_svg(imgdata, format='svg')
-
     svg_data = imgdata.getvalue()
     imgdata.close()
-
     return svg_data
 
 
@@ -977,15 +963,11 @@ def render_anode09_result(filename):
         of all the variables found in file
 
     """
-
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
-
     variables = parse_php_arrays(filename)
     assert variables != {}, "parsed result of '%s' was emtpy. I cannot plot anything" % filename
-
     fig = Figure(facecolor='white')
     canvas = FigureCanvas(fig)
-
     classes = {
         'small': 'nodules < 5mm',
         'large': 'nodules > 5mm',
@@ -993,13 +975,12 @@ def render_anode09_result(filename):
         'vascular': 'vascular nodules',
         'pleural': 'pleural nodules',
         'fissure': 'peri-fissural nodules',
-        'froc': 'all nodules'
+        'froc': 'all nodules',
     }
-
     for key, label in classes.items():
-        fig.gca().plot(variables["x"], variables[key + "y"], label=label,
-                       gid=key)
-
+        fig.gca().plot(
+            variables["x"], variables[key + "y"], label=label, gid=key
+        )
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
     fig.gca().legend(loc='best', prop={'size': 10})
@@ -1007,10 +988,8 @@ def render_anode09_result(filename):
     fig.gca().grid(which='minor')
     fig.gca().set_xlabel('Average FPs per scan')
     fig.gca().set_ylabel('Sensitivity')
-
     fig.gca().set_xscale("log")
     fig.set_size_inches(8, 6)
-
     return canvas_to_svg(canvas)
 
 
@@ -1046,14 +1025,10 @@ def render_anode09_table(filename):
         of all the variables found in file
 
     """
-
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
-
     variables = parse_php_arrays(filename)
     assert variables != {}, "parsed result of '%s' was emtpy. I cannot create table" % filename
-
     table_id = id_generator()
-
     tableHTML = """<table border=1 class = "comictable csvtable sortable" id="%s">
         <thead><tr>
             <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
@@ -1062,25 +1037,30 @@ def render_anode09_table(filename):
             <td align=center width='54'>2</td><td align=center width='54'>4</td>
             <td align=center width='54'>8</td><td align=center width='54'>average</td>
         </tr></thead>""" % table_id
-
     tableHTML = tableHTML + "<tbody>"
     tableHTML = tableHTML + array_to_table_row(
-        ["small nodules"] + variables["smallscore"])
+        ["small nodules"] + variables["smallscore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["large nodules"] + variables["largescore"])
+        ["large nodules"] + variables["largescore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["isolated nodules"] + variables["isolatedscore"])
+        ["isolated nodules"] + variables["isolatedscore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["vascular nodules"] + variables["vascularscore"])
+        ["vascular nodules"] + variables["vascularscore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["pleural nodules"] + variables["pleuralscore"])
+        ["pleural nodules"] + variables["pleuralscore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["peri-fissural nodules"] + variables["fissurescore"])
+        ["peri-fissural nodules"] + variables["fissurescore"]
+    )
     tableHTML = tableHTML + array_to_table_row(
-        ["all nodules"] + variables["frocscore"])
+        ["all nodules"] + variables["frocscore"]
+    )
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
-
     return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
 
 
@@ -1108,9 +1088,7 @@ def parse_php_arrays(filename):
 
     """
     verbose = False
-
     output = {}
-
     storage = DefaultStorage()
     with storage.open(filename, 'r') as f:
         content = f.read()
@@ -1119,83 +1097,84 @@ def parse_php_arrays(filename):
         s = php.search(content)
         assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
         phpcontent = s.group(1)
-
         phpvars = phpcontent.split("$")
         phpvars = [x for x in phpvars if x != '']  # remove empty
         if verbose:
             print("found %d php variables in %s. " % (len(phpvars), filename))
             print("parsing %s into int arrays.. " % filename)
-
         # check whether this looks like a php var
-        phpvar = re.compile(r"([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);",
-                            re.DOTALL)
+        phpvar = re.compile(
+            r"([a-zA-Z]+[a-zA-Z0-9]*?)=array\((.*?)\);", re.DOTALL
+        )
         for var in phpvars:
             result = phpvar.search(var)
-
             # TODO Log these messages as info
             if result is None:
                 msg = "Could not match regex pattern '%s' to '%s'\
-                                    " % (phpvar.pattern, var)
+                                    " % (
+                    phpvar.pattern, var
+                )
                 continue
 
             if len(result.groups()) != 2:
                 msg = "Expected to find  varname and content,\
                       but regex '%s' found %d items:%s " % (
-                    phpvar.pattern, len(result.groups()),
-                    "[" + ",".join(result.groups()) + "]")
+                    phpvar.pattern,
+                    len(result.groups()),
+                    "[" + ",".join(result.groups()) + "]",
+                )
                 continue
 
             (varname, varcontent) = result.groups()
-
             output[varname] = [float(x) for x in varcontent.split(",")]
-
     return output
 
 
 @register.tag(name="url_parameter")
 def url_parameter(parser, token):
     """ Try to read given variable from given url. """
-
     usagestr = """Tag usage: {% url_parameter <param_name> %}
                   <param_name>: The parameter to read from the requested url.
                   Example: {% url_parameter name %} will write "John" when the
                   requested url included ?name=John.
                   """
-
     split = token.split_contents()
     tag = split[0]
     all_args = split[1:]
-
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
         return TemplateErrorNode(error_message)
+
     else:
         args = {"url_parameter": all_args[0]}
-
     args["token"] = token
-
     return UrlParameterNode(args)
 
 
 class UrlParameterNode(template.Node):
+
     def __init__(self, args):
         self.args = args
 
     def make_error_msg(self, msg):
-        logger.error("Error in url_parameter tag: '" + ",".join(
-            self.args) + "': " + msg)
+        logger.error(
+            "Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg
+        )
         errormsg = "Error in url_parameter tag"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-
         if self.args['url_parameter'] in context['request'].GET:
             return context['request'].GET[self.args['url_parameter']]
+
         else:
             logger.error(
-                "Error rendering %s: Parameter '%s' not found in request URL" % (
+                "Error rendering %s: Parameter '%s' not found in request URL" %
+                (
                     "{%  " + self.args['token'].contents + "%}",
-                    self.args['url_parameter']))
+                    self.args['url_parameter'],
+                )
+            )
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
 
@@ -1206,11 +1185,8 @@ def render_all_projectlinks(parser, token):
     projects and challenges
 
     """
-
     usagestr = "Tag usage: {% all_projectlinks %}"
-
     args = parseKeyValueToken(token)
-
     try:
         projects = ComicSite.objects.non_hidden()
     except ObjectDoesNotExist as e:
@@ -1230,24 +1206,20 @@ class AllProjectLinksNode(template.Node):
 
     def render(self, context):
         projectlinks = []
-
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
-
         projectlinks += self.read_grand_challenge_projectlinks()
         html = self.render_project_links_per_year(projectlinks)
-
         # html = ""
         # for projectlink in projectlinks:
         #    html += projectlink.render_to_html()
-
         html = u"""
                   {filter_buttons_HTML}
                   <div id='projectlinks'>
                     {html}
                   </div> """.format(
-            filter_buttons_HTML=self.get_filter_buttons_HTML(),
-            html=html)
+            filter_buttons_HTML=self.get_filter_buttons_HTML(), html=html
+        )
         return html
 
     def get_filter_buttons_HTML(self):
@@ -1264,21 +1236,19 @@ class AllProjectLinksNode(template.Node):
         """
         # go throught all projectlinks and bin per year
         years = {}
-
         for projectlink in projectlinks:
             year = projectlink.date.year
             if year in years:
                 years[year].append(projectlink)
             else:
                 years[year] = [projectlink]
-
         years = years.items()
         years = sorted(years, key=lambda x: x[0], reverse=True)
-
         html = ""
         for year in years:
             yearheader = "<div class ='yearHeader' id ='{0}'><h2>{0}</h2></div>".format(
-                year[0])
+                year[0]
+            )
             projectlinks = ""
             for i, link in enumerate(year[1]):
                 projectlinks += self.render_to_html(link)
@@ -1287,20 +1257,19 @@ class AllProjectLinksNode(template.Node):
                 # We're displaying 3 items in a row on small, medium and large screens
                 if (i + 1) % 3 == 0:
                     projectlinks += '<div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>'
-
             html += u"""
             <div class='projectlinksyearcontainer'>
                 {0}
                 <div class='row'>
                     {1}
                 </div>
-            </div>""".format(yearheader, projectlinks)
-
+            </div>""".format(
+                yearheader, projectlinks
+            )
         return html
 
     def render_to_html(self, projectlink):
         """ return html representation of projectlink """
-
         html = u"""
                <div class="col-sm-4 projectlink {link_class} {year}">
                  <div class="panel panel-default">
@@ -1318,15 +1287,16 @@ class AllProjectLinksNode(template.Node):
                    <div class="panel-footer projectLinkFooter">{stats}</div>
                  </div>
                </div>
-                """.format(link_class=self.get_link_classes(projectlink),
-                           year=str(projectlink.params["year"]),
-                           abreviation=projectlink.params["abreviation"],
-                           url=projectlink.params["URL"],
-                           thumb_image_url=self.get_thumb_url(projectlink),
-                           projectname=projectlink.params["title"],
-                           description=projectlink.params["description"],
-                           stats=self.get_stats_html(projectlink)
-                           )
+                """.format(
+            link_class=self.get_link_classes(projectlink),
+            year=str(projectlink.params["year"]),
+            abreviation=projectlink.params["abreviation"],
+            url=projectlink.params["URL"],
+            thumb_image_url=self.get_thumb_url(projectlink),
+            projectname=projectlink.params["title"],
+            description=projectlink.params["description"],
+            stats=self.get_stats_html(projectlink),
+        )
         return html
 
     def capitalize(self, string):
@@ -1337,127 +1307,121 @@ class AllProjectLinksNode(template.Node):
         returns a space separated list of classes to use in html
         """
         classes = []
-
         if projectlink.params["open for submission"] == 'yes':
             classes.append("open")
-
         if projectlink.params["data download"] == 'yes':
             classes.append("datadownload")
-
         classes.append(self.get_host_id(projectlink))
-
         return " ".join(classes)
 
     def get_stats_html(self, projectlink):
         """ Returns html to render number of downloads, participants etc..
         if a value is not found it is ommitted from the html so there will
         be no 'participants: <empty>' strings shown """
-
         stats = []
-
         if projectlink.params["open for submission"] == "yes":
             open_for_submissions_HTML = self.make_link(
                 self.get_submission_link(projectlink),
                 "Open for submissions",
-                "submissionlink")
+                "submissionlink",
+            )
             stats.append(open_for_submissions_HTML)
-
         if projectlink.params["data download"] == "yes":
             if projectlink.params["download URL"]:
                 data_download_link = projectlink.params["download URL"]
             else:
                 data_download_link = projectlink.params["URL"]
-
-            data_download_HTML = self.make_link(data_download_link,
-                                                "Data download",
-                                                "datadownloadlink")
+            data_download_HTML = self.make_link(
+                data_download_link, "Data download", "datadownloadlink"
+            )
             stats.append(data_download_HTML)
-
         if projectlink.params["submitted results"]:
             submissionstring = (
-                    "results: " + str(projectlink.params["submitted results"]))
+                "results: " + str(projectlink.params["submitted results"])
+            )
             if projectlink.params["last submission date"]:
                 submissionstring += ", Latest: " + self.format_date(
-                    projectlink.params["last submission date"])
+                    projectlink.params["last submission date"]
+                )
             stats.append(submissionstring)
-
         if projectlink.params[
-            "workshop date"] and projectlink.UPCOMING in projectlink.find_link_class():
-            stats.append("workshop: " + self.format_date(
-                projectlink.params["workshop date"]))
-
+            "workshop date"
+        ] and projectlink.UPCOMING in projectlink.find_link_class():
+            stats.append(
+                "workshop: " +
+                self.format_date(projectlink.params["workshop date"])
+            )
         if projectlink.params["event name"]:
             stats.append(
-                "Associated with: " + self.make_event_link(projectlink))
-
+                "Associated with: " + self.make_event_link(projectlink)
+            )
         if projectlink.params["overview article journal"]:
             stats.append("Article: " + self.make_article_link(projectlink))
-
         hostlink = self.get_host_link(projectlink)
         if hostlink != "":
             stats.append("Hosted on: " + hostlink)
-
         stats_caps = []
         for string in stats:
             stats_caps.append(self.capitalize(string))
-
         # put divs around each statistic in the stats list
         stats_html = "".join(
-            ["<div>{}</div>".format(stat) for stat in stats_caps])
-
+            ["<div>{}</div>".format(stat) for stat in stats_caps]
+        )
         return stats_html
 
     def get_submission_link(self, projectlink):
         if projectlink.params["submission URL"]:
             return projectlink.params["submission URL"]
+
         else:
             return projectlink.params["URL"]
 
     def make_article_link(self, projectlink):
-        return self.make_link(projectlink.params["overview article url"],
-                              projectlink.params["overview article journal"],
-                              "articlelink")
+        return self.make_link(
+            projectlink.params["overview article url"],
+            projectlink.params["overview article journal"],
+            "articlelink",
+        )
 
     def make_event_link(self, projectlink):
         """ To link to event, like ISBI 2013 in overviews
         
         """
         if projectlink.params["event URL"]:
-            return self.make_link(projectlink.params["event URL"],
-                                  projectlink.params["event name"],
-                                  "eventlink")
+            return self.make_link(
+                projectlink.params["event URL"],
+                projectlink.params["event name"],
+                "eventlink",
+            )
+
         else:
             return projectlink.params["event name"]
 
     def get_host_link(self, projectlink):
         """ Try to find out what framework this challenge is hosted on 
         """
-
         host_id = self.get_host_id(projectlink)
         if host_id == "grand-challenge":
             framework_name = "grand-challenge.org"
             framework_URL = "http://grand-challenge.org"
-
         elif host_id == "codalab":
             framework_name = "codalab.org"
             framework_URL = "http://codalab.org"
-
         else:
             return ""
 
-        return self.make_link(framework_URL, framework_name,
-                              "frameworklink")
+        return self.make_link(framework_URL, framework_name, "frameworklink")
 
     def get_host_id(self, projectlink):
         """ Try to find out what framework this challenge is hosted on, return
         a string which can also be an id or class in HTML 
         """
-
         if projectlink.params["hosted on comic"]:
             return "grand-challenge"
 
         if "codalab.org" in projectlink.params["URL"]:
             return "codalab"
+
         else:
             return "Unknown"
 
@@ -1466,9 +1430,9 @@ class AllProjectLinksNode(template.Node):
             link_class_HTML = ""
         else:
             link_class_HTML = "class=" + link_class
-
-        return "<a href='{0}' {1}>{2}</a>".format(link_url, link_class,
-                                                  link_text)
+        return "<a href='{0}' {1}>{2}</a>".format(
+            link_url, link_class, link_text
+        )
 
     def get_thumb_url(self, projectlink):
         """ For displaying a little thumbnail image for each project, in 
@@ -1478,61 +1442,63 @@ class AllProjectLinksNode(template.Node):
         if projectlink.is_hosted_on_comic():
             thumb_image_url = projectlink.params["thumb_image_url"]
         else:
-            thumb_image_url = reverse('project_serve_file',
-                                      args=[settings.MAIN_PROJECT_NAME,
-                                            "public_html/images/all_challenges/{0}.png".format(
-                                                projectlink.params[
-                                                    "abreviation"])])
-
-            # thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
-
+            thumb_image_url = reverse(
+                'project_serve_file',
+                args=[
+                    settings.MAIN_PROJECT_NAME,
+                    "public_html/images/all_challenges/{0}.png".format(
+                        projectlink.params["abreviation"]
+                    ),
+                ],
+            )
+        # thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
         return thumb_image_url
 
     def read_grand_challenge_projectlinks(self):
-        filepath = os.path.join(settings.MEDIA_ROOT,
-                                settings.MAIN_PROJECT_NAME,
-                                settings.EXTERNAL_PROJECTS_FILE)
+        filepath = os.path.join(
+            settings.MEDIA_ROOT,
+            settings.MAIN_PROJECT_NAME,
+            settings.EXTERNAL_PROJECTS_FILE,
+        )
         reader = ProjectExcelReader(filepath, 'Challenges')
-
         # pdb.set_trace()
         logger.info("Reading projects excel from '%s'" % filepath)
         try:
             projectlinks = reader.get_project_links()
         except IOError as e:
-
-            logger.error("Could not read any projectlink information from"
-                         " '%s' returning empty list. trace: %s " % (
-                             filepath, traceback.format_exc()))
+            logger.error(
+                "Could not read any projectlink information from"
+                " '%s' returning empty list. trace: %s " %
+                (filepath, traceback.format_exc())
+            )
             projectlinks = []
-
         projectlinks_clean = []
         for projectlink in projectlinks:
             projectlinks_clean.append(
-                self.clean_grand_challenge_projectlink(projectlink))
-
+                self.clean_grand_challenge_projectlink(projectlink)
+            )
         return projectlinks_clean
 
     def clean_grand_challenge_projectlink(self, projectlink):
         """ Specifically for the grand challenges excel file, make everything strings,
         change weird values, like having more downloads than registered users
         """
-
         # cast all to int as there are no float values in the excel file, I'd
         # rather do this here than change the way excelreader reads them in
         for key in projectlink.params.keys():
             param = projectlink.params[key]
             if type(param) == float:
                 projectlink.params[key] = int(param)
-
         if projectlink.params["last submission date"]:
             projectlink.params[
-                "last submission date"] = self.determine_project_date(
-                projectlink.params["last submission date"])
-
+                "last submission date"
+            ] = self.determine_project_date(
+                projectlink.params["last submission date"]
+            )
         if projectlink.params["workshop date"]:
             projectlink.params["workshop date"] = self.determine_project_date(
-                projectlink.params["workshop date"])
-
+                projectlink.params["workshop date"]
+            )
         return projectlink
 
     def determine_project_date(self, datefloat):
@@ -1540,10 +1506,9 @@ class AllProjectLinksNode(template.Node):
         
         """
         date = str(datefloat)
-        parsed = datetime.datetime(year=int(date[0:4]),
-                                   month=int(date[4:6]),
-                                   day=int(date[6:8]))
-
+        parsed = datetime.datetime(
+            year=int(date[0:4]), month=int(date[4:6]), day=int(date[6:8])
+        )
         return parsed
 
     def format_date(self, date):
@@ -1572,7 +1537,8 @@ def HTML_encode_django_chars(string):
 
 def makeErrorMsgHtml(text):
     errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(
-        text) + " </span></p>"
+        text
+    ) + " </span></p>"
     return errorMsgHTML
 
 
@@ -1583,7 +1549,6 @@ def display_project_statistics(parser, token):
                   of residence entered by each participants for this project when they signed up.
                   
                   """
-
     return ProjectStatisticsNode()
 
 
@@ -1593,18 +1558,17 @@ def display_project_statistics(parser, token):
                   Displays a javascript map of the world which listing the country
                   of residence entered by each user of the framework when they signed up.
                   """
-
     try:
         _, include_header = token.split_contents()
         if include_header.lower() == "false":
             include_header = False
     except ValueError:
         include_header = True
-
     return ProjectStatisticsNode(allusers=True, include_header=include_header)
 
 
 class ProjectStatisticsNode(template.Node):
+
     def __init__(self, allusers=False, include_header=True):
         """
         Allusers is meant to be used on the main website, and does not filter for
@@ -1621,36 +1585,40 @@ class ProjectStatisticsNode(template.Node):
         """
         challenge_short_name = context.page.challenge.short_name
         all_users = self.allusers
-        key = 'ProjectStatisticsNode.{}.{}'.format(challenge_short_name, all_users)
+        key = 'ProjectStatisticsNode.{}.{}'.format(
+            challenge_short_name, all_users
+        )
         content = cache.get(key)
         if content is None:
-            content = self._get_map(challenge_short_name, all_users,
-                                    self.include_header)
+            content = self._get_map(
+                challenge_short_name, all_users, self.include_header
+            )
             cache.set(key, content, 10 * 60)
         return content
 
     @classmethod
     def _get_map(cls, challenge_short_name, all_users, include_header):
-
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
-
         # Get the users belonging to this project
-        perm = Group.objects.get(name='{}_participants'.format(challenge_short_name))
+        perm = Group.objects.get(
+            name='{}_participants'.format(challenge_short_name)
+        )
         User = get_user_model()
         if all_users:
             users = User.objects.all().distinct()
         else:
             users = User.objects.filter(groups=perm).distinct()
-
         country_counts = UserProfile.objects.filter(user__in=users).values(
-            'country').annotate(dcount=Count('country'))
-
+            'country'
+        ).annotate(
+            dcount=Count('country')
+        )
         chart_data = [['Country', '#Participants']]
         for country_count in country_counts:
             chart_data.append(
-                [str(country_count['country']), country_count['dcount']])
-
+                [str(country_count['country']), country_count['dcount']]
+            )
         snippet_geochart = """
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type='text/javascript'>
@@ -1667,16 +1635,16 @@ class ProjectStatisticsNode(template.Node):
             }};
         </script>
         <div id="chart_div"></div>
-        """.format(data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY)
-
+        """.format(
+            data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY
+        )
         snippet = ""
-
         if include_header:
             snippet += "<h1>Statistics</h1><br/>\n"
-
         snippet += """
         <p>Number of users: {num_users}</p>
         {geochart}
-        """.format(num_users=len(users), geochart=snippet_geochart)
-
+        """.format(
+            num_users=len(users), geochart=snippet_geochart
+        )
         return snippet_header + snippet + snippet_footer

@@ -8,22 +8,23 @@ def send_file_uploaded_notification_email(**kwargs):
     challenge = kwargs['challenge']
     site = kwargs['site']
     title = "New upload for %s: '%s' " % (
-         challenge.short_name, kwargs["filename"])
-    admins =  challenge.get_admins()
-
+        challenge.short_name, kwargs["filename"]
+    )
+    admins = challenge.get_admins()
     if not admins:
         admin_email_adresses = [x[1] for x in settings.ADMINS]
-        kwargs['additional_message'] = '<i> Message from COMIC: I could not\
-        find any administrator for ' +  challenge.short_name + '. Somebody needs to\
+        kwargs[
+            'additional_message'
+        ] = '<i> Message from COMIC: I could not\
+        find any administrator for ' + challenge.short_name + '. Somebody needs to\
         know about this new upload, so I am Sending this email to everyone set\
         as general COMIC admin (ADMINS in the /comic/settings/ conf file). To\
         stop getting these messages, set an admin for\
-        ' +  challenge.short_name + '.</i> <br/><br/>'
+        ' + challenge.short_name + '.</i> <br/><br/>'
     else:
         kwargs['additional_message'] = ''
         admin_email_adresses = [x.email for x in admins]
-
-    kwargs['project'] =  challenge
+    kwargs['project'] = challenge
     send_templated_email(
         title,
         "uploads/emails/file_uploaded_email.html",

@@ -17,6 +17,7 @@ def cleanup(container: ContainerApiMixin):
     """
     try:
         yield container
+
     finally:
         container.stop()
         container.remove(force=True)
@@ -32,12 +33,10 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     :param dest: The path to the target file in the container
     :return:
     """
-
     tar_b = io.BytesIO()
     tar = tarfile.open(fileobj=tar_b, mode='w')
     tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
     tarinfo.size = src.size
-
     # type File does not have a __enter__ method, so cannot use `with`
     src.open('rb')
     try:
@@ -45,6 +44,5 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     finally:
         src.close()
         tar.close()
-
     tar_b.seek(0)
     container.put_archive(os.path.dirname(dest), tar_b)

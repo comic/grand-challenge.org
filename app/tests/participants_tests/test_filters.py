@@ -12,7 +12,6 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
         client=client,
         user=TwoChallengeSets.admin12,
     )
-
     tests = [
         (False, TwoChallengeSets.ChallengeSet1.non_participant),
         (True, TwoChallengeSets.ChallengeSet1.participant),
@@ -29,10 +28,8 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
         (True, TwoChallengeSets.participant12),
         (False, TwoChallengeSets.admin1participant2),
     ]
-
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
-
     assert 'Participants for ' in response.rendered_content
 
 
@@ -44,13 +41,11 @@ def test_registration_list_is_filtered(client, TwoChallengeSets):
     r2 = RegistrationRequestFactory(
         challenge=TwoChallengeSets.ChallengeSet2.challenge
     )
-
     response = get_view_for_user(
         viewname='participants:registration-list',
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
         user=TwoChallengeSets.admin12,
     )
-
     assert r1.user.username in response.rendered_content
     assert r2.user.username not in response.rendered_content

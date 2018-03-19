@@ -6,7 +6,6 @@ def index(queryset, obj):
     Return -1 if not found
     
     """
-
     for index, item in enumerate(queryset):
         if item == obj:
             return index

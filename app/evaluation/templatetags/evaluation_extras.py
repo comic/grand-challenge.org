@@ -25,6 +25,7 @@ def get_jsonpath(obj: dict, jsonpath):
     try:
         expr = parse(jsonpath)
         return expr.find(obj)[0].value
+
     except (AttributeError, IndexError):
         return ''
 
@@ -41,6 +42,7 @@ def user_error(obj: str):
     try:
         lines = list(filter(None, obj.split('\n')))
         return lines[-1]
+
     except IndexError:
         return obj
 
@@ -54,6 +56,7 @@ def json_dumps(obj: dict):
     """
     try:
         return mark_safe(json.dumps(obj, indent=2))
+
     except TypeError:
         # Not json encodable
         return str(obj)
@@ -66,8 +69,9 @@ def get_team_html(obj: Result):
             challenge=obj.challenge,
             teammember__user=obj.job.submission.creator,
         )
-        return format_html('<a href="{}">{}</a>',
-                           team.get_absolute_url(),
-                           team.name)
+        return format_html(
+            '<a href="{}">{}</a>', team.get_absolute_url(), team.name
+        )
+
     except Exception:
         return

@@ -51,7 +51,7 @@
             <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
         </div>
     {% endif %}
-    <div id=pageContainer>{{ currentpage.rawHTML }}</div>
+    <div id=pageContainer>{{ currentpage.raw_html }}</div>
 
     <br/>
     {% get_obj_perms user for site as "site_perms" %}

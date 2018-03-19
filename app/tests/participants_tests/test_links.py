@@ -10,7 +10,6 @@ def test_join_page_links(client, ChallengeSet):
         (ChallengeSet.non_participant, 'Click here to join'),
         (ChallengeSet.participant, 'You are already participating'),
     ]
-
     for test in tests:
         response = get_view_for_user(
             viewname='participants:registration-create',
@@ -18,17 +17,14 @@ def test_join_page_links(client, ChallengeSet):
             user=test[0],
             challenge=ChallengeSet.challenge,
         )
-
         assert test[1] in response.rendered_content
-
-        rr = RegistrationRequestFactory(user=test[0],
-                                        challenge=ChallengeSet.challenge)
-
+        rr = RegistrationRequestFactory(
+            user=test[0], challenge=ChallengeSet.challenge
+        )
         response = get_view_for_user(
             viewname='participants:registration-create',
             client=client,
             user=test[0],
             challenge=ChallengeSet.challenge,
         )
-
         assert rr.status_to_string() in response.rendered_content

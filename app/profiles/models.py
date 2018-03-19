@@ -10,10 +10,9 @@ from comicmodels.models import ComicSite
 
 
 class UserProfile(UserenaBaseProfile):
-    user = models.OneToOneField(User,
-                                unique=True,
-                                verbose_name=_('user'),
-                                related_name='user_profile')
+    user = models.OneToOneField(
+        User, unique=True, verbose_name=_('user'), related_name='user_profile'
+    )
     institution = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     country = CountryField()
@@ -21,7 +20,8 @@ class UserProfile(UserenaBaseProfile):
 
     def get_challenges_as_participant(self):
         return ComicSite.objects.filter(
-            participants_group__in=self.user.groups.all())
+            participants_group__in=self.user.groups.all()
+        )
 
 
 def create_user_profile(sender, instance, created, **kwargs):

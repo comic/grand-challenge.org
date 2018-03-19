@@ -19,6 +19,7 @@ def profile(request):
         # print "username:", request.user.username
         # print "redirect to profile"
         return redirect('/accounts/' + request.user.username)
+
     else:
         return redirect('/accounts/signin')
 
@@ -30,9 +31,13 @@ def profile_edit_redirect(request):
     if request.user.is_authenticated():
         # print "username: ", request.user.username
         # print "redirect to profile edit"
-        messages.add_message(request, messages.INFO,
-                             "Please fill-in the missing information in the form form below.")
+        messages.add_message(
+            request,
+            messages.INFO,
+            "Please fill-in the missing information in the form form below.",
+        )
         return redirect('/accounts/' + request.user.username + '/edit')
+
     else:
         return redirect('accounts/signin')
 
@@ -44,10 +49,12 @@ def profile_edit(*args, **kwargs):
 
 def signup(request, extra_context=None, **kwargs):
     success = reverse("profile_signup_complete")
-    response = userena_views.signup(request=request,
-                                    extra_context=extra_context,
-                                    success_url=success,
-                                    **kwargs)
+    response = userena_views.signup(
+        request=request,
+        extra_context=extra_context,
+        success_url=success,
+        **kwargs
+    )
     return response
 
 

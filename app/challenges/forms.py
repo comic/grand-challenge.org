@@ -7,6 +7,7 @@ from comicmodels.models import ComicSite
 
 
 class ChallengeCreateForm(forms.ModelForm):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -23,23 +24,14 @@ class ChallengeCreateForm(forms.ModelForm):
 
 
 class ChallengeUpdateForm(forms.ModelForm):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab(
-                    'Information',
-                    'title',
-                    'description',
-                    'logo',
-                ),
-                Tab(
-                    'Layout',
-                    'header_image',
-                    'skin',
-                    'disclaimer',
-                ),
+                Tab('Information', 'title', 'description', 'logo'),
+                Tab('Layout', 'header_image', 'skin', 'disclaimer'),
                 Tab(
                     'Metadata',
                     'workshop_date',
@@ -60,20 +52,10 @@ class ChallengeUpdateForm(forms.ModelForm):
                     'require_participant_review',
                     'registration_page_text',
                 ),
-                Tab(
-                    'Visibility',
-                    'hidden',
-                    'hide_signin',
-                    'hide_footer',
-                ),
-                Tab(
-                    'Automated Evaluation',
-                    'use_evaluation',
-                ),
+                Tab('Visibility', 'hidden', 'hide_signin', 'hide_footer'),
+                Tab('Automated Evaluation', 'use_evaluation'),
             ),
-            ButtonHolder(
-                Submit('save', 'Save'),
-            )
+            ButtonHolder(Submit('save', 'Save')),
         )
 
     class Meta:

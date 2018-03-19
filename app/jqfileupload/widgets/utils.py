@@ -1,4 +1,3 @@
-
 class IntervalMap:
     """
     This class creates a lookup table for contiguous ranges that can be
@@ -43,6 +42,7 @@ class IntervalMap:
 
     Note that negative indexes are not allowed.
     """
+
     def __init__(self):
         self.__endpoints = []
 
@@ -51,18 +51,23 @@ class IntervalMap:
         self.__endpoints.sort()
 
     def __find_endpoint_index(self, i):
+
         def find(start, end):
             # use nested intervals to find correct label
             if start == end:
                 return start
+
             else:
                 mid = (start + end) // 2
                 if self.__endpoints[mid][0] > i:
                     return find(start, mid)
+
                 else:
                     return find(mid + 1, end)
+
         if i < 0 or i >= self.len:
             return None
+
         else:
             return find(0, len(self.__endpoints))
 
@@ -89,23 +94,28 @@ class IntervalMap:
         """
         if not isinstance(i, int):
             raise TypeError('index must be int')
+
         endpoint_index = self.__find_endpoint_index(i)
         if endpoint_index is None:
             raise IndexError()
+
         elif endpoint_index == 0:
             return 0
+
         else:
             return self.__endpoints[endpoint_index - 1][0]
 
     def __getitem__(self, i):
         if not isinstance(i, int):
             raise TypeError('index must be int')
+
         if i < 0:
             raise IndexError()
 
         endpoint_index = self.__find_endpoint_index(i)
         if endpoint_index is None:
             raise IndexError()
+
         else:
             return self.__endpoints[endpoint_index][1]
 

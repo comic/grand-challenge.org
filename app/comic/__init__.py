@@ -6,4 +6,4 @@ __all__ = ['celery_app']
 
 
 def toolbar_callback(*_, **__):
-        return settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR
+    return settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR

@@ -11,9 +11,7 @@ def send_challenge_created_email(challenge: ComicSite):
         f'User {challenge.creator} has just created the challenge '
         f'{challenge.short_name} at {challenge.get_absolute_url()}.'
     )
-
     staff = get_user_model().objects.filter(is_staff=True)
-
     for s in staff:
         send_mail(
             subject='New Challenge Created',

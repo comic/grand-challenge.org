@@ -5,18 +5,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
-from django.views.generic import (
-    CreateView,
-    ListView,
-    DetailView,
-    UpdateView,
-)
+from django.views.generic import (CreateView, ListView, DetailView, UpdateView)
 
-from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import (
-    UserIsChallengeAdminMixin,
-    UserIsChallengeParticipantOrAdminMixin,
+    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
 )
 from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
@@ -52,11 +45,9 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = self.request.challenge
-
         uploaded_file = form.cleaned_data['chunked_upload'][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
-
         return super(MethodCreate, self).form_valid(form)
 
 
@@ -72,8 +63,9 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
-                       SuccessMessageMixin, CreateView):
+class SubmissionCreate(
+    UserIsChallengeParticipantOrAdminMixin, SuccessMessageMixin, CreateView
+):
     model = Submission
     form_class = SubmissionForm
     success_message = (
@@ -83,43 +75,39 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
 
     def get_form_kwargs(self):
         kwargs = super(SubmissionCreate, self).get_form_kwargs()
-
         config = Config.objects.get(challenge=self.request.challenge)
-
-        kwargs.update({
-            'display_comment_field': config.allow_submission_comments,
-            'allow_supplementary_file': config.allow_supplementary_file,
-            'require_supplementary_file': config.require_supplementary_file,
-            'supplementary_file_label': config.supplementary_file_label,
-            'supplementary_file_help_text': config.supplementary_file_help_text,
-        })
-
+        kwargs.update(
+            {
+                'display_comment_field': config.allow_submission_comments,
+                'allow_supplementary_file': config.allow_supplementary_file,
+                'require_supplementary_file': config.require_supplementary_file,
+                'supplementary_file_label': config.supplementary_file_label,
+                'supplementary_file_help_text': config.supplementary_file_help_text,
+            }
+        )
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionCreate, self).get_context_data(**kwargs)
-
         config = Config.objects.get(challenge=self.request.challenge)
-
         context.update(
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
-
         pending_jobs = Job.objects.filter(
             challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
-
-        context.update({
-            'pending_jobs': pending_jobs,
-        })
-
+        context.update({'pending_jobs': pending_jobs})
         return context
 
-    def get_next_submission(self, *, max_subs: int,
-                            period: timedelta = timedelta(days=1),
-                            now: datetime = None) -> Dict:
+    def get_next_submission(
+        self,
+        *,
+        max_subs: int,
+        period: timedelta =timedelta(days=1),
+        now: datetime = None
+    ) -> Dict:
         """
         Determines the number of submissions left for the user in a given time
         period, and when they can next submit.
@@ -129,18 +117,17 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
         """
         if now is None:
             now = timezone.now()
-
         subs = Submission.objects.filter(
             challenge=self.request.challenge,
             creator=self.request.user,
             created__gte=now - period,
-        ).order_by('-created')
-
+        ).order_by(
+            '-created'
+        )
         try:
             next_sub_at = subs[max_subs - 1].created + period
         except (IndexError, AssertionError):
             next_sub_at = now
-
         return {
             'remaining_submissions': max_subs - len(subs),
             'next_submission_at': next_sub_at,
@@ -149,19 +136,15 @@ class SubmissionCreate(UserIsChallengeParticipantOrAdminMixin,
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = self.request.challenge
-
         uploaded_file = form.cleaned_data['chunked_upload'][0]
         with uploaded_file.open() as f:
             form.instance.file.save(uploaded_file.name, File(f))
-
         return super(SubmissionCreate, self).form_valid(form)
 
     def get_success_url(self):
         return reverse(
             'evaluation:job-list',
-            kwargs={
-                'challenge_short_name': self.object.challenge.short_name
-            }
+            kwargs={'challenge_short_name': self.object.challenge.short_name},
         )
 
 
@@ -171,14 +154,15 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     def get_queryset(self):
         """ Admins see everything, participants just their submissions """
         queryset = super(SubmissionList, self).get_queryset()
-
         challenge = self.request.challenge
-
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
+
         else:
-            return queryset.filter(Q(challenge=self.request.challenge),
-                                   Q(creator__pk=self.request.user.pk))
+            return queryset.filter(
+                Q(challenge=self.request.challenge),
+                Q(creator__pk=self.request.user.pk),
+            )
 
 
 class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
@@ -198,15 +182,14 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         """ Admins see everything, participants just their jobs """
         queryset = super(JobList, self).get_queryset()
         queryset = queryset.select_related('result')
-
         challenge = self.request.challenge
-
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
+
         else:
             return queryset.filter(
                 Q(challenge=self.request.challenge),
-                Q(submission__creator__pk=self.request.user.pk)
+                Q(submission__creator__pk=self.request.user.pk),
             )
 
 
@@ -221,9 +204,11 @@ class ResultList(ListView):
     def get_queryset(self):
         queryset = super(ResultList, self).get_queryset()
         queryset = queryset.select_related(
-            'job__submission__creator__user_profile')
-        return queryset.filter(Q(challenge=self.request.challenge),
-                               Q(public=True))
+            'job__submission__creator__user_profile'
+        )
+        return queryset.filter(
+            Q(challenge=self.request.challenge), Q(public=True)
+        )
 
 
 class ResultDetail(DetailView):
