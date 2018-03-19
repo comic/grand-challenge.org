@@ -9,7 +9,6 @@ from django.views.generic import (
     CreateView,
     ListView,
     DetailView,
-    TemplateView,
     UpdateView,
 )
 

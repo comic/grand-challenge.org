@@ -154,9 +154,9 @@ class Config(UUIDModel):
     )
 
     def get_absolute_url(self):
-        return reverse('evaluation:manage',
+        return reverse('challenge-homepage',
                        kwargs={
-                           'challenge_short_name': self.challenge.short_name
+                           'site_short_name': self.challenge.short_name
                        })
 
 
@@ -198,10 +198,8 @@ class Method(UUIDModel):
             ),
         ],
         help_text=(
-            'Tar archive of the container '
-            'image produced from the command '
-            '`docker save IMAGE > '
-            'IMAGE.tar`. See '
+            'Tar archive of the container image produced from the command '
+            '`docker save IMAGE > IMAGE.tar`. See '
             'https://docs.docker.com/engine/reference/commandline/save/'
         ),
     )

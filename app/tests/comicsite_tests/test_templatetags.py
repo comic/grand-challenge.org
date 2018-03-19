@@ -1,6 +1,8 @@
+import uuid
+
 import pytest
 from django.template import Template, Context, RequestContext
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 
 from tests.factories import ChallengeFactory, PageFactory
 
@@ -14,11 +16,13 @@ def test_taglist():
     rendered = template.render(Context({}))
 
     assert '<td>listdir</td>' in rendered
-    assert '<td>get_result_info</td>' in rendered
     assert '<td>get_project_prefix</td>' in rendered
 
 
 @pytest.mark.django_db
+# Override the settings so we can use the test file in dataproviders
+@override_settings(MEDIA_ROOT='/app/tests/dataproviders_tests/')
+@override_settings(MAIN_PROJECT_NAME='resources')
 def test_all_projectlinks():
     c = ChallengeFactory(hidden=False)
     hidden = ChallengeFactory(hidden=True)
@@ -36,7 +40,8 @@ def test_all_projectlinks():
 
 @pytest.mark.django_db
 def test_allusers_statistics():
-    p = PageFactory()
+    c = ChallengeFactory(short_name=str(uuid.uuid4()))
+    p = PageFactory(comicsite=c)
 
     template = Template(
         '{% load allusers_statistics from comic_templatetags %}'
@@ -53,7 +58,8 @@ def test_allusers_statistics():
 
 @pytest.mark.django_db
 def test_project_statistics():
-    p = PageFactory()
+    c = ChallengeFactory(short_name=str(uuid.uuid4()))
+    p = PageFactory(comicsite=c)
 
     template = Template(
         '{% load project_statistics from comic_templatetags %}'
@@ -84,9 +90,63 @@ def test_url_parameter(rf: RequestFactory):
 
     assert rendered == 'john'
 
-# {% image_browser path:string - path relative to current project
-#                  config:string - path relative to current project %}
 
-# get_result_info
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "view_type",
+    [
+        'anode09',
+        'anode09_table',
+    ]
+)
+@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+def test_insert_graph(rf: RequestFactory, view_type):
+    c = ChallengeFactory(short_name='testproj1734621')
+    p = PageFactory(comicsite=c)
 
-# insert_graph
+    r = rf.get('/Result/?id=4')
+
+    template = Template(
+        '{% load insert_graph from comic_templatetags %}'
+        '{% insert_graph 4.php type:'
+        f'{view_type}'
+        ' %}'
+    )
+
+    context = RequestContext(request=r)
+    context.page = p
+
+    rendered = template.render(context)
+
+    assert "pageError" not in rendered
+    assert "Error rendering graph from file" not in rendered
+    if view_type == 'anode09':
+        assert "Created with matplotlib" in rendered
+    else:
+        assert "comictablecontainer" in rendered
+
+
+@pytest.mark.django_db
+@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+def test_image_browser(rf: RequestFactory):
+    c = ChallengeFactory(short_name='testproj-image-browser')
+    p = PageFactory(comicsite=c)
+
+    template = Template(
+        '{% load image_browser from comic_templatetags %}'
+        '{% image_browser path:public_html '
+        'config:public_html/promise12_viewer_config_new.js %}'
+    )
+
+    context = RequestContext(request=rf.get(
+        '/results/?id=CBA&folder=20120627202920_304_CBA_Results'
+    ))
+    context.page = p
+    context.update({'site': c})
+
+    rendered = template.render(context)
+
+    assert "pageError" not in rendered
+    assert "Error rendering Visualization" not in rendered
+    assert "20120627202920_304_CBA_Results" in rendered
+    assert "Results viewer" in rendered
