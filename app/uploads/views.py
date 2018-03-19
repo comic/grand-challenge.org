@@ -107,7 +107,7 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
         return context
 
 
-def serve(request, project_name, path, document_root=None):
+def serve(request, challenge_short_name, path, document_root=None):
     """
     Serve static file for a given project.
 
@@ -134,7 +134,7 @@ def serve(request, project_name, path, document_root=None):
         newpath = os.path.join(newpath, part).replace('\\', '/')
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)
-    fullpath = os.path.join(document_root, project_name, newpath)
+    fullpath = os.path.join(document_root, challenge_short_name, newpath)
 
     storage = DefaultStorage()
 
@@ -144,17 +144,17 @@ def serve(request, project_name, path, document_root=None):
         # nameurl in the url is not exactly the same case as the filepath.
         # find the correct case for projectname then.
 
-        projectlist = ComicSite.objects.filter(short_name=project_name)
+        projectlist = ComicSite.objects.filter(short_name=challenge_short_name)
         if not projectlist:
-            raise Http404("project '%s' does not exist" % project_name)
+            raise Http404("project '%s' does not exist" % challenge_short_name)
 
-        project_name = projectlist[0].short_name
-        fullpath = os.path.join(document_root, project_name, newpath)
+        challenge_short_name = projectlist[0].short_name
+        fullpath = os.path.join(document_root, challenge_short_name, newpath)
 
     if not storage.exists(fullpath):
         raise Http404('"%(path)s" does not exist' % {'path': fullpath})
 
-    if can_access(request.user, path, project_name):
+    if can_access(request.user, path, challenge_short_name):
         try:
             f = storage.open(fullpath, 'rb')
             file = File(f)  # create django file object

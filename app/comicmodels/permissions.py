@@ -4,25 +4,25 @@ from django.core.exceptions import ImproperlyConfigured
 from comicmodels.models import ComicSiteModel, ComicSite
 
 
-def can_access(user, path, project_name):
+def can_access(user, path, challenge_short_name):
     """ Does this user have permission to access folder path which is part of
-    project named project_name?
+    challenge named challenge_short_name?
     Override permission can be used to make certain folders servable through
     code even though this would not be allowed otherwise
 
     """
-    required = _required_permission(path, project_name)
+    required = _required_permission(path, challenge_short_name)
 
     if required == ComicSiteModel.ALL:
         return True
     elif required == ComicSiteModel.REGISTERED_ONLY:
-        project = ComicSite.objects.get(short_name=project_name)
+        project = ComicSite.objects.get(short_name=challenge_short_name)
         if project.is_participant(user):
             return True
         else:
             return False
     elif required == ComicSiteModel.ADMIN_ONLY:
-        project = ComicSite.objects.get(short_name=project_name)
+        project = ComicSite.objects.get(short_name=challenge_short_name)
         if project.is_admin(user):
             return True
         else:
@@ -31,7 +31,7 @@ def can_access(user, path, project_name):
         return False
 
 
-def _required_permission(path, project_name):
+def _required_permission(path, challenge_short_name):
     """ Given a file path on local filesystem, which permission level is needed
     to view this?
 
@@ -54,19 +54,19 @@ def _required_permission(path, project_name):
             "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
             " to your .conf file.")
 
-    if project_name.lower() == 'mugshots':
+    if challenge_short_name.lower() == 'mugshots':
         # Anyone can see mugshots
         return ComicSiteModel.ALL
 
-    if project_name.lower() == 'evaluation':
+    if challenge_short_name.lower() == 'evaluation':
         # No one can download evaluation files
         return 'nobody'
 
-    if project_name.lower() == 'evaluation-supplementary':
+    if challenge_short_name.lower() == 'evaluation-supplementary':
         # Anyone can download supplementary files
         return ComicSiteModel.ALL
 
-    if project_name.lower() == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY:
+    if challenge_short_name.lower() == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY:
         # No one can download evaluation files
         return 'nobody'
 

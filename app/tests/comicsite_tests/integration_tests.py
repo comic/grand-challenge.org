@@ -467,32 +467,32 @@ class CreateProjectTest(ComicframeworkTestCase):
         self.projectadmin = self._create_random_user("projectadmin")
 
         # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
-        project_name = "under_score"
+        challenge_short_name = "under_score"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
-        project_name = "project with spaces"
+        challenge_short_name = "project with spaces"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
-        project_name = "project-with-w#$%^rd-items"
+        challenge_short_name = "project-with-w#$%^rd-items"
         response = self._try_create_comicsite(self.projectadmin,
-                                              project_name)
+                                              challenge_short_name)
         errors = self._find_errors_in_page(response)
 
         self.assertTrue(errors, u"Creating a project called '{0}' should not be \
             possible. But is seems to have been created anyway.".format(
-            project_name))
+            challenge_short_name))
 
 
 class ViewsTest(ComicframeworkTestCase):

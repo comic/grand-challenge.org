@@ -9,12 +9,12 @@ from django.http import HttpResponse
 from comicsite.views import get_data_folder_path, get_dirnames
 
 
-def get_public_results(request, project_name):
+def get_public_results(request, challenge_short_name):
     """ Return an array of strings respresenting all results that can be publically
     viewed.
     """
     try:
-        public_results = get_public_results_by_project_name(project_name)
+        public_results = get_public_results_by_challenge_name(challenge_short_name)
     except OSError:
         return HttpResponse(
             "Cannot list public results. Public results should be in folder'results/public/' but this folder could not be found'")
@@ -22,14 +22,14 @@ def get_public_results(request, project_name):
     return json.dumps(public_results)
 
 
-def get_public_results_by_project_name(project_name):
+def get_public_results_by_challenge_name(challenge_short_name):
     """ Made a separate method here to be able to also call this API function from
     within other parts of the code.
     
     raises OSError when no results folder can be found for this project
     """
 
-    data_folder_path = get_data_folder_path(project_name)
+    data_folder_path = get_data_folder_path(challenge_short_name)
     public_results_path = path.join(data_folder_path, "results/public/")
     dirnames = get_dirnames(public_results_path)
 

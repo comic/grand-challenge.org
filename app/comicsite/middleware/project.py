@@ -17,18 +17,25 @@ class ProjectMiddleware:
                 
         """
         request.is_projectadmin = self.is_projectadmin_url(request)
-        request.projectname = self.get_project_name(request)
-        request.project_pk = self.get_project_pk(request)
+        request.projectname = self.get_challenge_name(request)
 
-    def get_project_name(self, request):
+        try:
+            request.challenge = ComicSite.objects.get(
+                short_name=request.projectname
+            )
+            request.project_pk = request.challenge.pk
+        except ComicSite.DoesNotExist:
+            request.challenge = None
+            request.project_pk = -1
+
+
+    def get_challenge_name(self, request):
         """ Tries to infer the name of the project this project is regarding
         
         """
         try:
             resolution = resolve(request.path)
-            if "project_name" in resolution.kwargs:
-                projectname = resolution.kwargs["project_name"]
-            elif "challenge_short_name" in resolution.kwargs:
+            if "challenge_short_name" in resolution.kwargs:
                 projectname = resolution.kwargs["challenge_short_name"]
             elif request.is_projectadmin:
                 projectname = get_projectname(resolution.namespace)

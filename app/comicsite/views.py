@@ -176,10 +176,10 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     return currentpage
 
 
-def get_data_folder_path(project_name):
+def get_data_folder_path(challenge_short_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
-    return path.join(settings.MEDIA_ROOT, project_name)
+    return path.join(settings.MEDIA_ROOT, challenge_short_name)
 
 
 def get_dirnames(path):

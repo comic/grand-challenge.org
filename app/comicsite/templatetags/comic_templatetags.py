@@ -404,8 +404,8 @@ class ListDirNode(template.Node):
 
     def render(self, context):
 
-        project_name = context.page.challenge.short_name
-        projectpath = project_name + "/" + self.path
+        challenge_short_name = context.page.challenge.short_name
+        projectpath = challenge_short_name + "/" + self.path
         storage = DefaultStorage()
 
         try:
@@ -423,7 +423,7 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:
             downloadlink = reverse('project_serve_file',
-                                   kwargs={'project_name': project_name,
+                                   kwargs={'challenge_short_name': challenge_short_name,
                                            'path': self.path + "/" + filename})
 
             links.append(
@@ -486,10 +486,10 @@ class ImageBrowserNode(template.Node):
 
         # try to get names of all public results to be available in javascript
         # Where are the results?
-        from comicsite.api import get_public_results_by_project_name
+        from comicsite.api import get_public_results_by_challenge_name
 
         try:
-            public_results = get_public_results_by_project_name(
+            public_results = get_public_results_by_challenge_name(
                 context['site'].short_name)
         except OSError as e:
             # if no results can be found just skip it
@@ -551,10 +551,10 @@ class ImageBrowserNode(template.Node):
         """ The viewer options and behaviour can be custimized by passing along a piece of 
         javascript."""
 
-        project_name = context.page.challenge.short_name
+        challenge_short_name = context.page.challenge.short_name
         if "config" in self.args:
             downloadlink = reverse('project_serve_file',
-                                   kwargs={'project_name': project_name,
+                                   kwargs={'challenge_short_name': challenge_short_name,
                                            'path': self.args["config"]})
 
             return """<script type="text/javascript" src="{}"></script>""".format(
@@ -576,8 +576,8 @@ class ImageBrowserNode(template.Node):
         
         Raises OSError if directory can not be found
         """
-        project_name = context.page.challenge.short_name
-        projectpath = project_name + "/" + path
+        challenge_short_name = context.page.challenge.short_name
+        projectpath = challenge_short_name + "/" + path
         storage = DefaultStorage()
         filenames = storage.listdir(projectpath)[1]
 
@@ -742,8 +742,8 @@ class InsertFileNode(template.Node):
         except PathResolutionException as e:
             return self.make_error_msg("Path Resolution failed: {}".format(e))
 
-        project_name = context["site"].short_name
-        filepath = os.path.join(settings.MEDIA_ROOT, project_name, filename)
+        challenge_short_name = context["site"].short_name
+        filepath = os.path.join(settings.MEDIA_ROOT, challenge_short_name, filename)
         filepath = os.path.abspath(filepath)
         filepath = self.make_canonical_path(filepath)
 
@@ -853,8 +853,8 @@ class InsertGraphNode(template.Node):
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
 
-        project_name = context.page.challenge.short_name
-        filename = os.path.join(settings.MEDIA_ROOT, project_name,
+        challenge_short_name = context.page.challenge.short_name
+        filename = os.path.join(settings.MEDIA_ROOT, challenge_short_name,
                                 filename_clean)
 
         storage = DefaultStorage()
@@ -1619,24 +1619,24 @@ class ProjectStatisticsNode(template.Node):
         :param context: the page context
         :return: the map html string
         """
-        project_name = context.page.challenge.short_name
+        challenge_short_name = context.page.challenge.short_name
         all_users = self.allusers
-        key = 'ProjectStatisticsNode.{}.{}'.format(project_name, all_users)
+        key = 'ProjectStatisticsNode.{}.{}'.format(challenge_short_name, all_users)
         content = cache.get(key)
         if content is None:
-            content = self._get_map(project_name, all_users,
+            content = self._get_map(challenge_short_name, all_users,
                                     self.include_header)
             cache.set(key, content, 10 * 60)
         return content
 
     @classmethod
-    def _get_map(cls, project_name, all_users, include_header):
+    def _get_map(cls, challenge_short_name, all_users, include_header):
 
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
 
         # Get the users belonging to this project
-        perm = Group.objects.get(name='{}_participants'.format(project_name))
+        perm = Group.objects.get(name='{}_participants'.format(challenge_short_name))
         User = get_user_model()
         if all_users:
             users = User.objects.all().distinct()

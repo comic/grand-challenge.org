@@ -24,9 +24,7 @@ def comic_site(request):
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
 
-    if "project_name" in resolution.kwargs:
-        sitename = resolution.kwargs["project_name"]
-    elif "challenge_short_name" in resolution.kwargs:
+    if "challenge_short_name" in resolution.kwargs:
         sitename = resolution.kwargs["challenge_short_name"]
     else:
         sitename = settings.MAIN_PROJECT_NAME
@@ -43,7 +41,7 @@ def comic_site(request):
         "user_is_participant": site.is_participant(request.user),
         "pages": pages,
         "metafooterpages": metafooterpages,
-        "main_project_name": settings.MAIN_PROJECT_NAME,
+        "main_challenge_name": settings.MAIN_PROJECT_NAME,
     }
 
 

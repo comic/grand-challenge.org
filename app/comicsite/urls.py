@@ -47,10 +47,10 @@ urlpatterns = [
             permanent=False,
         )),
 
-    url(r'^(?P<project_name>[\w-]+)/serve/(?P<path>.+)/$', serve,
+    url(r'^(?P<challenge_short_name>[\w-]+)/serve/(?P<path>.+)/$', serve,
         name="project_serve_file"),
 
-    url(r'^(?P<project_name>[\w-]+)/api/get_public_results/$',
+    url(r'^(?P<challenge_short_name>[\w-]+)/api/get_public_results/$',
         get_public_results),
 
     #

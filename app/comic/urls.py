@@ -48,7 +48,7 @@ urlpatterns = [
     # order
     url(r'^(?P<page_title>[\w-]+)/$', comicmain, name='mainproject-home'),
 
-    url(r'^media/(?P<project_name>[\w-]+)/(?P<path>.*)$', serve),
+    url(r'^media/(?P<challenge_short_name>[\w-]+)/(?P<path>.*)$', serve),
 
 ]
 
