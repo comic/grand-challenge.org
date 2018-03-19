@@ -12,7 +12,7 @@ def send_new_admin_notification_email(*, challenge: ComicSite,
         title,
         "admins/emails/new_admin_notification_email.html",
         {
-            'comicsite': challenge,
+            'challenge': challenge,
             'new_admin': new_admin,
             'site': site,
         },

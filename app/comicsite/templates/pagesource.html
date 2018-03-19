@@ -1,5 +1,5 @@
 {% extends "page.html" %}
-{% block pageName %}{{ currentpage.comicsite.short_name }} -
+{% block pageName %}{{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} (Source) {% endblock %}
 {% block pagecontent %}
 
@@ -12,6 +12,6 @@
 {% endblock %}
 
 {% block editlink %}
-    <a class="editPageLink" href="{% url 'pages:detail' currentpage.comicsite.short_name currentpage.title %}">Back
+    <a class="editPageLink" href="{% url 'pages:detail' currentpage.challenge.short_name currentpage.title %}">Back
         to page</a>
 {% endblock %}

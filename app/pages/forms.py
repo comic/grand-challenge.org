@@ -38,7 +38,7 @@ class PageCreateForm(forms.ModelForm):
         """ Ensure that page titles are not duplicated for a challenge """
         title = self.cleaned_data['title']
 
-        queryset = Page.objects.filter(comicsite__pk=self.challenge_pk,
+        queryset = Page.objects.filter(challenge__pk=self.challenge_pk,
                                        title=title)
 
         if self.instance is not None:

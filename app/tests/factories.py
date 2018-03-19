@@ -26,7 +26,7 @@ class PageFactory(factory.DjangoModelFactory):
     class Meta:
         model = Page
 
-    comicsite = factory.SubFactory(ChallengeFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
     title = factory.Sequence(lambda n: f'page_{n}')
     html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
 
@@ -49,7 +49,7 @@ class UploadFactory(factory.DjangoModelFactory):
     class Meta:
         model = UploadModel
 
-    comicsite = factory.SubFactory(ChallengeFactory)
+    challenge = factory.SubFactory(ChallengeFactory)
     file = factory.django.FileField()
     user = factory.SubFactory(UserFactory)
     title = factory.Sequence(lambda n: f'file_{n}')

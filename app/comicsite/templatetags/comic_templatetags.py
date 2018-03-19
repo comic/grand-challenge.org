@@ -404,7 +404,7 @@ class ListDirNode(template.Node):
 
     def render(self, context):
 
-        project_name = context.page.comicsite.short_name
+        project_name = context.page.challenge.short_name
         projectpath = project_name + "/" + self.path
         storage = DefaultStorage()
 
@@ -551,7 +551,7 @@ class ImageBrowserNode(template.Node):
         """ The viewer options and behaviour can be custimized by passing along a piece of 
         javascript."""
 
-        project_name = context.page.comicsite.short_name
+        project_name = context.page.challenge.short_name
         if "config" in self.args:
             downloadlink = reverse('project_serve_file',
                                    kwargs={'project_name': project_name,
@@ -576,7 +576,7 @@ class ImageBrowserNode(template.Node):
         
         Raises OSError if directory can not be found
         """
-        project_name = context.page.comicsite.short_name
+        project_name = context.page.challenge.short_name
         projectpath = project_name + "/" + path
         storage = DefaultStorage()
         filenames = storage.listdir(projectpath)[1]
@@ -716,7 +716,7 @@ class InsertFileNode(template.Node):
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
         base_url = reverse('pages:insert-detail', kwargs={
-            'challenge_short_name': currentpage.comicsite.short_name,
+            'challenge_short_name': currentpage.challenge.short_name,
             'page_title': currentpage.title,
             'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
@@ -853,7 +853,7 @@ class InsertGraphNode(template.Node):
                         "" % (missed_parameters, found_parameters)
             return self.make_error_msg(error_msg)
 
-        project_name = context.page.comicsite.short_name
+        project_name = context.page.challenge.short_name
         filename = os.path.join(settings.MEDIA_ROOT, project_name,
                                 filename_clean)
 
@@ -868,7 +868,7 @@ class InsertGraphNode(template.Node):
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
         base_url = reverse('pages:insert-detail', kwargs={
-            'challenge_short_name': context.page.comicsite.short_name,
+            'challenge_short_name': context.page.challenge.short_name,
             'page_title': context.page.title,
             'dropboxpath': "remove"})
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
@@ -1619,7 +1619,7 @@ class ProjectStatisticsNode(template.Node):
         :param context: the page context
         :return: the map html string
         """
-        project_name = context.page.comicsite.short_name
+        project_name = context.page.challenge.short_name
         all_users = self.allusers
         key = 'ProjectStatisticsNode.{}.{}'.format(project_name, all_users)
         content = cache.get(key)

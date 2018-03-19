@@ -17,8 +17,8 @@ from django.utils.safestring import mark_safe
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-import comicsite.utils.query
 from comicsite.core.urlresolvers import reverse
+from comicsite.utils.query import index
 
 logger = logging.getLogger("django")
 
@@ -46,7 +46,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
         # are only headers and other public things
         permission_lvl = ComicSiteModel.ALL
     else:
-        challenge = uploadmodel.comicsite
+        challenge = uploadmodel.challenge
         permission_lvl = uploadmodel.permission_lvl
 
     # If permission is ALL, upload this file to the public_html folder
@@ -590,7 +590,7 @@ class ComicSiteModel(models.Model):
      such as authorization.
     """
     title = models.SlugField(max_length=64, blank=False)
-    comicsite = models.ForeignKey(ComicSite,
+    challenge = models.ForeignKey(ComicSite,
                                   help_text="To which comicsite does this object belong?")
 
     ALL = 'ALL'
@@ -634,8 +634,8 @@ class ComicSiteModel(models.Model):
         """ Give the right groups permissions to this object
             object needs to be saved before setting perms"""
 
-        admingroup = self.comicsite.admins_group
-        participantsgroup = self.comicsite.participants_group
+        admingroup = self.challenge.admins_group
+        participantsgroup = self.challenge.participants_group
         everyonegroup = Group.objects.get(name=settings.EVERYONE_GROUP_NAME)
 
         self.persist_if_needed()
@@ -694,7 +694,7 @@ class Page(ComicSiteModel):
             # get max value of order for current pages.
             try:
                 max_order = Page.objects.filter(
-                    comicsite__pk=self.comicsite.pk).aggregate(Max('order'))
+                    challenge__pk=self.challenge.pk).aggregate(Max('order'))
             except ObjectDoesNotExist:
                 max_order = None
 
@@ -712,28 +712,28 @@ class Page(ComicSiteModel):
 
     def move(self, move):
         if move == self.UP:
-            mm = Page.objects.get(comicsite=self.comicsite,
+            mm = Page.objects.get(challenge=self.challenge,
                                   order=self.order - 1)
             mm.order += 1
             mm.save()
             self.order -= 1
             self.save()
         elif move == self.DOWN:
-            mm = Page.objects.get(comicsite=self.comicsite,
+            mm = Page.objects.get(challenge=self.challenge,
                                   order=self.order + 1)
             mm.order -= 1
             mm.save()
             self.order += 1
             self.save()
         elif move == self.FIRST:
-            pages = Page.objects.filter(comicsite=self.comicsite)
-            idx = comicsite.utils.query.index(pages, self)
+            pages = Page.objects.filter(challenge=self.challenge)
+            idx = index(pages, self)
             pages[idx].order = pages[0].order - 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
         elif move == self.LAST:
-            pages = Page.objects.filter(comicsite=self.comicsite)
-            idx = comicsite.utils.query.index(pages, self)
+            pages = Page.objects.filter(challenge=self.challenge)
+            idx = index(pages, self)
             pages[idx].order = pages[len(pages) - 1].order + 1
             pages = sorted(pages, key=lambda page: page.order)
             self.normalize_page_order(pages)
@@ -751,17 +751,17 @@ class Page(ComicSiteModel):
         """ With this method, admin will show a 'view on site' button """
 
         url = reverse('pages:detail',
-                      args=[self.comicsite.short_name, self.title])
+                      args=[self.challenge.short_name, self.title])
         return url
 
     class Meta(ComicSiteModel.Meta):
         """special class holding meta info for this class"""
         # make sure a single site never has two pages with the same name because page names
         # are used as keys in urls
-        unique_together = (("comicsite", "title"),)
+        unique_together = (("challenge", "title"),)
 
         # when getting a list of these objects this ordering is used
-        ordering = ['comicsite', 'order']
+        ordering = ['challenge', 'order']
 
 
 class ErrorPage(Page):

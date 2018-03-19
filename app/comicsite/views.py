@@ -31,7 +31,7 @@ def site(request, site_short_name):
     [site, pages, metafooterpages] = site_get_standard_vars(site_short_name)
 
     if len(pages) == 0:
-        page = ErrorPage(comicsite=site, title="no_pages_found",
+        page = ErrorPage(challenge=site, title="no_pages_found",
                          html="No pages found for this site. Please log in and use the admin button to add pages.")
         currentpage = page
     else:
@@ -142,7 +142,7 @@ def permissionMessage(request, site, p):
     else:
         msg = "The page '" + p.title + "' can only be viewed by registered users. Please sign in to view this page."
         title = p.title
-    page = ErrorPage(comicsite=site, title=title, html=msg)
+    page = ErrorPage(challenge=site, title=title, html=msg)
     currentpage = page
     return currentpage
 
@@ -158,7 +158,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     if isinstance(page_or_page_title, str):
         page_title = page_or_page_title
         try:
-            p = Page.objects.get(comicsite__short_name=site.short_name,
+            p = Page.objects.get(challenge__short_name=site.short_name,
                                  title=page_title)
         except Page.DoesNotExist:
             raise Http404
@@ -211,7 +211,7 @@ def comicmain(request, page_title=""):
             request,
             'temppage.html',
             {
-                'site': p.comicsite,
+                'site': p.challenge,
                 'currentpage': p,
             },
         )
@@ -234,7 +234,7 @@ def comicmain(request, page_title=""):
             request,
             'temppage.html',
             {
-                'site': p.comicsite,
+                'site': p.challenge,
                 'currentpage': p,
             },
         )
@@ -246,7 +246,7 @@ def comicmain(request, page_title=""):
 
     else:
         try:
-            p = Page.objects.get(comicsite__short_name=site_short_name,
+            p = Page.objects.get(challenge__short_name=site_short_name,
                                  title=page_title)
         except Page.DoesNotExist:
             raise Http404
@@ -264,7 +264,7 @@ def comicmain(request, page_title=""):
         request,
         'mainpage.html',
         {
-            'site': p.comicsite,
+            'site': p.challenge,
             'currentpage': p,
             "pages": pages,
             "metafooterpages": metafooterpages,
@@ -282,7 +282,7 @@ def getSite(site_short_name):
 def getPages(site_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(comicsite__short_name=site_short_name)
+        pages = Page.objects.filter(challenge__short_name=site_short_name)
     except Page.DoesNotExist:
         raise Http404("Page '%s' not found" % site_short_name)
     return pages
@@ -330,7 +330,7 @@ def create_HTML_a_img(link_url, image_url):
 
 
 def copy_page(page):
-    return Page(comicsite=page.comicsite, title=page.title, html=page.html)
+    return Page(challenge=page.challenge, title=page.title, html=page.html)
 
 
 def create_temp_page(title="temp_page", html=""):
@@ -343,4 +343,4 @@ def create_temp_page(title="temp_page", html=""):
     site.name = "Temporary page"
     site.skin = ""
 
-    return Page(comicsite=site, title=title, html=html)
+    return Page(challenge=site, title=title, html=html)

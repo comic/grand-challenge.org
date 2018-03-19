@@ -22,10 +22,10 @@ from comicmodels.permissions import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 
 
-class ComicSiteFilteredQuerysetMixin(object):
+class ChallengeFilteredQuerysetMixin(object):
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(Q(comicsite__pk=self.request.project_pk))
+        return queryset.filter(Q(challenge__pk=self.request.project_pk))
 
 
 class ChallengeFormKwargsMixin(object):
@@ -44,17 +44,17 @@ class PageCreate(UserIsChallengeAdminMixin, ChallengeFormKwargsMixin,
     form_class = PageCreateForm
 
     def form_valid(self, form):
-        form.instance.comicsite = ComicSite.objects.get(
+        form.instance.challenge = ComicSite.objects.get(
             pk=self.request.project_pk)
         return super().form_valid(form)
 
 
-class PageList(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+class PageList(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
                ListView):
     model = Page
 
 
-class PageUpdate(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+class PageUpdate(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
                  ChallengeFormKwargsMixin, UpdateView):
     model = Page
     form_class = PageUpdateForm
@@ -68,7 +68,7 @@ class PageUpdate(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
         return response
 
 
-class PageDelete(UserIsChallengeAdminMixin, ComicSiteFilteredQuerysetMixin,
+class PageDelete(UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin,
                  DeleteView):
     model = Page
     slug_url_kwarg = 'page_title'
@@ -124,11 +124,11 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     [site, pages, metafooterpages] = site_get_standard_vars(
         challenge_short_name)
 
-    p = get_object_or_404(Page, comicsite__short_name=site.short_name,
+    p = get_object_or_404(Page, challenge__short_name=site.short_name,
                           title=page_title)
 
     baselink = reverse('pages:detail',
-                       kwargs={'challenge_short_name': p.comicsite.short_name,
+                       kwargs={'challenge_short_name': p.challenge.short_name,
                                'page_title': p.title})
 
     msg = "<div class=\"breadcrumbtrail\"> Displaying '" + dropboxpath + "' from local dropboxfolder, originally linked from\

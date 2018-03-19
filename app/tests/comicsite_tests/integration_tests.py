@@ -30,7 +30,7 @@ def create_page(comicsite, title, content="testcontent", permission_lvl=None):
         permission_lvl = Page.ALL
 
     return PageFactory(title=title,
-                       comicsite=comicsite,
+                       challenge=comicsite,
                        html=content,
                        permission_lvl=permission_lvl)
 
@@ -38,7 +38,7 @@ def create_page(comicsite, title, content="testcontent", permission_lvl=None):
 def get_first_page(comicsite):
     """ Get the first page of comicsite, saves some typing..
     """
-    return Page.objects.filter(comicsite=comicsite)[0]
+    return Page.objects.filter(challenge=comicsite)[0]
 
 
 def extract_form_errors(html):
@@ -186,7 +186,7 @@ class ComicframeworkTestCase(TestCase):
     def _test_page_can_be_viewed(self, user, page):
         page_url = reverse('pages:detail',
                            kwargs={
-                               "challenge_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.challenge.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_be_viewed(user, page_url)
@@ -194,7 +194,7 @@ class ComicframeworkTestCase(TestCase):
     def _test_page_can_not_be_viewed(self, user, page):
         page_url = reverse('pages:detail',
                            kwargs={
-                               "challenge_short_name": page.comicsite.short_name,
+                               "challenge_short_name": page.challenge.short_name,
                                "page_title": page.title})
 
         return self._test_url_can_not_be_viewed(user, page_url)
@@ -981,7 +981,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
                         "Nothing was rendered for projects overview")
 
     def get_mail_html_part(self, mail):
-        """ Extract html content from email sent with models.comicsite.send_templated_email
+        """ Extract html content from email sent with models.challenge.send_templated_email
         
         """
         return mail.alternatives[0][0]
