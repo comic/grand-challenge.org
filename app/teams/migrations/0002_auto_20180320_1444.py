@@ -10,14 +10,13 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('teams', '0001_initial'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(state_operations=[
-            migrations.AlterField(
-                model_name='team',
-                name='challenge',
-                field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-        ])
+        migrations.AlterField(
+            model_name='team',
+            name='challenge',
+            field=models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
     ]

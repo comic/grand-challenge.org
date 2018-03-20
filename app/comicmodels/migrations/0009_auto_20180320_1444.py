@@ -8,11 +8,6 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('uploads', '0003_auto_20180320_1444'),
-        ('pages', '0003_auto_20180320_1444'),
-        ('evaluation', '0005_auto_20180320_1444'),
-        ('participants', '0003_auto_20180320_1444'),
-        ('teams', '0002_auto_20180320_1444'),
         ('comicmodels', '0008_auto_20180320_1053'),
     ]
 

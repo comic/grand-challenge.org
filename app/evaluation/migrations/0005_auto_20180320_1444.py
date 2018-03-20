@@ -10,34 +10,33 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('evaluation', '0004_auto_20180227_1259'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(state_operations=[
-            migrations.AlterField(
-                model_name='config',
-                name='challenge',
-                field=models.OneToOneField(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='evaluation_config', to='challenges.ComicSite'),
-            ),
-            migrations.AlterField(
-                model_name='job',
-                name='challenge',
-                field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-            migrations.AlterField(
-                model_name='method',
-                name='challenge',
-                field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-            migrations.AlterField(
-                model_name='result',
-                name='challenge',
-                field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-            migrations.AlterField(
-                model_name='submission',
-                name='challenge',
-                field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-        ])
+        migrations.AlterField(
+            model_name='config',
+            name='challenge',
+            field=models.OneToOneField(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='evaluation_config', to='challenges.ComicSite'),
+        ),
+        migrations.AlterField(
+            model_name='job',
+            name='challenge',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
+        migrations.AlterField(
+            model_name='method',
+            name='challenge',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
+        migrations.AlterField(
+            model_name='result',
+            name='challenge',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
+        migrations.AlterField(
+            model_name='submission',
+            name='challenge',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
     ]

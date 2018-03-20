@@ -10,14 +10,13 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('participants', '0002_auto_20180320_1044'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(state_operations=[
-            migrations.AlterField(
-                model_name='registrationrequest',
-                name='challenge',
-                field=models.ForeignKey(help_text='To which project does the user want to register?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-        ])
+        migrations.AlterField(
+            model_name='registrationrequest',
+            name='challenge',
+            field=models.ForeignKey(help_text='To which project does the user want to register?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
     ]

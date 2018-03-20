@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('auth', '0008_alter_user_username_max_length'),
+        ('comicmodels', '0009_auto_20180320_1444'),
     ]
 
     operations = [

@@ -10,14 +10,13 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('pages', '0002_auto_20180319_1807'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
-        migrations.SeparateDatabaseAndState(state_operations=[
-            migrations.AlterField(
-                model_name='page',
-                name='challenge',
-                field=models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
-            ),
-        ])
+        migrations.AlterField(
+            model_name='page',
+            name='challenge',
+            field=models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite'),
+        ),
     ]
