@@ -22,7 +22,7 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView, TemplateView
 
-from comicmodels.models import UploadModel, ComicSite
+from comicmodels.models import ComicSite
 from comicmodels.permissions import can_access
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import getSite, site_get_standard_vars, permissionMessage
@@ -31,6 +31,7 @@ from pages.views import ChallengeFilteredQuerysetMixin
 from uploads.api import serve_file
 from uploads.emails import send_file_uploaded_notification_email
 from uploads.forms import UserUploadForm, CKUploadForm
+from uploads.models import UploadModel
 
 
 class UploadList(

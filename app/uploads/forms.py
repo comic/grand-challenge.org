@@ -1,6 +1,6 @@
 from django import forms
 
-from comicmodels.models import UploadModel
+from uploads.models import UploadModel
 
 
 class UserUploadForm(forms.ModelForm):
