@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from social_django.fields import JSONField
 
-from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from evaluation.emails import send_failed_job_email
 from evaluation.validators import MimeTypeValidator, ExtensionValidator
@@ -33,7 +32,7 @@ class Config(UUIDModel):
         (ASCENDING, 'Ascending'), (DESCENDING, 'Descending')
     )
     challenge = models.OneToOneField(
-        ComicSite,
+        'comicmodels.ComicSite',
         on_delete=models.CASCADE,
         related_name='evaluation_config',
         editable=False,
@@ -164,7 +163,7 @@ class Method(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(
-        ComicSite, on_delete=models.CASCADE
+        'comicmodels.ComicSite', on_delete=models.CASCADE
     )
     # Validation for methods needs to be done asynchronously
     ready = models.BooleanField(
@@ -226,7 +225,7 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(
-        ComicSite, on_delete=models.CASCADE
+        'comicmodels.ComicSite', on_delete=models.CASCADE
     )
     # Limitation for now: only accept zip files as these are expanded in
     # evaluation.tasks.Evaluation. We could extend this first to csv file
@@ -289,7 +288,7 @@ class Job(UUIDModel):
         (CANCELLED, 'The task was cancelled'),
     )
     challenge = models.ForeignKey(
-        ComicSite, on_delete=models.CASCADE
+        'comicmodels.ComicSite', on_delete=models.CASCADE
     )
     submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
     method = models.ForeignKey('Method', on_delete=models.CASCADE)
@@ -337,7 +336,7 @@ class Result(UUIDModel):
     Stores individual results for a challenges
     """
     challenge = models.ForeignKey(
-        ComicSite, on_delete=models.CASCADE
+        'comicmodels.ComicSite', on_delete=models.CASCADE
     )
     job = models.OneToOneField('Job', null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
