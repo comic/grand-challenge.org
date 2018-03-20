@@ -5,7 +5,6 @@ import os
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -14,6 +13,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
 from comicsite.core.urlresolvers import reverse
+from comicsite.validators import validate_nounderscores
 
 logger = logging.getLogger("django")
 
@@ -170,15 +170,6 @@ class ProjectLink(object):
 
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
-
-
-def validate_nounderscores(value):
-    if "_" in value:
-        raise ValidationError(
-            u"underscores not allowed. The url \
-            '{0}.{1}' would not be valid, "
-            u"please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
-        )
 
 
 class ComicSite(models.Model):

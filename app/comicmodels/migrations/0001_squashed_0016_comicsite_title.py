@@ -10,7 +10,7 @@ import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
 
-import comicmodels.models
+import comicsite.validators
 import uploads.models
 
 
@@ -26,7 +26,8 @@ class Migration(migrations.Migration):
             name='ComicSite',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
-                ('short_name', models.SlugField(default=b'', help_text=b'short name used in url, specific css, files etc. No spaces allowed', validators=[comicmodels.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid')])),
+                ('short_name', models.SlugField(default=b'', help_text=b'short name used in url, specific css, files etc. No spaces allowed', validators=[
+                    comicsite.validators.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid')])),
                 ('skin', models.CharField(max_length=225, default=b'public_html/project.css', help_text=b'css file to include throughout this project. relative to project data folder')),
                 ('description', models.CharField(max_length=1024, blank=True, default=b'', help_text=b'Short summary of this project, max 1024 characters.')),
                 ('logo', models.CharField(max_length=255, default=b'public_html/logo.png', help_text=b'100x100 pixel image file to use as logo in projects overview. Relative to project datafolder')),
@@ -133,7 +134,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='comicsite',
             name='short_name',
-            field=models.SlugField(unique=True, default=b'', help_text=b'short name used in url, specific css, files etc. No spaces allowed', validators=[comicmodels.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)]),
+            field=models.SlugField(unique=True, default=b'', help_text=b'short name used in url, specific css, files etc. No spaces allowed', validators=[
+                comicsite.validators.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)]),
         ),
         migrations.AlterField(
             model_name='comicsite',
@@ -228,7 +230,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='comicsite',
             name='short_name',
-            field=models.SlugField(unique=True, default='', help_text='short name used in url, specific css, files etc. No spaces allowed', validators=[comicmodels.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)]),
+            field=models.SlugField(unique=True, default='', help_text='short name used in url, specific css, files etc. No spaces allowed', validators=[
+                comicsite.validators.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)]),
         ),
         migrations.AlterField(
             model_name='comicsite',
