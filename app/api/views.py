@@ -6,7 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.serializers import (
     ResultSerializer, SubmissionSerializer, JobSerializer, MethodSerializer
 )
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 from evaluation.models import Result, Submission, Job, Method
 
 

@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, Client
 from django.views.generic import View
 
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD
 

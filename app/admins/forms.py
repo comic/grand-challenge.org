@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
 
 from admins.emails import send_new_admin_notification_email
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 
 
 class AdminsForm(forms.Form):

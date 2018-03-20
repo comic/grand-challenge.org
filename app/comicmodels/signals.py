@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from challenges.emails import send_challenge_created_email
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 from evaluation.models import Config
 
 

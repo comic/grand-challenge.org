@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 
 
 class RegistrationRequest(models.Model):

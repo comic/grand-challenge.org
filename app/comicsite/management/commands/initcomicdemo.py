@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 from pages.models import Page
 
 

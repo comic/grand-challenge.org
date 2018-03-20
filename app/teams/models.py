@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import models
 
-from challenges.models import ComicSite
+from comicmodels.models import ComicSite
 from comicsite.core.urlresolvers import reverse
 from evaluation.models import UUIDModel
 
