@@ -16,8 +16,9 @@ from django.test.utils import override_settings
 from six import StringIO
 from userena.models import UserenaSignup
 
-from comicmodels.models import Page, ComicSite
+from comicmodels.models import ComicSite
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
+from pages.models import Page
 from tests.factories import PageFactory, RegistrationRequestFactory
 from uploads.views import upload_handler
 

@@ -3,11 +3,12 @@ import hashlib
 import factory
 from django.conf import settings
 
-from comicmodels.models import (
-    ComicSite, Page, RegistrationRequest, UploadModel
-)
+from comicmodels.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
+from pages.models import Page
+from participants.models import RegistrationRequest
 from teams.models import Team, TeamMember
+from uploads.models import UploadModel
 
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 

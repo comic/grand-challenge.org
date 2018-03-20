@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
+import re
+
 import ckeditor.fields
-import comicmodels.models
-from django.conf import settings
-import django.utils.timezone
 import django.core.validators
 import django.db.models.deletion
-import re
+import django.utils.timezone
+from django.conf import settings
+from django.db import migrations, models
+
+import comicmodels.models
+import uploads.models
 
 
 class Migration(migrations.Migration):
@@ -105,7 +108,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
                 ('title', models.SlugField(max_length=64)),
                 ('permission_lvl', models.CharField(max_length=3, default='ALL', choices=[('ALL', 'All'), ('REG', 'Registered users only'), ('ADM', 'Administrators only')])),
-                ('file', models.FileField(max_length=255, upload_to=comicmodels.models.giveFileUploadDestinationPath)),
+                ('file', models.FileField(max_length=255, upload_to=uploads.models.giveFileUploadDestinationPath)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('comicsite', models.ForeignKey(help_text='To which comicsite does this object belong?', to='comicmodels.ComicSite')),

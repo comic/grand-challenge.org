@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView
 
-from comicmodels.models import RegistrationRequest
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from participants.emails import (
@@ -14,6 +13,7 @@ from participants.emails import (
     send_participation_request_accepted_email,
     send_participation_request_rejected_email,
 )
+from participants.models import RegistrationRequest
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
