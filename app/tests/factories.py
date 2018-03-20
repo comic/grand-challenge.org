@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from evaluation.models import Submission, Job, Method, Result
 from pages.models import Page
 from participants.models import RegistrationRequest

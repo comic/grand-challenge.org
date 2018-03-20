@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import comicsite.views
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from comicsite.core.exceptions import PathResolutionException
 from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus

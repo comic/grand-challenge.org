@@ -22,7 +22,7 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView, TemplateView
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from comicmodels.permissions import can_access
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import getSite, site_get_standard_vars, permissionMessage
