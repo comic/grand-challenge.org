@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.db import models
 
-from challenges.models import ComicSiteModel
+from grandchallenge.challenges.models import ComicSiteModel
 
 
 def giveFileUploadDestinationPath(uploadmodel, filename):

@@ -4,9 +4,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
-from challenges.emails import send_challenge_created_email
-from challenges.models import Challenge
 from evaluation.models import Config
+from grandchallenge.challenges.emails import send_challenge_created_email
+from grandchallenge.challenges.models import Challenge
 
 
 @receiver(post_save, sender=Challenge)

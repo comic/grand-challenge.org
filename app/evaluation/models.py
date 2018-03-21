@@ -5,10 +5,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from social_django.fields import JSONField
 
-from challenges.models import Challenge
 from core.urlresolvers import reverse
 from evaluation.emails import send_failed_job_email
 from evaluation.validators import MimeTypeValidator, ExtensionValidator
+from grandchallenge.challenges.models import Challenge
 
 
 class UUIDModel(models.Model):

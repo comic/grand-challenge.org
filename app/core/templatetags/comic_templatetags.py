@@ -25,12 +25,12 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import core.views
-from challenges.models import Challenge
 from core.exceptions import PathResolutionException
 from core.templatetags import library_plus
 from core.urlresolvers import reverse
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
+from grandchallenge.challenges.models import Challenge
 from profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()

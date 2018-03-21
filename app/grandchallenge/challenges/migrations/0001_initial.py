@@ -9,7 +9,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import challenges.models
+import grandchallenge.challenges.models
 
 
 class Migration(migrations.Migration):
@@ -26,7 +26,8 @@ class Migration(migrations.Migration):
             name='ComicSite',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('short_name', models.SlugField(default='', help_text='short name used in url, specific css, files etc. No spaces allowed', unique=True, validators=[challenges.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)])),
+                ('short_name', models.SlugField(default='', help_text='short name used in url, specific css, files etc. No spaces allowed', unique=True, validators=[
+                    grandchallenge.challenges.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z', 32), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid'), django.core.validators.MinLengthValidator(1)])),
                 ('skin', models.CharField(default='public_html/project.css', help_text='css file to include throughout this project. relative to project data folder', max_length=225)),
                 ('description', models.CharField(blank=True, default='', help_text='Short summary of this project, max 1024 characters.', max_length=1024)),
                 ('title', models.CharField(blank=True, default='', help_text='The name of the challenge that is displayed on the All Challenges page. If this is blank the short name of the challenge will be used.', max_length=64)),

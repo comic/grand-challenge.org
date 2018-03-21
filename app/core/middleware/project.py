@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, Resolver404
 
-from challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge
 
 
 class ProjectMiddleware:

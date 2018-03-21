@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge
 
 
 class RegistrationRequest(models.Model):

@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import models
 
-from challenges.models import Challenge
 from core.urlresolvers import reverse
+from grandchallenge.challenges.models import Challenge
 
 
 class Team(models.Model):

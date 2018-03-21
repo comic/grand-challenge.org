@@ -1,6 +1,6 @@
 from xlrd import open_workbook
 
-from challenges.models import ProjectLink
+from grandchallenge.challenges.models import ProjectLink
 
 
 class ProjectExcelReader(object):

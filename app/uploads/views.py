@@ -22,10 +22,10 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView, TemplateView
 
-from challenges.models import Challenge
-from challenges.permissions import can_access
 from core.permissions.mixins import UserIsChallengeAdminMixin
 from core.views import getSite, site_get_standard_vars, permissionMessage
+from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.permissions import can_access
 from pages.models import Page
 from pages.views import ChallengeFilteredQuerysetMixin
 from uploads.api import serve_file

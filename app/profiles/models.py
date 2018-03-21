@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
 from userena.models import UserenaBaseProfile
 
-from challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge
 
 
 class UserProfile(UserenaBaseProfile):

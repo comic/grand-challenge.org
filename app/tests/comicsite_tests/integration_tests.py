@@ -16,8 +16,8 @@ from django.test.utils import override_settings
 from six import StringIO
 from userena.models import UserenaSignup
 
-from challenges.models import Challenge
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
+from grandchallenge.challenges.models import Challenge
 from pages.models import Page
 from tests.factories import PageFactory, RegistrationRequestFactory
 from uploads.views import upload_handler

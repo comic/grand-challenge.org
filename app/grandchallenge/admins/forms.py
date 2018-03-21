@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
 
-from challenges.models import Challenge
 from grandchallenge.admins.emails import send_new_admin_notification_email
+from grandchallenge.challenges.models import Challenge
 
 
 class AdminsForm(forms.Form):

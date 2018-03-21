@@ -7,9 +7,9 @@ from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 
-from challenges.models import Challenge
 from core.template.context import ComicSiteRequestContext
 from core.urlresolvers import reverse
+from grandchallenge.challenges.models import Challenge
 from pages.models import Page, ErrorPage
 
 

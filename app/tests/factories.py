@@ -3,8 +3,8 @@ import hashlib
 import factory
 from django.conf import settings
 
-from challenges.models import Challenge
 from evaluation.models import Submission, Job, Method, Result
+from grandchallenge.challenges.models import Challenge
 from pages.models import Page
 from participants.models import RegistrationRequest
 from teams.models import Team, TeamMember

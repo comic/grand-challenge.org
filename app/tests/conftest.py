@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge
 from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 
 """ Defines fixtures than can be used across all of the tests """

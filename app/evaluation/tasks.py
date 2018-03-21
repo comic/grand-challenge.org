@@ -5,11 +5,11 @@ import uuid
 from celery import shared_task
 from django.db.models import Q
 
-from challenges.models import Challenge
 from evaluation.backends.dockermachine.evaluator import Evaluator
 from evaluation.exceptions import EvaluationException
 from evaluation.models import Job, Result, Method
 from evaluation.utils import generate_rank_dict
+from grandchallenge.challenges.models import Challenge
 
 
 @shared_task

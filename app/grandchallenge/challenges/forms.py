@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 
-from challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge
 
 
 class ChallengeCreateForm(forms.ModelForm):
