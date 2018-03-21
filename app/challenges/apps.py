@@ -1,9 +1,9 @@
 from django.apps import AppConfig
 
 
-class ComicModelsConfig(AppConfig):
-    name = 'comicmodels'
+class ChallengesConfig(AppConfig):
+    name = 'challenges'
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import comicmodels.signals
+        import challenges.signals

@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('comicmodels', '0001_initial'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('department', models.CharField(blank=True, max_length=64)),
                 ('institution', models.CharField(blank=True, max_length=64)),
                 ('website', models.URLField(blank=True)),
-                ('challenge', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='comicmodels.ComicSite')),
+                ('challenge', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),

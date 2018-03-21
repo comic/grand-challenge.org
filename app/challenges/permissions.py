@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from comicmodels.models import ComicSiteModel, ComicSite
+from challenges.models import ComicSiteModel, ComicSite
 
 
 def can_access(user, path, challenge_short_name):

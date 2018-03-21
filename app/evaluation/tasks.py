@@ -5,7 +5,7 @@ import uuid
 from celery import shared_task
 from django.db.models import Q
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from evaluation.backends.dockermachine.evaluator import Evaluator
 from evaluation.exceptions import EvaluationException
 from evaluation.models import Job, Result, Method

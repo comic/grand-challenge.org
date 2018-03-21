@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 
 """ Defines fixtures than can be used across all of the tests """

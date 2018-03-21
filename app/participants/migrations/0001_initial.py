@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('comicmodels', '0001_initial'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('changed', models.DateTimeField(auto_now=True)),
                 ('status', models.CharField(choices=[('PEND', 'Pending'), ('ACPT', 'Accepted'), ('RJCT', 'Rejected')], default='PEND', max_length=4)),
-                ('challenge', models.ForeignKey(help_text='To which project does the user want to register?', on_delete=django.db.models.deletion.CASCADE, to='comicmodels.ComicSite')),
+                ('challenge', models.ForeignKey(help_text='To which project does the user want to register?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
                 ('user', models.ForeignKey(help_text='which user requested to participate?', on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),

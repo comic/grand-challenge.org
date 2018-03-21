@@ -9,7 +9,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from comicmodels.permissions import can_access
+from challenges.permissions import can_access
 from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 from comicsite.views import (

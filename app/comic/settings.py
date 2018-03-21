@@ -238,7 +238,7 @@ INSTALLED_APPS = (
     # For sending email asynchronously
     'djcelery_email',
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
-    'comicmodels',
+    'challenges',
     # comicsite is the where main web portal of this framework lives
     'comicsite',
     # profiles extends userena and gives functionality to manage user profiles
@@ -268,7 +268,6 @@ INSTALLED_APPS = (
     'participants',
     'admins',
     'uploads',
-    'challenges',
 )
 
 ADMIN_URL = f'^{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
