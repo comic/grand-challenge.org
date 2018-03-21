@@ -1,6 +1,6 @@
 import pytest
 
-from comicsite.core.urlresolvers import reverse
+from comicsite.urlresolvers import reverse
 
 
 @pytest.mark.django_db

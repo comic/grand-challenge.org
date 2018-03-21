@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
 
-from comicsite.core.urlresolvers import reverse
+from comicsite.urlresolvers import reverse
 from pages.models import Page
 
 

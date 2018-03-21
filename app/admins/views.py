@@ -3,8 +3,8 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
 from admins.forms import AdminsForm
-from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
+from comicsite.urlresolvers import reverse
 
 
 class AdminsList(UserIsChallengeAdminMixin, ListView):

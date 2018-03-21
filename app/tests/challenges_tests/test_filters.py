@@ -1,6 +1,6 @@
 import pytest
 
-from comicsite.core.urlresolvers import reverse
+from comicsite.urlresolvers import reverse
 from tests.utils import get_view_for_user
 
 

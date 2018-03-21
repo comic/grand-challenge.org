@@ -7,10 +7,10 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import (CreateView, ListView, DetailView, UpdateView)
 
-from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import (
     UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
 )
+from comicsite.urlresolvers import reverse
 from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
 

@@ -27,8 +27,8 @@ from six import StringIO, iteritems
 import comicsite.views
 from challenges.models import ComicSite
 from comicsite.core.exceptions import PathResolutionException
-from comicsite.core.urlresolvers import reverse
 from comicsite.templatetags import library_plus
+from comicsite.urlresolvers import reverse
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile

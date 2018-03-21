@@ -6,8 +6,8 @@ from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView
 
-from comicsite.core.urlresolvers import reverse
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
+from comicsite.urlresolvers import reverse
 from participants.emails import (
     send_participation_request_notification_email,
     send_participation_request_accepted_email,

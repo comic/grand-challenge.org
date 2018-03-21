@@ -4,8 +4,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import models
 
 from challenges.models import ComicSite
-from comicsite.core.urlresolvers import reverse
-from evaluation.models import UUIDModel
+from comicsite.urlresolvers import reverse
 
 
 class Team(models.Model):
