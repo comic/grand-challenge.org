@@ -598,7 +598,7 @@ class ViewsTest(ComicframeworkTestCase):
 
     def test_non_exitant_page_gives_404(self):
         """ reproduces issue #219
-        https://github.com/comic/comic-django/issues/219
+        https://github.com/comic/grand-challenge.org/issues/219
         
         """
         page_url = reverse(
@@ -619,7 +619,7 @@ class ViewsTest(ComicframeworkTestCase):
 
     def test_non_exitant_project_gives_404(self):
         """ reproduces issue #219,
-        https://github.com/comic/comic-django/issues/219
+        https://github.com/comic/grand-challenge.org/issues/219
         
         """
         # main domain robots.txt
