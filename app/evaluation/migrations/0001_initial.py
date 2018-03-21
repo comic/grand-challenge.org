@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('supplementary_file_help_text', models.CharField(blank=True, default='', help_text='The help text to include on the submissions page to describe the submissions file. Eg: "A PDF description of the method.".', max_length=128)),
                 ('show_supplementary_file_link', models.BooleanField(default=False, help_text='Show a link to download the supplementary file on the results page.')),
                 ('daily_submission_limit', models.PositiveIntegerField(default=10, help_text='The limit on the number of times that a user can make a submission in a 24 hour period.')),
-                ('challenge', models.OneToOneField(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='evaluation_config', to='challenges.ComicSite')),
+                ('challenge', models.OneToOneField(editable=False, on_delete=django.db.models.deletion.CASCADE, related_name='evaluation_config', to='challenges.Challenge')),
             ],
             options={
                 'abstract': False,
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ('status', models.PositiveSmallIntegerField(choices=[(0, 'The task is waiting for execution'), (1, 'The task has been started'), (2, 'The task is to be retried, possibly because of failure'), (3, 'The task raised an exception, or has exceeded the retry limit'), (4, 'The task executed successfully'), (5, 'The task was cancelled')], default=0)),
                 ('status_history', social_django.fields.JSONField(default=dict)),
                 ('output', models.TextField()),
-                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
+                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
             ],
             options={
                 'abstract': False,
@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
                 ('status', models.TextField(editable=False)),
                 ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', upload_to=evaluation.models.method_image_path, validators=[evaluation.validators.ExtensionValidator(allowed_extensions=('.tar',))])),
                 ('image_sha256', models.CharField(editable=False, max_length=71)),
-                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
+                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
                 ('public', models.BooleanField(default=True)),
                 ('rank', models.PositiveIntegerField(default=0, help_text='The position of this result on the leaderboard. If the value is zero, then the result is unranked.')),
                 ('absolute_url', models.TextField(blank=True, editable=False)),
-                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
+                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
                 ('job', models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, to='evaluation.Job')),
             ],
             options={
@@ -117,7 +117,7 @@ class Migration(migrations.Migration):
                 ('file', models.FileField(upload_to=evaluation.models.submission_file_path, validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/zip', 'text/plain')), evaluation.validators.ExtensionValidator(allowed_extensions=('.zip', '.csv'))])),
                 ('supplementary_file', models.FileField(blank=True, upload_to=evaluation.models.submission_supplementary_file_path, validators=[evaluation.validators.MimeTypeValidator(allowed_types=('text/plain', 'application/pdf'))])),
                 ('comment', models.CharField(blank=True, default='', help_text='You can add a comment here to help you keep track of your submissions.', max_length=128)),
-                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
+                ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
             options={
