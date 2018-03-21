@@ -5,7 +5,7 @@ import uuid
 from celery import shared_task
 from django.db.models import Q
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from evaluation.backends.dockermachine.evaluator import Evaluator
 from evaluation.exceptions import EvaluationException
 from evaluation.models import Job, Result, Method
@@ -96,7 +96,7 @@ def validate_method_async(*, method_pk: uuid.UUID):
 
 @shared_task
 def calculate_ranks(*, challenge_pk: uuid.UUID):
-    challenge = ComicSite.objects.get(pk=challenge_pk)
+    challenge = Challenge.objects.get(pk=challenge_pk)
     valid_results = Result.objects.filter(
         Q(challenge=challenge), Q(public=True)
     )

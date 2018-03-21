@@ -140,7 +140,7 @@ class ProjectLink(object):
         which is in the future, make it upcoming, otherwise active
 
         """
-        linkclass = ComicSite.CHALLENGE_ACTIVE
+        linkclass = Challenge.CHALLENGE_ACTIVE
         # for project hosted on comic, try to find upcoming automatically
         if self.params["hosted on comic"]:
             linkclass = self.params["project type"]
@@ -150,13 +150,13 @@ class ProjectLink(object):
             # else use the explicit setting in xls
             section = self.params["website section"].lower()
             if section == "upcoming challenges":
-                linkclass = ComicSite.CHALLENGE_ACTIVE + " " + self.UPCOMING
+                linkclass = Challenge.CHALLENGE_ACTIVE + " " + self.UPCOMING
             elif section == "active challenges":
-                linkclass = ComicSite.CHALLENGE_ACTIVE
+                linkclass = Challenge.CHALLENGE_ACTIVE
             elif section == "past challenges":
-                linkclass = ComicSite.CHALLENGE_INACTIVE
+                linkclass = Challenge.CHALLENGE_INACTIVE
             elif section == "data publication":
-                linkclass = ComicSite.DATA_PUB
+                linkclass = Challenge.DATA_PUB
         return linkclass
 
     @staticmethod
@@ -181,7 +181,7 @@ def validate_nounderscores(value):
         )
 
 
-class ComicSite(models.Model):
+class Challenge(models.Model):
     """
     A collection of HTML pages using a certain skin. Pages can be browsed and
     edited.
@@ -592,7 +592,7 @@ class ComicSiteModel(models.Model):
     """
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
-        ComicSite, help_text="To which comicsite does this object belong?"
+        Challenge, help_text="To which comicsite does this object belong?"
     )
     ALL = 'ALL'
     REGISTERED_ONLY = 'REG'

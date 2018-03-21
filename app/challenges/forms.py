@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 
 
 class ChallengeCreateForm(forms.ModelForm):
@@ -14,7 +14,7 @@ class ChallengeCreateForm(forms.ModelForm):
         self.helper.layout.append(Submit('save', 'Save'))
 
     class Meta:
-        model = ComicSite
+        model = Challenge
         fields = [
             'short_name',
             'description',
@@ -59,7 +59,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         )
 
     class Meta:
-        model = ComicSite
+        model = Challenge
         fields = [
             'title',
             'description',

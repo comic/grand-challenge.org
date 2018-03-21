@@ -78,7 +78,7 @@
     {% if site.use_evaluation %}
 
         {% get_obj_perms user for site as "site_perms" %}
-        {% if "change_comicsite" in site_perms or user_is_participant %}
+        {% if "change_challenge" in site_perms or user_is_participant %}
             <li role="separator" class="divider"></li>
 
             {% if site.evaluation_config.use_teams %}
@@ -113,7 +113,7 @@
 {% block adminbutton %}
 
     {% get_obj_perms user for site as "site_perms" %}
-    {% if "change_comicsite" in site_perms %}
+    {% if "change_challenge" in site_perms %}
         {% if site.hide_footer %}
             <li role="separator" class="divider"></li>
         {% endif %}

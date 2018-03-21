@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, Client
 from django.views.generic import View
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from core.urlresolvers import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD
 
@@ -22,7 +22,7 @@ def assert_status(
     code: int,
     user: settings.AUTH_USER_MODEL,
     view: View,
-    challenge: ComicSite,
+    challenge: Challenge,
     rf: RequestFactory,
 ):
     request = rf.get('/rand')
@@ -38,7 +38,7 @@ def assert_status(
 def get_view_for_user(
     *,
     viewname: str = None,
-    challenge: ComicSite = None,
+    challenge: Challenge = None,
     client: Client,
     method: Callable = None,
     user: settings.AUTH_USER_MODEL = None,

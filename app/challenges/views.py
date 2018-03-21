@@ -4,12 +4,12 @@ from django.db.models import Q
 from django.views.generic import CreateView, ListView, UpdateView
 
 from challenges.forms import ChallengeCreateForm, ChallengeUpdateForm
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from core.permissions.mixins import UserIsChallengeAdminMixin
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
-    model = ComicSite
+    model = Challenge
     form_class = ChallengeCreateForm
     success_message = 'Challenge successfully created'
 
@@ -19,7 +19,7 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 
 
 class ChallengeList(LoginRequiredMixin, ListView):
-    model = ComicSite
+    model = Challenge
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -34,7 +34,7 @@ class ChallengeList(LoginRequiredMixin, ListView):
 class ChallengeUpdate(
     UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
 ):
-    model = ComicSite
+    model = Challenge
     slug_field = 'short_name'
     slug_url_kwarg = 'challenge_short_name'
     form_class = ChallengeUpdateForm

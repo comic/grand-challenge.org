@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import core.views
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from core.exceptions import PathResolutionException
 from core.templatetags import library_plus
 from core.urlresolvers import reverse
@@ -1188,7 +1188,7 @@ def render_all_projectlinks(parser, token):
     usagestr = "Tag usage: {% all_projectlinks %}"
     args = parseKeyValueToken(token)
     try:
-        projects = ComicSite.objects.non_hidden()
+        projects = Challenge.objects.non_hidden()
     except ObjectDoesNotExist as e:
         errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
         return TemplateErrorNode(errormsg)

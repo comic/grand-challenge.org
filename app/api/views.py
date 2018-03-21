@@ -6,7 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.serializers import (
     ResultSerializer, SubmissionSerializer, JobSerializer, MethodSerializer
 )
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from evaluation.models import Result, Submission, Job, Method
 
 
@@ -26,8 +26,8 @@ class SubmissionViewSet(ModelViewSet):
         # Validate that the challenge exists
         try:
             short_name = self.request.data.get('challenge')
-            challenge = ComicSite.objects.get(short_name=short_name)
-        except ComicSite.DoesNotExist:
+            challenge = Challenge.objects.get(short_name=short_name)
+        except Challenge.DoesNotExist:
             raise ValidationError(f"Challenge {short_name} does not exist.")
 
         serializer.save(

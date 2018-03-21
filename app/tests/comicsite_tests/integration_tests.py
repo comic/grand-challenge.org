@@ -16,7 +16,7 @@ from django.test.utils import override_settings
 from six import StringIO
 from userena.models import UserenaSignup
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from pages.models import Page
 from tests.factories import PageFactory, RegistrationRequestFactory
@@ -123,9 +123,9 @@ class ComicframeworkTestCase(TestCase):
         admin for every project
         """
         if len(
-            ComicSite.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
+            Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
         ) == 0:
-            main = ComicSite.objects.create(
+            main = Challenge.objects.create(
                 short_name=settings.MAIN_PROJECT_NAME,
                 description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
             )
@@ -406,7 +406,7 @@ class ComicframeworkTestCase(TestCase):
                 "Error creating project '%s':\n %s" % (short_name, errors),
             )
         # ad.set_base_permissions(request,project)
-        project = ComicSite.objects.get(short_name=short_name)
+        project = Challenge.objects.get(short_name=short_name)
         return project
 
     def _login(self, user, password="testpassword"):

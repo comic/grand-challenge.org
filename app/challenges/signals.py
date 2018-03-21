@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from challenges.emails import send_challenge_created_email
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from evaluation.models import Config
 
 
@@ -16,9 +16,9 @@ def add_standard_permissions(group, objname):
     group.permissions.add(can_add_obj, can_change_obj, can_delete_obj)
 
 
-@receiver(post_save, sender=ComicSite)
+@receiver(post_save, sender=Challenge)
 def setup_challenge_groups(
-    instance: ComicSite = None, created: bool = False, *_, **__
+    instance: Challenge = None, created: bool = False, *_, **__
 ):
     if created:
         # Create the evaluation config
@@ -31,10 +31,10 @@ def setup_challenge_groups(
         instance.admins_group = admins_group
         instance.participants_group = participants_group
         instance.save()
-        assign_perm("change_comicsite", admins_group, instance)
+        assign_perm("change_challenge", admins_group, instance)
         # add all permissions for pages and comicsites so
         # these can be edited by admin group
-        add_standard_permissions(admins_group, "comicsite")
+        add_standard_permissions(admins_group, "challenge")
         add_standard_permissions(admins_group, "page")
         # add current user to admins for this site
         try:
