@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('file', models.FileField(max_length=255, upload_to=uploads.models.giveFileUploadDestinationPath)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
+                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
                 ('user', models.ForeignKey(help_text='which user uploaded this?', on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={

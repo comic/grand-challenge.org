@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('department', models.CharField(blank=True, max_length=64)),
                 ('institution', models.CharField(blank=True, max_length=64)),
                 ('website', models.URLField(blank=True)),
-                ('challenge', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
+                ('challenge', models.ForeignKey(editable=False, on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
