@@ -3,8 +3,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import CreateView, ListView, UpdateView
 
-from comicmodels.forms import ChallengeCreateForm, ChallengeUpdateForm
-from comicmodels.models import ComicSite
+from challenges.forms import ChallengeCreateForm, ChallengeUpdateForm
+from challenges.models import ComicSite
 from comicsite.permissions.mixins import UserIsChallengeAdminMixin
 
 

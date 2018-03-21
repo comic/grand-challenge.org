@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('comicmodels', '0001_initial'),
+        ('challenges', '0001_initial'),
     ]
 
     operations = [
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('display_title', models.CharField(blank=True, default='', help_text='On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used', max_length=255)),
                 ('hidden', models.BooleanField(default=False, help_text='Do not display this page in site menu')),
                 ('html', ckeditor.fields.RichTextField()),
-                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='comicmodels.ComicSite')),
+                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.ComicSite')),
             ],
             options={
                 'ordering': ['challenge', 'order'],

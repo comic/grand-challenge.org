@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, Resolver404
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 
 
 class ProjectMiddleware:

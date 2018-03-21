@@ -1,6 +1,6 @@
 from xlrd import open_workbook
 
-from comicmodels.models import ProjectLink
+from challenges.models import ProjectLink
 
 
 class ProjectExcelReader(object):

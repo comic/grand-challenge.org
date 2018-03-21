@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import Max
 from django.utils.safestring import mark_safe
 
-from comicmodels.models import ComicSiteModel
+from challenges.models import ComicSiteModel
 from comicsite.core.urlresolvers import reverse
 from comicsite.utils.query import index
 

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from comicsite.utils.email import send_templated_email
 
 

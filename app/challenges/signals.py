@@ -4,8 +4,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
-from comicmodels.emails import send_challenge_created_email
-from comicmodels.models import ComicSite
+from challenges.emails import send_challenge_created_email
+from challenges.models import ComicSite
 from evaluation.models import Config
 
 

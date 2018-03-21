@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.urlresolvers import resolve
 from django.http import Http404
 
-from comicmodels.models import ComicSite
+from challenges.models import ComicSite
 from comicsite.utils import build_absolute_uri
 from comicsite.views import site_get_standard_vars
 
