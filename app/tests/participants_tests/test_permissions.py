@@ -1,6 +1,6 @@
 import pytest
 
-from comicsite.core.urlresolvers import reverse
+from core.urlresolvers import reverse
 from tests.factories import RegistrationRequestFactory
 from tests.utils import (
     validate_admin_only_view, validate_logged_in_view, get_view_for_user

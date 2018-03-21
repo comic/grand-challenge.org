@@ -1,11 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 
-from challenges.models import ComicSite
-from comicsite.utils.email import send_templated_email
+from challenges.models import Challenge
+from core.utils.email import send_templated_email
 
 
 def send_new_admin_notification_email(
-    *, challenge: ComicSite, new_admin: AbstractUser, site
+    *, challenge: Challenge, new_admin: AbstractUser, site
 ):
     title = f'You are now admin for {challenge.short_name}'
     send_templated_email(

@@ -7,9 +7,9 @@ from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 
-from challenges.models import ComicSite
-from comicsite.core.urlresolvers import reverse
-from comicsite.template.context import ComicSiteRequestContext
+from challenges.models import Challenge
+from core.template.context import ComicSiteRequestContext
+from core.urlresolvers import reverse
 from pages.models import Page, ErrorPage
 
 
@@ -21,7 +21,7 @@ def site(request, challenge_short_name):
     # result in server error..
     try:
         site = getSite(challenge_short_name)
-    except ComicSite.DoesNotExist:
+    except Challenge.DoesNotExist:
         raise Http404("Project %s does not exist" % challenge_short_name)
 
     [site, pages, metafooterpages] = site_get_standard_vars(
@@ -54,7 +54,7 @@ def site_get_standard_vars(challenge_short_name):
         site = getSite(challenge_short_name)
         pages = getPages(challenge_short_name)
         metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
-    except ComicSite.DoesNotExist:
+    except Challenge.DoesNotExist:
         # Site is not known, default to main project.
         site = getSite(settings.MAIN_PROJECT_NAME)
         metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
@@ -180,7 +180,7 @@ def get_dirnames(path):
 def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the main project """
     challenge_short_name = settings.MAIN_PROJECT_NAME
-    if ComicSite.objects.filter(short_name=challenge_short_name).count() == 0:
+    if Challenge.objects.filter(short_name=challenge_short_name).count() == 0:
         link = reverse('challenges:create')
         link = link + "?short_name=%s" % challenge_short_name
         link_html = create_HTML_a(
@@ -241,7 +241,7 @@ def comicmain(request, page_title=""):
 
 # ======================================== not called directly from urls.py ==
 def getSite(challenge_short_name):
-    project = ComicSite.objects.get(short_name=challenge_short_name)
+    project = Challenge.objects.get(short_name=challenge_short_name)
     return project
 
 
@@ -258,10 +258,10 @@ def getPages(challenge_short_name):
 # trying to follow pep 0008 here, finally.
 def site_exists(challenge_short_name):
     try:
-        site = ComicSite.objects.get(short_name=challenge_short_name)
+        site = Challenge.objects.get(short_name=challenge_short_name)
         return True
 
-    except ComicSite.DoesNotExist:
+    except Challenge.DoesNotExist:
         return False
 
 
@@ -300,7 +300,7 @@ def create_temp_page(title="temp_page", html=""):
     anything from database
     
     """
-    site = ComicSite()  # any page requires a site, create on the fly here.
+    site = Challenge()  # any page requires a site, create on the fly here.
     site.short_name = "Temp"
     site.name = "Temporary page"
     site.skin = ""

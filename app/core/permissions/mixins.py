@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponseForbidden
 
-from comicsite.utils import build_absolute_uri
+from core.utils import build_absolute_uri
 
 
 class UserAuthAndTestMixin(UserPassesTestMixin):
@@ -11,7 +11,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     A mixin that is exactly like the UserPassesTest mixin, but ensures that
     the user is logged in too.
 
-    Requires that comicsite.middleware.project is installed
+    Requires that core.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
@@ -46,7 +46,7 @@ class UserIsChallengeAdminMixin(UserAuthAndTestMixin):
     """
     A mixin that determines if a user is an admin for this challenge
 
-    Requires that comicsite.middleware.project is installed
+    Requires that core.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
@@ -62,7 +62,7 @@ class UserIsChallengeParticipantOrAdminMixin(UserAuthAndTestMixin):
     A mixin that determines if a user is a participant or an admin for this
     challenge
 
-    Requires that comicsite.middleware.project is installed
+    Requires that core.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin

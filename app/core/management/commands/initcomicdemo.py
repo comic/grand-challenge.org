@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from pages.models import Page
 
 
@@ -12,7 +12,7 @@ class Command(BaseCommand):
         """
         Creates the main project, demo user and demo challenge
         """
-        challenge, created = ComicSite.objects.get_or_create(
+        challenge, created = Challenge.objects.get_or_create(
             short_name=settings.MAIN_PROJECT_NAME, description='main project'
         )
         if created:
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 password='user',
                 active=True,
             )
-            demo = ComicSite.objects.create(
+            demo = Challenge.objects.create(
                 short_name='demo',
                 description='demo project',
                 creator=demoadmin,

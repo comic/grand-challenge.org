@@ -192,9 +192,9 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.template.context_processors.request',
                 'django.contrib.messages.context_processors.messages',
-                'comicsite.contextprocessors.contextprocessors.comic_site',
-                'comicsite.contextprocessors.contextprocessors.subdomain_absolute_uri',
-                'comicsite.contextprocessors.contextprocessors.google_analytics_id',
+                'core.contextprocessors.contextprocessors.comic_site',
+                'core.contextprocessors.contextprocessors.subdomain_absolute_uri',
+                'core.contextprocessors.contextprocessors.google_analytics_id',
             ],
         },
     },
@@ -211,8 +211,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'comicsite.middleware.subdomain.SubdomainMiddleware',
-    'comicsite.middleware.project.ProjectMiddleware',
+    'core.middleware.subdomain.SubdomainMiddleware',
+    'core.middleware.project.ProjectMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -240,7 +240,7 @@ INSTALLED_APPS = (
     # all objects used in the framework, e.g. algorithm, dataset, team, result.
     'challenges',
     # comicsite is the where main web portal of this framework lives
-    'comicsite',
+    'core',
     # profiles extends userena and gives functionality to manage user profiles
     # profiles needs to be loaded before userena
     'profiles',
@@ -432,7 +432,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=1),
     },
     'clear_sessions': {
-        'task': 'comicsite.tasks.clear_sessions',
+        'task': 'core.tasks.clear_sessions',
         'schedule': timedelta(days=1),
     },
 }

@@ -13,12 +13,12 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from comicsite.core.urlresolvers import reverse
+from core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
 
 
-class ComicSiteManager(models.Manager):
+class ChallengeManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """
 
     def non_hidden(self):
@@ -26,7 +26,7 @@ class ComicSiteManager(models.Manager):
         return self.filter(hidden=False)
 
     def get_queryset(self):
-        return super(ComicSiteManager, self).get_queryset()
+        return super().get_queryset()
 
 
 class ProjectLink(object):
@@ -140,7 +140,7 @@ class ProjectLink(object):
         which is in the future, make it upcoming, otherwise active
 
         """
-        linkclass = ComicSite.CHALLENGE_ACTIVE
+        linkclass = Challenge.CHALLENGE_ACTIVE
         # for project hosted on comic, try to find upcoming automatically
         if self.params["hosted on comic"]:
             linkclass = self.params["project type"]
@@ -150,13 +150,13 @@ class ProjectLink(object):
             # else use the explicit setting in xls
             section = self.params["website section"].lower()
             if section == "upcoming challenges":
-                linkclass = ComicSite.CHALLENGE_ACTIVE + " " + self.UPCOMING
+                linkclass = Challenge.CHALLENGE_ACTIVE + " " + self.UPCOMING
             elif section == "active challenges":
-                linkclass = ComicSite.CHALLENGE_ACTIVE
+                linkclass = Challenge.CHALLENGE_ACTIVE
             elif section == "past challenges":
-                linkclass = ComicSite.CHALLENGE_INACTIVE
+                linkclass = Challenge.CHALLENGE_INACTIVE
             elif section == "data publication":
-                linkclass = ComicSite.DATA_PUB
+                linkclass = Challenge.DATA_PUB
         return linkclass
 
     @staticmethod
@@ -181,7 +181,7 @@ def validate_nounderscores(value):
         )
 
 
-class ComicSite(models.Model):
+class Challenge(models.Model):
     """
     A collection of HTML pages using a certain skin. Pages can be browsed and
     edited.
@@ -389,15 +389,11 @@ class ComicSite(models.Model):
         on_delete=models.CASCADE,
         related_name='participants_of_challenge',
     )
-    objects = ComicSiteManager()
+    objects = ChallengeManager()
 
     def __str__(self):
         """ string representation for this object"""
         return self.short_name
-
-    def clean(self):
-        """ clean method is called automatically for each save in admin"""
-        pass
 
     # TODO check whether short name is really clean and short!
     def delete(self, using=None, keep_parents=False):
@@ -592,7 +588,7 @@ class ComicSiteModel(models.Model):
     """
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
-        ComicSite, help_text="To which comicsite does this object belong?"
+        Challenge, help_text="To which comicsite does this object belong?"
     )
     ALL = 'ALL'
     REGISTERED_ONLY = 'REG'
@@ -663,5 +659,3 @@ class ComicSiteModel(models.Model):
     class Meta:
         abstract = True
         permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
-
-

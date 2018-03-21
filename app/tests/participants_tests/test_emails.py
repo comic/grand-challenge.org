@@ -1,7 +1,7 @@
 import pytest
 from django.core import mail
 
-from comicsite.core.urlresolvers import reverse
+from core.urlresolvers import reverse
 from participants.models import RegistrationRequest
 from tests.factories import UserFactory, RegistrationRequestFactory
 from tests.utils import get_view_for_user

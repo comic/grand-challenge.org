@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 
 
 class RegistrationRequest(models.Model):
@@ -15,7 +15,7 @@ class RegistrationRequest(models.Model):
         help_text="which user requested to participate?",
     )
     challenge = models.ForeignKey(
-        ComicSite, help_text="To which project does the user want to register?"
+        Challenge, help_text="To which project does the user want to register?"
     )
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)

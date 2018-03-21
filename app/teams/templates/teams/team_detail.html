@@ -54,7 +54,7 @@
         {% endfor %}
     </ul>
 
-    {% if "change_team" in object_perms or "change_comicsite" in site_perms %}
+    {% if "change_team" in object_perms or "change_challenge" in site_perms %}
         <h3>Team Owner Settings</h3>
         <a href="{% url 'teams:update' site.short_name object.pk %}"
            class="btn btn-primary">Edit

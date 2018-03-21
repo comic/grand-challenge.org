@@ -5,8 +5,8 @@ from django.db.models import Max
 from django.utils.safestring import mark_safe
 
 from challenges.models import ComicSiteModel
-from comicsite.core.urlresolvers import reverse
-from comicsite.utils.query import index
+from core.urlresolvers import reverse
+from core.utils.query import index
 
 
 class Page(ComicSiteModel):

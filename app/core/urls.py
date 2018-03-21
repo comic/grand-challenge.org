@@ -1,8 +1,8 @@
 from django.conf.urls import url, include
 from django.views.generic import TemplateView, RedirectView
 
-from comicsite.api import get_public_results
-from comicsite.views import site
+from core.api import get_public_results
+from core.views import site
 from uploads.views import serve
 
 urlpatterns = [

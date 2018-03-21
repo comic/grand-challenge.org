@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 
 """ Defines fixtures than can be used across all of the tests """
@@ -38,7 +38,7 @@ def challenge_set():
     challenge.add_participant(participant1)
     non_participant = UserFactory()
     try:
-        ComicSite.objects.get(short_name=settings.MAIN_PROJECT_NAME)
+        Challenge.objects.get(short_name=settings.MAIN_PROJECT_NAME)
     except ObjectDoesNotExist:
         ChallengeFactory(short_name=settings.MAIN_PROJECT_NAME)
     return ChallengeSet(

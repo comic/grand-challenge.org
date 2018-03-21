@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
 from userena.models import UserenaBaseProfile
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 
 
 class UserProfile(UserenaBaseProfile):
@@ -19,7 +19,7 @@ class UserProfile(UserenaBaseProfile):
     website = models.CharField(max_length=150, blank=True)
 
     def get_challenges_as_participant(self):
-        return ComicSite.objects.filter(
+        return Challenge.objects.filter(
             participants_group__in=self.user.groups.all()
         )
 

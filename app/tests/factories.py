@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 from evaluation.models import Submission, Job, Method, Result
 from pages.models import Page
 from participants.models import RegistrationRequest
@@ -16,7 +16,7 @@ SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 class ChallengeFactory(factory.DjangoModelFactory):
 
     class Meta:
-        model = ComicSite
+        model = Challenge
 
     short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
 

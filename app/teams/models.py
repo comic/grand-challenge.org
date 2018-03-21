@@ -3,15 +3,14 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import models
 
-from challenges.models import ComicSite
-from comicsite.core.urlresolvers import reverse
-from evaluation.models import UUIDModel
+from challenges.models import Challenge
+from core.urlresolvers import reverse
 
 
 class Team(models.Model):
     name = models.CharField(max_length=32)
     challenge = models.ForeignKey(
-        ComicSite, on_delete=models.CASCADE, editable=False
+        Challenge, on_delete=models.CASCADE, editable=False
     )
     department = models.CharField(max_length=64, blank=True)
     institution = models.CharField(max_length=64, blank=True)

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, Resolver404
 
-from challenges.models import ComicSite
+from challenges.models import Challenge
 
 
 class ProjectMiddleware:
@@ -17,10 +17,10 @@ class ProjectMiddleware:
                 
         """
         try:
-            request.challenge = ComicSite.objects.get(
+            request.challenge = Challenge.objects.get(
                 short_name=self.get_challenge_name(request)
             )
-        except ComicSite.DoesNotExist:
+        except Challenge.DoesNotExist:
             request.challenge = None
 
     def get_challenge_name(self, request):

@@ -5,7 +5,7 @@ from os import path
 
 from django.http import HttpResponse
 
-from comicsite.views import get_data_folder_path, get_dirnames
+from core.views import get_data_folder_path, get_dirnames
 
 
 def get_public_results(request, challenge_short_name):

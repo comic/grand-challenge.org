@@ -6,9 +6,9 @@ from django.conf import settings
 from django.core.urlresolvers import resolve
 from django.http import Http404
 
-from challenges.models import ComicSite
-from comicsite.utils import build_absolute_uri
-from comicsite.views import site_get_standard_vars
+from challenges.models import Challenge
+from core.utils import build_absolute_uri
+from core.views import site_get_standard_vars
 
 
 def comic_site(request):
@@ -28,7 +28,7 @@ def comic_site(request):
         sitename = settings.MAIN_PROJECT_NAME
     try:
         [site, pages, metafooterpages] = site_get_standard_vars(sitename)
-    except ComicSite.DoesNotExist:
+    except Challenge.DoesNotExist:
         # Don't crash the system here, if a site cannot be found it will crash 
         # in a more appropriate location
         return {}

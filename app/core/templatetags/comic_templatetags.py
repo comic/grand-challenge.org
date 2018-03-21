@@ -24,11 +24,11 @@ from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
-import comicsite.views
-from challenges.models import ComicSite
-from comicsite.core.exceptions import PathResolutionException
-from comicsite.core.urlresolvers import reverse
-from comicsite.templatetags import library_plus
+import core.views
+from challenges.models import Challenge
+from core.exceptions import PathResolutionException
+from core.templatetags import library_plus
+from core.urlresolvers import reverse
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from profiles.models import UserProfile
@@ -112,7 +112,7 @@ def url(parser, token):
 
     REQUIREMENTS:
     * MIDDLEWARE_CLASSES in settings should contain
-      'comicsite.middleware.subdomain.SubdomainMiddleware'
+      'core.middleware.subdomain.SubdomainMiddleware'
 
     * These keys should be in the django settings file:
       SUBDOMAIN_IS_PROJECTNAME = True
@@ -249,8 +249,8 @@ class comic_URLNode(defaulttags.URLNode):
                 ]
             )
         ):
-            # Interpret subdomain as a comicsite. What would normally be the
-            # path to this comicsite?
+            # Interpret subdomain as a challenge. What would normally be the
+            # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
             project = args[0]
             if project == settings.MAIN_PROJECT_NAME:
@@ -318,7 +318,7 @@ def sanitize_django_items(string):
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
     html_string = mark_safe("")
-    pages = comicsite.views.getPages(settings.MAIN_PROJECT_NAME)
+    pages = core.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
             url = reverse('mainproject-home', kwargs={'page_title': p.title})
@@ -466,7 +466,7 @@ class ImageBrowserNode(template.Node):
 
         # try to get names of all public results to be available in javascript
         # Where are the results?
-        from comicsite.api import get_public_results_by_challenge_name
+        from core.api import get_public_results_by_challenge_name
 
         try:
             public_results = get_public_results_by_challenge_name(
@@ -1188,7 +1188,7 @@ def render_all_projectlinks(parser, token):
     usagestr = "Tag usage: {% all_projectlinks %}"
     args = parseKeyValueToken(token)
     try:
-        projects = ComicSite.objects.non_hidden()
+        projects = Challenge.objects.non_hidden()
     except ObjectDoesNotExist as e:
         errormsg = "Error rendering {% " + token.contents + " %}: Could not find any comicSite object.."
         return TemplateErrorNode(errormsg)
