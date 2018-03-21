@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 
 from challenges.models import ComicSite
-from comicsite.utils.email import send_templated_email
+from core.utils.email import send_templated_email
 
 
 def send_new_admin_notification_email(

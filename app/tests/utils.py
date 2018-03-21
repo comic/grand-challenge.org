@@ -7,7 +7,7 @@ from django.test import RequestFactory, Client
 from django.views.generic import View
 
 from challenges.models import ComicSite
-from comicsite.urlresolvers import reverse
+from core.urlresolvers import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD
 
 

@@ -8,8 +8,8 @@ from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
 
 from challenges.models import ComicSite
-from comicsite.template.context import ComicSiteRequestContext
-from comicsite.urlresolvers import reverse
+from core.template.context import ComicSiteRequestContext
+from core.urlresolvers import reverse
 from pages.models import Page, ErrorPage
 
 

@@ -458,7 +458,7 @@ class ComicframeworkTestCase(TestCase):
         """
         from django.contrib.sessions.middleware import SessionMiddleware  # Some admin actions render messages and will crash without explicit import
         from django.contrib.messages.middleware import MessageMiddleware
-        from comicsite.middleware.project import ProjectMiddleware
+        from core.middleware.project import ProjectMiddleware
 
         sm = SessionMiddleware()
         mm = MessageMiddleware()

@@ -1,6 +1,6 @@
 import pytest
 
-from comicsite.urlresolvers import reverse
+from core.urlresolvers import reverse
 from tests.utils import validate_logged_in_view, validate_admin_only_view
 
 

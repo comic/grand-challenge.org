@@ -24,8 +24,8 @@ from django.views.generic import ListView, CreateView, TemplateView
 
 from challenges.models import ComicSite
 from challenges.permissions import can_access
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin
-from comicsite.views import getSite, site_get_standard_vars, permissionMessage
+from core.permissions.mixins import UserIsChallengeAdminMixin
+from core.views import getSite, site_get_standard_vars, permissionMessage
 from pages.models import Page
 from pages.views import ChallengeFilteredQuerysetMixin
 from uploads.api import serve_file

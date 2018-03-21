@@ -13,7 +13,7 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from comicsite.urlresolvers import reverse
+from core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
 

@@ -7,8 +7,8 @@ from django.core.urlresolvers import resolve
 from django.http import Http404
 
 from challenges.models import ComicSite
-from comicsite.utils import build_absolute_uri
-from comicsite.views import site_get_standard_vars
+from core.utils import build_absolute_uri
+from core.views import site_get_standard_vars
 
 
 def comic_site(request):

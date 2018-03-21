@@ -5,7 +5,7 @@ from django.views.generic import CreateView, ListView, UpdateView
 
 from challenges.forms import ChallengeCreateForm, ChallengeUpdateForm
 from challenges.models import ComicSite
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin
+from core.permissions.mixins import UserIsChallengeAdminMixin
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):

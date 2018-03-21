@@ -10,9 +10,9 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from challenges.permissions import can_access
-from comicsite.permissions.mixins import UserIsChallengeAdminMixin
-from comicsite.urlresolvers import reverse
-from comicsite.views import (
+from core.permissions.mixins import UserIsChallengeAdminMixin
+from core.urlresolvers import reverse
+from core.views import (
     site_get_standard_vars, getRenderedPageIfAllowed, get_data_folder_path
 )
 from pages.forms import PageCreateForm, PageUpdateForm

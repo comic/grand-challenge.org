@@ -6,8 +6,8 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
 )
 
-from comicsite.permissions.mixins import UserIsChallengeParticipantOrAdminMixin
-from comicsite.urlresolvers import reverse
+from core.permissions.mixins import UserIsChallengeParticipantOrAdminMixin
+from core.urlresolvers import reverse
 from teams.models import Team, TeamMember
 from teams.permissions.mixins import (
     UserIsTeamOwnerOrChallengeAdminMixin,

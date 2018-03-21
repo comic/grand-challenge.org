@@ -7,7 +7,7 @@ from django.template import RequestContext
 
 
 class ComicSiteRequestContext(RequestContext):
-    """ RequestContext with added comicsite. Could not get comicsite from httprequest so
+    """ RequestContext with added challenge. Could not get comicsite from httprequest so
         passing it in init()"""
 
     # I want to add comicsite instance to current context so that template tags know

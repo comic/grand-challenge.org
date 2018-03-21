@@ -1,4 +1,4 @@
-from comicsite.permissions.mixins import UserAuthAndTestMixin
+from core.permissions.mixins import UserAuthAndTestMixin
 from teams.models import Team, TeamMember
 
 
