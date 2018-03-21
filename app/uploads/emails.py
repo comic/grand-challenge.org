@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from core.utils.email import send_templated_email
+from grandchallenge.core.utils.email import send_templated_email
 
 
 def send_file_uploaded_notification_email(**kwargs):

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
-from core.views import comicmain
+from grandchallenge.core.views import comicmain
 from uploads.views import serve
 
 admin.autodiscover()
@@ -26,7 +26,7 @@ urlpatterns = [
         ),
     ),
     url(settings.ADMIN_URL, admin.site.urls),
-    url(r'^site/', include('core.urls'), name='site'),
+    url(r'^site/', include('grandchallenge.core.urls'), name='site'),
     # Do not change the namespace without updating the view names in
     # evaluation.serializers
     url(r'^api/', include('grandchallenge.api.urls', namespace='api')),

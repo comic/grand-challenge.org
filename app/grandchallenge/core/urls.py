@@ -1,8 +1,8 @@
 from django.conf.urls import url, include
 from django.views.generic import TemplateView, RedirectView
 
-from core.api import get_public_results
-from core.views import site
+from grandchallenge.core.api import get_public_results
+from grandchallenge.core.views import site
 from uploads.views import serve
 
 urlpatterns = [

@@ -2,9 +2,9 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
-from core.permissions.mixins import UserIsChallengeAdminMixin
-from core.urlresolvers import reverse
 from grandchallenge.admins.forms import AdminsForm
+from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
+from grandchallenge.core.urlresolvers import reverse
 
 
 class AdminsList(UserIsChallengeAdminMixin, ListView):

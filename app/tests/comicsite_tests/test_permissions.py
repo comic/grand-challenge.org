@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
 
-from core.permissions.mixins import UserIsChallengeAdminMixin, \
+from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin, \
     UserIsChallengeParticipantOrAdminMixin
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import assert_redirect, assert_status
@@ -38,7 +38,7 @@ def test_permissions_mixin(
     non_participant = ChallengeSet.non_participant
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
-        'core.permissions.mixins.messages'
+        'grandchallenge.core.permissions.mixins.messages'
     ).start()
     mock_messages.INFO = "INFO"
     assert_status(200, admin_user, AdminOnlyView, challenge, rf)
@@ -85,7 +85,7 @@ def test_permissions_after_challenge_rename(
     non_participant = ChallengeSet.non_participant
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
-        'core.permissions.mixins.messages'
+        'grandchallenge.core.permissions.mixins.messages'
     ).start()
     mock_messages.INFO = "INFO"
     assert_status(200, admin_user, AdminOnlyView, challenge, rf)

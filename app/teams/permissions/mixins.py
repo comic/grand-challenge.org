@@ -1,4 +1,4 @@
-from core.permissions.mixins import UserAuthAndTestMixin
+from grandchallenge.core.permissions.mixins import UserAuthAndTestMixin
 from teams.models import Team, TeamMember
 
 

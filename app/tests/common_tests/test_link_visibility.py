@@ -1,6 +1,6 @@
 import pytest
 
-from core.urlresolvers import reverse
+from grandchallenge.core.urlresolvers import reverse
 from tests.utils import validate_admin_only_text_in_page
 
 

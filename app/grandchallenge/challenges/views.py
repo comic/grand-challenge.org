@@ -3,11 +3,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import CreateView, ListView, UpdateView
 
-from core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm, ChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):

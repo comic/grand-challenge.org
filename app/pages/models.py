@@ -4,9 +4,9 @@ from django.db import models
 from django.db.models import Max
 from django.utils.safestring import mark_safe
 
-from core.urlresolvers import reverse
-from core.utils.query import index
 from grandchallenge.challenges.models import ComicSiteModel
+from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.utils.query import index
 
 
 class Page(ComicSiteModel):

@@ -9,12 +9,12 @@ from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from core.permissions.mixins import UserIsChallengeAdminMixin
-from core.urlresolvers import reverse
-from core.views import (
+from grandchallenge.challenges.permissions import can_access
+from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
+from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.views import (
     site_get_standard_vars, getRenderedPageIfAllowed, get_data_folder_path
 )
-from grandchallenge.challenges.permissions import can_access
 from pages.forms import PageCreateForm, PageUpdateForm
 from pages.models import Page
 from uploads.api import serve_file

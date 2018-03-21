@@ -6,9 +6,9 @@ from django.conf import settings
 from django.core.urlresolvers import resolve
 from django.http import Http404
 
-from core.utils import build_absolute_uri
-from core.views import site_get_standard_vars
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.utils import build_absolute_uri
+from grandchallenge.core.views import site_get_standard_vars
 
 
 def comic_site(request):

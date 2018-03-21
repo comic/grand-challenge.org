@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.core.mail import send_mail
 
-from core.urlresolvers import reverse
+from grandchallenge.core.urlresolvers import reverse
 
 
 def send_failed_job_email(job):

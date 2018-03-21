@@ -13,7 +13,7 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from core.urlresolvers import reverse
+from grandchallenge.core.urlresolvers import reverse
 
 logger = logging.getLogger("django")
 

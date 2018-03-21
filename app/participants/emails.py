@@ -1,6 +1,6 @@
 from django.contrib.sites.shortcuts import get_current_site
 
-from core.utils.email import send_templated_email
+from grandchallenge.core.utils.email import send_templated_email
 
 
 def send_participation_request_notification_email(request, obj):

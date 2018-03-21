@@ -24,13 +24,14 @@ from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
-import core.views
-from core.exceptions import PathResolutionException
-from core.templatetags import library_plus
-from core.urlresolvers import reverse
+import grandchallenge.core.views
 from dataproviders.ProjectExcelReader import ProjectExcelReader
 from dataproviders.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.api import get_public_results_by_challenge_name
+from grandchallenge.core.exceptions import PathResolutionException
+from grandchallenge.core.templatetags import library_plus
+from grandchallenge.core.urlresolvers import reverse
 from profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
@@ -318,7 +319,7 @@ def sanitize_django_items(string):
 def metafooterpages():
     """ Get html for links to general pages like 'contact' """
     html_string = mark_safe("")
-    pages = core.views.getPages(settings.MAIN_PROJECT_NAME)
+    pages = grandchallenge.core.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
             url = reverse('mainproject-home', kwargs={'page_title': p.title})
@@ -463,10 +464,6 @@ class ImageBrowserNode(template.Node):
             filenames = self.get_filenames(context, path_resolved)
         except OSError as e:
             return self.make_dataset_error_msg(str(e))
-
-        # try to get names of all public results to be available in javascript
-        # Where are the results?
-        from core.api import get_public_results_by_challenge_name
 
         try:
             public_results = get_public_results_by_challenge_name(

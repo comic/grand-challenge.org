@@ -7,12 +7,12 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import (CreateView, ListView, DetailView, UpdateView)
 
-from core.permissions.mixins import (
-    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
-)
-from core.urlresolvers import reverse
 from evaluation.forms import MethodForm, SubmissionForm
 from evaluation.models import Result, Submission, Job, Method, Config
+from grandchallenge.core.permissions.mixins import (
+    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
+)
+from grandchallenge.core.urlresolvers import reverse
 
 
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
