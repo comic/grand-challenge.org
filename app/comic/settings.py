@@ -262,7 +262,7 @@ INSTALLED_APPS = (
     'jqfileupload',
     'rest_framework',
     'rest_framework.authtoken',
-    'api',
+    'grandchallenge.api',
     # bootstrap forms
     'crispy_forms',
     'teams',
