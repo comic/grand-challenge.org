@@ -1,15 +1,15 @@
 COMIC Django Frontend
 =====================
 
-.. image:: https://travis-ci.org/comic/comic-django.svg?branch=master
-   :target: https://travis-ci.org/comic/comic-django
-.. image:: https://codeclimate.com/github/comic/comic-django/badges/gpa.svg
-   :target: https://codeclimate.com/github/comic/comic-django
-   :alt: Code Climate
-.. image:: https://codecov.io/gh/comic/comic-django/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/comic/comic-django
-.. image:: https://readthedocs.org/projects/comic-django/badge/?version=latest
-   :target: http://comic-django.readthedocs.io/en/latest/?badge=latest
+.. image:: https://travis-ci.org/comic/grand-challenge.org.svg?branch=master
+   :target: https://travis-ci.org/comic/grand-challenge.org
+.. image:: https://api.codeclimate.com/v1/badges/b056e3bb28f145fa1bde/maintainability
+   :target: https://codeclimate.com/github/comic/grand-challenge.org/maintainability
+   :alt: Maintainability
+.. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/comic/grand-challenge.org
+.. image:: https://readthedocs.org/projects/grand-challengeorg/badge/?version=latest
+   :target: http://grand-challengeorg.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
 This repository contains the Django-based web frontend for the COMIC project.  "COMIC" stands for *Consortium for Open Medical Image Computing*.
@@ -21,7 +21,7 @@ Installation
 
 You can fetch a copy by cloning the git repository::
 
-    git clone git://github.com/comic/comic-django.git
+    git clone git://github.com/comic/grand-challenge.org.git
 
 You can then install the requirements into your python environment with::
 

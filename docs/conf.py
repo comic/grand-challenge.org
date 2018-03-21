@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# COMIC-Django documentation build configuration file, created by
+# grand-challenge.org documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  5 16:19:37 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -53,7 +53,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'COMIC-Django'
+project = 'grand-challenge.org'
 copyright = '2018, James Meakin'
 author = 'James Meakin'
 
@@ -119,7 +119,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'COMIC-Djangodoc'
+htmlhelp_basename = 'grand-challenge.orgdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -146,7 +146,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'COMIC-Django.tex', 'COMIC-Django Documentation',
+    (master_doc, 'grand-challenge.org.tex', 'grand-challenge.org Documentation',
      'James Meakin', 'manual'),
 ]
 
@@ -156,7 +156,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'comic-django', 'COMIC-Django Documentation',
+    (master_doc, 'grand-challenge.org', 'grand-challenge.org Documentation',
      [author], 1)
 ]
 
@@ -167,8 +167,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'COMIC-Django', 'COMIC-Django Documentation',
-     author, 'COMIC-Django', 'One line description of project.',
+    (master_doc, 'grand-challenge.org', 'grand-challenge.org Documentation',
+     author, 'grand-challenge.org', 'One line description of project.',
      'Miscellaneous'),
 ]
 

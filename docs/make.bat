@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=COMIC-Django
+set SPHINXPROJ=grand-challenge.org
 
 if "%1" == "" goto help
 

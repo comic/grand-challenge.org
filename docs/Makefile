@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = COMIC-Django
+SPHINXPROJ    = grand-challenge.org
 SOURCEDIR     = .
 BUILDDIR      = _build
 
