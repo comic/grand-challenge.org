@@ -18,7 +18,7 @@ from core.urlresolvers import reverse
 logger = logging.getLogger("django")
 
 
-class ComicSiteManager(models.Manager):
+class ChallengeManager(models.Manager):
     """ adds some tabel level functions for getting ComicSites from db. """
 
     def non_hidden(self):
@@ -26,7 +26,7 @@ class ComicSiteManager(models.Manager):
         return self.filter(hidden=False)
 
     def get_queryset(self):
-        return super(ComicSiteManager, self).get_queryset()
+        return super().get_queryset()
 
 
 class ProjectLink(object):
@@ -389,15 +389,11 @@ class Challenge(models.Model):
         on_delete=models.CASCADE,
         related_name='participants_of_challenge',
     )
-    objects = ComicSiteManager()
+    objects = ChallengeManager()
 
     def __str__(self):
         """ string representation for this object"""
         return self.short_name
-
-    def clean(self):
-        """ clean method is called automatically for each save in admin"""
-        pass
 
     # TODO check whether short name is really clean and short!
     def delete(self, using=None, keep_parents=False):
@@ -663,5 +659,3 @@ class ComicSiteModel(models.Model):
     class Meta:
         abstract = True
         permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
-
-
