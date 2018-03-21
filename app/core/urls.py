@@ -25,7 +25,7 @@ urlpatterns = [
     ),
     url(
         r'^(?P<challenge_short_name>[\w-]+)/admins/',
-        include('admins.urls', namespace='admins'),
+        include('grandchallenge.admins.urls', namespace='admins'),
     ),
     url(r'^(?P<challenge_short_name>[\w-]+)/uploads/', include('uploads.urls', namespace='uploads')),
     #################

@@ -2,13 +2,13 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
-from admins.forms import AdminsForm
 from core.permissions.mixins import UserIsChallengeAdminMixin
 from core.urlresolvers import reverse
+from grandchallenge.admins.forms import AdminsForm
 
 
 class AdminsList(UserIsChallengeAdminMixin, ListView):
-    template_name = 'admins/admins_list.html'
+    template_name = 'admins/templates/admins/admins_list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -27,7 +27,7 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
 
 class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
     form_class = AdminsForm
-    template_name = 'admins/admins_form.html'
+    template_name = 'admins/templates/admins/admins_form.html'
     success_message = 'Admins successfully updated'
 
     def get_success_url(self):

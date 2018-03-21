@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from admins.views import AdminsList, AdminsUpdate
+from grandchallenge.admins.views import AdminsList, AdminsUpdate
 
 urlpatterns = [
     url(r'^$', AdminsList.as_view(), name='list'),

@@ -25,6 +25,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the "Comic" app dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+APPS_DIR = os.path.join(SITE_ROOT, 'grandchallenge')
 
 MANAGERS = ADMINS
 
@@ -180,6 +181,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            str(APPS_DIR),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -266,7 +268,7 @@ INSTALLED_APPS = (
     'teams',
     'pages',
     'participants',
-    'admins',
+    'grandchallenge.admins',
     'uploads',
 )
 
