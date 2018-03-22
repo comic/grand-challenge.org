@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from jsonpath_rw import parse
 
 from grandchallenge.evaluation.models import Result
-from teams.models import Team
+from grandchallenge.teams.models import Team
 
 register = template.Library()
 

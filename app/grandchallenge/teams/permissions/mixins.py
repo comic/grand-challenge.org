@@ -1,5 +1,5 @@
 from grandchallenge.core.permissions.mixins import UserAuthAndTestMixin
-from teams.models import Team, TeamMember
+from grandchallenge.teams.models import Team, TeamMember
 
 
 class UserIsTeamOwnerOrChallengeAdminMixin(UserAuthAndTestMixin):

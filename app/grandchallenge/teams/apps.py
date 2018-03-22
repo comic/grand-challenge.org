@@ -2,8 +2,8 @@ from django.apps import AppConfig
 
 
 class TeamsConfig(AppConfig):
-    name = 'teams'
+    name = 'grandchallenge.teams'
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import teams.signals
+        import grandchallenge.teams.signals

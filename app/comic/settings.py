@@ -265,7 +265,7 @@ INSTALLED_APPS = (
     'grandchallenge.api',
     # bootstrap forms
     'crispy_forms',
-    'teams',
+    'grandchallenge.teams',
     'grandchallenge.pages',
     'grandchallenge.participants',
     'grandchallenge.admins',

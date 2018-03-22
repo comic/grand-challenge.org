@@ -7,7 +7,7 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
-from teams.models import Team, TeamMember
+from grandchallenge.teams.models import Team, TeamMember
 from uploads.models import UploadModel
 
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'

@@ -23,7 +23,7 @@ urlpatterns = [
     ),
     url(
         r'^(?P<challenge_short_name>[\w-]+)/teams/',
-        include('teams.urls', namespace='teams'),
+        include('grandchallenge.teams.urls', namespace='teams'),
     ),
     url(
         r'^(?P<challenge_short_name>[\w-]+)/participants/',

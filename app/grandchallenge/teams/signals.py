@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
-from teams.models import Team, TeamMember
+from grandchallenge.teams.models import Team, TeamMember
 
 
 @receiver(post_save, sender=Team)

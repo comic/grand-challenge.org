@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from teams.views import (
+from grandchallenge.teams.views import (
     TeamList,
     TeamDetail,
     TeamUpdate,

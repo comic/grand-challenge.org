@@ -9,8 +9,8 @@ from django.views.generic import (
 from grandchallenge.core.permissions.mixins import \
     UserIsChallengeParticipantOrAdminMixin
 from grandchallenge.core.urlresolvers import reverse
-from teams.models import Team, TeamMember
-from teams.permissions.mixins import (
+from grandchallenge.teams.models import Team, TeamMember
+from grandchallenge.teams.permissions.mixins import (
     UserIsTeamOwnerOrChallengeAdminMixin,
     UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
 )
