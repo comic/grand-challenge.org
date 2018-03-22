@@ -31,4 +31,4 @@ ratings:
 exclude_paths:
   - app/grandchallenge/core/static/**/*
   - app/grandchallenge/**/migrations/**/*
-  - app/tests/comicsite_tests/resources/**/*
+  - app/tests/core_tests/resources/**/*

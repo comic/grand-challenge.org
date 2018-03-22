@@ -5,8 +5,9 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
 
-from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin, \
-    UserIsChallengeParticipantOrAdminMixin
+from grandchallenge.core.permissions.mixins import (
+    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin,
+)
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import assert_redirect, assert_status
 

@@ -76,7 +76,7 @@ def test_url_parameter(rf: RequestFactory):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("view_type", ['anode09', 'anode09_table'])
-@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+@override_settings(MEDIA_ROOT='/app/tests/core_tests/resources/')
 def test_insert_graph(rf: RequestFactory, view_type):
     c = ChallengeFactory(short_name='testproj1734621')
     p = PageFactory(challenge=c)
@@ -99,7 +99,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
 
 
 @pytest.mark.django_db
-@override_settings(MEDIA_ROOT='/app/tests/comicsite_tests/resources/')
+@override_settings(MEDIA_ROOT='/app/tests/core_tests/resources/')
 def test_image_browser(rf: RequestFactory):
     c = ChallengeFactory(short_name='testproj-image-browser')
     p = PageFactory(challenge=c)
