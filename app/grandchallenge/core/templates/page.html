@@ -1,6 +1,6 @@
 {% extends "site.html" %}
 {% load guardian_tags %}
-{% load comic_templatetags %}
+{% load grandchallenge_tags %}
 
 {% block pageName %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}

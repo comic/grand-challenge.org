@@ -15,7 +15,7 @@ class LibraryPlus(template.Library):
 
     def tag(self, name=None, compile_function=None, usagestr=""):
         tagfunction = super(LibraryPlus, self).tag(name, compile_function)
-        # fixme: Why is this function called twice for each @register.tag call in comic_templatetags.py?
+        # fixme: Why is this function called twice for each @register.tag call in grandchallenge_tags.py?
         # Second call has no 'usagestr' defined workaround now is to check for
         # existing key and not overwriting it.
         if name not in self.usagestrings:
