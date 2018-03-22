@@ -48,7 +48,7 @@ DEFAULT_FROM_EMAIL = 'noreply@comicframework.org'
 ANONYMOUS_USER_NAME = 'AnonymousUser'
 EVERYONE_GROUP_NAME = 'everyone'
 
-AUTH_PROFILE_MODULE = 'profiles.UserProfile'
+AUTH_PROFILE_MODULE = 'grandchallenge.profiles.UserProfile'
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = 'open'
 LOGIN_URL = '/accounts/signin/'
@@ -245,7 +245,7 @@ INSTALLED_APPS = (
     'grandchallenge.core',
     # profiles extends userena and gives functionality to manage user profiles
     # profiles needs to be loaded before userena
-    'profiles',
+    'grandchallenge.profiles',
     # userena provides advanced user management
     'userena',
     # guardian (depency of userena) implements advanced authentication on a per object basis
@@ -298,7 +298,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_by_email',
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
-    'profiles.social_auth.pipeline.profile.create_profile',
+    'grandchallenge.profiles.social_auth.pipeline.profile.create_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',

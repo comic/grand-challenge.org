@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 
-from profiles.forms import SignupFormExtra
-from profiles.views import (
+from grandchallenge.profiles.forms import SignupFormExtra
+from grandchallenge.profiles.views import (
     login_redirect,
     profile_edit_redirect,
     profile,

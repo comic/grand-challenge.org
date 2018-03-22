@@ -33,7 +33,7 @@ from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.dataproviders.ProjectExcelReader import ProjectExcelReader
 from grandchallenge.dataproviders.utils.HtmlLinkReplacer import \
     HtmlLinkReplacer
-from profiles.models import UserProfile
+from grandchallenge.profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
 logger = logging.getLogger("django")

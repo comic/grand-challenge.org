@@ -30,9 +30,9 @@ urlpatterns = [
     # Do not change the namespace without updating the view names in
     # evaluation.serializers
     url(r'^api/', include('grandchallenge.api.urls', namespace='api')),
-    # Used for logging in and managing profiles. This is done on the framework
+    # Used for logging in and managing grandchallenge.profiles. This is done on the framework
     # level because it is too hard to get this all under each project
-    url(r'^accounts/', include('profiles.urls')),
+    url(r'^accounts/', include('grandchallenge.profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
     url(
         r'^challenges/',
