@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from pages.views import (
+from grandchallenge.pages.views import (
     page, insertedpage, PageList, PageCreate, PageUpdate, PageDelete
 )
 

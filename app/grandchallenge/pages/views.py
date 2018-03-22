@@ -15,8 +15,8 @@ from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.views import (
     site_get_standard_vars, getRenderedPageIfAllowed, get_data_folder_path
 )
-from pages.forms import PageCreateForm, PageUpdateForm
-from pages.models import Page
+from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
+from grandchallenge.pages.models import Page
 from uploads.api import serve_file
 
 

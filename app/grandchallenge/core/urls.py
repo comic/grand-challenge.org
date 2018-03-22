@@ -61,6 +61,6 @@ urlpatterns = [
     # If nothing specific matches, try to resolve the url as project/pagename
     url(
         r'^(?P<challenge_short_name>[\w-]+)/',
-        include('pages.urls', namespace='pages'),
+        include('grandchallenge.pages.urls', namespace='pages'),
     ),
 ]

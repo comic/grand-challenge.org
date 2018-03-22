@@ -7,7 +7,7 @@ from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
 
 from grandchallenge.core.urlresolvers import reverse
-from pages.models import Page
+from grandchallenge.pages.models import Page
 
 
 class PageCreateForm(forms.ModelForm):

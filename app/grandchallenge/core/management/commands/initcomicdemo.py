@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
-from pages.models import Page
+from grandchallenge.pages.models import Page
 
 
 class Command(BaseCommand):

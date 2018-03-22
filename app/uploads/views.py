@@ -25,10 +25,11 @@ from django.views.generic import ListView, CreateView, TemplateView
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import getSite, site_get_standard_vars, \
-    permissionMessage
-from pages.models import Page
-from pages.views import ChallengeFilteredQuerysetMixin
+from grandchallenge.core.views import (
+    getSite, site_get_standard_vars, permissionMessage,
+)
+from grandchallenge.pages.models import Page
+from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from uploads.api import serve_file
 from uploads.emails import send_file_uploaded_notification_email
 from uploads.forms import UserUploadForm, CKUploadForm

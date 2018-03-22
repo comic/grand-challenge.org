@@ -10,7 +10,7 @@ from django.template.defaulttags import VerbatimNode
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.template.context import ComicSiteRequestContext
 from grandchallenge.core.urlresolvers import reverse
-from pages.models import Page, ErrorPage
+from grandchallenge.pages.models import Page, ErrorPage
 
 
 def site(request, challenge_short_name):
