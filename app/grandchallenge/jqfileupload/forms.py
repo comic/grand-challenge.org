@@ -1,7 +1,7 @@
 from django import forms
 
-from jqfileupload.widgets import uploader
-from jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.jqfileupload.widgets import uploader
+from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 test_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/ulwidget1/"

@@ -259,7 +259,7 @@ INSTALLED_APPS = (
     'ckeditor_uploader',
     # automated evaluation
     'grandchallenge.evaluation',
-    'jqfileupload',
+    'grandchallenge.jqfileupload',
     'rest_framework',
     'rest_framework.authtoken',
     'grandchallenge.api',
@@ -430,7 +430,7 @@ DOCKER_BASE_URL = 'unix://var/run/docker.sock'
 
 CELERY_BEAT_SCHEDULE = {
     'cleanup_stale_uploads': {
-        'task': 'jqfileupload.tasks.cleanup_stale_uploads',
+        'task': 'grandchallenge.jqfileupload.tasks.cleanup_stale_uploads',
         'schedule': timedelta(hours=1),
     },
     'clear_sessions': {

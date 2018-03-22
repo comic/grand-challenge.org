@@ -11,13 +11,14 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
-from django.http.response import HttpResponseBadRequest, JsonResponse, \
-    HttpResponseForbidden
+from django.http.response import (
+    HttpResponseBadRequest, JsonResponse, HttpResponseForbidden,
+)
 from django.template.loader import get_template
 from django.utils import timezone
 
-from jqfileupload.models import StagedFile
-from jqfileupload.widgets.utils import IntervalMap
+from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.jqfileupload.widgets.utils import IntervalMap
 
 
 def cleanup_stale_files():

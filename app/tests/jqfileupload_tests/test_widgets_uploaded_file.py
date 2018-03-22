@@ -8,8 +8,9 @@ from django.conf import settings
 from django.core import files
 from django.utils import timezone
 
-from jqfileupload.models import StagedFile
-from jqfileupload.widgets.uploader import StagedAjaxFile, cleanup_stale_files, \
+from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
+    cleanup_stale_files, \
     NotFoundError
 
 

@@ -1,7 +1,7 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from jqfileupload.forms import UploadForm
+from grandchallenge.jqfileupload.forms import UploadForm
 
 
 def uploader_widget_test(request: HttpRequest, **kwargs) -> HttpResponse:

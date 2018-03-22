@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from jqfileupload.widgets.uploader import cleanup_stale_files
+from grandchallenge.jqfileupload.widgets.uploader import cleanup_stale_files
 
 
 @shared_task

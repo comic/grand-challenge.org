@@ -3,8 +3,8 @@ from django import forms
 
 from grandchallenge.evaluation.models import Method, Submission
 from grandchallenge.evaluation.validators import ExtensionValidator
-from jqfileupload.widgets import uploader
-from jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.jqfileupload.widgets import uploader
+from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 method_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/method-upload/", multifile=False

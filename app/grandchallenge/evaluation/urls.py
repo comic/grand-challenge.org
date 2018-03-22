@@ -19,8 +19,10 @@ from grandchallenge.evaluation.views import (
     ConfigUpdate,
     ResultUpdate,
 )
-from jqfileupload.forms import test_upload_widget, test_upload_widget2
-from jqfileupload.views import uploader_widget_test
+from grandchallenge.jqfileupload.forms import (
+    test_upload_widget, test_upload_widget2,
+)
+from grandchallenge.jqfileupload.views import uploader_widget_test
 
 urlpatterns = [
     url(r'^config/$', ConfigUpdate.as_view(), name='config-update'),
