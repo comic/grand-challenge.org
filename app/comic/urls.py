@@ -34,7 +34,10 @@ urlpatterns = [
     # level because it is too hard to get this all under each project
     url(r'^accounts/', include('profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
-    url(r'^challenges/', include('grandchallenge.challenges.urls', namespace='challenges')),
+    url(
+        r'^challenges/',
+        include('grandchallenge.challenges.urls', namespace='challenges')
+    ),
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in

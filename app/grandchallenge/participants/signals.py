@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from participants.models import RegistrationRequest
+from grandchallenge.participants.models import RegistrationRequest
 
 
 @receiver(post_save, sender=RegistrationRequest)

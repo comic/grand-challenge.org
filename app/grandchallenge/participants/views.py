@@ -1,19 +1,20 @@
 from auth_mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError, NON_FIELD_ERRORS, \
-    ObjectDoesNotExist
+from django.core.exceptions import (
+    ValidationError, NON_FIELD_ERRORS, ObjectDoesNotExist,
+)
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.urlresolvers import reverse
-from participants.emails import (
+from grandchallenge.participants.emails import (
     send_participation_request_notification_email,
     send_participation_request_accepted_email,
     send_participation_request_rejected_email,
 )
-from participants.models import RegistrationRequest
+from grandchallenge.participants.models import RegistrationRequest
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):

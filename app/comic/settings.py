@@ -267,7 +267,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'teams',
     'grandchallenge.pages',
-    'participants',
+    'grandchallenge.participants',
     'grandchallenge.admins',
     'uploads',
 )

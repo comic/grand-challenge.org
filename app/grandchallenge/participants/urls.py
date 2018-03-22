@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from participants.views import (
+from grandchallenge.participants.views import (
     RegistrationRequestList,
     RegistrationRequestCreate,
     RegistrationRequestUpdate,

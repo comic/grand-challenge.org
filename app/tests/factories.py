@@ -6,7 +6,7 @@ from django.conf import settings
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
-from participants.models import RegistrationRequest
+from grandchallenge.participants.models import RegistrationRequest
 from teams.models import Team, TeamMember
 from uploads.models import UploadModel
 
