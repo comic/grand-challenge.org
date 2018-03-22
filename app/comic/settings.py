@@ -224,53 +224,47 @@ ROOT_URLCONF = 'comic.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'comic.wsgi.application'
 
-INSTALLED_APPS = (
+DJANGO_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Needed for userena
-    'django.contrib.sites',
+    # 'django.contrib.humanize', # Handy template tags
     'django.contrib.admin',
-    # For monitoring with sentry
-    'raven.contrib.django.raven_compat',
-    # For performance monitoring
-    'opbeat.contrib.django',
-    # For sending email asynchronously
-    'djcelery_email',
-    # all objects used in the framework, e.g. algorithm, dataset, team, result.
+]
+
+THIRD_PARTY_APPS = [
+    'raven.contrib.django.raven_compat', # error logging
+    'opbeat.contrib.django', # performance monitoring
+    'djcelery_email', # asynchronous emails
+    'userena', # user profiles
+    'guardian', # userena dependency, per object permissions
+    'easy_thumbnails', # userena dependency
+    'social_django', # social authentication with oauth2
+    'ckeditor', # WYSIWYG editor, used in granchallenge.pages
+    'ckeditor_uploader', # image uploads
+    'rest_framework', # provides REST API
+    'rest_framework.authtoken', # token auth for REST API
+    'crispy_forms', # bootstrap forms
+]
+
+LOCAL_APPS = [
+    'grandchallenge.admins',
+    'grandchallenge.api',
     'grandchallenge.challenges',
-    # comicsite is the where main web portal of this framework lives
     'grandchallenge.core',
-    # profiles extends userena and gives functionality to manage user profiles
-    # profiles needs to be loaded before userena
-    'grandchallenge.profiles',
-    # userena provides advanced user management
-    'userena',
-    # guardian (depency of userena) implements advanced authentication on a per object basis
-    'guardian',
-    # easy-thumbnails (depency of userena) is a thumbnailing application
-    'easy_thumbnails',
-    # social-auth provides authentication via social accounts using openid and oauth2
-    'social_django',
-    # html WYSIWYG editor
-    'ckeditor',
-    'ckeditor_uploader',
-    # automated evaluation
     'grandchallenge.evaluation',
     'grandchallenge.jqfileupload',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'grandchallenge.api',
-    # bootstrap forms
-    'crispy_forms',
-    'grandchallenge.teams',
     'grandchallenge.pages',
     'grandchallenge.participants',
-    'grandchallenge.admins',
+    'grandchallenge.profiles',
+    'grandchallenge.teams',
     'grandchallenge.uploads',
-)
+]
+
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 ADMIN_URL = f'^{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
