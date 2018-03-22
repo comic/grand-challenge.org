@@ -59,7 +59,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A grandchallenge worker -l info -c 2
+      && celery -A config worker -l info -c 2
       "
     links:
       - db:mysql
@@ -67,8 +67,6 @@ services:
       - web
     volumes_from:
       - web
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
 
   celery_worker_evaluation:
     extends:
@@ -77,7 +75,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A grandchallenge worker -l info -Q evaluation -c 2
+      && celery -A config worker -l info -Q evaluation -c 2
       "
     links:
       - db:mysql
@@ -95,7 +93,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A grandchallenge beat --pidfile= -l info
+      && celery -A config beat --pidfile= -l info
       "
     links:
       - db:mysql
