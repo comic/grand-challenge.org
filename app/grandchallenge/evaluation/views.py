@@ -72,7 +72,7 @@ class SubmissionCreate(
     form_class = SubmissionForm
     success_message = (
         "Your submission was successful. "
-        "Please keep checking this page for your result."
+        "You will receive an email when your result is ready."
     )
 
     def get_form_kwargs(self):
