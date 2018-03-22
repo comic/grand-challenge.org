@@ -1,7 +1,8 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from evaluation.validators import ExtensionValidator, MimeTypeValidator
+from grandchallenge.evaluation.validators import ExtensionValidator, \
+    MimeTypeValidator
 
 
 class FakeFile(object):

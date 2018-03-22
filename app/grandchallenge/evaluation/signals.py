@@ -5,9 +5,11 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
-from evaluation.emails import send_new_result_email
-from evaluation.models import Submission, Job, Method, Result, Config
-from evaluation.tasks import (
+from grandchallenge.evaluation.emails import send_new_result_email
+from grandchallenge.evaluation.models import (
+    Submission, Job, Method, Result, Config,
+)
+from grandchallenge.evaluation.tasks import (
     evaluate_submission, validate_method_async, calculate_ranks
 )
 

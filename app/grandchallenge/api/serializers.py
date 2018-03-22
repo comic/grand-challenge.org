@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from evaluation.models import Result, Submission, Job, Method
+from grandchallenge.evaluation.models import Result, Submission, Job, Method
 
 
 class ResultSerializer(serializers.HyperlinkedModelSerializer):

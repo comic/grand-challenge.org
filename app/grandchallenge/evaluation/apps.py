@@ -2,8 +2,8 @@ from django.apps import AppConfig
 
 
 class EvaluationConfig(AppConfig):
-    name = 'evaluation'
+    name = 'grandchallenge.evaluation'
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import evaluation.signals
+        import grandchallenge.evaluation.signals

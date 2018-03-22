@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.conf.urls import url
 
-from evaluation.forms import method_upload_widget, submission_upload_widget
-from evaluation.views import (
+from grandchallenge.evaluation.forms import (
+    method_upload_widget, submission_upload_widget,
+)
+from grandchallenge.evaluation.views import (
     MethodCreate,
     SubmissionCreate,
     JobCreate,

@@ -3,11 +3,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
 
-from evaluation.models import Result, Submission, Job, Method
 from grandchallenge.api.serializers import (
     ResultSerializer, SubmissionSerializer, JobSerializer, MethodSerializer
 )
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.evaluation.models import Result, Submission, Job, Method
 
 
 class ResultViewSet(ModelViewSet):

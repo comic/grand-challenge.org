@@ -1,8 +1,8 @@
 from crispy_forms.helper import FormHelper
 from django import forms
 
-from evaluation.models import Method, Submission
-from evaluation.validators import ExtensionValidator
+from grandchallenge.evaluation.models import Method, Submission
+from grandchallenge.evaluation.validators import ExtensionValidator
 from jqfileupload.widgets import uploader
 from jqfileupload.widgets.uploader import UploadedAjaxFileList
 

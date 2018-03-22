@@ -258,7 +258,7 @@ INSTALLED_APPS = (
     'ckeditor',
     'ckeditor_uploader',
     # automated evaluation
-    'evaluation',
+    'grandchallenge.evaluation',
     'jqfileupload',
     'rest_framework',
     'rest_framework.authtoken',
@@ -440,7 +440,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    'evaluation.tasks.evaluate_submission': 'evaluation',
+    'grandchallenge.evaluation.tasks.evaluate_submission': 'evaluation',
 }
 
 # Set which template pack to use for forms

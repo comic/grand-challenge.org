@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from evaluation.tasks import evaluate_submission
+from grandchallenge.evaluation.tasks import evaluate_submission
 
 
 # TODO - This integration test does not work right now as celery cannot connect

@@ -1,8 +1,10 @@
 from collections import defaultdict, namedtuple
 from typing import Tuple
 
-from evaluation.models import Result
-from evaluation.templatetags.evaluation_extras import get_jsonpath
+from grandchallenge.evaluation.models import Result
+from grandchallenge.evaluation.templatetags.evaluation_extras import (
+    get_jsonpath,
+)
 
 
 def generate_rank_dict(

@@ -9,11 +9,17 @@ urlpatterns = [
     url(
         r'^(?P<challenge_short_name>[\w-]+)/$', site, name='challenge-homepage'
     ),
-    url(r'^(?P<challenge_short_name>[\w-]+)/robots\.txt/$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain'), name="comicsite_robots_txt"),
+    url(
+        r'^(?P<challenge_short_name>[\w-]+)/robots\.txt/$', 
+        TemplateView.as_view(
+            template_name='robots.txt', content_type='text/plain'
+        ), 
+        name="comicsite_robots_txt"
+    ),
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
     url(
         r'^(?P<challenge_short_name>[\w-]+)/evaluation/',
-        include('evaluation.urls', namespace='evaluation'),
+        include('grandchallenge.evaluation.urls', namespace='evaluation'),
     ),
     url(
         r'^(?P<challenge_short_name>[\w-]+)/teams/',
@@ -27,7 +33,10 @@ urlpatterns = [
         r'^(?P<challenge_short_name>[\w-]+)/admins/',
         include('grandchallenge.admins.urls', namespace='admins'),
     ),
-    url(r'^(?P<challenge_short_name>[\w-]+)/uploads/', include('uploads.urls', namespace='uploads')),
+    url(
+        r'^(?P<challenge_short_name>[\w-]+)/uploads/', 
+        include('uploads.urls', namespace='uploads')
+    ),
     #################
     #
     # Legacy apps
@@ -41,7 +50,10 @@ urlpatterns = [
         serve,
         name="project_serve_file",
     ),
-    url(r'^(?P<challenge_short_name>[\w-]+)/api/get_public_results/$', get_public_results),
+    url(
+        r'^(?P<challenge_short_name>[\w-]+)/api/get_public_results/$', 
+        get_public_results
+    ),
     # 
     # End Legacy
     #

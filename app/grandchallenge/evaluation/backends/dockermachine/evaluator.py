@@ -7,9 +7,13 @@ from django.conf import settings
 from django.core.files import File
 from docker.errors import ContainerError
 
-from evaluation.backends.dockermachine.utils import cleanup, put_file
-from evaluation.exceptions import SubmissionError, MethodContainerError
-from evaluation.validators import get_file_mimetype
+from grandchallenge.evaluation.backends.dockermachine.utils import (
+    cleanup, put_file,
+)
+from grandchallenge.evaluation.exceptions import (
+    SubmissionError, MethodContainerError,
+)
+from grandchallenge.evaluation.validators import get_file_mimetype
 
 
 class Evaluator(object):

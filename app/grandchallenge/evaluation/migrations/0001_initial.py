@@ -9,7 +9,7 @@ import social_django.fields
 from django.conf import settings
 from django.db import migrations, models
 
-import evaluation.validators
+import grandchallenge.evaluation.validators
 
 
 class Migration(migrations.Migration):
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('ready', models.BooleanField(default=False, editable=False, help_text='Is this method ready to be used?')),
                 ('status', models.TextField(editable=False)),
-                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', upload_to=evaluation.models.method_image_path, validators=[evaluation.validators.ExtensionValidator(allowed_extensions=('.tar',))])),
+                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', upload_to=grandchallenge.evaluation.models.method_image_path, validators=[grandchallenge.evaluation.validators.ExtensionValidator(allowed_extensions=('.tar',))])),
                 ('image_sha256', models.CharField(editable=False, max_length=71)),
                 ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.ImageField(upload_to=evaluation.models.result_screenshot_path)),
+                ('image', models.ImageField(upload_to=grandchallenge.evaluation.models.result_screenshot_path)),
                 ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='evaluation.Result')),
             ],
             options={
@@ -114,8 +114,8 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(upload_to=evaluation.models.submission_file_path, validators=[evaluation.validators.MimeTypeValidator(allowed_types=('application/zip', 'text/plain')), evaluation.validators.ExtensionValidator(allowed_extensions=('.zip', '.csv'))])),
-                ('supplementary_file', models.FileField(blank=True, upload_to=evaluation.models.submission_supplementary_file_path, validators=[evaluation.validators.MimeTypeValidator(allowed_types=('text/plain', 'application/pdf'))])),
+                ('file', models.FileField(upload_to=grandchallenge.evaluation.models.submission_file_path, validators=[grandchallenge.evaluation.validators.MimeTypeValidator(allowed_types=('application/zip', 'text/plain')), grandchallenge.evaluation.validators.ExtensionValidator(allowed_extensions=('.zip', '.csv'))])),
+                ('supplementary_file', models.FileField(blank=True, upload_to=grandchallenge.evaluation.models.submission_supplementary_file_path, validators=[grandchallenge.evaluation.validators.MimeTypeValidator(allowed_types=('text/plain', 'application/pdf'))])),
                 ('comment', models.CharField(blank=True, default='', help_text='You can add a comment here to help you keep track of your submissions.', max_length=128)),
                 ('challenge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
