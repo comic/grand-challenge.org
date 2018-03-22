@@ -17,7 +17,7 @@ from grandchallenge.core.views import (
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
-from uploads.api import serve_file
+from grandchallenge.uploads.api import serve_file
 
 
 class ChallengeFilteredQuerysetMixin(object):

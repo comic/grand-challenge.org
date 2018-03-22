@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from uploads.views import (
+from grandchallenge.uploads.views import (
     UploadList, upload_handler, CKUploadView, CKBrowseView
 )
 

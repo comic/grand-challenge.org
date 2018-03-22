@@ -269,7 +269,7 @@ INSTALLED_APPS = (
     'grandchallenge.pages',
     'grandchallenge.participants',
     'grandchallenge.admins',
-    'uploads',
+    'grandchallenge.uploads',
 )
 
 ADMIN_URL = f'^{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'

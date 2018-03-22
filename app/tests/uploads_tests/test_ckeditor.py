@@ -4,8 +4,8 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
+from grandchallenge.uploads.models import UploadModel
 from tests.utils import get_view_for_user
-from uploads.models import UploadModel
 
 
 @pytest.mark.django_db

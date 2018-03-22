@@ -1,6 +1,6 @@
 from django import forms
 
-from uploads.models import UploadModel
+from grandchallenge.uploads.models import UploadModel
 
 
 class UserUploadForm(forms.ModelForm):

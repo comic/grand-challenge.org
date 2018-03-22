@@ -3,7 +3,7 @@ import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from uploads.models import UploadModel
+from grandchallenge.uploads.models import UploadModel
 
 
 @receiver(post_save, sender=UploadModel)

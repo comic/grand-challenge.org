@@ -21,8 +21,8 @@ from grandchallenge.dataproviders.utils.HtmlLinkReplacer import (
     HtmlLinkReplacer,
 )
 from grandchallenge.pages.models import Page
+from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
-from uploads.views import upload_handler
 
 # Platform independent regex which will match line endings in win and linux
 PI_LINE_END_REGEX = "(\r\n|\n)"

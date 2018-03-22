@@ -6,7 +6,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import uploads.models
+import grandchallenge.uploads.models
 
 
 class Migration(migrations.Migration):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.SlugField(max_length=64)),
                 ('permission_lvl', models.CharField(choices=[('ALL', 'All'), ('REG', 'Registered users only'), ('ADM', 'Administrators only')], default='ALL', max_length=3)),
-                ('file', models.FileField(max_length=255, upload_to=uploads.models.giveFileUploadDestinationPath)),
+                ('file', models.FileField(max_length=255, upload_to=grandchallenge.uploads.models.giveFileUploadDestinationPath)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),

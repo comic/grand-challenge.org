@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
 from grandchallenge.core.views import comicmain
-from uploads.views import serve
+from grandchallenge.uploads.views import serve
 
 admin.autodiscover()
 

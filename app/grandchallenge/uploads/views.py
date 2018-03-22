@@ -30,10 +30,10 @@ from grandchallenge.core.views import (
 )
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
-from uploads.api import serve_file
-from uploads.emails import send_file_uploaded_notification_email
-from uploads.forms import UserUploadForm, CKUploadForm
-from uploads.models import UploadModel
+from grandchallenge.uploads.api import serve_file
+from grandchallenge.uploads.emails import send_file_uploaded_notification_email
+from grandchallenge.uploads.forms import UserUploadForm, CKUploadForm
+from grandchallenge.uploads.models import UploadModel
 
 
 class UploadList(

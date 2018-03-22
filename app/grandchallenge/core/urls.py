@@ -3,7 +3,7 @@ from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.api import get_public_results
 from grandchallenge.core.views import site
-from uploads.views import serve
+from grandchallenge.uploads.views import serve
 
 urlpatterns = [
     url(
@@ -35,7 +35,7 @@ urlpatterns = [
     ),
     url(
         r'^(?P<challenge_short_name>[\w-]+)/uploads/', 
-        include('uploads.urls', namespace='uploads')
+        include('grandchallenge.uploads.urls', namespace='uploads')
     ),
     #################
     #
