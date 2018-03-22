@@ -4,13 +4,12 @@ import os
 from datetime import timedelta
 
 import six
-from celery.schedules import crontab
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+
 # Default COMIC settings, to be included by settings.py
 # To overwrite these settings local-only, please add a file XX-local.conf.py in the same dir
 # and make XX higher then 00
-from matplotlib.dates import hours
 
 DEBUG = True
 
@@ -219,10 +218,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'comic.urls'
+ROOT_URLCONF = 'config.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'comic.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 DJANGO_APPS = [
     'django.contrib.auth',
@@ -489,5 +488,5 @@ if DEBUG:
         )
 
         DEBUG_TOOLBAR_CONFIG = {
-            'SHOW_TOOLBAR_CALLBACK': 'comic.toolbar_callback',
+            'SHOW_TOOLBAR_CALLBACK': 'config.toolbar_callback',
         }

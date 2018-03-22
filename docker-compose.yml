@@ -59,7 +59,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A comic worker -l info -c 2
+      && celery -A grandchallenge worker -l info -c 2
       "
     links:
       - db:mysql
@@ -77,7 +77,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A comic worker -l info -Q evaluation -c 2
+      && celery -A grandchallenge worker -l info -Q evaluation -c 2
       "
     links:
       - db:mysql
@@ -95,7 +95,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A comic beat --pidfile= -l info
+      && celery -A grandchallenge beat --pidfile= -l info
       "
     links:
       - db:mysql
