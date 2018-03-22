@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
 def send_failed_job_email(job):
@@ -11,7 +12,7 @@ def send_failed_job_email(job):
         f'Unfortunately the evaluation for the submission to '
         f'{job.challenge.short_name} failed with an error. The error message '
         f'is:\n\n'
-        f'{job.output}\n\n'
+        f'{user_error(job.output)}\n\n'
         f'You may wish to try and correct this, or contact the challenge '
         f'organizers. The following information may help them:\n'
         f'User: {job.submission.creator.username}\n'
