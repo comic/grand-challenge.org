@@ -1,0 +1,15 @@
+{% extends "page.html" %}
+{% load guardian_tags %}
+{% load grandchallenge_tags %}
+
+
+
+{% block pagecontent %}
+
+    <div>{{ currentpage.raw_html }}</div>
+    {% block editlink %}
+    {% endblock %}
+
+{% endblock %}
+
+	

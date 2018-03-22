@@ -1,0 +1,15 @@
+{% extends 'site_signin.html' %}
+{% load grandchallenge_tags %}
+{% load i18n %}
+
+
+{% block pageName %} {{ main_challenge_name }} - Signup almost done {% endblock %}
+
+{% block pagecontent %}
+    <h2>Signup</h2>
+
+    <p>Thank you for signing up to {{ main_challenge_name }}.</p>
+    <p>You have been sent an e-mail with an activation link. Please use the link in this email to complete your
+        registration. Remember to check your SPAM folder for the email, just in case.</p>
+
+{% endblock %}

@@ -2,8 +2,8 @@ import pytest
 from django.db.models.signals import post_save
 from factory.django import mute_signals
 
-from evaluation.models import Result
-from evaluation.tasks import calculate_ranks
+from grandchallenge.evaluation.models import Result
+from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.factories import ResultFactory, ChallengeFactory
 
 

@@ -1,0 +1,11 @@
+{% extends "site.html" %}
+{% load get_obj_perms from guardian_tags %}
+{% load url from grandchallenge_tags %}
+
+{% block pagecontent %}
+
+    <h2>{{ object.name }}</h2>
+
+    Are you sure that you want to remove this team member?
+
+{% endblock %}

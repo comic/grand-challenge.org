@@ -115,11 +115,11 @@ is one number per evaluation. For example::
 Evaluation Options
 ~~~~~~~~~~~~~~~~~~
 
-.. py:class:: evaluation.models.Config
+.. py:class:: grandchallenge.evaluation.models.Config
 
 
 Template Tags
 -------------
-.. py:module:: evaluation.templatetags.evaluation_extras
+.. py:module:: grandchallenge.evaluation.templatetags.evaluation_extras
 
 .. autofunction:: get_jsonpath()

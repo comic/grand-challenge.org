@@ -1,0 +1,17 @@
+{% extends 'site_signin.html' %}
+{% load grandchallenge_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block pageName %}{% trans "Signup" %}{% endblock %}
+
+{% block content %}
+    <h2>Create an account on {{ main_challenge_name }}</h2>
+    <br/>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="{% trans "Signup" %}"/>
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}"/>{% endif %}
+    </form>
+{% endblock %}

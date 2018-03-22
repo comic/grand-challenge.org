@@ -15,7 +15,7 @@ services:
       && python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
-      && gunicorn -b 0.0.0.0 comic.wsgi
+      && gunicorn -b 0.0.0.0 config.wsgi
       "
     restart: always
 

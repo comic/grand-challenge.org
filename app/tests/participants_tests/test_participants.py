@@ -1,6 +1,6 @@
 import pytest
 
-from participants.models import RegistrationRequest
+from grandchallenge.participants.models import RegistrationRequest
 from tests.factories import UserFactory, RegistrationRequestFactory
 from tests.utils import get_view_for_user
 

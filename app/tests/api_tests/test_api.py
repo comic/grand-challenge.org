@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from evaluation.models import Submission
+from grandchallenge.evaluation.models import Submission
 from tests.factories import UserFactory, ChallengeFactory
 
 

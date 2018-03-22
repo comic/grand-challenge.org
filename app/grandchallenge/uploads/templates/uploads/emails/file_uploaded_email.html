@@ -1,0 +1,13 @@
+{% load url from grandchallenge_tags %}
+
+{% autoescape off %}
+{{additional_message}}
+Dear Admin,
+<br/>
+User {{uploader.username}} (email: {{uploader.email}}) has just uploaded file '{{filename}}' to {{challenge.short_name}}. A list of uploads can also be found
+<a href ="{% url 'uploads:list' challenge.short_name %}"> here</a>.
+<br/>
+<br/>
+Regards,<br/>
+{{ site.name }}
+{% endautoescape %}

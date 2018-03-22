@@ -1,0 +1,14 @@
+{% load url from grandchallenge_tags %}
+
+{% autoescape off %}
+    Dear {{ new_admin.username }},
+
+    <p>You have been made admin of the project <a href="{% url 'challenge-homepage' challenge.short_name %}">{{ challenge.short_name }}</a> on {{ site.domain }}.</p>
+
+    <p>When you are logged in to {{ site.name }}, the admin button will now appear in the {{ challenge.short_name }} site menu.</p>
+
+    <p>You can now edit this project's pages, amongst other things. See {{ site.domain }}/support for more information.</p>
+
+    <p>Regards,<br/>
+        {{ site.name }}</p>
+{% endautoescape %}

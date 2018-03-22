@@ -1,0 +1,309 @@
+{% load static %}
+{% load grandchallenge_tags %}
+{% load sentry_public_dsn from raven %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block html_header %}
+        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+        <meta name="description"
+              content="{{ site.description }}"/>
+        <meta name="keywords"
+              content="COMIC, open, science, medical, image, computing, validated"/>
+
+        <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js" crossorigin="anonymous"></script>
+        <script>Raven.config('{% sentry_public_dsn %}').install()</script>
+
+        <!-- Global Site Tag (gtag.js) - Google Analytics -->
+        <script async
+                src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+
+            gtag('js', new Date());
+
+            gtag('config', "{{ google_analytics_id }}" );
+        </script>
+
+        {% block jquery_js %}
+            <script type="text/javascript"
+                    src="{% static "jquery-3.2.1/js/jquery-3.2.1.min.js" %}"></script>
+        {% endblock %}
+
+        {% block bootstrap %}
+            {# Latest compiled and minified CSS #}
+            <link rel="stylesheet"
+                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+                  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+                  crossorigin="anonymous">
+
+            {# Optional theme #}
+            <link rel="stylesheet"
+                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+                  integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+                  crossorigin="anonymous">
+
+            {# Latest compiled and minified JavaScript #}
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+                    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+                    crossorigin="anonymous"></script>
+
+            <meta name="viewport"
+                  content="width=device-width, initial-scale=1">
+        {% endblock %}
+
+        {% block datatables %}
+            {% comment %}
+                Requires jquery from above, and uses bootstrap themes
+            {% endcomment %}
+            <link rel="stylesheet" type="text/css"
+                  href="{% static "DataTables-1.10.16/css/dataTables.bootstrap.min.css" %}"
+                  crossorigin="anonymous"/>
+
+            <script type="text/javascript"
+                    src="{% static "DataTables-1.10.16/js/jquery.dataTables.min.js" %}"
+                    crossorigin="anonymous"></script>
+
+            <script type="text/javascript"
+                    src="{% static "DataTables-1.10.16/js/dataTables.bootstrap.min.js" %}"
+                    crossorigin="anonymous"></script>
+        {% endblock %}
+
+        {% block fontawesome %}
+            <link href="{% static 'fontawesome-5.0.8/css/fontawesome-all.css' %}"
+                  rel="stylesheet">
+        {% endblock %}
+
+        {% block fileupload %}
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+                    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+                    crossorigin="anonymous"></script>
+            <script type="text/javascript"
+                    src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
+        {% endblock %}
+
+        {% block jqcookie %}
+            <script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
+                    integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
+                    crossorigin="anonymous"></script>
+        {% endblock %}
+
+        {#  Custom CSS, must be included AFTER bootstrap  #}
+        <link href="{% static "css/core.css" %}" type="text/css"
+              rel="stylesheet">
+
+        <link href="{% static "img/favicon.ico" %}"
+              rel="shortcut icon">
+
+        <!--Put any site or page specific css here -->
+        <link href="{% block stylesheet %} {% endblock %}" type="text/css"
+              rel="stylesheet">
+
+        <script>
+            //url prefix for API functions
+            API_PREFIX = "{% get_project_prefix %}api",
+
+                $(document).ready(function () {
+
+                    // delete message on click
+                    $(document).on('click', '.del-msg', function () {
+                        $('.messagelist').attr('style', 'display:none;');
+                    });
+                    // messages timeout
+                    setTimeout(function () {
+                        $('.messagelist').fadeOut('slow');
+                    }, 5000); // <-- time in milliseconds, 1000 =  1 sec
+
+                    $('table.sortable').dataTable({
+                        "bJQueryUI": false,
+                        "sPaginationType": "full_numbers",
+                        "bPaginate": false,
+                        "bLengthChange": false,
+                        "bFilter": false,
+                        "bInfo": false,
+                        "bAutoWidth": false
+                    });
+                });
+        </script>
+
+        <style>
+            {% block additionalCSS %}{% endblock %}
+        </style>
+
+        <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+    {% endblock %}
+</head>
+<body>
+
+{% block topheader %}
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div id="topheader" class="container-fluid text-capitalize">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed"
+                        data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1"
+                        aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand text-capitalize"
+                   href="{% main_page_url %}">
+                    {{ main_challenge_name }}
+                </a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse "
+                 id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    {% metafooterpages %}
+                </ul>
+                <div id="topheader_right">
+                    <ul class="nav navbar-nav navbar-right">
+                        {% if user.is_authenticated %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle"
+                                   data-toggle="dropdown" role="button"
+                                   aria-haspopup="true"
+                                   aria-expanded="false">
+                                    <div style='vertical-align:middle; display:inline;'>
+                                        <img class="mugshot"
+                                             src="{{ user.user_profile.get_mugshot_url }}"
+                                             alt="User Mugshot"
+                                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                                        <span class="caret"></span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="metaFooterMenuItem"
+                                           href="{% url 'userena_profile_detail' user.username %}">My
+                                        Profile</a>
+                                    </li>
+                                    <li><a href="{% url 'challenges:list' %}">My
+                                        Challenges</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a class="metaFooterMenuItem last"
+                                           href="{% url 'userena_signout' %}?next=/">
+                                        Sign
+                                        out</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            {% block loginbutton %}
+                                <li><a class="metaFooterMenuItem last"
+                                       href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
+                                    in / Register</a></li>
+                            {% endblock %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+{% endblock topheader %}
+
+
+<div id="messagescontainer" class="container">
+    {% block messages %}
+        {% if messages %}
+            <div class="messagelist">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.level_tag }}">
+                        {% if 'safe' in message.tags %}
+                            {{ message | safe }}
+                        {% else %}
+                            {{ message }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endblock messages %}
+</div>
+
+<div id="page">
+
+    {% block jumbotron %}
+        <div id="header" class="container">
+            <a style="display:block"
+               href={% block headerLink %}"/"{% endblock %}>
+                <div id="headerTitle" class="jumbotron text-uppercase">
+                    <h1>
+                        {% block headerTitle %}
+                            <div class="noimage">
+                                {{ main_challenge_name }}
+                            </div>
+                        {% endblock %}
+                    </h1>
+                </div>
+            </a>
+        </div>
+    {% endblock %}
+
+    {% block challengeNav %}
+
+        <div class="container">
+            <nav class="navbar navbar-default">
+                <div id="navMenuContainer"
+                     class="container-fluid text-capitalize">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed"
+                                data-toggle="collapse"
+                                data-target="#bs-example-navbar-collapse-2"
+                                aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+
+                    </div>
+
+                    <div class="collapse navbar-collapse"
+                         id="bs-example-navbar-collapse-2">
+                        <div id="navMenu">
+                            <ul class="nav navbar-nav">
+                                {% block topmenu %} {% endblock %}
+                            </ul>
+                        </div>
+                        <div id="additionalNavigation">
+                            <ul class="nav navbar-nav navbar-right">
+                                {% block sitemenuloginbutton %} {% endblock %}
+                                {% block adminbutton %} {% endblock %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+    {% endblock %}
+
+
+    <div id="container" class="container">
+        <div id="mainContent">
+            {% block content %} content {% endblock %}
+        </div>
+    </div>
+    <!-- container -->
+</div>
+
+<!-- page -->
+{% block footer %}
+    <footer id="metafooter" class="container text-center">
+        <div id="copyrightNotice">
+            Consortium for Open Medical Image Computing &copy;
+            2012-{% now "Y" %}
+        </div>
+    </footer>
+{% endblock %}
+
+</body>
+</html>

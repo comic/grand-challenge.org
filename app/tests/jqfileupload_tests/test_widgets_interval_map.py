@@ -1,6 +1,6 @@
 import pytest
 
-from jqfileupload.widgets.utils import IntervalMap
+from grandchallenge.jqfileupload.widgets.utils import IntervalMap
 
 
 def test_interval_map_indexing_and_length():

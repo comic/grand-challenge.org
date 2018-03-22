@@ -12,7 +12,7 @@ from django.http.response import (
 )
 from django.test.client import RequestFactory
 
-from jqfileupload.widgets.uploader import (
+from grandchallenge.jqfileupload.widgets.uploader import (
     AjaxUploadWidget, StagedAjaxFile, UploadedAjaxFileList
 )
 

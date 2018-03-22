@@ -6,8 +6,9 @@ import pytest
 from django.conf import settings
 from django.db.models import signals
 
-from evaluation.models import Method
-from evaluation.tasks import evaluate_submission, validate_method_async
+from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.tasks import evaluate_submission, \
+    validate_method_async
 from tests.factories import SubmissionFactory, JobFactory, MethodFactory, \
     UserFactory
 

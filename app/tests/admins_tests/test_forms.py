@@ -1,7 +1,7 @@
 import pytest
 from django.core import mail
 
-from admins.forms import AdminsForm
+from grandchallenge.admins.forms import AdminsForm
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 

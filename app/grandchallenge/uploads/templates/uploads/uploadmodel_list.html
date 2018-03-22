@@ -1,0 +1,59 @@
+{% extends 'site.html' %}
+{% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+
+{% block pagecontent %}
+    <h2>Uploads for {{ site.short_name }}</h2>
+
+    <table class="table" id="uploadsTable">
+        <thead>
+        <tr>
+            <th>Created</th>
+            <th>User</th>
+            <th>Title</th>
+            <th>File</th>
+            <th>Visible to</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for upload in object_list %}
+            <tr>
+                <td data-order="{{ upload.created|date:"U" }}">
+                    {{ upload.created }}
+                </td>
+                <td>
+                    {{ upload.user|user_profile_link }}
+                </td>
+                <td>
+                    {{ upload.title }}
+                </td>
+                <td>
+                    <a href="{{ upload.file.url }}">
+                        {{ upload.file }}
+                    </a>
+                </td>
+                <td>
+                    {% if upload.permission_lvl == upload.ADMIN_ONLY %}
+                        <span class="label label-danger">Admins Only</span>
+                    {% elif upload.permission_lvl == upload.REGISTERED_ONLY %}
+                        <span class="label label-warning">Participants Only</span>
+                    {% elif upload.permission_lvl == upload.ALL %}
+                        <span class="label label-success">Everyone</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#uploadsTable').DataTable({
+                order: [[0, "desc"]],
+                "bLengthChange": false,
+                "pageLength": 50
+            });
+        });
+    </script>
+
+{% endblock %}

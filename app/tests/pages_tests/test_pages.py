@@ -1,9 +1,9 @@
 import pytest
 from django.db.models import BLANK_CHOICE_DASH
 
-from pages.models import Page
+from grandchallenge.pages.models import Page
 from tests.factories import PageFactory
-from tests.utils import (validate_admin_only_view, get_view_for_user)
+from tests.utils import validate_admin_only_view, get_view_for_user
 
 
 @pytest.mark.django_db

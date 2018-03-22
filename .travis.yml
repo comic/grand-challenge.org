@@ -29,6 +29,3 @@ after_success:
   - mv app/.coverage .coverage.docker
   - coverage combine
   - codecov
-
-after_script:
-  - docker ps -aqf name=comicdjango_web_run_1

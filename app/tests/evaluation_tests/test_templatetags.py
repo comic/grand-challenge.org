@@ -1,4 +1,4 @@
-from evaluation.templatetags.evaluation_extras import get_jsonpath, user_error
+from grandchallenge.evaluation.templatetags.evaluation_extras import get_jsonpath, user_error
 
 
 def test_get_jsonpath():

@@ -1,0 +1,36 @@
+{% extends 'auth/user_list.html' %}
+{% load url from grandchallenge_tags %}
+
+{% block contentTitle %}
+    <h2>Admins for {{ site.short_name }}</h2>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'admins:update' site.short_name %}">
+            <i class="fas fa-plus"></i> Add another admin
+        </a>
+    </p>
+
+{% endblock %}
+
+{% block tableExtraHeaders %}
+    <th>Remove</th>
+{% endblock tableExtraHeaders %}
+
+{% block tableExtraBody %}
+    <td>
+        {% if user.pk != this_admin_pk %}
+            <form method="post"
+                  action="{% url 'admins:update' site.short_name %}">
+                {% csrf_token %}
+                <input name="user" type="hidden" value="{{ user.pk }}">
+                <input name="action" type="hidden"
+                       value="{{ admin_remove_action }}">
+                <button type="submit"
+                        class="btn btn-xs btn-danger">
+                    Remove Admin
+                </button>
+            </form>
+        {% endif %}
+    </td>
+{% endblock tableExtraBody %}
