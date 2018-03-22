@@ -27,12 +27,15 @@ from six import StringIO, iteritems
 import grandchallenge.core.views
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.api import get_public_results_by_challenge_name
+from grandchallenge.core.dataproviders.ProjectExcelReader import (
+    ProjectExcelReader
+)
+from grandchallenge.core.dataproviders.utils.HtmlLinkReplacer import (
+    HtmlLinkReplacer
+)
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.dataproviders.ProjectExcelReader import ProjectExcelReader
-from grandchallenge.dataproviders.utils.HtmlLinkReplacer import \
-    HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()

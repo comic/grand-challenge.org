@@ -17,7 +17,7 @@ from six import StringIO
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.dataproviders.utils.HtmlLinkReplacer import (
+from grandchallenge.core.dataproviders.utils.HtmlLinkReplacer import (
     HtmlLinkReplacer,
 )
 from grandchallenge.pages.models import Page

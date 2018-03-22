@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from grandchallenge.dataproviders.ProjectExcelReader import ProjectExcelReader
+from grandchallenge.core.dataproviders.ProjectExcelReader import (
+    ProjectExcelReader,
+)
 
 
 def test_project_excel_reader():
