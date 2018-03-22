@@ -5,7 +5,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from jsonpath_rw import parse
 
-from grandchallenge.evaluation.models import Result
 from grandchallenge.teams.models import Team
 
 register = template.Library()
@@ -63,7 +62,7 @@ def json_dumps(obj: dict):
 
 
 @register.filter
-def get_team_html(obj: Result):
+def get_team_html(obj):
     try:
         team = Team.objects.get(
             challenge=obj.challenge,
