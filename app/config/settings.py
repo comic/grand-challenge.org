@@ -323,6 +323,7 @@ CKEDITOR_CONFIGS = {
         'height': 300,
         'toolbarCanCollapse': False,
         'entities': False,
+        'extraAllowedContent': '*(*)', # Allows any class in ckeditor html
     }
 }
 
