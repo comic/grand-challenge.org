@@ -356,6 +356,14 @@ class Challenge(models.Model):
             "new users are allowed access immediately"
         ),
     )
+    allow_unfiltered_page_html = models.BooleanField(
+        default=False,
+        help_text= (
+            'If true, the page HTML is NOT filtered, allowing the challenge '
+            'administrator to have full control over the page contents when '
+            'they edit it in ckeditor.'
+        )
+    )
     use_registration_page = models.BooleanField(
         default=True,
         help_text='If true, show a registration page on the challenge site.',

@@ -33,6 +33,14 @@ class PageCreateForm(forms.ModelForm):
                     ),
                 }
             )
+
+            if self.challenge.allow_unfiltered_page_html:
+                self.fields['html'].widget.config.update(
+                    {
+                        'allowedContent': True,
+                    }
+                )
+
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit('save', 'Save'))
 
