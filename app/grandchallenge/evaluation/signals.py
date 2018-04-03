@@ -64,6 +64,8 @@ def cache_absolute_url(instance: Result = None, *_, **__):
 @receiver(post_save, sender=Result)
 def result_created_email(instance: Result, created: bool = False, *_, **__):
     if created:
+        # Only send emails on created, as EVERY result for this challenge is
+        # updated when the results are recalculated
         send_new_result_email(instance)
 
 
