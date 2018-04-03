@@ -14,7 +14,6 @@ SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 
 
 class ChallengeFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Challenge
 
@@ -22,7 +21,6 @@ class ChallengeFactory(factory.DjangoModelFactory):
 
 
 class PageFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Page
 
@@ -32,7 +30,6 @@ class PageFactory(factory.DjangoModelFactory):
 
 
 class UserFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = settings.AUTH_USER_MODEL
 
@@ -47,7 +44,6 @@ class UserFactory(factory.DjangoModelFactory):
 
 
 class UploadFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = UploadModel
 
@@ -58,7 +54,6 @@ class UploadFactory(factory.DjangoModelFactory):
 
 
 class RegistrationRequestFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = RegistrationRequest
 
@@ -73,7 +68,6 @@ def hash_sha256(s):
 
 
 class MethodFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Method
 
@@ -83,7 +77,6 @@ class MethodFactory(factory.DjangoModelFactory):
 
 
 class SubmissionFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Submission
 
@@ -93,7 +86,6 @@ class SubmissionFactory(factory.DjangoModelFactory):
 
 
 class JobFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Job
 
@@ -103,7 +95,6 @@ class JobFactory(factory.DjangoModelFactory):
 
 
 class ResultFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Result
 
@@ -111,7 +102,6 @@ class ResultFactory(factory.DjangoModelFactory):
 
 
 class TeamFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = Team
 
@@ -120,7 +110,6 @@ class TeamFactory(factory.DjangoModelFactory):
 
 
 class TeamMemberFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = TeamMember
 
