@@ -89,6 +89,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
 
     challenge = factory.SubFactory(ChallengeFactory)
     file = factory.django.FileField()
+    creator = factory.SubFactory(UserFactory)
 
 
 class JobFactory(factory.DjangoModelFactory):
@@ -106,7 +107,7 @@ class ResultFactory(factory.DjangoModelFactory):
     class Meta:
         model = Result
 
-    challenge = factory.SubFactory(ChallengeFactory)
+    job = factory.SubFactory(JobFactory)
 
 
 class TeamFactory(factory.DjangoModelFactory):
