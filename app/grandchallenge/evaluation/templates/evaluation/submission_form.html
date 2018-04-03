@@ -14,7 +14,11 @@
 
 {% block pagecontent %}
 
-    <h2>Create a new submission</h2>
+    <h2>Submission</h2>
+
+    {{ site.evaluation_config.submission_page_html|safe }}
+
+    <h3>Create a new submission</h3>
 
     {% if pending_jobs %}
 
@@ -44,7 +48,7 @@
 
     {% endif %}
 
-    <h2>View my submissions</h2>
+    <h3>View my submissions</h3>
 
     <p><a href="{% url 'evaluation:job-list' site.short_name %}">Click here</a>
         to view your current submissions to this challenge.</p>

@@ -5,34 +5,22 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
-from django.views.generic import (CreateView, ListView, DetailView, UpdateView)
+from django.views.generic import CreateView, ListView, DetailView, UpdateView
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
 )
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.forms import MethodForm, SubmissionForm
+from grandchallenge.evaluation.forms import (
+    MethodForm, SubmissionForm, ConfigForm
+)
 from grandchallenge.evaluation.models import (
     Result, Submission, Job, Method, Config,
 )
 
 
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    model = Config
-    fields = (
-        'use_teams',
-        'daily_submission_limit',
-        'score_title',
-        'score_jsonpath',
-        'score_default_sort',
-        'extra_results_columns',
-        'allow_submission_comments',
-        'allow_supplementary_file',
-        'require_supplementary_file',
-        'supplementary_file_label',
-        'supplementary_file_help_text',
-        'show_supplementary_file_link',
-    )
+    form_class = ConfigForm
     success_message = "Configuration successfully updated"
 
     def get_object(self, queryset=None):
@@ -107,8 +95,8 @@ class SubmissionCreate(
         self,
         *,
         max_subs: int,
-        period: timedelta =timedelta(days=1),
-        now: datetime = None
+        period: timedelta=timedelta(days=1),
+        now: datetime=None
     ) -> Dict:
         """
         Determines the number of submissions left for the user in a given time

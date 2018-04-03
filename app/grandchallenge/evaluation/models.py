@@ -1,5 +1,6 @@
 import uuid
 
+from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -139,6 +140,12 @@ class Config(UUIDModel):
             'The limit on the number of times that a user can make a '
             'submission in a 24 hour period.'
         ),
+    )
+    submission_page_html = RichTextField(
+        help_text=(
+            'HTML to include on the submission page for this challenge.'
+        ),
+        blank=True,
     )
 
     def get_absolute_url(self):

@@ -1,10 +1,38 @@
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 
-from grandchallenge.evaluation.models import Method, Submission
+from grandchallenge.evaluation.models import Method, Submission, Config
 from grandchallenge.evaluation.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+
+
+class ConfigForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'Save'))
+
+    class Meta:
+        model = Config
+        fields = (
+            'use_teams',
+            'daily_submission_limit',
+            'score_title',
+            'score_jsonpath',
+            'score_default_sort',
+            'extra_results_columns',
+            'submission_page_html',
+            'allow_submission_comments',
+            'allow_supplementary_file',
+            'require_supplementary_file',
+            'supplementary_file_label',
+            'supplementary_file_help_text',
+            'show_supplementary_file_link',
+        )
+
 
 method_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/method-upload/", multifile=False
