@@ -4,6 +4,7 @@ from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
@@ -146,6 +147,14 @@ class Config(UUIDModel):
             'HTML to include on the submission page for this challenge.'
         ),
         blank=True,
+    )
+    new_results_are_public = BooleanField(
+        default=True,
+        help_text=(
+            'If true, new results are automatically made public. If false, '
+            'the challenge administrator must manually publish each new '
+            'result.'
+        ),
     )
 
     def get_absolute_url(self):
@@ -360,6 +369,16 @@ class Result(UUIDModel):
     )
     # Cache the url as this is slow on the results list page
     absolute_url = models.TextField(blank=True, editable=False)
+
+    def save(self, *args, **kwargs):
+
+        # Note: cannot use `self.pk is None` with a custom pk
+        if self._state.adding:
+            self.public = (
+                self.challenge.evaluation_config.new_results_are_public
+            )
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(

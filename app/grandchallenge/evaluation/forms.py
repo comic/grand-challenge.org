@@ -25,6 +25,7 @@ class ConfigForm(forms.ModelForm):
             'score_default_sort',
             'extra_results_columns',
             'submission_page_html',
+            'new_results_are_public',
             'allow_submission_comments',
             'allow_supplementary_file',
             'require_supplementary_file',

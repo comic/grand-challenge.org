@@ -1,48 +1,59 @@
 from pathlib import Path
 
 import docker
-import factory
 import pytest
 from django.conf import settings
-from django.db.models import signals
 
 from grandchallenge.evaluation.models import Method
-from grandchallenge.evaluation.tasks import evaluate_submission, \
-    validate_method_async
-from tests.factories import SubmissionFactory, JobFactory, MethodFactory, \
-    UserFactory
+from grandchallenge.evaluation.tasks import (
+    evaluate_submission, validate_method_async
+)
+from tests.factories import (
+    SubmissionFactory, JobFactory, MethodFactory, UserFactory
+)
 
 
 @pytest.mark.django_db
-@factory.django.mute_signals(signals.post_save)
 def test_submission_evaluation(client, evaluation_image, submission_file):
     # Upload a submission and create a job
+
     dockerclient = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+
     user = UserFactory()
+
     submission = SubmissionFactory(
         file__from_path=submission_file, creator=user
     )
+
     eval_container, sha256 = evaluation_image
+
     method = MethodFactory(
         image__from_path=eval_container, image_sha256=sha256, ready=True
     )
+
     # We should not be able to download methods
     response = client.get(method.image.url)
     assert response.status_code == 403
+
     job = JobFactory(submission=submission, method=method)
+
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
+
     res = evaluate_submission(job=job)
+
     # The evaluation method should return the correct answer
     assert res["acc"] == 0.5
     # The evaluation method should clean up after itself
     assert len(dockerclient.volumes.list()) == num_volumes_before
     assert len(dockerclient.containers.list()) == num_containers_before
+
     # Try with a csv file
     submission = SubmissionFactory(
         file__from_path=Path(__file__).parent / 'resources' / 'submission.csv',
         creator=user,
     )
+
     job = JobFactory(submission=submission, method=method)
     res = evaluate_submission(job=job)
     assert res["acc"] == 0.5
