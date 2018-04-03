@@ -35,7 +35,7 @@ def test_submission_evaluation(client, evaluation_image, submission_file):
     response = client.get(method.image.url)
     assert response.status_code == 403
 
-    job = JobFactory(submission=submission, method=method, challenge=c)
+    job = JobFactory(submission=submission, method=method)
 
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
