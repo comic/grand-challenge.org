@@ -18,6 +18,7 @@ from grandchallenge.evaluation.views import (
     ResultDetail,
     ConfigUpdate,
     ResultUpdate,
+    LegacySubmissionCreate,
 )
 from grandchallenge.jqfileupload.forms import (
     test_upload_widget, test_upload_widget2,
@@ -43,6 +44,16 @@ urlpatterns = [
         r'^submissions/create/$',
         SubmissionCreate.as_view(),
         name='submission-create',
+    ),
+    url(
+        r'^submissions/create-legacy/$',
+        LegacySubmissionCreate.as_view(),
+        name='submission-create-legacy',
+    ),
+    url(
+        f'^submissions/create-legacy/{submission_upload_widget.ajax_target_path}$',
+        submission_upload_widget.handle_ajax,
+        name='submission-upload-legacy-ajax',
     ),
     url(
         f'^submissions/create/{submission_upload_widget.ajax_target_path}$',
@@ -73,6 +84,7 @@ urlpatterns = [
         name='result-update',
     ),
 ]
+
 if settings.DEBUG:
     urlpatterns.append(
         url(

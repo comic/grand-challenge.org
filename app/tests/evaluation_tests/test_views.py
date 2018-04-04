@@ -169,6 +169,35 @@ def test_submission_create(client, TwoChallengeSets):
         client=client,
     )
 
+    response = get_view_for_user(
+        viewname='evaluation:submission-create',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.ChallengeSet1.participant,
+        client=client,
+    )
+
+    assert response.status_code == 200
+    assert 'Creator' not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_legacy_submission_create(client, TwoChallengeSets):
+    validate_admin_only_view(
+        viewname='evaluation:submission-create-legacy',
+        two_challenge_set=TwoChallengeSets,
+        client=client,
+    )
+
+    response = get_view_for_user(
+        viewname='evaluation:submission-create-legacy',
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        user=TwoChallengeSets.admin12,
+        client=client,
+    )
+
+    assert response.status_code == 200
+    assert 'Creator' in response.rendered_content
+
 
 @pytest.mark.django_db
 def test_submission_time_limit(client, TwoChallengeSets):

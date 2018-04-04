@@ -79,31 +79,51 @@ class SubmissionForm(forms.ModelForm):
         display_comment_field kwarg
         """
         display_comment_field = kwargs.pop('display_comment_field', False)
+
         allow_supplementary_file = kwargs.pop(
             'allow_supplementary_file', False
         )
+
         require_supplementary_file = kwargs.pop(
             'require_supplementary_file', False
         )
+
         supplementary_file_label = kwargs.pop('supplementary_file_label', '')
+
         supplementary_file_help_text = kwargs.pop(
             'supplementary_file_help_text', ''
         )
+
         super(SubmissionForm, self).__init__(*args, **kwargs)
+
         if not display_comment_field:
             del self.fields['comment']
+
         if supplementary_file_label:
             self.fields['supplementary_file'].label = supplementary_file_label
+
         if supplementary_file_help_text:
             self.fields[
                 'supplementary_file'
             ].help_text = supplementary_file_help_text
+
         if require_supplementary_file:
             self.fields['supplementary_file'].required = True
         elif not allow_supplementary_file:
             del self.fields['supplementary_file']
+
         self.helper = FormHelper(self)
 
     class Meta:
         model = Submission
         fields = ('comment', 'supplementary_file', 'chunked_upload')
+
+class LegacySubmissionForm(SubmissionForm):
+    class Meta:
+        model = Submission
+        fields = (
+            'creator',
+            'comment',
+            'supplementary_file',
+            'chunked_upload',
+        )
