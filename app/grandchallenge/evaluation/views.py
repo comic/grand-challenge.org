@@ -12,7 +12,7 @@ from grandchallenge.core.permissions.mixins import (
 )
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.forms import (
-    MethodForm, SubmissionForm, ConfigForm
+    MethodForm, SubmissionForm, ConfigForm, LegacySubmissionForm
 )
 from grandchallenge.evaluation.models import (
     Result, Submission, Job, Method, Config,
@@ -53,19 +53,21 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
     model = Method
 
 
-class SubmissionCreate(
-    UserIsChallengeParticipantOrAdminMixin, SuccessMessageMixin, CreateView
-):
+class SubmissionCreateBase(SuccessMessageMixin, CreateView):
+    """
+    This class has no permissions, do not use it directly! See the subclasses
+    """
     model = Submission
-    form_class = SubmissionForm
     success_message = (
         "Your submission was successful. "
         "Your result will appear on the leaderboard when it is ready."
     )
 
     def get_form_kwargs(self):
-        kwargs = super(SubmissionCreate, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
+
         config = Config.objects.get(challenge=self.request.challenge)
+
         kwargs.update(
             {
                 'display_comment_field': config.allow_submission_comments,
@@ -75,20 +77,26 @@ class SubmissionCreate(
                 'supplementary_file_help_text': config.supplementary_file_help_text,
             }
         )
+
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(SubmissionCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+
         config = Config.objects.get(challenge=self.request.challenge)
+
         context.update(
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
+
         pending_jobs = Job.objects.filter(
             challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
+
         context.update({'pending_jobs': pending_jobs})
+
         return context
 
     def get_next_submission(
@@ -107,6 +115,7 @@ class SubmissionCreate(
         """
         if now is None:
             now = timezone.now()
+
         subs = Submission.objects.filter(
             challenge=self.request.challenge,
             creator=self.request.user,
@@ -114,28 +123,65 @@ class SubmissionCreate(
         ).order_by(
             '-created'
         )
+
         try:
             next_sub_at = subs[max_subs - 1].created + period
         except (IndexError, AssertionError):
             next_sub_at = now
+
         return {
             'remaining_submissions': max_subs - len(subs),
             'next_submission_at': next_sub_at,
         }
 
     def form_valid(self, form):
-        form.instance.creator = self.request.user
+
+        if form.instance.creator is None:
+            form.instance.creator = self.request.user
+
         form.instance.challenge = self.request.challenge
+
         uploaded_file = form.cleaned_data['chunked_upload'][0]
+
         with uploaded_file.open() as f:
             form.instance.file.save(uploaded_file.name, File(f))
-        return super(SubmissionCreate, self).form_valid(form)
+
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
             'evaluation:job-list',
             kwargs={'challenge_short_name': self.object.challenge.short_name},
         )
+
+
+class SubmissionCreate(
+    UserIsChallengeParticipantOrAdminMixin, SubmissionCreateBase
+):
+    form_class = SubmissionForm
+
+
+class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
+    form_class = LegacySubmissionForm
+
+    def get_next_submission(
+        self,
+        *,
+        max_subs: int,
+        period: timedelta = timedelta(days=1),
+        now: datetime = None
+    ):
+        """
+        Admins should always be able to upload legacy results, so set the
+        remaining submissions to infinite.
+        """
+        if now is None:
+            now = timezone.now()
+
+        return {
+            'remaining_submissions': float('Inf'),
+            'next_submission_at': now,
+        }
 
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
