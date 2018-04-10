@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "2692c20891cd491b1c0fa17aaff938bb8efa413795233e8b884d24efe310a377"
+            "sha256": "39a22bb4264bb3a9566c2aa9beefdaae9f2ee61bb2e5d399fb5c36db1f5f6fbf"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -95,14 +95,6 @@
                 "sha256:ddab987d14b26731352c01ee69c090a4ebfc9141ed223bef039d79587f22acd9"
             ],
             "version": "==1.0.2"
-        },
-        "django-auth-mixins": {
-            "hashes": [
-                "sha256:18b859a58274b7352d7a79816d06ac3b8325a2337c152c5ce1ebc9517d595cf9",
-                "sha256:4361dc5f56e0c0ba3c7977b659cd1844d63aba66f5ee458937e6f26036571239"
-            ],
-            "index": "pypi",
-            "version": "==1.0.1"
         },
         "django-celery-email": {
             "hashes": [
