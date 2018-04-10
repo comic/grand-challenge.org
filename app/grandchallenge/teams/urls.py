@@ -10,6 +10,8 @@ from grandchallenge.teams.views import (
     TeamDelete,
 )
 
+app_name = 'teams'
+
 urlpatterns = [
     url(r'^$', TeamList.as_view(), name='list'),
     url(r'^t/create/$', TeamCreate.as_view(), name='create'),

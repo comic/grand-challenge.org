@@ -4,6 +4,8 @@ from grandchallenge.uploads.views import (
     UploadList, upload_handler, CKUploadView, CKBrowseView
 )
 
+app_name = 'uploads'
+
 urlpatterns = [
     url(r'^$', UploadList.as_view(), name='list'),
     url(r'^create/$', upload_handler, name='create'),
