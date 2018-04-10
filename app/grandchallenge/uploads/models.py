@@ -45,7 +45,9 @@ class UploadModel(ComicSiteModel):
         max_length=255, upload_to=giveFileUploadDestinationPath
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, help_text="which user uploaded this?"
+        settings.AUTH_USER_MODEL,
+        help_text="which user uploaded this?",
+        on_delete=models.CASCADE,
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)

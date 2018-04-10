@@ -11,8 +11,13 @@ from grandchallenge.challenges.models import Challenge
 
 class UserProfile(UserenaBaseProfile):
     user = models.OneToOneField(
-        User, unique=True, verbose_name=_('user'), related_name='user_profile'
+        User,
+        unique=True,
+        verbose_name=_('user'),
+        related_name='user_profile',
+        on_delete=models.CASCADE,
     )
+
     institution = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     country = CountryField()
