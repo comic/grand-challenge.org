@@ -8,7 +8,6 @@ from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponseRedirect,
     Http404,
@@ -17,6 +16,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt

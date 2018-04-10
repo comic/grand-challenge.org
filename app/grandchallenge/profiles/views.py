@@ -1,6 +1,6 @@
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from userena import views as userena_views
 
 from grandchallenge.profiles.forms import EditProfileForm

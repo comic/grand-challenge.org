@@ -3,7 +3,7 @@ import os
 
 import pytest
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
