@@ -21,7 +21,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     )
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             messages.add_message(
                 self.request,
                 messages.INFO,

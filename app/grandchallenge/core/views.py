@@ -113,7 +113,7 @@ def escape_verbatim_node_contents(template):
 
 
 def permissionMessage(request, site, p):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         msg = """ <div class="system_message">
                 <h2> Restricted page</h2>
                   This page can only be viewed by participants of this project to view this page please make sure of the following:
