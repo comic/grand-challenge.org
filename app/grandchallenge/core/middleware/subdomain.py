@@ -1,4 +1,7 @@
-class SubdomainMiddleware:
+from django.utils.deprecation import MiddlewareMixin
+
+
+class SubdomainMiddleware(MiddlewareMixin):
     """ Add subdomain to any request. Thanks to Dave Fowler. 
     http://thingsilearned.com/2009/01/05/using-subdomains-in-django/
     """
