@@ -54,7 +54,7 @@
                     <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
                 {% endfor %}
 
-                {% if site.evaluation_config.allow_submission_comments %}
+                {% if site.evaluation_config.display_submission_comments %}
                     <td>{{ result.job.submission.comment }}</td>
                 {% endif %}
 

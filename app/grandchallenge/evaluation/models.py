@@ -94,6 +94,12 @@ class Config(UUIDModel):
             'Allow users to submit comments as part of their submission.'
         ),
     )
+    display_submission_comments = models.BooleanField(
+        default=False,
+        help_text=(
+            'If true, submission comments are shown on the results page.'
+        ),
+    )
     allow_supplementary_file = models.BooleanField(
         default=False,
         help_text=(
