@@ -15,9 +15,9 @@ from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
-from django.core.urlresolvers import reverse as reverse_djangocore
 from django.db.models import Count
 from django.template import defaulttags
+from django.urls import reverse as reverse_djangocore
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas

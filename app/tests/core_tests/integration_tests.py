@@ -9,10 +9,10 @@ from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
+from django.urls import reverse
 from six import StringIO
 from userena.models import UserenaSignup
 

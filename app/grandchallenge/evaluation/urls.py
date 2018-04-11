@@ -25,6 +25,8 @@ from grandchallenge.jqfileupload.forms import (
 )
 from grandchallenge.jqfileupload.views import uploader_widget_test
 
+app_name = 'evaluation'
+
 urlpatterns = [
     url(r'^config/$', ConfigUpdate.as_view(), name='config-update'),
     url(r'^methods/$', MethodList.as_view(), name='method-list'),

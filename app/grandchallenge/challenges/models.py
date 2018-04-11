@@ -596,7 +596,9 @@ class ComicSiteModel(models.Model):
     """
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
-        Challenge, help_text="To which comicsite does this object belong?"
+        Challenge,
+        help_text="To which comicsite does this object belong?",
+        on_delete=models.CASCADE,
     )
     ALL = 'ALL'
     REGISTERED_ONLY = 'REG'

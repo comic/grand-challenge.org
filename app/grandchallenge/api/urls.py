@@ -6,6 +6,8 @@ from grandchallenge.api.views import (
     ResultViewSet, SubmissionViewSet, JobViewSet, MethodViewSet
 )
 
+app_name = 'api'
+
 router = routers.DefaultRouter()
 router.register(r'results', ResultViewSet)
 router.register(r'submissions', SubmissionViewSet)

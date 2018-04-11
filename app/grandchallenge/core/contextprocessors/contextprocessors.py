@@ -3,8 +3,8 @@
  see http://www.djangobook.com/en/2.0/chapter09.html  
 """
 from django.conf import settings
-from django.core.urlresolvers import resolve
 from django.http import Http404
+from django.urls import resolve
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import build_absolute_uri

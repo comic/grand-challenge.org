@@ -1,4 +1,4 @@
-from auth_mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ValidationError, NON_FIELD_ERRORS, ObjectDoesNotExist,

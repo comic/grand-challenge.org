@@ -1,5 +1,5 @@
-from auth_mixins import UserPassesTestMixin
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponseForbidden
 
@@ -21,7 +21,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     )
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             messages.add_message(
                 self.request,
                 messages.INFO,

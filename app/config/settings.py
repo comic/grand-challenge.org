@@ -201,7 +201,7 @@ TEMPLATES = [
     },
 ]
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     # Opbeat must be first
     'opbeat.contrib.django.middleware.OpbeatAPMMiddleware',
     # Sentry 404 must be as close as possible to the top
@@ -484,7 +484,7 @@ if DEBUG:
             'debug_toolbar',
         )
 
-        MIDDLEWARE_CLASSES += (
+        MIDDLEWARE += (
             'debug_toolbar.middleware.DebugToolbarMiddleware',
         )
 

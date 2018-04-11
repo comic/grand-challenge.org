@@ -1,7 +1,7 @@
 from urllib.parse import urljoin
 
 from django.conf import settings
-from django.core.urlresolvers import reverse as reverse_org
+from django.urls import reverse as reverse_org
 
 
 def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):

@@ -4,6 +4,8 @@ from grandchallenge.pages.views import (
     page, insertedpage, PageList, PageCreate, PageUpdate, PageDelete
 )
 
+app_name = 'pages'
+
 urlpatterns = [
     url(r'^pages/$', PageList.as_view(), name='list'),
     url(r'^pages/create/$', PageCreate.as_view(), name='create'),

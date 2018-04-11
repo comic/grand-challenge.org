@@ -13,9 +13,12 @@ class RegistrationRequest(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         help_text="which user requested to participate?",
+        on_delete=models.CASCADE,
     )
     challenge = models.ForeignKey(
-        Challenge, help_text="To which project does the user want to register?"
+        Challenge,
+        help_text="To which project does the user want to register?",
+        on_delete=models.CASCADE,
     )
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)

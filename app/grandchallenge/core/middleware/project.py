@@ -1,10 +1,11 @@
 from django.conf import settings
-from django.core.urlresolvers import resolve, Resolver404
+from django.urls import resolve, Resolver404
+from django.utils.deprecation import MiddlewareMixin
 
 from grandchallenge.challenges.models import Challenge
 
 
-class ProjectMiddleware:
+class ProjectMiddleware(MiddlewareMixin):
     """ Everything you do on comicframework is related to a challenge. This
     middleware makes this possible without having to duplicate 'challenge'
     variables everywhere. 

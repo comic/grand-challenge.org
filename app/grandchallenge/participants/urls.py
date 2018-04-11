@@ -7,6 +7,8 @@ from grandchallenge.participants.views import (
     ParticipantsList,
 )
 
+app_name = 'participants'
+
 urlpatterns = [
     url(r'^$', ParticipantsList.as_view(), name='list'),
     url(
