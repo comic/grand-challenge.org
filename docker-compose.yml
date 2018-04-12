@@ -112,6 +112,17 @@ services:
       - rabbitmq
     restart: always
 
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+    command: server /data
+    env_file:
+      - dev.env
+
 volumes:
   static:
   media:
+  minio-data:
