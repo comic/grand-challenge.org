@@ -261,6 +261,7 @@ LOCAL_APPS = [
     'grandchallenge.profiles',
     'grandchallenge.teams',
     'grandchallenge.uploads',
+    'grandchallenge.minioupload',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -446,6 +447,10 @@ MESSAGE_TAGS = {
 }
 
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
+
+MINIO_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY', '')
+MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY', '')
+MINIO_PUBLIC_URL = os.environ.get('MINIO_PUBLIC_URL', '')
 
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the

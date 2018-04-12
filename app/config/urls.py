@@ -38,6 +38,9 @@ urlpatterns = [
         r'^challenges/',
         include('grandchallenge.challenges.urls', namespace='challenges')
     ),
+
+    url(r'^minio/', include('grandchallenge.minioupload.urls')),
+
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
