@@ -452,6 +452,7 @@ JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 MINIO_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY', '')
 MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY', '')
 MINIO_PUBLIC_URL = os.environ.get('MINIO_PUBLIC_URL', '')
+MINIO_DEFAULT_BUCKET_NAME = os.environ.get('MINIO_DEFAULT_BUCKET_NAME', 'testbucket')
 
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
