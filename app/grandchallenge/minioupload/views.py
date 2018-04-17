@@ -48,24 +48,45 @@ def presigned_url(request, filename):
 
 
 def presign_string(request):
-    # TODO: Try this with a real AWS bucket
+    # TODO: CSRF protection
     to_sign = request.GET['to_sign']
     date = request.GET['datetime']
-
     canonical_request = request.GET['canonical_request']
-    current_canonical_signature = hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
 
-    new_canonical_request = canonical_request.replace('host:localhost', 'host:localhost:9000')
-    new_canonical_signature = hashlib.sha256(new_canonical_request.encode('utf-8')).hexdigest()
+    # Due to a bug with running on a non-standard port the hostname
+    # is not correctly formatted. Here, we rewrite the canonical_request
+    # so that the true request matches.
+    current_canonical_signature = hashlib.sha256(
+        canonical_request.encode('utf-8')
+    ).hexdigest()
 
-    to_sign = to_sign.replace(current_canonical_signature, new_canonical_signature)
+    new_canonical_request = canonical_request.replace(
+        'host:localhost', 'host:localhost:9000'
+    )
 
+    new_canonical_signature = hashlib.sha256(
+        new_canonical_request.encode('utf-8')
+    ).hexdigest()
 
-    signing_key = generate_signing_key(datetime.datetime.strptime(date,
-                                                                  '%Y%m%dT%H%M%SZ'),
-                                       'us-east-1',
-                                       settings.MINIO_SECRET_KEY)
-    signature = hmac.new(signing_key, to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+    to_sign = to_sign.replace(
+        current_canonical_signature, new_canonical_signature,
+    )
+
+    # TODO: ensure that the request contains the correct bucket, path and filename
+    # otherwise, return 403
+
+    # TODO: ensure that the timeout of the request is reasonable
+    # Use X-Amz-Expires
+
+    signing_key = generate_signing_key(
+        datetime.datetime.strptime(date, '%Y%m%dT%H%M%SZ'),
+        'us-east-1',
+        settings.MINIO_SECRET_KEY
+    )
+
+    signature = hmac.new(
+        signing_key, to_sign.encode('utf-8'), hashlib.sha256
+    ).hexdigest()
 
     return HttpResponse(signature, content_type='text/HTML')
 
