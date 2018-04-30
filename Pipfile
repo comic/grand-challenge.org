@@ -13,7 +13,8 @@ pytest-mock = "*"
 factory-boy = "*"
 django-debug-toolbar = "*"
 black = "==18.3a2"
-
+sphinx-autobuild = "*"
+sphinx = "*"
 
 [packages]
 
