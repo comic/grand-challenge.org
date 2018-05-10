@@ -34,8 +34,7 @@ class Evaluator(object):
         self._io_image = 'alpine:3.6'
         self._mem_limit = '2g'
         self._cpu_period = 100000
-        self._cpu_quota = 25000
-        # TODO: error handling
+        self._cpu_quota = 100000
         self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
         self._input_volume = f'{self._job_id}-input'
         self._output_volume = f'{self._job_id}-output'
