@@ -10,6 +10,7 @@ Welcome to grand-challenge.org's documentation!
     :maxdepth: 2
     :caption: Contents:
 
+    getting-started
     evaluation
 
 
