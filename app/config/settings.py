@@ -3,7 +3,6 @@ import glob
 import os
 from datetime import timedelta
 
-import six
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
@@ -471,7 +470,7 @@ conf_files.sort()
 for conf_file in conf_files:
     with open(conf_file) as f:
         code = compile(f.read(), conf_file, 'exec')
-        six.exec_(code)
+        exec(code)
 
 CKEDITOR_UPLOAD_PATH = 'uploads/'
 

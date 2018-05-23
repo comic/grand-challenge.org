@@ -6,6 +6,7 @@ import random
 import re
 import string
 import traceback
+from io import StringIO
 from urllib.parse import urljoin
 
 from django import template
@@ -22,7 +23,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
-from six import StringIO, iteritems
 
 import grandchallenge.core.views
 from grandchallenge.challenges.models import Challenge
@@ -291,7 +291,7 @@ class TagListNode(template.Node):
         html_out = "<table class =\"comictable taglist\">"
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
-        for key, val in iteritems(register.usagestrings):
+        for key, val in register.usagestrings.items():
             if not val == "":
                 html_out = html_out + "<tr class=\"%s\"><td>%s</td><td>%s</td></tr>\
                         " % (
