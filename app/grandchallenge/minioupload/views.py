@@ -13,7 +13,7 @@ from minio.signer import presign_v4, generate_signing_key
 
 
 def get_bucket_name():
-    return 'testbucket'
+    return settings.MINIO_DEFAULT_BUCKET_NAME
 
 
 def presigned_url(request, filename):
@@ -53,35 +53,20 @@ def presign_string(request):
     date = request.GET['datetime']
     canonical_request = request.GET['canonical_request']
 
-    # Due to a bug with running on a non-standard port the hostname
-    # is not correctly formatted. Here, we rewrite the canonical_request
-    # so that the true request matches.
     current_canonical_signature = hashlib.sha256(
         canonical_request.encode('utf-8')
     ).hexdigest()
 
-    new_canonical_request = canonical_request.replace(
-        'host:localhost', 'host:localhost:9000'
-    )
-
-    new_canonical_signature = hashlib.sha256(
-        new_canonical_request.encode('utf-8')
-    ).hexdigest()
-
-    to_sign = to_sign.replace(
-        current_canonical_signature, new_canonical_signature,
-    )
-
-    # TODO: ensure that the request contains the correct bucket, path and filename
-    # otherwise, return 403
-
-    # TODO: ensure that the timeout of the request is reasonable
+    # TODO:
+    # - ensure that signature is in the string to sign
+    # - ensure that the request contains the correct bucket, path and filename
+    # - ensure that the timeout of the request is reasonable
     # Use X-Amz-Expires
 
     signing_key = generate_signing_key(
         datetime.datetime.strptime(date, '%Y%m%dT%H%M%SZ'),
-        'us-east-1',
-        settings.MINIO_SECRET_KEY
+        settings.MINIO_REGION,
+        settings.MINIO_SECRET_KEY,
     )
 
     signature = hmac.new(
@@ -105,6 +90,8 @@ class EvaporateFileUpload(TemplateView):
             {
                 'MINIO_ACCESS_KEY': settings.MINIO_ACCESS_KEY,
                 'MINIO_BUCKET_NAME': get_bucket_name(),
+                'MINIO_PUBLIC_URL': settings.MINIO_PUBLIC_URL,
+                'MINIO_REGION': settings.MINIO_REGION,
             }
         )
 

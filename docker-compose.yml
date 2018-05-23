@@ -38,6 +38,7 @@ services:
       - "443:443"
     links:
       - web
+      - minio
     volumes:
       - static:/srv/public/static/:ro
       - media:/dbox/Dropbox/media/:ro
@@ -119,8 +120,6 @@ services:
     image: minio/minio
     volumes:
       - minio-data:/data
-    ports:
-      - "9000:9000"
     command: server /data
     env_file:
       - dev.env

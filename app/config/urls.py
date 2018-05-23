@@ -39,7 +39,10 @@ urlpatterns = [
         include('grandchallenge.challenges.urls', namespace='challenges')
     ),
 
-    url(r'^minio/', include('grandchallenge.minioupload.urls')),
+    url(
+        r'^minio/',
+        include('grandchallenge.minioupload.urls', namespace='minioupload'),
+    ),
 
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
@@ -48,9 +51,10 @@ urlpatterns = [
     url(r'^(?P<page_title>[\w-]+)/$', comicmain, name='mainproject-home'),
     url(r'^media/(?P<challenge_short_name>[\w-]+)/(?P<path>.*)$', serve),
 ]
+
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls))
-    ] + urlpatterns
+                      url(r'^__debug__/', include(debug_toolbar.urls))
+                  ] + urlpatterns

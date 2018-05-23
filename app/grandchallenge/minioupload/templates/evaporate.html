@@ -1,4 +1,5 @@
 {% load static from staticfiles %}
+{% load url from grandchallenge_tags %}
 
 <!DOCTYPE html>
 <html>
@@ -26,12 +27,12 @@
     /* START EDITS */
     aws_key: '{{ MINIO_ACCESS_KEY }}', // REQUIRED -- set this to your AWS_ACCESS_KEY_ID
     bucket: '{{ MINIO_BUCKET_NAME }}', // REQUIRED -- set this to your s3 bucket name
-    awsRegion: 'us-east-1', // OPTIONAL -- change this if your bucket is outside us-east-1
+    awsRegion: '{{ MINIO_REGION }}', // OPTIONAL -- change this if your bucket is outside us-east-1
     /* END EDITS */
-    signerUrl: 'presign',
+    signerUrl: '{% url "minioupload:presign" %}',
       sendCanonicalRequestToSignerUrl: true,
       debug: true,
-    aws_url: 'http://localhost:9000',
+    aws_url: '{{ MINIO_PUBLIC_URL }}',
     awsSignatureVersion: '4',
     computeContentMd5: true,
     cryptoMd5Method: function (data) { return AWS.util.crypto.md5(data, 'base64'); },
