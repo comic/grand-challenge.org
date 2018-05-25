@@ -126,7 +126,7 @@ class Evaluator(object):
                 cpu_quota=self._cpu_quota,
             )
         except ContainerError as exc:
-            raise MethodContainerError(exc.stderr)
+            raise MethodContainerError(exc.stderr.decode())
 
     def _get_result(self) -> dict:
         try:
@@ -143,7 +143,7 @@ class Evaluator(object):
                 cpu_quota=self._cpu_quota,
             )
         except ContainerError as exc:
-            raise MethodContainerError(exc.stderr)
+            raise MethodContainerError(exc.stderr.decode())
 
         try:
             result = json.loads(result.decode())
