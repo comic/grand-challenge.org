@@ -202,8 +202,6 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    # Opbeat must be first
-    'opbeat.contrib.django.middleware.OpbeatAPMMiddleware',
     # Sentry 404 must be as close as possible to the top
     'raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware',
     'raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware',
@@ -236,7 +234,6 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat', # error logging
-    'opbeat.contrib.django', # performance monitoring
     'djcelery_email', # asynchronous emails
     'userena', # user profiles
     'guardian', # userena dependency, per object permissions
@@ -394,12 +391,6 @@ LOGGING = {
 
 RAVEN_CONFIG = {
     'dsn': os.environ.get('DJANGO_SENTRY_DSN', ''),
-}
-
-OPBEAT = {
-    'ORGANIZATION_ID': os.environ.get('DJANGO_OPBEAT_ORGANIZATION_ID', ''),
-    'APP_ID': os.environ.get('DJANGO_OPBEAT_APP_ID', ''),
-    'SECRET_TOKEN': os.environ.get('DJANGO_OPBEAT_SECRET_TOKEN', ''),
 }
 
 REST_FRAMEWORK = {
