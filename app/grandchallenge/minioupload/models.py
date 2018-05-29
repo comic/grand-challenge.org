@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.db import models
 
-from grandchallenge.evaluation.models import UUIDModel
+from grandchallenge.core.models import UUIDModel
 
 
 class MinioFile(UUIDModel):
