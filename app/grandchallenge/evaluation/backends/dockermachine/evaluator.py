@@ -69,7 +69,7 @@ class Evaluator(object):
         self._client.images.pull(repository=self._io_image)
 
         if self._eval_image_sha256 not in [
-            x.id for x in self._client.images.list()
+            img.id for img in self._client.images.list()
         ]:
             with self._eval_image.open('rb') as f:
                 self._client.images.load(f)
@@ -77,7 +77,7 @@ class Evaluator(object):
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
             self._client.volumes.create(
-                name=volume, labels={'job_id': self._job_id}
+                name=volume, labels=self._run_kwargs["labels"],
             )
 
     def _provision_input_volume(self):
