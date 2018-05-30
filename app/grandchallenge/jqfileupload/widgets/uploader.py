@@ -59,8 +59,7 @@ class AjaxUploadWidget(Widget):
        - jQuery (3.2.1)
        - jQuery-ui (1.12.1)
        - blueimp-file-upload (9.19.1)
-     - The website must include the JS and CSS files defined in the classes
-       variables CSS and JS
+     - The website must render the media associated with the widget
      - The website must define a djang csfr-token by either:
        - defining a hidden input element with the name 'csrfmiddlewaretoken'
          (use the {% csrf_token %} template function for this).
@@ -78,9 +77,13 @@ class AjaxUploadWidget(Widget):
     uploads are not linked to any session or similar. Anyone who can guess
     a valid database id referring to a file, can also refer to this file. What
     this means depends on the actual app that uses this widget.
-
-    This widget will require updating when moving forward from django 1.8.
     """
+
+    class Media:
+        css = {
+            'all': ('jqfileupload/css/upload_widget_button.css',)
+        }
+        js = ('jqfileupload/js/upload_widget.js',)
 
     def __init__(
         self, *args, ajax_target_path: str = None, multifile=True, **kwargs
