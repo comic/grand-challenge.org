@@ -17,10 +17,7 @@ class Case(MinioFile):
     )
 
     challenge = models.ForeignKey(
-        to='challenges.Challenge',
-        on_delete=models.CASCADE,
-        editable=False,
-        blank=True, # A case can exist without belonging to a challenge
+        to='challenges.Challenge', on_delete=models.CASCADE, editable=False,
     )
     stage = models.CharField(
         max_length=5, choices=STAGE_CHOICES, default=NONE,

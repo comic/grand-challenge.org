@@ -1,3 +1,5 @@
+import uuid
+
 from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -6,12 +8,24 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.evaluation.validators import (
     MimeTypeValidator, ExtensionValidator,
 )
+
+
+class UUIDModel(models.Model):
+    """
+    Abstract class that consists of a UUID primary key, created and modified
+    times
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
 
 
 class Config(UUIDModel):
