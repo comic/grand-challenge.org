@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.template.response import TemplateResponse
+from django.urls import path
 from django.views.generic import TemplateView
 
 from grandchallenge.core.views import comicmain
@@ -38,6 +39,9 @@ urlpatterns = [
         r'^challenges/',
         include('grandchallenge.challenges.urls', namespace='challenges')
     ),
+
+    path('cases/', include('grandchallenge.cases.urls', namespace='cases')),
+
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
@@ -49,5 +53,5 @@ if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls))
-    ] + urlpatterns
+                      url(r'^__debug__/', include(debug_toolbar.urls))
+                  ] + urlpatterns
