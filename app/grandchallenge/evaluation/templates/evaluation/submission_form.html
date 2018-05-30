@@ -1,16 +1,6 @@
 {% extends "site.html" %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
-{% load static %}
-
-{% block html_header %}
-    {{ block.super }}
-
-    <link rel="stylesheet" type="text/css"
-          href="{% static "jqfileupload/css/upload_widget_button.css" %}">
-    <script type="text/javascript"
-            src="{% static "jqfileupload/js/upload_widget.js" %}"></script>
-{% endblock %}
 
 {% block pagecontent %}
 
