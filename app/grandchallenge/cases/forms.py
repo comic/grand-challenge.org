@@ -8,17 +8,19 @@ from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 case_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/case-upload/", multifile=False
+    ajax_target_path="ajax/case-upload/", multifile=True,
 )
 
 
 class CaseForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=case_upload_widget,
-        label='The case',
-        validators=[ExtensionValidator(allowed_extensions=('.mha',))],
+        label='Case Files',
+        validators=[
+            ExtensionValidator(allowed_extensions=('.mhd', '.raw', '.zraw', ))
+        ],
         help_text=(
-            'Select the .mha file that you want to use.'
+            'Select the files for this case.'
         ),
     )
 

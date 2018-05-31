@@ -2,6 +2,227 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
+{% block html_header %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="https://use.edgefonts.net/source-code-pro.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.rawgit.com/dataarts/dat.gui/master/build/dat.gui.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ami.js/0.0.22/ami.js"></script>
+{% endblock %}
+
 {% block content %}
-    {{ object.file.url }}
+
+    <h2>Case</h2>
+
+    <h3>Files</h3>
+
+    <ul>
+        {% for f in object.casefile_set.all %}
+            <li>{{ f.file.url }}</li>
+        {% endfor %}
+    </ul>
+
+
+    <div style="width:100%; height:600px; position:relative;">
+        <div id="my-gui-container"
+             style="top:0; left:0; position:absolute; z-index:1;"></div>
+        <div id="case-container"
+             style="width:100%; height:100%; top:0; left:0; position:absolute;"></div>
+    </div>
+
+    <script type="text/javascript">
+        const AMI = window.AMI;
+
+        var container = document.getElementById("case-container");
+
+        var renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+
+        var loader = new AMI.VolumeLoader(container);
+        var files = [[
+            {% for f in object.casefile_set.all %}
+                "https://localhost{{ f.file.url }}",
+            {% endfor %}
+        ]];
+
+        renderer.setSize(container.offsetWidth, container.offsetHeight);
+        renderer.setClearColor(0x353535, 1);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Setup scene
+        var scene = new THREE.Scene();
+
+        // Setup camera
+        var camera = new AMI.OrthographicCamera(
+            container.clientWidth / -2,
+            container.clientWidth / 2,
+            container.clientHeight / 2,
+            container.clientHeight / -2,
+            0.1,
+            10000
+        );
+
+        // Setup controls
+        var controls = new AMI.TrackballOrthoControl(camera, container);
+        controls.staticMoving = true;
+        controls.noRotate = true;
+        camera.controls = controls;
+
+        function gui(stackHelper) {
+            var gui = new dat.GUI({
+                autoPlace: false
+            });
+
+            var customContainer = document.getElementById('my-gui-container');
+            customContainer.appendChild(gui.domElement);
+
+            // only reason to use this object is to satusfy data.GUI
+            var camUtils = {
+                invertRows: false,
+                invertColumns: false,
+                rotate: 0,
+                convention: 'radio'
+            };
+
+            // camera
+            var cameraFolder = gui.addFolder('Camera');
+            var invertRows = cameraFolder.add(camUtils, 'invertRows');
+            invertRows.onChange(function () {
+                camera.invertRows();
+            });
+
+            var invertColumns = cameraFolder.add(camUtils, 'invertColumns');
+            invertColumns.onChange(function () {
+                camera.invertColumns();
+            });
+
+            cameraFolder
+                .add(camera, 'angle', 0, 360)
+                .step(1)
+                .listen();
+
+            let conventionUpdate = cameraFolder.add(camUtils, 'convention', ['radio', 'neuro']);
+            conventionUpdate.onChange(function (value) {
+                camera.convention = value;
+                camera.update();
+                camera.fitBox(2);
+            });
+
+            cameraFolder.open();
+
+            // slice
+            var sliceFolder = gui.addFolder('Slice');
+            sliceFolder
+                .add(stackHelper.slice, 'windowWidth', 1, stackHelper.stack.minMax[1] - stackHelper.stack.minMax[0])
+                .step(1)
+                .listen();
+            sliceFolder
+                .add(stackHelper.slice, 'windowCenter', stackHelper.stack.minMax[0], stackHelper.stack.minMax[1])
+                .step(1)
+                .listen();
+            sliceFolder.add(stackHelper.slice, 'intensityAuto').listen();
+            sliceFolder.add(stackHelper.slice, 'invert');
+            let zoomUpdate = sliceFolder.add(camera, 'zoom', 0.1, 3.0).step(0.025).listen();
+            zoomUpdate.onChange(function (value) {
+                camera.update()
+            });
+            sliceFolder.open();
+        }
+
+        function onWindowResize() {
+            camera.canvas = {
+                width: container.offsetWidth,
+                height: container.offsetHeight
+            };
+
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        /**
+         * Start animation loop
+         */
+        function animate() {
+            controls.update();
+            renderer.render(scene, camera);
+
+            // request new frame
+            requestAnimationFrame(function () {
+                animate();
+            });
+        }
+
+        animate();
+
+
+        loader
+            .load(files)
+            .then(function () {
+                // merge files into clean series/stack/frame structure
+                var series = loader.data[0].mergeSeries(loader.data);
+                var stack = series[0].stack[0];
+                loader.free();
+                loader = null;
+
+                for (var i = 0; i < stack._frame.length; i++) {
+                    stack._frame[i]._imageOrientation = [1, 0, 0, 0, 1, 0]
+                }
+
+                // be carefull that series and target stack exist!
+                var stackHelper = new AMI.StackHelper(stack);
+
+                // tune bounding box
+                stackHelper.bbox.visible = false;
+
+                // tune slice border
+                stackHelper.border.color = 0xff9800;
+                // stackHelper.border.visible = false;
+
+                scene.add(stackHelper);
+
+                // build the gui
+                gui(stackHelper);
+
+                // center camera and interactor to center of bouding box
+                // for nicer experience
+                // set camera
+                var worldbb = stack.worldBoundingBox();
+                var lpsDims = new THREE.Vector3(worldbb[1] - worldbb[0], worldbb[3] - worldbb[2], worldbb[5] - worldbb[4]);
+
+                // box: {halfDimensions, center}
+                var box = {
+                    center: stack.worldCenter().clone(),
+                    halfDimensions: new THREE.Vector3(lpsDims.x + 10, lpsDims.y + 10, lpsDims.z + 10)
+                };
+
+                // init and zoom
+                var canvas = {
+                    width: container.clientWidth,
+                    height: container.clientHeight
+                };
+
+
+                camera.directions = [stack.xCosine, stack.yCosine, stack.zCosine];
+                camera.box = box;
+                camera.canvas = canvas;
+                camera.update();
+                camera.fitBox(2);
+
+
+            })
+            .catch(function (error) {
+                window.console.log(error);
+            });
+
+    </script>
+
 {% endblock %}

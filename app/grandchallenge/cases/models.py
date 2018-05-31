@@ -8,20 +8,29 @@ from grandchallenge.evaluation.validators import ExtensionValidator
 
 
 def case_file_path(instance, filename):
-    return f"cases/{instance.pk}/{filename}"
+    return f"cases/{instance.case.pk}/{filename}"
 
 
 class Case(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    file = models.FileField(
-        upload_to=case_file_path,
-        validators=[ExtensionValidator(allowed_extensions=('.mha',))],
-        help_text=(
-            'Select the .mha file that you want to use.'
-        ),
-    )
 
     def get_absolute_url(self):
         return reverse("cases:detail", kwargs={"pk": self.pk})
+
+
+class CaseFile(UUIDModel):
+    case = models.ForeignKey(to=Case, on_delete=models.CASCADE)
+
+    file = models.FileField(
+        upload_to=case_file_path,
+        validators=[
+            ExtensionValidator(
+                allowed_extensions=('.mhd', '.raw', '.zraw',)
+            )
+        ],
+        help_text=(
+            'Select the file for this case.'
+        ),
+    )

@@ -1,39 +1,22 @@
-<div class="file-upload"
+<div class="file-upload drop-here-floater"
      id="{{ attr.id }}"
      upload_target="{{ target }}"
      multi_upload="{{ multi_upload }}">
 
-    <span class="btn btn-success fileinput-button">
-        <i class="glyphicon glyphicon-plus"></i>
-        <span>Select files...</span>
+    <span class="btn btn-primary fileinput-button">
+        <span>Choose Files</span>
         <input type="file" name="files[]" form="(null)"
                {% if multi_upload == "true" %}multiple{% endif %}>
     </span>
 
-    <br>
-    <br>
-
-    <div class="progress">
+    <div class="progress" style="display:none">
         <div class="progress-bar progress-bar-info progress-bar-striped active"
              role="progressbar"
              style="width:0">
         </div>
     </div>
 
-    <div class="failed-list foldable folded">
-        <p>
-            <button form="null" onclick="upload_fold_unfold(this)"></button>
-            Failed uploads:
-            <span class="count">0</span>
-        </p>
-        <button form="null" class="remove fa fa-remove"></button>
-    </div>
-
-    <div class="drop-here-floater">
-        <div>Drop files here</div>
-    </div>
     <input name="{{ name }}" type="hidden" value="{{ value }}"/>
-
 
 </div>
 

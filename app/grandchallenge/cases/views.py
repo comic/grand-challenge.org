@@ -4,7 +4,7 @@ from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 
 from grandchallenge.cases.forms import CaseForm
-from grandchallenge.cases.models import Case
+from grandchallenge.cases.models import Case, CaseFile
 
 
 class CaseList(ListView):
@@ -17,12 +17,16 @@ class CaseCreate(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+        redirect = super().form_valid(form)
 
-        uploaded_file = form.cleaned_data['chunked_upload'][0]
-        with uploaded_file.open() as f:
-            form.instance.file.save(uploaded_file.name, File(f))
+        for uploaded_file in form.cleaned_data['chunked_upload']:
+            with uploaded_file.open() as f:
+                case_file = CaseFile.objects.create(
+                    case=self.object,
+                )
+                case_file.file.save(uploaded_file.name, File(f))
 
-        return super().form_valid(form)
+        return redirect
 
 
 class CaseDetail(DetailView):

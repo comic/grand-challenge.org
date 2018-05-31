@@ -23,6 +23,7 @@ function upload_fold_unfold(element) {
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
         var is_multiupload = upload_element.attr("multi_upload") === "true";
+        var total_files = 0;
 
         var target_url = upload_element.attr("upload_target");
 
@@ -114,7 +115,7 @@ function upload_fold_unfold(element) {
             }
             update_hidden_form_element();
 
-            if (!is_multiupload) {
+            if (succeeded_uploads_list.length === total_files) {
                 upload_element.closest('form').submit();
             }
         }
@@ -141,11 +142,16 @@ function upload_fold_unfold(element) {
         var fileinput_button = upload_element.find("span.fileinput-button");
         var progress_div = upload_element.find("div.progress");
 
+        upload_element.on('change', function (e) {
+           total_files = e.target.files.length;
+        });
+
+        upload_element.on('fileuploadadd', function (e, data) {
+            fileinput_button.css("display","none");
+            progress_div.css("display", "block");
+        });
+
         upload_element.on('fileuploadsubmit', function (e, data) {
-            if (!is_multiupload) {
-                fileinput_button.css("display","none");
-                progress_div.css("display", "block");
-            }
             data.formData = {
                 "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
             };
@@ -157,7 +163,6 @@ function upload_fold_unfold(element) {
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
-            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
             add_succeeded_upload(data.result);
         });
 
@@ -178,6 +183,11 @@ function upload_fold_unfold(element) {
                 'width',
                 progress + '%'
             );
+
+            if (progress >= 100) {
+                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
+            }
+
         });
 
     }
