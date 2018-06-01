@@ -2,6 +2,8 @@
 
 {% block content %}
 
+    <h2>Jobs</h2>
+
     <ul>
     {% for job in object_list %}
         <li><a href="{{ job.get_absolute_url }}">{{ job.pk }}</a></li>

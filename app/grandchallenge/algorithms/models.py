@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.db import models
+from social_django.fields import JSONField
 
 from grandchallenge.core.models import UUIDModel, CeleryJobModel
 from grandchallenge.core.urlresolvers import reverse
@@ -57,3 +58,11 @@ class Job(UUIDModel, CeleryJobModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
+
+
+class Result(UUIDModel):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    output = JSONField(default=dict)
+
+    def get_absolute_url(self):
+        return reverse("algorithms:results-detail", kwargs={"pk": self.pk})

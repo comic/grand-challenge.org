@@ -4,7 +4,7 @@ from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 
 from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm, Job, Result
 
 
 class AlgorithmList(ListView):
@@ -44,3 +44,11 @@ class JobCreate(CreateView):
 
 class JobDetail(DetailView):
     model = Job
+
+
+class ResultList(ListView):
+    model = Result
+
+
+class ResultDetail(DetailView):
+    model = Result

@@ -2,11 +2,14 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-
-
 {% block content %}
 
-    <h2>Job</h2>
+    <h2>Result</h2>
 
+    {{ object.job.get_absolute_url }}
+
+    <pre>
+        {{ object.output }}
+    </pre>
 
 {% endblock %}
