@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.validators import ExtensionValidator
 
 
@@ -29,4 +30,5 @@ class Algorithm(UUIDModel):
     )
     image_sha256 = models.CharField(editable=False, max_length=71)
 
-
+    def get_absolute_url(self):
+        return reverse("algorithms:detail", kwargs={"pk": self.pk})
