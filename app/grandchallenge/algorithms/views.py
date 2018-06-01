@@ -3,8 +3,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 
-from grandchallenge.algorithms.forms import AlgorithmForm
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
+from grandchallenge.algorithms.models import Algorithm, Job
 
 
 class AlgorithmList(ListView):
@@ -24,7 +24,23 @@ class AlgorithmCreate(LoginRequiredMixin, CreateView):
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
 
+        # TODO: Run nbconvert on the description and get the html
+
         return super().form_valid(form)
+
 
 class AlgorithmDetail(DetailView):
     model = Algorithm
+
+
+class JobList(ListView):
+    model = Job
+
+
+class JobCreate(CreateView):
+    model = Job
+    form_class = JobForm
+
+
+class JobDetail(DetailView):
+    model = Job
