@@ -6,7 +6,7 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import UUIDModel, CeleryJobModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.evaluation.validators import (
@@ -275,39 +275,16 @@ class Submission(UUIDModel):
         )
 
 
-class Job(UUIDModel):
+class Job(UUIDModel, CeleryJobModel):
     """
     Stores information about a job for a given upload
     """
-    # The job statuses come directly from celery.result.AsyncResult.status:
-    # http://docs.celeryproject.org/en/latest/reference/celery.result.html
-    PENDING = 0
-    STARTED = 1
-    RETRY = 2
-    FAILURE = 3
-    SUCCESS = 4
-    CANCELLED = 5
-    STATUS_CHOICES = (
-        (PENDING, 'The task is waiting for execution'),
-        (STARTED, 'The task has been started'),
-        (RETRY, 'The task is to be retried, possibly because of failure'),
-        (
-            FAILURE,
-            'The task raised an exception, or has exceeded the retry limit',
-        ),
-        (SUCCESS, 'The task executed successfully'),
-        (CANCELLED, 'The task was cancelled'),
-    )
+
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE
     )
     submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
     method = models.ForeignKey('Method', on_delete=models.CASCADE)
-    status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=PENDING
-    )
-    status_history = JSONField(default=dict)
-    output = models.TextField()
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
@@ -318,19 +295,19 @@ class Job(UUIDModel):
                 f"with a method for {self.method.challenge}"
             )
 
-        super(Job, self).clean()
+        super().clean()
 
     def save(self, *args, **kwargs):
         self.challenge = self.submission.challenge
-        super(Job, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
-    def update_status(self, *, status: STATUS_CHOICES, output: str = None):
-        self.status = status
-        if output:
-            self.output = output
-        self.save()
+    def update_status(self, *args, **kwargs):
+        res = super().update_status(*args, **kwargs)
+
         if self.status == self.FAILURE:
             send_failed_job_email(self)
+            
+        return res
 
     def get_absolute_url(self):
         return reverse(
@@ -363,7 +340,6 @@ class Result(UUIDModel):
     absolute_url = models.TextField(blank=True, editable=False)
 
     def save(self, *args, **kwargs):
-
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
             self.public = (
