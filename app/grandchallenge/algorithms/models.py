@@ -4,12 +4,18 @@ from django.db import models
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.evaluation.validators import ExtensionValidator, \
+    MimeTypeValidator
 
 
 def algorithm_image_path(instance, filename):
     return (
         f'algorithms/{instance.pk}/{filename}'
+    )
+
+def algorithm_description_path(instance, filename):
+    return (
+        f'algorithm-descriptions/{instance.pk}/{filename}'
     )
 
 class Algorithm(UUIDModel):
@@ -29,6 +35,15 @@ class Algorithm(UUIDModel):
         ),
     )
     image_sha256 = models.CharField(editable=False, max_length=71)
+
+    # TODO: add that this is an ipynb to the help_text
+    description = models.FileField(
+        upload_to=algorithm_description_path,
+        validators=[
+            MimeTypeValidator(allowed_types=('text/plain', ))
+        ],
+        blank=True,
+    )
 
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"pk": self.pk})

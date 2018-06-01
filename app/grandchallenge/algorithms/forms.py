@@ -31,5 +31,4 @@ class AlgorithmForm(forms.ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ['chunked_upload']
-
+        fields = ('description', 'chunked_upload',)

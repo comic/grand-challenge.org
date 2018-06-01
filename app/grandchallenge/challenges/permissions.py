@@ -84,6 +84,10 @@ def _required_permission(path, challenge_short_name):
         # No one can download algorithms
         return 'nobody'
 
+    if challenge_short_name.lower() == 'algorithm-descriptions':
+        # Everyone can view algorithm descriptions
+        return ComicSiteModel.ALL
+
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
             return ComicSiteModel.ALL
