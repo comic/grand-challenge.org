@@ -41,6 +41,8 @@ urlpatterns = [
     ),
 
     path('cases/', include('grandchallenge.cases.urls', namespace='cases')),
+    path('algorithms/',
+         include('grandchallenge.algorithms.urls', namespace='algorithms')),
 
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <ul>
+    {% for algorithm in object_list %}
+        <li><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.pk }}</a></li>
+    {% endfor %}
+    </ul>
+
+{% endblock %}
