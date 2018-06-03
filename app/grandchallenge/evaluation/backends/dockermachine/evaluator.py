@@ -1,6 +1,7 @@
 import json
 import uuid
 from json import JSONDecodeError
+from pathlib import Path
 
 import docker
 from django.conf import settings
@@ -25,6 +26,7 @@ class Evaluator(object):
             input_file: File,
             eval_image: File,
             eval_image_sha256: str,
+            results_file: Path = Path("/output/metrics.json"),
     ):
         super().__init__()
         self._job_id = str(job_id)
@@ -32,6 +34,7 @@ class Evaluator(object):
         self._eval_image = eval_image
         self._eval_image_sha256 = eval_image_sha256
         self._io_image = 'alpine:3.6'
+        self._results_file = results_file
 
         self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
 
@@ -135,7 +138,7 @@ class Evaluator(object):
                 volumes={
                     self._output_volume: {'bind': '/output/', 'mode': 'ro'}
                 },
-                command='cat /output/metrics.json',
+                command=f"cat {self._results_file}",
                 **self._run_kwargs,
             )
         except ContainerError as exc:
