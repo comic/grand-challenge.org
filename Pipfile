@@ -1,12 +1,9 @@
 [[source]]
-
 verify_ssl = true
 url = "https://pypi.python.org/simple"
 name = "pypi"
 
-
 [dev-packages]
-
 pytest-django = "*"
 pytest-cov = "*"
 pytest-mock = "*"
@@ -17,7 +14,6 @@ sphinx-autobuild = "*"
 sphinx = "*"
 
 [packages]
-
 "beautifulsoup4" = "*"
 celery = "*"
 django = "<2.1"
@@ -39,3 +35,4 @@ gunicorn = "*"
 django-ckeditor = "==5.4.0"
 raven = "*"
 django-celery-email = "*"
+nbconvert = "*"

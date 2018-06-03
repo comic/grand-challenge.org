@@ -40,6 +40,7 @@ class Algorithm(UUIDModel):
     image_sha256 = models.CharField(editable=False, max_length=71)
 
     # TODO: add that this is an ipynb to the help_text
+    # TODO: should the ipynb be downloadable?
     description = models.FileField(
         upload_to=algorithm_description_path,
         validators=[
@@ -47,6 +48,8 @@ class Algorithm(UUIDModel):
         ],
         blank=True,
     )
+
+    description_html = models.TextField(blank=True, editable=False)
 
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"pk": self.pk})
