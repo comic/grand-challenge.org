@@ -2,9 +2,27 @@
 
 {% block content %}
 
+    <h2>Cases</h2>
+
+    <p>
+    <a class="btn btn-primary"
+       href="{% url 'cases:create' %}">
+                <i class="fas fa-plus"></i> Add a new case
+            </a>
+    </p>
+
+    <h2>Existing Cases</h2>
+
     <ul>
     {% for case in object_list %}
-        <li><a href="{{ case.get_absolute_url }}">{{ case.pk }}</a></li>
+        <li><a href="{{ case.get_absolute_url }}">{{ case.pk }}</a>
+        <ul>
+            {% for file in case.casefile_set.all %}
+                <li>{{ file.file.name }}</li>
+            {% endfor %}
+        </ul>
+
+        </li>
     {% endfor %}
     </ul>
 

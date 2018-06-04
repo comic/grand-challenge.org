@@ -54,13 +54,18 @@ def execute_algorithm(*, job_pk: uuid.UUID):
 
     job.update_status(status=Job.STARTED)
 
-    with AlgorithmExecutor(
+    try:
+        with AlgorithmExecutor(
             job_id=job_pk,
             input_files=[c.file for c in job.case.casefile_set.all()],
             eval_image=job.algorithm.image,
             #TODO: Unhardcode
             eval_image_sha256="sha256:9c883b4e797a021b59424e6bb3dc44c016b7cb2c67bc1a1c9e2d6cd0d01ba10c",
-    ) as e:
-        result = e.evaluate()
+        ) as e:
+            result = e.evaluate()
+    except Exception as e:
+        job.update_status(status=job.FAILURE, output=str(e))
+        return
 
     Result.objects.create(job=job, output=result)
+    job.update_status(status=Job.SUCCESS)
