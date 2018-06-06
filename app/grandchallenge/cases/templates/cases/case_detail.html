@@ -20,6 +20,8 @@
 
     <h2>Case</h2>
 
+    <p><a href="{% url 'cases:list' %}">Back to all cases</a></p>
+
     <h3>Files</h3>
 
     <ul>
@@ -70,7 +72,7 @@
         var loader = new AMI.VolumeLoader(container);
         var files = [[
             {% for f in object.casefile_set.all %}
-                "https://localhost{{ f.file.url }}",
+                "{{ f.file.url }}",
             {% endfor %}
         ]];
 

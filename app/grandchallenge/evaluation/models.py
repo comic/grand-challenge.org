@@ -6,7 +6,9 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.models import UUIDModel, CeleryJobModel
+from grandchallenge.core.models import (
+    UUIDModel, CeleryJobModel, DockerImageModel
+)
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.evaluation.validators import (
@@ -157,6 +159,7 @@ class Config(UUIDModel):
 
 
 def method_image_path(instance, filename):
+    """ Deprecated: only used in a migration """
     return (
         f'evaluation/'
         f'{instance.challenge.pk}/'
@@ -166,7 +169,7 @@ def method_image_path(instance, filename):
     )
 
 
-class Method(UUIDModel):
+class Method(UUIDModel, DockerImageModel):
     """
     Stores the methods for performing an evaluation
     """
@@ -176,26 +179,6 @@ class Method(UUIDModel):
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE
     )
-    # Validation for methods needs to be done asynchronously
-    ready = models.BooleanField(
-        default=False,
-        editable=False,
-        help_text="Is this method ready to be used?",
-    )
-    status = models.TextField(editable=False)
-    image = models.FileField(
-        upload_to=method_image_path,
-        validators=[ExtensionValidator(allowed_extensions=('.tar',))],
-        help_text=(
-            'Tar archive of the container image produced from the command '
-            '`docker save IMAGE > IMAGE.tar`. See '
-            'https://docs.docker.com/engine/reference/commandline/save/'
-        ),
-    )
-    image_sha256 = models.CharField(editable=False, max_length=71)
-
-    def save(self, *args, **kwargs):
-        super(Method, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(

@@ -80,8 +80,8 @@ def _required_permission(path, challenge_short_name):
         # Everyone can download cases
         return ComicSiteModel.ALL
 
-    if challenge_short_name.lower() == 'algorithms':
-        # No one can download algorithms
+    if challenge_short_name.lower() == 'docker':
+        # No one can download docker stuff
         return 'nobody'
 
     if challenge_short_name.lower() == 'algorithm-descriptions':

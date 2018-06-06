@@ -3,6 +3,8 @@ import uuid
 from django.db import models
 from social_django.fields import JSONField
 
+from grandchallenge.evaluation.validators import ExtensionValidator
+
 
 class UUIDModel(models.Model):
     """
@@ -15,6 +17,7 @@ class UUIDModel(models.Model):
 
     class Meta:
         abstract = True
+
 
 class CeleryJobModel(models.Model):
     # The job statuses come directly from celery.result.AsyncResult.status:
@@ -51,6 +54,38 @@ class CeleryJobModel(models.Model):
             self.output = output
 
         self.save()
+
+    class Meta:
+        abstract = True
+
+
+def docker_image_path(instance, filename):
+    return (
+        f'docker/'
+        f'images/'
+        f'{instance.__class__.__qualname__}/'
+        f'{instance.pk}/'
+        f'{filename}'
+    )
+
+
+class DockerImageModel(models.Model):
+    image = models.FileField(
+        upload_to=docker_image_path,
+        validators=[ExtensionValidator(allowed_extensions=('.tar',))],
+        help_text=(
+            'Tar archive of the container image produced from the command '
+            '`docker save IMAGE > IMAGE.tar`. See '
+            'https://docs.docker.com/engine/reference/commandline/save/'
+        ),
+    )
+    image_sha256 = models.CharField(editable=False, max_length=71)
+    ready = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text="Is this image ready to be used?",
+    )
+    status = models.TextField(editable=False)
 
     class Meta:
         abstract = True
