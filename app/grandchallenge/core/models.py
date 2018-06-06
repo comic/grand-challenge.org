@@ -63,7 +63,8 @@ def docker_image_path(instance, filename):
     return (
         f'docker/'
         f'images/'
-        f'{instance.__class__.__qualname__}/'
+        f'{instance._meta.app_label.lower()}/'
+        f'{instance._meta.object_name.lower()}/'
         f'{instance.pk}/'
         f'{filename}'
     )

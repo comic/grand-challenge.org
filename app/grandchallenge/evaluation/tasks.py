@@ -1,5 +1,3 @@
-import json
-import tarfile
 import uuid
 
 from celery import shared_task
@@ -11,7 +9,7 @@ from grandchallenge.evaluation.backends.dockermachine.evaluator import (
     Evaluator,
 )
 from grandchallenge.evaluation.exceptions import EvaluationException
-from grandchallenge.evaluation.models import Job, Result, Method
+from grandchallenge.evaluation.models import Job, Result
 from grandchallenge.evaluation.utils import generate_rank_dict
 
 
@@ -96,7 +94,7 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
                 eval_image=job.method.image,
                 eval_image_sha256=job.method.image_sha256,
         ) as e:
-            metrics = e.evaluate() # This call is potentially very long
+            metrics = e.evaluate()  # This call is potentially very long
     except EvaluationException as exc:
         job = get_job(job_pk=job_pk)
         job.update_status(status=Job.FAILURE, output=exc.message)
@@ -105,40 +103,6 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
     create_result(metrics=metrics, job_pk=job_pk)
 
     return metrics
-
-
-@shared_task()
-def validate_method_async(*, method_pk: uuid.UUID):
-    instance = Method.objects.get(pk=method_pk)
-    instance.image.open(mode='rb')
-    try:
-        with tarfile.open(fileobj=instance.image, mode='r') as t:
-            member = dict(zip(t.getnames(), t.getmembers()))['manifest.json']
-            manifest = t.extractfile(member).read()
-    except (KeyError, tarfile.ReadError):
-        instance.status = (
-            'manifest.json not found at the root of the '
-            'container image file. Was this created '
-            'with docker save?'
-        )
-        instance.save()
-        # TODO: email admin
-        return
-
-    manifest = json.loads(manifest)
-    if len(manifest) != 1:
-        instance.status = (
-            'The container image file should only have '
-            '1 image. This file contains '
-            f'{len(manifest)}.'
-        )
-        instance.save()
-        # TODO: email admin
-        return
-
-    instance.image_sha256 = f"sha256:{manifest[0]['Config'][:64]}"
-    instance.ready = True
-    instance.save()
 
 
 @shared_task

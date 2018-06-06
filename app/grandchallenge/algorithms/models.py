@@ -21,8 +21,9 @@ class Algorithm(UUIDModel, DockerImageModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
 
+    # TODO: Split out the ipynb description as a separate object
     # TODO: add that this is an ipynb to the help_text
-    # TODO: should the ipynb be downloadable?
+    #  TODO: should the ipynb be downloadable?
     description = models.FileField(
         upload_to=algorithm_description_path,
         validators=[

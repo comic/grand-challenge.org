@@ -38,7 +38,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
         uploaded_file = form.cleaned_data['chunked_upload'][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
-        return super(MethodCreate, self).form_valid(form)
+        return super().form_valid(form)
 
 
 class MethodList(UserIsChallengeAdminMixin, ListView):

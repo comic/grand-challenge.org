@@ -10,7 +10,7 @@ from grandchallenge.evaluation.models import (
     Submission, Job, Method, Result, Config,
 )
 from grandchallenge.evaluation.tasks import (
-    evaluate_submission, validate_method_async, calculate_ranks
+    evaluate_submission, calculate_ranks
 )
 
 
@@ -37,12 +37,6 @@ def execute_job(instance: Job = None, created: bool = False, *_, **__):
         evaluate_submission.apply_async(
             task_id=str(instance.pk), kwargs={'job_pk': instance.pk}
         )
-
-
-@receiver(post_save, sender=Method)
-def validate_method(instance: Method = None, created: bool = False, *_, **__):
-    if created:
-        validate_method_async.apply_async(kwargs={'method_pk': instance.pk})
 
 
 @receiver(post_save, sender=Config)

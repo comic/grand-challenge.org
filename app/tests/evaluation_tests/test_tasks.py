@@ -5,9 +5,8 @@ import pytest
 from django.conf import settings
 
 from grandchallenge.evaluation.models import Method
-from grandchallenge.evaluation.tasks import (
-    evaluate_submission, validate_method_async
-)
+from grandchallenge.evaluation.tasks import evaluate_submission
+from grandchallenge.core.tasks import validate_docker_image_async
 from tests.factories import (
     SubmissionFactory, JobFactory, MethodFactory, UserFactory
 )
@@ -67,7 +66,7 @@ def test_method_validation(evaluation_image):
     # The method factory fakes the sha256 on creation
     assert method.image_sha256 != sha256
     assert method.ready == False
-    validate_method_async(method_pk=method.pk)
+    validate_docker_image_async(method_pk=method.pk)
     method = Method.objects.get(pk=method.pk)
     assert method.image_sha256 == sha256
     assert method.ready == True
@@ -78,7 +77,7 @@ def test_method_validation_invalid_dockefile(alpine_images):
     """ Uploading two images in a tar archive should fail """
     method = MethodFactory(image__from_path=alpine_images)
     assert method.ready == False
-    validate_method_async(method_pk=method.pk)
+    validate_docker_image_async(method_pk=method.pk)
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
     assert 'should only have 1 image' in method.status
@@ -89,7 +88,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
     """ Upload something that isnt a docker file should be invalid """
     method = MethodFactory(image__from_path=submission_file)
     assert method.ready == False
-    validate_method_async(method_pk=method.pk)
+    validate_docker_image_async(method_pk=method.pk)
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
     assert 'manifest.json not found' in method.status
