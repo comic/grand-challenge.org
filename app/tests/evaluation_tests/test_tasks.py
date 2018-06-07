@@ -3,6 +3,7 @@ from pathlib import Path
 import docker
 import pytest
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from grandchallenge.evaluation.models import Method
 from grandchallenge.evaluation.tasks import evaluate_submission
@@ -63,10 +64,17 @@ def test_method_validation(evaluation_image):
     """ The validator should set the correct sha256 and set the ready bit """
     container, sha256 = evaluation_image
     method = MethodFactory(image__from_path=container)
+
     # The method factory fakes the sha256 on creation
     assert method.image_sha256 != sha256
     assert method.ready == False
-    validate_docker_image_async(method_pk=method.pk)
+
+    validate_docker_image_async(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        object_name=method._meta.object_name
+    )
+
     method = Method.objects.get(pk=method.pk)
     assert method.image_sha256 == sha256
     assert method.ready == True
@@ -77,7 +85,14 @@ def test_method_validation_invalid_dockefile(alpine_images):
     """ Uploading two images in a tar archive should fail """
     method = MethodFactory(image__from_path=alpine_images)
     assert method.ready == False
-    validate_docker_image_async(method_pk=method.pk)
+
+    with pytest.raises(ValidationError):
+        validate_docker_image_async(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            object_name=method._meta.object_name
+        )
+
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
     assert 'should only have 1 image' in method.status
@@ -88,7 +103,14 @@ def test_method_validation_not_a_docker_tar(submission_file):
     """ Upload something that isnt a docker file should be invalid """
     method = MethodFactory(image__from_path=submission_file)
     assert method.ready == False
-    validate_docker_image_async(method_pk=method.pk)
+
+    with pytest.raises(ValidationError):
+        validate_docker_image_async(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            object_name=method._meta.object_name
+        )
+
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
     assert 'manifest.json not found' in method.status

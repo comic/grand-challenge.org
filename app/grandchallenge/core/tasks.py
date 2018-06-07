@@ -4,6 +4,7 @@ import uuid
 
 from celery import shared_task
 from django.apps import apps
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 
 
@@ -31,7 +32,7 @@ def validate_docker_image_async(
             'manifest.json not found at the root of the container image file. '
             'Was this created with docker save?'
         ))
-        raise e
+        raise ValidationError("Invalid Dockerfile")
 
     manifest = json.loads(manifest)
 
@@ -40,7 +41,7 @@ def validate_docker_image_async(
             f'The container image file should only have 1 image. '
             f'This file contains {len(manifest)}.'
         ))
-        raise ValueError
+        raise ValidationError("Invalid Dockerfile")
 
     model.objects.filter(pk=pk).update(
         image_sha256=f"sha256:{manifest[0]['Config'][:64]}", ready=True

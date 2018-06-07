@@ -4,7 +4,9 @@ from crispy_forms.layout import Submit
 from django import forms
 
 from grandchallenge.algorithms.models import Algorithm, Job
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.evaluation.validators import (
+    ExtensionValidator, MimeTypeValidator
+)
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
@@ -14,6 +16,15 @@ algorithm_upload_widget = uploader.AjaxUploadWidget(
 
 
 class AlgorithmForm(forms.ModelForm):
+    ipython_notebook = forms.FileField(
+        validators=[
+            MimeTypeValidator(allowed_types=('text/plain',))
+        ],
+        required=False,
+        help_text=(
+            "Please upload an iPython notebook that describes your algorithm"
+        ),
+    )
     chunked_upload = UploadedAjaxFileList(
         widget=algorithm_upload_widget,
         label='Algorithm Image',
@@ -33,7 +44,7 @@ class AlgorithmForm(forms.ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ('description', 'chunked_upload',)
+        fields = ('ipython_notebook', 'chunked_upload',)
 
 
 class JobForm(forms.ModelForm):
