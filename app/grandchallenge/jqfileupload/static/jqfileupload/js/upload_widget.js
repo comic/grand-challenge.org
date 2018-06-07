@@ -23,7 +23,7 @@ function upload_fold_unfold(element) {
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
         var is_multiupload = upload_element.attr("multi_upload") === "true";
-        var total_files = 0;
+        var total_expected_files = 0;
 
         var target_url = upload_element.attr("upload_target");
 
@@ -115,7 +115,8 @@ function upload_fold_unfold(element) {
             }
             update_hidden_form_element();
 
-            if (succeeded_uploads_list.length === total_files) {
+            if (succeeded_uploads_list.length === total_expected_files) {
+                total_expected_files = 0; // In case we submit does not work
                 upload_element.closest('form').submit();
             }
         }
@@ -142,13 +143,10 @@ function upload_fold_unfold(element) {
         var fileinput_button = upload_element.find("span.fileinput-button");
         var progress_div = upload_element.find("div.progress");
 
-        upload_element.on('change', function (e) {
-           total_files = e.target.files.length;
-        });
-
         upload_element.on('fileuploadadd', function (e, data) {
             fileinput_button.css("display","none");
             progress_div.css("display", "block");
+            total_expected_files += data.files.length;
         });
 
         upload_element.on('fileuploadsubmit', function (e, data) {
