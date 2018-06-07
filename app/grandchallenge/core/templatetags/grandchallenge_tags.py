@@ -746,8 +746,10 @@ class InsertFileNode(template.Node):
             return self.make_error_msg(error_msg)
 
         storage = DefaultStorage()
+
         try:
-            contents = storage.open(filepath, "r").read()
+            with storage.open(filepath, "r") as f:
+                contents = f.read()
         except Exception as e:
             return self.make_error_msg("error opening file:" + str(e))
 
@@ -768,11 +770,15 @@ class InsertFileNode(template.Node):
             currentpage = context.page
         else:
             currentpage = None
+
         if currentpage and os.path.splitext(filename)[1] != ".css":
-            html_out = self.replace_links(filename, contents, currentpage)
+            html_out = self.replace_links(
+                filename, contents, currentpage
+            ).decode()
         # rewrite relative links
         else:
             html_out = contents
+
         return html_out
 
 
