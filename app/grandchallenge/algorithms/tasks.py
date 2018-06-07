@@ -7,43 +7,15 @@ from celery import shared_task
 from grandchallenge.algorithms.models import Job, Result
 from grandchallenge.evaluation.backends.dockermachine.evaluator import \
     Evaluator
-from grandchallenge.evaluation.backends.dockermachine.utils import cleanup, \
-    put_file
-from grandchallenge.evaluation.exceptions import SubmissionError
 
 
 class AlgorithmExecutor(Evaluator):
-    def __init__(self, *args, input_files, **kwargs):
-        super().__init__(*args,
-                         input_file=None,
-                         results_file=Path("/output/results.json"),
-                         **kwargs)
-        self._input_files = input_files
-
-    def _provision_input_volume(self):
-        try:
-            with cleanup(
-                    self._client.containers.run(
-                        image=self._io_image,
-                        volumes={
-                            self._input_volume: {
-                                'bind': '/input/', 'mode': 'rw'
-                            }
-                        },
-                        detach=True,
-                        tty=True,
-                        **self._run_kwargs,
-                    )
-            ) as writer:
-
-                for case in self._input_files:
-                    dest_file = f"/input/{Path(case.name).name}"
-                    put_file(
-                        container=writer, src=case, dest=dest_file
-                    )
-
-        except Exception as exc:
-            raise SubmissionError(str(exc))
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            results_file=Path("/output/results.json"),
+            **kwargs
+        )
 
 
 @shared_task

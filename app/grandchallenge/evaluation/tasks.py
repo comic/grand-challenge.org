@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 
 from celery import shared_task
 from django.db import OperationalError
@@ -8,9 +9,11 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.backends.dockermachine.evaluator import (
     Evaluator,
 )
+from grandchallenge.evaluation.backends.dockermachine.utils import put_file
 from grandchallenge.evaluation.exceptions import EvaluationException
 from grandchallenge.evaluation.models import Job, Result
 from grandchallenge.evaluation.utils import generate_rank_dict
+from grandchallenge.evaluation.validators import get_file_mimetype
 
 
 def retry_if_dropped(func):
@@ -53,6 +56,34 @@ def create_result(*, metrics, job_pk):
     job.update_status(status=Job.SUCCESS)
 
 
+class SubmissionEvaluator(Evaluator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            results_file=Path("/output/metrics.json"),
+            **kwargs,
+        )
+
+    def _copy_input_files(self, writer):
+        for file in self._input_files:
+            dest_file = '/tmp/submission-src'
+            put_file(
+                container=writer, src=file, dest=dest_file
+            )
+
+            with file.open('rb') as f:
+                mimetype = get_file_mimetype(f)
+
+            if mimetype.lower() == 'application/zip':
+                # Unzip the file in the container rather than in the python
+                # process. With resource limits this should provide some
+                # protection against zip bombs etc.
+                writer.exec_run(f'unzip {dest_file} -d /input/')
+            else:
+                # Not a zip file, so must be a csv
+                writer.exec_run(f'mv {dest_file} /input/submission.csv')
+
+
 @shared_task
 def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
     """
@@ -80,7 +111,6 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
     job.update_status(status=Job.STARTED)
 
     if not job.method.ready:
-        # TODO: email admin
         job.update_status(
             status=Job.FAILURE,
             output=f"Method {job.method.id} was not ready to be used.",
@@ -88,9 +118,9 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         return {}
 
     try:
-        with Evaluator(
+        with SubmissionEvaluator(
                 job_id=job.pk,
-                input_file=job.submission.file,
+                input_files=(job.submission.file,),
                 eval_image=job.method.image,
                 eval_image_sha256=job.method.image_sha256,
         ) as e:
