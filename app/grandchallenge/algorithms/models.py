@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.conf import settings
 from django.db import models
 from social_django.fields import JSONField
 
@@ -17,10 +16,6 @@ def algorithm_description_path(instance, filename):
 
 
 class Algorithm(UUIDModel, DockerImageModel):
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
-
     # TODO: Split out the ipynb description as a separate object
     # TODO: add that this is an ipynb to the help_text
     #  TODO: should the ipynb be downloadable?

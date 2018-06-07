@@ -173,9 +173,6 @@ class Method(UUIDModel, DockerImageModel):
     """
     Stores the methods for performing an evaluation
     """
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE
     )

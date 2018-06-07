@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from social_django.fields import JSONField
 
@@ -71,6 +72,9 @@ def docker_image_path(instance, filename):
 
 
 class DockerImageModel(models.Model):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
     image = models.FileField(
         upload_to=docker_image_path,
         validators=[ExtensionValidator(allowed_extensions=('.tar',))],
