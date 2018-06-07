@@ -5,7 +5,7 @@ import pytest
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.models import Method, Result
 from grandchallenge.evaluation.tasks import evaluate_submission
 from grandchallenge.core.tasks import validate_docker_image_async
 from tests.factories import (
@@ -40,7 +40,13 @@ def test_submission_evaluation(client, evaluation_image, submission_file):
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
 
-    res = evaluate_submission(job=job)
+    res = evaluate_submission(
+        job_pk=job.pk,
+        job_app_label=job._meta.app_label,
+        job_model_name=job._meta.model_name,
+        result_app_label=Result._meta.app_label,
+        result_model_name=Result._meta.model_name,
+    )
 
     # The evaluation method should return the correct answer
     assert res["acc"] == 0.5
@@ -55,7 +61,15 @@ def test_submission_evaluation(client, evaluation_image, submission_file):
     )
 
     job = JobFactory(submission=submission, method=method)
-    res = evaluate_submission(job=job)
+
+    res = evaluate_submission(
+        job_pk=job.pk,
+        job_app_label=job._meta.app_label,
+        job_model_name=job._meta.model_name,
+        result_app_label=Result._meta.app_label,
+        result_model_name=Result._meta.model_name,
+    )
+
     assert res["acc"] == 0.5
 
 
@@ -72,7 +86,7 @@ def test_method_validation(evaluation_image):
     validate_docker_image_async(
         pk=method.pk,
         app_label=method._meta.app_label,
-        object_name=method._meta.object_name
+        model_name=method._meta.model_name
     )
 
     method = Method.objects.get(pk=method.pk)
@@ -90,7 +104,7 @@ def test_method_validation_invalid_dockefile(alpine_images):
         validate_docker_image_async(
             pk=method.pk,
             app_label=method._meta.app_label,
-            object_name=method._meta.object_name
+            model_name=method._meta.model_name
         )
 
     method = Method.objects.get(pk=method.pk)
@@ -108,7 +122,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
         validate_docker_image_async(
             pk=method.pk,
             app_label=method._meta.app_label,
-            object_name=method._meta.object_name
+            model_name=method._meta.model_name
         )
 
     method = Method.objects.get(pk=method.pk)

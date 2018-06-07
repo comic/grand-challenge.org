@@ -14,7 +14,7 @@ def validate_docker_image(
         validate_docker_image_async.apply_async(
             kwargs={
                 'app_label': instance._meta.app_label,
-                'object_name': instance._meta.object_name,
+                'model_name': instance._meta.model_name,
                 'pk': instance.pk,
             }
         )

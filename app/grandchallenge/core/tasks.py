@@ -16,9 +16,9 @@ def clear_sessions():
 
 @shared_task()
 def validate_docker_image_async(
-        *, pk: uuid.UUID, app_label: str, object_name: str
+        *, pk: uuid.UUID, app_label: str, model_name: str
 ):
-    model = apps.get_model(app_label=app_label, model_name=object_name)
+    model = apps.get_model(app_label=app_label, model_name=model_name)
 
     instance = model.objects.get(pk=pk)
     instance.image.open(mode='rb')
@@ -27,7 +27,7 @@ def validate_docker_image_async(
         with tarfile.open(fileobj=instance.image, mode='r') as t:
             member = dict(zip(t.getnames(), t.getmembers()))['manifest.json']
             manifest = t.extractfile(member).read()
-    except (KeyError, tarfile.ReadError) as e:
+    except (KeyError, tarfile.ReadError):
         model.objects.filter(pk=pk).update(status=(
             'manifest.json not found at the root of the container image file. '
             'Was this created with docker save?'

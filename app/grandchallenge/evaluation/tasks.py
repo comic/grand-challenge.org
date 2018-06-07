@@ -2,6 +2,7 @@ import uuid
 from pathlib import Path
 
 from celery import shared_task
+from django.apps import apps
 from django.db import OperationalError
 from django.db.models import Q
 
@@ -45,14 +46,34 @@ def retry_if_dropped(func):
 
 
 @retry_if_dropped
-def get_job(*, job_pk) -> Job:
-    return Job.objects.get(pk=job_pk)
+def get_model_instance(*, pk, app_label, model_name):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    return model.objects.get(pk=pk)
 
 
 @retry_if_dropped
-def create_result(*, metrics, job_pk):
-    job = get_job(job_pk=job_pk)
-    Result.objects.create(job=job, metrics=metrics, challenge=job.challenge)
+def create_result(
+        *,
+        metrics,
+        job_pk,
+        job_app_label,
+        job_model_name,
+        result_app_label,
+        result_model_name
+):
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+
+    # Note: assumes that the result and job classes are in the same app
+    result_model = apps.get_model(
+        app_label=result_app_label, model_name=result_model_name
+    )
+
+    result_model.objects.create(
+        job=job, metrics=metrics, challenge=job.challenge
+    )
+
     job.update_status(status=Job.SUCCESS)
 
 
@@ -85,7 +106,14 @@ class SubmissionEvaluator(Evaluator):
 
 
 @shared_task
-def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
+def evaluate_submission(
+        *,
+        job_pk: uuid.UUID,
+        job_app_label: str,
+        job_model_name: str,
+        result_app_label: str,
+        result_model_name: str,
+) -> dict:
     """
     Interfaces between Django and the Evaluation. Gathers together all
     resources, and then writes the result back to the database so that the
@@ -96,18 +124,10 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         serialise Job objects to JSON.
     :return:
     """
-    if (job_pk is None and job is None) or (
-            job_pk is not None and job is not None
-    ):
-        raise TypeError(
-            'You need to provide either a job or a job_id as '
-            'arguments to evaluate_submission, not none or both.'
-        )
 
-    if job:
-        job_pk = job.pk
-
-    job = get_job(job_pk=job_pk)
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
     job.update_status(status=Job.STARTED)
 
     if not job.method.ready:
@@ -126,11 +146,20 @@ def evaluate_submission(*, job_pk: uuid.UUID = None, job: Job = None) -> dict:
         ) as e:
             metrics = e.evaluate()  # This call is potentially very long
     except EvaluationException as exc:
-        job = get_job(job_pk=job_pk)
+        job = get_model_instance(
+            job_pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
         job.update_status(status=Job.FAILURE, output=exc.message)
         return {}
 
-    create_result(metrics=metrics, job_pk=job_pk)
+    create_result(
+        metrics=metrics,
+        job_pk=job_pk,
+        job_app_label=job_app_label,
+        job_model_name=job_model_name,
+        result_app_label=result_app_label,
+        result_model_name=result_model_name,
+    )
 
     return metrics
 

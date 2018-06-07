@@ -65,7 +65,7 @@ def docker_image_path(instance, filename):
         f'docker/'
         f'images/'
         f'{instance._meta.app_label.lower()}/'
-        f'{instance._meta.object_name.lower()}/'
+        f'{instance._meta.model_name.lower()}/'
         f'{instance.pk}/'
         f'{filename}'
     )
