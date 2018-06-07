@@ -35,7 +35,14 @@ def execute_job(instance: Job = None, created: bool = False, *_, **__):
     if created:
         # TODO: Create Timeout tests
         evaluate_submission.apply_async(
-            task_id=str(instance.pk), kwargs={'job_pk': instance.pk}
+            task_id=str(instance.pk),
+            kwargs={
+                'job_pk': instance.pk,
+                'job_app_label': instance._meta.app_label,
+                'job_model_name': instance._meta.model_name,
+                'result_app_label': Result._meta.app_label,
+                'result_model_name': Result._meta.model_name,
+            }
         )
 
 

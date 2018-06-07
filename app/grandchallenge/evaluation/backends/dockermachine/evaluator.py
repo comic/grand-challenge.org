@@ -2,6 +2,7 @@ import json
 import uuid
 from json import JSONDecodeError
 from pathlib import Path
+from typing import Tuple
 
 import docker
 from django.conf import settings
@@ -14,7 +15,6 @@ from grandchallenge.evaluation.backends.dockermachine.utils import (
 from grandchallenge.evaluation.exceptions import (
     SubmissionError, MethodContainerError,
 )
-from grandchallenge.evaluation.validators import get_file_mimetype
 
 
 class Evaluator(object):
@@ -23,14 +23,14 @@ class Evaluator(object):
             self,
             *,
             job_id: uuid.UUID,
-            input_file: File,
+            input_files: Tuple[File, ...],
             eval_image: File,
             eval_image_sha256: str,
-            results_file: Path = Path("/output/metrics.json"),
+            results_file: Path,
     ):
         super().__init__()
         self._job_id = str(job_id)
-        self._input_file = input_file
+        self._input_files = input_files
         self._eval_image = eval_image
         self._eval_image_sha256 = eval_image_sha256
         self._io_image = 'alpine:3.6'
@@ -84,7 +84,6 @@ class Evaluator(object):
             )
 
     def _provision_input_volume(self):
-        dest_file = '/tmp/submission-src'
         try:
             with cleanup(
                     self._client.containers.run(
@@ -99,24 +98,17 @@ class Evaluator(object):
                         **self._run_kwargs,
                     )
             ) as writer:
-                put_file(
-                    container=writer, src=self._input_file, dest=dest_file
-                )
-
-                with self._input_file.open('rb') as f:
-                    mimetype = get_file_mimetype(f)
-
-                if mimetype.lower() == 'application/zip':
-                    # Unzip the file in the container rather than in the python
-                    # process. With resource limits this should provide some
-                    # protection against zip bombs etc.
-                    writer.exec_run(f'unzip {dest_file} -d /input/')
-                else:
-                    # Not a zip file, so must be a csv
-                    writer.exec_run(f'mv {dest_file} /input/submission.csv')
-
+                self._copy_input_files(writer=writer)
         except Exception as exc:
             raise SubmissionError(str(exc))
+
+    def _copy_input_files(self, writer):
+        for file in self._input_files:
+            put_file(
+                container=writer,
+                src=file,
+                dest=f"/input/{Path(file.name).name}"
+            )
 
     def _run_evaluation(self):
         try:
