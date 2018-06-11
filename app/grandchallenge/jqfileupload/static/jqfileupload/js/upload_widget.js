@@ -64,11 +64,9 @@ function upload_fold_unfold(element) {
             show_drop_overlay();
         });
         drop_here_floater.on('dragleave', function (e) {
-            console.log("dragleave");
             hide_drop_overlay();
         });
         drop_here_floater.on('dragexit', function (e) {
-            console.log("dragexit");
             hide_drop_overlay();
         });
         drop_here_floater.on('drop', function (e) {
@@ -144,7 +142,9 @@ function upload_fold_unfold(element) {
         var progress_div = upload_element.find("div.progress");
 
         upload_element.on('fileuploadadd', function (e, data) {
-            fileinput_button.css("display","none");
+            if (!is_multiupload) {
+                fileinput_button.css("display", "none");
+            }
             progress_div.css("display", "block");
             total_expected_files += data.files.length;
         });
@@ -165,9 +165,9 @@ function upload_fold_unfold(element) {
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
+            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
             if (!is_multiupload) {
                 clear_succeeded_list();
-                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
             }
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];

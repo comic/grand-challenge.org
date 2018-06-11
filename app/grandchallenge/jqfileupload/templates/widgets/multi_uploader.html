@@ -3,17 +3,22 @@
      upload_target="{{ target }}"
      multi_upload="{{ multi_upload }}">
 
-    <span class="btn btn-primary fileinput-button">
-        <span>Choose Files</span>
-        <input type="file" name="files[]" form="(null)"
-               {% if multi_upload == "true" %}multiple{% endif %}>
-    </span>
+    <div class="top-row">
+        <span class="btn btn-primary fileinput-button">
+            <span>Choose Files</span>
+            <input type="file" name="files[]" form="(null)"
+                   {% if multi_upload == "true" %}multiple{% endif %}>
+        </span>
 
-    <div class="progress" style="display:none">
-        <div class="progress-bar progress-bar-info progress-bar-striped active"
-             role="progressbar"
-             style="width:0">
+        <div class="progress" style="display:none">
+            <div class="progress-bar progress-bar-info progress-bar-striped active"
+                 role="progressbar"
+                 style="width:0">
+            </div>
         </div>
+    </div>
+
+    <div class="failed-list">
     </div>
 
     <input name="{{ name }}" type="hidden" value="{{ value }}"/>

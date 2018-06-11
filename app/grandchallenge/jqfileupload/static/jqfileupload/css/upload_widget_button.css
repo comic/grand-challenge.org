@@ -1,10 +1,10 @@
-.fileinput-button {
+div.file-upload .fileinput-button {
     position: relative;
     overflow: hidden;
     display: inline-block;
 }
 
-.fileinput-button input {
+div.file-upload .fileinput-button input {
     position: absolute;
     top: 0;
     right: 0;
@@ -23,4 +23,31 @@
         font-size: 100%;
         height: 100%;
     }
+}
+
+div.file-upload div.top-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+div.file-upload div.top-row > span.fileinput-button {
+    flex-grow: 0;
+    margin-right: 10pt;
+}
+
+div.file-upload div.top-row div.progress {
+    flex-grow: 1;
+    margin: 0;
+}
+
+div.file-upload div.failed-list p {
+    margin: 0cm 0cm 0cm .5cm;
+}
+
+div.file-upload div.failed-list span.left {
+    display: inline-block;
+    width: 10cm;
 }
