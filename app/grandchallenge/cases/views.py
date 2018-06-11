@@ -3,8 +3,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 
-from grandchallenge.cases.forms import CaseForm
-from grandchallenge.cases.models import Case, CaseFile
+from grandchallenge.cases.forms import CaseForm, UploadRawImagesForm
+from grandchallenge.cases.models import Case, CaseFile, RawImageFile, \
+    RawImageUploadSession
 
 
 class CaseList(ListView):
@@ -31,3 +32,14 @@ class CaseCreate(LoginRequiredMixin, CreateView):
 
 class CaseDetail(DetailView):
     model = Case
+
+
+class UploadRawFiles(LoginRequiredMixin, CreateView):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        redirect = super().form_valid(form)
+
+        return redirect
