@@ -17,7 +17,6 @@ class ChallengeCreateForm(forms.ModelForm):
         model = Challenge
         fields = [
             'short_name',
-            'logo',
             'description',
             'require_participant_review',
             'use_evaluation',
@@ -32,7 +31,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         self.helper.layout = Layout(
             TabHolder(
                 Tab('Information', 'title', 'description', 'logo'),
-                Tab('Layout', 'header_image', 'skin', 'disclaimer'),
+                Tab('Layout', 'header_image', 'disclaimer'),
                 Tab(
                     'Metadata',
                     'workshop_date',
@@ -66,7 +65,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             'description',
             'logo',
             'header_image',
-            'skin',
             'disclaimer',
             'workshop_date',
             'event_name',
