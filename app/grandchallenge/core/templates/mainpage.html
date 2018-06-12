@@ -7,28 +7,7 @@
 
 {% block headerLink %}"/"{% endblock %}
 
-{% block headerTitle %}
-    {% if site.header_image == "" %}
-        <div class="noimage">
-            {{ site.short_name }}
-        </div>
-    {% else %}
-        <style>
-            #headerTitle {
-                padding: 0;
-            }
-        </style>
-        <div class="image">
-            <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
-                 class="headerImage">
-        </div>
-    {% endif %}
-{% endblock %}
-
-{% block challengeNav %}
-{% endblock %}
-
-
+{% block challengeNav %}{% endblock %}
 
 {% block pagecontent %}
 
