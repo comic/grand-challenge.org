@@ -224,7 +224,7 @@ class Challenge(models.Model):
             'used.'
         ),
     )
-    logo = models.CharField(
+    logo_path = models.CharField(
         max_length=255,
         default=public_folder + "/logo.png",
         help_text="100x100 pixel image file to use as logo"
@@ -514,7 +514,7 @@ class Challenge(models.Model):
         overview page listing all projects
         """
         thumb_image_url = reverse(
-            'project_serve_file', args=[self.short_name, self.logo]
+            'project_serve_file', args=[self.short_name, self.logo_path]
         )
         args = {
             "abreviation": self.short_name,
@@ -526,7 +526,7 @@ class Challenge(models.Model):
             "event name": self.event_name,
             "year": "",
             "event URL": self.event_url,
-            "image URL": self.logo,
+            "image URL": self.logo_path,
             "thumb_image_url": thumb_image_url,
             "website section": "active challenges",
             "overview article url": self.publication_url,

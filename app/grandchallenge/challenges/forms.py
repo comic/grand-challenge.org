@@ -30,7 +30,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab('Information', 'title', 'description', 'logo'),
+                Tab('Information', 'title', 'description', 'logo_path'),
                 Tab('Layout', 'header_image', 'skin', 'disclaimer'),
                 Tab(
                     'Metadata',
@@ -63,7 +63,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         fields = [
             'title',
             'description',
-            'logo',
+            'logo_path',
             'header_image',
             'skin',
             'disclaimer',
