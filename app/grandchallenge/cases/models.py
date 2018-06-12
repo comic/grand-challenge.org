@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.db import models
-from django.forms import UUIDField
 from django.utils import timezone
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.validators import ExtensionValidator
-from grandchallenge.jqfileupload.models import StagedFile
 
 
 def case_file_path(instance, filename):
@@ -48,17 +46,42 @@ class Image(UUIDModel):
     image_handle = models.TextField()
 
 
+class ImageFile(UUIDModel):
+    image = models.ForeignKey(to=Image)
+    file = models.FileField(
+        upload_to=image_file_path,
+        blank=False,
+    )
+
+
+class UPLOAD_SESSION_STATE:
+    created = "created"
+    queued = "queued"
+    running = "running"
+    stopped = "stopped"
+
+
 class RawImageUploadSession(UUIDModel):
     """
     A session keeps track of uploaded files and forms the basis of a processing
     task that tries to make sense of the uploaded files to form normalized
     images that can be fed to processing tasks.
     """
-    session_state = models.CharField(max_length=16)
+    session_state = models.CharField(
+        max_length=16,
+        default=UPLOAD_SESSION_STATE.created,
+    )
 
     created_on = models.DateTimeField(
         blank=False,
         default=timezone.now,
+    )
+
+    error_message = models.CharField(
+        max_length=256,
+        blank=False
+        null=True,
+        default=None,
     )
 
     def get_absolute_url(self):
@@ -72,8 +95,15 @@ class RawImageFile(UUIDModel):
     """
     upload_session = models.ForeignKey(
         RawImageUploadSession,
-        null=True,
-        on_delete=models.SET_NULL,
+        blank=False,
+        on_delete=models.CASCADE,
     )
 
     staged_file_id = models.UUIDField(blank=False)
+
+    error = models.CharField(
+        max_length=128,
+        blank=False,
+        null=True,
+        default=None
+    )
