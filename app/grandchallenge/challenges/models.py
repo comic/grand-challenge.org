@@ -46,7 +46,6 @@ class ProjectLink(object):
         "event name": "",
         "year": "",
         "event URL": "",
-        "image URL": "",
         "website section": "",
         "overview article url": "",
         "overview article journal": "",
@@ -184,6 +183,9 @@ def validate_nounderscores(value):
 def get_logo_path(instance, filename):
     return f"logos/{instance.pk}/{filename}"
 
+def get_banner_path(instance, filename):
+    return f"banners/{instance.pk}/{filename}"
+
 
 class Challenge(models.Model):
     """
@@ -230,6 +232,10 @@ class Challenge(models.Model):
     )
     logo = models.ImageField(
         upload_to=get_logo_path,
+        blank=True,
+    )
+    banner = models.ImageField(
+        upload_to=get_banner_path,
         blank=True,
     )
     logo_path = models.CharField(
@@ -539,7 +545,6 @@ class Challenge(models.Model):
             "event name": self.event_name,
             "year": "",
             "event URL": self.event_url,
-            "image URL": thumb_image_url,
             "thumb_image_url": thumb_image_url,
             "website section": "active challenges",
             "overview article url": self.publication_url,
