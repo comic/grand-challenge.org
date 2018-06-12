@@ -50,4 +50,5 @@ div.file-upload div.failed-list p {
 div.file-upload div.failed-list span.left {
     display: inline-block;
     width: 10cm;
+    overflow: hidden;
 }

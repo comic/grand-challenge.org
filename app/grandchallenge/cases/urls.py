@@ -20,7 +20,7 @@ urlpatterns = [
 
     path('new/upload/', UploadRawFiles.as_view(), name='create'),
     path(
-        f"new/{upload_raw_files_widget.ajax_target_path}",
+        f"new/upload/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-raw-image-files-ajax",
     ),
