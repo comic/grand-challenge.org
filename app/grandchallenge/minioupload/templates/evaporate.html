@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static from staticfiles %}
+{% load url from grandchallenge_tags %}
+
+{% block html_header %}
+    {{ block.super }}
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.2.43.min.js"></script>
+    <script language="javascript" type="text/javascript"
+            src="{% static 'EvaporateJS-2.1.4/evaporate.js' %}"></script>
+    <link rel="stylesheet" type="text/css"
+          href="{% static "jqfileupload/css/upload_widget_button.css" %}">
+{% endblock %}
+
+{% block content %}
+
+    <div class="file-upload drop-here-floater" id="{{ attr.id }}">
+
+    <span class="btn btn-primary fileinput-button" id="file-selector-span">
+        <span>Choose File</span>
+        <input type="file" id="file-selector" name="files[]" form="(null)">
+    </span>
+
+        <div class="progress" id="file-upload-progress" style="display:none">
+            <div class="progress-bar progress-bar-info progress-bar-striped active"
+                 role="progressbar"
+                 id="file-upload-progress-bar"
+                 style="width:0">
+            </div>
+        </div>
+
+        <input name="{{ name }}" type="hidden" value="{{ value }}"/>
+
+    </div>
+
+    <div><span class="label" id="file-upload-message"></span></div>
+
+
+    <script language="javascript">
+        "use strict";
+
+        Evaporate.create({
+            aws_key: '{{ MINIO_ACCESS_KEY }}',
+            bucket: '{{ MINIO_BUCKET_NAME }}',
+            awsRegion: '{{ MINIO_REGION }}',
+            signerUrl: '{% url "minioupload:presign" %}',
+            sendCanonicalRequestToSignerUrl: true,
+            aws_url: '{{ MINIO_PUBLIC_URL }}',
+            awsSignatureVersion: '4',
+            computeContentMd5: true,
+            cryptoMd5Method: function (data) {
+                return AWS.util.crypto.md5(data, 'base64');
+            },
+            cryptoHexEncodedHash256: function (data) {
+                return AWS.util.crypto.sha256(data, 'hex');
+            }
+        })
+            .then(
+                // Successfully created evaporate instance `_e_`
+                function success(_e_) {
+                    var fileSelector = document.getElementById('file-selector'),
+                        fileSelectorSpan = document.getElementById('file-selector-span'),
+                        progressDiv = document.getElementById('file-upload-progress'),
+                        progressBar = document.getElementById('file-upload-progress-bar'),
+                        messageSpan = document.getElementById('file-upload-message'),
+                        filePromises = [];
+
+                    // Start a new evaporate upload anytime new files are added in the file input
+                    fileSelector.onchange = function (evt) {
+                        var files = evt.target.files;
+
+                        for (var i = 0; i < files.length; i++) {
+                            var promise = _e_.add({
+                                name: files[i].name,
+                                file: files[i],
+                                progress: function (progress) {
+                                    // Update progress
+                                    $(progressBar).css(
+                                        'width',
+                                        100.0 * progress + '%'
+                                    );
+                                }
+                            })
+                                .then(function (awsKey) {
+                                    // This file is complete
+                                });
+                            filePromises.push(promise);
+                        }
+
+                        $(fileSelectorSpan).css("display", "none");
+                        $(progressDiv).css("display", "block");
+
+                        // Wait until all promises are complete
+                        Promise.all(filePromises)
+                            .then(function () {
+                                // All files were uploaded successfully
+                                $(progressBar).removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
+                                $(messageSpan).addClass("label-success");
+                                messageSpan.innerHTML = "Files successfully uploaded."
+                            }, function (reason) {
+                                // All files were not uploaded successfully
+                                $(progressBar).removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
+                                $(messageSpan).addClass("label-danger");
+                                messageSpan.innerHTML = "Failed to upload file: " + reason;
+                            });
+                    };
+                },
+
+                // Failed to create new instance of evaporate
+                function failure(reason) {
+                    var messageSpan = document.getElementById('file-upload-message');
+                    $(messageSpan).addClass("label-danger");
+                    messageSpan.innerHTML = "Failed to initialize upload: " + reason;
+                }
+            );
+    </script>
+{% endblock %}

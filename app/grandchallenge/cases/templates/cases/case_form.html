@@ -1,0 +1,14 @@
+{% extends 'site.html' %}
+{% load grandchallenge_tags %}
+{% load crispy from crispy_forms_tags %}
+
+
+{% block content %}
+
+    {% crispy form %}
+
+    {% if object %}
+     {# TODO: ADD ALL THE STUFF TO DO S3 UPLOADING HERE #}
+    {% endif %}
+
+{% endblock %}

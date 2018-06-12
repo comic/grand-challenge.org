@@ -1,10 +1,9 @@
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
-from six import StringIO
 
 
 def fake_file(filename, content="mock content"):

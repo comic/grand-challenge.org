@@ -3,7 +3,6 @@ import glob
 import os
 from datetime import timedelta
 
-import six
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
@@ -258,6 +257,8 @@ LOCAL_APPS = [
     'grandchallenge.profiles',
     'grandchallenge.teams',
     'grandchallenge.uploads',
+    'grandchallenge.minioupload',
+    'grandchallenge.cases',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -438,6 +439,12 @@ MESSAGE_TAGS = {
 
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 
+MINIO_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY', '')
+MINIO_SECRET_KEY = os.environ.get('MINIO_SECRET_KEY', '')
+MINIO_PUBLIC_URL = os.environ.get('MINIO_PUBLIC_URL', '')
+MINIO_DEFAULT_BUCKET_NAME = os.environ.get('MINIO_DEFAULT_BUCKET_NAME', 'testbucket')
+MINIO_REGION = os.environ.get('MINIO_REGION', 'us-east-1')
+
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
 # current dir. XX should be a number which determines the order of execution. 
@@ -454,7 +461,7 @@ conf_files.sort()
 for conf_file in conf_files:
     with open(conf_file) as f:
         code = compile(f.read(), conf_file, 'exec')
-        six.exec_(code)
+        exec(code)
 
 CKEDITOR_UPLOAD_PATH = 'uploads/'
 

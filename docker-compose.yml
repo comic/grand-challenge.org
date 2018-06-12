@@ -16,12 +16,15 @@ services:
     links:
       - db:mysql
       - memcached
+      - minio
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
       - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - dev.env
     build:
       args:
         - PIPENV_DEV=--dev
@@ -35,6 +38,7 @@ services:
       - "443:443"
     links:
       - web
+      - minio
     volumes:
       - static:/srv/public/static/:ro
       - media:/dbox/Dropbox/media/:ro
@@ -112,6 +116,15 @@ services:
       - rabbitmq
     restart: always
 
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+    command: server /data
+    env_file:
+      - dev.env
+
 volumes:
   static:
   media:
+  minio-data:
