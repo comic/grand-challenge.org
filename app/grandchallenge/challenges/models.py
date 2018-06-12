@@ -181,6 +181,10 @@ def validate_nounderscores(value):
         )
 
 
+def get_logo_path(instance, filename):
+    return f"logos/{instance.pk}/{filename}"
+
+
 class Challenge(models.Model):
     """
     A collection of HTML pages using a certain skin. Pages can be browsed and
@@ -223,6 +227,10 @@ class Challenge(models.Model):
             ' page. If this is blank the short name of the challenge will be '
             'used.'
         ),
+    )
+    logo = models.ImageField(
+        upload_to=get_logo_path,
+        blank=True,
     )
     logo_path = models.CharField(
         max_length=255,
@@ -513,9 +521,14 @@ class Challenge(models.Model):
         Return a ProjectLink representation of this comicsite, to show in an
         overview page listing all projects
         """
-        thumb_image_url = reverse(
-            'project_serve_file', args=[self.short_name, self.logo_path]
-        )
+
+        try:
+            thumb_image_url = self.logo.url
+        except ValueError:
+            thumb_image_url = reverse(
+                'project_serve_file', args=[self.short_name, self.logo_path]
+            )
+
         args = {
             "abreviation": self.short_name,
             "title": self.title if self.title else self.short_name,
@@ -526,7 +539,7 @@ class Challenge(models.Model):
             "event name": self.event_name,
             "year": "",
             "event URL": self.event_url,
-            "image URL": self.logo_path,
+            "image URL": thumb_image_url,
             "thumb_image_url": thumb_image_url,
             "website section": "active challenges",
             "overview article url": self.publication_url,
