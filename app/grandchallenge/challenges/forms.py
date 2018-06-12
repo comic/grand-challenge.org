@@ -30,10 +30,11 @@ class ChallengeUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab('Information', 'title', 'description', 'logo'),
-                Tab('Layout', 'header_image', 'skin', 'disclaimer'),
+                Tab('Information', 'title', 'description', ),
+                Tab('Images', 'logo', 'banner', ),
                 Tab(
                     'Metadata',
+                    'disclaimer',
                     'workshop_date',
                     'event_name',
                     'event_url',
@@ -47,7 +48,7 @@ class ChallengeUpdateForm(forms.ModelForm):
                     'publication_journal_name',
                 ),
                 Tab(
-                    'Users',
+                    'Registration',
                     'use_registration_page',
                     'require_participant_review',
                     'registration_page_text',
@@ -64,8 +65,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             'title',
             'description',
             'logo',
-            'header_image',
-            'skin',
+            'banner',
             'disclaimer',
             'workshop_date',
             'event_name',
