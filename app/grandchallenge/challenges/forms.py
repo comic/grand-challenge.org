@@ -23,24 +23,6 @@ class ChallengeCreateForm(forms.ModelForm):
         ]
 
 
-class ExternalChallengeCreateForm(forms.ModelForm):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit('save', 'Save'))
-
-    class Meta:
-        model = ExternalChallenge
-        fields = (
-            "homepage",
-            "short_name",
-            "title",
-            "description",
-            "logo",
-        )
-
-
 class ChallengeUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -104,3 +86,35 @@ class ChallengeUpdateForm(forms.ModelForm):
             'hide_footer',
             'use_evaluation',
         ]
+
+
+class ExternalChallengeCreateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'Save'))
+
+    class Meta:
+        model = ExternalChallenge
+        fields = (
+            "homepage",
+            "short_name",
+            "title",
+            "description",
+            "logo",
+        )
+
+
+class ExternalChallengeUpdateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'Save'))
+
+    class Meta:
+        model = ExternalChallenge
+        fields = (
+            "hidden",
+        )

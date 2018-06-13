@@ -5,6 +5,7 @@ from grandchallenge.challenges.views import (
     UsersChallengeList,
     ChallengeUpdate,
     ExternalChallengeCreate,
+    ExternalChallengeUpdate,
     ChallengeList,
 )
 
@@ -20,7 +21,11 @@ urlpatterns = [
         ExternalChallengeCreate.as_view(),
         name='external-create'
     ),
-
+    path(
+        "external/<slug:short_name>/",
+        ExternalChallengeUpdate.as_view(),
+        name="external-update",
+    ),
     path(
         '<slug:challenge_short_name>/update/',
         ChallengeUpdate.as_view(),

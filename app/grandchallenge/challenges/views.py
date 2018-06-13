@@ -4,10 +4,15 @@ from django.db.models import Q
 from django.views.generic import CreateView, ListView, UpdateView
 
 from grandchallenge.challenges.forms import (
-    ChallengeCreateForm, ChallengeUpdateForm, ExternalChallengeCreateForm
+    ChallengeCreateForm,
+    ChallengeUpdateForm,
+    ExternalChallengeCreateForm,
+    ExternalChallengeUpdateForm
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
-from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
+from grandchallenge.core.permissions.mixins import (
+    UserIsChallengeAdminMixin, UserIsStaffMixin
+)
 from grandchallenge.core.urlresolvers import reverse
 
 
@@ -55,13 +60,32 @@ class ChallengeUpdate(
     template_name_suffix = '_update'
 
 
-class ExternalChallengeCreate(LoginRequiredMixin, CreateView):
+class ExternalChallengeCreate(
+    LoginRequiredMixin, SuccessMessageMixin, CreateView
+):
     model = ExternalChallenge
     form_class = ExternalChallengeCreateForm
+    success_message = (
+        "Your challenge has been successfully submitted. "
+        "An admin will review your challenge before it is published."
+    )
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("challenges:list")
+
+class ExternalChallengeUpdate(
+    UserIsStaffMixin, SuccessMessageMixin, UpdateView
+):
+    model = ExternalChallenge
+    slug_field = "short_name"
+    slug_url_kwarg = "short_name"
+    form_class = ExternalChallengeUpdateForm
+    template_name_suffix = "_update"
+    success_message = "Challenge updated"
 
     def get_success_url(self):
         return reverse("challenges:list")

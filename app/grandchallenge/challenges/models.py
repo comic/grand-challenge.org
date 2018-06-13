@@ -1,5 +1,6 @@
 import copy
 import datetime
+import hashlib
 import logging
 import os
 
@@ -299,7 +300,13 @@ class ChallengeBase(models.Model):
 
     @property
     def thumb_image_url(self):
-        return self.logo.url
+        try:
+            return self.logo.url
+        except ValueError:
+            return (
+                f"https://www.gravatar.com/avatar/"
+                f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
+            )
 
     @property
     def submission_url(self):
@@ -572,7 +579,7 @@ class Challenge(ChallengeBase):
     def thumb_image_url(self):
         """ Legacy method for challenges that still use logo_path """
         try:
-            return super().thumb_image_url
+            return self.logo.url
         except ValueError:
             return reverse(
                 'project_serve_file', args=[self.short_name, self.logo_path]

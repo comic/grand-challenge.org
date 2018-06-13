@@ -108,18 +108,9 @@
 
         <script>
             //url prefix for API functions
-            API_PREFIX = "{% get_project_prefix %}api",
+            API_PREFIX = "{% get_project_prefix %}api";
 
                 $(document).ready(function () {
-
-                    // delete message on click
-                    $(document).on('click', '.del-msg', function () {
-                        $('.messagelist').attr('style', 'display:none;');
-                    });
-                    // messages timeout
-                    setTimeout(function () {
-                        $('.messagelist').fadeOut('slow');
-                    }, 5000); // <-- time in milliseconds, 1000 =  1 sec
 
                     $('table.sortable').dataTable({
                         "bJQueryUI": false,
@@ -225,6 +216,9 @@
                         {% else %}
                             {{ message }}
                         {% endif %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                     </div>
                 {% endfor %}
             </div>

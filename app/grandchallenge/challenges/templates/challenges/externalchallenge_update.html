@@ -1,0 +1,15 @@
+{% extends "mainpage.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}Update Existing Challenge{% endblock %}
+
+{% block contentTitle %}
+    <h2>Update an Existing Challenge</h2>
+{% endblock %}
+
+{% block pagecontent %}
+    {% crispy form %}
+
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}
