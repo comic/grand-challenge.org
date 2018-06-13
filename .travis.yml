@@ -18,14 +18,17 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - pip install codecov pytest-cov
+  - sudo mkdir -p /tmp/coverage
+  - sudo chmod a+w /tmp/coverage
 
 install:
   - docker-compose up --build -d
 
 script:
-  - docker-compose run web dockerize -wait tcp://db:3306 -timeout 30s bash -c "python manage.py collectstatic --noinput && py.test --cov-report= --cov=."
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web dockerize -wait tcp://db:3306 -timeout 30s bash -c "python manage.py collectstatic --noinput && COVERAGE_FILE=/tmp/coverage/.coverage py.test --cov-report= --cov=."
 
 after_success:
-  - mv app/.coverage .coverage.docker
+  - mv /tmp/coverage/.coverage .coverage.docker
   - coverage combine
   - codecov
+

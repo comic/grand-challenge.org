@@ -26,9 +26,13 @@
 {% endblock %}
 
 {% block headerTitle %}
-    {% if site.header_image == "" %}
+    {% if not site.header_image and not site.banner %}
         <div class="noimage">
-            {{ site.short_name }}
+            {% if site.title %}
+                {{ site.title }}
+            {% else %}
+                {{ site.short_name }}
+            {% endif %}
         </div>
     {% else %}
         <style>
@@ -37,8 +41,18 @@
             }
         </style>
         <div class="image">
-            <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
-                 class="headerImage">
+
+            {% if site.banner %}
+
+                <img src="{{ site.banner.url }}" class="headerImage">
+
+            {% else %}
+
+                <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
+                     class="headerImage">
+
+            {% endif %}
+
         </div>
     {% endif %}
 {% endblock %}

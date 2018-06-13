@@ -22,7 +22,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir /app
+RUN mkdir -p /app /static /dbox/Dropbox/media
 WORKDIR /app
 
 ARG PIPENV_DEV
@@ -31,6 +31,8 @@ ADD Pipfile.lock /app/
 RUN python -m pip install -U pipenv
 RUN pipenv install --system $PIPENV_DEV
 
-ADD ./app /app/
+RUN chown 2001:2001 /app /static /dbox/Dropbox/media
 
-RUN mkdir /static
+USER 2001:2001
+
+ADD ./app /app/
