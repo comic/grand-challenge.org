@@ -19,6 +19,7 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
+  - sudo chmod a+w /tmp/coverage
 
 install:
   - docker-compose up --build -d
