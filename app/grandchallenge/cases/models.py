@@ -6,6 +6,7 @@ from django.utils import timezone
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.jqfileupload.models import StagedFile
 
 
 def case_file_path(instance, filename):
@@ -104,7 +105,15 @@ class RawImageFile(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    staged_file_id = models.UUIDField(blank=False)
+    # Copy in case staged_file_id is set to None
+    filename = models.CharField(
+        max_length=128,
+        blank=False,
+    )
+
+    staged_file_id = models.UUIDField(
+        blank=True,
+        null=True)
 
     error = models.CharField(
         max_length=128,

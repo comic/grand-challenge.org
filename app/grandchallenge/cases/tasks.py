@@ -10,7 +10,8 @@ from django.db import transaction
 
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
+    NotFoundError
 
 
 class ProvisioningError(Exception): pass
@@ -207,7 +208,12 @@ def build_images(upload_session_uuid: UUID):
                     raw_file.error = \
                         "File could not be processed by any image builders"
 
-                #
+                # Delete any touched file data
+                for file in session_files:
+                    try:
+                        file.staged_file_id = None
+                    except NotFoundError:
+                        pass
             except Exception as e:
                 upload_session.error_message = str(e)
         finally:

@@ -10,7 +10,7 @@ app_name = 'cases'
 
 urlpatterns = [
     path('', CaseList.as_view(), name='list'),
-    path('create/', CaseCreate.as_view(), name='create'),
+    #path('create/', CaseCreate.as_view(), name='create'),
     path(
         f'create/{case_upload_widget.ajax_target_path}',
         case_upload_widget.handle_ajax,

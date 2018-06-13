@@ -5,6 +5,7 @@ import logging
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.db import transaction
 
 from grandchallenge.cases.models import Case, RawImageUploadSession, \
     RawImageFile
@@ -63,16 +64,19 @@ class UploadRawImagesForm(forms.ModelForm):
         self.helper.add_input(Submit("save", "Submit"))
 
     def save(self, commit=True):
-        instance = super(UploadRawImagesForm, self).save(commit=commit)
+        with transaction.atomic():
+            instance = super(UploadRawImagesForm, self).save(commit=commit)
 
-        # Create links between the created session and all uploaded files
-        uploaded_files = self.cleaned_data["files"]
-        uploaded_files: List[StagedAjaxFile]
+            # Create links between the created session and all uploaded files
+            uploaded_files = self.cleaned_data["files"]
+            uploaded_files: List[StagedAjaxFile]
 
-        for uploaded_file in uploaded_files:
-            RawImageFile.objects.create(
-                upload_session=instance,
-                staged_file_id=uploaded_file.uuid)
+            for uploaded_file in uploaded_files:
+                RawImageFile.objects.create(
+                    upload_session=instance,
+                    filename=uploaded_file.name,
+                    staged_file_id=uploaded_file.uuid,
+                )
 
         return instance
 
