@@ -47,7 +47,11 @@ class Image(UUIDModel):
 
 
 class ImageFile(UUIDModel):
-    image = models.ForeignKey(to=Image)
+    image = models.ForeignKey(
+        to=Image,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     file = models.FileField(
         upload_to=image_file_path,
         blank=False,
@@ -79,7 +83,7 @@ class RawImageUploadSession(UUIDModel):
 
     error_message = models.CharField(
         max_length=256,
-        blank=False
+        blank=False,
         null=True,
         default=None,
     )
