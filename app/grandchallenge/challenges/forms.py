@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 
 
 class ChallengeCreateForm(forms.ModelForm):
@@ -21,6 +21,24 @@ class ChallengeCreateForm(forms.ModelForm):
             'require_participant_review',
             'use_evaluation',
         ]
+
+
+class ExternalChallengeCreateForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit('save', 'Save'))
+
+    class Meta:
+        model = ExternalChallenge
+        fields = (
+            "homepage",
+            "short_name",
+            "title",
+            "description",
+            "logo",
+        )
 
 
 class ChallengeUpdateForm(forms.ModelForm):

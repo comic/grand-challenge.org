@@ -165,6 +165,8 @@
             <div class="collapse navbar-collapse "
                  id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    <li><a class="metaFooterMenuItem"
+                           href="{% url 'challenges:list' %}">All Challenges</a></li>
                     {% metafooterpages %}
                 </ul>
                 <div id="topheader_right">
@@ -188,7 +190,7 @@
                                            href="{% url 'userena_profile_detail' user.username %}">My
                                         Profile</a>
                                     </li>
-                                    <li><a href="{% url 'challenges:list' %}">My
+                                    <li><a href="{% url 'challenges:users-list' %}">My
                                         Challenges</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a class="metaFooterMenuItem last"

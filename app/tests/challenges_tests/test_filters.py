@@ -25,7 +25,7 @@ def test_challenge_list_is_filtered(client, TwoChallengeSets):
     ]
     for test in tests:
         response = get_view_for_user(
-            url=reverse('challenges:list'), client=client, user=test[2]
+            url=reverse('challenges:users-list'), client=client, user=test[2]
         )
         for short_name in test[0]:
             assert short_name in response.rendered_content

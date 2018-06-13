@@ -4,10 +4,11 @@ from django.db.models import Q
 from django.views.generic import CreateView, ListView, UpdateView
 
 from grandchallenge.challenges.forms import (
-    ChallengeCreateForm, ChallengeUpdateForm,
+    ChallengeCreateForm, ChallengeUpdateForm, ExternalChallengeCreateForm
 )
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
+from grandchallenge.core.urlresolvers import reverse
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -17,11 +18,20 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        return super(ChallengeCreate, self).form_valid(form)
+        return super().form_valid(form)
 
 
-class ChallengeList(LoginRequiredMixin, ListView):
+class ChallengeList(ListView):
     model = Challenge
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(Q(hidden=False))
+
+
+class UsersChallengeList(LoginRequiredMixin, ListView):
+    model = Challenge
+    template_name = "challenges/challenge_users_list.html"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -42,3 +52,15 @@ class ChallengeUpdate(
     form_class = ChallengeUpdateForm
     success_message = 'Challenge successfully updated'
     template_name_suffix = '_update'
+
+
+class ExternalChallengeCreate(LoginRequiredMixin, CreateView):
+    model = ExternalChallenge
+    form_class = ExternalChallengeCreateForm
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("challenges:list")

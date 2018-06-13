@@ -172,17 +172,19 @@ def validate_nounderscores(value):
             u"please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
 
+
 def get_logo_path(instance, filename):
     return f"logos/{instance.pk}/{filename}"
 
+
 def get_banner_path(instance, filename):
     return f"banners/{instance.pk}/{filename}"
+
 
 class ChallengeBase(models.Model):
     CHALLENGE_ACTIVE = 'challenge_active'
     CHALLENGE_INACTIVE = 'challenge_inactive'
     DATA_PUB = 'data_pub'
-
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -354,7 +356,7 @@ class Challenge(ChallengeBase):
         max_length=225,
         default=public_folder + "/project.css",
         help_text="css file to include throughout this"
-        " project. relative to project data folder",
+                  " project. relative to project data folder",
     )
     banner = models.ImageField(
         upload_to=get_banner_path,
@@ -364,17 +366,17 @@ class Challenge(ChallengeBase):
         max_length=255,
         default=public_folder + "/logo.png",
         help_text="100x100 pixel image file to use as logo"
-        " in projects overview. Relative to project datafolder",
+                  " in projects overview. Relative to project datafolder",
     )
     header_image = models.CharField(
         max_length=255,
         blank=True,
         help_text="optional 658 pixel wide Header image which will "
-        "appear on top of each project page top of each "
-        "project. "
-        "Relative to project datafolder. Suggested default:" +
-        public_folder +
-        "/header.png",
+                  "appear on top of each project page top of each "
+                  "project. "
+                  "Relative to project datafolder. Suggested default:" +
+                  public_folder +
+                  "/header.png",
     )
     hide_signin = models.BooleanField(
         default=False,
@@ -407,7 +409,7 @@ class Challenge(ChallengeBase):
     )
     allow_unfiltered_page_html = models.BooleanField(
         default=False,
-        help_text= (
+        help_text=(
             'If true, the page HTML is NOT filtered, allowing the challenge '
             'administrator to have full control over the page contents when '
             'they edit it in ckeditor.'
@@ -582,7 +584,7 @@ class Challenge(ChallengeBase):
         url = reverse('challenge-homepage', args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
-                "http://"
+                    "http://"
             ) or self.submission_page_name.startswith(
                 "https://"
             ):
@@ -617,6 +619,24 @@ class Challenge(ChallengeBase):
     class Meta:
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
+
+
+class ExternalChallenge(ChallengeBase):
+    homepage = models.URLField(
+        blank=False,
+        help_text=("What is the homepage for this challenge?"),
+    )
+    submission_page = models.URLField(
+        blank=True,
+        help_text=("Where is the submissions page for this challenge?")
+    )
+
+    def get_absolute_url(self):
+        return self.homepage
+
+    @property
+    def submission_url(self):
+        return self.submission_page
 
 
 class ComicSiteModel(models.Model):
