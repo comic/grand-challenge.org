@@ -41,7 +41,7 @@ def cleanup_stale_files():
         chunk.delete()
 
 
-class NotFoundError(Exception):
+class NotFoundError(FileNotFoundError):
     pass
 
 
@@ -419,7 +419,7 @@ class StagedAjaxFile:
 
     @property
     def name(self):
-        """ Returns the name specified by the clinet for the uploaded file
+        """ Returns the name specified by the client for the uploaded file
         (might be unsafe!) """
         chunks_query = self._raise_if_missing()
         return chunks_query.first().client_filename
