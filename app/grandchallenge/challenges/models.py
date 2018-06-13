@@ -172,7 +172,6 @@ def validate_nounderscores(value):
             u"please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
 
-
 def get_logo_path(instance, filename):
     return f"logos/{instance.pk}/{filename}"
 
@@ -251,18 +250,6 @@ class ChallengeBase(models.Model):
             "Affects listing in projects overview"
         ),
     )
-
-    submission_page_name = models.CharField(
-        blank=True,
-        null=True,
-        max_length=255,
-        help_text=(
-            "If the project allows submissions, there will be a link in "
-            "projects overview going directly to you "
-            "project/<submission_page_name>/. If empty, the projects main "
-            "page will be used instead"
-        ),
-    )
     number_of_submissions = models.IntegerField(
         blank=True,
         null=True,
@@ -305,6 +292,8 @@ class ChallengeBase(models.Model):
             "journal abbreviations</a> format"
         ),
     )
+
+    objects = ChallengeManager()
 
     @property
     def thumb_image_url(self):
@@ -457,8 +446,17 @@ class Challenge(ChallengeBase):
         on_delete=models.CASCADE,
         related_name='participants_of_challenge',
     )
-
-    objects = ChallengeManager()
+    submission_page_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=(
+            "If the project allows submissions, there will be a link in "
+            "projects overview going directly to you "
+            "project/<submission_page_name>/. If empty, the projects main "
+            "page will be used instead"
+        ),
+    )
 
     def __str__(self):
         """ string representation for this object"""
