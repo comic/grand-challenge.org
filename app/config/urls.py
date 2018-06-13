@@ -2,7 +2,8 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.template.response import TemplateResponse
-from django.views.generic import TemplateView
+from django.urls import re_path
+from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.views import comicmain
 from grandchallenge.uploads.views import serve
@@ -36,7 +37,11 @@ urlpatterns = [
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
     url(
         r'^challenges/',
-        include('grandchallenge.challenges.urls', namespace='challenges')
+        include('grandchallenge.challenges.urls', namespace='challenges'),
+    ),
+    re_path(
+        r"^(?i)all_challenges/$",
+        RedirectView.as_view(pattern_name="challenges:list", permanent=False),
     ),
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
