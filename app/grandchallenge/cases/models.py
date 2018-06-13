@@ -88,7 +88,8 @@ class RawImageUploadSession(UUIDModel):
         default=None,
     )
 
-    def get_absolute_url(self):
+    @staticmethod
+    def get_absolute_url():
         return reverse("cases:raw-files-session-detail")
 
 

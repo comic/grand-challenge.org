@@ -1,11 +1,12 @@
+import shutil
+from uuid import UUID
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence, Dict
-from uuid import UUID
+from typing import Tuple, Sequence, Dict, List
 
 from celery import shared_task
-from pip._vendor.distlib._backport import shutil
+from django.db import transaction
 
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
@@ -15,7 +16,7 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 class ProvisioningError(Exception): pass
 
 
-def mhd_construction(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile], Dict[Path, str]]:
+def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile], Dict[Path, str]]:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -95,8 +96,67 @@ def populate_provisioning_directory(
             f"image construction directory")
 
 
+@transaction.atomic
+def store_image(image: Image, all_image_files: Sequence[ImageFile]):
+    """
+    Stores an image in the database in a single transaction (or fails
+    accordingly). Associated image files are extracted from the
+    all_image_files argument and stored together with the image itself
+    in a single transaction.
+
+    Parameters
+    ----------
+    image: :class:`Image`
+        The image to store. The actual image files that are stored are extracted
+        from the second argument.
+
+    all_image_files: list of :class:`ImageFile`
+        An unordered list of ImageFile objects that might or might not belong
+        to the image provided as the first argument. The function automatically
+        extracts related images from the all_image_files argument to store
+        alongside the given image.
+    """
+    associated_files = [
+        _if for _if in all_image_files
+        if _if.image == image
+    ]
+
+    image.save()
+    for af in associated_files:
+        af.save()
+
+
+IMAGE_BUILDER_ALGORITHMS = [
+    image_builder_mhd
+]
+
+
 @shared_task
 def build_images(upload_session_uuid: UUID):
+    """
+    Task which analyzes an upload session and attempts to extract and store
+    detected images assembled from files uploaded in the image session.
+
+    The task updates the state-filed of the associated
+    :class:`RawImageUploadSession` to indicate if it is running or has finished
+    computing.
+
+    Results are stored in:
+    - `RawImageUploadSession.error_message` if a general error occurred during
+        processing.
+    - The `RawImageFile.error` field of associated `RawImageFile` objects,
+        in case files could not be processed.
+
+    The operation of building images will delete associated `StagedAjaxFile`s
+    of analyzed images in order to free up space on the server (only done if the
+    function does not error out).
+
+    Parameters
+    ----------
+    upload_session_uuid: UUID
+        The uuid of the upload sessions that should be analyzed.
+
+    """
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_uuid)
     upload_session: RawImageUploadSession
 
@@ -106,10 +166,6 @@ def build_images(upload_session_uuid: UUID):
             try:
                 upload_session.session_state = UPLOAD_SESSION_STATE.running
                 upload_session.save()
-
-                IMAGE_CONSTRUCTION_ALGORITHMS = [
-                    mhd_construction
-                ]
 
                 session_files = RawImageFile.objects.filter(
                     upload_session=upload_session.pk).all()
@@ -126,7 +182,7 @@ def build_images(upload_session_uuid: UUID):
                 collected_images = []
                 collected_associated_files = []
                 invalid_files = []
-                for algorithm in IMAGE_CONSTRUCTION_ALGORITHMS:
+                for algorithm in IMAGE_BUILDER_ALGORITHMS:
                     new_images, new_associated_image_files, new_invalid_files = \
                         algorithm()
 
@@ -137,14 +193,21 @@ def build_images(upload_session_uuid: UUID):
                     for used_file in new_associated_image_files:
                         filename = used_file.file.name
                         unconsumed_filenames.remove(filename)
-
                     for filename, message in new_invalid_files.iteritems():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[filename]
                             raw_image.error = str(message)[:128]
                             raw_image.save()
-                # TODO: save results to database
+
+                for image in collected_images:
+                    store_image(image, collected_associated_files)
+                for unconsumed_filename in unconsumed_filenames:
+                    raw_file = unconsumed_filenames[unconsumed_filename]
+                    raw_file.error = \
+                        "File could not be processed by any image builders"
+
+                #
             except Exception as e:
                 upload_session.error_message = str(e)
         finally:
