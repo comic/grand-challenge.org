@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <h2>Session state</h2>
+
+
+    <p>State: {{ object.session_state }}</p>
+    <p>Error message: {{ object.error_message }}</p>
+    <p>Creation date: {{ object.created_on }}</p>
+{% endblock %}

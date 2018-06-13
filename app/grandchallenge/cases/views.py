@@ -43,3 +43,7 @@ class UploadRawFiles(LoginRequiredMixin, CreateView):
         redirect = super().form_valid(form)
 
         return redirect
+
+
+class ShowUploadSessionState(DetailView):
+    model = RawImageUploadSession

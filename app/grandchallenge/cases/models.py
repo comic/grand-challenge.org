@@ -6,7 +6,6 @@ from django.utils import timezone
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.validators import ExtensionValidator
-from grandchallenge.jqfileupload.models import StagedFile
 
 
 def case_file_path(instance, filename):
@@ -89,9 +88,12 @@ class RawImageUploadSession(UUIDModel):
         default=None,
     )
 
-    @staticmethod
-    def get_absolute_url():
-        return reverse("cases:raw-files-session-detail")
+    def get_absolute_url(self):
+        return reverse(
+            "cases:raw-files-session-detail",
+            kwargs={
+                "pk": self.pk,
+            })
 
 
 class RawImageFile(UUIDModel):
