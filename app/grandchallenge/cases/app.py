@@ -8,4 +8,4 @@ class Config(AppConfig):
         super(Config, self).ready()
 
         # noinspection PyUnresolvedReferences
-        import app.grandchallenge.cases.signals
+        import grandchallenge.cases.signals

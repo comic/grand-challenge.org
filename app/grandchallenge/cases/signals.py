@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import RawImageUploadSession, \
+    UPLOAD_SESSION_STATE
 from grandchallenge.cases.tasks import build_images
 
 
@@ -13,3 +14,5 @@ def execute_job(
         build_images.apply_async(
             args=(instance.pk, ),
         )
+        instance.session_state = UPLOAD_SESSION_STATE.queued
+        instance.save()
