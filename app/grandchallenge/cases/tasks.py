@@ -158,11 +158,6 @@ def build_images(upload_session_uuid: UUID):
         The uuid of the upload sessions that should be analyzed.
 
     """
-    print(f"Going to look for: {upload_session_uuid}")
-    import time
-    time.sleep(10)
-    print(f"Now looking for: {upload_session_uuid}")
-
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_uuid)
     upload_session: RawImageUploadSession
 
