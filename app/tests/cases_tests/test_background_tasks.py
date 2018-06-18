@@ -63,3 +63,19 @@ def test_mhd_file_creation():
 
     build_images(session.pk)
 
+    session.refresh_from_db()
+    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.error_message is None
+
+    for name, db_object in uploaded_images.items():
+        name: str
+        db_object: RawImageFile
+
+        db_object.refresh_from_db()
+
+        assert db_object.staged_file_id is None
+        if name == "no_image":
+            assert db_object.error is not None
+        else:
+            assert db_object.error is None
+

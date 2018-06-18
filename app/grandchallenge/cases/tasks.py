@@ -128,6 +128,7 @@ IMAGE_BUILDER_ALGORITHMS = [
 ]
 
 
+@shared_task
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -209,6 +210,7 @@ def build_images(upload_session_uuid: UUID):
                         saf = StagedAjaxFile(file.staged_file_id)
                         file.staged_file_id = None
                         saf.delete()
+                        file.save()
                     except NotFoundError:
                         pass
             except Exception as e:
@@ -219,8 +221,3 @@ def build_images(upload_session_uuid: UUID):
 
             upload_session.session_state = UPLOAD_SESSION_STATE.stopped
             upload_session.save()
-
-
-@shared_task
-def build_images_task(upload_session_uuid: UUID):
-    build_images(upload_session_uuid)
