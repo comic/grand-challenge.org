@@ -11,4 +11,4 @@ AnatomicalOrientation = RAI
 ElementSpacing = 1 1 1
 DimSize = 10 10 10
 ElementType = MET_DOUBLE
-ElementDataFile = out.zraw
+ElementDataFile = image10x10x10.zraw

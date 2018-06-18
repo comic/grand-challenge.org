@@ -1,16 +1,36 @@
 import shutil
+from contextlib import contextmanager
+
 from uuid import UUID
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Tuple, Sequence, Dict, List
 
 from celery import shared_task
+from django.core.files import File
 from django.db import transaction
+import SimpleITK as sitk
+from pipenv.patched.piptools._compat import contextlib
 
+from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
     NotFoundError
+
+
+@contextmanager
+def auto_temp_dir(prefix=None):
+    temp_dir = mkdtemp(prefix=prefix)
+    try:
+        yield Path(temp_dir)
+    finally:
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            # This is a problem, but not breaking the regular process. However,
+            # lost directories will accumulate and fill up the disk
+            logger.error(f"Could not remove temp_dir: {temp_dir}  (dir lost)")
 
 
 class ProvisioningError(Exception): pass
@@ -33,11 +53,41 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
      - files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
+    def detect_mhd_file(filename: Path) -> bool:
+        return filename.suffix.lower() == ".mhd" # TODO
+
+    def detect_mha_file(filename: Path) -> bool:
+        return filename.suffix.lower() == ".mha" # TODO
+
+    def convert_itk_file(filename: Path) -> Tuple[Image, Sequence[ImageFile]]:
+        simple_itk_image = sitk.ReadImage(str(filename.absolute()))
+
+        with auto_temp_dir() as work_dir:
+            work_dir: Path
+
+            sitk.WriteImage(simple_itk_image, str(work_dir / "out.mhd"), True)
+
+            db_image = Image(name=filename.name)
+            db_image_files = []
+            for _file in work_dir.iterdir():
+                with open(_file, "rb") as open_file:
+                    db_image_file = ImageFile(
+                        image=db_image,
+                        file=File(open_file),
+                    )
+                    db_image_files.append(db_image_file)
+
+        return db_image, db_image_files
+
     images = []
     image_files = []
     invalid_files = {}
     for file in path.iterdir():
-        pass
+        if detect_mhd_file(file) or detect_mha_file(file):
+            n_image, n_image_files = convert_itk_file(file)
+            images.append(n_image)
+            image_files += list(n_image_files)
+
     return images, image_files, invalid_files
 
 

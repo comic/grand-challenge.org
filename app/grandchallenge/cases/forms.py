@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from typing import List
-import logging
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -10,12 +9,10 @@ from django.db import transaction
 from grandchallenge.cases.models import Case, RawImageUploadSession, \
     RawImageFile
 from grandchallenge.evaluation.validators import ExtensionValidator
-from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList, \
     StagedAjaxFile
 
-logger = logging.getLogger("grandchallenge-cases")
 
 case_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/case-upload/", multifile=True,
