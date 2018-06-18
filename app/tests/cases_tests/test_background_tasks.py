@@ -63,5 +63,3 @@ def test_mhd_file_creation():
 
     build_images(session.pk)
 
-
-

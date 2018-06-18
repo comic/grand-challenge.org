@@ -1,6 +1,5 @@
 import shutil
 from uuid import UUID
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Tuple, Sequence, Dict, List
@@ -36,7 +35,7 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
     """
     images = []
     image_files = []
-    invalid_files = []
+    invalid_files = {}
     for file in path.iterdir():
         pass
     return images, image_files, invalid_files
@@ -80,17 +79,14 @@ def populate_provisioning_directory(
                     buffer = src_file.read(BUFFER_SIZE)
                     dest_file.write(buffer)
 
-    with ThreadPoolExecutor(4) as thread_pool:
-        results = [
-            thread_pool.submit(copy_to_tmpdir, rfile)
-            for rfile in raw_files
-        ]
-
+    # with ThreadPoolExecutor(4) as thread_pool:
     exceptions_raised = 0
-    for result in results:
-        exception = result.exception()
-        if exception is not None:
+    for raw_file in raw_files:
+        try:
+            copy_to_tmpdir(raw_file)
+        except Exception as e:
             exceptions_raised += 1
+
     if exceptions_raised > 0:
         raise ProvisioningError(
             f"{exceptions_raised} errors occurred during provisioning of the "
@@ -132,7 +128,6 @@ IMAGE_BUILDER_ALGORITHMS = [
 ]
 
 
-@shared_task
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -185,7 +180,7 @@ def build_images(upload_session_uuid: UUID):
                 invalid_files = []
                 for algorithm in IMAGE_BUILDER_ALGORITHMS:
                     new_images, new_associated_image_files, new_invalid_files = \
-                        algorithm()
+                        algorithm(tmp_dir)
 
                     collected_images += new_images
                     collected_associated_files += new_associated_image_files
@@ -194,7 +189,7 @@ def build_images(upload_session_uuid: UUID):
                     for used_file in new_associated_image_files:
                         filename = used_file.file.name
                         unconsumed_filenames.remove(filename)
-                    for filename, message in new_invalid_files.iteritems():
+                    for filename, message in new_invalid_files.items():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[filename]
@@ -204,22 +199,28 @@ def build_images(upload_session_uuid: UUID):
                 for image in collected_images:
                     store_image(image, collected_associated_files)
                 for unconsumed_filename in unconsumed_filenames:
-                    raw_file = unconsumed_filenames[unconsumed_filename]
+                    raw_file = filename_lookup[unconsumed_filename]
                     raw_file.error = \
                         "File could not be processed by any image builders"
 
                 # Delete any touched file data
                 for file in session_files:
                     try:
+                        saf = StagedAjaxFile(file.staged_file_id)
                         file.staged_file_id = None
+                        saf.delete()
                     except NotFoundError:
                         pass
             except Exception as e:
                 upload_session.error_message = str(e)
         finally:
-            if tmp_dir is None:
+            if tmp_dir is not None:
                 shutil.rmtree(tmp_dir)
 
             upload_session.session_state = UPLOAD_SESSION_STATE.stopped
             upload_session.save()
 
+
+@shared_task
+def build_images_task(upload_session_uuid: UUID):
+    build_images(upload_session_uuid)

@@ -3,9 +3,7 @@ from django.dispatch import receiver
 
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE
-from grandchallenge.cases.tasks import build_images
-
-
+from grandchallenge.cases.tasks import build_images_task
 
 PREVENT_JOB_CREATION_ON_SAVE = False
 
@@ -19,7 +17,7 @@ def execute_job(
         instance.save()
 
         try:
-            build_images.apply_async(
+            build_images_task.apply_async(
                 args=(instance.pk, ),
             )
         except Exception as e:
