@@ -89,3 +89,6 @@ docs/_build/
 .pytest_cache/
 
 app/celerybeat-schedule
+
+# No coverage files
+.coverage
