@@ -3,6 +3,7 @@ Tests for the mhd-file reconstruction.
 """
 
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -58,3 +59,34 @@ def test_fail_on_invalid_utf8():
     with pytest.raises(ValueError):
         parse_mh_header(RESOURCE_PATH / "invalid_utf8.mhd")
 
+
+def test_too_many_headers_file(tmpdir):
+    # Generate test file...
+    test_file_path = Path(tmpdir) / "test.mhd"
+    with open(test_file_path, "w", encoding="utf-8") as f:
+        for i in range(1000000):
+            f.write("key{i} = {i}\n")
+
+    with pytest.raises(ValueError):
+        parse_mh_header(test_file_path)
+
+
+def test_line_too_long(tmpdir):
+    # Generate test file...
+    test_file_path = Path(tmpdir) / "test.mhd"
+    with open(test_file_path, "w", encoding="utf-8") as f:
+        f.write("key = ")
+        for i in range(1000000):
+            f.write("{i}")
+
+    with pytest.raises(ValueError):
+        parse_mh_header(test_file_path)
+
+
+def test_does_not_choke_on_empty_file(tmpdir):
+    # Generate test file...
+    test_file_path = Path(tmpdir) / "test.mhd"
+    with open(test_file_path, "w", encoding="utf-8") as f:
+        f.write("\n")
+
+    assert parse_mh_header(test_file_path) == {}
