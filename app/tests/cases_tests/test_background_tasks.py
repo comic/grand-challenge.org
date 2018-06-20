@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Tuple, Dict
 
 import pytest
@@ -8,12 +7,10 @@ from grandchallenge.cases.models import RawImageFile, RawImageUploadSession, \
     UPLOAD_SESSION_STATE
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from tests.cases_tests import RESOURCE_PATH
 from tests.jqfileupload_tests.external_test_support import \
     create_file_from_filepath
 
-
-BASE_PATH = Path(__file__).parent.absolute()
-RESOURCE_PATH = BASE_PATH / "resources"
 
 # We need more control over whn jobs are emitted, so lets just disable the
 # signal

@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from uuid import UUID
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence, Dict, List
+from typing import Tuple, Sequence, Dict, List, Mapping, Union
 
 from celery import shared_task
 from django.core.files import File
@@ -36,6 +36,59 @@ def auto_temp_dir(prefix=None):
 class ProvisioningError(Exception): pass
 
 
+def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
+    """
+    Attempts to parse the headers of an mhd file. This function must be
+    secure to safeguard agains any untrusted uploaded file.
+
+    Parameters
+    ----------
+    filename
+
+    Returns
+    -------
+
+    Raises
+    ------
+    ValueError:
+        raised when the file contains problems making it impossible to
+        read
+    """
+    read_line_limit = 10000  # attempt to limit numer of read headers to prevent overflow attacks
+
+    result = {}
+    with open(filename, 'rb') as f:
+        bin_line = True
+        while bin_line is not None:
+            read_line_limit -= 1
+            if read_line_limit < 0:
+                raise ValueError("Files contains too many header lines")
+
+            bin_line = f.readline(10000)
+            if not bin_line:
+                bin_line = None
+                continue
+            if len(bin_line) >= 10000:
+                raise ValueError("Line length is too long")
+
+            try:
+                line = bin_line.decode('utf-8')
+            except UnicodeDecodeError:
+                raise ValueError("Header contains invalid UTF-8")
+            else:
+                # Clean line endings
+                line = line.rstrip("\n\r")
+                if line.strip():
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        result[key.strip()] = value.strip()
+                    else:
+                        result[line.strip()] = None
+            if "ElementDataFile" in result:
+                break # last parsed header...
+    return result
+
+
 def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile], Dict[Path, str]]:
     """
     Constructs image objects by inspecting files in a directory.
@@ -53,14 +106,26 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
      - files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    def detect_mhd_file(filename: Path) -> bool:
-        return filename.suffix.lower() == ".mhd" # TODO
+    def detect_mhd_file(headers: Mapping[str, Union[str, None]]) -> bool:
+        data_file = headers.get("ElementDataFile", None)
+        if data_file in [None, "LOCAL"]:
+            return False
+        data_file_path = Path(data_file).absolute()
+        if path not in data_file_path.parents:
+            raise ValueError(
+                "ElementDataFile references a file which is not in the uploaded "
+                "data folder")
+        return True
 
-    def detect_mha_file(filename: Path) -> bool:
-        return filename.suffix.lower() == ".mha" # TODO
+    def detect_mha_file(headers: Mapping[str, Union[str, None]]) -> bool:
+        data_file = headers.get("ElementDataFile", None)
+        return data_file == "LOCAL"
 
     def convert_itk_file(filename: Path) -> Tuple[Image, Sequence[ImageFile]]:
-        simple_itk_image = sitk.ReadImage(str(filename.absolute()))
+        try:
+            simple_itk_image = sitk.ReadImage(str(filename.absolute()))
+        except RuntimeError:
+            raise ValueError("SimpleITK cannot open file")
 
         with auto_temp_dir() as work_dir:
             work_dir: Path
@@ -83,10 +148,15 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
     image_files = []
     invalid_files = {}
     for file in path.iterdir():
-        if detect_mhd_file(file) or detect_mha_file(file):
-            n_image, n_image_files = convert_itk_file(file)
-            images.append(n_image)
-            image_files += list(n_image_files)
+        try:
+            parsed_headers = parse_mh_header(file)
+        except ValueError:
+            pass # Maybe add .mhd and .mha files here?
+        else:
+            if detect_mhd_file(parsed_headers) or detect_mha_file(parsed_headers):
+                n_image, n_image_files = convert_itk_file(file)
+                images.append(n_image)
+                image_files += list(n_image_files)
 
     return images, image_files, invalid_files
 
