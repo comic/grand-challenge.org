@@ -5,12 +5,13 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 """
 
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, TemporaryFile
 from typing import Mapping, Union, Sequence, Tuple
 
 import SimpleITK as sitk
 from django.core.files import File
 
+from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
 
 
@@ -67,7 +68,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     return result
 
 
-def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile], Mapping[Path, str]]:
+def image_builder_mhd(path: Path) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -90,11 +91,14 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
         data_file = headers.get(ELEMENT_DATA_FILE_KEY, None)
         if data_file in [None, "LOCAL"]:
             return False
-        data_file_path = Path(data_file).absolute()
+        data_file_path = (path / Path(data_file)).resolve(strict=False)
         if path not in data_file_path.parents:
             raise ValueError(
                 f"{ELEMENT_DATA_FILE_KEY} references a file which is not in "
                 f"the uploaded data folder")
+        if not data_file_path.is_file():
+            raise ValueError(
+                f"Data container is not a file")
         return True
 
     def detect_mha_file(headers: Mapping[str, Union[str, None]]) -> bool:
@@ -117,18 +121,26 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
             db_image = Image(name=filename.name)
             db_image_files = []
             for _file in work_dir.iterdir():
+                temp_file = TemporaryFile()
                 with open(_file, "rb") as open_file:
-                    db_image_file = ImageFile(
-                        image=db_image,
-                        file=File(open_file),
-                    )
-                    db_image_files.append(db_image_file)
+
+                    buffer = True
+                    while buffer:
+                        buffer = open_file.read(1024)
+                        temp_file.write(buffer)
+
+                db_image_file = ImageFile(
+                    image=db_image,
+                    file=File(temp_file, name=_file.name),
+                )
+                db_image_files.append(db_image_file)
 
         return db_image, db_image_files
 
-    images = []
-    image_files = []
-    invalid_files = {}
+    new_images = []
+    new_image_files = []
+    consumed_files = set()
+    invalid_file_errors = {}
     for file in path.iterdir():
         try:
             parsed_headers = parse_mh_header(file)
@@ -138,9 +150,18 @@ def image_builder_mhd(path: Path) -> Tuple[Sequence[Image], Sequence[ImageFile],
         else:
             if detect_mhd_file(parsed_headers) or detect_mha_file(parsed_headers):
                 n_image, n_image_files = convert_itk_file(parsed_headers, file)
-                images.append(n_image)
-                image_files += list(n_image_files)
+                new_images.append(n_image)
+                new_image_files += list(n_image_files)
 
-    return images, image_files, invalid_files
+                consumed_files.add(file.name)
+                if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
+                    consumed_files.add(parsed_headers[ELEMENT_DATA_FILE_KEY])
+
+    return ImageBuilderResult(
+        consumed_files=consumed_files,
+        file_errors_map=invalid_file_errors,
+        new_images=new_images,
+        new_image_files=new_image_files,
+    )
 
 

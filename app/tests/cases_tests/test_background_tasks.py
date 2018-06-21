@@ -51,6 +51,8 @@ def test_mhd_file_creation():
         "image10x10x10.zraw",
         "image10x10x10.mhd",
         "image10x10x10.mha",
+        "image10x10x10-extra-stuff.mhd",
+        "invalid_utf8.mhd",
         "no_image",
     ]
     session, uploaded_images = create_raw_upload_image_session(images)
@@ -71,8 +73,47 @@ def test_mhd_file_creation():
         db_object.refresh_from_db()
 
         assert db_object.staged_file_id is None
-        if name == "no_image":
+        if name in ("no_image", "invalid_utf8.mhd"):
             assert db_object.error is not None
         else:
             assert db_object.error is None
 
+
+@pytest.mark.django_db
+def test_staged_uploaded_file_cleanup_interferes_with_image_build():
+    images = [
+        "image10x10x10.zraw",
+        "image10x10x10.mhd",
+    ]
+    session, uploaded_images = create_raw_upload_image_session(images)
+    StagedAjaxFile(uploaded_images["image10x10x10.zraw"].staged_file_id).delete()
+
+    session.session_state = UPLOAD_SESSION_STATE.queued
+    session.save()
+
+    build_images(session.pk)
+
+    session.refresh_from_db()
+    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.error_message is not None
+
+
+@pytest.mark.django_db
+def test_no_convertible_file():
+    images = [
+        "no_image",
+    ]
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.session_state = UPLOAD_SESSION_STATE.queued
+    session.save()
+
+    build_images(session.pk)
+
+    session.refresh_from_db()
+    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.error_message is None
+
+    no_image_image = list(uploaded_images.values())[0]
+    no_image_image.refresh_from_db()
+    assert no_image_image.error is not None

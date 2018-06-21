@@ -9,6 +9,7 @@ from typing import Tuple, Sequence, Dict, Mapping, Union
 from celery import shared_task
 from django.db import transaction
 
+from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.metaio_mhd_mha import image_builder_mhd
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
@@ -46,7 +47,7 @@ def populate_provisioning_directory(
         staged_file = StagedAjaxFile(image_file.staged_file_id)
         if not staged_file.exists:
             raise ValueError(
-                "staged file {image_file.staged_file_id} does not exist")
+                f"staged file {image_file.staged_file_id} does not exist")
 
         with open(provisioning_dir / staged_file.name, "wb") as dest_file:
             with staged_file.open() as src_file:
@@ -57,7 +58,6 @@ def populate_provisioning_directory(
                     buffer = src_file.read(BUFFER_SIZE)
                     dest_file.write(buffer)
 
-    # with ThreadPoolExecutor(4) as thread_pool:
     exceptions_raised = 0
     for raw_file in raw_files:
         try:
@@ -95,7 +95,6 @@ def store_image(image: Image, all_image_files: Sequence[ImageFile]):
         _if for _if in all_image_files
         if _if.image == image
     ]
-
     image.save()
     for af in associated_files:
         af.save()
@@ -156,23 +155,23 @@ def build_images(upload_session_uuid: UUID):
 
                 collected_images = []
                 collected_associated_files = []
-                invalid_files = []
                 for algorithm in IMAGE_BUILDER_ALGORITHMS:
-                    new_images, new_associated_image_files, new_invalid_files = \
-                        algorithm(tmp_dir)
+                    algorithm_result = algorithm(tmp_dir)
+                    algorithm_result: ImageBuilderResult
 
-                    collected_images += new_images
-                    collected_associated_files += new_associated_image_files
-                    invalid_files += list(new_invalid_files.keys())
+                    collected_images += list(algorithm_result.new_images)
+                    collected_associated_files += \
+                        list(algorithm_result.new_image_files)
 
-                    for used_file in new_associated_image_files:
-                        filename = used_file.file.name
-                        unconsumed_filenames.remove(filename)
-                    for filename, message in new_invalid_files.items():
+                    for filename in algorithm_result.consumed_files:
+                        if filename in unconsumed_filenames:
+                            unconsumed_filenames.remove(filename)
+                    for filename, msg in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[filename]
-                            raw_image.error = str(message)[:128]
+                            raw_file: RawImageFile
+                            raw_image.error = str(msg)[:256]
                             raw_image.save()
 
                 for image in collected_images:

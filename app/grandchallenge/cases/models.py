@@ -38,7 +38,7 @@ class CaseFile(UUIDModel):
 
 
 def image_file_path(instance, filename):
-    return f"images/{instance.case.pk}/{filename}"
+    return f"images/{instance.image.pk}/{filename}"
 
 
 class Image(UUIDModel):
@@ -118,7 +118,7 @@ class RawImageFile(UUIDModel):
         null=True)
 
     error = models.CharField(
-        max_length=128,
+        max_length=256,
         blank=False,
         null=True,
         default=None
