@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from grandchallenge.cases.tasks import parse_mh_header
+from grandchallenge.cases.image_builders.metaio_mhd_mha import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
 
 
