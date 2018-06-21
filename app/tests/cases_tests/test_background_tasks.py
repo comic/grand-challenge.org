@@ -117,3 +117,29 @@ def test_no_convertible_file():
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
     assert no_image_image.error is not None
+
+
+@pytest.mark.django_db
+def test_errors_on_files_with_duplicate_file_names():
+    images = [
+        "image10x10x10.zraw",
+        "image10x10x10.mhd",
+        "image10x10x10.zraw",
+        "image10x10x10.mhd",
+    ]
+    session, uploaded_images = create_raw_upload_image_session(images)
+    uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
+    assert len(uploaded_images) == 4
+
+    session.session_state = UPLOAD_SESSION_STATE.queued
+    session.save()
+
+    build_images(session.pk)
+
+    session.refresh_from_db()
+    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.error_message is None
+
+    for raw_image in uploaded_images:
+        raw_image.refresh_from_db()
+        assert raw_image.error is not None
