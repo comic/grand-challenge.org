@@ -5,9 +5,31 @@
 
     <h2>Session state</h2>
 
+    <p>Job id: {{ upload_session.processing_task }}</p>
+    <p>State: {{ upload_session.session_state }}</p>
+    <p>Error message: {{ upload_session.error_message }}</p>
+    <p>Creation date: {{ upload_session.created_on }}</p>
 
-    <p>Job id: {{ object.processing_task }}</p>
-    <p>State: {{ object.session_state }}</p>
-    <p>Error message: {{ object.error_message }}</p>
-    <p>Creation date: {{ object.created_on }}</p>
+    {% if process_finished %}
+        <h2>Processed files</h2>
+
+        <div style="padding-left:1cm;">
+            <table>
+                <tbody>
+                    {% for raw_file in raw_files %}
+                        <tr>
+                            <td style="padding-right:1cm;">{{ raw_file.filename }}</td>
+                            <td>
+                                {% if raw_file.error  %}
+                                    {{ raw_file.error }}
+                                {% else %}
+                                    {{ "succeeded" }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}

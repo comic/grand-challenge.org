@@ -134,6 +134,9 @@ def build_images(upload_session_uuid: UUID):
     of analyzed images in order to free up space on the server (only done if the
     function does not error out).
 
+    If a job fails due to a RawImageUploadSession.DoesNotExist error, the
+    job is queued for a retry (max 15 times).
+
     Parameters
     ----------
     upload_session_uuid: UUID
@@ -187,7 +190,7 @@ def build_images(upload_session_uuid: UUID):
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]
                     raw_file.error = \
-                        "File could not be processed by any image builders"
+                        "File could not be processed by any image builder"
 
                 # Delete any touched file data
                 for file in session_files:

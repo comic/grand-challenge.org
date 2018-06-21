@@ -5,7 +5,7 @@ from django.views.generic import ListView, CreateView, DetailView
 
 from grandchallenge.cases.forms import CaseForm, UploadRawImagesForm
 from grandchallenge.cases.models import Case, CaseFile, RawImageFile, \
-    RawImageUploadSession
+    RawImageUploadSession, UPLOAD_SESSION_STATE
 
 
 class CaseList(ListView):
@@ -47,3 +47,11 @@ class UploadRawFiles(LoginRequiredMixin, CreateView):
 
 class ShowUploadSessionState(DetailView):
     model = RawImageUploadSession
+
+    def get_context_data(self, **kwargs):
+        result = super(ShowUploadSessionState, self).get_context_data(**kwargs)
+        result["upload_session"] = result["object"]
+        result["raw_files"] = \
+            RawImageFile.objects.filter(upload_session=result["object"]).all()
+        result["process_finished"] = result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+        return result
