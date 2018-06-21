@@ -109,6 +109,41 @@ IMAGE_BUILDER_ALGORITHMS = [
 ]
 
 
+def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
+    """
+    Filters the given sequence of RawImageFile objects and removes all files
+    that have a nun-unqie filename.
+
+    Parameters
+    ----------
+    session_files: Sequence[RawImageFile]
+        List of RawImageFile objects thats filenames should be checked for
+        uniqueness.
+
+    Returns
+    -------
+    Two Sequence[RawImageFile]. The first sequence is the filtered session_files
+    list, the second list is a list of duplicates that were removed.
+    """
+    filename_lookup = {}
+    duplicates = []
+    for file in session_files:
+        if file.filename in filename_lookup:
+            duplicates.append(file)
+
+            looked_up_file = filename_lookup[file.filename]
+            if looked_up_file is not None:
+                duplicates.append(looked_up_file)
+                filename_lookup[file.filename] = None
+        else:
+            filename_lookup[file.filename] = file
+    return (
+        tuple(x for x in filename_lookup.values() if x is not None),
+        tuple(duplicates)
+    )
+
+
+
 @shared_task(
     autoretry_for=(RawImageUploadSession.DoesNotExist,),
     default_retry_delay=60,
@@ -155,6 +190,16 @@ def build_images(upload_session_uuid: UUID):
                 session_files = RawImageFile.objects.filter(
                     upload_session=upload_session.pk).all()
                 session_files: Tuple[RawImageFile]
+
+                session_files, duplicates = \
+                    remove_duplicate_files(session_files)
+                for duplicate in duplicates:
+                    duplicate: RawImageFile
+                    duplicate.error = "Filename not unique"
+                    saf = StagedAjaxFile(duplicate.staged_file_id)
+                    duplicate.staged_file_id = None
+                    saf.delete()
+                    duplicate.save()
 
                 populate_provisioning_directory(session_files, tmp_dir)
 

@@ -25,6 +25,7 @@ def create_raw_upload_image_session(
         staged_file = create_file_from_filepath(RESOURCE_PATH / image)
         image = RawImageFile.objects.create(
             upload_session=upload_session,
+            filename=staged_file.name,
             staged_file_id=staged_file.uuid,
         )
         uploaded_images[staged_file.name] = image
