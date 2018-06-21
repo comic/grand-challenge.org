@@ -4,13 +4,14 @@ from contextlib import contextmanager
 from uuid import UUID
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence, Dict, Mapping, Union
+from typing import Tuple, Sequence, Dict, Mapping, Union, Optional
 
 from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.metaio_mhd_mha import image_builder_mhd
+from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
@@ -63,6 +64,9 @@ def populate_provisioning_directory(
         try:
             copy_to_tmpdir(raw_file)
         except Exception as e:
+            logger.exception(
+                f"populate_provisioning_directory exception "
+                f"for file: '{raw_file.filename}'")
             exceptions_raised += 1
 
     if exceptions_raised > 0:
@@ -105,7 +109,12 @@ IMAGE_BUILDER_ALGORITHMS = [
 ]
 
 
-@shared_task
+@shared_task(
+    autoretry_for=(RawImageUploadSession.DoesNotExist,),
+    default_retry_delay=60,
+    retry_kwargs={
+        'max_retries': 15
+    })
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -129,7 +138,6 @@ def build_images(upload_session_uuid: UUID):
     ----------
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
-
     """
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_uuid)
     upload_session: RawImageUploadSession

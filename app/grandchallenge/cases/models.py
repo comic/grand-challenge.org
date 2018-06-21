@@ -81,6 +81,11 @@ class RawImageUploadSession(UUIDModel):
         default=timezone.now,
     )
 
+    processing_task = models.UUIDField(
+        null=True,
+        default=None,
+    )
+
     error_message = models.CharField(
         max_length=256,
         blank=False,

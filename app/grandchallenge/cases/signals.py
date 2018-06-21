@@ -13,13 +13,13 @@ def execute_job(
         instance: RawImageUploadSession=None, created: bool=False,
         *_, **__):
     if created and not PREVENT_JOB_CREATION_ON_SAVE:
-        instance.session_state = UPLOAD_SESSION_STATE.queued
-        instance.save()
-
         try:
-            build_images.apply_async(
+            task = build_images.apply_async(
                 args=(instance.pk, ),
             )
+            instance.session_state = UPLOAD_SESSION_STATE.queued
+            instance.processing_task = task.id
+            instance.save()
         except Exception as e:
             instance.session_state = UPLOAD_SESSION_STATE.stopped
             instance.error_message = f"Could not start job: {e}"
