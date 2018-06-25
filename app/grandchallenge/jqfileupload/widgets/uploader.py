@@ -86,8 +86,11 @@ class AjaxUploadWidget(Widget):
         js = ('jqfileupload/js/upload_widget.js',)
 
     def __init__(
-        self, *args, ajax_target_path: str = None, multifile=True, **kwargs
-    ):
+            self,
+            *args,
+            ajax_target_path: str = None,
+            multifile=True,
+            **kwargs):
         super(AjaxUploadWidget, self).__init__(*args, **kwargs)
         if ajax_target_path is None:
             raise ValueError("AJAX target path required")
@@ -120,11 +123,10 @@ class AjaxUploadWidget(Widget):
         }
 
     def _handle_chunked(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         # Only content ranges of the form
         #
         #   bytes-unit SP byte-range-resp
@@ -269,9 +271,6 @@ class OpenedStagedAjaxFile(BufferedIOBase):
     reconstructs the contingent file from the file chunks that have been
     uploaded.
     """
-
-    # TODO: This really should be an instance of BufferedIOBase and follow the
-    # specifications there.
     def __init__(self, _uuid):
         super(OpenedStagedAjaxFile, self).__init__()
         self.__uuid = _uuid
