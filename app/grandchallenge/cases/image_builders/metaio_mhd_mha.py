@@ -145,24 +145,32 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             parsed_headers = parse_mh_header(file)
         except ValueError:
             # Maybe add .mhd and .mha files here as "processed" but with errors
-            pass
-        else:
-            if detect_mhd_file(parsed_headers) or detect_mha_file(parsed_headers):
-                file_dependency = None
-                if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
-                    file_dependency = Path(parsed_headers[ELEMENT_DATA_FILE_KEY])
-                    if not (path / file_dependency).is_file():
-                        invalid_file_errors[file.name] = \
-                            "cannot find data file"
-                        continue
+            continue
 
-                n_image, n_image_files = convert_itk_file(parsed_headers, file)
-                new_images.append(n_image)
-                new_image_files += list(n_image_files)
+        try:
+            is_hd_or_mha = \
+                detect_mhd_file(parsed_headers) or \
+                detect_mha_file(parsed_headers)
+        except ValueError as e:
+            invalid_file_errors[file.name] = str(e)
+            continue
 
-                consumed_files.add(file.name)
-                if file_dependency is not None:
-                    consumed_files.add(str(file_dependency.name))
+        if is_hd_or_mha:
+            file_dependency = None
+            if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
+                file_dependency = Path(parsed_headers[ELEMENT_DATA_FILE_KEY])
+                if not (path / file_dependency).is_file():
+                    invalid_file_errors[file.name] = \
+                        "cannot find data file"
+                    continue
+
+            n_image, n_image_files = convert_itk_file(parsed_headers, file)
+            new_images.append(n_image)
+            new_image_files += list(n_image_files)
+
+            consumed_files.add(file.name)
+            if file_dependency is not None:
+                consumed_files.add(str(file_dependency.name))
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

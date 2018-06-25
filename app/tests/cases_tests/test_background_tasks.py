@@ -103,6 +103,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build():
 def test_no_convertible_file():
     images = [
         "no_image",
+        "image10x10x10.mhd"
     ]
     session, uploaded_images = create_raw_upload_image_session(images)
 
@@ -118,6 +119,10 @@ def test_no_convertible_file():
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
     assert no_image_image.error is not None
+
+    lonely_mhd_image = list(uploaded_images.values())[0]
+    lonely_mhd_image.refresh_from_db()
+    assert lonely_mhd_image.error is not None
 
 
 @pytest.mark.django_db
