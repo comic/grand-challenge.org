@@ -123,7 +123,6 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             for _file in work_dir.iterdir():
                 temp_file = TemporaryFile()
                 with open(_file, "rb") as open_file:
-
                     buffer = True
                     while buffer:
                         buffer = open_file.read(1024)
@@ -149,13 +148,21 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             pass
         else:
             if detect_mhd_file(parsed_headers) or detect_mha_file(parsed_headers):
+                file_dependency = None
+                if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
+                    file_dependency = Path(parsed_headers[ELEMENT_DATA_FILE_KEY])
+                    if not (path / file_dependency).is_file():
+                        invalid_file_errors[file.name] = \
+                            "cannot find data file"
+                        continue
+
                 n_image, n_image_files = convert_itk_file(parsed_headers, file)
                 new_images.append(n_image)
                 new_image_files += list(n_image_files)
 
                 consumed_files.add(file.name)
-                if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
-                    consumed_files.add(parsed_headers[ELEMENT_DATA_FILE_KEY])
+                if file_dependency is not None:
+                    consumed_files.add(str(file_dependency.name))
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
