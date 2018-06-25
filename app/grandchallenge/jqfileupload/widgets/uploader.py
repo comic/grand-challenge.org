@@ -90,6 +90,7 @@ class AjaxUploadWidget(Widget):
             *args,
             ajax_target_path: str = None,
             multifile=True,
+            auto_commit=True,
             **kwargs):
         super(AjaxUploadWidget, self).__init__(*args, **kwargs)
         if ajax_target_path is None:
@@ -97,7 +98,8 @@ class AjaxUploadWidget(Widget):
 
         self.ajax_target_path = ajax_target_path
         self.timeout = timedelta(hours=2)
-        self.__multifile = multifile
+        self.__multifile = bool(multifile)
+        self.__auto_commit = bool(auto_commit)
 
     def _handle_complete(
         self,
@@ -260,6 +262,7 @@ class AjaxUploadWidget(Widget):
             "name": name,
             "attrs": attrs,
             "multi_upload": "true" if self.__multifile else "false",
+            "auto_commit": "true" if self.__auto_commit else "false",
         }
         return template.render(context=context)
 

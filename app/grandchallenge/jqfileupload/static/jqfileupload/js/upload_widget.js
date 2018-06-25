@@ -22,8 +22,10 @@ function upload_fold_unfold(element) {
         var dropzone = upload_element;
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
-        var is_multiupload = upload_element.attr("multi_upload") === "true";
         var total_expected_files = 0;
+
+        var is_multiupload = upload_element.attr("multi_upload") === "true";
+        var is_autocommit = upload_element.attr("auto_commit") === "true";
 
         var target_url = upload_element.attr("upload_target");
 
@@ -113,7 +115,8 @@ function upload_fold_unfold(element) {
             }
             update_hidden_form_element();
 
-            if (succeeded_uploads_list.length === total_expected_files) {
+            if (is_autocommit &&
+                    (succeeded_uploads_list.length === total_expected_files)) {
                 total_expected_files = 0; // In case we submit does not work
                 upload_element.closest('form').submit();
             }

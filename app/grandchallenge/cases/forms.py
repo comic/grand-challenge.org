@@ -43,6 +43,7 @@ class CaseForm(forms.ModelForm):
 upload_raw_files_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/raw_files/",
     multifile=True,
+    auto_commit=False,
 )
 
 

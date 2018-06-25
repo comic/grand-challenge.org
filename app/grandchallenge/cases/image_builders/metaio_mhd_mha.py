@@ -97,8 +97,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 f"{ELEMENT_DATA_FILE_KEY} references a file which is not in "
                 f"the uploaded data folder")
         if not data_file_path.is_file():
-            raise ValueError(
-                f"Data container is not a file")
+            raise ValueError("Data container of mhd file is missing")
         return True
 
     def detect_mha_file(headers: Mapping[str, Union[str, None]]) -> bool:
