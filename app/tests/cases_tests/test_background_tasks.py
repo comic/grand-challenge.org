@@ -4,7 +4,7 @@ import pytest
 
 from grandchallenge.cases import signals
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession, \
-    UPLOAD_SESSION_STATE
+    UPLOAD_SESSION_STATE, Image
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
@@ -67,6 +67,8 @@ def test_mhd_file_creation():
     assert session.session_state == UPLOAD_SESSION_STATE.stopped
     assert session.error_message is None
 
+    assert Image.objects.filter(origin=session).count() == 3
+
     for name, db_object in uploaded_images.items():
         name: str
         db_object: RawImageFile
@@ -103,7 +105,8 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build():
 def test_no_convertible_file():
     images = [
         "no_image",
-        "image10x10x10.mhd"
+        "image10x10x10.mhd",
+        "referring_to_system_file.mhd",
     ]
     session, uploaded_images = create_raw_upload_image_session(images)
 
@@ -120,9 +123,13 @@ def test_no_convertible_file():
     no_image_image.refresh_from_db()
     assert no_image_image.error is not None
 
-    lonely_mhd_image = list(uploaded_images.values())[0]
+    lonely_mhd_image = list(uploaded_images.values())[1]
     lonely_mhd_image.refresh_from_db()
     assert lonely_mhd_image.error is not None
+
+    sys_file_image = list(uploaded_images.values())[2]
+    sys_file_image.refresh_from_db()
+    assert sys_file_image.error is not None
 
 
 @pytest.mark.django_db
@@ -149,3 +156,34 @@ def test_errors_on_files_with_duplicate_file_names():
     for raw_image in uploaded_images:
         raw_image.refresh_from_db()
         assert raw_image.error is not None
+
+
+@pytest.mark.django_db
+def test_mhd_file_annotation_creation():
+    images = [
+        "image5x6x7.mhd",
+        "image5x6x7.zraw",
+    ]
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.session_state = UPLOAD_SESSION_STATE.queued
+    session.save()
+
+    build_images(session.pk)
+
+    session.refresh_from_db()
+    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file = list(uploaded_images.values())[0]
+    raw_image_file: RawImageFile
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image = images[0]
+    assert image.shape == [5, 6, 7]
+    assert image.shape_without_color == [5, 6, 7]
+    assert image.color_space == Image.COLOR_SPACE_GRAY

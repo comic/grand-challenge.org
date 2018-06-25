@@ -31,5 +31,20 @@
                 </tbody>
             </table>
         </div>
+
+        <h2>Images</h2>
+
+        <div style="padding-left:1cm;">
+            <table>
+                <tbody>
+                    {% for image in images %}
+                        <tr>
+                            <td style="padding-right:1cm;">{{ image.name }}</td>
+                            <td style="padding-right:1cm;">aaa{{ image.shape_without_color|join:"x" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 {% endblock %}

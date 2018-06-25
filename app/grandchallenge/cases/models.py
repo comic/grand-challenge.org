@@ -37,27 +37,6 @@ class CaseFile(UUIDModel):
     )
 
 
-def image_file_path(instance, filename):
-    return f"images/{instance.image.pk}/{filename}"
-
-
-class Image(UUIDModel):
-    name = models.CharField(max_length=128)
-    image_handle = models.TextField()
-
-
-class ImageFile(UUIDModel):
-    image = models.ForeignKey(
-        to=Image,
-        null=True,
-        on_delete=models.SET_NULL,
-    )
-    file = models.FileField(
-        upload_to=image_file_path,
-        blank=False,
-    )
-
-
 class UPLOAD_SESSION_STATE:
     created = "created"
     queued = "queued"
@@ -128,3 +107,81 @@ class RawImageFile(UUIDModel):
         null=True,
         default=None
     )
+
+
+def image_file_path(instance, filename):
+    return f"images/{instance.image.pk}/{filename}"
+
+
+class Image(UUIDModel):
+    COLOR_SPACE_GRAY = "GRAY"
+    COLOR_SPACE_RGB = "RGB"
+    COLOR_SPACE_RGBA = "RGB"
+
+    COLOR_SPACES = (
+        (COLOR_SPACE_GRAY, "GRAY"),
+        (COLOR_SPACE_RGB, "RGB"),
+        (COLOR_SPACE_RGBA, "RGBA"),
+    )
+
+    COLOR_SPACE_COMPONENTS = {
+        COLOR_SPACE_GRAY: 1,
+        COLOR_SPACE_RGB: 3,
+        COLOR_SPACE_RGBA: 4,
+    }
+
+    name = models.CharField(max_length=128)
+    origin = models.ForeignKey(
+        to=RawImageUploadSession,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    created_on = models.DateTimeField(
+        blank=False,
+        default=timezone.now,
+    )
+
+    width = models.IntegerField(
+        blank=False,
+    )
+    height = models.IntegerField(
+        blank=False,
+    )
+    depth = models.IntegerField(
+        null=True,
+    )
+    color_space = models.CharField(
+        max_length=8,
+        blank=False,
+        choices=COLOR_SPACES,
+    )
+
+    @property
+    def shape_without_color(self):
+        result = []
+        if self.depth is not None:
+            result.append(self.depth)
+        result.append(self.height)
+        result.append(self.width)
+        return result
+
+    @property
+    def shape(self):
+        result = self.shape_without_color
+        color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
+        if color_components > 1:
+            result.append(color_components)
+        return result
+
+
+class ImageFile(UUIDModel):
+    image = models.ForeignKey(
+        to=Image,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    file = models.FileField(
+        upload_to=image_file_path,
+        blank=False,
+    )
+

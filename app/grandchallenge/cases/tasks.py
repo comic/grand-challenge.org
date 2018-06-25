@@ -231,6 +231,7 @@ def build_images(upload_session_uuid: UUID):
                             raw_image.save()
 
                 for image in collected_images:
+                    image.origin = upload_session
                     store_image(image, collected_associated_files)
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]

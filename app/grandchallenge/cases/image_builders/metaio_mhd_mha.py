@@ -109,15 +109,32 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             filename: Path) -> Tuple[Image, Sequence[ImageFile]]:
         try:
             simple_itk_image = sitk.ReadImage(str(filename.absolute()))
+            simple_itk_image: sitk.Image
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
+
+        color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
+        color_space = {
+            1: Image.COLOR_SPACE_GRAY,
+            3: Image.COLOR_SPACE_RGB,
+            4: Image.COLOR_SPACE_RGBA,
+        }.get(color_space, None)
+        if color_space is None:
+            raise ValueError("Unknown color space for MetaIO image.")
 
         with TemporaryDirectory() as work_dir:
             work_dir = Path(work_dir)
 
             sitk.WriteImage(simple_itk_image, str(work_dir / "out.mhd"), True)
 
-            db_image = Image(name=filename.name)
+            depth = simple_itk_image.GetDepth()
+            db_image = Image(
+                name=filename.name,
+                width=simple_itk_image.GetWidth(),
+                height=simple_itk_image.GetHeight(),
+                depth=depth if depth else None,
+                color_space=color_space,
+            )
             db_image_files = []
             for _file in work_dir.iterdir():
                 temp_file = TemporaryFile()
