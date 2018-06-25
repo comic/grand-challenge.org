@@ -40,7 +40,7 @@
                     {% for image in images %}
                         <tr>
                             <td style="padding-right:1cm;">{{ image.name }}</td>
-                            <td style="padding-right:1cm;">aaa{{ image.shape_without_color|join:"x" }}</td>
+                            <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
