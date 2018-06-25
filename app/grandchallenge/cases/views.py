@@ -57,3 +57,8 @@ class ShowUploadSessionState(DetailView):
             Image.objects.filter(origin=result["object"]).all()
         result["process_finished"] = result["object"].session_state == UPLOAD_SESSION_STATE.stopped
         return result
+
+
+class ViewImage(DetailView):
+    model = Image
+    template_name = "cases/view_image.html"

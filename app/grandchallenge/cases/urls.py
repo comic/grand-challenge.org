@@ -4,7 +4,7 @@ from django.urls import path
 from grandchallenge.cases.forms import case_upload_widget, \
     upload_raw_files_widget
 from grandchallenge.cases.views import CaseList, CaseCreate, CaseDetail, \
-    UploadRawFiles, ShowUploadSessionState
+    UploadRawFiles, ShowUploadSessionState, ViewImage
 
 app_name = 'cases'
 
@@ -28,5 +28,11 @@ urlpatterns = [
         'uploaded/<uuid:pk>/',
         ShowUploadSessionState.as_view(),
         name='raw-files-session-detail',
+    ),
+
+    path(
+        'image/view/<uuid:pk>/',
+        ViewImage.as_view(),
+        name='display-processed-image',
     ),
 ]
