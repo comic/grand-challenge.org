@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
+from django.http import HttpResponse
 from django.http.request import HttpRequest
 from django.http.response import (
     HttpResponseBadRequest, JsonResponse, HttpResponseForbidden,
@@ -91,6 +92,7 @@ class AjaxUploadWidget(Widget):
             ajax_target_path: str = None,
             multifile=True,
             auto_commit=True,
+            upload_validators=(),
             **kwargs):
         super(AjaxUploadWidget, self).__init__(*args, **kwargs)
         if ajax_target_path is None:
@@ -100,6 +102,7 @@ class AjaxUploadWidget(Widget):
         self.timeout = timedelta(hours=2)
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
+        self.__upload_validators = upload_validators
 
     def _handle_complete(
         self,
@@ -224,7 +227,7 @@ class AjaxUploadWidget(Widget):
             "extra_attrs": {},
         }
 
-    def handle_ajax(self, request: HttpRequest, **kwargs):
+    def handle_ajax(self, request: HttpRequest, **kwargs) -> HttpResponse:
         if request.method != "POST":
             return HttpResponseBadRequest()
 
@@ -238,6 +241,12 @@ class AjaxUploadWidget(Widget):
             handler = self._handle_complete
         result = []
         try:
+            for uploaded_file in request.FILES.values():
+                try:
+                    self.__validate_uploaded_file(uploaded_file)
+                except ValidationError as e:
+                    return HttpResponseForbidden(str(e))
+
             for uploaded_file in request.FILES.values():
                 result.append(handler(request, csrf_token, uploaded_file))
         except InvalidRequestException as e:
@@ -265,6 +274,10 @@ class AjaxUploadWidget(Widget):
             "auto_commit": "true" if self.__auto_commit else "false",
         }
         return template.render(context=context)
+
+    def __validate_uploaded_file(self, uploaded_file):
+        for validator in self.__upload_validators:
+            validator(uploaded_file)
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):

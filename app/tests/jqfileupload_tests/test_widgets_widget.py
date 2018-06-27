@@ -12,6 +12,7 @@ from django.http.response import (
 )
 from django.test.client import RequestFactory
 
+from grandchallenge.evaluation.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets.uploader import (
     AjaxUploadWidget, StagedAjaxFile, UploadedAjaxFileList
 )
@@ -265,7 +266,10 @@ def test_render():
 
 def test_form_field_to_python():
     form_field = UploadedAjaxFileList()
-    uuid_string = "4dec34db-930f-48be-bb65-d7f8319ff654," + "5d901b2c-7cd1-416e-9952-d30b6a0edcba," + "4a3c5731-0050-4489-8364-282278f7190f"
+    uuid_string = ",".join((
+        "4dec34db-930f-48be-bb65-d7f8319ff654",
+        "5d901b2c-7cd1-416e-9952-d30b6a0edcba",
+        "4a3c5731-0050-4489-8364-282278f7190f"))
     staged_files = form_field.to_python(uuid_string)
     assert ",".join(str(sf.uuid) for sf in staged_files) == uuid_string
     with pytest.raises(ValidationError):
@@ -278,3 +282,37 @@ def test_form_field_to_python():
 def test_form_field_prepare_value_not_implemented():
     form_field = UploadedAjaxFileList()
     assert form_field.prepare_value("") is None
+
+
+@pytest.mark.django_db
+def test_upload_validator_using_wrong_extension(rf: RequestFactory):
+    widget = AjaxUploadWidget(
+        ajax_target_path="/ajax",
+        upload_validators=[
+            ExtensionValidator(
+                allowed_extensions=(
+                    '.allowed-extension',
+                )
+            )
+        ],
+    )
+    widget.timeout = timedelta(seconds=1)
+    content = load_test_data()
+
+    upload_id = generate_new_upload_id(
+        test_upload_validator_using_wrong_extension, content
+    )
+
+    request = create_upload_file_request(
+        rf,
+        content=b"should error",
+        filename="test.wrong_extension")
+    response = widget.handle_ajax(request)
+    assert response.status_code == 403
+
+    request = create_upload_file_request(
+        rf,
+        content=b"should error",
+        filename="test.allowed-extension")
+    response = widget.handle_ajax(request)
+    assert response.status_code == 200
