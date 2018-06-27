@@ -25,8 +25,9 @@ def create_upload_file_request(
     boundary: str = "RandomBoundaryFTWBlablablablalba8923475278934578",
     content: bytes = None,
     csrf_token: str = "tests_csrf_token",
-    extra_fields: dict ={},
-    extra_headers: dict ={},
+    extra_fields: dict = {},
+    extra_headers: dict = {},
+    url: str = "/ajax",
 ):
     if content is None:
         content = load_test_data()
@@ -51,7 +52,7 @@ Content-Disposition: form-data; name="{key}"\r
     headers.update(extra_headers)
     headers["CSRF_COOKIE"] = csrf_token
     return rf.post(
-        "/ajax",
+        url,
         data=data,
         content_type=f"multipart/form-data; boundary={boundary}",
         **headers,

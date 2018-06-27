@@ -4,19 +4,20 @@ import contextlib
 
 import pytest
 from django.http import HttpResponse
-from django.test import Client, RequestFactory
+from django.test import Client
 
 from grandchallenge.cases import signals
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.urlresolvers import reverse
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.job_test_utils import CeleryTaskCollector, replace_var
 from tests.factories import SUPER_SECURE_TEST_PASSWORD
 from tests.jqfileupload_tests.external_test_support import \
-    create_file_from_filepath
+    create_file_from_filepath, UploadSession
 
 
 @pytest.mark.django_db
-def test_upload_some_images(client: Client, rf: RequestFactory, ChallengeSet):
+def test_upload_some_images(client: Client, ChallengeSet):
     task_collector = CeleryTaskCollector(signals.build_images)
     with replace_var(signals, "build_images", task_collector):
         test_user = ChallengeSet.participant
@@ -53,3 +54,32 @@ def test_upload_some_images(client: Client, rf: RequestFactory, ChallengeSet):
         response = client.get(response["Location"])
         response: HttpResponse
         assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_upload_duplicate_images(
+        client: Client, ChallengeSet):
+    test_user = ChallengeSet.participant
+
+    assert client.login(
+        username=test_user.username,
+        password=SUPER_SECURE_TEST_PASSWORD)
+
+    upload_session = UploadSession(test_upload_duplicate_images)
+
+    response = upload_session.single_chunk_upload(
+        client,
+        "test_duplicate_filename.txt",
+        b"123456789",
+        reverse("cases:upload-raw-image-files-ajax")
+    )
+    assert response.status_code == 200
+
+    response = upload_session.single_chunk_upload(
+        client,
+        "test_duplicate_filename.txt",
+        b"123456789",
+        reverse("cases:upload-raw-image-files-ajax")
+    )
+    assert response.status_code == 403
+

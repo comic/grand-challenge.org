@@ -2,11 +2,16 @@
 Module containing functions supporting tests using jqfileupload. Contains
 functions to create uploaded_file objects in various ways.
 """
+import random
 from pathlib import Path
+
+from django.http import HttpResponse
+from django.test import Client
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.jqfileupload_tests.test_widgets_uploaded_file import \
     create_uploaded_file
+from tests.jqfileupload_tests.utils import create_upload_file_request
 
 
 def create_file_with_content(
@@ -73,3 +78,53 @@ def create_file_from_filepath(
     with open(file_path, "rb") as f:
         return create_file_with_content(
             file_path.name, f.read(), chunk_size=chunk_size)
+
+
+class UploadSession:
+    """
+    This class generates a new upload session allowing to upload multiple files
+    as one session through the ajax interface.
+
+    This mainly involves the creation of a new csrf_token which is remembered
+    and used for every upload request.  
+    """
+    def __init__(self, sender):
+        self.__csrf_token = \
+            f"{__file__}" \
+            f"-{id(sender)}" \
+            f"-{hex(random.randint(0, 1000000000000000000))[2:]}"
+
+    def single_chunk_upload(
+            self,
+            client: Client,
+            filename: str,
+            content: bytes,
+            endpoint: str) -> HttpResponse:
+        """
+        Executes a single-chunk upload with the given content. In contrast to
+        the `create_file_*` functions, this function utilizes the django-router and
+        operates on the AJAX-API, resulting in a more expensive, but also more
+        rigid test.
+
+        Parameters
+        ----------
+        client: Client
+            Django test client to use to make conenctions,
+        filename: str
+            The filename of the uploaded file
+        content: bytes
+            The content of the file
+        endpoint: str
+            URL the url to upload to
+
+        Returns
+        -------
+        HttpResponse resulting from the request.
+        """
+        return create_upload_file_request(
+            client,
+            filename=filename,
+            content=content,
+            url=endpoint,
+            csrf_token=self.__csrf_token
+        )
