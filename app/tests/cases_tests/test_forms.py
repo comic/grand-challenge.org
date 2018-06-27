@@ -66,6 +66,7 @@ def test_upload_duplicate_images(
         password=SUPER_SECURE_TEST_PASSWORD)
 
     upload_session = UploadSession(test_upload_duplicate_images)
+    upload_session2 = UploadSession(test_upload_duplicate_images)
 
     response = upload_session.single_chunk_upload(
         client,
@@ -82,4 +83,13 @@ def test_upload_duplicate_images(
         reverse("cases:upload-raw-image-files-ajax")
     )
     assert response.status_code == 403
+
+    # Should work for the second session!
+    response = upload_session2.single_chunk_upload(
+        client,
+        "test_duplicate_filename.txt",
+        b"123456789",
+        reverse("cases:upload-raw-image-files-ajax")
+    )
+    assert response.status_code == 200
 
