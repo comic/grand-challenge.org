@@ -6,38 +6,11 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.db import transaction
 
-from grandchallenge.cases.models import Case, RawImageUploadSession, \
-    RawImageFile
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList, \
     StagedAjaxFile
-
-
-case_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/case-upload/", multifile=True,
-)
-
-
-class CaseForm(forms.ModelForm):
-    chunked_upload = UploadedAjaxFileList(
-        widget=case_upload_widget,
-        label='Case Files',
-        validators=[
-            ExtensionValidator(allowed_extensions=('.mhd', '.raw', '.zraw', ))
-        ],
-        help_text=(
-            'Select the files for this case.'
-        ),
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-
-    class Meta:
-        model = Case
-        fields = ['chunked_upload']
 
 
 upload_raw_files_widget = uploader.AjaxUploadWidget(

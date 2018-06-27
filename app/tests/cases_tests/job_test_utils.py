@@ -85,4 +85,4 @@ class CeleryTaskCollector:
         """
         while self.__calls:
             call = self.__calls.pop()
-            self.__fun(*call.args, **call.kwargs)
+            self(*call.args, **call.kwargs)
