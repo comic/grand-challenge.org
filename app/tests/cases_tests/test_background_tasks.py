@@ -8,13 +8,10 @@ from grandchallenge.cases.models import RawImageFile, RawImageUploadSession, \
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.job_test_utils import CeleryTaskCollector, replace_var
 from tests.jqfileupload_tests.external_test_support import \
     create_file_from_filepath
 
-
-# We need more control over whn jobs are emitted, so lets just disable the
-# signal
-signals.PREVENT_JOB_CREATION_ON_SAVE = True
 
 
 def create_raw_upload_image_session(
@@ -48,142 +45,134 @@ def test_file_session_creation():
 
 @pytest.mark.django_db
 def test_mhd_file_creation():
-    images = [
-        "image10x10x10.zraw",
-        "image10x10x10.mhd",
-        "image10x10x10.mha",
-        "image10x10x10-extra-stuff.mhd",
-        "invalid_utf8.mhd",
-        "no_image",
-    ]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    task_collector = CeleryTaskCollector(signals.build_images)
+    with replace_var(signals, "build_images", task_collector):
+        images = [
+            "image10x10x10.zraw",
+            "image10x10x10.mhd",
+            "image10x10x10.mha",
+            "image10x10x10-extra-stuff.mhd",
+            "invalid_utf8.mhd",
+            "no_image",
+        ]
+        session, uploaded_images = create_raw_upload_image_session(images)
+        task_collector.execute_calls()
 
-    session.session_state = UPLOAD_SESSION_STATE.queued
-    session.save()
+        session.refresh_from_db()
+        assert session.session_state == UPLOAD_SESSION_STATE.stopped
+        assert session.error_message is None
 
-    build_images(session.pk)
+        assert Image.objects.filter(origin=session).count() == 3
 
-    session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
+        for name, db_object in uploaded_images.items():
+            name: str
+            db_object: RawImageFile
 
-    assert Image.objects.filter(origin=session).count() == 3
+            db_object.refresh_from_db()
 
-    for name, db_object in uploaded_images.items():
-        name: str
-        db_object: RawImageFile
-
-        db_object.refresh_from_db()
-
-        assert db_object.staged_file_id is None
-        if name in ("no_image", "invalid_utf8.mhd"):
-            assert db_object.error is not None
-        else:
-            assert db_object.error is None
+            assert db_object.staged_file_id is None
+            if name in ("no_image", "invalid_utf8.mhd"):
+                assert db_object.error is not None
+            else:
+                assert db_object.error is None
 
 
 @pytest.mark.django_db
 def test_staged_uploaded_file_cleanup_interferes_with_image_build():
-    images = [
-        "image10x10x10.zraw",
-        "image10x10x10.mhd",
-    ]
-    session, uploaded_images = create_raw_upload_image_session(images)
-    StagedAjaxFile(uploaded_images["image10x10x10.zraw"].staged_file_id).delete()
+    task_collector = CeleryTaskCollector(signals.build_images)
+    with replace_var(signals, "build_images", task_collector):
+        images = [
+            "image10x10x10.zraw",
+            "image10x10x10.mhd",
+        ]
+        session, uploaded_images = create_raw_upload_image_session(images)
+        StagedAjaxFile(uploaded_images["image10x10x10.zraw"].staged_file_id).delete()
+        task_collector.execute_calls()
 
-    session.session_state = UPLOAD_SESSION_STATE.queued
-    session.save()
-
-    build_images(session.pk)
-
-    session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is not None
+        session.refresh_from_db()
+        assert session.session_state == UPLOAD_SESSION_STATE.stopped
+        assert session.error_message is not None
 
 
 @pytest.mark.django_db
 def test_no_convertible_file():
-    images = [
-        "no_image",
-        "image10x10x10.mhd",
-        "referring_to_system_file.mhd",
-    ]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    task_collector = CeleryTaskCollector(signals.build_images)
+    with replace_var(signals, "build_images", task_collector):
+        images = [
+            "no_image",
+            "image10x10x10.mhd",
+            "referring_to_system_file.mhd",
+        ]
+        session, uploaded_images = create_raw_upload_image_session(images)
+        task_collector.execute_calls()
 
-    session.session_state = UPLOAD_SESSION_STATE.queued
-    session.save()
+        session.refresh_from_db()
+        assert session.session_state == UPLOAD_SESSION_STATE.stopped
+        assert session.error_message is None
 
-    build_images(session.pk)
+        no_image_image = list(uploaded_images.values())[0]
+        no_image_image.refresh_from_db()
+        assert no_image_image.error is not None
 
-    session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
+        lonely_mhd_image = list(uploaded_images.values())[1]
+        lonely_mhd_image.refresh_from_db()
+        assert lonely_mhd_image.error is not None
 
-    no_image_image = list(uploaded_images.values())[0]
-    no_image_image.refresh_from_db()
-    assert no_image_image.error is not None
-
-    lonely_mhd_image = list(uploaded_images.values())[1]
-    lonely_mhd_image.refresh_from_db()
-    assert lonely_mhd_image.error is not None
-
-    sys_file_image = list(uploaded_images.values())[2]
-    sys_file_image.refresh_from_db()
-    assert sys_file_image.error is not None
+        sys_file_image = list(uploaded_images.values())[2]
+        sys_file_image.refresh_from_db()
+        assert sys_file_image.error is not None
 
 
 @pytest.mark.django_db
 def test_errors_on_files_with_duplicate_file_names():
-    images = [
-        "image10x10x10.zraw",
-        "image10x10x10.mhd",
-        "image10x10x10.zraw",
-        "image10x10x10.mhd",
-    ]
-    session, uploaded_images = create_raw_upload_image_session(images)
-    uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
-    assert len(uploaded_images) == 4
+    task_collector = CeleryTaskCollector(signals.build_images)
+    with replace_var(signals, "build_images", task_collector):
+        images = [
+            "image10x10x10.zraw",
+            "image10x10x10.mhd",
+            "image10x10x10.zraw",
+            "image10x10x10.mhd",
+        ]
+        session, uploaded_images = create_raw_upload_image_session(images)
+        uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
+        assert len(uploaded_images) == 4
 
-    session.session_state = UPLOAD_SESSION_STATE.queued
-    session.save()
+        task_collector.execute_calls()
 
-    build_images(session.pk)
+        session.refresh_from_db()
+        assert session.session_state == UPLOAD_SESSION_STATE.stopped
+        assert session.error_message is None
 
-    session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
-
-    for raw_image in uploaded_images:
-        raw_image.refresh_from_db()
-        assert raw_image.error is not None
+        for raw_image in uploaded_images:
+            raw_image.refresh_from_db()
+            assert raw_image.error is not None
 
 
 @pytest.mark.django_db
 def test_mhd_file_annotation_creation():
-    images = [
-        "image5x6x7.mhd",
-        "image5x6x7.zraw",
-    ]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    task_collector = CeleryTaskCollector(signals.build_images)
+    with replace_var(signals, "build_images", task_collector):
+        images = [
+            "image5x6x7.mhd",
+            "image5x6x7.zraw",
+        ]
+        session, uploaded_images = create_raw_upload_image_session(images)
 
-    session.session_state = UPLOAD_SESSION_STATE.queued
-    session.save()
+        task_collector.execute_calls()
 
-    build_images(session.pk)
+        session.refresh_from_db()
+        assert session.session_state == UPLOAD_SESSION_STATE.stopped
+        assert session.error_message is None
 
-    session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
+        images = Image.objects.filter(origin=session).all()
+        assert len(images) == 1
 
-    images = Image.objects.filter(origin=session).all()
-    assert len(images) == 1
+        raw_image_file = list(uploaded_images.values())[0]
+        raw_image_file: RawImageFile
+        raw_image_file.refresh_from_db()
+        assert raw_image_file.staged_file_id is None
 
-    raw_image_file = list(uploaded_images.values())[0]
-    raw_image_file: RawImageFile
-    raw_image_file.refresh_from_db()
-    assert raw_image_file.staged_file_id is None
-
-    image = images[0]
-    assert image.shape == [5, 6, 7]
-    assert image.shape_without_color == [5, 6, 7]
-    assert image.color_space == Image.COLOR_SPACE_GRAY
+        image = images[0]
+        assert image.shape == [5, 6, 7]
+        assert image.shape_without_color == [5, 6, 7]
+        assert image.color_space == Image.COLOR_SPACE_GRAY

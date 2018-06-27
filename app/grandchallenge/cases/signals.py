@@ -5,17 +5,15 @@ from grandchallenge.cases.models import RawImageUploadSession, \
     UPLOAD_SESSION_STATE
 from grandchallenge.cases.tasks import build_images
 
-PREVENT_JOB_CREATION_ON_SAVE = False
-
 
 @receiver(post_save, sender=RawImageUploadSession)
-def execute_job(
+def queue_build_image_job(
         instance: RawImageUploadSession=None, created: bool=False,
         *_, **__):
-    if created and not PREVENT_JOB_CREATION_ON_SAVE:
+    if created:
         try:
             task = build_images.apply_async(
-                args=(instance.pk, ),
+                args=(instance.pk,),
             )
             instance.session_state = UPLOAD_SESSION_STATE.queued
             instance.processing_task = task.id
@@ -25,3 +23,5 @@ def execute_job(
             instance.error_message = f"Could not start job: {e}"
             instance.save()
             raise e
+
+
