@@ -14,6 +14,7 @@ def queue_build_image_job(
         try:
             task = build_images.apply_async(
                 args=(instance.pk,),
+                countdown=5, # Wait a bit - immediate start won't work!
             )
             instance.session_state = UPLOAD_SESSION_STATE.queued
             instance.processing_task = task.id
