@@ -29,6 +29,16 @@ function upload_fold_unfold(element) {
 
         var target_url = upload_element.attr("upload_target");
 
+        var client_upload_session_key = generate_labeled_id("client_upload_session");
+        target_url = target_url + "?client_session=" + client_upload_session_key;
+
+        function generate_labeled_id(label) {
+            var rnd = "" + Math.floor(Math.random() * 1000000);
+            var date = (new Date).toISOString();
+            var filename = label.slice(0, 32);
+            return filename + '_' + rnd + '_' + date;
+        }
+
         upload_element.fileupload(
             {
                 url: target_url,
@@ -134,13 +144,6 @@ function upload_fold_unfold(element) {
             console.log("uuid_list_string = " + uuid_list_string);
         }
 
-        function generate_unique_file_handle_id(file) {
-            var rnd = "" + Math.floor(Math.random() * 1000000);
-            var date = (new Date).toISOString();
-            var filename = file.name.slice(0, 32);
-            return filename + '_' + rnd + '_' + date;
-        }
-
         var fileinput_button = upload_element.find("span.fileinput-button");
         var progress_div = upload_element.find("div.progress");
 
@@ -154,7 +157,7 @@ function upload_fold_unfold(element) {
 
         upload_element.on('fileuploadsubmit', function (e, data) {
             data.formData = {
-                "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
+                "X-Upload-ID": generate_labeled_id(data.files[0].name)
             };
         });
 

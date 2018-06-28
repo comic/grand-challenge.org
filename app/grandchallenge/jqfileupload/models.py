@@ -29,4 +29,4 @@ class StagedFile(models.Model):
 
     # Support for disambiguating between different upload widgets on the same
     # website
-    upload_path = models.CharField(max_length=128)
+    upload_path_sha256 = models.CharField(max_length=64)

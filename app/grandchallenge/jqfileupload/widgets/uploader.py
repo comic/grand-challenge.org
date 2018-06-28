@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import json
+import hashlib
 
 from collections import Iterable
 from datetime import timedelta
@@ -22,6 +23,12 @@ from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.utils import IntervalMap
+
+
+def generate_upload_path_hash(request: HttpRequest) -> str:
+    hasher = hashlib.sha256()
+    hasher.update(request.get_full_path().encode())
+    return hasher.hexdigest()
 
 
 def cleanup_stale_files():
@@ -122,7 +129,7 @@ class AjaxUploadWidget(Widget):
             start_byte=0,
             end_byte=uploaded_file.size - 1,
             total_size=uploaded_file.size,
-            upload_path=request.path,
+            upload_path_sha256=generate_upload_path_hash(request),
         )
         return {
             "filename": new_staged_file.client_filename,
@@ -184,7 +191,9 @@ class AjaxUploadWidget(Widget):
 
         # Verify consistency and generate file ids
         other_chunks = StagedFile.objects.filter(
-            csrf=csrf_token, client_id=client_id, upload_path=request.path,
+            csrf=csrf_token,
+            client_id=client_id,
+            upload_path_sha256=generate_upload_path_hash(request),
         ).all()
         if len(other_chunks) == 0:
             file_id = uuid.uuid4()
@@ -223,7 +232,7 @@ class AjaxUploadWidget(Widget):
             start_byte=start_byte,
             end_byte=end_byte,
             total_size=total_size,
-            upload_path=request.path,
+            upload_path_sha256=generate_upload_path_hash(request),
         )
         return {
             "filename": new_staged_file.client_filename,
