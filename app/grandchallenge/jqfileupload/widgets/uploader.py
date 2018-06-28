@@ -1,6 +1,8 @@
 import os
 import re
 import uuid
+import json
+
 from collections import Iterable
 from datetime import timedelta
 from io import BufferedIOBase
@@ -235,7 +237,10 @@ class AjaxUploadWidget(Widget):
 
         csrf_token = request.META.get('CSRF_COOKIE', None)
         if not csrf_token:
-            return HttpResponseForbidden("CSRF token is missing")
+            return HttpResponseForbidden(
+                "CSRF token is missing",
+                content_type="text/plain"
+            )
 
         if "HTTP_CONTENT_RANGE" in request.META:
             handler = self._handle_chunked
@@ -247,7 +252,11 @@ class AjaxUploadWidget(Widget):
                 try:
                     self.__validate_uploaded_file(request, uploaded_file)
                 except ValidationError as e:
-                    return HttpResponseForbidden(str(e))
+                    print(e, type(e))
+                    return HttpResponseForbidden(
+                        json.dumps(list(e.messages)),
+                        content_type="application/json",
+                    )
 
             for uploaded_file in request.FILES.values():
                 result.append(handler(request, csrf_token, uploaded_file))

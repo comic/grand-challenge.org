@@ -172,9 +172,18 @@ function upload_fold_unfold(element) {
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
+
+            var error_message = "Sending failed.";
+            var response = data.response();
+            console.log(response);
+            if (response.jqXHR.responseJSON) {
+                error_message = response.jqXHR.responseJSON[0];
+            }
+
+            console.log(data.response());
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
-                add_failed_upload(file.name, "Sending failed.");
+                add_failed_upload(file.name, error_message);
             }
         });
 
