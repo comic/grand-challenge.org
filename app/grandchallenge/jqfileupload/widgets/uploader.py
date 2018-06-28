@@ -102,7 +102,7 @@ class AjaxUploadWidget(Widget):
         self.timeout = timedelta(hours=2)
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
-        self.__upload_validators = upload_validators
+        self.__upload_validators = tuple(upload_validators)
 
     def _handle_complete(
         self,
@@ -120,6 +120,7 @@ class AjaxUploadWidget(Widget):
             start_byte=0,
             end_byte=uploaded_file.size - 1,
             total_size=uploaded_file.size,
+            upload_path=request.path,
         )
         return {
             "filename": new_staged_file.client_filename,
@@ -181,7 +182,7 @@ class AjaxUploadWidget(Widget):
 
         # Verify consistency and generate file ids
         other_chunks = StagedFile.objects.filter(
-            csrf=csrf_token, client_id=client_id
+            csrf=csrf_token, client_id=client_id, upload_path=request.path,
         ).all()
         if len(other_chunks) == 0:
             file_id = uuid.uuid4()
@@ -220,6 +221,7 @@ class AjaxUploadWidget(Widget):
             start_byte=start_byte,
             end_byte=end_byte,
             total_size=total_size,
+            upload_path=request.path,
         )
         return {
             "filename": new_staged_file.client_filename,
@@ -243,7 +245,7 @@ class AjaxUploadWidget(Widget):
         try:
             for uploaded_file in request.FILES.values():
                 try:
-                    self.__validate_uploaded_file(uploaded_file)
+                    self.__validate_uploaded_file(request, uploaded_file)
                 except ValidationError as e:
                     return HttpResponseForbidden(str(e))
 
@@ -275,9 +277,14 @@ class AjaxUploadWidget(Widget):
         }
         return template.render(context=context)
 
-    def __validate_uploaded_file(self, uploaded_file):
+    def __validate_uploaded_file(self, request, uploaded_file):
         for validator in self.__upload_validators:
-            validator(uploaded_file)
+            kwargs = {}
+            if hasattr(validator, "_filter_marker_requires_request_object"):
+                # noinspection PyProtectedMember
+                if validator._filter_marker_requires_request_object:
+                    kwargs["request"] = request
+            validator(uploaded_file, **kwargs)
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):

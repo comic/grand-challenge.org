@@ -26,3 +26,7 @@ class StagedFile(models.Model):
     start_byte = models.BigIntegerField(blank=False)
     end_byte = models.BigIntegerField(blank=False)
     total_size = models.BigIntegerField(null=True)
+
+    # Support for disambiguating between different upload widgets on the same
+    # website
+    upload_path = models.CharField(max_length=128)
