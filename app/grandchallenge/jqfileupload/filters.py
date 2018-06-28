@@ -8,7 +8,7 @@ from grandchallenge.jqfileupload.models import StagedFile
 def filter_requires_request_argument(f):
     """
     Marker that will lead to upload_filters getting an extra kwarg, which is
-    the HttpRequest used to
+    the HttpRequest for the processed file upload.
     """
     f._filter_marker_requires_request_object = True
     return f
@@ -16,6 +16,25 @@ def filter_requires_request_argument(f):
 
 @filter_requires_request_argument
 def reject_duplicate_filenames(file: UploadedFile, request: HttpRequest = None):
+    """
+    Upload filter that can be used together with
+    AjaxUploadWidget-upload_filters. This filter will NOT work properly as a
+    normal model-field filter! Using this filter will reject duplicate filenames
+    while uploading the file.
+
+    Parameters
+    ----------
+    file: UploadedFile
+        The uploaded file object to check.
+    request: HttpRequest
+        Thee used HttpRequest
+
+    Raises
+    ------
+    ValidationError:
+        Raised if a duplicate file has been detected.
+
+    """
     csrf_token = request.META.get('CSRF_COOKIE', None)
     client_id = request.META.get(
         "X-Upload-ID", request.POST.get("X-Upload-ID", None)

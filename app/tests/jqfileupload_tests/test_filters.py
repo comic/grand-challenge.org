@@ -2,10 +2,8 @@ import pytest
 
 from django.test import Client, RequestFactory
 
-from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.jqfileupload.filters import reject_duplicate_filenames
 from grandchallenge.jqfileupload.widgets.uploader import AjaxUploadWidget
-from tests.factories import SUPER_SECURE_TEST_PASSWORD
 from tests.jqfileupload_tests.external_test_support import UploadSession
 
 
@@ -83,7 +81,8 @@ def test_upload_duplicate_images(rf: RequestFactory):
     responses = [widget1.handle_ajax(r) for r in requests]
     assert all(response.status_code == 200 for response in responses)
 
-    # Uploading to another widget with the same csrf_token should work
+    # Uploading the same file to another widget with the same
+    # csrf_token should work
     requests = upload_session.multi_chunk_upload(
         rf,
         "test_new_duplicate_filename.txt",
