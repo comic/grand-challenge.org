@@ -68,10 +68,12 @@ def test_upload_duplicate_images(
     upload_session = UploadSession(test_upload_duplicate_images)
     upload_session2 = UploadSession(test_upload_duplicate_images)
 
+    content = b"0123456789" * int(1e6)
+
     response = upload_session.single_chunk_upload(
         client,
         "test_duplicate_filename.txt",
-        b"123456789",
+        content,
         reverse("cases:upload-raw-image-files-ajax")
     )
     assert response.status_code == 200
@@ -79,10 +81,18 @@ def test_upload_duplicate_images(
     response = upload_session.single_chunk_upload(
         client,
         "test_duplicate_filename.txt",
-        b"123456789",
+        content,
         reverse("cases:upload-raw-image-files-ajax")
     )
     assert response.status_code == 403
+
+    response = upload_session.single_chunk_upload(
+        client,
+        "test_different_filename.txt",
+        b"123456789",
+        reverse("cases:upload-raw-image-files-ajax")
+    )
+    assert response.status_code == 200
 
     # Should work for the second session!
     response = upload_session2.single_chunk_upload(
@@ -93,3 +103,21 @@ def test_upload_duplicate_images(
     )
     assert response.status_code == 200
 
+    # Multi chunk uploads should not be special!
+    responses = upload_session.multi_chunk_upload(
+        client,
+        "test_duplicate_filename.txt",
+        content,
+        reverse("cases:upload-raw-image-files-ajax"),
+        chunks=10,
+    )
+    assert all(response.status_code == 403 for response in responses)
+
+    responses = upload_session.multi_chunk_upload(
+        client,
+        "test_new_duplicate_filename.txt",
+        content,
+        reverse("cases:upload-raw-image-files-ajax"),
+        chunks=10,
+    )
+    assert all(response.status_code == 200 for response in responses)

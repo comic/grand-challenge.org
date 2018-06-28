@@ -66,6 +66,8 @@ def create_partial_upload_file_request(
     start_byte: int,
     end_byte: int,
     filename: str = "test.bin",
+    url: str = "/ajax",
+    csrf_token: str = "tests_csrf_token",
 ):
     content_range = f"bytes {start_byte}-{end_byte-1}/{len(content)}"
     return create_upload_file_request(
@@ -77,5 +79,7 @@ def create_partial_upload_file_request(
             "HTTP_CONTENT_RANGE": content_range,
         },
         extra_fields={"X-Upload-ID": upload_identifer},
+        url=url,
+        csrf_token=csrf_token,
     )
 

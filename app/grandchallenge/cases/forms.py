@@ -40,7 +40,7 @@ class DuplicateFileRejecter:
                 client_filename=file.name,
             )
             if client_id:
-                uploaded_files.exclude(client_id=client_id)
+                uploaded_files = uploaded_files.exclude(client_id=client_id)
             if uploaded_files.exists():
                 raise ValidationError("Duplicate file")
 
