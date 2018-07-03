@@ -33,7 +33,9 @@ class Evaluator(object):
         self._eval_image_sha256 = eval_image_sha256
         self._io_image = 'alpine:3.6'
 
-        self._client = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+        self._client = docker.DockerClient(
+            base_url=settings.EVALUATION_DOCKER_BASE_URL
+        )
 
         self._input_volume = f'{self._job_id}-input'
         self._output_volume = f'{self._job_id}-output'
@@ -41,9 +43,9 @@ class Evaluator(object):
         self._run_kwargs = {
             'labels': {'job_id': self._job_id},
             'network_disabled': True,
-            'mem_limit': '2g',
-            'cpu_period': 100000,
-            'cpu_quota': 100000,
+            'mem_limit': settings.EVALUATION_MEMORY_LIMIT,
+            'cpu_period': settings.EVALUATION_CPU_PERIOD,
+            'cpu_quota': settings.EVALUATION_CPU_QUOTA,
         }
 
     def __enter__(self):
