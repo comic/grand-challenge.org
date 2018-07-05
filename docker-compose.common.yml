@@ -10,7 +10,8 @@ services:
       - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
     command: >-
       dockerize -wait tcp://db:3306 -timeout 120s bash -c "
-      python manage.py collectstatic --noinput
+      [ -e /static ] || rm -rf /static
+      && python manage.py collectstatic --noinput
       && mkdir -p /dbox/Dropbox/media/
       && python manage.py migrate
       && python manage.py check_permissions
