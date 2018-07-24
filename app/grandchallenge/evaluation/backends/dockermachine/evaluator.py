@@ -122,7 +122,7 @@ class Evaluator(object):
             self._client.containers.run(
                 image=self._eval_image_sha256,
                 volumes={
-                    self._input_volume: {'bind': '/input/', 'mode': 'ro'},
+                    self._input_volume: {'bind': '/input/', 'mode': 'rw'},
                     self._output_volume: {'bind': '/output/', 'mode': 'rw'},
                 },
                 **self._run_kwargs,
