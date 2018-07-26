@@ -35,12 +35,6 @@ services:
     image: memcached:1.4
     restart: always
 
-  dropbox:
-    image: janeczku/dropbox
-    volumes:
-      - /srv/public/Dropbox/:/dbox/Dropbox/
-    restart: always
-
   rabbitmq:
     image: rabbitmq:3.6-management
     environment:

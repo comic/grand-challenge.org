@@ -17,7 +17,9 @@ from tests.factories import (
 def test_submission_evaluation(client, evaluation_image, submission_file):
     # Upload a submission and create a job
 
-    dockerclient = docker.DockerClient(base_url=settings.DOCKER_BASE_URL)
+    dockerclient = docker.DockerClient(
+        base_url=settings.EVALUATION_DOCKER_BASE_URL
+    )
 
     user = UserFactory()
 
