@@ -3,7 +3,6 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import get_jsonpat
 
 def test_get_jsonpath():
     obj = {
-        'spam.eggs': 99,
         'spam': {'eggs': 42, 'ham': {'beans': 84}},
         'chips': 21,
     }
