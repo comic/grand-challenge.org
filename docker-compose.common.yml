@@ -34,9 +34,6 @@ services:
     image: memcached:1.4
     restart: always
 
-  rabbitmq:
-    image: rabbitmq:3.6-management
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+  redis:
+    image: redis:4.0
     restart: always

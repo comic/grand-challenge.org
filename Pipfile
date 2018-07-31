@@ -15,7 +15,7 @@ sphinx = "*"
 
 [packages]
 "beautifulsoup4" = "*"
-celery = "*"
+celery = {extras = ["redis"]}
 django = "<2.1"
 django-countries = "*"
 django-crispy-forms = "*"
