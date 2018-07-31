@@ -235,6 +235,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat', # error logging
     'djcelery_email', # asynchronous emails
+    'django_celery_beat', # periodic tasks
     'userena', # user profiles
     'guardian', # userena dependency, per object permissions
     'easy_thumbnails', # userena dependency
