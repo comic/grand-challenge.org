@@ -46,13 +46,10 @@ services:
       file: docker-compose.common.yml
       service: memcached
 
-  rabbitmq:
+  redis:
     extends:
       file: docker-compose.common.yml
-      service: rabbitmq
-    hostname: rabbit
-    ports:
-      - "8080:15672"
+      service: redis
 
   celery_worker:
     extends:
@@ -65,7 +62,7 @@ services:
       "
     links:
       - db:mysql
-      - rabbitmq
+      - redis
       - web
     volumes_from:
       - web
@@ -81,7 +78,7 @@ services:
       "
     links:
       - db:mysql
-      - rabbitmq
+      - redis
       - web
     volumes_from:
       - web
@@ -101,7 +98,7 @@ services:
       "
     links:
       - db:mysql
-      - rabbitmq
+      - redis
       - web
     volumes_from:
       - web
@@ -109,11 +106,11 @@ services:
   flower:
     image: crgwbr/docker-celery-flower
     environment:
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+      - CELERY_BROKER_URL=redis://redis:6379/0
     ports:
       - "5555:5555"
     links:
-      - rabbitmq
+      - redis
     restart: always
 
 volumes:
