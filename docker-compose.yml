@@ -97,7 +97,7 @@ services:
     command: >-
       bash -c "
       sleep 120
-      && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile="/tmp/celerybeat.pid"
+      && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
       "
     links:
       - db:mysql
