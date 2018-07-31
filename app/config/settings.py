@@ -235,6 +235,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat', # error logging
     'djcelery_email', # asynchronous emails
+    'django_celery_beat', # periodic tasks
     'userena', # user profiles
     'guardian', # userena dependency, per object permissions
     'easy_thumbnails', # userena dependency
@@ -412,7 +413,7 @@ CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
 
 EVALUATION_DOCKER_BASE_URL = 'unix://var/run/docker.sock'
-EVALUATION_MEMORY_LIMIT = "5g"
+EVALUATION_MEMORY_LIMIT = "4g"
 EVALUATION_CPU_QUOTA = 100000
 EVALUATION_CPU_PERIOD = 100000
 
