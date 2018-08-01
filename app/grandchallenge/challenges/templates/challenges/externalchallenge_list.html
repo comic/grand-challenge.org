@@ -2,22 +2,30 @@
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
-{% block pageName %}My Challenges{% endblock %}
+{% block pageName %}External Challenges{% endblock %}
 
 {% block pagecontent %}
 
-    <h2>My Challenges</h2>
+    <h2>External Challenges</h2>
 
-    <p>This is a list of the challenges that you are participating in on
-    {{ site.short_name }}.</p>
+    {% if request.user.is_staff %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-create' %}">
+                <i class="fas fa-plus"></i> Add an external challenge
+            </a>
+        </p>
+    {% endif %}
 
     <table class="table" id="challengesTable">
         <thead>
         <tr>
             <th>Name</th>
             <th>Created</th>
-            <th>Admins</th>
+            <th>Creator</th>
             <th>Description</th>
+            <th>Edit</th>
+            <th>Delete</th>
         </tr>
         </thead>
         <tbody>
@@ -37,11 +45,23 @@
                     {{ challenge.created_at }}
                 </td>
                 <td>
-                    {% for user in challenge.get_admins %}
-                        {{ user|user_profile_link }}<br/>
-                    {% endfor %}
+                    {{ challenge.creator|user_profile_link }}
                 </td>
-                <td>{{ challenge.description }}</td>
+                <td>
+                    {{ challenge.description }}
+                </td>
+                <td>
+                    <a href="{% url 'challenges:external-update' challenge.short_name %}">
+                        <i class="fa fa-edit"
+                           title="Edit External Challenge"></i>
+                    </a>
+                </td>
+            <td>
+                <a href="{% url 'challenges:external-delete' challenge.short_name %}">
+                        <i class="fa fa-trash text-danger"
+                           title="Delete External Challenge"></i>
+                </a>
+            </td>
             </tr>
         {% endfor %}
 

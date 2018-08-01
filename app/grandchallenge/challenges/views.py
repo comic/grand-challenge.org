@@ -1,7 +1,8 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
@@ -89,3 +90,19 @@ class ExternalChallengeUpdate(
 
     def get_success_url(self):
         return reverse("challenges:list")
+
+class ExternalChallengeList(UserIsStaffMixin, ListView):
+    model = ExternalChallenge
+
+class ExternalChallengeDelete(UserIsStaffMixin, DeleteView):
+    model = ExternalChallenge
+    slug_field = "short_name"
+    slug_url_kwarg = "short_name"
+    success_message = "External challenge was successfully deleted"
+
+    def get_success_url(self):
+        return reverse("challenges:external-list")
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)

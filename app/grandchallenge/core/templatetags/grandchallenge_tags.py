@@ -1452,7 +1452,7 @@ class AllProjectLinksNode(template.Node):
             project overviews 
             
         """
-        if projectlink.is_hosted_on_comic():
+        if not projectlink.is_defined_in_excel():
             thumb_image_url = projectlink.params["thumb_image_url"]
         else:
             thumb_image_url = reverse(

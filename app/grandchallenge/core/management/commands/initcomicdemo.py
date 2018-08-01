@@ -46,6 +46,14 @@ class Command(BaseCommand):
                 password='user',
                 active=True,
             )
+            adminuser = UserenaSignup.objects.create_user(
+                username="admin",
+                email="admin@example.com",
+                password="admin",
+                active=True,
+            )
+            adminuser.is_staff = True
+            adminuser.save()
             demo = Challenge.objects.create(
                 short_name='demo',
                 description='demo project',

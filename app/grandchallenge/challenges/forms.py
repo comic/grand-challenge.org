@@ -98,15 +98,19 @@ class ExternalChallengeCreateForm(forms.ModelForm):
     class Meta:
         model = ExternalChallenge
         fields = (
-            "homepage",
             "short_name",
             "title",
+            "homepage",
             "description",
             "logo",
         )
 
 
 class ExternalChallengeUpdateForm(forms.ModelForm):
+
+    workshop_date = forms.DateField(
+        widget=forms.TextInput(attrs={'type': 'date'})
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,5 +120,10 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
     class Meta:
         model = ExternalChallenge
         fields = (
+            "title",
+            "homepage",
+            "description",
+            "logo",
+            "workshop_date",
             "hidden",
         )

@@ -7,6 +7,19 @@
 
     <h2>All Challenges</h2>
 
+    {% if request.user.is_staff %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-create' %}">
+                <i class="fas fa-plus"></i> Add an external challenge
+            </a>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-list' %}">
+                <i class="fas fa-edit"></i> Edit external challenges
+            </a>
+        </p>
+    {% endif %}
+
     {% all_projectlinks %}
 
 {% endblock %}

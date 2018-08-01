@@ -54,6 +54,7 @@ class ProjectLink(object):
         "last submission date": "",
         "hosted on comic": False,
         "project type": "",
+        "excel": True,
     }
     # css selector used to designate a project as still open
     UPCOMING = "challenge_upcoming"
@@ -163,6 +164,9 @@ class ProjectLink(object):
 
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
+
+    def is_defined_in_excel(self):
+        return self.params["excel"]
 
 
 def validate_nounderscores(value):
@@ -298,6 +302,10 @@ class ChallengeBase(models.Model):
 
     objects = ChallengeManager()
 
+    def __str__(self):
+        """ string representation for this object"""
+        return self.short_name
+
     @property
     def thumb_image_url(self):
         try:
@@ -315,12 +323,9 @@ class ChallengeBase(models.Model):
     def get_absolute_url(self):
         raise NotImplementedError
 
-    def to_projectlink(self):
-        """
-        Return a ProjectLink representation of this comicsite, to show in an
-        overview page listing all projects
-        """
-        args = {
+    @property
+    def projectlink_args(self):
+        return {
             # These are copied from ProjectLink
             "abreviation": self.short_name,
             "title": self.title if self.title else self.short_name,
@@ -339,6 +344,7 @@ class ChallengeBase(models.Model):
             "submitted results": self.number_of_submissions,
             "last submission date": self.last_submission_date,
             "hosted on comic": True,
+            "excel": False,
 
             # These are extra
             "download URL": "",
@@ -347,7 +353,12 @@ class ChallengeBase(models.Model):
             "created at": self.created_at,
         }
 
-        return ProjectLink(args)
+    def to_projectlink(self):
+        """
+        Return a ProjectLink representation of this comicsite, to show in an
+        overview page listing all projects
+        """
+        return ProjectLink(self.projectlink_args)
 
     class Meta:
         abstract = True
@@ -466,10 +477,6 @@ class Challenge(ChallengeBase):
             "page will be used instead"
         ),
     )
-
-    def __str__(self):
-        """ string representation for this object"""
-        return self.short_name
 
     # TODO check whether short name is really clean and short!
     def delete(self, using=None, keep_parents=False):
@@ -637,6 +644,25 @@ class ExternalChallenge(ChallengeBase):
         blank=True,
         help_text=("Where is the submissions page for this challenge?")
     )
+
+    @property
+    def projectlink_args(self):
+        """
+        Override the project link arguments to get around the nasty hacks
+        made in the excel sheet
+        """
+        args = super().projectlink_args
+
+        args["hosted on comic"] = False
+
+        if not self.workshop_date:
+            args["workshop date"] = str(self.created_at)
+            args["year"] = self.created_at.year
+        else:
+            args["workshop date"] = str(self.workshop_date)
+            args["year"] = self.workshop_date.year
+
+        return args
 
     def get_absolute_url(self):
         return self.homepage
