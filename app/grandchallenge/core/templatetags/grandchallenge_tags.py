@@ -623,7 +623,7 @@ class RenderGetProjectPrefixNode(template.Node):
     def render(self, context):
         try:
             projectname = context["site"].short_name
-        except AttributeError:
+        except (AttributeError, KeyError):
             projectname = settings.MAIN_PROJECT_NAME
         url = reverse("challenge-homepage", args=[projectname])
         return url
