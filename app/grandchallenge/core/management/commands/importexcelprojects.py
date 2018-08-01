@@ -111,11 +111,17 @@ class Command(BaseCommand):
 
         if not challenge.logo:
             try:
-                logo = f"https://grand-challenges.grand-challenge.org/serve/public_html/images/all_challenges/{challenge.short_name.lower()}.png/"
-                img = urlopen(logo).read()
+                logo = os.path.join(settings.MEDIA_ROOT,
+                                    settings.MAIN_PROJECT_NAME,
+                                    settings.EXTERNAL_PROJECTS_IMAGE_FOLDER,
+                                    f'{challenge.short_name.lower()}.png')
+
+                with open(logo, 'rb') as f:
+                    img = f.read()
                 challenge.logo = ContentFile(img,
                                              f"{challenge.short_name.lower()}.png")
-            except HTTPError:
+                
+            except Exception:
                 print(f"Could not find logo for {challenge.short_name}")
                 print(f"{logo}")
 
