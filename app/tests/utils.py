@@ -70,13 +70,16 @@ def get_view_for_user(
         client.login(
             username=user.username, password=SUPER_SECURE_TEST_PASSWORD
         )
+
     if method is None:
         method = client.get
+
     try:
         response = method(url, **kwargs)
     finally:
         if user:
             client.logout()
+
     return response
 
 
