@@ -25,7 +25,7 @@ urlpatterns = [
         name='external-create'
     ),
     path(
-        "external/<slug:short_name>/",
+        "external/<slug:short_name>/update/",
         ExternalChallengeUpdate.as_view(),
         name="external-update",
     ),
