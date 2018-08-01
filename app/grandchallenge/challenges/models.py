@@ -644,6 +644,10 @@ class ExternalChallenge(ChallengeBase):
         blank=True,
         help_text=("Where is the submissions page for this challenge?")
     )
+    download_page = models.URLField(
+        blank=True,
+        help_text=("Where is the download page for this challenge?")
+    )
 
     @property
     def projectlink_args(self):
@@ -661,6 +665,9 @@ class ExternalChallenge(ChallengeBase):
         else:
             args["workshop date"] = str(self.workshop_date)
             args["year"] = self.workshop_date.year
+
+        if self.download_page:
+            args["download URL"] = self.download_page
 
         return args
 

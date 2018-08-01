@@ -58,6 +58,8 @@ class Command(BaseCommand):
 
         admin_user = get_user_model().objects.get(username="jamesmeakin")
 
+        print(f"Importing {projectlink.params['abreviation']}")
+
         try:
             challenge = ExternalChallenge.objects.get(
                 short_name=projectlink.params["abreviation"]
@@ -79,7 +81,7 @@ class Command(BaseCommand):
         challenge.event_name = projectlink.params["event name"]
         challenge.event_url = projectlink.params["event URL"]
 
-        challenge.hidden = True
+        challenge.hidden = False
 
         challenge.publication_journal_name = projectlink.params[
             "overview article journal"]
@@ -97,6 +99,7 @@ class Command(BaseCommand):
             challenge.last_submission_date = projectlink.params["last submission date"]
 
         challenge.offers_data_download = True if projectlink.params["data download"] else False
+        challenge.download_page = projectlink.params["download URL"]
 
         try:
             challenge.number_of_downloads = int(projectlink.params["dataset downloads"])
