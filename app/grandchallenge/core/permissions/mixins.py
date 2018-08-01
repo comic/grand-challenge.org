@@ -72,3 +72,18 @@ class UserIsChallengeParticipantOrAdminMixin(UserAuthAndTestMixin):
         user = self.request.user
         challenge = self.request.challenge
         return challenge.is_admin(user) or challenge.is_participant(user)
+
+
+class UserIsStaffMixin(UserAuthAndTestMixin):
+    """
+    A mixin that determines if a user is a staff member
+
+    Requires that grandchallenge.core.middleware.project is installed
+
+    NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
+    See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
+    """
+
+    def test_func(self):
+        user = self.request.user
+        return user.is_staff

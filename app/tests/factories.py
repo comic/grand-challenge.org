@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -18,6 +18,13 @@ class ChallengeFactory(factory.DjangoModelFactory):
         model = Challenge
 
     short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
+
+class ExternalChallengeFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = ExternalChallenge
+
+    short_name = factory.Sequence(lambda n: f'test_external_challenge{n}')
+    homepage = factory.Faker('url')
 
 
 class PageFactory(factory.DjangoModelFactory):

@@ -1,5 +1,6 @@
 import copy
 import datetime
+import hashlib
 import logging
 import os
 
@@ -25,9 +26,6 @@ class ChallengeManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
 
-    def get_queryset(self):
-        return super().get_queryset()
-
 
 class ProjectLink(object):
     """ Metadata about a single project: url, event etc. Used as the shared
@@ -49,17 +47,14 @@ class ProjectLink(object):
         "website section": "",
         "overview article url": "",
         "overview article journal": "",
-        "overview article citations": "",
-        "overview article date": "",
-        "submission deadline": "",
         "workshop date": "",
         "open for submission": "",
         "dataset downloads": "",
-        "registered teams": "",
         "submitted results": "",
         "last submission date": "",
         "hosted on comic": False,
         "project type": "",
+        "excel": True,
     }
     # css selector used to designate a project as still open
     UPCOMING = "challenge_upcoming"
@@ -170,6 +165,9 @@ class ProjectLink(object):
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
 
+    def is_defined_in_excel(self):
+        return self.params["excel"]
+
 
 def validate_nounderscores(value):
     if "_" in value:
@@ -181,21 +179,22 @@ def validate_nounderscores(value):
 
 
 def get_logo_path(instance, filename):
-    return f"logos/{instance.pk}/{filename}"
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
+
 
 def get_banner_path(instance, filename):
     return f"banners/{instance.pk}/{filename}"
 
 
-class Challenge(models.Model):
-    """
-    A collection of HTML pages using a certain skin. Pages can be browsed and
-    edited.
-    """
-    public_folder = "public_html"
+class ChallengeBase(models.Model):
+    CHALLENGE_ACTIVE = 'challenge_active'
+    CHALLENGE_INACTIVE = 'challenge_inactive'
+    DATA_PUB = 'data_pub'
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    created_at = models.DateTimeField(auto_now_add=True)
     short_name = models.SlugField(
         max_length=50,
         default="",
@@ -208,17 +207,11 @@ class Challenge(models.Model):
         ],
         unique=True,
     )
-    skin = models.CharField(
-        max_length=225,
-        default=public_folder + "/project.css",
-        help_text="css file to include throughout this"
-        " project. relative to project data folder",
-    )
     description = models.CharField(
         max_length=1024,
         default="",
         blank=True,
-        help_text="Short summary of " "this project, max 1024 characters.",
+        help_text="Short summary of this project, max 1024 characters.",
     )
     title = models.CharField(
         max_length=64,
@@ -234,52 +227,10 @@ class Challenge(models.Model):
         upload_to=get_logo_path,
         blank=True,
     )
-    banner = models.ImageField(
-        upload_to=get_banner_path,
-        blank=True,
-    )
-    logo_path = models.CharField(
-        max_length=255,
-        default=public_folder + "/logo.png",
-        help_text="100x100 pixel image file to use as logo"
-        " in projects overview. Relative to project datafolder",
-    )
-    header_image = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="optional 658 pixel wide Header image which will "
-        "appear on top of each project page top of each "
-        "project. "
-        "Relative to project datafolder. Suggested default:" +
-        public_folder +
-        "/header.png",
-    )
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Project in any public overview",
     )
-    hide_signin = models.BooleanField(
-        default=False,
-        help_text="Do no show the Sign in / Register link on any page",
-    )
-    hide_footer = models.BooleanField(
-        default=False,
-        help_text=(
-            "Do not show the general links or "
-            "the grey divider line in page footers"
-        ),
-    )
-    disclaimer = models.CharField(
-        max_length=2048,
-        default="",
-        blank=True,
-        null=True,
-        help_text=(
-            "Optional text to show on each page in the project. "
-            "For showing 'under construction' type messages"
-        ),
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
     workshop_date = models.DateField(
         null=True,
         blank=True,
@@ -299,25 +250,11 @@ class Challenge(models.Model):
         null=True,
         help_text="Website of the event which will host the workshop",
     )
-    CHALLENGE_ACTIVE = 'challenge_active'
-    CHALLENGE_INACTIVE = 'challenge_inactive'
-    DATA_PUB = 'data_pub'
     is_open_for_submissions = models.BooleanField(
         default=False,
         help_text=(
             "This project currently accepts new submissions. "
             "Affects listing in projects overview"
-        ),
-    )
-    submission_page_name = models.CharField(
-        blank=True,
-        null=True,
-        max_length=255,
-        help_text=(
-            "If the project allows submissions, there will be a link in "
-            "projects overview going directly to you "
-            "project/<submission_page_name>/. If empty, the projects main "
-            "page will be used instead"
         ),
     )
     number_of_submissions = models.IntegerField(
@@ -362,6 +299,124 @@ class Challenge(models.Model):
             "journal abbreviations</a> format"
         ),
     )
+
+    objects = ChallengeManager()
+
+    def __str__(self):
+        """ string representation for this object"""
+        return self.short_name
+
+    @property
+    def thumb_image_url(self):
+        try:
+            return self.logo.url
+        except ValueError:
+            return (
+                f"https://www.gravatar.com/avatar/"
+                f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
+            )
+
+    @property
+    def submission_url(self):
+        raise NotImplementedError
+
+    def get_absolute_url(self):
+        raise NotImplementedError
+
+    @property
+    def projectlink_args(self):
+        return {
+            # These are copied from ProjectLink
+            "abreviation": self.short_name,
+            "title": self.title if self.title else self.short_name,
+            "description": self.description,
+            "URL": self.get_absolute_url(),
+            "submission URL": self.submission_url,
+            "event name": self.event_name,
+            "year": "",
+            "event URL": self.event_url,
+            "website section": "active challenges",
+            "overview article url": self.publication_url,
+            "overview article journal": self.publication_journal_name,
+            "workshop date": self.workshop_date,
+            "open for submission": "yes" if self.is_open_for_submissions else "no",
+            "dataset downloads": self.number_of_downloads,
+            "submitted results": self.number_of_submissions,
+            "last submission date": self.last_submission_date,
+            "hosted on comic": True,
+            "excel": False,
+
+            # These are extra
+            "download URL": "",
+            "thumb_image_url": self.thumb_image_url,
+            "data download": "yes" if self.offers_data_download else "no",
+            "created at": self.created_at,
+        }
+
+    def to_projectlink(self):
+        """
+        Return a ProjectLink representation of this comicsite, to show in an
+        overview page listing all projects
+        """
+        return ProjectLink(self.projectlink_args)
+
+    class Meta:
+        abstract = True
+
+
+class Challenge(ChallengeBase):
+    """
+    A collection of HTML pages using a certain skin. Pages can be browsed and
+    edited.
+    """
+    public_folder = "public_html"
+    skin = models.CharField(
+        max_length=225,
+        default=public_folder + "/project.css",
+        help_text="css file to include throughout this"
+                  " project. relative to project data folder",
+    )
+    banner = models.ImageField(
+        upload_to=get_banner_path,
+        blank=True,
+    )
+    logo_path = models.CharField(
+        max_length=255,
+        default=public_folder + "/logo.png",
+        help_text="100x100 pixel image file to use as logo"
+                  " in projects overview. Relative to project datafolder",
+    )
+    header_image = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="optional 658 pixel wide Header image which will "
+                  "appear on top of each project page top of each "
+                  "project. "
+                  "Relative to project datafolder. Suggested default:" +
+                  public_folder +
+                  "/header.png",
+    )
+    hide_signin = models.BooleanField(
+        default=False,
+        help_text="Do no show the Sign in / Register link on any page",
+    )
+    hide_footer = models.BooleanField(
+        default=False,
+        help_text=(
+            "Do not show the general links or "
+            "the grey divider line in page footers"
+        ),
+    )
+    disclaimer = models.CharField(
+        max_length=2048,
+        default="",
+        blank=True,
+        null=True,
+        help_text=(
+            "Optional text to show on each page in the project. "
+            "For showing 'under construction' type messages"
+        ),
+    )
     require_participant_review = models.BooleanField(
         default=False,
         help_text=(
@@ -372,7 +427,7 @@ class Challenge(models.Model):
     )
     allow_unfiltered_page_html = models.BooleanField(
         default=False,
-        help_text= (
+        help_text=(
             'If true, the page HTML is NOT filtered, allowing the challenge '
             'administrator to have full control over the page contents when '
             'they edit it in ckeditor.'
@@ -411,11 +466,17 @@ class Challenge(models.Model):
         on_delete=models.CASCADE,
         related_name='participants_of_challenge',
     )
-    objects = ChallengeManager()
-
-    def __str__(self):
-        """ string representation for this object"""
-        return self.short_name
+    submission_page_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=(
+            "If the project allows submissions, there will be a link in "
+            "projects overview going directly to you "
+            "project/<submission_page_name>/. If empty, the projects main "
+            "page will be used instead"
+        ),
+    )
 
     # TODO check whether short name is really clean and short!
     def delete(self, using=None, keep_parents=False):
@@ -519,58 +580,25 @@ class Challenge(models.Model):
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        url = reverse('challenge-homepage', args=[self.short_name])
-        return url
+        return reverse('challenge-homepage', args=[self.short_name])
 
-    def to_projectlink(self):
-        """
-        Return a ProjectLink representation of this comicsite, to show in an
-        overview page listing all projects
-        """
-
+    @property
+    def thumb_image_url(self):
+        """ Legacy method for challenges that still use logo_path """
         try:
-            thumb_image_url = self.logo.url
+            return self.logo.url
         except ValueError:
-            thumb_image_url = reverse(
+            return reverse(
                 'project_serve_file', args=[self.short_name, self.logo_path]
             )
 
-        args = {
-            "abreviation": self.short_name,
-            "title": self.title if self.title else self.short_name,
-            "description": self.description,
-            "URL": reverse('challenge-homepage', args=[self.short_name]),
-            "download URL": "",
-            "submission URL": self.get_submission_url(),
-            "event name": self.event_name,
-            "year": "",
-            "event URL": self.event_url,
-            "thumb_image_url": thumb_image_url,
-            "website section": "active challenges",
-            "overview article url": self.publication_url,
-            "overview article journal": self.publication_journal_name,
-            "overview article citations": "",
-            "overview article date": "",
-            "submission deadline": "",
-            "workshop date": self.workshop_date,
-            "open for submission": "yes" if self.is_open_for_submissions else "no",
-            "data download": "yes" if self.offers_data_download else "no",
-            "dataset downloads": self.number_of_downloads,
-            "registered teams": "",
-            "submitted results": self.number_of_submissions,
-            "last submission date": self.last_submission_date,
-            "hosted on comic": True,
-            "created at": self.created_at,
-        }
-        projectlink = ProjectLink(args)
-        return projectlink
-
-    def get_submission_url(self):
+    @property
+    def submission_url(self):
         """ What url can you go to to submit for this project? """
         url = reverse('challenge-homepage', args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
-                "http://"
+                    "http://"
             ) or self.submission_page_name.startswith(
                 "https://"
             ):
@@ -605,6 +633,50 @@ class Challenge(models.Model):
     class Meta:
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
+
+
+class ExternalChallenge(ChallengeBase):
+    homepage = models.URLField(
+        blank=False,
+        help_text=("What is the homepage for this challenge?"),
+    )
+    submission_page = models.URLField(
+        blank=True,
+        help_text=("Where is the submissions page for this challenge?")
+    )
+    download_page = models.URLField(
+        blank=True,
+        help_text=("Where is the download page for this challenge?")
+    )
+
+    @property
+    def projectlink_args(self):
+        """
+        Override the project link arguments to get around the nasty hacks
+        made in the excel sheet
+        """
+        args = super().projectlink_args
+
+        args["hosted on comic"] = False
+
+        if not self.workshop_date:
+            args["workshop date"] = str(self.created_at)
+            args["year"] = self.created_at.year
+        else:
+            args["workshop date"] = str(self.workshop_date)
+            args["year"] = self.workshop_date.year
+
+        if self.download_page:
+            args["download URL"] = self.download_page
+
+        return args
+
+    def get_absolute_url(self):
+        return self.homepage
+
+    @property
+    def submission_url(self):
+        return self.submission_page
 
 
 class ComicSiteModel(models.Model):

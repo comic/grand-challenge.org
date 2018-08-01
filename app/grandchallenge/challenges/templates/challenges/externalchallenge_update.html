@@ -1,0 +1,15 @@
+{% extends "mainpage.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}Update {{ object.short_name }}{% endblock %}
+
+{% block contentTitle %}
+    <h2>Update {{ object.short_name }}</h2>
+{% endblock %}
+
+{% block pagecontent %}
+    {% crispy form %}
+
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

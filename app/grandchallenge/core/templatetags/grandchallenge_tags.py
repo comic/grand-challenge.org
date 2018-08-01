@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import grandchallenge.core.views
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.api import get_public_results_by_challenge_name
 from grandchallenge.core.dataproviders.ProjectExcelReader import (
     ProjectExcelReader
@@ -623,7 +623,7 @@ class RenderGetProjectPrefixNode(template.Node):
     def render(self, context):
         try:
             projectname = context["site"].short_name
-        except AttributeError:
+        except (AttributeError, KeyError):
             projectname = settings.MAIN_PROJECT_NAME
         url = reverse("challenge-homepage", args=[projectname])
         return url
@@ -1194,6 +1194,7 @@ def render_all_projectlinks(parser, token):
     """
     usagestr = "Tag usage: {% all_projectlinks %}"
     args = parseKeyValueToken(token)
+
     try:
         projects = Challenge.objects.non_hidden()
     except ObjectDoesNotExist as e:
@@ -1213,13 +1214,17 @@ class AllProjectLinksNode(template.Node):
 
     def render(self, context):
         projectlinks = []
+
         for project in self.projects:
             projectlinks.append(project.to_projectlink())
+
+        for challenge in ExternalChallenge.objects.non_hidden():
+            projectlinks.append(challenge.to_projectlink())
+
         projectlinks += self.read_grand_challenge_projectlinks()
+
         html = self.render_project_links_per_year(projectlinks)
-        # html = ""
-        # for projectlink in projectlinks:
-        #    html += projectlink.render_to_html()
+
         html = u"""
                   {filter_buttons_HTML}
                   <div id='projectlinks'>
@@ -1227,6 +1232,7 @@ class AllProjectLinksNode(template.Node):
                   </div> """.format(
             filter_buttons_HTML=self.get_filter_buttons_HTML(), html=html
         )
+
         return html
 
     def get_filter_buttons_HTML(self):
@@ -1446,7 +1452,7 @@ class AllProjectLinksNode(template.Node):
             project overviews 
             
         """
-        if projectlink.is_hosted_on_comic():
+        if not projectlink.is_defined_in_excel():
             thumb_image_url = projectlink.params["thumb_image_url"]
         else:
             thumb_image_url = reverse(
