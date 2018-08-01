@@ -62,7 +62,7 @@ class ChallengeUpdate(
 
 
 class ExternalChallengeCreate(
-    LoginRequiredMixin, SuccessMessageMixin, CreateView
+    UserIsStaffMixin, SuccessMessageMixin, CreateView
 ):
     model = ExternalChallenge
     form_class = ExternalChallengeCreateForm

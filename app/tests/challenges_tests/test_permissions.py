@@ -1,6 +1,7 @@
 import pytest
 
 from grandchallenge.core.urlresolvers import reverse
+from tests.factories import ExternalChallengeFactory
 from tests.utils import (
     validate_logged_in_view,
     validate_admin_only_view,
@@ -25,7 +26,19 @@ def test_challenge_update_permissions(client, TwoChallengeSets):
     )
 
 @pytest.mark.django_db
-def test_external_challenge_list(client):
+@pytest.mark.parametrize(
+    "view", [
+        "challenges:external-list",
+        "challenges:external-create",
+        "challenges:external-update",
+        "challenges:external-delete",
+    ])
+def test_external_challenges_staff_views(client, view):
+    if view in ["challenges:external-update", "challenges:external-delete"]:
+        reverse_kwargs = {"short_name": ExternalChallengeFactory().short_name}
+    else:
+        reverse_kwargs = {}
+
     validate_staff_only_view(
-        client=client, viewname='challenges:external-list'
+        client=client, viewname=view, reverse_kwargs=reverse_kwargs
     )
