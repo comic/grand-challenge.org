@@ -179,7 +179,7 @@ def validate_nounderscores(value):
 
 
 def get_logo_path(instance, filename):
-    return f"logos/{instance.pk}/{filename}"
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
 
 
 def get_banner_path(instance, filename):

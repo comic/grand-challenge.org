@@ -96,6 +96,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             TabHolder(
                 Tab(
                     'Information',
+                    'short_name',
                     'title',
                     'homepage',
                     'description',
@@ -134,6 +135,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         model = ExternalChallenge
         fields = (
             # Information
+            "short_name",
             "title",
             "homepage",
             "description",
