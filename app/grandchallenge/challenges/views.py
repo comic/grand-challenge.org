@@ -7,8 +7,7 @@ from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
     ChallengeUpdateForm,
-    ExternalChallengeCreateForm,
-    ExternalChallengeUpdateForm
+    ExternalChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.permissions.mixins import (
@@ -65,7 +64,7 @@ class ExternalChallengeCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
 ):
     model = ExternalChallenge
-    form_class = ExternalChallengeCreateForm
+    form_class = ExternalChallengeUpdateForm
     success_message = (
         "Your challenge has been successfully submitted. "
         "An admin will review your challenge before it is published."

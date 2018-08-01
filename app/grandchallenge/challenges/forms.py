@@ -88,42 +88,79 @@ class ChallengeUpdateForm(forms.ModelForm):
         ]
 
 
-class ExternalChallengeCreateForm(forms.ModelForm):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit('save', 'Save'))
-
-    class Meta:
-        model = ExternalChallenge
-        fields = (
-            "short_name",
-            "title",
-            "homepage",
-            "description",
-            "logo",
-        )
-
-
 class ExternalChallengeUpdateForm(forms.ModelForm):
-
-    workshop_date = forms.DateField(
-        widget=forms.TextInput(attrs={'type': 'date'})
-    )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit('save', 'Save'))
+        self.helper.layout = Layout(
+            TabHolder(
+                Tab(
+                    'Information',
+                    'title',
+                    'homepage',
+                    'description',
+                    'logo',
+                    'hidden',
+                ),
+                Tab(
+                    'Event',
+                    'event_name',
+                    'event_url',
+                    'workshop_date',
+                ),
+                Tab(
+                    'Data',
+                    "offers_data_download",
+                    "download_page",
+                    "number_of_downloads",
+                ),
+                Tab(
+                    'Submissions',
+                    "is_open_for_submissions",
+                    "submission_page",
+                    "number_of_submissions",
+                    "last_submission_date",
+                ),
+                Tab(
+                    'Publication',
+                    "publication_url",
+                    "publication_journal_name",
+                ),
+            ),
+            ButtonHolder(Submit('save', 'Save')),
+        )
 
     class Meta:
         model = ExternalChallenge
         fields = (
+            # Information
             "title",
             "homepage",
             "description",
             "logo",
-            "workshop_date",
             "hidden",
+
+            # Event
+            "event_name",
+            "event_url",
+            "workshop_date",
+
+            # Data
+            "offers_data_download",
+            "download_page",
+            "number_of_downloads",
+
+            # Submissions
+            "is_open_for_submissions",
+            "submission_page",
+            "number_of_submissions",
+            "last_submission_date",
+
+            # Publication
+            "publication_url",
+            "publication_journal_name",
         )
+        widgets = {
+            "workshop_date": forms.TextInput(attrs={'type': 'date'}),
+            "last_submission_date": forms.TextInput(attrs={'type': 'date'}),
+        }

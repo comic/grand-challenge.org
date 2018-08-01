@@ -2,10 +2,10 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}Update Existing Challenge{% endblock %}
+{% block pageName %}Update {{ object.short_name }}{% endblock %}
 
 {% block contentTitle %}
-    <h2>Update an Existing Challenge</h2>
+    <h2>Update {{ object.short_name }}</h2>
 {% endblock %}
 
 {% block pagecontent %}
