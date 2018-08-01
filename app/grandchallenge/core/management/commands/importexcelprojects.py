@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
     def add_project_link_to_db(self, projectlink):
 
-        admin_user = get_user_model().objects.get(username="jamesmeakin")
+        admin_user = get_user_model().objects.get(username="BramVanGinneken")
 
         print(f"Importing {projectlink.params['abreviation']}")
 
