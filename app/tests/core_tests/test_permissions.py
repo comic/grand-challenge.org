@@ -6,7 +6,9 @@ from django.test import RequestFactory
 from django.views.generic import View
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin,
+    UserIsChallengeAdminMixin,
+    UserIsChallengeParticipantOrAdminMixin,
+    UserIsStaffMixin,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import assert_redirect, assert_status
@@ -28,6 +30,38 @@ class ParticipantOrAdminOnlyView(
     pass
 
 
+class StaffOnlyView(UserIsStaffMixin, EmptyResponseView):
+    pass
+
+
+@pytest.mark.django_db
+def test_staff_view(rf: RequestFactory, ChallengeSet, admin_user, mocker):
+    # admin_user is a superuser, not a challenge admin
+    creator = ChallengeSet.creator
+    challenge = ChallengeSet.challenge
+    participant = ChallengeSet.participant
+    non_participant = ChallengeSet.non_participant
+
+    # Messages need to be mocked when using request factory
+    mock_messages = mocker.patch(
+        'grandchallenge.core.permissions.mixins.messages'
+    ).start()
+    mock_messages.INFO = "INFO"
+
+    assert_redirect(
+        settings.LOGIN_URL, AnonymousUser(), StaffOnlyView, challenge, rf
+    )
+    assert_status(403, participant, StaffOnlyView, challenge, rf)
+    assert_status(403, non_participant, StaffOnlyView, challenge, rf)
+    assert_status(403, creator, StaffOnlyView, challenge, rf)
+    assert_status(200, admin_user, StaffOnlyView, challenge, rf)
+
+    participant.is_staff = True
+    participant.save()
+
+    assert_status(200, participant, StaffOnlyView, challenge, rf)
+
+
 @pytest.mark.django_db
 def test_permissions_mixin(
     rf: RequestFactory, admin_user, mocker, ChallengeSet
@@ -37,10 +71,12 @@ def test_permissions_mixin(
     challenge = ChallengeSet.challenge
     participant = ChallengeSet.participant
     non_participant = ChallengeSet.non_participant
+
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
         'grandchallenge.core.permissions.mixins.messages'
     ).start()
+
     mock_messages.INFO = "INFO"
     assert_status(200, admin_user, AdminOnlyView, challenge, rf)
     assert_status(200, creator, AdminOnlyView, challenge, rf)
