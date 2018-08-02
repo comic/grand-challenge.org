@@ -134,7 +134,7 @@ MAIN_PROJECT_NAME = "comic"
 # An overview can be rendered of all projects in the framework. In addition,
 # external projects can be included from the file below. Relative to
 # MEDIA_ROOT + MAIN_PROJECT_NAME
-EXTERNAL_PROJECTS_FILE = "challengestats.xls"
+EXTERNAL_PROJECTS_FILE = "challengestats_UNUSED.xls"
 
 # Each project in ALL_PROJECTS_FILE can have a 100x100 image thumbnail associated
 # with it. Thumbnail images are looked for in the folder below. Filenames should

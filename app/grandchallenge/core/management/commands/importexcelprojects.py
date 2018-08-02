@@ -88,7 +88,7 @@ class Command(BaseCommand):
         challenge.publication_url = projectlink.params["overview article url"]
 
         challenge.is_open_for_submissions = True if projectlink.params[
-            "open for submission"] else False
+            "open for submission"].lower() == "yes" else False
 
         try:
             challenge.number_of_submissions = int(projectlink.params["submitted results"])

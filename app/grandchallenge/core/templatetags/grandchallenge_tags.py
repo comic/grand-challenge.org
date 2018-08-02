@@ -1221,7 +1221,8 @@ class AllProjectLinksNode(template.Node):
         for challenge in ExternalChallenge.objects.non_hidden():
             projectlinks.append(challenge.to_projectlink())
 
-        projectlinks += self.read_grand_challenge_projectlinks()
+        # Reading from the excel sheet is deprecated
+        # projectlinks += self.read_grand_challenge_projectlinks()
 
         html = self.render_project_links_per_year(projectlinks)
 
