@@ -13,11 +13,27 @@ from grandchallenge.uploads.models import UploadModel
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
 
 
+class UserFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = settings.AUTH_USER_MODEL
+
+    username = factory.Sequence(lambda n: f'test_user_{n:04}')
+    email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)
+    password = factory.PostGenerationMethodCall(
+        'set_password', SUPER_SECURE_TEST_PASSWORD
+    )
+    is_active = True
+    is_staff = False
+    is_superuser = False
+
+
 class ChallengeFactory(factory.DjangoModelFactory):
     class Meta:
         model = Challenge
 
     short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
+    creator = factory.SubFactory(UserFactory)
+
 
 class ExternalChallengeFactory(factory.DjangoModelFactory):
     class Meta:
@@ -34,20 +50,6 @@ class PageFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.Sequence(lambda n: f'page_{n}')
     html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
-
-
-class UserFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = settings.AUTH_USER_MODEL
-
-    username = factory.Sequence(lambda n: f'test_user_{n:04}')
-    email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)
-    password = factory.PostGenerationMethodCall(
-        'set_password', SUPER_SECURE_TEST_PASSWORD
-    )
-    is_active = True
-    is_staff = False
-    is_superuser = False
 
 
 class UploadFactory(factory.DjangoModelFactory):

@@ -380,22 +380,6 @@ class Challenge(ChallengeBase):
         upload_to=get_banner_path,
         blank=True,
     )
-    logo_path = models.CharField(
-        max_length=255,
-        default=public_folder + "/logo.png",
-        help_text="100x100 pixel image file to use as logo"
-                  " in projects overview. Relative to project datafolder",
-    )
-    header_image = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="optional 658 pixel wide Header image which will "
-                  "appear on top of each project page top of each "
-                  "project. "
-                  "Relative to project datafolder. Suggested default:" +
-                  public_folder +
-                  "/header.png",
-    )
     hide_signin = models.BooleanField(
         default=False,
         help_text="Do no show the Sign in / Register link on any page",
@@ -581,16 +565,6 @@ class Challenge(ChallengeBase):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
         return reverse('challenge-homepage', args=[self.short_name])
-
-    @property
-    def thumb_image_url(self):
-        """ Legacy method for challenges that still use logo_path """
-        try:
-            return self.logo.url
-        except ValueError:
-            return reverse(
-                'project_serve_file', args=[self.short_name, self.logo_path]
-            )
 
     @property
     def submission_url(self):

@@ -369,7 +369,7 @@ class ComicframeworkTestCase(TestCase):
         url = reverse("challenges:create")
         factory = RequestFactory()
         storage = DefaultStorage()
-        header_image = storage._open(
+        banner = storage._open(
             settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg"
         )
         data = {
@@ -377,7 +377,7 @@ class ComicframeworkTestCase(TestCase):
             "description": description,
             "skin": "fake_test_dir/fakecss.css",
             "logo": "fakelogo.jpg",
-            "header_image": header_image,
+            "banner": banner,
             "prefix": "form",
             "page_set-TOTAL_FORMS": u"0",
             "page_set-INITIAL_FORMS": u"0",
