@@ -2,8 +2,6 @@
 import datetime
 import os
 import traceback
-from urllib.error import HTTPError
-from urllib.request import urlopen
 
 import pytz
 from django.conf import settings
