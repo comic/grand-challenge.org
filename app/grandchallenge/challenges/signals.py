@@ -4,8 +4,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.challenges.emails import send_challenge_created_email
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.emails import (
+    send_challenge_created_email, send_external_challenge_created_email
+)
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Config
 
 
@@ -30,10 +32,18 @@ def setup_challenge_groups(
         # add current user to admins for this site
         try:
             instance.creator.groups.add(admins_group)
-            send_challenge_created_email(instance)
         except AttributeError:
             # No creator set
             pass
+
+        send_challenge_created_email(instance)
+
+@receiver(post_save, sender=ExternalChallenge)
+def setup_external_challenge(
+    instance: ExternalChallenge = None, created: bool = False, *_, **__
+):
+    if created:
+        send_external_challenge_created_email(instance)
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
