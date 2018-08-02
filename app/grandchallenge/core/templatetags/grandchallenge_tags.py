@@ -1,4 +1,3 @@
-import datetime
 import logging
 import ntpath
 import os
@@ -16,7 +15,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
-from django.template import defaulttags
+from django.template import defaulttags, loader
 from django.urls import reverse as reverse_djangocore
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -27,9 +26,6 @@ from six import StringIO, iteritems
 import grandchallenge.core.views
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.api import get_public_results_by_challenge_name
-from grandchallenge.core.dataproviders.ProjectExcelReader import (
-    ProjectExcelReader
-)
 from grandchallenge.core.dataproviders.utils.HtmlLinkReplacer import (
     HtmlLinkReplacer
 )
@@ -238,13 +234,13 @@ class comic_URLNode(defaulttags.URLNode):
         url = super(comic_URLNode, self).render(context)
         url = url.lower()
         if subdomain_is_projectname() and (
-            (
-                self.view_name.var in [
+                (
+                        self.view_name.var in [
                     "challenge-homepage", "project_serve_file"
                 ]
-            )
-            or (
-                self.view_name.var.split(':')[0] in [
+                )
+                or (
+                        self.view_name.var.split(':')[0] in [
                     'evaluation',
                     'teams',
                     'pages',
@@ -252,7 +248,7 @@ class comic_URLNode(defaulttags.URLNode):
                     'admins',
                     'uploads',
                 ]
-            )
+                )
         ):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
@@ -1221,9 +1217,6 @@ class AllProjectLinksNode(template.Node):
         for challenge in ExternalChallenge.objects.non_hidden():
             projectlinks.append(challenge.to_projectlink())
 
-        # Reading from the excel sheet is deprecated
-        # projectlinks += self.read_grand_challenge_projectlinks()
-
         html = self.render_project_links_per_year(projectlinks)
 
         html = u"""
@@ -1240,7 +1233,6 @@ class AllProjectLinksNode(template.Node):
         """ Get all the HTML and Jquery to have working filter and selection
         checkboxes on top of the projectlinks overview
         """
-        from django.template import loader
         return loader.render_to_string('all_projectlinks_filter.html')
 
     def render_project_links_per_year(self, projectlinks):
@@ -1306,7 +1298,7 @@ class AllProjectLinksNode(template.Node):
             year=str(projectlink.params["year"]),
             abreviation=projectlink.params["abreviation"],
             url=projectlink.params["URL"],
-            thumb_image_url=self.get_thumb_url(projectlink),
+            thumb_image_url=projectlink.params["thumb_image_url"],
             projectname=projectlink.params["title"],
             description=projectlink.params["description"],
             stats=self.get_stats_html(projectlink),
@@ -1351,7 +1343,7 @@ class AllProjectLinksNode(template.Node):
             stats.append(data_download_HTML)
         if projectlink.params["submitted results"]:
             submissionstring = (
-                "results: " + str(projectlink.params["submitted results"])
+                    "results: " + str(projectlink.params["submitted results"])
             )
             if projectlink.params["last submission date"]:
                 submissionstring += ", Latest: " + self.format_date(
@@ -1386,7 +1378,6 @@ class AllProjectLinksNode(template.Node):
     def get_submission_link(self, projectlink):
         if projectlink.params["submission URL"]:
             return projectlink.params["submission URL"]
-
         else:
             return projectlink.params["URL"]
 
@@ -1407,7 +1398,6 @@ class AllProjectLinksNode(template.Node):
                 projectlink.params["event name"],
                 "eventlink",
             )
-
         else:
             return projectlink.params["event name"]
 
@@ -1440,90 +1430,9 @@ class AllProjectLinksNode(template.Node):
             return "Unknown"
 
     def make_link(self, link_url, link_text, link_class=""):
-        if link_class == "":
-            link_class_HTML = ""
-        else:
-            link_class_HTML = "class=" + link_class
         return "<a href='{0}' {1}>{2}</a>".format(
             link_url, link_class, link_text
         )
-
-    def get_thumb_url(self, projectlink):
-        """ For displaying a little thumbnail image for each project, in 
-            project overviews 
-            
-        """
-        if not projectlink.is_defined_in_excel():
-            thumb_image_url = projectlink.params["thumb_image_url"]
-        else:
-            thumb_image_url = reverse(
-                'project_serve_file',
-                args=[
-                    settings.MAIN_PROJECT_NAME,
-                    "public_html/images/all_challenges/{0}.png".format(
-                        projectlink.params["abreviation"]
-                    ),
-                ],
-            )
-        # thumb_image_url = "http://shared.runmc-radiology.nl/mediawiki/challenges/localImage.php?file="+projectlink.params["abreviation"]+".png"
-        return thumb_image_url
-
-    def read_grand_challenge_projectlinks(self):
-        filepath = os.path.join(
-            settings.MEDIA_ROOT,
-            settings.MAIN_PROJECT_NAME,
-            settings.EXTERNAL_PROJECTS_FILE,
-        )
-        reader = ProjectExcelReader(filepath, 'Challenges')
-        # pdb.set_trace()
-        logger.info("Reading projects excel from '%s'" % filepath)
-        try:
-            projectlinks = reader.get_project_links()
-        except IOError as e:
-            logger.error(
-                "Could not read any projectlink information from"
-                " '%s' returning empty list. trace: %s " %
-                (filepath, traceback.format_exc())
-            )
-            projectlinks = []
-        projectlinks_clean = []
-        for projectlink in projectlinks:
-            projectlinks_clean.append(
-                self.clean_grand_challenge_projectlink(projectlink)
-            )
-        return projectlinks_clean
-
-    def clean_grand_challenge_projectlink(self, projectlink):
-        """ Specifically for the grand challenges excel file, make everything strings,
-        change weird values, like having more downloads than registered users
-        """
-        # cast all to int as there are no float values in the excel file, I'd
-        # rather do this here than change the way excelreader reads them in
-        for key in projectlink.params.keys():
-            param = projectlink.params[key]
-            if type(param) == float:
-                projectlink.params[key] = int(param)
-        if projectlink.params["last submission date"]:
-            projectlink.params[
-                "last submission date"
-            ] = self.determine_project_date(
-                projectlink.params["last submission date"]
-            )
-        if projectlink.params["workshop date"]:
-            projectlink.params["workshop date"] = self.determine_project_date(
-                projectlink.params["workshop date"]
-            )
-        return projectlink
-
-    def determine_project_date(self, datefloat):
-        """ Parse float (e.g. 20130425.0) read by excelreader into python date
-        
-        """
-        date = str(datefloat)
-        parsed = datetime.datetime(
-            year=int(date[0:4]), month=int(date[4:6]), day=int(date[6:8])
-        )
-        return parsed
 
     def format_date(self, date):
         return date.strftime('%b %d, %Y')

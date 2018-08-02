@@ -54,7 +54,6 @@ class ProjectLink(object):
         "last submission date": "",
         "hosted on comic": False,
         "project type": "",
-        "excel": True,
     }
     # css selector used to designate a project as still open
     UPCOMING = "challenge_upcoming"
@@ -164,9 +163,6 @@ class ProjectLink(object):
 
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
-
-    def is_defined_in_excel(self):
-        return self.params["excel"]
 
 
 def validate_nounderscores(value):
@@ -344,7 +340,6 @@ class ChallengeBase(models.Model):
             "submitted results": self.number_of_submissions,
             "last submission date": self.last_submission_date,
             "hosted on comic": True,
-            "excel": False,
 
             # These are extra
             "download URL": "",
