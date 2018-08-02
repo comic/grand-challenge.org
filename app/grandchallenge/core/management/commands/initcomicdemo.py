@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.pages.models import Page
 
 
@@ -70,4 +70,22 @@ class Command(BaseCommand):
             )
             Page.objects.create(
                 challenge=demo, title='adm', permission_lvl='ADM'
+            )
+
+            ExternalChallenge.objects.create(
+                creator=demoadmin,
+                homepage="https://www.example.com",
+                short_name="EXAMPLE2018",
+                title="Example External Challenge 2018",
+                description="An example of an external challenge",
+                is_open_for_submissions=True,
+                event_name="Example Event",
+                event_url="https://www.example.com/2018",
+                offers_data_download=True,
+                download_page="https://www.example.com/2018/download",
+                number_of_downloads=1337,
+                number_of_submissions=10,
+                publication_journal_name="Nature",
+                publication_url="https://doi.org/10.1038/s41586-018-0367-9",
+                hidden=False,
             )
