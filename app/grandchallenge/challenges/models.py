@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.template import loader
 from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -354,6 +355,12 @@ class ChallengeBase(models.Model):
         overview page listing all projects
         """
         return ProjectLink(self.projectlink_args)
+
+    def get_card_html(self):
+        template = loader.get_template(
+            "challenges/challenge_card_partial.html"
+        )
+        return template.render(context={"challenge": self})
 
     class Meta:
         abstract = True

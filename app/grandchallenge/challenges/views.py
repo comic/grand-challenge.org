@@ -1,3 +1,5 @@
+from itertools import chain
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -27,11 +29,13 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 
 
 class ChallengeList(ListView):
-    model = Challenge
+    template_name = "challenges/challenge_list.html"
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(Q(hidden=False))
+        return chain(
+            Challenge.objects.filter(hidden=False),
+            ExternalChallenge.objects.filter(hidden=False),
+        )
 
 
 class UsersChallengeList(LoginRequiredMixin, ListView):
@@ -77,6 +81,7 @@ class ExternalChallengeCreate(
     def get_success_url(self):
         return reverse("challenges:list")
 
+
 class ExternalChallengeUpdate(
     UserIsStaffMixin, SuccessMessageMixin, UpdateView
 ):
@@ -90,8 +95,10 @@ class ExternalChallengeUpdate(
     def get_success_url(self):
         return reverse("challenges:list")
 
+
 class ExternalChallengeList(UserIsStaffMixin, ListView):
     model = ExternalChallenge
+
 
 class ExternalChallengeDelete(UserIsStaffMixin, DeleteView):
     model = ExternalChallenge

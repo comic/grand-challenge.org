@@ -26,6 +26,10 @@
         challenge, please send an email to support@grand-challenge.org and we
         will add the challenge to the list on this page.</p>
 
+    {% for challenge in object_list %}
+        {{ challenge.get_card_html|safe }}
+    {% endfor %}
+
     {% all_projectlinks %}
 
 {% endblock %}
