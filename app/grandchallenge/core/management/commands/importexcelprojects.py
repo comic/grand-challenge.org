@@ -19,14 +19,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         filepath = os.path.join(
-            settings.MEDIA_ROOT,
-            settings.MAIN_PROJECT_NAME,
-            #"/",
-            #"app",
-            #"tests",
-            #"dataproviders_tests",
-            #"resources",
-            settings.EXTERNAL_PROJECTS_FILE,
+            #settings.MEDIA_ROOT,
+            #settings.MAIN_PROJECT_NAME,
+            "/",
+            "app",
+            "tests",
+            "dataproviders_tests",
+            "resources",
+            "challengestats.xls",
+            #settings.EXTERNAL_PROJECTS_FILE,
         )
 
         reader = ProjectExcelReader(filepath, 'Challenges')
@@ -54,7 +55,7 @@ class Command(BaseCommand):
 
     def add_project_link_to_db(self, projectlink):
 
-        admin_user = get_user_model().objects.get(username="BramVanGinneken")
+        admin_user = get_user_model().objects.get(username="admin")
 
         print(f"Importing {projectlink.params['abreviation']}")
 
@@ -106,7 +107,7 @@ class Command(BaseCommand):
 
         challenge.created_at = datetime.datetime(projectlink.params["year"], 1,
                                                  1, 13, 0, 0, 0, pytz.UTC)
-
+        """
         if not challenge.logo:
             try:
                 logo = os.path.join(settings.MEDIA_ROOT,
@@ -122,6 +123,7 @@ class Command(BaseCommand):
             except Exception:
                 print(f"Could not find logo for {challenge.short_name}")
                 print(f"{logo}")
+        """
 
         challenge.save()
 

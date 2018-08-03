@@ -448,8 +448,7 @@ class ChallengeBase(models.Model):
                 )
             stats.append(submissionstring)
 
-        if self.workshop_date and self.workshop_date > self.to_datetime(
-                datetime.datetime.today()):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
             stats.append(
                 "workshop: " + self.format_date(self.workshop_date)
             )
@@ -537,18 +536,6 @@ class ChallengeBase(models.Model):
     def capitalize(string):
         """ Copied from grandchallenge tags """
         return string[0].upper() + string[1:]
-
-    @staticmethod
-    def to_datetime(date):
-        """
-        Copied from Projectlink
-
-        add midnight to a date to make it a datetime because I cannot
-        compare these two types directly. Also add offset awareness to easily
-        compare with other django datetimes.
-        """
-        dt = datetime.datetime(date.year, date.month, date.day)
-        return timezone.make_aware(dt, timezone.get_default_timezone())
 
     class Meta:
         abstract = True
