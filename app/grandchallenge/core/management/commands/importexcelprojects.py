@@ -26,6 +26,7 @@ class Command(BaseCommand):
             #"tests",
             #"dataproviders_tests",
             #"resources",
+            #"challengestats.xls",
             settings.EXTERNAL_PROJECTS_FILE,
         )
 

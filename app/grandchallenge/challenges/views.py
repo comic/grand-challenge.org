@@ -1,8 +1,12 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView
+from django.template import loader
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView, \
+    TemplateView
 
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
@@ -26,12 +30,42 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
 
-class ChallengeList(ListView):
-    model = Challenge
+class ChallengeList(TemplateView):
+    template_name = "challenges/challenge_list.html"
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(Q(hidden=False))
+    @staticmethod
+    def create_objects_by_year(queryset, existing=None):
+        if existing is None:
+            existing = defaultdict(list)
+
+        for q in queryset:
+            existing[q.year].append(q)
+
+        return existing
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+
+        challenges_by_year = self.create_objects_by_year(
+            Challenge.objects
+                .filter(hidden=False)
+                .order_by("-created_at")
+        )
+        challenges_by_year = self.create_objects_by_year(
+            ExternalChallenge.objects
+                .filter(hidden=False)
+                .order_by("-created_at"),
+            challenges_by_year
+        )
+
+        context.update(
+            {
+                "challenges_by_year": dict(challenges_by_year),
+                "filter_buttons_html": loader.render_to_string('all_projectlinks_filter.html')
+            }
+        )
+
+        return context
 
 
 class UsersChallengeList(LoginRequiredMixin, ListView):
@@ -77,6 +111,7 @@ class ExternalChallengeCreate(
     def get_success_url(self):
         return reverse("challenges:list")
 
+
 class ExternalChallengeUpdate(
     UserIsStaffMixin, SuccessMessageMixin, UpdateView
 ):
@@ -90,8 +125,10 @@ class ExternalChallengeUpdate(
     def get_success_url(self):
         return reverse("challenges:list")
 
+
 class ExternalChallengeList(UserIsStaffMixin, ListView):
     model = ExternalChallenge
+
 
 class ExternalChallengeDelete(UserIsStaffMixin, DeleteView):
     model = ExternalChallenge

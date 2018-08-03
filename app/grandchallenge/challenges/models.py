@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.template import loader
 from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -54,7 +55,6 @@ class ProjectLink(object):
         "last submission date": "",
         "hosted on comic": False,
         "project type": "",
-        "excel": True,
     }
     # css selector used to designate a project as still open
     UPCOMING = "challenge_upcoming"
@@ -164,9 +164,6 @@ class ProjectLink(object):
 
     def is_hosted_on_comic(self):
         return self.params["hosted on comic"]
-
-    def is_defined_in_excel(self):
-        return self.params["excel"]
 
 
 def validate_nounderscores(value):
@@ -324,6 +321,17 @@ class ChallengeBase(models.Model):
         raise NotImplementedError
 
     @property
+    def hosted_on_comic(self):
+        return True
+
+    @property
+    def year(self):
+        if self.workshop_date:
+            return self.workshop_date.year
+        else:
+            return self.created_at.year
+
+    @property
     def projectlink_args(self):
         return {
             # These are copied from ProjectLink
@@ -344,7 +352,6 @@ class ChallengeBase(models.Model):
             "submitted results": self.number_of_submissions,
             "last submission date": self.last_submission_date,
             "hosted on comic": True,
-            "excel": False,
 
             # These are extra
             "download URL": "",
@@ -359,6 +366,176 @@ class ChallengeBase(models.Model):
         overview page listing all projects
         """
         return ProjectLink(self.projectlink_args)
+
+    def get_host_id(self):
+        """
+        Copied from grandchallenge_tags
+
+        Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML
+        """
+        if self.hosted_on_comic:
+            return "grand-challenge"
+
+        if "codalab.org" in self.get_absolute_url():
+            return "codalab"
+
+        else:
+            return "Unknown"
+
+    def get_link_classes(self):
+        """
+        Copied from grandchallenge_tags
+
+        For adding this as id, for jquery filtering later on
+        returns a space separated list of classes to use in html
+        """
+        classes = []
+
+        if self.is_open_for_submissions:
+            classes.append("open")
+
+        if self.offers_data_download:
+            classes.append("datadownload")
+
+        classes.append(self.get_host_id())
+
+        return " ".join(classes)
+
+    def get_card_html(self):
+        template = loader.get_template(
+            "challenges/challenge_card_partial.html"
+        )
+        return template.render(context={"challenge": self})
+
+    def get_stats_html(self):
+        """
+        Copied from grandchallenge tags
+
+        Returns html to render number of downloads, participants etc..
+        if a value is not found it is ommitted from the html so there will
+        be no 'participants: <empty>' strings shown
+        """
+        stats = []
+
+        if self.is_open_for_submissions:
+            open_for_submissions_html = self.make_link(
+                self.get_submission_link(),
+                "Open for submissions",
+                "submissionlink",
+            )
+            stats.append(open_for_submissions_html)
+
+        if self.offers_data_download:
+            try:
+                # noinspection PyUnresolvedReferences
+                data_download_link = self.download_url
+            except AttributeError:
+                data_download_link = self.get_absolute_url()
+
+            data_download_html = self.make_link(
+                data_download_link, "Data download", "datadownloadlink"
+            )
+            stats.append(data_download_html)
+
+        if self.number_of_submissions:
+            submissionstring = (
+                    "results: " + str(self.number_of_submissions)
+            )
+            if self.last_submission_date:
+                submissionstring += ", Latest: " + self.format_date(
+                    self.last_submission_date
+                )
+            stats.append(submissionstring)
+
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            stats.append(
+                "workshop: " + self.format_date(self.workshop_date)
+            )
+
+        if self.event_name:
+            stats.append("Associated with: " + self.make_event_link())
+
+        if self.publication_journal_name:
+            stats.append("Article: " + self.make_article_link())
+
+        hostlink = self.get_host_link()
+
+        if hostlink != "":
+            stats.append("Hosted on: " + hostlink)
+
+        stats_caps = []
+
+        for string in stats:
+            stats_caps.append(self.capitalize(string))
+
+        # put divs around each statistic in the stats list
+        stats_html = "".join(
+            ["<div>{}</div>".format(stat) for stat in stats_caps]
+        )
+
+        return stats_html
+
+    def make_article_link(self):
+        """ Copied from grandchallenge tags """
+        return self.make_link(
+            self.publication_url, self.publication_journal_name, "articlelink",
+        )
+
+    def make_event_link(self):
+        """
+        Copied from grandchallenge tags
+
+        To link to event, like ISBI 2013 in overviews
+        """
+        if self.event_url:
+            return self.make_link(
+                self.event_url, self.event_name, "eventlink",
+            )
+        else:
+            return self.event_name
+
+    def get_host_link(self):
+        """
+        Copied from grandchallenge tags
+
+        Try to find out what framework this challenge is hosted on
+        """
+        host_id = self.get_host_id()
+        if host_id == "grand-challenge":
+            framework_name = "grand-challenge.org"
+            framework_url = "http://grand-challenge.org"
+        elif host_id == "codalab":
+            framework_name = "codalab.org"
+            framework_url = "http://codalab.org"
+        else:
+            return ""
+
+        return self.make_link(framework_url, framework_name, "frameworklink")
+
+    @staticmethod
+    def make_link(link_url, link_text, link_class=""):
+        """ Copied from grandchallenge tags"""
+        return "<a href='{0}' {1}>{2}</a>".format(
+            link_url, link_class, link_text
+        )
+
+    def get_submission_link(self):
+        """ Copied from grandchallenge tags """
+        if self.submission_url:
+            return self.submission_url
+        else:
+            return self.get_absolute_url()
+
+    @staticmethod
+    def format_date(date):
+        """ Copied from grandchallenge tags """
+        return date.strftime('%b %d, %Y')
+
+    @staticmethod
+    def capitalize(string):
+        """ Copied from grandchallenge tags """
+        return string[0].upper() + string[1:]
 
     class Meta:
         abstract = True
@@ -651,6 +828,10 @@ class ExternalChallenge(ChallengeBase):
     @property
     def submission_url(self):
         return self.submission_page
+
+    @property
+    def hosted_on_comic(self):
+        return False
 
 
 class ComicSiteModel(models.Model):
