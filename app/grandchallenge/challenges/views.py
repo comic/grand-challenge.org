@@ -4,9 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.template import loader
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView, \
-    TemplateView
+from django.views.generic import (
+    CreateView,
+    ListView,
+    UpdateView,
+    DeleteView,
+    TemplateView,
+)
 
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
@@ -58,12 +62,7 @@ class ChallengeList(TemplateView):
             challenges_by_year
         )
 
-        context.update(
-            {
-                "challenges_by_year": dict(challenges_by_year),
-                "filter_buttons_html": loader.render_to_string('all_projectlinks_filter.html')
-            }
-        )
+        context.update({"challenges_by_year": dict(challenges_by_year)})
 
         return context
 

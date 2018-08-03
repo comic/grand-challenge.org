@@ -18,22 +18,6 @@ def test_taglist():
 
 
 @pytest.mark.django_db
-# Override the settings so we can use the test file in dataproviders
-@override_settings(MEDIA_ROOT='/app/tests/dataproviders_tests/')
-@override_settings(MAIN_PROJECT_NAME='resources')
-def test_all_projectlinks():
-    c = ChallengeFactory(hidden=False)
-    hidden = ChallengeFactory(hidden=True)
-    template = Template(
-        '{% load all_projectlinks from grandchallenge_tags %}'
-        '{% all_projectlinks %}'
-    )
-    rendered = template.render(Context({}))
-    assert c.short_name in rendered
-    assert hidden.short_name not in rendered
-
-
-@pytest.mark.django_db
 def test_allusers_statistics():
     c = ChallengeFactory(short_name=str(uuid.uuid4()))
     p = PageFactory(challenge=c)

@@ -1023,26 +1023,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
             " in it. Instead found '%s'" % scary,
         )
 
-    def test_all_projectlinks(self):
-        """ Overview showing short descriptions for all projects in the framework """
-        content = "Here is a test overview of all projects : <allprojects> {% all_projectlinks %} </allprojects>"
-        testallprojectlinkspage = create_page(
-            self.testproject, "testallprojectlinkspage", content
-        )
-        # This overview should be viewable by anyone
-        self._test_page_can_be_viewed(
-            self.signedup_user, testallprojectlinkspage
-        )
-        response = self._test_page_can_be_viewed(None, testallprojectlinkspage)
-        # Extract rendered content from included file, see if it has been rendered
-        # In the correct way
-        allprojectsHTML = find_text_between(
-            '<allprojects>', '</allprojects>', response.content
-        )
-        self.assertTrue(
-            allprojectsHTML != "", "Nothing was rendered for projects overview"
-        )
-
     def get_mail_html_part(self, mail):
         """ Extract html content from email sent with models.challenge.send_templated_email
         
