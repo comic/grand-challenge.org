@@ -321,6 +321,10 @@ class ChallengeBase(models.Model):
         raise NotImplementedError
 
     @property
+    def hosted_on_comic(self):
+        return True
+
+    @property
     def projectlink_args(self):
         return {
             # These are copied from ProjectLink
@@ -355,6 +359,41 @@ class ChallengeBase(models.Model):
         overview page listing all projects
         """
         return ProjectLink(self.projectlink_args)
+
+    def get_host_id(self):
+        """
+        Copied from grandchallenge_tags
+
+        Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML
+        """
+        if self.hosted_on_comic:
+            return "grand-challenge"
+
+        if "codalab.org" in self.get_absolute_url():
+            return "codalab"
+
+        else:
+            return "Unknown"
+
+    def get_link_classes(self):
+        """
+        Copied from grandchallenge_tags
+
+        For adding this as id, for jquery filtering later on
+        returns a space separated list of classes to use in html
+        """
+        classes = []
+
+        if self.is_open_for_submissions:
+            classes.append("open")
+
+        if self.offers_data_download:
+            classes.append("datadownload")
+
+        classes.append(self.get_host_id())
+
+        return " ".join(classes)
 
     def get_card_html(self):
         template = loader.get_template(
@@ -653,6 +692,10 @@ class ExternalChallenge(ChallengeBase):
     @property
     def submission_url(self):
         return self.submission_page
+
+    @property
+    def hosted_on_comic(self):
+        return False
 
 
 class ComicSiteModel(models.Model):
