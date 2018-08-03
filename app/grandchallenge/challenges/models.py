@@ -190,21 +190,10 @@ class ChallengeBase(models.Model):
         else:
             return self.created_at.year
 
-    def get_host_id(self):
-        """
-        Copied from grandchallenge_tags
-
-        Try to find out what framework this challenge is hosted on, return
-        a string which can also be an id or class in HTML
-        """
-        if self.hosted_on_comic:
-            return "grand-challenge"
-
-        if "codalab.org" in self.get_absolute_url():
-            return "codalab"
-
-        else:
-            return "Unknown"
+    @property
+    def upcoming_workshop_date(self):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            return self.workshop_date
 
     def get_link_classes(self):
         """
@@ -225,92 +214,21 @@ class ChallengeBase(models.Model):
 
         return " ".join(classes)
 
-    def get_stats_html(self):
+    def get_host_id(self):
         """
-        Copied from grandchallenge tags
+        Copied from grandchallenge_tags
 
-        Returns html to render number of downloads, participants etc..
-        if a value is not found it is ommitted from the html so there will
-        be no 'participants: <empty>' strings shown
+        Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML
         """
-        stats = []
+        if self.hosted_on_comic:
+            return "grand-challenge"
 
-        if self.is_open_for_submissions:
-            open_for_submissions_html = self.make_link(
-                self.get_submission_link(),
-                "Open for submissions",
-                "submissionlink",
-            )
-            stats.append(open_for_submissions_html)
+        if "codalab.org" in self.get_absolute_url():
+            return "codalab"
 
-        if self.offers_data_download:
-            try:
-                # noinspection PyUnresolvedReferences
-                data_download_link = self.download_url
-            except AttributeError:
-                data_download_link = self.get_absolute_url()
-
-            data_download_html = self.make_link(
-                data_download_link, "Data download", "datadownloadlink"
-            )
-            stats.append(data_download_html)
-
-        if self.number_of_submissions:
-            submissionstring = (
-                    "results: " + str(self.number_of_submissions)
-            )
-            if self.last_submission_date:
-                submissionstring += ", Latest: " + self.format_date(
-                    self.last_submission_date
-                )
-            stats.append(submissionstring)
-
-        if self.workshop_date and self.workshop_date > datetime.date.today():
-            stats.append(
-                "workshop: " + self.format_date(self.workshop_date)
-            )
-
-        if self.event_name:
-            stats.append("Associated with: " + self.make_event_link())
-
-        if self.publication_journal_name:
-            stats.append("Article: " + self.make_article_link())
-
-        hostlink = self.get_host_link()
-
-        if hostlink != "":
-            stats.append("Hosted on: " + hostlink)
-
-        stats_caps = []
-
-        for string in stats:
-            stats_caps.append(self.capitalize(string))
-
-        # put divs around each statistic in the stats list
-        stats_html = "".join(
-            ["<div>{}</div>".format(stat) for stat in stats_caps]
-        )
-
-        return stats_html
-
-    def make_article_link(self):
-        """ Copied from grandchallenge tags """
-        return self.make_link(
-            self.publication_url, self.publication_journal_name, "articlelink",
-        )
-
-    def make_event_link(self):
-        """
-        Copied from grandchallenge tags
-
-        To link to event, like ISBI 2013 in overviews
-        """
-        if self.event_url:
-            return self.make_link(
-                self.event_url, self.event_name, "eventlink",
-            )
         else:
-            return self.event_name
+            return "Unknown"
 
     def get_host_link(self):
         """
@@ -319,6 +237,7 @@ class ChallengeBase(models.Model):
         Try to find out what framework this challenge is hosted on
         """
         host_id = self.get_host_id()
+
         if host_id == "grand-challenge":
             framework_name = "grand-challenge.org"
             framework_url = "http://grand-challenge.org"
@@ -326,16 +245,9 @@ class ChallengeBase(models.Model):
             framework_name = "codalab.org"
             framework_url = "http://codalab.org"
         else:
-            return ""
+            return None
 
-        return self.make_link(framework_url, framework_name, "frameworklink")
-
-    @staticmethod
-    def make_link(link_url, link_text, link_class=""):
-        """ Copied from grandchallenge tags"""
-        return "<a href='{0}' {1}>{2}</a>".format(
-            link_url, link_class, link_text
-        )
+        return f"<a href={framework_url}>{framework_name}</a>"
 
     def get_submission_link(self):
         """ Copied from grandchallenge tags """
@@ -343,16 +255,6 @@ class ChallengeBase(models.Model):
             return self.submission_url
         else:
             return self.get_absolute_url()
-
-    @staticmethod
-    def format_date(date):
-        """ Copied from grandchallenge tags """
-        return date.strftime('%b %d, %Y')
-
-    @staticmethod
-    def capitalize(string):
-        """ Copied from grandchallenge tags """
-        return string[0].upper() + string[1:]
 
     class Meta:
         abstract = True

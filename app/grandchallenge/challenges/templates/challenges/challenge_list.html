@@ -112,11 +112,59 @@
                                     </div>
                                 </a>
 
-                                <div class="panel-body projectLinkBody">{{ challenge.description }}</div>
+                                <div class="panel-body projectLinkBody">
+                                    {{ challenge.description }}
+                                </div>
 
                                 <div class="panel-footer projectLinkFooter">
 
-                                    {{ challenge.get_stats_html|safe }}
+                                    {% if challenge.is_open_for_submissions %}
+                                        <div>
+                                            <a href="{{ challenge.get_submission_link }}">Open for submissions</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.offers_data_download %}
+                                        <div>
+                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data download</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.number_of_submissions %}
+                                        <div>
+                                            Results: {{ challenge.number_of_submissions }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.last_submission_date %}
+                                        <div>
+                                            Latest result: {{ challenge.last_submission_date }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.upcoming_workshop_date %}
+                                        <div>
+                                            Workshop: {{ challenge.upcoming_workshop_date }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.event_name %}
+                                        <div>
+                                            Associated with: <a href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.publication_journal_name or challenge.publication_url %}
+                                        <div>
+                                            Article: <a href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.get_host_link %}
+                                        <div>
+                                            Hosted on: {{ challenge.get_host_link|safe }}
+                                        </div>
+                                    {% endif %}
 
                                     {% if not challenge.hosted_on_comic %}
                                         {% if request.user.is_staff %}
@@ -161,6 +209,7 @@
 
     </div>
 
-    <script type="text/javascript" src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
+    <script type="text/javascript"
+            src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
 
 {% endblock %}
