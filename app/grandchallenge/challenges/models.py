@@ -325,6 +325,13 @@ class ChallengeBase(models.Model):
         return True
 
     @property
+    def year(self):
+        if self.workshop_date:
+            return self.workshop_date.year
+        else:
+            return self.created_at.year
+
+    @property
     def projectlink_args(self):
         return {
             # These are copied from ProjectLink
