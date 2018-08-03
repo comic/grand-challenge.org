@@ -1,4 +1,5 @@
 {% extends 'mainpage.html' %}
+{% load url from grandchallenge_tags %}
 
 {% block pageName %}All Challenges{% endblock %}
 
@@ -112,7 +113,30 @@
 
                                 <div class="panel-body projectLinkBody">{{ challenge.description }}</div>
 
-                                <div class="panel-footer projectLinkFooter">{{ challenge.get_stats_html|safe }}</div>
+                                <div class="panel-footer projectLinkFooter">
+
+                                    {{ challenge.get_stats_html|safe }}
+
+                                    {% if not challenge.hosted_on_comic %}
+                                        {% if request.user.is_staff %}
+                                            <div class="projectLinkEdit">
+                                                <p>
+                                                    <a class="btn btn-primary"
+                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                        <i class="fas fa-edit"></i>
+                                                        Edit challenge
+                                                    </a>
+                                                    <a class="btn btn-danger"
+                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                        <i class="fas fa-trash"></i>
+                                                        Delete challenge
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+
+                                </div>
                             </div>
                         </div>
 
