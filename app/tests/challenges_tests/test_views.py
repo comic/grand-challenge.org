@@ -3,7 +3,7 @@
 import pytest
 
 from grandchallenge.core.urlresolvers import reverse
-from tests.factories import UserFactory
+from tests.factories import UserFactory, ChallengeFactory
 from tests.utils import get_view_for_user
 
 
@@ -34,3 +34,15 @@ def test_external_challenge_buttons(client):
 
     assert create_url in response.rendered_content
     assert list_url in response.rendered_content
+
+@pytest.mark.django_db
+def test_challenge_list(client):
+    c = ChallengeFactory(hidden=False)
+    hidden = ChallengeFactory(hidden=True)
+
+    response = get_view_for_user(
+        client=client, viewname="challenges:list",
+    )
+
+    assert c.short_name in response.rendered_content
+    assert hidden.short_name not in response.rendered_content

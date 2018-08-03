@@ -1,4 +1,3 @@
-import copy
 import datetime
 import hashlib
 import logging
@@ -10,8 +9,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
 from django.db.models import Q
-from django.template import loader
-from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -26,144 +23,6 @@ class ChallengeManager(models.Manager):
     def non_hidden(self):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
-
-
-class ProjectLink(object):
-    """ Metadata about a single project: url, event etc. Used as the shared
-    class for both external challenges and projects hosted on comic so they can
-    be shown on the projectlinks overview page
-
-    """
-    # Using dict instead of giving a lot of fields to this object because the
-    # former is easier to work with
-    defaults = {
-        "abreviation": "",
-        "title": "",
-        "description": "",
-        "URL": "",
-        "submission URL": "",
-        "event name": "",
-        "year": "",
-        "event URL": "",
-        "website section": "",
-        "overview article url": "",
-        "overview article journal": "",
-        "workshop date": "",
-        "open for submission": "",
-        "dataset downloads": "",
-        "submitted results": "",
-        "last submission date": "",
-        "hosted on comic": False,
-        "project type": "",
-    }
-    # css selector used to designate a project as still open
-    UPCOMING = "challenge_upcoming"
-
-    def __init__(self, params, date=""):
-        self.params = copy.deepcopy(self.defaults)
-        self.params.update(params)
-        # add date in addition to datestring already in dict, to make sorting
-        # easier.
-        if date == "":
-            self.date = self.determine_project_date()
-        else:
-            self.date = date
-        self.params["year"] = self.date.year
-
-    def determine_project_date(self):
-        """ Try to find the date for this project. Return default
-        date if nothing can be parsed.
-
-        """
-        if self.params["hosted on comic"]:
-            if self.params["workshop date"]:
-                date = self.to_datetime(self.params["workshop date"])
-            else:
-                date = ""
-        else:
-            datestr = self.params["workshop date"]
-            # this happens when excel says its a number. I dont want to force
-            # the excel file to be clean, so deal with it here.
-            if type(datestr) == float:
-                datestr = str(datestr)[0:8]
-            try:
-                date = timezone.make_aware(
-                    datetime.datetime.strptime(datestr, "%Y%m%d"),
-                    timezone.get_default_timezone(),
-                )
-            except ValueError:
-                logger.warning(
-                    "could not parse date '%s' from xls line starting with "
-                    "'%s'. Returning default date 2013-01-01" %
-                    (datestr, self.params["abreviation"])
-                )
-                date = ""
-        if date == "":
-            # If you cannot find the exact date for a project,
-            # use date created
-            if self.params["hosted on comic"]:
-                return self.params["created at"]
-
-            # If you cannot find the exact date, try to get at least the year
-            # right. again do not throw errors, excel can be dirty
-            year = int(self.params["year"])
-            try:
-                date = timezone.make_aware(
-                    datetime.datetime(year, 1, 1),
-                    timezone.get_default_timezone(),
-                )
-            except ValueError:
-                logger.warning(
-                    "could not parse year '%f' from xls line starting with "
-                    "'%s'. Returning default date 2013-01-01" %
-                    (year, self.params["abreviation"])
-                )
-                date = timezone.make_aware(
-                    datetime.datetime(2013, 1, 1),
-                    timezone.get_default_timezone(),
-                )
-        return date
-
-    def find_link_class(self):
-        """ Get css classes to give to this projectlink.
-        For filtering and sorting project links, we discern upcoming, active
-        and inactive projects. Determiniation of upcoming/active/inactive is
-        described in column 'website section' in grand-challenges xls.
-        For projects hosted on comic, determine this automatically based on
-        associated workshop date. If a comicsite has an associated workshop
-        which is in the future, make it upcoming, otherwise active
-
-        """
-        linkclass = Challenge.CHALLENGE_ACTIVE
-        # for project hosted on comic, try to find upcoming automatically
-        if self.params["hosted on comic"]:
-            linkclass = self.params["project type"]
-            if self.date > self.to_datetime(datetime.datetime.today()):
-                linkclass += " " + self.UPCOMING
-        else:
-            # else use the explicit setting in xls
-            section = self.params["website section"].lower()
-            if section == "upcoming challenges":
-                linkclass = Challenge.CHALLENGE_ACTIVE + " " + self.UPCOMING
-            elif section == "active challenges":
-                linkclass = Challenge.CHALLENGE_ACTIVE
-            elif section == "past challenges":
-                linkclass = Challenge.CHALLENGE_INACTIVE
-            elif section == "data publication":
-                linkclass = Challenge.DATA_PUB
-        return linkclass
-
-    @staticmethod
-    def to_datetime(date):
-        """ add midnight to a date to make it a datetime because I cannot
-        compare these two types directly. Also add offset awareness to easily
-        compare with other django datetimes.
-        """
-        dt = datetime.datetime(date.year, date.month, date.day)
-        return timezone.make_aware(dt, timezone.get_default_timezone())
-
-    def is_hosted_on_comic(self):
-        return self.params["hosted on comic"]
 
 
 def validate_nounderscores(value):
@@ -332,56 +191,9 @@ class ChallengeBase(models.Model):
             return self.created_at.year
 
     @property
-    def projectlink_args(self):
-        return {
-            # These are copied from ProjectLink
-            "abreviation": self.short_name,
-            "title": self.title if self.title else self.short_name,
-            "description": self.description,
-            "URL": self.get_absolute_url(),
-            "submission URL": self.submission_url,
-            "event name": self.event_name,
-            "year": "",
-            "event URL": self.event_url,
-            "website section": "active challenges",
-            "overview article url": self.publication_url,
-            "overview article journal": self.publication_journal_name,
-            "workshop date": self.workshop_date,
-            "open for submission": "yes" if self.is_open_for_submissions else "no",
-            "dataset downloads": self.number_of_downloads,
-            "submitted results": self.number_of_submissions,
-            "last submission date": self.last_submission_date,
-            "hosted on comic": True,
-
-            # These are extra
-            "download URL": "",
-            "thumb_image_url": self.thumb_image_url,
-            "data download": "yes" if self.offers_data_download else "no",
-            "created at": self.created_at,
-        }
-
-    def to_projectlink(self):
-        """
-        Return a ProjectLink representation of this comicsite, to show in an
-        overview page listing all projects
-        """
-        return ProjectLink(self.projectlink_args)
-
-    def get_host_id(self):
-        """
-        Copied from grandchallenge_tags
-
-        Try to find out what framework this challenge is hosted on, return
-        a string which can also be an id or class in HTML
-        """
-        if self.hosted_on_comic:
-            return "grand-challenge"
-
-        if "codalab.org" in self.get_absolute_url():
-            return "codalab"
-
-        else:
-            return "Unknown"
+    def upcoming_workshop_date(self):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            return self.workshop_date
 
     def get_link_classes(self):
         """
@@ -402,98 +214,21 @@ class ChallengeBase(models.Model):
 
         return " ".join(classes)
 
-    def get_card_html(self):
-        template = loader.get_template(
-            "challenges/challenge_card_partial.html"
-        )
-        return template.render(context={"challenge": self})
-
-    def get_stats_html(self):
+    def get_host_id(self):
         """
-        Copied from grandchallenge tags
+        Copied from grandchallenge_tags
 
-        Returns html to render number of downloads, participants etc..
-        if a value is not found it is ommitted from the html so there will
-        be no 'participants: <empty>' strings shown
+        Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML
         """
-        stats = []
+        if self.hosted_on_comic:
+            return "grand-challenge"
 
-        if self.is_open_for_submissions:
-            open_for_submissions_html = self.make_link(
-                self.get_submission_link(),
-                "Open for submissions",
-                "submissionlink",
-            )
-            stats.append(open_for_submissions_html)
+        if "codalab.org" in self.get_absolute_url():
+            return "codalab"
 
-        if self.offers_data_download:
-            try:
-                # noinspection PyUnresolvedReferences
-                data_download_link = self.download_url
-            except AttributeError:
-                data_download_link = self.get_absolute_url()
-
-            data_download_html = self.make_link(
-                data_download_link, "Data download", "datadownloadlink"
-            )
-            stats.append(data_download_html)
-
-        if self.number_of_submissions:
-            submissionstring = (
-                    "results: " + str(self.number_of_submissions)
-            )
-            if self.last_submission_date:
-                submissionstring += ", Latest: " + self.format_date(
-                    self.last_submission_date
-                )
-            stats.append(submissionstring)
-
-        if self.workshop_date and self.workshop_date > datetime.date.today():
-            stats.append(
-                "workshop: " + self.format_date(self.workshop_date)
-            )
-
-        if self.event_name:
-            stats.append("Associated with: " + self.make_event_link())
-
-        if self.publication_journal_name:
-            stats.append("Article: " + self.make_article_link())
-
-        hostlink = self.get_host_link()
-
-        if hostlink != "":
-            stats.append("Hosted on: " + hostlink)
-
-        stats_caps = []
-
-        for string in stats:
-            stats_caps.append(self.capitalize(string))
-
-        # put divs around each statistic in the stats list
-        stats_html = "".join(
-            ["<div>{}</div>".format(stat) for stat in stats_caps]
-        )
-
-        return stats_html
-
-    def make_article_link(self):
-        """ Copied from grandchallenge tags """
-        return self.make_link(
-            self.publication_url, self.publication_journal_name, "articlelink",
-        )
-
-    def make_event_link(self):
-        """
-        Copied from grandchallenge tags
-
-        To link to event, like ISBI 2013 in overviews
-        """
-        if self.event_url:
-            return self.make_link(
-                self.event_url, self.event_name, "eventlink",
-            )
         else:
-            return self.event_name
+            return "Unknown"
 
     def get_host_link(self):
         """
@@ -502,6 +237,7 @@ class ChallengeBase(models.Model):
         Try to find out what framework this challenge is hosted on
         """
         host_id = self.get_host_id()
+
         if host_id == "grand-challenge":
             framework_name = "grand-challenge.org"
             framework_url = "http://grand-challenge.org"
@@ -509,16 +245,9 @@ class ChallengeBase(models.Model):
             framework_name = "codalab.org"
             framework_url = "http://codalab.org"
         else:
-            return ""
+            return None
 
-        return self.make_link(framework_url, framework_name, "frameworklink")
-
-    @staticmethod
-    def make_link(link_url, link_text, link_class=""):
-        """ Copied from grandchallenge tags"""
-        return "<a href='{0}' {1}>{2}</a>".format(
-            link_url, link_class, link_text
-        )
+        return f"<a href={framework_url}>{framework_name}</a>"
 
     def get_submission_link(self):
         """ Copied from grandchallenge tags """
@@ -526,16 +255,6 @@ class ChallengeBase(models.Model):
             return self.submission_url
         else:
             return self.get_absolute_url()
-
-    @staticmethod
-    def format_date(date):
-        """ Copied from grandchallenge tags """
-        return date.strftime('%b %d, %Y')
-
-    @staticmethod
-    def capitalize(string):
-        """ Copied from grandchallenge tags """
-        return string[0].upper() + string[1:]
 
     class Meta:
         abstract = True
@@ -799,28 +518,6 @@ class ExternalChallenge(ChallengeBase):
         blank=True,
         help_text=("Where is the download page for this challenge?")
     )
-
-    @property
-    def projectlink_args(self):
-        """
-        Override the project link arguments to get around the nasty hacks
-        made in the excel sheet
-        """
-        args = super().projectlink_args
-
-        args["hosted on comic"] = False
-
-        if not self.workshop_date:
-            args["workshop date"] = str(self.created_at)
-            args["year"] = self.created_at.year
-        else:
-            args["workshop date"] = str(self.workshop_date)
-            args["year"] = self.workshop_date.year
-
-        if self.download_page:
-            args["download URL"] = self.download_page
-
-        return args
 
     def get_absolute_url(self):
         return self.homepage
