@@ -408,6 +408,148 @@ class ChallengeBase(models.Model):
         )
         return template.render(context={"challenge": self})
 
+    def get_stats_html(self):
+        """
+        Copied from grandchallenge tags
+
+        Returns html to render number of downloads, participants etc..
+        if a value is not found it is ommitted from the html so there will
+        be no 'participants: <empty>' strings shown
+        """
+        stats = []
+
+        if self.is_open_for_submissions:
+            open_for_submissions_html = self.make_link(
+                self.get_submission_link(),
+                "Open for submissions",
+                "submissionlink",
+            )
+            stats.append(open_for_submissions_html)
+
+        if self.offers_data_download:
+            try:
+                # noinspection PyUnresolvedReferences
+                data_download_link = self.download_url
+            except AttributeError:
+                data_download_link = self.get_absolute_url()
+
+            data_download_html = self.make_link(
+                data_download_link, "Data download", "datadownloadlink"
+            )
+            stats.append(data_download_html)
+
+        if self.number_of_submissions:
+            submissionstring = (
+                    "results: " + str(self.number_of_submissions)
+            )
+            if self.last_submission_date:
+                submissionstring += ", Latest: " + self.format_date(
+                    self.last_submission_date
+                )
+            stats.append(submissionstring)
+
+        if self.workshop_date and self.workshop_date > self.to_datetime(
+                datetime.datetime.today()):
+            stats.append(
+                "workshop: " + self.format_date(self.workshop_date)
+            )
+
+        if self.event_name:
+            stats.append("Associated with: " + self.make_event_link())
+
+        if self.publication_journal_name:
+            stats.append("Article: " + self.make_article_link())
+
+        hostlink = self.get_host_link()
+
+        if hostlink != "":
+            stats.append("Hosted on: " + hostlink)
+
+        stats_caps = []
+
+        for string in stats:
+            stats_caps.append(self.capitalize(string))
+
+        # put divs around each statistic in the stats list
+        stats_html = "".join(
+            ["<div>{}</div>".format(stat) for stat in stats_caps]
+        )
+
+        return stats_html
+
+    def make_article_link(self):
+        """ Copied from grandchallenge tags """
+        return self.make_link(
+            self.publication_url, self.publication_journal_name, "articlelink",
+        )
+
+    def make_event_link(self):
+        """
+        Copied from grandchallenge tags
+
+        To link to event, like ISBI 2013 in overviews
+        """
+        if self.event_url:
+            return self.make_link(
+                self.event_url, self.event_name, "eventlink",
+            )
+        else:
+            return self.event_name
+
+    def get_host_link(self):
+        """
+        Copied from grandchallenge tags
+
+        Try to find out what framework this challenge is hosted on
+        """
+        host_id = self.get_host_id()
+        if host_id == "grand-challenge":
+            framework_name = "grand-challenge.org"
+            framework_url = "http://grand-challenge.org"
+        elif host_id == "codalab":
+            framework_name = "codalab.org"
+            framework_url = "http://codalab.org"
+        else:
+            return ""
+
+        return self.make_link(framework_url, framework_name, "frameworklink")
+
+    @staticmethod
+    def make_link(link_url, link_text, link_class=""):
+        """ Copied from grandchallenge tags"""
+        return "<a href='{0}' {1}>{2}</a>".format(
+            link_url, link_class, link_text
+        )
+
+    def get_submission_link(self):
+        """ Copied from grandchallenge tags """
+        if self.submission_url:
+            return self.submission_url
+        else:
+            return self.get_absolute_url()
+
+    @staticmethod
+    def format_date(date):
+        """ Copied from grandchallenge tags """
+        return date.strftime('%b %d, %Y')
+
+    @staticmethod
+    def capitalize(string):
+        """ Copied from grandchallenge tags """
+        return string[0].upper() + string[1:]
+
+    @staticmethod
+    def to_datetime(date):
+        """
+        Copied from Projectlink
+
+        add midnight to a date to make it a datetime because I cannot
+        compare these two types directly. Also add offset awareness to easily
+        compare with other django datetimes.
+        """
+        dt = datetime.datetime(date.year, date.month, date.day)
+        return timezone.make_aware(dt, timezone.get_default_timezone())
+
     class Meta:
         abstract = True
 

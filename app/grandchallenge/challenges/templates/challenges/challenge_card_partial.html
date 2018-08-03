@@ -18,6 +18,6 @@
             </div>
         </a>
         <div class="panel-body projectLinkBody">{{ challenge.description }}</div>
-        <div class="panel-footer projectLinkFooter">{stats}</div>
+        <div class="panel-footer projectLinkFooter">{{ challenge.get_stats_html|safe }}</div>
     </div>
 </div>
