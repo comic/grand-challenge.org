@@ -60,8 +60,13 @@ def _required_permission(path, challenge_short_name):
             " to your .conf file."
         )
 
-    if challenge_short_name.lower() in ['logos', 'banners', 'mugshots']:
-        # Anyone can download logos, banners and mugshots
+    if challenge_short_name.lower() in [
+        'logos',
+        'banners',
+        'mugshots',
+        'favicon',
+    ]:
+        # Anyone can download logos, banners, mugshots and favicons
         return ComicSiteModel.ALL
 
     if challenge_short_name.lower() == 'evaluation':

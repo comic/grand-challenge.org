@@ -1,6 +1,8 @@
 {% load static %}
 {% load grandchallenge_tags %}
 {% load sentry_public_dsn from raven %}
+{% load placeFavicon from favtags %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,8 +101,7 @@
         <link href="{% static "css/core.css" %}" type="text/css"
               rel="stylesheet">
 
-        <link href="{% static "img/favicon.ico" %}"
-              rel="shortcut icon">
+        {% placeFavicon %}
 
         <!--Put any site or page specific css here -->
         <link href="{% block stylesheet %} {% endblock %}" type="text/css"
