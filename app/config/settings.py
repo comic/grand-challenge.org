@@ -234,6 +234,7 @@ THIRD_PARTY_APPS = [
     'rest_framework', # provides REST API
     'rest_framework.authtoken', # token auth for REST API
     'crispy_forms', # bootstrap forms
+    'favicon', # favicon management
 ]
 
 LOCAL_APPS = [
