@@ -26,6 +26,8 @@ class UserProfile(UserenaBaseProfile):
     def get_challenges_as_participant(self):
         return Challenge.objects.filter(
             participants_group__in=self.user.groups.all()
+        ).filter(
+            hidden=False
         )
 
 
