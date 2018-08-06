@@ -201,8 +201,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'grandchallenge.core.middleware.subdomain.SubdomainMiddleware',
     'grandchallenge.core.middleware.project.ProjectMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
 ROOT_URLCONF = 'config.urls'
