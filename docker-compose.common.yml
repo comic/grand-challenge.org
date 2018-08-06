@@ -1,4 +1,4 @@
-version: '2.1'
+version: '2.3'
 
 services:
 
@@ -36,4 +36,5 @@ services:
 
   redis:
     image: redis:4.0
+    command: redis-server --appendonly yes
     restart: always
