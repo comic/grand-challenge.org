@@ -1249,32 +1249,30 @@ class ProjectStatisticsNode(template.Node):
         :param context: the page context
         :return: the map html string
         """
-        challenge_short_name = context.page.challenge.short_name
+
         all_users = self.allusers
         key = 'ProjectStatisticsNode.{}.{}'.format(
-            challenge_short_name, all_users
+            context.page.challenge.pk, all_users
         )
         content = cache.get(key)
         if content is None:
             content = self._get_map(
-                challenge_short_name, all_users, self.include_header
+                context.page.challenge, all_users, self.include_header
             )
             cache.set(key, content, 10 * 60)
         return content
 
     @classmethod
-    def _get_map(cls, challenge_short_name, all_users, include_header):
+    def _get_map(cls, challenge, all_users, include_header):
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
-        # Get the users belonging to this project
-        perm = Group.objects.get(
-            name='{}_participants'.format(challenge_short_name)
-        )
-        User = get_user_model()
+
         if all_users:
+            User = get_user_model()
             users = User.objects.all().distinct()
         else:
-            users = User.objects.filter(groups=perm).distinct()
+            users = challenge.get_participants()
+
         country_counts = UserProfile.objects.filter(user__in=users).values(
             'country'
         ).annotate(
