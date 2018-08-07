@@ -2,13 +2,6 @@ version: '2.3'
 
 services:
 
-  db:
-    image: mariadb:10.1
-    environment:
-     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-     - MYSQL_DATABASE=comic
-    restart: always
-
   postgres:
     image: postgres:10.4
     environment:
@@ -22,7 +15,6 @@ services:
       file: docker-compose.common.yml
       service: web
     links:
-      - db:mysql
       - memcached
     volumes:
       - static:/static/
@@ -69,7 +61,6 @@ services:
       && celery -A config worker -l info -c 2
       "
     links:
-      - db:mysql
       - postgres
       - redis
       - web
@@ -86,7 +77,6 @@ services:
       && celery -A config worker -l info -Q evaluation -c 2
       "
     links:
-      - db:mysql
       - postgres
       - redis
       - web
@@ -107,7 +97,6 @@ services:
       && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
       "
     links:
-      - db:mysql
       - postgres
       - redis
       - web
