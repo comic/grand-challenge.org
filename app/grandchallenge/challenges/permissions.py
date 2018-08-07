@@ -12,11 +12,12 @@ def can_access(user, path, challenge_short_name):
 
     """
     required = _required_permission(path, challenge_short_name)
+
     if required == ComicSiteModel.ALL:
         return True
 
     elif required == ComicSiteModel.REGISTERED_ONLY:
-        project = Challenge.objects.get(short_name=challenge_short_name)
+        project = Challenge.objects.get(short_name__iexact=challenge_short_name)
         if project.is_participant(user):
             return True
 
@@ -24,7 +25,7 @@ def can_access(user, path, challenge_short_name):
             return False
 
     elif required == ComicSiteModel.ADMIN_ONLY:
-        project = Challenge.objects.get(short_name=challenge_short_name)
+        project = Challenge.objects.get(short_name__iexact=challenge_short_name)
         if project.is_admin(user):
             return True
 
