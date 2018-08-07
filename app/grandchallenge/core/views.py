@@ -217,7 +217,7 @@ def comicmain(request, page_title=""):
     else:
         try:
             p = Page.objects.get(
-                challenge__short_name=challenge_short_name, title=page_title
+                challenge__short_name=challenge_short_name, title__iexact=page_title
             )
         except Page.DoesNotExist:
             raise Http404
