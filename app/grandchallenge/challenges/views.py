@@ -76,8 +76,7 @@ class UsersChallengeList(LoginRequiredMixin, ListView):
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
                 Q(participants_group__in=self.request.user.groups.all()) |
-                Q(admins_group__in=self.request.user.groups.all()) |
-                Q(hidden=False)
+                Q(admins_group__in=self.request.user.groups.all())
             )
         return queryset
 
