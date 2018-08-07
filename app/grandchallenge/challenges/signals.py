@@ -8,10 +8,12 @@ from grandchallenge.challenges.emails import (
     send_challenge_created_email, send_external_challenge_created_email
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.evaluation.models import Config
 
 
 @receiver(post_save, sender=Challenge)
+@disable_for_loaddata
 def setup_challenge_groups(
     instance: Challenge = None, created: bool = False, *_, **__
 ):
@@ -40,6 +42,7 @@ def setup_challenge_groups(
         send_challenge_created_email(instance)
 
 @receiver(post_save, sender=ExternalChallenge)
+@disable_for_loaddata
 def setup_external_challenge(
     instance: ExternalChallenge = None, created: bool = False, *_, **__
 ):
@@ -48,6 +51,7 @@ def setup_external_challenge(
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+@disable_for_loaddata
 def create_everyone_user_group(
     instance: settings.AUTH_USER_MODEL = None, created: bool = False, *_, **__
 ):
