@@ -36,7 +36,15 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': 'db',
         'PORT': '3306',
-    }
+    },
+    'postgres': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'comic',
+        'USER': 'comic',
+        'PASSWORD': 'secretpassword',
+        'HOST': 'postgres',
+        'PORT': '5432',
+    },
 }
 
 EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
