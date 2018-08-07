@@ -85,7 +85,7 @@ class ChallengeUpdate(
     UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
 ):
     model = Challenge
-    slug_field = 'short_name'
+    slug_field = 'short_name__iexact'
     slug_url_kwarg = 'challenge_short_name'
     form_class = ChallengeUpdateForm
     success_message = 'Challenge successfully updated'
@@ -114,7 +114,7 @@ class ExternalChallengeUpdate(
     UserIsStaffMixin, SuccessMessageMixin, UpdateView
 ):
     model = ExternalChallenge
-    slug_field = "short_name"
+    slug_field = "short_name__iexact"
     slug_url_kwarg = "short_name"
     form_class = ExternalChallengeUpdateForm
     template_name_suffix = "_update"
@@ -130,7 +130,7 @@ class ExternalChallengeList(UserIsStaffMixin, ListView):
 
 class ExternalChallengeDelete(UserIsStaffMixin, DeleteView):
     model = ExternalChallenge
-    slug_field = "short_name"
+    slug_field = "short_name__iexact"
     slug_url_kwarg = "short_name"
     success_message = "External challenge was successfully deleted"
 

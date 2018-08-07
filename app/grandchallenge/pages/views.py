@@ -64,7 +64,7 @@ class PageUpdate(
     model = Page
     form_class = PageUpdateForm
     slug_url_kwarg = 'page_title'
-    slug_field = 'title'
+    slug_field = 'title__iexact'
     template_name_suffix = '_form_update'
 
     def form_valid(self, form):
@@ -78,7 +78,7 @@ class PageDelete(
 ):
     model = Page
     slug_url_kwarg = 'page_title'
-    slug_field = 'title'
+    slug_field = 'title__iexact'
     success_message = 'Page was successfully deleted'
 
     def get_success_url(self):
