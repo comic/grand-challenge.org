@@ -1,10 +1,12 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.participants.models import RegistrationRequest
 
 
 @receiver(post_save, sender=RegistrationRequest)
+@disable_for_loaddata
 def process_registration(
     instance: RegistrationRequest = None, created: bool = False, *_, **__
 ):

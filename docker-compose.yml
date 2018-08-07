@@ -9,6 +9,14 @@ services:
      - MYSQL_DATABASE=comic
     restart: always
 
+  postgres:
+    image: postgres:10.4
+    environment:
+      - POSTGRES_PASSWORD=secretpassword
+      - POSTGRES_USER=comic
+      - POSTGRES_DB=comic
+    restart: always
+
   web:
     extends:
       file: docker-compose.common.yml
@@ -62,6 +70,7 @@ services:
       "
     links:
       - db:mysql
+      - postgres
       - redis
       - web
     volumes_from:
@@ -78,6 +87,7 @@ services:
       "
     links:
       - db:mysql
+      - postgres
       - redis
       - web
     volumes_from:
@@ -98,6 +108,7 @@ services:
       "
     links:
       - db:mysql
+      - postgres
       - redis
       - web
     volumes_from:
