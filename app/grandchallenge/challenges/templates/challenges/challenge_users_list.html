@@ -33,8 +33,8 @@
                            title="Challenge not listed on the all challenges page"></i>
                     {% endif %}
                 </td>
-                <td data-order="{{ challenge.created_at|date:"U" }}">
-                    {{ challenge.created_at }}
+                <td data-order="{{ challenge.created|date:"U" }}">
+                    {{ challenge.created }}
                 </td>
                 <td>
                     {% for user in challenge.get_admins %}

@@ -216,7 +216,7 @@ DJANGO_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'django.contrib.humanize', # Handy template tags
+    'django.contrib.humanize',
     'django.contrib.admin',
 ]
 
@@ -234,6 +234,7 @@ THIRD_PARTY_APPS = [
     'rest_framework.authtoken', # token auth for REST API
     'crispy_forms', # bootstrap forms
     'favicon', # favicon management
+    'django_select2', # for multiple choice widgets
 ]
 
 LOCAL_APPS = [

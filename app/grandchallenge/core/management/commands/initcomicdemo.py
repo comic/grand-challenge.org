@@ -2,7 +2,14 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import (
+    Challenge,
+    ExternalChallenge,
+    TaskType,
+    BodyRegion,
+    BodyStructure,
+    ImagingModality,
+)
 from grandchallenge.pages.models import Page
 
 
@@ -89,3 +96,41 @@ class Command(BaseCommand):
                 publication_url="https://doi.org/10.1038/s41586-018-0367-9",
                 hidden=False,
             )
+
+            TaskType.objects.create(type="Segmentation")
+            TaskType.objects.create(type="Classification")
+
+            regions_structures = {
+                "Head and Neck": ["Brain", "Teeth", ],
+                "Thorax": ["Lung", ],
+                "Cardiac": ["Heart", ],
+                "Abdomen": ["Liver", "Pancreas", "Kidney", "Spleen", ],
+                "Pelvis": ["Prostate", "Cervix", ],
+                "Spine": ["Spinal Cord", ],
+                "Upper Limb": ["Hand", ],
+                "Lower Limb": ["Knee", ],
+            }
+
+            for region, structures in regions_structures.items():
+                r = BodyRegion.objects.create(region=region)
+                for structure in structures:
+                    BodyStructure.objects.create(
+                        structure=structure, region=r,
+                    )
+
+            modalities = (
+                "CT",
+                "MR",
+                "XR",
+                "PET",
+                "PET/CT",
+                "PET/MR",
+                "Mammography",
+                "CT/MR",
+                "US",
+                "TEM",
+                "Histology",
+            )
+
+            for modality in modalities:
+                ImagingModality.objects.create(modality=modality)

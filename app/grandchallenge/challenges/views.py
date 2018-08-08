@@ -53,12 +53,12 @@ class ChallengeList(TemplateView):
         challenges_by_year = self.create_objects_by_year(
             Challenge.objects
                 .filter(hidden=False)
-                .order_by("-created_at")
+                .order_by("-created")
         )
         challenges_by_year = self.create_objects_by_year(
             ExternalChallenge.objects
                 .filter(hidden=False)
-                .order_by("-created_at"),
+                .order_by("-created"),
             challenges_by_year
         )
 
