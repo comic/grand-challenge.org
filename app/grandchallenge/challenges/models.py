@@ -207,6 +207,11 @@ class ChallengeBase(models.Model):
         ),
     )
 
+    data_license_agreement = models.TextField(
+        blank=True,
+        help_text="What is the data license agreement for this challenge?",
+    )
+
     task_types = models.ManyToManyField(
         TaskType,
         blank=True,

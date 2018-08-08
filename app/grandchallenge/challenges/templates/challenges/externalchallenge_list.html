@@ -41,7 +41,7 @@
             <tr>
                 <td>
                     <a href="{{ challenge.get_absolute_url }}">
-                        {% firstof challenge.title challenge.short_name %}
+                        {{ challenge.short_name }} - {{ challenge.title }}
                     </a>
                     {% if challenge.hidden %}
                         <i class="fa fa-eye-slash text-danger"

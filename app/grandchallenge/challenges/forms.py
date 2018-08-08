@@ -119,6 +119,7 @@ event_items = (
     'workshop_date',
 )
 data_items = (
+    "data_license_agreement",
     "data_stored",
     "number_of_training_cases",
     "number_of_test_cases",
