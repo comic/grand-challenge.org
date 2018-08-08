@@ -102,16 +102,14 @@ class ChallengeBase(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    short_name = models.SlugField(
+    short_name = CICharField(
         max_length=50,
-        default="",
+        blank=False,
         help_text=(
             "short name used in url, specific css, files etc. "
             "No spaces allowed"
         ),
-        validators=[
-            validate_nounderscores, validate_slug, MinLengthValidator(1)
-        ],
+        validators=[validate_nounderscores, validate_slug, ],
         unique=True,
     )
     description = models.CharField(
