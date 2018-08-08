@@ -4,9 +4,11 @@ from django.dispatch import receiver
 
 from grandchallenge.core.models import DockerImageModel
 from grandchallenge.core.tasks import validate_docker_image_async
+from grandchallenge.core.utils import disable_for_loaddata
 
 
 @receiver(post_save)
+@disable_for_loaddata
 def validate_docker_image(
         instance: DockerImageModel = None, created: bool = False, *_, **__
 ):
