@@ -223,12 +223,12 @@ def substitute(string, substitutions):
 class comic_URLNode(defaulttags.URLNode):
 
     def __init__(self, *args, **kwargs):
-        super(comic_URLNode, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def render(self, context):
         # get the url the default django method would give.
-        url = super(comic_URLNode, self).render(context)
-        url = url.lower()
+        url = super().render(context)
+
         if subdomain_is_projectname() and (
                 (
                         self.view_name.var in [
@@ -260,12 +260,15 @@ class comic_URLNode(defaulttags.URLNode):
             else:
                 path_to_site = reverse_djangocore(
                     "challenge-homepage", args=[project]
-                ).lower()
+                )
+
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
+
                 scheme_subsite_and_host = reverse(
                     "challenge-homepage", args=[project]
-                ).lower()
+                )
+
                 return urljoin(scheme_subsite_and_host, url)
 
         return url
