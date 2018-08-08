@@ -1,60 +1,215 @@
 {% extends 'mainpage.html' %}
+{% load static %}
 {% load url from grandchallenge_tags %}
-{% load user_profile_link from profiles %}
 
-{% block pageName %}My Challenges{% endblock %}
+{% block pageName %}All Challenges{% endblock %}
 
 {% block pagecontent %}
 
-    <h2>My Challenges</h2>
+    <h2>All Challenges</h2>
 
-    <p>This is a list of the challenges that you are participating in on
-    {{ site.short_name }}.</p>
+    {% if request.user.is_staff %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-create' %}">
+                <i class="fas fa-plus"></i> Add an external challenge
+            </a>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-list' %}">
+                <i class="fas fa-edit"></i> Edit external challenges
+            </a>
+        </p>
+    {% endif %}
 
-    <table class="table" id="challengesTable">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Created</th>
-            <th>Admins</th>
-            <th>Description</th>
-        </tr>
-        </thead>
-        <tbody>
+    <p>Here is an overview of all challenges that have been organized within
+        the area of medical image analysis that we are aware of. If you know
+        any study that would fit in this overview, or want to advertise your
+        challenge, please send an email to support@grand-challenge.org and we
+        will add the challenge to the list on this page.</p>
 
-        {% for challenge in object_list %}
-            <tr>
-                <td>
-                    <a href="{{ challenge.get_absolute_url }}">
-                        {% firstof challenge.title challenge.short_name %}
-                    </a>
-                    {% if challenge.hidden %}
-                        <i class="fa fa-eye-slash text-danger"
-                           title="Challenge not listed on the all challenges page"></i>
-                    {% endif %}
-                </td>
-                <td data-order="{{ challenge.created_at|date:"U" }}">
-                    {{ challenge.created_at }}
-                </td>
-                <td>
-                    {% for user in challenge.get_admins %}
-                        {{ user|user_profile_link }}<br/>
+    <div id="projectfilterbuttons">
+
+        <div id="info">Showing <span class="counter" id="projectlink"></span>
+            projects of <span class="counter"
+                              id="total"></span></div>
+        <div id="buttonbar">
+
+            <div id="filterby">Filter by:</div>
+
+            <div id="projectLinksFilters">
+                <form class="form-inline">
+                    <!--Hidden checkbox to display all projectlinks by default -->
+                    <label class="checkbox-inline no_indent projectLinkFilter">
+                        <input type="checkbox" class="include" checked disabled
+                               id="projectlink"
+                               style="display:none;">
+                    </label>
+
+                    <label id="open"
+                           class="checkbox-inline no_indent projectLinkFilter"
+                           title="Show projects that accept new submissions">
+                        <input type="checkbox" class="filter" id="open">
+                        Open for submissions (<span
+                            class="counter" id="open"></span>)
+                    </label>
+
+                    <label id="datadownload"
+                           class="checkbox-inline no_indent projectLinkFilter"
+                           title="Show projects that offer data download">
+                        <input type="checkbox" class="filter"
+                               id="datadownload">
+                        Data download (<span
+                            class="counter" id="datadownload"></span>)
+                    </label>
+
+                    <label id="grand-challenge"
+                           class="checkbox-inline no_indent projectLinkFilter">
+                        <input type="checkbox" class="filter"
+                               id="grand-challenge">
+                        Hosted on Grand-challenge (<span
+                            class="counter"
+                            id="grand-challenge"></span>)
+                    </label>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div id='projectlinks'>
+
+        {% for year, challenges in challenges_by_year.items %}
+
+            <div class='projectlinksyearcontainer'>
+
+                <div class='yearHeader' id='{{ year }}'>
+                    <h2>{{ year }}</h2>
+                </div>
+
+                <div class='row'>
+
+                    {% for challenge in challenges %}
+
+                        <div class="col-sm-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
+                            <div class="panel panel-default">
+                                <a id="{{ challenge.short_name }}"
+                                   href="{{ challenge.get_absolute_url }}"
+                                   style="display:block">
+                                    <div class="panel-heading projectLinkHeading">
+                                        <div class="projectLinkImage">
+                                            <img alt=""
+                                                 src="{{ challenge.thumb_image_url }}">
+                                        </div>
+                                        <div class="projectLinkName">
+                                            <h3>
+                                                {% if challenge.title %}
+                                                    {{ challenge.title }}
+                                                {% else %}
+                                                    {{ challenge.short_name }}
+                                                {% endif %}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </a>
+
+                                <div class="panel-body projectLinkBody">
+                                    {{ challenge.description }}
+                                </div>
+
+                                <div class="panel-footer projectLinkFooter">
+
+                                    {% if challenge.is_open_for_submissions %}
+                                        <div>
+                                            <a href="{{ challenge.get_submission_link }}">Open for submissions</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.offers_data_download %}
+                                        <div>
+                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data download</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.number_of_submissions %}
+                                        <div>
+                                            Results: {{ challenge.number_of_submissions }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.last_submission_date %}
+                                        <div>
+                                            Latest result: {{ challenge.last_submission_date }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.upcoming_workshop_date %}
+                                        <div>
+                                            Workshop: {{ challenge.upcoming_workshop_date }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.event_name %}
+                                        <div>
+                                            Associated with: <a href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.publication_journal_name or challenge.publication_url %}
+                                        <div>
+                                            Article: <a href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if challenge.get_host_link %}
+                                        <div>
+                                            Hosted on: {{ challenge.get_host_link|safe }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if not challenge.hosted_on_comic %}
+                                        {% if request.user.is_staff %}
+                                            <div class="projectLinkEdit">
+                                                <p>
+                                                    <a class="btn btn-primary"
+                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                        <i class="fas fa-edit"></i>
+                                                        Edit challenge
+                                                    </a>
+                                                    <a class="btn btn-danger"
+                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                        <i class="fas fa-trash"></i>
+                                                        Delete challenge
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                        {# Invisible block needed for proper wrapping #}
+                        <div class="clearfix visible-xs-block"></div>
+
+                        {# We're displaying 3 items in a row on small, medium and large screens #}
+                        {% if forloop.counter|divisibleby:3 %}
+                            <div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>
+                        {% endif %}
+
+
                     {% endfor %}
-                </td>
-                <td>{{ challenge.description }}</td>
-            </tr>
+
+                </div>
+
+            </div>
+
         {% endfor %}
 
-        </tbody>
-    </table>
+    </div>
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#challengesTable').DataTable({
-                "bLengthChange": false,
-                "pageLength": 50
-            });
-        });
-    </script>
+    <script type="text/javascript"
+            src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
 
 {% endblock %}

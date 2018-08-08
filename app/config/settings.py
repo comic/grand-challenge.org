@@ -30,13 +30,13 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'comic',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'db',
-        'PORT': '3306',
-    }
+        'USER': 'comic',
+        'PASSWORD': 'secretpassword',
+        'HOST': 'postgres',
+        'PORT': '5432',
+    },
 }
 
 EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
@@ -131,23 +131,12 @@ COMIC_RESULTS_FOLDER_NAME = "results"
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = "comic"
 
-# An overview can be rendered of all projects in the framework. In addition,
-# external projects can be included from the file below. Relative to
-# MEDIA_ROOT + MAIN_PROJECT_NAME
-EXTERNAL_PROJECTS_FILE = "challengestats.xls"
-
-# Each project in ALL_PROJECTS_FILE can have a 100x100 image thumbnail associated
-# with it. Thumbnail images are looked for in the folder below. Filenames should
-# <project_abbreviation>.jpg. For example, If a projects value in the "abreviation"
-# column 'ABC2013' then the framework will include the image 'ABD2013.png' from the
-# directory below. Directory is relative to MEDIA_ROOT+MAIN_PROJECT_NAME
-EXTERNAL_PROJECTS_IMAGE_FOLDER = "public_html/images/all_challenges/"
-
 # The url for a project in comic is /site/<challenge>. This is quite ugly. It
 # would be nicer to be able to use <challenge>.examplehost.com/, like blogger
 # does.
 # True: Changes links on pages where possible to use subdomain.
 SUBDOMAIN_IS_PROJECTNAME = False
+
 # For links to basic comicframework content, for example the main comic help
 # page, django needs to know the hostname. This setting is only used when
 # SUBDOMAIN_IS_PROJECTNAME = True
@@ -212,8 +201,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'grandchallenge.core.middleware.subdomain.SubdomainMiddleware',
     'grandchallenge.core.middleware.project.ProjectMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
 ROOT_URLCONF = 'config.urls'
@@ -235,6 +223,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat', # error logging
     'djcelery_email', # asynchronous emails
+    'django_celery_beat', # periodic tasks
     'userena', # user profiles
     'guardian', # userena dependency, per object permissions
     'easy_thumbnails', # userena dependency
@@ -244,6 +233,7 @@ THIRD_PARTY_APPS = [
     'rest_framework', # provides REST API
     'rest_framework.authtoken', # token auth for REST API
     'crispy_forms', # bootstrap forms
+    'favicon', # favicon management
 ]
 
 LOCAL_APPS = [
@@ -407,14 +397,14 @@ REST_FRAMEWORK = {
     ),
 }
 
-CELERY_BROKER_URL = 'pyamqp://rabbitmq'
-CELERY_RESULT_BACKEND = 'rpc://rabbitmq'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
 
 EVALUATION_DOCKER_BASE_URL = 'unix://var/run/docker.sock'
-EVALUATION_MEMORY_LIMIT = "5g"
+EVALUATION_MEMORY_LIMIT = "4g"
 EVALUATION_CPU_QUOTA = 100000
 EVALUATION_CPU_PERIOD = 100000
 

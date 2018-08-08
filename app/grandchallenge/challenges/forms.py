@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 
 
 class ChallengeCreateForm(forms.ModelForm):
@@ -86,3 +86,83 @@ class ChallengeUpdateForm(forms.ModelForm):
             'hide_footer',
             'use_evaluation',
         ]
+
+
+class ExternalChallengeUpdateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            TabHolder(
+                Tab(
+                    'Information',
+                    'short_name',
+                    'title',
+                    'homepage',
+                    'description',
+                    'logo',
+                    'hidden',
+                ),
+                Tab(
+                    'Event',
+                    'event_name',
+                    'event_url',
+                    'workshop_date',
+                ),
+                Tab(
+                    'Data',
+                    "offers_data_download",
+                    "download_page",
+                    "number_of_downloads",
+                ),
+                Tab(
+                    'Submissions',
+                    "is_open_for_submissions",
+                    "submission_page",
+                    "number_of_submissions",
+                    "last_submission_date",
+                ),
+                Tab(
+                    'Publication',
+                    "publication_url",
+                    "publication_journal_name",
+                ),
+            ),
+            ButtonHolder(Submit('save', 'Save')),
+        )
+
+    class Meta:
+        model = ExternalChallenge
+        fields = (
+            # Information
+            "short_name",
+            "title",
+            "homepage",
+            "description",
+            "logo",
+            "hidden",
+
+            # Event
+            "event_name",
+            "event_url",
+            "workshop_date",
+
+            # Data
+            "offers_data_download",
+            "download_page",
+            "number_of_downloads",
+
+            # Submissions
+            "is_open_for_submissions",
+            "submission_page",
+            "number_of_submissions",
+            "last_submission_date",
+
+            # Publication
+            "publication_url",
+            "publication_journal_name",
+        )
+        widgets = {
+            "workshop_date": forms.TextInput(attrs={'type': 'date'}),
+            "last_submission_date": forms.TextInput(attrs={'type': 'date'}),
+        }

@@ -3,7 +3,6 @@ import json
 from django import template
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from jsonpath_rw import parse
 
 from grandchallenge.teams.models import Team
 
@@ -21,11 +20,17 @@ def get_jsonpath(obj: dict, jsonpath):
     :param jsonpath: The path to the object (singular)
     :return: The most relevant object in the dictionary
     """
-    try:
-        expr = parse(jsonpath)
-        return expr.find(obj)[0].value
 
-    except (AttributeError, IndexError):
+    try:
+        keys = jsonpath.split('.')
+        val = obj
+
+        for key in keys:
+            val = val[key]
+
+        return val
+
+    except KeyError:
         return ''
 
 

@@ -1,6 +1,8 @@
 {% load static %}
 {% load grandchallenge_tags %}
 {% load sentry_public_dsn from raven %}
+{% load placeFavicon from favtags %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,8 +101,7 @@
         <link href="{% static "css/core.css" %}" type="text/css"
               rel="stylesheet">
 
-        <link href="{% static "img/favicon.ico" %}"
-              rel="shortcut icon">
+        {% placeFavicon %}
 
         <!--Put any site or page specific css here -->
         <link href="{% block stylesheet %} {% endblock %}" type="text/css"
@@ -108,18 +109,9 @@
 
         <script>
             //url prefix for API functions
-            API_PREFIX = "{% get_project_prefix %}api",
+            API_PREFIX = "{% get_project_prefix %}api";
 
                 $(document).ready(function () {
-
-                    // delete message on click
-                    $(document).on('click', '.del-msg', function () {
-                        $('.messagelist').attr('style', 'display:none;');
-                    });
-                    // messages timeout
-                    setTimeout(function () {
-                        $('.messagelist').fadeOut('slow');
-                    }, 5000); // <-- time in milliseconds, 1000 =  1 sec
 
                     $('table.sortable').dataTable({
                         "bJQueryUI": false,
@@ -165,6 +157,8 @@
             <div class="collapse navbar-collapse "
                  id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    <li><a class="metaFooterMenuItem"
+                           href="{% url 'challenges:list' %}">All Challenges</a></li>
                     {% metafooterpages %}
                 </ul>
                 <div id="topheader_right">
@@ -188,7 +182,7 @@
                                            href="{% url 'userena_profile_detail' user.username %}">My
                                         Profile</a>
                                     </li>
-                                    <li><a href="{% url 'challenges:list' %}">My
+                                    <li><a href="{% url 'challenges:users-list' %}">My
                                         Challenges</a></li>
                                     <li role="separator" class="divider"></li>
                                     <li><a class="metaFooterMenuItem last"
@@ -223,6 +217,9 @@
                         {% else %}
                             {{ message }}
                         {% endif %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                     </div>
                 {% endfor %}
             </div>

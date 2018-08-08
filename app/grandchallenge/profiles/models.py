@@ -7,6 +7,7 @@ from django_countries.fields import CountryField
 from userena.models import UserenaBaseProfile
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.utils import disable_for_loaddata
 
 
 class UserProfile(UserenaBaseProfile):
@@ -26,9 +27,12 @@ class UserProfile(UserenaBaseProfile):
     def get_challenges_as_participant(self):
         return Challenge.objects.filter(
             participants_group__in=self.user.groups.all()
+        ).filter(
+            hidden=False
         )
 
 
+@disable_for_loaddata
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)

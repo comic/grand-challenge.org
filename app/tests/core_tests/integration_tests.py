@@ -369,7 +369,7 @@ class ComicframeworkTestCase(TestCase):
         url = reverse("challenges:create")
         factory = RequestFactory()
         storage = DefaultStorage()
-        header_image = storage._open(
+        banner = storage._open(
             settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg"
         )
         data = {
@@ -377,7 +377,7 @@ class ComicframeworkTestCase(TestCase):
             "description": description,
             "skin": "fake_test_dir/fakecss.css",
             "logo": "fakelogo.jpg",
-            "header_image": header_image,
+            "banner": banner,
             "prefix": "form",
             "page_set-TOTAL_FORMS": u"0",
             "page_set-INITIAL_FORMS": u"0",
@@ -1021,26 +1021,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
             "Error including file" in scary,
             "Expected a message 'Error including file' when trying to include filepath with ../"
             " in it. Instead found '%s'" % scary,
-        )
-
-    def test_all_projectlinks(self):
-        """ Overview showing short descriptions for all projects in the framework """
-        content = "Here is a test overview of all projects : <allprojects> {% all_projectlinks %} </allprojects>"
-        testallprojectlinkspage = create_page(
-            self.testproject, "testallprojectlinkspage", content
-        )
-        # This overview should be viewable by anyone
-        self._test_page_can_be_viewed(
-            self.signedup_user, testallprojectlinkspage
-        )
-        response = self._test_page_can_be_viewed(None, testallprojectlinkspage)
-        # Extract rendered content from included file, see if it has been rendered
-        # In the correct way
-        allprojectsHTML = find_text_between(
-            '<allprojects>', '</allprojects>', response.content
-        )
-        self.assertTrue(
-            allprojectsHTML != "", "Nothing was rendered for projects overview"
         )
 
     def get_mail_html_part(self, mail):

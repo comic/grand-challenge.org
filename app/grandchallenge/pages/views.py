@@ -7,7 +7,10 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    ListView, CreateView, UpdateView, DeleteView, RedirectView
+)
+from favicon.models import Favicon
 
 from grandchallenge.challenges.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
@@ -61,7 +64,7 @@ class PageUpdate(
     model = Page
     form_class = PageUpdateForm
     slug_url_kwarg = 'page_title'
-    slug_field = 'title'
+    slug_field = 'title__iexact'
     template_name_suffix = '_form_update'
 
     def form_valid(self, form):
@@ -75,7 +78,7 @@ class PageDelete(
 ):
     model = Page
     slug_url_kwarg = 'page_title'
-    slug_field = 'title'
+    slug_field = 'title__iexact'
     success_message = 'Page was successfully deleted'
 
     def get_success_url(self):
@@ -175,3 +178,30 @@ def inserted_file(request, challenge_short_name, filepath=""):
         return HttpResponseForbidden(
             "This file is not available without credentials."
         )
+
+
+class FaviconView(RedirectView):
+    """
+    Some browsers do not follow the favicon links in base.html, so do this
+    explicitly here.
+    """
+
+    permanent = False
+    rel = 'shortcut icon'
+
+    def get_redirect_url(self, *args, **kwargs):
+        fav = Favicon.objects.filter(isFavicon=True).first()
+
+        if not fav:
+            return None
+
+        if self.rel == 'shortcut icon':
+            size = 32
+        else:
+            # This is the largest icon from
+            # https://github.com/audreyr/favicon-cheat-sheet
+            size = kwargs.get('size', 180)
+
+        default_fav = fav.get_favicon(size=size, rel=self.rel)
+
+        return default_fav.faviconImage.url

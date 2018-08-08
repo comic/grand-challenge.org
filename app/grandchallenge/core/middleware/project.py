@@ -19,7 +19,7 @@ class ProjectMiddleware(MiddlewareMixin):
         """
         try:
             request.challenge = Challenge.objects.get(
-                short_name=self.get_challenge_name(request)
+                short_name__iexact=self.get_challenge_name(request)
             )
         except Challenge.DoesNotExist:
             request.challenge = None

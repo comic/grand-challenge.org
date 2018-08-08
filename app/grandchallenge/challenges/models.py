@@ -1,5 +1,5 @@
-import copy
 import datetime
+import hashlib
 import logging
 import os
 
@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -25,151 +24,6 @@ class ChallengeManager(models.Manager):
         """ like all(), but only return ComicSites for which hidden=false"""
         return self.filter(hidden=False)
 
-    def get_queryset(self):
-        return super().get_queryset()
-
-
-class ProjectLink(object):
-    """ Metadata about a single project: url, event etc. Used as the shared
-    class for both external challenges and projects hosted on comic so they can
-    be shown on the projectlinks overview page
-
-    """
-    # Using dict instead of giving a lot of fields to this object because the
-    # former is easier to work with
-    defaults = {
-        "abreviation": "",
-        "title": "",
-        "description": "",
-        "URL": "",
-        "submission URL": "",
-        "event name": "",
-        "year": "",
-        "event URL": "",
-        "website section": "",
-        "overview article url": "",
-        "overview article journal": "",
-        "overview article citations": "",
-        "overview article date": "",
-        "submission deadline": "",
-        "workshop date": "",
-        "open for submission": "",
-        "dataset downloads": "",
-        "registered teams": "",
-        "submitted results": "",
-        "last submission date": "",
-        "hosted on comic": False,
-        "project type": "",
-    }
-    # css selector used to designate a project as still open
-    UPCOMING = "challenge_upcoming"
-
-    def __init__(self, params, date=""):
-        self.params = copy.deepcopy(self.defaults)
-        self.params.update(params)
-        # add date in addition to datestring already in dict, to make sorting
-        # easier.
-        if date == "":
-            self.date = self.determine_project_date()
-        else:
-            self.date = date
-        self.params["year"] = self.date.year
-
-    def determine_project_date(self):
-        """ Try to find the date for this project. Return default
-        date if nothing can be parsed.
-
-        """
-        if self.params["hosted on comic"]:
-            if self.params["workshop date"]:
-                date = self.to_datetime(self.params["workshop date"])
-            else:
-                date = ""
-        else:
-            datestr = self.params["workshop date"]
-            # this happens when excel says its a number. I dont want to force
-            # the excel file to be clean, so deal with it here.
-            if type(datestr) == float:
-                datestr = str(datestr)[0:8]
-            try:
-                date = timezone.make_aware(
-                    datetime.datetime.strptime(datestr, "%Y%m%d"),
-                    timezone.get_default_timezone(),
-                )
-            except ValueError:
-                logger.warning(
-                    "could not parse date '%s' from xls line starting with "
-                    "'%s'. Returning default date 2013-01-01" %
-                    (datestr, self.params["abreviation"])
-                )
-                date = ""
-        if date == "":
-            # If you cannot find the exact date for a project,
-            # use date created
-            if self.params["hosted on comic"]:
-                return self.params["created at"]
-
-            # If you cannot find the exact date, try to get at least the year
-            # right. again do not throw errors, excel can be dirty
-            year = int(self.params["year"])
-            try:
-                date = timezone.make_aware(
-                    datetime.datetime(year, 1, 1),
-                    timezone.get_default_timezone(),
-                )
-            except ValueError:
-                logger.warning(
-                    "could not parse year '%f' from xls line starting with "
-                    "'%s'. Returning default date 2013-01-01" %
-                    (year, self.params["abreviation"])
-                )
-                date = timezone.make_aware(
-                    datetime.datetime(2013, 1, 1),
-                    timezone.get_default_timezone(),
-                )
-        return date
-
-    def find_link_class(self):
-        """ Get css classes to give to this projectlink.
-        For filtering and sorting project links, we discern upcoming, active
-        and inactive projects. Determiniation of upcoming/active/inactive is
-        described in column 'website section' in grand-challenges xls.
-        For projects hosted on comic, determine this automatically based on
-        associated workshop date. If a comicsite has an associated workshop
-        which is in the future, make it upcoming, otherwise active
-
-        """
-        linkclass = Challenge.CHALLENGE_ACTIVE
-        # for project hosted on comic, try to find upcoming automatically
-        if self.params["hosted on comic"]:
-            linkclass = self.params["project type"]
-            if self.date > self.to_datetime(datetime.datetime.today()):
-                linkclass += " " + self.UPCOMING
-        else:
-            # else use the explicit setting in xls
-            section = self.params["website section"].lower()
-            if section == "upcoming challenges":
-                linkclass = Challenge.CHALLENGE_ACTIVE + " " + self.UPCOMING
-            elif section == "active challenges":
-                linkclass = Challenge.CHALLENGE_ACTIVE
-            elif section == "past challenges":
-                linkclass = Challenge.CHALLENGE_INACTIVE
-            elif section == "data publication":
-                linkclass = Challenge.DATA_PUB
-        return linkclass
-
-    @staticmethod
-    def to_datetime(date):
-        """ add midnight to a date to make it a datetime because I cannot
-        compare these two types directly. Also add offset awareness to easily
-        compare with other django datetimes.
-        """
-        dt = datetime.datetime(date.year, date.month, date.day)
-        return timezone.make_aware(dt, timezone.get_default_timezone())
-
-    def is_hosted_on_comic(self):
-        return self.params["hosted on comic"]
-
 
 def validate_nounderscores(value):
     if "_" in value:
@@ -181,21 +35,22 @@ def validate_nounderscores(value):
 
 
 def get_logo_path(instance, filename):
-    return f"logos/{instance.pk}/{filename}"
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
+
 
 def get_banner_path(instance, filename):
     return f"banners/{instance.pk}/{filename}"
 
 
-class Challenge(models.Model):
-    """
-    A collection of HTML pages using a certain skin. Pages can be browsed and
-    edited.
-    """
-    public_folder = "public_html"
+class ChallengeBase(models.Model):
+    CHALLENGE_ACTIVE = 'challenge_active'
+    CHALLENGE_INACTIVE = 'challenge_inactive'
+    DATA_PUB = 'data_pub'
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    created_at = models.DateTimeField(auto_now_add=True)
     short_name = models.SlugField(
         max_length=50,
         default="",
@@ -208,17 +63,11 @@ class Challenge(models.Model):
         ],
         unique=True,
     )
-    skin = models.CharField(
-        max_length=225,
-        default=public_folder + "/project.css",
-        help_text="css file to include throughout this"
-        " project. relative to project data folder",
-    )
     description = models.CharField(
         max_length=1024,
         default="",
         blank=True,
-        help_text="Short summary of " "this project, max 1024 characters.",
+        help_text="Short summary of this project, max 1024 characters.",
     )
     title = models.CharField(
         max_length=64,
@@ -234,52 +83,10 @@ class Challenge(models.Model):
         upload_to=get_logo_path,
         blank=True,
     )
-    banner = models.ImageField(
-        upload_to=get_banner_path,
-        blank=True,
-    )
-    logo_path = models.CharField(
-        max_length=255,
-        default=public_folder + "/logo.png",
-        help_text="100x100 pixel image file to use as logo"
-        " in projects overview. Relative to project datafolder",
-    )
-    header_image = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="optional 658 pixel wide Header image which will "
-        "appear on top of each project page top of each "
-        "project. "
-        "Relative to project datafolder. Suggested default:" +
-        public_folder +
-        "/header.png",
-    )
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Project in any public overview",
     )
-    hide_signin = models.BooleanField(
-        default=False,
-        help_text="Do no show the Sign in / Register link on any page",
-    )
-    hide_footer = models.BooleanField(
-        default=False,
-        help_text=(
-            "Do not show the general links or "
-            "the grey divider line in page footers"
-        ),
-    )
-    disclaimer = models.CharField(
-        max_length=2048,
-        default="",
-        blank=True,
-        null=True,
-        help_text=(
-            "Optional text to show on each page in the project. "
-            "For showing 'under construction' type messages"
-        ),
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
     workshop_date = models.DateField(
         null=True,
         blank=True,
@@ -299,25 +106,11 @@ class Challenge(models.Model):
         null=True,
         help_text="Website of the event which will host the workshop",
     )
-    CHALLENGE_ACTIVE = 'challenge_active'
-    CHALLENGE_INACTIVE = 'challenge_inactive'
-    DATA_PUB = 'data_pub'
     is_open_for_submissions = models.BooleanField(
         default=False,
         help_text=(
             "This project currently accepts new submissions. "
             "Affects listing in projects overview"
-        ),
-    )
-    submission_page_name = models.CharField(
-        blank=True,
-        null=True,
-        max_length=255,
-        help_text=(
-            "If the project allows submissions, there will be a link in "
-            "projects overview going directly to you "
-            "project/<submission_page_name>/. If empty, the projects main "
-            "page will be used instead"
         ),
     )
     number_of_submissions = models.IntegerField(
@@ -362,6 +155,148 @@ class Challenge(models.Model):
             "journal abbreviations</a> format"
         ),
     )
+
+    objects = ChallengeManager()
+
+    def __str__(self):
+        """ string representation for this object"""
+        return self.short_name
+
+    @property
+    def thumb_image_url(self):
+        try:
+            return self.logo.url
+        except ValueError:
+            return (
+                f"https://www.gravatar.com/avatar/"
+                f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
+            )
+
+    @property
+    def submission_url(self):
+        raise NotImplementedError
+
+    def get_absolute_url(self):
+        raise NotImplementedError
+
+    @property
+    def hosted_on_comic(self):
+        return True
+
+    @property
+    def year(self):
+        if self.workshop_date:
+            return self.workshop_date.year
+        else:
+            return self.created_at.year
+
+    @property
+    def upcoming_workshop_date(self):
+        if self.workshop_date and self.workshop_date > datetime.date.today():
+            return self.workshop_date
+
+    def get_link_classes(self):
+        """
+        Copied from grandchallenge_tags
+
+        For adding this as id, for jquery filtering later on
+        returns a space separated list of classes to use in html
+        """
+        classes = []
+
+        if self.is_open_for_submissions:
+            classes.append("open")
+
+        if self.offers_data_download:
+            classes.append("datadownload")
+
+        classes.append(self.get_host_id())
+
+        return " ".join(classes)
+
+    def get_host_id(self):
+        """
+        Copied from grandchallenge_tags
+
+        Try to find out what framework this challenge is hosted on, return
+        a string which can also be an id or class in HTML
+        """
+        if self.hosted_on_comic:
+            return "grand-challenge"
+
+        if "codalab.org" in self.get_absolute_url():
+            return "codalab"
+
+        else:
+            return "Unknown"
+
+    def get_host_link(self):
+        """
+        Copied from grandchallenge tags
+
+        Try to find out what framework this challenge is hosted on
+        """
+        host_id = self.get_host_id()
+
+        if host_id == "grand-challenge":
+            framework_name = "grand-challenge.org"
+            framework_url = "http://grand-challenge.org"
+        elif host_id == "codalab":
+            framework_name = "codalab.org"
+            framework_url = "http://codalab.org"
+        else:
+            return None
+
+        return f"<a href={framework_url}>{framework_name}</a>"
+
+    def get_submission_link(self):
+        """ Copied from grandchallenge tags """
+        if self.submission_url:
+            return self.submission_url
+        else:
+            return self.get_absolute_url()
+
+    class Meta:
+        abstract = True
+
+
+class Challenge(ChallengeBase):
+    """
+    A collection of HTML pages using a certain skin. Pages can be browsed and
+    edited.
+    """
+    public_folder = "public_html"
+    skin = models.CharField(
+        max_length=225,
+        default=public_folder + "/project.css",
+        help_text="css file to include throughout this"
+                  " project. relative to project data folder",
+    )
+    banner = models.ImageField(
+        upload_to=get_banner_path,
+        blank=True,
+    )
+    hide_signin = models.BooleanField(
+        default=False,
+        help_text="Do no show the Sign in / Register link on any page",
+    )
+    hide_footer = models.BooleanField(
+        default=False,
+        help_text=(
+            "Do not show the general links or "
+            "the grey divider line in page footers"
+        ),
+    )
+    disclaimer = models.CharField(
+        max_length=2048,
+        default="",
+        blank=True,
+        null=True,
+        help_text=(
+            "Optional text to show on each page in the project. "
+            "For showing 'under construction' type messages"
+        ),
+    )
     require_participant_review = models.BooleanField(
         default=False,
         help_text=(
@@ -372,7 +307,7 @@ class Challenge(models.Model):
     )
     allow_unfiltered_page_html = models.BooleanField(
         default=False,
-        help_text= (
+        help_text=(
             'If true, the page HTML is NOT filtered, allowing the challenge '
             'administrator to have full control over the page contents when '
             'they edit it in ckeditor.'
@@ -411,11 +346,17 @@ class Challenge(models.Model):
         on_delete=models.CASCADE,
         related_name='participants_of_challenge',
     )
-    objects = ChallengeManager()
-
-    def __str__(self):
-        """ string representation for this object"""
-        return self.short_name
+    submission_page_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=(
+            "If the project allows submissions, there will be a link in "
+            "projects overview going directly to you "
+            "project/<submission_page_name>/. If empty, the projects main "
+            "page will be used instead"
+        ),
+    )
 
     # TODO check whether short name is really clean and short!
     def delete(self, using=None, keep_parents=False):
@@ -519,58 +460,15 @@ class Challenge(models.Model):
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        url = reverse('challenge-homepage', args=[self.short_name])
-        return url
+        return reverse('challenge-homepage', args=[self.short_name])
 
-    def to_projectlink(self):
-        """
-        Return a ProjectLink representation of this comicsite, to show in an
-        overview page listing all projects
-        """
-
-        try:
-            thumb_image_url = self.logo.url
-        except ValueError:
-            thumb_image_url = reverse(
-                'project_serve_file', args=[self.short_name, self.logo_path]
-            )
-
-        args = {
-            "abreviation": self.short_name,
-            "title": self.title if self.title else self.short_name,
-            "description": self.description,
-            "URL": reverse('challenge-homepage', args=[self.short_name]),
-            "download URL": "",
-            "submission URL": self.get_submission_url(),
-            "event name": self.event_name,
-            "year": "",
-            "event URL": self.event_url,
-            "thumb_image_url": thumb_image_url,
-            "website section": "active challenges",
-            "overview article url": self.publication_url,
-            "overview article journal": self.publication_journal_name,
-            "overview article citations": "",
-            "overview article date": "",
-            "submission deadline": "",
-            "workshop date": self.workshop_date,
-            "open for submission": "yes" if self.is_open_for_submissions else "no",
-            "data download": "yes" if self.offers_data_download else "no",
-            "dataset downloads": self.number_of_downloads,
-            "registered teams": "",
-            "submitted results": self.number_of_submissions,
-            "last submission date": self.last_submission_date,
-            "hosted on comic": True,
-            "created at": self.created_at,
-        }
-        projectlink = ProjectLink(args)
-        return projectlink
-
-    def get_submission_url(self):
+    @property
+    def submission_url(self):
         """ What url can you go to to submit for this project? """
         url = reverse('challenge-homepage', args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
-                "http://"
+                    "http://"
             ) or self.submission_page_name.startswith(
                 "https://"
             ):
@@ -605,6 +503,32 @@ class Challenge(models.Model):
     class Meta:
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
+
+
+class ExternalChallenge(ChallengeBase):
+    homepage = models.URLField(
+        blank=False,
+        help_text=("What is the homepage for this challenge?"),
+    )
+    submission_page = models.URLField(
+        blank=True,
+        help_text=("Where is the submissions page for this challenge?")
+    )
+    download_page = models.URLField(
+        blank=True,
+        help_text=("Where is the download page for this challenge?")
+    )
+
+    def get_absolute_url(self):
+        return self.homepage
+
+    @property
+    def submission_url(self):
+        return self.submission_page
+
+    @property
+    def hosted_on_comic(self):
+        return False
 
 
 class ComicSiteModel(models.Model):

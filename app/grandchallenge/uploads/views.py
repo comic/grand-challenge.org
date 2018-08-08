@@ -144,7 +144,7 @@ def serve(request, challenge_short_name, path, document_root=None):
         # On case sensitive filesystems you can have problems if the project
         # nameurl in the url is not exactly the same case as the filepath.
         # find the correct case for projectname then.
-        projectlist = Challenge.objects.filter(short_name=challenge_short_name)
+        projectlist = Challenge.objects.filter(short_name__iexact=challenge_short_name)
         if not projectlist:
             raise Http404("project '%s' does not exist" % challenge_short_name)
 

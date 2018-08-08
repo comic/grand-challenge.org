@@ -101,10 +101,6 @@ http {
       try_files $uri =404;
     }
 
-    location ~ /favicon.ico/?$ {
-      alias /srv/public/static/img/favicon.ico;
-    }
-
     location ~ /(wp-login.php|apple-app-site-association|admin)/?$ {
       return 404;
     }

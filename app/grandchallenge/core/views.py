@@ -27,6 +27,7 @@ def site(request, challenge_short_name):
     [site, pages, metafooterpages] = site_get_standard_vars(
         challenge_short_name
     )
+
     if len(pages) == 0:
         page = ErrorPage(
             challenge=site,
@@ -145,7 +146,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
         page_title = page_or_page_title
         try:
             p = Page.objects.get(
-                challenge__short_name=site.short_name, title=page_title
+                challenge__short_name=site.short_name, title__iexact=page_title
             )
         except Page.DoesNotExist:
             raise Http404
@@ -216,7 +217,7 @@ def comicmain(request, page_title=""):
     else:
         try:
             p = Page.objects.get(
-                challenge__short_name=challenge_short_name, title=page_title
+                challenge__short_name=challenge_short_name, title__iexact=page_title
             )
         except Page.DoesNotExist:
             raise Http404
@@ -241,28 +242,18 @@ def comicmain(request, page_title=""):
 
 # ======================================== not called directly from urls.py ==
 def getSite(challenge_short_name):
-    project = Challenge.objects.get(short_name=challenge_short_name)
+    project = Challenge.objects.get(short_name__iexact=challenge_short_name)
     return project
 
 
 def getPages(challenge_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(challenge__short_name=challenge_short_name)
+        pages = Page.objects.filter(challenge__short_name__iexact=challenge_short_name)
     except Page.DoesNotExist:
         raise Http404("Page '%s' not found" % challenge_short_name)
 
     return pages
-
-
-# trying to follow pep 0008 here, finally.
-def site_exists(challenge_short_name):
-    try:
-        site = Challenge.objects.get(short_name=challenge_short_name)
-        return True
-
-    except Challenge.DoesNotExist:
-        return False
 
 
 def create_HTML_a(link_url, link_text):

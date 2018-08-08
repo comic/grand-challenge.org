@@ -1,4 +1,5 @@
 import re
+from functools import wraps
 
 from django.conf import settings
 
@@ -25,3 +26,18 @@ def build_absolute_uri(request):
             # nothing to rewrite
             pass
     return subdomain_absolute_uri
+
+
+def disable_for_loaddata(signal_handler):
+    """Decorator for disabling a signal handler when using loaddata"""
+
+    @wraps(signal_handler)
+    def wrapper(*args, **kwargs):
+        if kwargs['raw']:
+            print(f"Skipping signal for {args} {kwargs}")
+            return
+
+        signal_handler(*args, **kwargs)
+
+    return wrapper
+

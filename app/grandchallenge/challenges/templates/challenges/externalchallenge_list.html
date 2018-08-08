@@ -1,0 +1,81 @@
+{% extends 'mainpage.html' %}
+{% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+
+{% block pageName %}External Challenges{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>External Challenges</h2>
+
+    {% if request.user.is_staff %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'challenges:external-create' %}">
+                <i class="fas fa-plus"></i> Add an external challenge
+            </a>
+        </p>
+    {% endif %}
+
+    <table class="table" id="challengesTable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Created</th>
+            <th>Creator</th>
+            <th>Description</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for challenge in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ challenge.get_absolute_url }}">
+                        {% firstof challenge.title challenge.short_name %}
+                    </a>
+                    {% if challenge.hidden %}
+                        <i class="fa fa-eye-slash text-danger"
+                           title="Challenge not listed on the all challenges page"></i>
+                    {% endif %}
+                </td>
+                <td data-order="{{ challenge.created_at|date:"U" }}">
+                    {{ challenge.created_at }}
+                </td>
+                <td>
+                    {{ challenge.creator|user_profile_link }}
+                </td>
+                <td>
+                    {{ challenge.description }}
+                </td>
+                <td>
+                    <a href="{% url 'challenges:external-update' challenge.short_name %}">
+                        <i class="fa fa-edit"
+                           title="Edit External Challenge"></i>
+                    </a>
+                </td>
+            <td>
+                <a href="{% url 'challenges:external-delete' challenge.short_name %}">
+                        <i class="fa fa-trash text-danger"
+                           title="Delete External Challenge"></i>
+                </a>
+            </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#challengesTable').DataTable({
+                "bLengthChange": false,
+                "pageLength": 50,
+                "order": [[1, "desc"]]
+            });
+        });
+    </script>
+
+{% endblock %}

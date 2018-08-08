@@ -1,0 +1,17 @@
+{% extends "mainpage.html" %}
+
+{% block pagecontent %}
+
+    <h2>Confirm Deletion</h2>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the external challenge "{{ object }}"? <br>
+            <b class="text-danger">WARNING:
+                You are not able to undo this action, once the challenge is deleted
+                it is deleted forever.</b></p>
+        <input type="submit" value="I understand, delete the challenge called '{{ object }}'"
+               class="btn btn-danger"/>
+    </form>
+
+{% endblock %}

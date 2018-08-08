@@ -26,33 +26,22 @@
 {% endblock %}
 
 {% block headerTitle %}
-    {% if not site.header_image and not site.banner %}
-        <div class="noimage">
-            {% if site.title %}
-                {{ site.title }}
-            {% else %}
-                {{ site.short_name }}
-            {% endif %}
-        </div>
-    {% else %}
+    {% if site.banner %}
         <style>
             #headerTitle {
                 padding: 0;
             }
         </style>
         <div class="image">
-
-            {% if site.banner %}
-
-                <img src="{{ site.banner.url }}" class="headerImage">
-
+            <img src="{{ site.banner.url }}" class="headerImage">
+        </div>
+    {% else %}
+        <div class="noimage">
+            {% if site.title %}
+                {{ site.title }}
             {% else %}
-
-                <img src="{% url 'project_serve_file' site.short_name site.header_image %}"
-                     class="headerImage">
-
+                {{ site.short_name }}
             {% endif %}
-
         </div>
     {% endif %}
 {% endblock %}

@@ -8,7 +8,6 @@ RUN apt-get update && \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libxft-dev \
-    default-libmysqlclient-dev \
     libffi-dev \
     wget \
     gettext

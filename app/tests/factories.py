@@ -3,7 +3,7 @@ import hashlib
 import factory
 from django.conf import settings
 
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -11,22 +11,6 @@ from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 
 SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
-
-
-class ChallengeFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Challenge
-
-    short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
-
-
-class PageFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Page
-
-    challenge = factory.SubFactory(ChallengeFactory)
-    title = factory.Sequence(lambda n: f'page_{n}')
-    html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -41,6 +25,31 @@ class UserFactory(factory.DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
+
+
+class ChallengeFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Challenge
+
+    short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
+    creator = factory.SubFactory(UserFactory)
+
+
+class ExternalChallengeFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = ExternalChallenge
+
+    short_name = factory.Sequence(lambda n: f'test_external_challenge{n}')
+    homepage = factory.Faker('url')
+
+
+class PageFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Page
+
+    challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.Sequence(lambda n: f'page_{n}')
+    html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
 
 
 class UploadFactory(factory.DjangoModelFactory):

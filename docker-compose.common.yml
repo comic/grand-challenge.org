@@ -1,4 +1,4 @@
-version: '2'
+version: '2.3'
 
 services:
 
@@ -9,7 +9,7 @@ services:
     environment:
       - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
     command: >-
-      dockerize -wait tcp://db:3306 -timeout 120s bash -c "
+      dockerize -wait tcp://postgres:5432 -timeout 120s bash -c "
       [ -e /static ] || rm -rf /static
       && python manage.py collectstatic --noinput
       && mkdir -p /dbox/Dropbox/media/
@@ -35,9 +35,7 @@ services:
     image: memcached:1.4
     restart: always
 
-  rabbitmq:
-    image: rabbitmq:3.6-management
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+  redis:
+    image: redis:4.0
+    command: redis-server --appendonly yes
     restart: always

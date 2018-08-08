@@ -1,5 +1,6 @@
 {% extends 'site_signin.html' %}
 {% load i18n %}
+{% load url from grandchallenge_tags %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
     {{ username }}'s profile.
