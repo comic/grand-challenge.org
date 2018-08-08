@@ -1,6 +1,7 @@
 {% extends 'mainpage.html' %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
+{% load humanize %}
 
 {% block pageName %}External Challenges{% endblock %}
 
@@ -22,8 +23,14 @@
         <tr>
             <th>Name</th>
             <th>Created</th>
+            <th>Updated</th>
             <th>Creator</th>
             <th>Description</th>
+            <th>Type</th>
+            <th>Modalities</th>
+            <th>Structures</th>
+            <th>Cases</th>
+            <th>Data Stored?</th>
             <th>Edit</th>
             <th>Delete</th>
         </tr>
@@ -41,14 +48,47 @@
                            title="Challenge not listed on the all challenges page"></i>
                     {% endif %}
                 </td>
-                <td data-order="{{ challenge.created_at|date:"U" }}">
-                    {{ challenge.created_at }}
+                <td data-order="{{ challenge.created|date:"U" }}">
+                    {{ challenge.created }}
+                </td>
+                <td data-order="{{ challenge.modified|date:"U" }}">
+                    {{ challenge.modified|naturaltime }}
                 </td>
                 <td>
                     {{ challenge.creator|user_profile_link }}
                 </td>
                 <td>
                     {{ challenge.description }}
+                </td>
+                <td>
+                    {% for task_type in challenge.task_types.all %}
+                        {{ task_type }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for modality in challenge.modalities.all %}
+                        {{ modality }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for structure in challenge.structures.all %}
+                        {{ structure }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if challenge.number_of_training_cases %}
+                        Training: {{ challenge.number_of_training_cases|intcomma }}<br>
+                    {% endif %}
+                    {% if challenge.number_of_test_cases %}
+                        Test: {{ challenge.number_of_test_cases|intcomma }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if challenge.data_stored %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
                 </td>
                 <td>
                     <a href="{% url 'challenges:external-update' challenge.short_name %}">
