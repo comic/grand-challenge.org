@@ -10,12 +10,11 @@ from urllib.parse import urljoin
 from django import template
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
-from django.template import defaulttags, loader
+from django.template import defaulttags
 from django.urls import reverse as reverse_djangocore
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -24,11 +23,8 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import grandchallenge.core.views
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.api import get_public_results_by_challenge_name
-from grandchallenge.core.dataproviders.utils.HtmlLinkReplacer import (
-    HtmlLinkReplacer
-)
+from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
