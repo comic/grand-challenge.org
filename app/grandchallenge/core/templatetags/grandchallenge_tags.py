@@ -243,6 +243,7 @@ class comic_URLNode(defaulttags.URLNode):
                     'participants',
                     'admins',
                     'uploads',
+                    'challenges',
                 ]
                 )
         ):
