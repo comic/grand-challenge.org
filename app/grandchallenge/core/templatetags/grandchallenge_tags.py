@@ -243,13 +243,20 @@ class comic_URLNode(defaulttags.URLNode):
                     'participants',
                     'admins',
                     'uploads',
+                    'challenges',
                 ]
                 )
         ):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
-            project = args[0]
+
+            try:
+                project = args[0]
+            except IndexError:
+                # No project was set, so must be part of the main site
+                project = settings.MAIN_PROJECT_NAME
+
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
