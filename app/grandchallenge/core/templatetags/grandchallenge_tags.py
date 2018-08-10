@@ -10,12 +10,11 @@ from urllib.parse import urljoin
 from django import template
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
-from django.template import defaulttags, loader
+from django.template import defaulttags
 from django.urls import reverse as reverse_djangocore
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -24,11 +23,8 @@ from matplotlib.figure import Figure
 from six import StringIO, iteritems
 
 import grandchallenge.core.views
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.api import get_public_results_by_challenge_name
-from grandchallenge.core.dataproviders.utils.HtmlLinkReplacer import (
-    HtmlLinkReplacer
-)
+from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
@@ -227,12 +223,12 @@ def substitute(string, substitutions):
 class comic_URLNode(defaulttags.URLNode):
 
     def __init__(self, *args, **kwargs):
-        super(comic_URLNode, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def render(self, context):
         # get the url the default django method would give.
-        url = super(comic_URLNode, self).render(context)
-        url = url.lower()
+        url = super().render(context)
+
         if subdomain_is_projectname() and (
                 (
                         self.view_name.var in [
@@ -253,7 +249,13 @@ class comic_URLNode(defaulttags.URLNode):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
-            project = args[0]
+
+            try:
+                project = args[0]
+            except IndexError:
+                # No project was set, so must be part of the main site
+                project = settings.MAIN_PROJECT_NAME
+
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
                 # probably meant as a link the main comicframework site.
@@ -264,12 +266,15 @@ class comic_URLNode(defaulttags.URLNode):
             else:
                 path_to_site = reverse_djangocore(
                     "challenge-homepage", args=[project]
-                ).lower()
+                )
+
                 if url.startswith(path_to_site):
                     url = url.replace(path_to_site, "/")
+
                 scheme_subsite_and_host = reverse(
                     "challenge-homepage", args=[project]
-                ).lower()
+                )
+
                 return urljoin(scheme_subsite_and_host, url)
 
         return url

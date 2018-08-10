@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -53,16 +53,22 @@ class ChallengeList(TemplateView):
         challenges_by_year = self.create_objects_by_year(
             Challenge.objects
                 .filter(hidden=False)
-                .order_by("-created_at")
+                .order_by("-created")
         )
         challenges_by_year = self.create_objects_by_year(
             ExternalChallenge.objects
                 .filter(hidden=False)
-                .order_by("-created_at"),
+                .order_by("-created"),
             challenges_by_year
         )
 
-        context.update({"challenges_by_year": dict(challenges_by_year)})
+        # Cannot use a defaultdict in django template so convert to dict,
+        # and this must be ordered by year for display
+        context.update({
+            "challenges_by_year": OrderedDict(sorted(
+                challenges_by_year.items(), key=lambda t: t[0], reverse=True,
+            ))
+        })
 
         return context
 

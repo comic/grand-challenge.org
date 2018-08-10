@@ -47,9 +47,13 @@ class PageCreateForm(forms.ModelForm):
     def clean_title(self):
         """ Ensure that page titles are not duplicated for a challenge """
         title = self.cleaned_data['title']
-        queryset = Page.objects.filter(challenge=self.challenge, title=title)
+        queryset = Page.objects.filter(
+            challenge=self.challenge, title__iexact=title
+        )
+
         if self.instance is not None:
             queryset = queryset.exclude(pk=self.instance.pk)
+
         if queryset.exists():
             raise ValidationError(
                 gettext(

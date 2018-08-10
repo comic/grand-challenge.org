@@ -5,6 +5,7 @@ import os
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.postgres.fields import CICharField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug, MinLengthValidator
 from django.db import models
@@ -42,6 +43,55 @@ def get_banner_path(instance, filename):
     return f"banners/{instance.pk}/{filename}"
 
 
+class TaskType(models.Model):
+    """
+    Stores the task type options, eg, Segmentation, Regression, Prediction, etc
+    """
+    type = CICharField(max_length=16, blank=False, unique=True)
+
+    class Meta:
+        ordering = ("type",)
+
+    def __str__(self):
+        return self.type
+
+
+class ImagingModality(models.Model):
+    """ Stores the modality options, eg, MR, CT, PET, XR """
+    modality = CICharField(max_length=16, blank=False, unique=True)
+
+    class Meta:
+        ordering = ("modality",)
+
+    def __str__(self):
+        return self.modality
+
+
+class BodyRegion(models.Model):
+    """ Stores the anatomy options, eg, Head, Neck, Thorax, etc """
+    region = CICharField(max_length=16, blank=False, unique=True)
+
+    class Meta:
+        ordering = ("region",)
+
+    def __str__(self):
+        return self.region
+
+
+class BodyStructure(models.Model):
+    """ Stores the organ name and what region it belongs to """
+    structure = CICharField(max_length=16, blank=False, unique=True)
+    region = models.ForeignKey(
+        to=BodyRegion, on_delete=models.CASCADE, blank=False,
+    )
+
+    class Meta:
+        ordering = ("region", "structure",)
+
+    def __str__(self):
+        return f"{self.structure} ({self.region})"
+
+
 class ChallengeBase(models.Model):
     CHALLENGE_ACTIVE = 'challenge_active'
     CHALLENGE_INACTIVE = 'challenge_inactive'
@@ -50,17 +100,16 @@ class ChallengeBase(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    short_name = models.SlugField(
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    short_name = CICharField(
         max_length=50,
-        default="",
+        blank=False,
         help_text=(
             "short name used in url, specific css, files etc. "
             "No spaces allowed"
         ),
-        validators=[
-            validate_nounderscores, validate_slug, MinLengthValidator(1)
-        ],
+        validators=[validate_nounderscores, validate_slug, ],
         unique=True,
     )
     description = models.CharField(
@@ -156,6 +205,30 @@ class ChallengeBase(models.Model):
         ),
     )
 
+    data_license_agreement = models.TextField(
+        blank=True,
+        help_text="What is the data license agreement for this challenge?",
+    )
+
+    task_types = models.ManyToManyField(
+        TaskType,
+        blank=True,
+        help_text="What type of task is this challenge?",
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="What imaging modalities are used in this challenge?",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="What structures are used in this challenge?",
+    )
+
+    number_of_training_cases = models.IntegerField(blank=True, null=True)
+    number_of_test_cases = models.IntegerField(blank=True, null=True)
+
     objects = ChallengeManager()
 
     def __str__(self):
@@ -188,7 +261,7 @@ class ChallengeBase(models.Model):
         if self.workshop_date:
             return self.workshop_date.year
         else:
-            return self.created_at.year
+            return self.created.year
 
     @property
     def upcoming_workshop_date(self):
@@ -517,6 +590,11 @@ class ExternalChallenge(ChallengeBase):
     download_page = models.URLField(
         blank=True,
         help_text=("Where is the download page for this challenge?")
+    )
+
+    data_stored = models.BooleanField(
+        default=False,
+        help_text=("Has the grand-challenge team stored the data?")
     )
 
     def get_absolute_url(self):
