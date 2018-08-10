@@ -7,7 +7,7 @@ from grandchallenge.algorithms.tasks import execute_algorithm
 
 
 @receiver(post_save, sender=Job)
-def execute_job(instance: Job = None, created: bool = False, *_, **__):
+def schedule_job(instance: Job = None, created: bool = False, *_, **__):
     if created:
         execute_algorithm.apply_async(
             task_id=str(instance.pk), kwargs={"job_pk": instance.pk}

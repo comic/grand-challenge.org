@@ -10,9 +10,8 @@ from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
     Submission, Job, Method, Result, Config,
 )
-from grandchallenge.evaluation.tasks import (
-    evaluate_submission, calculate_ranks
-)
+from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.core.tasks import execute_job
 
 
 @receiver(post_save, sender=Submission)
@@ -35,10 +34,10 @@ def create_evaluation_job(
 
 @receiver(post_save, sender=Job)
 @disable_for_loaddata
-def execute_job(instance: Job = None, created: bool = False, *_, **__):
+def schedule_job(instance: Job = None, created: bool = False, *_, **__):
     if created:
         # TODO: Create Timeout tests
-        return evaluate_submission.apply_async(
+        return execute_job.apply_async(
             task_id=str(instance.pk),
             kwargs={
                 'job_pk': instance.pk,
