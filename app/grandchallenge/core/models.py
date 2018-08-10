@@ -1,6 +1,8 @@
 import uuid
+from typing import Tuple
 
 from django.conf import settings
+from django.core.files import File
 from django.db import models
 from social_django.fields import JSONField
 
@@ -62,6 +64,14 @@ class CeleryJobModel(models.Model):
         Returns the container object associated with this instance, which
         should be a foreign key to an object that is a subclass of
         DockerImageModel
+        """
+        raise NotImplementedError
+
+    @property
+    def input_files(self) -> Tuple[File, ...]:
+        """
+        Returns a tuple of the input files that will be mounted into the
+        container when it is executed
         """
         raise NotImplementedError
 

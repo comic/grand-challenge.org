@@ -270,6 +270,10 @@ class Job(UUIDModel, CeleryJobModel):
     def container(self):
         return self.method
 
+    @property
+    def input_files(self):
+        return (self.submission.file,)
+
     def clean(self):
         if self.submission.challenge != self.method.challenge:
             raise ValidationError(

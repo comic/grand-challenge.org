@@ -155,7 +155,7 @@ def execute_job(
     try:
         with Evaluator(
                 job_id=job.pk,
-                input_files=(job.submission.file,),
+                input_files=job.input_files,
                 eval_image=job.container.image,
                 eval_image_sha256=job.container.image_sha256,
         ) as e:

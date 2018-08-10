@@ -24,6 +24,10 @@ class Job(UUIDModel, CeleryJobModel):
     def container(self):
         return self.algorithm
 
+    @property
+    def input_files(self):
+        return [c.file for c in self.case.casefile_set.all()]
+
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
 
