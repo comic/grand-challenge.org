@@ -2,11 +2,11 @@ import uuid
 from pathlib import Path
 
 from celery import shared_task
-from django.apps import apps
-from django.db import OperationalError
 from django.db.models import Q
+from django.utils.module_loading import import_string
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.tasks import get_model_instance, create_result
 from grandchallenge.evaluation.backends.dockermachine.evaluator import (
     Evaluator,
 )
@@ -15,66 +15,6 @@ from grandchallenge.evaluation.exceptions import EvaluationException
 from grandchallenge.evaluation.models import Job, Result
 from grandchallenge.evaluation.utils import generate_rank_dict
 from grandchallenge.evaluation.validators import get_file_mimetype
-
-
-def retry_if_dropped(func):
-    """
-    Sometimes the Mysql connection will drop for long running jobs. This is
-    a decorator that will retry a function that relies on a usable connection.
-    """
-
-    def wrapper(*args, **kwargs):
-        n_tries = 0
-        max_tries = 2
-        err = None
-
-        while n_tries < max_tries:
-            n_tries += 1
-
-            try:
-                return func(*args, **kwargs)
-            except OperationalError as e:
-                err = e
-
-                # This needs to be a local import
-                from django.db import connection
-                connection.close()
-
-        raise err
-
-    return wrapper
-
-
-@retry_if_dropped
-def get_model_instance(*, pk, app_label, model_name):
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    return model.objects.get(pk=pk)
-
-
-@retry_if_dropped
-def create_result(
-        *,
-        metrics,
-        job_pk,
-        job_app_label,
-        job_model_name,
-        result_app_label,
-        result_model_name
-):
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
-
-    # Note: assumes that the result and job classes are in the same app
-    result_model = apps.get_model(
-        app_label=result_app_label, model_name=result_model_name
-    )
-
-    result_model.objects.create(
-        job=job, metrics=metrics, challenge=job.challenge
-    )
-
-    job.update_status(status=Job.SUCCESS)
 
 
 class SubmissionEvaluator(Evaluator):
@@ -113,6 +53,8 @@ def evaluate_submission(
         job_model_name: str,
         result_app_label: str,
         result_model_name: str,
+        result_object_output_kwarg: str,
+        evaluation_class: str,
 ) -> dict:
     """
     Interfaces between Django and the Evaluation. Gathers together all
@@ -131,37 +73,44 @@ def evaluate_submission(
     job.update_status(status=Job.STARTED)
 
     if not job.method.ready:
-        job.update_status(
-            status=Job.FAILURE,
-            output=f"Method {job.method.id} was not ready to be used.",
-        )
-        return {}
+        msg = f"Method {job.method.id} was not ready to be used."
+        job.update_status(status=Job.FAILURE, output=msg, )
+        raise AttributeError(msg)
 
     try:
-        with SubmissionEvaluator(
+        Evaluator = import_string(evaluation_class)
+    except ImportError:
+        job.update_status(
+            status=Job.FAILURE, output=f"Could not import {evaluation_class}.",
+        )
+        raise
+
+    try:
+        with Evaluator(
                 job_id=job.pk,
                 input_files=(job.submission.file,),
                 eval_image=job.method.image,
                 eval_image_sha256=job.method.image_sha256,
         ) as e:
-            metrics = e.evaluate()  # This call is potentially very long
+            result = e.evaluate()  # This call is potentially very long
+
     except EvaluationException as exc:
         job = get_model_instance(
-            job_pk=job_pk, app_label=job_app_label, model_name=job_model_name
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(status=Job.FAILURE, output=exc.message)
-        return {}
+        raise
 
     create_result(
-        metrics=metrics,
         job_pk=job_pk,
         job_app_label=job_app_label,
         job_model_name=job_model_name,
         result_app_label=result_app_label,
         result_model_name=result_model_name,
+        **{result_object_output_kwarg: result},
     )
 
-    return metrics
+    return result
 
 
 @shared_task

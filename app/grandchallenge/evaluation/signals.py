@@ -24,6 +24,7 @@ def create_evaluation_job(
         method = Method.objects.filter(challenge=instance.challenge).order_by(
             '-created'
         ).first()
+
         if method is None:
             # TODO: Email here, do not raise
             # raise NoMethodForChallengeError
@@ -37,7 +38,7 @@ def create_evaluation_job(
 def execute_job(instance: Job = None, created: bool = False, *_, **__):
     if created:
         # TODO: Create Timeout tests
-        evaluate_submission.apply_async(
+        return evaluate_submission.apply_async(
             task_id=str(instance.pk),
             kwargs={
                 'job_pk': instance.pk,
@@ -45,6 +46,8 @@ def execute_job(instance: Job = None, created: bool = False, *_, **__):
                 'job_model_name': instance._meta.model_name,
                 'result_app_label': Result._meta.app_label,
                 'result_model_name': Result._meta.model_name,
+                'result_object_output_kwarg': 'metrics',
+                'evaluation_class': 'grandchallenge.evaluation.tasks.SubmissionEvaluator',
             }
         )
 

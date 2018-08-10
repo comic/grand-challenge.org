@@ -2,29 +2,26 @@ from pathlib import Path
 
 import docker
 import pytest
-from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from grandchallenge.evaluation.models import Method, Result
-from grandchallenge.evaluation.tasks import evaluate_submission
 from grandchallenge.core.tasks import validate_docker_image_async
-from tests.factories import (
-    SubmissionFactory, JobFactory, MethodFactory, UserFactory
-)
+from grandchallenge.evaluation.models import Method
+from tests.factories import SubmissionFactory, MethodFactory
 
 
 @pytest.mark.django_db
-def test_submission_evaluation(client, evaluation_image, submission_file):
-    # Upload a submission and create a job
+def test_submission_evaluation(
+        client, evaluation_image, submission_file, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = True,
+    settings.task_always_eager = True,
+    settings.broker_url = 'memory://',
+    settings.backend = 'memory'
 
+    # Upload a submission and create a job
     dockerclient = docker.DockerClient(
         base_url=settings.EVALUATION_DOCKER_BASE_URL
-    )
-
-    user = UserFactory()
-
-    submission = SubmissionFactory(
-        file__from_path=submission_file, creator=user
     )
 
     eval_container, sha256 = evaluation_image
@@ -37,42 +34,30 @@ def test_submission_evaluation(client, evaluation_image, submission_file):
     response = client.get(method.image.url)
     assert response.status_code == 403
 
-    job = JobFactory(submission=submission, method=method)
-
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
 
-    res = evaluate_submission(
-        job_pk=job.pk,
-        job_app_label=job._meta.app_label,
-        job_model_name=job._meta.model_name,
-        result_app_label=Result._meta.app_label,
-        result_model_name=Result._meta.model_name,
+    # This will create a job, and we'll wait for it to be executed
+    submission = SubmissionFactory(
+        file__from_path=submission_file, challenge=method.challenge
     )
 
-    # The evaluation method should return the correct answer
-    assert res["acc"] == 0.5
     # The evaluation method should clean up after itself
     assert len(dockerclient.volumes.list()) == num_volumes_before
     assert len(dockerclient.containers.list()) == num_containers_before
 
+    # The evaluation method should return the correct answer
+    assert len(submission.job_set.all()) == 1
+    assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
+
     # Try with a csv file
     submission = SubmissionFactory(
         file__from_path=Path(__file__).parent / 'resources' / 'submission.csv',
-        creator=user,
+        challenge=method.challenge,
     )
 
-    job = JobFactory(submission=submission, method=method)
-
-    res = evaluate_submission(
-        job_pk=job.pk,
-        job_app_label=job._meta.app_label,
-        job_model_name=job._meta.model_name,
-        result_app_label=Result._meta.app_label,
-        result_model_name=Result._meta.model_name,
-    )
-
-    assert res["acc"] == 0.5
+    assert len(submission.job_set.all()) == 1
+    assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
 
 
 @pytest.mark.django_db

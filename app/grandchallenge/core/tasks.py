@@ -6,6 +6,9 @@ from celery import shared_task
 from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.db import OperationalError
+
+from grandchallenge.evaluation.models import Job
 
 
 @shared_task
@@ -46,3 +49,62 @@ def validate_docker_image_async(
     model.objects.filter(pk=pk).update(
         image_sha256=f"sha256:{manifest[0]['Config'][:64]}", ready=True
     )
+
+
+def retry_if_dropped(func):
+    """
+    Sometimes the Mysql connection will drop for long running jobs. This is
+    a decorator that will retry a function that relies on a usable connection.
+    """
+
+    def wrapper(*args, **kwargs):
+        n_tries = 0
+        max_tries = 2
+        err = None
+
+        while n_tries < max_tries:
+            n_tries += 1
+
+            try:
+                return func(*args, **kwargs)
+            except OperationalError as e:
+                err = e
+
+                # This needs to be a local import
+                from django.db import connection
+                connection.close()
+
+        raise err
+
+    return wrapper
+
+
+@retry_if_dropped
+def get_model_instance(*, pk, app_label, model_name):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    return model.objects.get(pk=pk)
+
+
+@retry_if_dropped
+def create_result(
+        *,
+        job_pk,
+        job_app_label,
+        job_model_name,
+        result_app_label,
+        result_model_name,
+        **kwargs,
+):
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+
+    result_model = apps.get_model(
+        app_label=result_app_label, model_name=result_model_name
+    )
+
+    result_model.objects.create(
+        job=job, challenge=job.challenge, **kwargs
+    )
+
+    job.update_status(status=Job.SUCCESS)
