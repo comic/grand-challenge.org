@@ -5,13 +5,13 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
+from grandchallenge.core.tasks import execute_job
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
     Submission, Job, Method, Result, Config,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
-from grandchallenge.core.tasks import execute_job
 
 
 @receiver(post_save, sender=Submission)
@@ -43,9 +43,6 @@ def schedule_job(instance: Job = None, created: bool = False, *_, **__):
                 'job_pk': instance.pk,
                 'job_app_label': instance._meta.app_label,
                 'job_model_name': instance._meta.model_name,
-                'result_app_label': Result._meta.app_label,
-                'result_model_name': Result._meta.model_name,
-                'result_object_output_kwarg': 'metrics',
             }
         )
 

@@ -290,62 +290,6 @@ class SubmissionEvaluator(Evaluator):
                 writer.exec_run(f'mv {dest_file} /input/submission.csv')
 
 
-class Job(UUIDModel, CeleryJobModel):
-    """
-    Stores information about a job for a given upload
-    """
-
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
-    submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
-    method = models.ForeignKey('Method', on_delete=models.CASCADE)
-
-    @property
-    def container(self):
-        return self.method
-
-    @property
-    def input_files(self):
-        return [self.submission.file, ]
-
-    @property
-    def evaluator_cls(self):
-        return SubmissionEvaluator
-
-    def clean(self):
-        if self.submission.challenge != self.method.challenge:
-            raise ValidationError(
-                "The submission and method challenges should"
-                "be the same. You are trying to evaluate a"
-                f"submission for {self.submission.challenge}"
-                f"with a method for {self.method.challenge}"
-            )
-
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        self.challenge = self.submission.challenge
-        super().save(*args, **kwargs)
-
-    def update_status(self, *args, **kwargs):
-        res = super().update_status(*args, **kwargs)
-
-        if self.status == self.FAILURE:
-            send_failed_job_email(self)
-
-        return res
-
-    def get_absolute_url(self):
-        return reverse(
-            'evaluation:job-detail',
-            kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
-            },
-        )
-
-
 class Result(UUIDModel):
     """
     Stores individual results for a challenges
@@ -378,6 +322,67 @@ class Result(UUIDModel):
     def get_absolute_url(self):
         return reverse(
             'evaluation:result-detail',
+            kwargs={
+                'pk': self.pk,
+                'challenge_short_name': self.challenge.short_name,
+            },
+        )
+
+
+class Job(UUIDModel, CeleryJobModel):
+    """
+    Stores information about a job for a given upload
+    """
+
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE
+    )
+    submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
+    method = models.ForeignKey('Method', on_delete=models.CASCADE)
+
+    @property
+    def container(self):
+        return self.method
+
+    @property
+    def input_files(self):
+        return [self.submission.file, ]
+
+    @property
+    def evaluator_cls(self):
+        return SubmissionEvaluator
+
+    def create_result(self, *, result):
+        Result.objects.create(
+            job=self, challenge=self.challenge, metrics=result
+        )
+
+    def clean(self):
+        if self.submission.challenge != self.method.challenge:
+            raise ValidationError(
+                "The submission and method challenges should"
+                "be the same. You are trying to evaluate a"
+                f"submission for {self.submission.challenge}"
+                f"with a method for {self.method.challenge}"
+            )
+
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.challenge = self.submission.challenge
+        super().save(*args, **kwargs)
+
+    def update_status(self, *args, **kwargs):
+        res = super().update_status(*args, **kwargs)
+
+        if self.status == self.FAILURE:
+            send_failed_job_email(self)
+
+        return res
+
+    def get_absolute_url(self):
+        return reverse(
+            'evaluation:job-detail',
             kwargs={
                 'pk': self.pk,
                 'challenge_short_name': self.challenge.short_name,

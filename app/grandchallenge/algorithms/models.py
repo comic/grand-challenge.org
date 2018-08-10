@@ -29,6 +29,14 @@ class AlgorithmExecutor(Evaluator):
         )
 
 
+class Result(UUIDModel):
+    job = models.OneToOneField('Job', null=True, on_delete=models.CASCADE)
+    output = JSONField(default=dict)
+
+    def get_absolute_url(self):
+        return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
+
+
 class Job(UUIDModel, CeleryJobModel):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     case = models.ForeignKey("cases.Case", on_delete=models.CASCADE)
@@ -45,13 +53,8 @@ class Job(UUIDModel, CeleryJobModel):
     def evaluator_cls(self):
         return AlgorithmExecutor
 
+    def create_result(self, *, result: dict):
+        Result.objects.create(job=self, output=result)
+
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
-
-
-class Result(UUIDModel):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    output = JSONField(default=dict)
-
-    def get_absolute_url(self):
-        return reverse("algorithms:results-detail", kwargs={"pk": self.pk})

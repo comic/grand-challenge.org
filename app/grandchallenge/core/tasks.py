@@ -7,10 +7,8 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import OperationalError
-from django.utils.module_loading import import_string
 
 from grandchallenge.evaluation.exceptions import EvaluationException
-from grandchallenge.evaluation.models import Job
 
 
 @shared_task
@@ -87,40 +85,9 @@ def get_model_instance(*, pk, app_label, model_name):
     return model.objects.get(pk=pk)
 
 
-@retry_if_dropped
-def create_result(
-        *,
-        job_pk,
-        job_app_label,
-        job_model_name,
-        result_app_label,
-        result_model_name,
-        **kwargs,
-):
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
-
-    result_model = apps.get_model(
-        app_label=result_app_label, model_name=result_model_name
-    )
-
-    result_model.objects.create(
-        job=job, challenge=job.challenge, **kwargs
-    )
-
-    job.update_status(status=Job.SUCCESS)
-
-
 @shared_task
 def execute_job(
-        *,
-        job_pk: uuid.UUID,
-        job_app_label: str,
-        job_model_name: str,
-        result_app_label: str,
-        result_model_name: str,
-        result_object_output_kwarg: str,
+        *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str,
 ) -> dict:
     """
     Interfaces between Django and the Evaluation. Gathers together all
@@ -136,11 +103,11 @@ def execute_job(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-    job.update_status(status=Job.STARTED)
+    job.update_status(status=job.STARTED)
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used."
-        job.update_status(status=Job.FAILURE, output=msg, )
+        job.update_status(status=job.FAILURE, output=msg, )
         raise AttributeError(msg)
 
     try:
@@ -156,16 +123,13 @@ def execute_job(
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=Job.FAILURE, output=exc.message)
+        job.update_status(status=job.FAILURE, output=exc.message)
         raise
 
-    create_result(
-        job_pk=job_pk,
-        job_app_label=job_app_label,
-        job_model_name=job_model_name,
-        result_app_label=result_app_label,
-        result_model_name=result_model_name,
-        **{result_object_output_kwarg: result},
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
+    job.create_result(result=result)
+    job.update_status(status=job.SUCCESS)
 
     return result

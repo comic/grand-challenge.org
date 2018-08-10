@@ -85,6 +85,13 @@ class CeleryJobModel(models.Model):
         """
         raise NotImplementedError
 
+    def create_result(self, *, result: dict):
+        """
+        This is called at the end of an evaluation run, the result object for
+        this job must be created by this function.
+        """
+        raise NotImplementedError
+
     class Meta:
         abstract = True
 
