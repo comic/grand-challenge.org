@@ -2,8 +2,8 @@
 from pathlib import Path
 
 from ckeditor.fields import RichTextField
+from django.contrib.postgres.fields import JSONField
 from django.db import models
-from social_django.fields import JSONField
 
 from grandchallenge.core.models import (
     UUIDModel, CeleryJobModel, DockerImageModel
