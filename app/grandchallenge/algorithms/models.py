@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
 from ckeditor.fields import RichTextField
 from django.db import models
 from social_django.fields import JSONField
@@ -7,6 +9,8 @@ from grandchallenge.core.models import (
     UUIDModel, CeleryJobModel, DockerImageModel
 )
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.evaluation.backends.dockermachine.evaluator import \
+    Evaluator
 
 
 class Algorithm(UUIDModel, DockerImageModel):
@@ -14,6 +18,15 @@ class Algorithm(UUIDModel, DockerImageModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"pk": self.pk})
+
+
+class AlgorithmExecutor(Evaluator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            results_file=Path("/output/results.json"),
+            **kwargs
+        )
 
 
 class Job(UUIDModel, CeleryJobModel):
@@ -27,6 +40,10 @@ class Job(UUIDModel, CeleryJobModel):
     @property
     def input_files(self):
         return [c.file for c in self.case.casefile_set.all()]
+
+    @property
+    def evaluator_cls(self):
+        return AlgorithmExecutor
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})

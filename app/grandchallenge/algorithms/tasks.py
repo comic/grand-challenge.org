@@ -1,21 +1,9 @@
 # -*- coding: utf-8 -*-
 import uuid
-from pathlib import Path
 
 from celery import shared_task
 
-from grandchallenge.algorithms.models import Job, Result
-from grandchallenge.evaluation.backends.dockermachine.evaluator import \
-    Evaluator
-
-
-class AlgorithmExecutor(Evaluator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            results_file=Path("/output/results.json"),
-            **kwargs
-        )
+from grandchallenge.algorithms.models import Job, Result, AlgorithmExecutor
 
 
 @shared_task

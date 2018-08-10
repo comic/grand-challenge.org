@@ -1,11 +1,13 @@
 import uuid
-from typing import Tuple
+from typing import Tuple, Type
 
 from django.conf import settings
 from django.core.files import File
 from django.db import models
 from social_django.fields import JSONField
 
+from grandchallenge.evaluation.backends.dockermachine.evaluator import \
+    Evaluator
 from grandchallenge.evaluation.validators import ExtensionValidator
 
 
@@ -72,6 +74,14 @@ class CeleryJobModel(models.Model):
         """
         Returns a tuple of the input files that will be mounted into the
         container when it is executed
+        """
+        raise NotImplementedError
+
+    @property
+    def evaluator_cls(self) -> Type[Evaluator]:
+        """
+        Returns the evaluator class for this job, which must be a subclass of
+        Evaluator
         """
         raise NotImplementedError
 

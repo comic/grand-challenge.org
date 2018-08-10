@@ -121,7 +121,6 @@ def execute_job(
         result_app_label: str,
         result_model_name: str,
         result_object_output_kwarg: str,
-        evaluation_class: str,
 ) -> dict:
     """
     Interfaces between Django and the Evaluation. Gathers together all
@@ -145,15 +144,7 @@ def execute_job(
         raise AttributeError(msg)
 
     try:
-        Evaluator = import_string(evaluation_class)
-    except ImportError:
-        job.update_status(
-            status=Job.FAILURE, output=f"Could not import {evaluation_class}.",
-        )
-        raise
-
-    try:
-        with Evaluator(
+        with job.evaluator_cls(
                 job_id=job.pk,
                 input_files=job.input_files,
                 eval_image=job.container.image,

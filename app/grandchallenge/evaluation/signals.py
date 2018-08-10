@@ -46,7 +46,6 @@ def schedule_job(instance: Job = None, created: bool = False, *_, **__):
                 'result_app_label': Result._meta.app_label,
                 'result_model_name': Result._meta.model_name,
                 'result_object_output_kwarg': 'metrics',
-                'evaluation_class': 'grandchallenge.evaluation.tasks.SubmissionEvaluator',
             }
         )
 
