@@ -5,7 +5,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
-from grandchallenge.core.tasks import execute_job
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
@@ -30,21 +29,6 @@ def create_evaluation_job(
             pass
         else:
             Job.objects.create(submission=instance, method=method)
-
-
-@receiver(post_save, sender=Job)
-@disable_for_loaddata
-def schedule_job(instance: Job = None, created: bool = False, *_, **__):
-    if created:
-        # TODO: Create Timeout tests
-        return execute_job.apply_async(
-            task_id=str(instance.pk),
-            kwargs={
-                'job_pk': instance.pk,
-                'job_app_label': instance._meta.app_label,
-                'job_model_name': instance._meta.model_name,
-            }
-        )
 
 
 @receiver(post_save, sender=Config)

@@ -6,6 +6,7 @@ from django.core.files import File
 from django.db import models
 from social_django.fields import JSONField
 
+from grandchallenge.core.tasks import execute_job
 from grandchallenge.evaluation.backends.dockermachine.evaluator import \
     Evaluator
 from grandchallenge.evaluation.validators import ExtensionValidator
@@ -91,6 +92,16 @@ class CeleryJobModel(models.Model):
         this job must be created by this function.
         """
         raise NotImplementedError
+
+    def schedule_job(self):
+        execute_job.apply_async(
+            task_id=str(self.pk),
+            kwargs={
+                'job_pk': self.pk,
+                'job_app_label': self._meta.app_label,
+                'job_model_name': self._meta.model_name,
+            }
+        )
 
     class Meta:
         abstract = True
