@@ -421,7 +421,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    'grandchallenge.evaluation.tasks.evaluate_submission': 'evaluation',
+    'grandchallenge.core.tasks.execute_job': 'evaluation',
 }
 
 # Set which template pack to use for forms
