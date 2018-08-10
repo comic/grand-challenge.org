@@ -56,6 +56,15 @@ class CeleryJobModel(models.Model):
 
         self.save()
 
+    @property
+    def container(self) -> 'DockerImageModel':
+        """
+        Returns the container object associated with this instance, which
+        should be a foreign key to an object that is a subclass of
+        DockerImageModel
+        """
+        raise NotImplementedError
+
     class Meta:
         abstract = True
 

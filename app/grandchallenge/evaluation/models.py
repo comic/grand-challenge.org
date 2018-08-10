@@ -266,6 +266,10 @@ class Job(UUIDModel, CeleryJobModel):
     submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
     method = models.ForeignKey('Method', on_delete=models.CASCADE)
 
+    @property
+    def container(self):
+        return self.method
+
     def clean(self):
         if self.submission.challenge != self.method.challenge:
             raise ValidationError(
@@ -286,7 +290,7 @@ class Job(UUIDModel, CeleryJobModel):
 
         if self.status == self.FAILURE:
             send_failed_job_email(self)
-            
+
         return res
 
     def get_absolute_url(self):

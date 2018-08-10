@@ -20,6 +20,10 @@ class Job(UUIDModel, CeleryJobModel):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     case = models.ForeignKey("cases.Case", on_delete=models.CASCADE)
 
+    @property
+    def container(self):
+        return self.algorithm
+
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
 

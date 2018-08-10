@@ -139,8 +139,8 @@ def execute_job(
     )
     job.update_status(status=Job.STARTED)
 
-    if not job.method.ready:
-        msg = f"Method {job.method.id} was not ready to be used."
+    if not job.container.ready:
+        msg = f"Method {job.container.pk} was not ready to be used."
         job.update_status(status=Job.FAILURE, output=msg, )
         raise AttributeError(msg)
 
@@ -156,8 +156,8 @@ def execute_job(
         with Evaluator(
                 job_id=job.pk,
                 input_files=(job.submission.file,),
-                eval_image=job.method.image,
-                eval_image_sha256=job.method.image_sha256,
+                eval_image=job.container.image,
+                eval_image_sha256=job.container.image_sha256,
         ) as e:
             result = e.evaluate()  # This call is potentially very long
 
