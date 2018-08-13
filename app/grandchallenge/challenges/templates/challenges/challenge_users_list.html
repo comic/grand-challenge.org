@@ -43,12 +43,15 @@
                     {% endfor %}
                 </td>
                 <td>{{ challenge.description }}</td>
-                <td>
-                    {% if challenge.use_evaluation and challenge.method_set.all %}
-                        <i class="fas fa-check text-success" title="Challenge is using automated evaluation"></i>
-                    {% else %}
-                        <i class="fas fa-times text-danger" title="Challenge is not using automated evaluation"></i>
-                    {% endif %}
+                {% if challenge.use_evaluation and challenge.method_set.all %}
+                    <td data-order="true">
+                        <i class="fas fa-check text-success"
+                           title="Challenge is using automated evaluation"></i>
+                        {% else %}
+                    <td data-order="false">
+                    <i class="fas fa-times text-danger"
+                       title="Challenge is not using automated evaluation"></i>
+                {% endif %}
                 </td>
             </tr>
         {% endfor %}
