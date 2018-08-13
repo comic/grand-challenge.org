@@ -47,6 +47,7 @@
                     <td data-order="true">
                         <i class="fas fa-check text-success"
                            title="Challenge is using automated evaluation"></i>
+                        Submissions: {{ challenge.submission_set.all|length }}
                         {% else %}
                     <td data-order="false">
                     <i class="fas fa-times text-danger"
