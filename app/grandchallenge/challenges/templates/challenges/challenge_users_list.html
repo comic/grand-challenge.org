@@ -18,6 +18,7 @@
             <th>Created</th>
             <th>Admins</th>
             <th>Description</th>
+            <th>Automated Evaluation</th>
         </tr>
         </thead>
         <tbody>
@@ -42,6 +43,13 @@
                     {% endfor %}
                 </td>
                 <td>{{ challenge.description }}</td>
+                <td>
+                    {% if challenge.use_evaluation and challenge.method_set.all %}
+                        <i class="fas fa-check text-success" title="Challenge is using automated evaluation"></i>
+                    {% else %}
+                        <i class="fas fa-times text-danger" title="Challenge is not using automated evaluation"></i>
+                    {% endif %}
+                </td>
             </tr>
         {% endfor %}
 
