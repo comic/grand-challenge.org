@@ -25,7 +25,7 @@ install:
   - docker-compose up --build -d
 
 script:
-  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web dockerize -wait tcp://postgres:5432 -timeout 30s bash -c "python manage.py collectstatic --noinput && COVERAGE_FILE=/tmp/coverage/.coverage py.test --cov-report= --cov=."
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web dockerize -wait tcp://postgres:5432 -timeout 30s bash -c "[ -e /static ] || rm -rf /static && python manage.py collectstatic --noinput && COVERAGE_FILE=/tmp/coverage/.coverage py.test --cov-report= --cov=."
 
 after_success:
   - mv /tmp/coverage/.coverage .coverage.docker

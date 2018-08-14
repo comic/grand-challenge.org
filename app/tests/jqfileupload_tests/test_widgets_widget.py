@@ -1,7 +1,4 @@
 import json
-import os
-import random
-import time
 import uuid
 from datetime import timedelta
 
@@ -12,81 +9,12 @@ from django.http.response import (
 )
 from django.test.client import RequestFactory
 
+from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets.uploader import (
     AjaxUploadWidget, StagedAjaxFile, UploadedAjaxFileList
 )
-
-
-def load_test_data():
-    with open(
-        os.path.join(os.path.dirname(__file__), "testdata", "rnddata"), 'rb'
-    ) as f:
-        return f.read()
-
-
-def generate_new_upload_id(sender, content):
-    return f"{id(sender)}_{hash(content)}_{time.time()}_{random.random()}"
-
-
-def create_upload_file_request(
-    rf: RequestFactory,
-    filename: str = "test.bin",
-    boundary: str = "RandomBoundaryFTWBlablablablalba8923475278934578",
-    content: bytes = None,
-    csrf_token: str = "tests_csrf_token",
-    extra_fields: dict ={},
-    extra_headers: dict ={},
-):
-    if content is None:
-        content = load_test_data()
-    ##### Basic request #####
-    data = f"""
---{boundary}\r
-Content-Disposition: form-data; name="files[]"; filename="{filename}"\r
-Content-Type: application/octet-stream\r
-\r
-""".lstrip().encode() + content + f"""\r
---{boundary}--""".encode()
-    ##### Add additional fields #####
-    for key, value in extra_fields.items():
-        extra_field_data = f"""
---{boundary}\r
-Content-Disposition: form-data; name="{key}"\r
-\r
-{value}\r
-""".lstrip().encode()
-        data = extra_field_data + data
-    headers = {"X-CSRFToken": csrf_token}
-    for key, value in extra_headers.items():
-        headers[key] = value
-    post_request = rf.post(
-        "/ajax",
-        data=data,
-        content_type=f"multipart/form-data; boundary={boundary}",
-        **headers,
-    )
-    post_request.META["CSRF_COOKIE"] = csrf_token
-    return post_request
-
-
-def create_partial_upload_file_request(
-    rf: RequestFactory,
-    upload_identifer: str,
-    content: bytes,
-    start_byte: int,
-    end_byte: int,
-    filename: str = "test.bin",
-):
-    content_range = f"bytes {start_byte}-{end_byte-1}/{len(content)}"
-    post_request = create_upload_file_request(
-        rf,
-        filename=filename,
-        content=content[start_byte:end_byte],
-        extra_headers={"Content-Range": content_range},
-        extra_fields={"X-Upload-ID": upload_identifer},
-    )
-    post_request.META["HTTP_CONTENT_RANGE"] = content_range
-    return post_request
+from tests.jqfileupload_tests.utils import create_upload_file_request, \
+    load_test_data, generate_new_upload_id, create_partial_upload_file_request
 
 
 def force_post_update(request, key: str, value: object):
@@ -265,7 +193,10 @@ def test_render():
 
 def test_form_field_to_python():
     form_field = UploadedAjaxFileList()
-    uuid_string = "4dec34db-930f-48be-bb65-d7f8319ff654," + "5d901b2c-7cd1-416e-9952-d30b6a0edcba," + "4a3c5731-0050-4489-8364-282278f7190f"
+    uuid_string = ",".join((
+        "4dec34db-930f-48be-bb65-d7f8319ff654",
+        "5d901b2c-7cd1-416e-9952-d30b6a0edcba",
+        "4a3c5731-0050-4489-8364-282278f7190f"))
     staged_files = form_field.to_python(uuid_string)
     assert ",".join(str(sf.uuid) for sf in staged_files) == uuid_string
     with pytest.raises(ValidationError):
@@ -278,3 +209,37 @@ def test_form_field_to_python():
 def test_form_field_prepare_value_not_implemented():
     form_field = UploadedAjaxFileList()
     assert form_field.prepare_value("") is None
+
+
+@pytest.mark.django_db
+def test_upload_validator_using_wrong_extension(rf: RequestFactory):
+    widget = AjaxUploadWidget(
+        ajax_target_path="/ajax",
+        upload_validators=[
+            ExtensionValidator(
+                allowed_extensions=(
+                    '.allowed-extension',
+                )
+            )
+        ],
+    )
+    widget.timeout = timedelta(seconds=1)
+    content = load_test_data()
+
+    upload_id = generate_new_upload_id(
+        test_upload_validator_using_wrong_extension, content
+    )
+
+    request = create_upload_file_request(
+        rf,
+        content=b"should error",
+        filename="test.wrong_extension")
+    response = widget.handle_ajax(request)
+    assert response.status_code == 403
+
+    request = create_upload_file_request(
+        rf,
+        content=b"should error",
+        filename="test.allowed-extension")
+    response = widget.handle_ajax(request)
+    assert response.status_code == 200

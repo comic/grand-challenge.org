@@ -1,4 +1,4 @@
-import uuid
+from pathlib import Path
 
 from ckeditor.fields import RichTextField
 from django.conf import settings
@@ -8,24 +8,18 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.emails import send_failed_job_email
-from grandchallenge.evaluation.validators import (
-    MimeTypeValidator, ExtensionValidator,
+from grandchallenge.container_exec.backends.docker import Executor, put_file
+from grandchallenge.container_exec.models import (
+    ContainerExecJobModel, ContainerImageModel
 )
-
-
-class UUIDModel(models.Model):
-    """
-    Abstract class that consists of a UUID primary key, created and modified
-    times
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.validators import (
+    MimeTypeValidator,
+    ExtensionValidator,
+    get_file_mimetype,
+)
+from grandchallenge.evaluation.emails import send_failed_job_email
 
 
 class Config(UUIDModel):
@@ -171,6 +165,7 @@ class Config(UUIDModel):
 
 
 def method_image_path(instance, filename):
+    """ Deprecated: only used in a migration """
     return (
         f'evaluation/'
         f'{instance.challenge.pk}/'
@@ -180,36 +175,13 @@ def method_image_path(instance, filename):
     )
 
 
-class Method(UUIDModel):
+class Method(UUIDModel, ContainerImageModel):
     """
     Stores the methods for performing an evaluation
     """
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE
     )
-    # Validation for methods needs to be done asynchronously
-    ready = models.BooleanField(
-        default=False,
-        editable=False,
-        help_text="Is this method ready to be used?",
-    )
-    status = models.TextField(editable=False)
-    image = models.FileField(
-        upload_to=method_image_path,
-        validators=[ExtensionValidator(allowed_extensions=('.tar',))],
-        help_text=(
-            'Tar archive of the container image produced from the command '
-            '`docker save IMAGE > IMAGE.tar`. See '
-            'https://docs.docker.com/engine/reference/commandline/save/'
-        ),
-    )
-    image_sha256 = models.CharField(editable=False, max_length=71)
-
-    def save(self, *args, **kwargs):
-        super(Method, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(
@@ -289,71 +261,32 @@ class Submission(UUIDModel):
         )
 
 
-class Job(UUIDModel):
-    """
-    Stores information about a job for a given upload
-    """
-    # The job statuses come directly from celery.result.AsyncResult.status:
-    # http://docs.celeryproject.org/en/latest/reference/celery.result.html
-    PENDING = 0
-    STARTED = 1
-    RETRY = 2
-    FAILURE = 3
-    SUCCESS = 4
-    CANCELLED = 5
-    STATUS_CHOICES = (
-        (PENDING, 'The task is waiting for execution'),
-        (STARTED, 'The task has been started'),
-        (RETRY, 'The task is to be retried, possibly because of failure'),
-        (
-            FAILURE,
-            'The task raised an exception, or has exceeded the retry limit',
-        ),
-        (SUCCESS, 'The task executed successfully'),
-        (CANCELLED, 'The task was cancelled'),
-    )
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
-    submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
-    method = models.ForeignKey('Method', on_delete=models.CASCADE)
-    status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=PENDING
-    )
-    status_history = JSONField(default=dict)
-    output = models.TextField()
+class SubmissionEvaluator(Executor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            results_file=Path("/output/metrics.json"),
+            **kwargs,
+        )
 
-    def clean(self):
-        if self.submission.challenge != self.method.challenge:
-            raise ValidationError(
-                "The submission and method challenges should"
-                "be the same. You are trying to evaluate a"
-                f"submission for {self.submission.challenge}"
-                f"with a method for {self.method.challenge}"
+    def _copy_input_files(self, writer):
+        for file in self._input_files:
+            dest_file = '/tmp/submission-src'
+            put_file(
+                container=writer, src=file, dest=dest_file
             )
 
-        super(Job, self).clean()
+            with file.open('rb') as f:
+                mimetype = get_file_mimetype(f)
 
-    def save(self, *args, **kwargs):
-        self.challenge = self.submission.challenge
-        super(Job, self).save(*args, **kwargs)
-
-    def update_status(self, *, status: STATUS_CHOICES, output: str = None):
-        self.status = status
-        if output:
-            self.output = output
-        self.save()
-        if self.status == self.FAILURE:
-            send_failed_job_email(self)
-
-    def get_absolute_url(self):
-        return reverse(
-            'evaluation:job-detail',
-            kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
-            },
-        )
+            if mimetype.lower() == 'application/zip':
+                # Unzip the file in the container rather than in the python
+                # process. With resource limits this should provide some
+                # protection against zip bombs etc.
+                writer.exec_run(f'unzip {dest_file} -d /input/')
+            else:
+                # Not a zip file, so must be a csv
+                writer.exec_run(f'mv {dest_file} /input/submission.csv')
 
 
 class Result(UUIDModel):
@@ -377,7 +310,6 @@ class Result(UUIDModel):
     absolute_url = models.TextField(blank=True, editable=False)
 
     def save(self, *args, **kwargs):
-
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
             self.public = (
@@ -389,6 +321,67 @@ class Result(UUIDModel):
     def get_absolute_url(self):
         return reverse(
             'evaluation:result-detail',
+            kwargs={
+                'pk': self.pk,
+                'challenge_short_name': self.challenge.short_name,
+            },
+        )
+
+
+class Job(UUIDModel, ContainerExecJobModel):
+    """
+    Stores information about a job for a given upload
+    """
+
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE
+    )
+    submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
+    method = models.ForeignKey('Method', on_delete=models.CASCADE)
+
+    @property
+    def container(self):
+        return self.method
+
+    @property
+    def input_files(self):
+        return [self.submission.file, ]
+
+    @property
+    def executor_cls(self):
+        return SubmissionEvaluator
+
+    def create_result(self, *, result):
+        Result.objects.create(
+            job=self, challenge=self.challenge, metrics=result
+        )
+
+    def clean(self):
+        if self.submission.challenge != self.method.challenge:
+            raise ValidationError(
+                "The submission and method challenges should"
+                "be the same. You are trying to evaluate a"
+                f"submission for {self.submission.challenge}"
+                f"with a method for {self.method.challenge}"
+            )
+
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.challenge = self.submission.challenge
+        super().save(*args, **kwargs)
+
+    def update_status(self, *args, **kwargs):
+        res = super().update_status(*args, **kwargs)
+
+        if self.status == self.FAILURE:
+            send_failed_job_email(self)
+
+        return res
+
+    def get_absolute_url(self):
+        return reverse(
+            'evaluation:job-detail',
             kwargs={
                 'pk': self.pk,
                 'challenge_short_name': self.challenge.short_name,

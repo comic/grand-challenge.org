@@ -1,6 +1,9 @@
 import os
 import re
 import uuid
+import json
+import hashlib
+
 from collections import Iterable
 from datetime import timedelta
 from io import BufferedIOBase
@@ -10,6 +13,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
+from django.http import HttpResponse
 from django.http.request import HttpRequest
 from django.http.response import (
     HttpResponseBadRequest, JsonResponse, HttpResponseForbidden,
@@ -19,6 +23,12 @@ from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.utils import IntervalMap
+
+
+def generate_upload_path_hash(request: HttpRequest) -> str:
+    hasher = hashlib.sha256()
+    hasher.update(request.get_full_path().encode())
+    return hasher.hexdigest()
 
 
 def cleanup_stale_files():
@@ -41,7 +51,7 @@ def cleanup_stale_files():
         chunk.delete()
 
 
-class NotFoundError(Exception):
+class NotFoundError(FileNotFoundError):
     pass
 
 
@@ -86,15 +96,22 @@ class AjaxUploadWidget(Widget):
         js = ('jqfileupload/js/upload_widget.js',)
 
     def __init__(
-        self, *args, ajax_target_path: str = None, multifile=True, **kwargs
-    ):
+            self,
+            *args,
+            ajax_target_path: str = None,
+            multifile=True,
+            auto_commit=True,
+            upload_validators=(),
+            **kwargs):
         super(AjaxUploadWidget, self).__init__(*args, **kwargs)
         if ajax_target_path is None:
             raise ValueError("AJAX target path required")
 
         self.ajax_target_path = ajax_target_path
         self.timeout = timedelta(hours=2)
-        self.__multifile = multifile
+        self.__multifile = bool(multifile)
+        self.__auto_commit = bool(auto_commit)
+        self.__upload_validators = tuple(upload_validators)
 
     def _handle_complete(
         self,
@@ -112,6 +129,7 @@ class AjaxUploadWidget(Widget):
             start_byte=0,
             end_byte=uploaded_file.size - 1,
             total_size=uploaded_file.size,
+            upload_path_sha256=generate_upload_path_hash(request),
         )
         return {
             "filename": new_staged_file.client_filename,
@@ -120,11 +138,10 @@ class AjaxUploadWidget(Widget):
         }
 
     def _handle_chunked(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
+            self,
+            request: HttpRequest,
+            csrf_token: str,
+            uploaded_file: UploadedFile) -> dict:
         # Only content ranges of the form
         #
         #   bytes-unit SP byte-range-resp
@@ -174,7 +191,9 @@ class AjaxUploadWidget(Widget):
 
         # Verify consistency and generate file ids
         other_chunks = StagedFile.objects.filter(
-            csrf=csrf_token, client_id=client_id
+            csrf=csrf_token,
+            client_id=client_id,
+            upload_path_sha256=generate_upload_path_hash(request),
         ).all()
         if len(other_chunks) == 0:
             file_id = uuid.uuid4()
@@ -213,6 +232,7 @@ class AjaxUploadWidget(Widget):
             start_byte=start_byte,
             end_byte=end_byte,
             total_size=total_size,
+            upload_path_sha256=generate_upload_path_hash(request),
         )
         return {
             "filename": new_staged_file.client_filename,
@@ -220,13 +240,16 @@ class AjaxUploadWidget(Widget):
             "extra_attrs": {},
         }
 
-    def handle_ajax(self, request: HttpRequest, **kwargs):
+    def handle_ajax(self, request: HttpRequest, **kwargs) -> HttpResponse:
         if request.method != "POST":
             return HttpResponseBadRequest()
 
         csrf_token = request.META.get('CSRF_COOKIE', None)
         if not csrf_token:
-            return HttpResponseForbidden("CSRF token is missing")
+            return HttpResponseForbidden(
+                "CSRF token is missing",
+                content_type="text/plain"
+            )
 
         if "HTTP_CONTENT_RANGE" in request.META:
             handler = self._handle_chunked
@@ -234,6 +257,16 @@ class AjaxUploadWidget(Widget):
             handler = self._handle_complete
         result = []
         try:
+            for uploaded_file in request.FILES.values():
+                try:
+                    self.__validate_uploaded_file(request, uploaded_file)
+                except ValidationError as e:
+                    print(e, type(e))
+                    return HttpResponseForbidden(
+                        json.dumps(list(e.messages)),
+                        content_type="application/json",
+                    )
+
             for uploaded_file in request.FILES.values():
                 result.append(handler(request, csrf_token, uploaded_file))
         except InvalidRequestException as e:
@@ -258,8 +291,18 @@ class AjaxUploadWidget(Widget):
             "name": name,
             "attrs": attrs,
             "multi_upload": "true" if self.__multifile else "false",
+            "auto_commit": "true" if self.__auto_commit else "false",
         }
         return template.render(context=context)
+
+    def __validate_uploaded_file(self, request, uploaded_file):
+        for validator in self.__upload_validators:
+            kwargs = {}
+            if hasattr(validator, "_filter_marker_requires_request_object"):
+                # noinspection PyProtectedMember
+                if validator._filter_marker_requires_request_object:
+                    kwargs["request"] = request
+            validator(uploaded_file, **kwargs)
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):
@@ -269,9 +312,6 @@ class OpenedStagedAjaxFile(BufferedIOBase):
     reconstructs the contingent file from the file chunks that have been
     uploaded.
     """
-
-    # TODO: This really should be an instance of BufferedIOBase and follow the
-    # specifications there.
     def __init__(self, _uuid):
         super(OpenedStagedAjaxFile, self).__init__()
         self.__uuid = _uuid
@@ -419,7 +459,7 @@ class StagedAjaxFile:
 
     @property
     def name(self):
-        """ Returns the name specified by the clinet for the uploaded file
+        """ Returns the name specified by the client for the uploaded file
         (might be unsafe!) """
         chunks_query = self._raise_if_missing()
         return chunks_query.first().client_filename

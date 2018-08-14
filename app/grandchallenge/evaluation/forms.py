@@ -3,7 +3,7 @@ from crispy_forms.layout import Submit
 from django import forms
 
 from grandchallenge.evaluation.models import Method, Submission, Config
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 

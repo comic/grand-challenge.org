@@ -22,9 +22,22 @@ function upload_fold_unfold(element) {
         var dropzone = upload_element;
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
+        var total_expected_files = 0;
+
         var is_multiupload = upload_element.attr("multi_upload") === "true";
+        var is_autocommit = upload_element.attr("auto_commit") === "true";
 
         var target_url = upload_element.attr("upload_target");
+
+        var client_upload_session_key = generate_labeled_id("client_upload_session");
+        target_url = target_url + "?client_session=" + client_upload_session_key;
+
+        function generate_labeled_id(label) {
+            var rnd = "" + Math.floor(Math.random() * 1000000);
+            var date = (new Date).toISOString();
+            var filename = label.slice(0, 32);
+            return filename + '_' + rnd + '_' + date;
+        }
 
         upload_element.fileupload(
             {
@@ -63,11 +76,9 @@ function upload_fold_unfold(element) {
             show_drop_overlay();
         });
         drop_here_floater.on('dragleave', function (e) {
-            console.log("dragleave");
             hide_drop_overlay();
         });
         drop_here_floater.on('dragexit', function (e) {
-            console.log("dragexit");
             hide_drop_overlay();
         });
         drop_here_floater.on('drop', function (e) {
@@ -114,7 +125,9 @@ function upload_fold_unfold(element) {
             }
             update_hidden_form_element();
 
-            if (!is_multiupload) {
+            if (is_autocommit &&
+                    (succeeded_uploads_list.length === total_expected_files)) {
+                total_expected_files = 0; // In case we submit does not work
                 upload_element.closest('form').submit();
             }
         }
@@ -131,23 +144,20 @@ function upload_fold_unfold(element) {
             console.log("uuid_list_string = " + uuid_list_string);
         }
 
-        function generate_unique_file_handle_id(file) {
-            var rnd = "" + Math.floor(Math.random() * 1000000);
-            var date = (new Date).toISOString();
-            var filename = file.name.slice(0, 32);
-            return filename + '_' + rnd + '_' + date;
-        }
-
         var fileinput_button = upload_element.find("span.fileinput-button");
         var progress_div = upload_element.find("div.progress");
 
-        upload_element.on('fileuploadsubmit', function (e, data) {
+        upload_element.on('fileuploadadd', function (e, data) {
             if (!is_multiupload) {
-                fileinput_button.css("display","none");
-                progress_div.css("display", "block");
+                fileinput_button.css("display", "none");
             }
+            progress_div.css("display", "block");
+            total_expected_files += data.files.length;
+        });
+
+        upload_element.on('fileuploadsubmit', function (e, data) {
             data.formData = {
-                "X-Upload-ID": generate_unique_file_handle_id(data.files[0])
+                "X-Upload-ID": generate_labeled_id(data.files[0].name)
             };
         });
 
@@ -157,18 +167,26 @@ function upload_fold_unfold(element) {
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
-            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
             add_succeeded_upload(data.result);
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
+            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
             if (!is_multiupload) {
                 clear_succeeded_list();
-                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
             }
+
+            var error_message = "Sending failed.";
+            var response = data.response();
+            console.log(response);
+            if (response.jqXHR.responseJSON) {
+                error_message = response.jqXHR.responseJSON[0];
+            }
+
+            console.log(data.response());
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
-                add_failed_upload(file.name, "Sending failed.");
+                add_failed_upload(file.name, error_message);
             }
         });
 
@@ -178,6 +196,11 @@ function upload_fold_unfold(element) {
                 'width',
                 progress + '%'
             );
+
+            if (progress >= 100) {
+                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
+            }
+
         });
 
     }

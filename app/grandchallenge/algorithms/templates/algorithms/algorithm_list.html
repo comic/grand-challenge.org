@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h2>Algorithms</h2>
+
+    <p>
+    <a class="btn btn-primary"
+       href="{% url 'algorithms:create' %}">
+                <i class="fas fa-plus"></i> Add a new algorithm
+            </a>
+    </p>
+
+    <h2>Existing Algorithms</h2>
+
+    <ul>
+    {% for algorithm in object_list %}
+        <li><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.pk }}</a></li>
+    {% endfor %}
+    </ul>
+
+{% endblock %}

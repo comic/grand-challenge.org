@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.evaluation.validators import ExtensionValidator, \
+from grandchallenge.core.validators import ExtensionValidator, \
     MimeTypeValidator
 
 

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+
+{% block content %}
+
+    <h2>Algorithm Description</h2>
+
+    <iframe srcdoc="{{ object.description_html }}"
+            style="width: 100%; height: 600px;">
+    </iframe>
+
+    {{ object.ready }}
+    {{ object.image_sha256 }}
+
+    <h2>Jobs for this algorithm</h2>
+
+    <ul>
+    {% for job in object.job_set.all %}
+        <li><a href="{{ job.get_absolute_url }}">{{ job.created }}</a>
+        <ul>
+        {% for result in job.result_set.all %}
+            <li><a href="{{ result.get_absolute_url }}">{{ result.output }}</a></li>
+        {% endfor %}
+        </ul>
+        </li>
+    {% endfor %}
+    </ul>
+
+    <p>
+    <a class="btn btn-primary"
+       href="{% url 'algorithms:jobs-create' %}">
+        Run this algorithm on a case
+            </a>
+    </p>
+
+
+
+{% endblock %}

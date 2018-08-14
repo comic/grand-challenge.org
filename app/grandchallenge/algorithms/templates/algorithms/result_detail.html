@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <h2>Result</h2>
+
+    <p>
+        Result for job <a href="{{ object.job.get_absolute_url }}">{{ object.job }}</a>,
+    case <a href="{{ object.job.case.get_absolute_url }}">{{ object.job.case }}</a> and
+    algorithm <a href="{{ object.job.algorithm.get_absolute_url }}">{{ object.job.algorithm }}</a>.
+    </p>
+
+
+    <pre>{{ object.output }}</pre>
+
+{% endblock %}

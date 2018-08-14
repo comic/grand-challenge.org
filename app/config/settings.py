@@ -249,6 +249,9 @@ LOCAL_APPS = [
     'grandchallenge.profiles',
     'grandchallenge.teams',
     'grandchallenge.uploads',
+    'grandchallenge.cases',
+    'grandchallenge.algorithms',
+    'grandchallenge.container_exec',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -402,10 +405,11 @@ CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
 
-EVALUATION_DOCKER_BASE_URL = 'unix://var/run/docker.sock'
-EVALUATION_MEMORY_LIMIT = "4g"
-EVALUATION_CPU_QUOTA = 100000
-EVALUATION_CPU_PERIOD = 100000
+CONTAINER_EXEC_DOCKER_BASE_URL = 'unix://var/run/docker.sock'
+CONTAINER_EXEC_MEMORY_LIMIT = "4g"
+CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
+CONTAINER_EXEC_CPU_QUOTA = 100000
+CONTAINER_EXEC_CPU_PERIOD = 100000
 
 CELERY_BEAT_SCHEDULE = {
     'cleanup_stale_uploads': {
@@ -419,7 +423,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    'grandchallenge.evaluation.tasks.evaluate_submission': 'evaluation',
+    'grandchallenge.container_exec.tasks.execute_job': 'evaluation',
 }
 
 # Set which template pack to use for forms

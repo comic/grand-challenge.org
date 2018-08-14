@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+
+{% block content %}
+
+    <h2>Job</h2>
+
+    <div class="alert
+    {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+        alert-danger
+    {% elif object.status == object.RETRY %}
+        alert-warning
+    {% elif object.status == object.SUCCESS %}
+        alert-success
+    {% else %}
+        alert-info
+    {% endif %}">
+        {{ object.get_status_display }}
+    </div>
+
+    <dl>
+        <dt>Algorithm</dt>
+        <dd>
+            <a href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm }}</a>
+        </dd>
+        <dt>Case</dt>
+        <dd>
+            <a href="{{ object.case.get_absolute_url }}">{{ object.case }}</a>
+        </dd>
+        <dt>Results</dt>
+        {% for result in object.result_set.all %}
+        <dd>
+            <a href="{{ result.get_absolute_url }}">{{ result }}</a>
+        </dd>
+        {% endfor %}
+    </dl>
+
+
+{% endblock %}

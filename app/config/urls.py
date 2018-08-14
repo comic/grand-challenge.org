@@ -60,8 +60,9 @@ urlpatterns = [
     # Do not change the namespace without updating the view names in
     # evaluation.serializers
     url(r'^api/', include('grandchallenge.api.urls', namespace='api')),
-    # Used for logging in and managing grandchallenge.profiles. This is done on the framework
-    # level because it is too hard to get this all under each project
+    # Used for logging in and managing grandchallenge.profiles. This is done on
+    # the framework level because it is too hard to get this all under each
+    # project
     url(r'^accounts/', include('grandchallenge.profiles.urls')),
     url(r'^socialauth/', include('social_django.urls', namespace='social')),
     url(
@@ -72,6 +73,11 @@ urlpatterns = [
         r"^(?i)all_challenges/$",
         RedirectView.as_view(pattern_name="challenges:list", permanent=False),
     ),
+
+    path('cases/', include('grandchallenge.cases.urls', namespace='cases')),
+    path('algorithms/',
+         include('grandchallenge.algorithms.urls', namespace='algorithms')),
+
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
@@ -83,5 +89,5 @@ if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns = [
-        url(r'^__debug__/', include(debug_toolbar.urls))
-    ] + urlpatterns
+                      url(r'^__debug__/', include(debug_toolbar.urls))
+                  ] + urlpatterns

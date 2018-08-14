@@ -10,9 +10,7 @@ from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
     Submission, Job, Method, Result, Config,
 )
-from grandchallenge.evaluation.tasks import (
-    evaluate_submission, validate_method_async, calculate_ranks
-)
+from grandchallenge.evaluation.tasks import calculate_ranks
 
 
 @receiver(post_save, sender=Submission)
@@ -24,29 +22,13 @@ def create_evaluation_job(
         method = Method.objects.filter(challenge=instance.challenge).order_by(
             '-created'
         ).first()
+
         if method is None:
             # TODO: Email here, do not raise
             # raise NoMethodForChallengeError
             pass
         else:
             Job.objects.create(submission=instance, method=method)
-
-
-@receiver(post_save, sender=Job)
-@disable_for_loaddata
-def execute_job(instance: Job = None, created: bool = False, *_, **__):
-    if created:
-        # TODO: Create Timeout tests
-        evaluate_submission.apply_async(
-            task_id=str(instance.pk), kwargs={'job_pk': instance.pk}
-        )
-
-
-@receiver(post_save, sender=Method)
-@disable_for_loaddata
-def validate_method(instance: Method = None, created: bool = False, *_, **__):
-    if created:
-        validate_method_async.apply_async(kwargs={'method_pk': instance.pk})
 
 
 @receiver(post_save, sender=Config)
