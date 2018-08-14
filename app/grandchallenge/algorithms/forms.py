@@ -55,4 +55,4 @@ class JobForm(forms.ModelForm):
 
     class Meta:
         model = Job
-        fields = ("algorithm", "case",)
+        fields = ("algorithm", "image",)

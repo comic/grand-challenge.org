@@ -39,7 +39,7 @@ class AlgorithmExecutor(Executor):
 
 class Job(UUIDModel, ContainerExecJobModel):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
-    case = models.ForeignKey("cases.Case", on_delete=models.CASCADE)
+    image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
 
     @property
     def container(self):
@@ -47,7 +47,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     @property
     def input_files(self):
-        return [c.file for c in self.case.casefile_set.all()]
+        return [c.file for c in self.image.imagefile_set.all()]
 
     @property
     def executor_cls(self):
