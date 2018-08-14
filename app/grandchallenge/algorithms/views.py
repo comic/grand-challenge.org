@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
 
 from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
 from grandchallenge.algorithms.models import Algorithm, Job, Result
+from tests.core_tests.test_permissions import StaffOnlyView
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmList(ListView):
+class AlgorithmList(StaffOnlyView, ListView):
     model = Algorithm
 
 
@@ -27,8 +27,7 @@ def ipynb_to_html(*, notebook: File):
     return body
 
 
-class AlgorithmCreate(LoginRequiredMixin, CreateView):
-    # TODO: Permissions
+class AlgorithmCreate(StaffOnlyView, CreateView):
     model = Algorithm
     form_class = AlgorithmForm
 
@@ -48,26 +47,26 @@ class AlgorithmCreate(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class AlgorithmDetail(DetailView):
+class AlgorithmDetail(StaffOnlyView, DetailView):
     model = Algorithm
 
 
-class JobList(ListView):
+class JobList(StaffOnlyView, ListView):
     model = Job
 
 
-class JobCreate(CreateView):
+class JobCreate(StaffOnlyView, CreateView):
     model = Job
     form_class = JobForm
 
 
-class JobDetail(DetailView):
+class JobDetail(StaffOnlyView, DetailView):
     model = Job
 
 
-class ResultList(ListView):
+class ResultList(StaffOnlyView, ListView):
     model = Result
 
 
-class ResultDetail(DetailView):
+class ResultDetail(StaffOnlyView, DetailView):
     model = Result
