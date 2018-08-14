@@ -7,12 +7,12 @@ from nbconvert import HTMLExporter
 
 from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
 from grandchallenge.algorithms.models import Algorithm, Job, Result
-from tests.core_tests.test_permissions import StaffOnlyView
+from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmList(StaffOnlyView, ListView):
+class AlgorithmList(UserIsStaffMixin, ListView):
     model = Algorithm
 
 
@@ -27,7 +27,7 @@ def ipynb_to_html(*, notebook: File):
     return body
 
 
-class AlgorithmCreate(StaffOnlyView, CreateView):
+class AlgorithmCreate(UserIsStaffMixin, CreateView):
     model = Algorithm
     form_class = AlgorithmForm
 
@@ -47,26 +47,26 @@ class AlgorithmCreate(StaffOnlyView, CreateView):
         return super().form_valid(form)
 
 
-class AlgorithmDetail(StaffOnlyView, DetailView):
+class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
 
 
-class JobList(StaffOnlyView, ListView):
+class JobList(UserIsStaffMixin, ListView):
     model = Job
 
 
-class JobCreate(StaffOnlyView, CreateView):
+class JobCreate(UserIsStaffMixin, CreateView):
     model = Job
     form_class = JobForm
 
 
-class JobDetail(StaffOnlyView, DetailView):
+class JobDetail(UserIsStaffMixin, DetailView):
     model = Job
 
 
-class ResultList(StaffOnlyView, ListView):
+class ResultList(UserIsStaffMixin, ListView):
     model = Result
 
 
-class ResultDetail(StaffOnlyView, DetailView):
+class ResultDetail(UserIsStaffMixin, DetailView):
     model = Result

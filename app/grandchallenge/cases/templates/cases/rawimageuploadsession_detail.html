@@ -9,7 +9,7 @@
     <p>Job id: {{ upload_session.processing_task }}</p>
     <p>State: {{ upload_session.session_state }}</p>
     <p>Error message: {{ upload_session.error_message }}</p>
-    <p>Creation date: {{ upload_session.created_on }}</p>
+    <p>Creation date: {{ upload_session.created }}</p>
 
     {% if process_finished %}
         <h2>Processed files</h2>

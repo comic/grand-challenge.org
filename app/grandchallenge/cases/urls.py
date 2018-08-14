@@ -2,8 +2,9 @@
 from django.urls import path
 
 from grandchallenge.cases.forms import upload_raw_files_widget
-from grandchallenge.cases.views import UploadRawFiles, \
-    ShowUploadSessionState, ViewImage
+from grandchallenge.cases.views import (
+    UploadRawFiles, ShowUploadSessionState, ViewImage
+)
 
 app_name = 'cases'
 

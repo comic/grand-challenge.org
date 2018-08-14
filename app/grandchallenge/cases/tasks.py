@@ -1,21 +1,23 @@
 import shutil
-from contextlib import contextmanager
-
-from uuid import UUID
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence, Dict, Mapping, Union, Optional
+from typing import Tuple, Sequence
+from uuid import UUID
 
 from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.metaio_mhd_mha import image_builder_mhd
+from grandchallenge.cases.image_builders.metaio_mhd_mha import (
+    image_builder_mhd
+)
 from grandchallenge.cases.log import logger
-from grandchallenge.cases.models import RawImageUploadSession, \
-    UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
-    NotFoundError
+from grandchallenge.cases.models import (
+    RawImageUploadSession, UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
+)
+from grandchallenge.jqfileupload.widgets.uploader import (
+    StagedAjaxFile, NotFoundError
+)
 
 
 class ProvisioningError(Exception): pass
@@ -109,7 +111,8 @@ IMAGE_BUILDER_ALGORITHMS = [
 ]
 
 
-def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
+def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[
+    Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
     that have a nun-unqie filename.
@@ -141,7 +144,6 @@ def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[Seque
         tuple(x for x in filename_lookup.values() if x is not None),
         tuple(duplicates)
     )
-
 
 
 @shared_task(
@@ -204,7 +206,8 @@ def build_images(upload_session_uuid: UUID):
                 populate_provisioning_directory(session_files, tmp_dir)
 
                 filename_lookup = {
-                    StagedAjaxFile(raw_image_file.staged_file_id).name: raw_image_file
+                    StagedAjaxFile(
+                        raw_image_file.staged_file_id).name: raw_image_file
                     for raw_image_file in session_files
                 }
                 unconsumed_filenames = set(filename_lookup.keys())

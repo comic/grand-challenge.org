@@ -8,11 +8,10 @@ from django.db import transaction
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.jqfileupload.filters import reject_duplicate_filenames
-
 from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList, \
-    StagedAjaxFile
-
+from grandchallenge.jqfileupload.widgets.uploader import (
+    UploadedAjaxFileList, StagedAjaxFile
+)
 
 upload_raw_files_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/raw_files/",
@@ -43,8 +42,8 @@ class UploadRawImagesForm(forms.ModelForm):
             instance = super(UploadRawImagesForm, self).save(commit=commit)
 
             # Create links between the created session and all uploaded files
-            uploaded_files = self.cleaned_data["files"]
-            uploaded_files: List[StagedAjaxFile]
+            uploaded_files = self.cleaned_data[
+                "files"]  # type: List[StagedAjaxFile]
 
             for uploaded_file in uploaded_files:
                 RawImageFile.objects.create(
@@ -58,4 +57,3 @@ class UploadRawImagesForm(forms.ModelForm):
     class Meta:
         model = RawImageUploadSession
         fields = ['files']
-

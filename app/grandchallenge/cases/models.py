@@ -55,11 +55,6 @@ class RawImageUploadSession(UUIDModel):
         default=UPLOAD_SESSION_STATE.created,
     )
 
-    created_on = models.DateTimeField(
-        blank=False,
-        default=timezone.now,
-    )
-
     processing_task = models.UUIDField(
         null=True,
         default=None,
@@ -116,7 +111,7 @@ def image_file_path(instance, filename):
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
-    COLOR_SPACE_RGBA = "RGB"
+    COLOR_SPACE_RGBA = "RGBA"
 
     COLOR_SPACES = (
         (COLOR_SPACE_GRAY, "GRAY"),
@@ -136,10 +131,6 @@ class Image(UUIDModel):
         null=True,
         on_delete=models.SET_NULL,
     )
-    created_on = models.DateTimeField(
-        blank=False,
-        default=timezone.now,
-    )
 
     width = models.IntegerField(
         blank=False,
@@ -151,7 +142,7 @@ class Image(UUIDModel):
         null=True,
     )
     color_space = models.CharField(
-        max_length=8,
+        max_length=4,
         blank=False,
         choices=COLOR_SPACES,
     )
@@ -184,4 +175,3 @@ class ImageFile(UUIDModel):
         upload_to=image_file_path,
         blank=False,
     )
-

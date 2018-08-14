@@ -33,7 +33,9 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
         raised when the file contains problems making it impossible to
         read
     """
-    read_line_limit = 10000  # attempt to limit numer of read headers to prevent overflow attacks
+
+    # attempt to limit numer of read headers to prevent overflow attacks
+    read_line_limit = 10000
 
     result = {}
     with open(filename, 'rb') as f:
@@ -64,7 +66,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
                     else:
                         result[line.strip()] = None
             if "ElementDataFile" in result:
-                break # last parsed header...
+                break  # last parsed header...
     return result
 
 
@@ -75,8 +77,8 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
     Parameters
     ----------
     path: Path
-        Path to a directory that contains all images that were uploaded duing an
-        upload session.
+        Path to a directory that contains all images that were uploaded duing
+        an upload session.
 
     Returns
     -------
@@ -194,5 +196,3 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         new_images=new_images,
         new_image_files=new_image_files,
     )
-
-
