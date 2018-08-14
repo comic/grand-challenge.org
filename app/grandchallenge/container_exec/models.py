@@ -2,9 +2,9 @@
 from typing import Tuple, Type
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
+from social_django.fields import JSONField
 
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job

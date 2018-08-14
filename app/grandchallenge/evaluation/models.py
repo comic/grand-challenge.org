@@ -2,10 +2,10 @@ from pathlib import Path
 
 from ckeditor.fields import RichTextField
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import BooleanField
+from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.backends.docker import Executor, put_file
