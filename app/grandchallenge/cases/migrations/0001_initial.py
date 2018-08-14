@@ -2,10 +2,9 @@
 
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 import django.utils.timezone
 import grandchallenge.cases.models
-import grandchallenge.evaluation.validators
+import grandchallenge.core.validators
 import uuid
 
 
@@ -36,7 +35,8 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(help_text='Select the file for this case.', upload_to=grandchallenge.cases.models.case_file_path, validators=[grandchallenge.evaluation.validators.ExtensionValidator(allowed_extensions=('.mhd', '.raw', '.zraw'))])),
+                ('file', models.FileField(help_text='Select the file for this case.', upload_to=grandchallenge.cases.models.case_file_path, validators=[
+                    grandchallenge.core.validators.ExtensionValidator(allowed_extensions=('.mhd', '.raw', '.zraw'))])),
                 ('case', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Case')),
             ],
             options={

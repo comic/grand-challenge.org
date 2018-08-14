@@ -4,7 +4,7 @@ from crispy_forms.layout import Submit
 from django import forms
 
 from grandchallenge.algorithms.models import Algorithm, Job
-from grandchallenge.evaluation.validators import (
+from grandchallenge.core.validators import (
     ExtensionValidator, MimeTypeValidator
 )
 from grandchallenge.jqfileupload.widgets import uploader

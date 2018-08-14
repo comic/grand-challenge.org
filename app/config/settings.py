@@ -251,6 +251,7 @@ LOCAL_APPS = [
     'grandchallenge.uploads',
     'grandchallenge.cases',
     'grandchallenge.algorithms',
+    'grandchallenge.container_exec',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -415,13 +416,13 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=1),
     },
     'clear_sessions': {
-        'task': 'grandchallenge.core.tasks.clear_sessions',
+        'task': 'grandchallenge.container_exec.tasks.clear_sessions',
         'schedule': timedelta(days=1),
     },
 }
 
 CELERY_TASK_ROUTES = {
-    'grandchallenge.core.tasks.execute_job': 'evaluation',
+    'grandchallenge.container_exec.tasks.execute_job': 'evaluation',
 }
 
 # Set which template pack to use for forms

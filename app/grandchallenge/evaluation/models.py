@@ -8,15 +8,15 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.models import (
-    UUIDModel, CeleryJobModel, DockerImageModel
-)
+from grandchallenge.core.models import UUIDModel
+from grandchallenge.container_exec.models import CeleryJobModel, \
+    DockerImageModel
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.backends.dockermachine.evaluator import \
+from grandchallenge.container_exec.backends.dockermachine.evaluator import \
     Evaluator
-from grandchallenge.evaluation.backends.dockermachine.utils import put_file
+from grandchallenge.container_exec.backends.dockermachine.utils import put_file
 from grandchallenge.evaluation.emails import send_failed_job_email
-from grandchallenge.evaluation.validators import (
+from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
     get_file_mimetype,

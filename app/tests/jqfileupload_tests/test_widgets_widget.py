@@ -9,7 +9,7 @@ from django.http.response import (
 )
 from django.test.client import RequestFactory
 
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets.uploader import (
     AjaxUploadWidget, StagedAjaxFile, UploadedAjaxFileList
 )

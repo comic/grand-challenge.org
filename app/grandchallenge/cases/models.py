@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.validators import ExtensionValidator
+from grandchallenge.core.validators import ExtensionValidator
 
 
 def case_file_path(instance, filename):

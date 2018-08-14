@@ -9,10 +9,10 @@ from django.conf import settings
 from django.core.files import File
 from docker.errors import ContainerError
 
-from grandchallenge.evaluation.backends.dockermachine.utils import (
+from grandchallenge.container_exec.backends.dockermachine.utils import (
     cleanup, put_file,
 )
-from grandchallenge.evaluation.exceptions import (
+from grandchallenge.container_exec.exceptions import (
     SubmissionError, MethodContainerError,
 )
 

@@ -5,12 +5,14 @@ from ckeditor.fields import RichTextField
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from grandchallenge.core.models import (
-    UUIDModel, CeleryJobModel, DockerImageModel
+from grandchallenge.core.models import UUIDModel
+from grandchallenge.container_exec.models import (
+    CeleryJobModel, DockerImageModel,
 )
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.evaluation.backends.dockermachine.evaluator import \
+from grandchallenge.container_exec.backends.dockermachine.evaluator import (
     Evaluator
+)
 
 
 class Algorithm(UUIDModel, DockerImageModel):

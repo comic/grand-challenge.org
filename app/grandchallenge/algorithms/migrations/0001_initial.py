@@ -5,8 +5,10 @@ from django.conf import settings
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
+
+import grandchallenge.container_exec.models
 import grandchallenge.core.models
-import grandchallenge.evaluation.validators
+import grandchallenge.core.validators
 import social_django.fields
 import uuid
 
@@ -27,7 +29,8 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', upload_to=grandchallenge.core.models.docker_image_path, validators=[grandchallenge.evaluation.validators.ExtensionValidator(allowed_extensions=('.tar',))])),
+                ('image', models.FileField(help_text='Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/', upload_to=grandchallenge.container_exec.models.docker_image_path, validators=[
+                    grandchallenge.core.validators.ExtensionValidator(allowed_extensions=('.tar',))])),
                 ('image_sha256', models.CharField(editable=False, max_length=71)),
                 ('ready', models.BooleanField(default=False, editable=False, help_text='Is this image ready to be used?')),
                 ('status', models.TextField(editable=False)),
