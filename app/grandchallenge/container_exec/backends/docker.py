@@ -142,7 +142,10 @@ class Executor(object):
             raise ExecContainerError(exc.stderr.decode())
 
         try:
-            result = json.loads(result.decode())
+            result = json.loads(
+                result.decode(),
+                parse_constant=lambda x: None, # Removes -inf, inf and NaN
+            )
         except JSONDecodeError as exc:
             raise ExecContainerError(exc.msg)
 

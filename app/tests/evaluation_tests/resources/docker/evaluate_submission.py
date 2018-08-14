@@ -15,7 +15,7 @@ def get_classes(csvfile: str):
 
 def write_metrics(metrics: dict):
     with open('/output/metrics.json', 'w') as f:
-        f.write(json.dumps(metrics, ensure_ascii=True, allow_nan=False))
+        f.write(json.dumps(metrics, ensure_ascii=True))
 
 
 if __name__ == '__main__':
@@ -39,5 +39,7 @@ if __name__ == '__main__':
             'log_loss': log_loss(gt, preds),
             'recall_score': recall_score(gt, preds),
         },
+        "inf": float("inf"),
+        "nan": float("nan"),
     }
     write_metrics(metrics)

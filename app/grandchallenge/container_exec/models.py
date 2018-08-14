@@ -4,7 +4,6 @@ from typing import Tuple, Type
 from django.conf import settings
 from django.core.files import File
 from django.db import models
-from social_django.fields import JSONField
 
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
@@ -36,7 +35,6 @@ class ContainerExecJobModel(models.Model):
     status = models.PositiveSmallIntegerField(
         choices=STATUS_CHOICES, default=PENDING
     )
-    status_history = JSONField(default=dict)
     output = models.TextField()
 
     def update_status(self, *, status: STATUS_CHOICES, output: str = None):
