@@ -13,8 +13,6 @@ import uuid
 
 class Migration(migrations.Migration):
 
-    replaces = [('algorithms', '0001_initial'), ('algorithms', '0002_remove_job_status_history'), ('algorithms', '0003_auto_20180814_1506'), ('algorithms', '0004_auto_20180814_1508')]
-
     initial = True
 
     dependencies = [
