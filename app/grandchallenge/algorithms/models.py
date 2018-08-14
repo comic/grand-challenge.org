@@ -5,17 +5,15 @@ from ckeditor.fields import RichTextField
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.models import (
-    CeleryJobModel, DockerImageModel,
+    ContainerExecJobModel, ContainerImageModel,
 )
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.container_exec.backends.dockermachine.evaluator import (
-    Evaluator
-)
 
 
-class Algorithm(UUIDModel, DockerImageModel):
+class Algorithm(UUIDModel, ContainerImageModel):
     description_html = RichTextField(blank=True)
 
     def get_absolute_url(self):
@@ -30,7 +28,7 @@ class Result(UUIDModel):
         return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
 
 
-class AlgorithmExecutor(Evaluator):
+class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
@@ -39,7 +37,7 @@ class AlgorithmExecutor(Evaluator):
         )
 
 
-class Job(UUIDModel, CeleryJobModel):
+class Job(UUIDModel, ContainerExecJobModel):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
     case = models.ForeignKey("cases.Case", on_delete=models.CASCADE)
 
@@ -52,7 +50,7 @@ class Job(UUIDModel, CeleryJobModel):
         return [c.file for c in self.case.casefile_set.all()]
 
     @property
-    def evaluator_cls(self):
+    def executor_cls(self):
         return AlgorithmExecutor
 
     def create_result(self, *, result: dict):

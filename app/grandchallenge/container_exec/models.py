@@ -6,14 +6,12 @@ from django.core.files import File
 from django.db import models
 from social_django.fields import JSONField
 
+from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
-from grandchallenge.container_exec.backends.dockermachine.evaluator import (
-    Evaluator
-)
 from grandchallenge.core.validators import ExtensionValidator
 
 
-class CeleryJobModel(models.Model):
+class ContainerExecJobModel(models.Model):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
     PENDING = 0
@@ -50,11 +48,11 @@ class CeleryJobModel(models.Model):
         self.save()
 
     @property
-    def container(self) -> 'DockerImageModel':
+    def container(self) -> 'ContainerImageModel':
         """
         Returns the container object associated with this instance, which
         should be a foreign key to an object that is a subclass of
-        DockerImageModel
+        ContainerImageModel
         """
         raise NotImplementedError
 
@@ -67,17 +65,17 @@ class CeleryJobModel(models.Model):
         raise NotImplementedError
 
     @property
-    def evaluator_cls(self) -> Type[Evaluator]:
+    def executor_cls(self) -> Type[Executor]:
         """
-        Returns the evaluator class for this job, which must be a subclass of
-        Evaluator
+        Returns the executor class for this job, which must be a subclass of
+        Executor
         """
         raise NotImplementedError
 
     def create_result(self, *, result: dict):
         """
-        This is called at the end of an evaluation run, the result object for
-        this job must be created by this function.
+        This is called at the end of the container execution, the result object
+        for this job must be created by this function.
         """
         raise NotImplementedError
 
@@ -106,7 +104,7 @@ def docker_image_path(instance, filename):
     )
 
 
-class DockerImageModel(models.Model):
+class ContainerImageModel(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )

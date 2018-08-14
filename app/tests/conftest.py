@@ -99,7 +99,9 @@ def evaluation_image(tmpdir_factory):
     """
     Creates the example evaluation container
     """
-    client = docker.DockerClient(base_url=settings.EVALUATION_DOCKER_BASE_URL)
+    client = docker.DockerClient(
+        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+    )
     im, _ = client.images.build(
         path=os.path.join(
             os.path.split(__file__)[0],
@@ -110,7 +112,7 @@ def evaluation_image(tmpdir_factory):
         tag='test_evaluation:latest',
     )
     assert im.id in [x.id for x in client.images.list()]
-    cli = docker.APIClient(base_url=settings.EVALUATION_DOCKER_BASE_URL)
+    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
     image = cli.get_image('test_evaluation:latest')
     outfile = tmpdir_factory.mktemp('docker').join('evaluation-latest.tar')
     with outfile.open(mode='wb') as f:
@@ -123,10 +125,12 @@ def evaluation_image(tmpdir_factory):
 
 @pytest.fixture(scope='session')
 def alpine_images(tmpdir_factory):
-    client = docker.DockerClient(base_url=settings.EVALUATION_DOCKER_BASE_URL)
+    client = docker.DockerClient(
+        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+    )
     client.images.pull('alpine:3.6')
     client.images.pull('alpine:3.7')
-    cli = docker.APIClient(base_url=settings.EVALUATION_DOCKER_BASE_URL)
+    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
     # get all images and put them in a tar archive
     image = cli.get_image('alpine')
     outfile = tmpdir_factory.mktemp('alpine').join('alpine.tar')

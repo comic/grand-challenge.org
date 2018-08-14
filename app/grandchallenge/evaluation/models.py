@@ -8,19 +8,18 @@ from django.db.models import BooleanField
 from social_django.fields import JSONField
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.container_exec.backends.docker import Executor, put_file
+from grandchallenge.container_exec.models import (
+    ContainerExecJobModel, ContainerImageModel
+)
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.container_exec.models import CeleryJobModel, \
-    DockerImageModel
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.container_exec.backends.dockermachine.evaluator import \
-    Evaluator
-from grandchallenge.container_exec.backends.dockermachine.utils import put_file
-from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
     get_file_mimetype,
 )
+from grandchallenge.evaluation.emails import send_failed_job_email
 
 
 class Config(UUIDModel):
@@ -176,7 +175,7 @@ def method_image_path(instance, filename):
     )
 
 
-class Method(UUIDModel, DockerImageModel):
+class Method(UUIDModel, ContainerImageModel):
     """
     Stores the methods for performing an evaluation
     """
@@ -262,7 +261,7 @@ class Submission(UUIDModel):
         )
 
 
-class SubmissionEvaluator(Evaluator):
+class SubmissionEvaluator(Executor):
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
@@ -329,7 +328,7 @@ class Result(UUIDModel):
         )
 
 
-class Job(UUIDModel, CeleryJobModel):
+class Job(UUIDModel, ContainerExecJobModel):
     """
     Stores information about a job for a given upload
     """
@@ -349,7 +348,7 @@ class Job(UUIDModel, CeleryJobModel):
         return [self.submission.file, ]
 
     @property
-    def evaluator_cls(self):
+    def executor_cls(self):
         return SubmissionEvaluator
 
     def create_result(self, *, result):

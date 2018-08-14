@@ -8,7 +8,7 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import OperationalError
 
-from grandchallenge.container_exec.exceptions import EvaluationException
+from grandchallenge.container_exec.exceptions import ContainerExecException
 
 
 @shared_task()
@@ -83,17 +83,6 @@ def get_model_instance(*, pk, app_label, model_name):
 def execute_job(
         *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str,
 ) -> dict:
-    """
-    Interfaces between Django and the Evaluation. Gathers together all
-    resources, and then writes the result back to the database so that the
-    Evaluation is only concerned with producing metrics.json.
-
-    :param job_pk:
-        The id of the job. This must be a str or UUID as celery cannot
-        serialise Job objects to JSON.
-    :return:
-    """
-
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
@@ -105,15 +94,15 @@ def execute_job(
         raise AttributeError(msg)
 
     try:
-        with job.evaluator_cls(
+        with job.executor_cls(
                 job_id=job.pk,
                 input_files=job.input_files,
-                eval_image=job.container.image,
-                eval_image_sha256=job.container.image_sha256,
+                exec_image=job.container.image,
+                exec_image_sha256=job.container.image_sha256,
         ) as e:
-            result = e.evaluate()  # This call is potentially very long
+            result = e.execute()  # This call is potentially very long
 
-    except EvaluationException as exc:
+    except ContainerExecException as exc:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
