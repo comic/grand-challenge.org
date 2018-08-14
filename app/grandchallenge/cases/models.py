@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
