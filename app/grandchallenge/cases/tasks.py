@@ -146,12 +146,7 @@ def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[
     )
 
 
-@shared_task(
-    autoretry_for=(RawImageUploadSession.DoesNotExist,),
-    default_retry_delay=60,
-    retry_kwargs={
-        'max_retries': 15
-    })
+@shared_task
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store

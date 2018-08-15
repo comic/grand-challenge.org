@@ -33,24 +33,29 @@ class UploadRawImagesForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(UploadRawImagesForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit("save", "Submit"))
 
     def save(self, commit=True):
-        with transaction.atomic():
-            instance = super(UploadRawImagesForm, self).save(commit=commit)
+        instance = super().save(commit=False)
 
-            # Create links between the created session and all uploaded files
-            uploaded_files = self.cleaned_data[
-                "files"]  # type: List[StagedAjaxFile]
+        # Create links between the created session and all uploaded files
+        uploaded_files = self.cleaned_data[
+            "files"]  # type: List[StagedAjaxFile]
 
-            for uploaded_file in uploaded_files:
-                RawImageFile.objects.create(
-                    upload_session=instance,
-                    filename=uploaded_file.name,
-                    staged_file_id=uploaded_file.uuid,
-                )
+        raw_files = [
+            RawImageFile(
+                upload_session=instance,
+                filename=uploaded_file.name,
+                staged_file_id=uploaded_file.uuid,
+            ) for uploaded_file in uploaded_files
+        ]
+
+        if commit:
+            with transaction.atomic():
+                instance.save()
+                RawImageFile.objects.bulk_create(raw_files)
 
         return instance
 

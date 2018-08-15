@@ -11,17 +11,20 @@ from grandchallenge.core.utils import disable_for_loaddata
 @receiver(post_save, sender=RawImageUploadSession)
 @disable_for_loaddata
 def queue_build_image_job(
-        instance: RawImageUploadSession=None, created: bool=False,
-        *_, **__):
+        instance: RawImageUploadSession = None, created: bool = False, *_, **__
+):
     if created:
         try:
-            task = build_images.apply_async(
-                args=(instance.pk,),
-                countdown=5, # Wait a bit - immediate start won't work!
+
+            RawImageUploadSession.objects.filter(pk=instance.pk).update(
+                session_state=UPLOAD_SESSION_STATE.queued,
+                processing_task=instance.pk
             )
-            instance.session_state = UPLOAD_SESSION_STATE.queued
-            instance.processing_task = task.id
-            instance.save()
+
+            build_images.apply_async(
+                task_id=str(instance.pk), args=(instance.pk,),
+            )
+
         except Exception as e:
             instance.session_state = UPLOAD_SESSION_STATE.stopped
             instance.error_message = f"Could not start job: {e}"
