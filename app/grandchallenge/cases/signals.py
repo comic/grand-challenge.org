@@ -15,13 +15,18 @@ def queue_build_image_job(
         *_, **__):
     if created:
         try:
-            task = build_images.apply_async(
+
+            RawImageUploadSession.objects.filter(pk=instance.pk).update(
+                session_state = UPLOAD_SESSION_STATE.queued,
+                processing_task=instance.pk
+            )
+
+            build_images.apply_async(
+                task_id=str(instance.pk),
                 args=(instance.pk,),
                 countdown=5, # Wait a bit - immediate start won't work!
             )
-            instance.session_state = UPLOAD_SESSION_STATE.queued
-            instance.processing_task = task.id
-            instance.save()
+
         except Exception as e:
             instance.session_state = UPLOAD_SESSION_STATE.stopped
             instance.error_message = f"Could not start job: {e}"

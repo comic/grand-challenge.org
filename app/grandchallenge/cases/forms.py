@@ -33,13 +33,13 @@ class UploadRawImagesForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(UploadRawImagesForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit("save", "Submit"))
 
     def save(self, commit=True):
         with transaction.atomic():
-            instance = super(UploadRawImagesForm, self).save(commit=commit)
+            instance = super().save(commit=commit)
 
             # Create links between the created session and all uploaded files
             uploaded_files = self.cleaned_data[
