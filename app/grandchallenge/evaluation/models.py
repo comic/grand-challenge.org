@@ -72,6 +72,7 @@ class Config(UUIDModel):
     )
     extra_results_columns = JSONField(
         default=dict,
+        blank=True,
         help_text=(
             'A JSON object that contains the extra columns from metrics.json '
             'that will be displayed on the results page. '
