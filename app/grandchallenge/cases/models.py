@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
@@ -147,3 +148,12 @@ class ImageFile(UUIDModel):
         upload_to=image_file_path,
         blank=False,
     )
+
+class ImageAnnotation(UUIDModel):
+    annotation_of = models.ForeignKey(
+        Image, related_name="annotations", on_delete=models.CASCADE,
+    )
+    image = models.ForeignKey(
+        Image, null=True, on_delete=models.CASCADE
+    )
+    metadata = JSONField()
