@@ -56,15 +56,3 @@ def result_created_email(instance: Result, created: bool = False, *_, **__):
         # Only send emails on created, as EVERY result for this challenge is
         # updated when the results are recalculated
         send_new_result_email(instance)
-
-
-# TODO: do we really want to generate an API token for all users? Only admins?
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-@disable_for_loaddata
-def create_auth_token(
-    instance: settings.AUTH_USER_MODEL = None, created: bool = False, *_, **__
-):
-    # Ignore the anonymous user which is created by userena on initial
-    # migration
-    if created and instance.username != settings.ANONYMOUS_USER_NAME:
-        Token.objects.create(user=instance)

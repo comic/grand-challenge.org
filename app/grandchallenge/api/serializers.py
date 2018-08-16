@@ -38,6 +38,10 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
 class MethodSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="api:method-detail")
 
+    creator = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+    )
+
     class Meta:
         model = Method
         fields = '__all__'
