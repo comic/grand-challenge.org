@@ -149,11 +149,17 @@ class ImageFile(UUIDModel):
         blank=False,
     )
 
-class ImageAnnotation(UUIDModel):
-    annotation_of = models.ForeignKey(
+
+class Annotation(UUIDModel):
+    """
+    An object that represents an annotation of an image. This can be another
+    image, for instance, a segmentation, or some metadata such as a
+    classification, eg. {"cancer": False}.
+    """
+    of = models.ForeignKey(
         Image, related_name="annotations", on_delete=models.CASCADE,
     )
     image = models.ForeignKey(
-        Image, null=True, on_delete=models.CASCADE
+        Image, null=True, on_delete=models.CASCADE,
     )
     metadata = JSONField()

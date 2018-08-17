@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, ListView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
-    RawImageFile, RawImageUploadSession, UPLOAD_SESSION_STATE, Image
-)
+    RawImageFile, RawImageUploadSession, UPLOAD_SESSION_STATE, Image,
+    Annotation)
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -37,3 +37,9 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 class ViewImage(UserIsStaffMixin, DetailView):
     model = Image
     template_name = "cases/view_image.html"
+
+class AnnotationList(UserIsStaffMixin, ListView):
+    model = Annotation
+
+    # TODO - this should list only the annotations for this image
+
