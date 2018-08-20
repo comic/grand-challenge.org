@@ -4,7 +4,6 @@ from typing import List
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
-from django.db import transaction
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.jqfileupload.filters import reject_duplicate_filenames
@@ -53,9 +52,8 @@ class UploadRawImagesForm(forms.ModelForm):
         ]
 
         if commit:
-            with transaction.atomic():
-                instance.save()
-                RawImageFile.objects.bulk_create(raw_files)
+            instance.save()
+            RawImageFile.objects.bulk_create(raw_files)
 
         return instance
 

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import json
+
 import pytest
 
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, Annotation
 from grandchallenge.core.urlresolvers import reverse
 from tests.cases_tests.test_background_tasks import \
     create_raw_upload_image_session
@@ -31,7 +33,21 @@ def test_annotation_list_filter(client, settings):
         username = user.username, password = SUPER_SECURE_TEST_PASSWORD
     )
 
-    url = reverse("cases:annotation-list", kwargs={"image_pk": image.pk})
+    url = reverse("cases:annotation-list", kwargs={"base_pk": image.pk})
     response = client.get(url)
 
     assert response.status_code == 200
+
+    url = reverse("cases:annotation-create", kwargs={"base_pk": image.pk})
+    response = client.get(url)
+    assert response.status_code == 200
+
+    assert len(Annotation.objects.all()) == 0
+    response = client.post(url, data={"metadata": json.dumps({"foo": "bar"})})
+    assert response.status_code == 302
+
+    response = client.get(response.url)
+    assert response.status_code == 200
+
+    assert len(Annotation.objects.all()) == 1
+    assert Annotation.objects.all()[0].base.pk == image.pk

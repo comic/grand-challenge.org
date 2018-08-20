@@ -31,17 +31,17 @@ urlpatterns = [
         name='display-processed-image',
     ),
     path(
-        'images/<uuid:image_pk>/annotations/',
+        'images/<uuid:base_pk>/annotations/',
         AnnotationList.as_view(),
         name='annotation-list',
     ),
     path(
-        "images/<uuid:image_pk>/annotations/create/",
+        "images/<uuid:base_pk>/annotations/create/",
         AnnotationCreate.as_view(),
         name="annotation-create",
     ),
     path(
-        "images/<uuid:image_pk>/annotations/<uuid:annotation_pk>/",
+        "images/<uuid:base_pk>/annotations/<uuid:pk>/",
         AnnotationDetail.as_view(),
         name="annotation-detail",
     ),

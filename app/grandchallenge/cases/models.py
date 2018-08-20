@@ -156,10 +156,19 @@ class Annotation(UUIDModel):
     image, for instance, a segmentation, or some metadata such as a
     classification, eg. {"cancer": False}.
     """
-    of = models.ForeignKey(
+    base = models.ForeignKey(
         Image, related_name="annotations", on_delete=models.CASCADE,
     )
     image = models.ForeignKey(
-        Image, null=True, on_delete=models.CASCADE,
+        Image, null=True, blank=True,  on_delete=models.CASCADE,
     )
     metadata = JSONField()
+
+    def get_absolute_url(self):
+        return reverse(
+            "cases:annotation-detail",
+            kwargs={
+                "base_pk": self.base.pk,
+                "pk": self.pk,
+            }
+        )

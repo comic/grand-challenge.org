@@ -41,11 +41,20 @@ class ViewImage(UserIsStaffMixin, DetailView):
 
 class AnnotationList(UserIsStaffMixin, ListView):
     model = Annotation
-    # TODO - this should list only the annotations for this image
+
+    def get_queryset(self):
+        # TODO Filtering test
+        queryset = super().get_queryset()
+        return queryset.filter(base__pk=self.kwargs["base_pk"])
 
 
 class AnnotationCreate(UserIsStaffMixin, CreateView):
     model = Annotation
+    fields = ("image", "metadata",)
+
+    def form_valid(self, form):
+        form.instance.base = Image.objects.get(pk=self.kwargs["base_pk"])
+        return super().form_valid(form)
 
 
 class AnnotationDetail(UserIsStaffMixin, DetailView):
