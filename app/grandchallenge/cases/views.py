@@ -38,8 +38,15 @@ class ViewImage(UserIsStaffMixin, DetailView):
     model = Image
     template_name = "cases/view_image.html"
 
+
 class AnnotationList(UserIsStaffMixin, ListView):
     model = Annotation
-
     # TODO - this should list only the annotations for this image
 
+
+class AnnotationCreate(UserIsStaffMixin, CreateView):
+    model = Annotation
+
+
+class AnnotationDetail(UserIsStaffMixin, DetailView):
+    model = Annotation
