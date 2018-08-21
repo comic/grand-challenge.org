@@ -57,6 +57,12 @@ If you only want to run the tests for a particular app, eg. for `teams`, you can
 Development
 -----------
 
+You will need to install pre-commit so that the code is correctly formatted
+
+.. code-block:: console
+
+    $ python3 -m pip install pre-commit
+
 We recommend using Pycharm for development.
 You will need the Professional edition to use the docker-compose integration. 
 To set up the environment in Pycharm Professional 2018.1:
@@ -81,13 +87,8 @@ You can do this with
 
 .. code-block:: console
 
-    $ docker-compose run web --rm python manage.py makemigrations
+    $ docker-compose run web --rm --user `id -u` python manage.py makemigrations
 
-and then change ownership of the created files to yourself with
-
-.. code-block:: console
-
-    $ sudo chown $USER:$(id -gn) <migration_file>
 
 add these to git and commit.
 
