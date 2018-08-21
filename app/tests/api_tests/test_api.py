@@ -23,6 +23,7 @@ def get_staff_user_with_token():
     "test_input, expected",
     [
         ("submission", "Submission List"),
+        ("annotation", "Annotation List"),
     ],
 )
 def test_api_pages(client, test_input, expected):
