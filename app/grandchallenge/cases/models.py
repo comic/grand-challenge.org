@@ -143,6 +143,7 @@ class ImageFile(UUIDModel):
         to=Image,
         null=True,
         on_delete=models.SET_NULL,
+        related_name="files",
     )
     file = models.FileField(
         upload_to=image_file_path,
@@ -160,9 +161,9 @@ class Annotation(UUIDModel):
         Image, related_name="annotations", on_delete=models.CASCADE,
     )
     image = models.ForeignKey(
-        Image, null=True, blank=True,  on_delete=models.CASCADE,
+        Image, null=True, blank=True, on_delete=models.CASCADE,
     )
-    metadata = JSONField()
+    metadata = JSONField(null=True, blank=True)
 
     def get_absolute_url(self):
         return reverse(

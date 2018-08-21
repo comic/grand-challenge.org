@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 from django.views.generic import CreateView, DetailView, ListView
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
-    RawImageFile, RawImageUploadSession, UPLOAD_SESSION_STATE, Image,
-    Annotation)
+    RawImageFile,
+    RawImageUploadSession,
+    UPLOAD_SESSION_STATE,
+    Image,
+    Annotation,
+    ImageFile,
+)
+from grandchallenge.cases.serializers import (
+    AnnotationSerializer, ImageSerializer, ImageFileSerializer
+)
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -59,3 +68,18 @@ class AnnotationCreate(UserIsStaffMixin, CreateView):
 
 class AnnotationDetail(UserIsStaffMixin, DetailView):
     model = Annotation
+
+
+class ImageViewSet(ReadOnlyModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer
+
+
+class ImageFileViewSet(ReadOnlyModelViewSet):
+    queryset = ImageFile.objects.all()
+    serializer_class = ImageFileSerializer
+
+
+class AnnotationViewSet(ReadOnlyModelViewSet):
+    queryset = Annotation.objects.all()
+    serializer_class = AnnotationSerializer

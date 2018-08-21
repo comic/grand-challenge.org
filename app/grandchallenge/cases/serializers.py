@@ -4,23 +4,27 @@ from rest_framework import serializers
 from grandchallenge.cases.models import Image, ImageFile, Annotation
 
 
-class ImageFileSerializer(serializers.HyperlinkedModelSerializer):
+class ImageFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageFile
-        fields = ("image", "file",)
+        fields = ("pk", "image", "file",)
 
 
-class AnnotationSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Annotation
-        fields = ("base", "image", "metadata",)
-
-
-class ImageSerializer(serializers.HyperlinkedModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
-    annotations = AnnotationSerializer(many=True, read_only=True)
+    annotations = serializers.HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="api:annotation-detail",
+    )
 
     class Meta:
         model = Image
-        fields = ("name",)
-        
+        fields = ("pk", "name", "files", "annotations",)
+
+
+class AnnotationSerializer(serializers.ModelSerializer):
+    base = ImageSerializer(many=False, read_only=True)
+    image = ImageSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Annotation
+        fields = ("pk", "base", "image", "metadata",)
