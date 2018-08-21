@@ -11,23 +11,35 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='StagedFile',
+            name="StagedFile",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('csrf', models.CharField(max_length=128)),
-                ('client_id', models.CharField(max_length=128, null=True)),
-                ('client_filename', models.CharField(max_length=128)),
-                ('file_id', models.UUIDField()),
-                ('timeout', models.DateTimeField()),
-                ('file', models.FileField(upload_to=grandchallenge.jqfileupload.models.generate_upload_filename)),
-                ('start_byte', models.BigIntegerField()),
-                ('end_byte', models.BigIntegerField()),
-                ('total_size', models.BigIntegerField(null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("csrf", models.CharField(max_length=128)),
+                ("client_id", models.CharField(max_length=128, null=True)),
+                ("client_filename", models.CharField(max_length=128)),
+                ("file_id", models.UUIDField()),
+                ("timeout", models.DateTimeField()),
+                (
+                    "file",
+                    models.FileField(
+                        upload_to=grandchallenge.jqfileupload.models.generate_upload_filename
+                    ),
+                ),
+                ("start_byte", models.BigIntegerField()),
+                ("end_byte", models.BigIntegerField()),
+                ("total_size", models.BigIntegerField(null=True)),
             ],
-        ),
+        )
     ]

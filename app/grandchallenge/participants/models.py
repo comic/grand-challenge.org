@@ -10,6 +10,7 @@ class RegistrationRequest(models.Model):
     each user before allowing or denying them. This class records the needed
     info for that.
     """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         help_text="which user requested to participate?",
@@ -22,11 +23,13 @@ class RegistrationRequest(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True)
     changed = models.DateTimeField(auto_now=True)
-    PENDING = 'PEND'
-    ACCEPTED = 'ACPT'
-    REJECTED = 'RJCT'
+    PENDING = "PEND"
+    ACCEPTED = "ACPT"
+    REJECTED = "RJCT"
     REGISTRATION_CHOICES = (
-        (PENDING, 'Pending'), (ACCEPTED, 'Accepted'), (REJECTED, 'Rejected')
+        (PENDING, "Pending"),
+        (ACCEPTED, "Accepted"),
+        (REJECTED, "Rejected"),
     )
     status = models.CharField(
         max_length=4, choices=REGISTRATION_CHOICES, default=PENDING
@@ -59,11 +62,11 @@ class RegistrationRequest(models.Model):
 
     @staticmethod
     def format_date(date):
-        return date.strftime('%b %d, %Y at %H:%M')
+        return date.strftime("%b %d, %Y at %H:%M")
 
     def user_affiliation(self):
         profile = self.user.user_profile
         return profile.institution + " - " + profile.department
 
     class Meta:
-        unique_together = (('challenge', 'user'),)
+        unique_together = (("challenge", "user"),)

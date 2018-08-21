@@ -5,14 +5,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('evaluation', '0003_config_new_results_are_public'),
-    ]
+    dependencies = [("evaluation", "0003_config_new_results_are_public")]
 
     operations = [
         migrations.AddField(
-            model_name='config',
-            name='display_submission_comments',
-            field=models.BooleanField(default=False, help_text='If true, submission comments are shown on the results page.'),
-        ),
+            model_name="config",
+            name="display_submission_comments",
+            field=models.BooleanField(
+                default=False,
+                help_text="If true, submission comments are shown on the results page.",
+            ),
+        )
     ]

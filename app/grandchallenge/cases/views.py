@@ -10,9 +10,7 @@ from grandchallenge.cases.models import (
     Image,
     Annotation,
 )
-from grandchallenge.cases.serializers import (
-    AnnotationSerializer
-)
+from grandchallenge.cases.serializers import AnnotationSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -35,10 +33,12 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 
         result["upload_session"] = result["object"]
         result["raw_files"] = RawImageFile.objects.filter(
-            upload_session=result["object"]).all()
+            upload_session=result["object"]
+        ).all()
         result["images"] = Image.objects.filter(origin=result["object"]).all()
-        result["process_finished"] = result[
-                                         "object"].session_state == UPLOAD_SESSION_STATE.stopped
+        result["process_finished"] = (
+            result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+        )
         return result
 
 
@@ -58,7 +58,7 @@ class AnnotationList(UserIsStaffMixin, ListView):
 
 class AnnotationCreate(UserIsStaffMixin, CreateView):
     model = Annotation
-    fields = ("image", "metadata",)
+    fields = ("image", "metadata")
 
     def form_valid(self, form):
         form.instance.base = Image.objects.get(pk=self.kwargs["base_pk"])

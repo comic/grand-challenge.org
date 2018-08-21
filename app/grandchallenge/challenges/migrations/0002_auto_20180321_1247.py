@@ -7,13 +7,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0001_initial'),
-    ]
+    dependencies = [("challenges", "0001_initial")]
 
     operations = [
-        migrations.RenameModel(
-            old_name='ComicSite',
-            new_name='Challenge',
-        ),
+        migrations.RenameModel(old_name="ComicSite", new_name="Challenge")
     ]

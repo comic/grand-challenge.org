@@ -10,7 +10,7 @@ from tests.utils import (
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view", ['challenges:create', 'challenges:users-list'])
+@pytest.mark.parametrize("view", ["challenges:create", "challenges:users-list"])
 def test_challenge_logged_in_permissions(view, client, ChallengeSet):
     validate_logged_in_view(
         url=reverse(view), challenge_set=ChallengeSet, client=client
@@ -21,18 +21,21 @@ def test_challenge_logged_in_permissions(view, client, ChallengeSet):
 def test_challenge_update_permissions(client, TwoChallengeSets):
     validate_admin_only_view(
         two_challenge_set=TwoChallengeSets,
-        viewname='challenges:update',
+        viewname="challenges:update",
         client=client,
     )
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "view", [
+    "view",
+    [
         "challenges:external-list",
         "challenges:external-create",
         "challenges:external-update",
         "challenges:external-delete",
-    ])
+    ],
+)
 def test_external_challenges_staff_views(client, view):
     if view in ["challenges:external-update", "challenges:external-delete"]:
         reverse_kwargs = {"short_name": ExternalChallengeFactory().short_name}

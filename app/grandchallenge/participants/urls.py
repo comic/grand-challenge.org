@@ -7,23 +7,23 @@ from grandchallenge.participants.views import (
     ParticipantsList,
 )
 
-app_name = 'participants'
+app_name = "participants"
 
 urlpatterns = [
-    url(r'^$', ParticipantsList.as_view(), name='list'),
+    url(r"^$", ParticipantsList.as_view(), name="list"),
     url(
-        r'^registration/$',
+        r"^registration/$",
         RegistrationRequestList.as_view(),
-        name='registration-list',
+        name="registration-list",
     ),
     url(
-        r'^registration/create/$',
+        r"^registration/create/$",
         RegistrationRequestCreate.as_view(),
-        name='registration-create',
+        name="registration-create",
     ),
     url(
-        r'^registration/(?P<pk>\d+)/update/$',
+        r"^registration/(?P<pk>\d+)/update/$",
         RegistrationRequestUpdate.as_view(),
-        name='registration-update',
+        name="registration-update",
     ),
 ]

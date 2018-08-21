@@ -5,7 +5,7 @@ from tests.utils import validate_admin_only_view
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "view", ['uploads:list', 'uploads:ck-create', 'uploads:ck-browse']
+    "view", ["uploads:list", "uploads:ck-create", "uploads:ck-browse"]
 )
 def test_upload_list(view, client, TwoChallengeSets):
     reverse_kwargs = {}

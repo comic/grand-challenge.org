@@ -38,7 +38,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     read_line_limit = 10000
 
     result = {}
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         bin_line = True
         while bin_line is not None:
             read_line_limit -= 1
@@ -53,7 +53,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
                 raise ValueError("Line length is too long")
 
             try:
-                line = bin_line.decode('utf-8')
+                line = bin_line.decode("utf-8")
             except UnicodeDecodeError:
                 raise ValueError("Header contains invalid UTF-8")
             else:
@@ -97,7 +97,8 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         if path not in data_file_path.parents:
             raise ValueError(
                 f"{ELEMENT_DATA_FILE_KEY} references a file which is not in "
-                f"the uploaded data folder")
+                f"the uploaded data folder"
+            )
         if not data_file_path.is_file():
             raise ValueError("Data container of mhd file is missing")
         return True
@@ -107,8 +108,8 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         return data_file == "LOCAL"
 
     def convert_itk_file(
-            headers: Mapping[str, Union[str, None]],
-            filename: Path) -> Tuple[Image, Sequence[ImageFile]]:
+        headers: Mapping[str, Union[str, None]], filename: Path
+    ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
             simple_itk_image = sitk.ReadImage(str(filename.absolute()))
             simple_itk_image: sitk.Image
@@ -147,8 +148,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                         temp_file.write(buffer)
 
                 db_image_file = ImageFile(
-                    image=db_image,
-                    file=File(temp_file, name=_file.name),
+                    image=db_image, file=File(temp_file, name=_file.name)
                 )
                 db_image_files.append(db_image_file)
 
@@ -166,9 +166,9 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             continue
 
         try:
-            is_hd_or_mha = \
-                detect_mhd_file(parsed_headers) or \
-                detect_mha_file(parsed_headers)
+            is_hd_or_mha = detect_mhd_file(parsed_headers) or detect_mha_file(
+                parsed_headers
+            )
         except ValueError as e:
             invalid_file_errors[file.name] = str(e)
             continue
@@ -178,8 +178,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
                 file_dependency = Path(parsed_headers[ELEMENT_DATA_FILE_KEY])
                 if not (path / file_dependency).is_file():
-                    invalid_file_errors[file.name] = \
-                        "cannot find data file"
+                    invalid_file_errors[file.name] = "cannot find data file"
                     continue
 
             n_image, n_image_files = convert_itk_file(parsed_headers, file)

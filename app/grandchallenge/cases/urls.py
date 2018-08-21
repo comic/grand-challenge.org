@@ -11,29 +11,27 @@ from grandchallenge.cases.views import (
     AnnotationDetail,
 )
 
-app_name = 'cases'
+app_name = "cases"
 
 urlpatterns = [
-    path('uploads/', UploadRawFiles.as_view(), name='create'),
+    path("uploads/", UploadRawFiles.as_view(), name="create"),
     path(
         f"uploads/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-raw-image-files-ajax",
     ),
     path(
-        'uploads/<uuid:pk>/',
+        "uploads/<uuid:pk>/",
         ShowUploadSessionState.as_view(),
-        name='raw-files-session-detail',
+        name="raw-files-session-detail",
     ),
     path(
-        'images/<uuid:pk>/',
-        ViewImage.as_view(),
-        name='display-processed-image',
+        "images/<uuid:pk>/", ViewImage.as_view(), name="display-processed-image"
     ),
     path(
-        'images/<uuid:base_pk>/annotations/',
+        "images/<uuid:base_pk>/annotations/",
         AnnotationList.as_view(),
-        name='annotation-list',
+        name="annotation-list",
     ),
     path(
         "images/<uuid:base_pk>/annotations/create/",

@@ -29,12 +29,12 @@ class HtmlLinkReplacer:
         return soup.renderContents()
 
     def replace_a(self, soup, baseURL, currentpath):
-        for a in soup.findAll('a'):
+        for a in soup.findAll("a"):
             a = self.fix_url(a, baseURL, currentpath)
         return soup
 
     def replace_img(self, soup, baseURL, currentpath):
-        for a in soup.findAll('img'):
+        for a in soup.findAll("img"):
             a = self.fix_url(a, baseURL, currentpath)
         return soup
 
@@ -47,11 +47,11 @@ class HtmlLinkReplacer:
             return False
 
     def get_url(self, a):
-        if a.has_attr('src'):
-            return a['src']
+        if a.has_attr("src"):
+            return a["src"]
 
-        elif a.has_attr('href'):
-            return a['href']
+        elif a.has_attr("href"):
+            return a["href"]
 
         else:
             return ""
@@ -92,10 +92,10 @@ class HtmlLinkReplacer:
         handles root-relative url (e.g "/admin/index.html") and regular relative url
         (e.g. "images/test.png") correctly   
         """
-        if a.has_attr('src'):
-            url = a['src']
-        elif a.has_attr('href'):
-            url = a['href']
+        if a.has_attr("src"):
+            url = a["src"]
+        elif a.has_attr("href"):
+            url = a["href"]
         else:
             raise AttributeError(
                 "Trying to replace a link which has no src and no href"
@@ -103,14 +103,14 @@ class HtmlLinkReplacer:
             )
 
         # leave absolute links alone
-        if re.match('http://', url) or re.match('https://', url):
+        if re.match("http://", url) or re.match("https://", url):
             pass
         # for root-relative links
-        elif re.match('/', url):
+        elif re.match("/", url):
             url = baseURL + url
         # regular relative links
         elif re.match(
-            '\w', url
+            "\w", url
         ):  # match matches start of string, \w = any alphanumeric
             url = baseURL + currentpath + url
         # go up path if ../ are in link
@@ -141,10 +141,10 @@ class HtmlLinkReplacer:
         url = re.sub(
             "http:/(?=\w)", "http://", url
         )  # but this also removes double slashes in http://.  Reverse this.
-        if a.has_attr('src'):
-            a['src'] = url
-        elif a.has_attr('href'):
-            a['href'] = url
+        if a.has_attr("src"):
+            a["src"] = url
+        elif a.has_attr("href"):
+            a["href"] = url
         else:
             logger.warning(
                 "Trying to replace a link which has no src and no href"

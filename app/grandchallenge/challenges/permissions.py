@@ -49,7 +49,7 @@ def _required_permission(path, challenge_short_name):
         raise ImproperlyConfigured(
             "Don't know from which folder serving publiv files"
             "is allowed. Please add a setting like "
-            "'COMIC_PUBLIC_FOLDER_NAME = \"public_html\""
+            '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
             " to your .conf file."
         )
 
@@ -57,38 +57,41 @@ def _required_permission(path, challenge_short_name):
         raise ImproperlyConfigured(
             "Don't know from which folder serving protected files"
             "is allowed. Please add a setting like "
-            "'COMIC_REGISTERED_ONLY_FOLDER_NAME = \"datasets\""
+            '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
             " to your .conf file."
         )
 
     if challenge_short_name.lower() in [
-        'logos',
-        'banners',
-        'mugshots',
-        'favicon',
+        "logos",
+        "banners",
+        "mugshots",
+        "favicon",
     ]:
         # Anyone can download logos, banners, mugshots and favicons
         return ComicSiteModel.ALL
 
-    if challenge_short_name.lower() == 'evaluation':
+    if challenge_short_name.lower() == "evaluation":
         # No one can download evaluation files
-        return 'nobody'
+        return "nobody"
 
-    if challenge_short_name.lower() == 'evaluation-supplementary':
+    if challenge_short_name.lower() == "evaluation-supplementary":
         # Anyone can download supplementary files
         return ComicSiteModel.ALL
 
-    if challenge_short_name.lower() == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY:
+    if (
+        challenge_short_name.lower()
+        == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY
+    ):
         # No one can download evaluation files
-        return 'nobody'
+        return "nobody"
 
-    if challenge_short_name.lower() in ['cases', 'images']:
+    if challenge_short_name.lower() in ["cases", "images"]:
         # Everyone can download cases and images
         return ComicSiteModel.ALL
 
-    if challenge_short_name.lower() == 'docker':
+    if challenge_short_name.lower() == "docker":
         # No one can download docker stuff
-        return 'nobody'
+        return "nobody"
 
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):

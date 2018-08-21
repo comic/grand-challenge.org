@@ -11,31 +11,77 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('challenges', '0001_initial'),
-    ]
+    dependencies = [("challenges", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='Page',
+            name="Page",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.SlugField(max_length=64)),
-                ('permission_lvl', models.CharField(choices=[('ALL', 'All'), ('REG', 'Registered users only'), ('ADM', 'Administrators only')], default='ALL', max_length=3)),
-                ('order', models.IntegerField(default=1, editable=False, help_text='Determines order in which page appear in site menu')),
-                ('display_title', models.CharField(blank=True, default='', help_text='On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used', max_length=255)),
-                ('hidden', models.BooleanField(default=False, help_text='Do not display this page in site menu')),
-                ('html', ckeditor.fields.RichTextField()),
-                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.SlugField(max_length=64)),
+                (
+                    "permission_lvl",
+                    models.CharField(
+                        choices=[
+                            ("ALL", "All"),
+                            ("REG", "Registered users only"),
+                            ("ADM", "Administrators only"),
+                        ],
+                        default="ALL",
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "order",
+                    models.IntegerField(
+                        default=1,
+                        editable=False,
+                        help_text="Determines order in which page appear in site menu",
+                    ),
+                ),
+                (
+                    "display_title",
+                    models.CharField(
+                        blank=True,
+                        default="",
+                        help_text="On pages and in menu items, use this text. Spaces and special chars allowed here. Optional field. If emtpy, title is used",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "hidden",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Do not display this page in site menu",
+                    ),
+                ),
+                ("html", ckeditor.fields.RichTextField()),
+                (
+                    "challenge",
+                    models.ForeignKey(
+                        help_text="To which comicsite does this object belong?",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="challenges.Challenge",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['challenge', 'order'],
-                'permissions': (('view_ComicSiteModel', 'Can view Comic Site Model'),),
-                'abstract': False,
+                "ordering": ["challenge", "order"],
+                "permissions": (
+                    ("view_ComicSiteModel", "Can view Comic Site Model"),
+                ),
+                "abstract": False,
             },
         ),
         migrations.AlterUniqueTogether(
-            name='page',
-            unique_together=set([('challenge', 'title')]),
+            name="page", unique_together=set([("challenge", "title")])
         ),
     ]

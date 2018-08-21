@@ -1,1 +1,1 @@
-default_app_config = 'grandchallenge.evaluation.apps.EvaluationConfig'
+default_app_config = "grandchallenge.evaluation.apps.EvaluationConfig"

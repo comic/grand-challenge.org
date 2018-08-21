@@ -19,7 +19,8 @@ from grandchallenge.challenges.forms import (
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin, UserIsStaffMixin
+    UserIsChallengeAdminMixin,
+    UserIsStaffMixin,
 )
 from grandchallenge.core.urlresolvers import reverse
 
@@ -27,7 +28,7 @@ from grandchallenge.core.urlresolvers import reverse
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Challenge
     form_class = ChallengeCreateForm
-    success_message = 'Challenge successfully created'
+    success_message = "Challenge successfully created"
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -51,24 +52,26 @@ class ChallengeList(TemplateView):
         context = super().get_context_data()
 
         challenges_by_year = self.create_objects_by_year(
-            Challenge.objects
-                .filter(hidden=False)
-                .order_by("-created")
+            Challenge.objects.filter(hidden=False).order_by("-created")
         )
         challenges_by_year = self.create_objects_by_year(
-            ExternalChallenge.objects
-                .filter(hidden=False)
-                .order_by("-created"),
-            challenges_by_year
+            ExternalChallenge.objects.filter(hidden=False).order_by("-created"),
+            challenges_by_year,
         )
 
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display
-        context.update({
-            "challenges_by_year": OrderedDict(sorted(
-                challenges_by_year.items(), key=lambda t: t[0], reverse=True,
-            ))
-        })
+        context.update(
+            {
+                "challenges_by_year": OrderedDict(
+                    sorted(
+                        challenges_by_year.items(),
+                        key=lambda t: t[0],
+                        reverse=True,
+                    )
+                )
+            }
+        )
 
         return context
 
@@ -81,8 +84,8 @@ class UsersChallengeList(LoginRequiredMixin, ListView):
         queryset = super().get_queryset()
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
-                Q(participants_group__in=self.request.user.groups.all()) |
-                Q(admins_group__in=self.request.user.groups.all())
+                Q(participants_group__in=self.request.user.groups.all())
+                | Q(admins_group__in=self.request.user.groups.all())
             )
         return queryset
 
@@ -91,11 +94,11 @@ class ChallengeUpdate(
     UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
 ):
     model = Challenge
-    slug_field = 'short_name__iexact'
-    slug_url_kwarg = 'challenge_short_name'
+    slug_field = "short_name__iexact"
+    slug_url_kwarg = "challenge_short_name"
     form_class = ChallengeUpdateForm
-    success_message = 'Challenge successfully updated'
-    template_name_suffix = '_update'
+    success_message = "Challenge successfully updated"
+    template_name_suffix = "_update"
 
 
 class ExternalChallengeCreate(

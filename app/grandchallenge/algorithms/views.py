@@ -19,7 +19,7 @@ class AlgorithmList(UserIsStaffMixin, ListView):
 def ipynb_to_html(*, notebook: File):
     # Run nbconvert on the description and get the html on each save
     html_exporter = HTMLExporter()
-    html_exporter.template_file = 'full'
+    html_exporter.template_file = "full"
 
     with notebook.open() as d:
         (body, _) = html_exporter.from_file(d)
@@ -40,7 +40,7 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
             logger.warning("Could not convert notebook to html.")
 
         form.instance.creator = self.request.user
-        uploaded_file = form.cleaned_data['chunked_upload'][0]
+        uploaded_file = form.cleaned_data["chunked_upload"][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
 

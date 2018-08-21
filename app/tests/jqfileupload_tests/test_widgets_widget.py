@@ -5,16 +5,24 @@ from datetime import timedelta
 import pytest
 from django.core.exceptions import ValidationError
 from django.http.response import (
-    JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
+    JsonResponse,
+    HttpResponseForbidden,
+    HttpResponseBadRequest,
 )
 from django.test.client import RequestFactory
 
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets.uploader import (
-    AjaxUploadWidget, StagedAjaxFile, UploadedAjaxFileList
+    AjaxUploadWidget,
+    StagedAjaxFile,
+    UploadedAjaxFileList,
 )
-from tests.jqfileupload_tests.utils import create_upload_file_request, \
-    load_test_data, generate_new_upload_id, create_partial_upload_file_request
+from tests.jqfileupload_tests.utils import (
+    create_upload_file_request,
+    load_test_data,
+    generate_new_upload_id,
+    create_partial_upload_file_request,
+)
 
 
 def force_post_update(request, key: str, value: object):
@@ -35,7 +43,7 @@ def test_invalid_initialization():
 def test_single_chunk(rf: RequestFactory):
     widget = AjaxUploadWidget(ajax_target_path="/ajax")
     widget.timeout = timedelta(seconds=1)
-    filename = 'test.bin'
+    filename = "test.bin"
     post_request = create_upload_file_request(rf, filename=filename)
     response = widget.handle_ajax(post_request)
     assert isinstance(response, JsonResponse)
@@ -109,9 +117,7 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10
     )
-    post_request.META[
-        "HTTP_CONTENT_RANGE"
-    ] = "corrupted data: 54343-3223/21323"
+    post_request.META["HTTP_CONTENT_RANGE"] = "corrupted data: 54343-3223/21323"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10
@@ -193,10 +199,13 @@ def test_render():
 
 def test_form_field_to_python():
     form_field = UploadedAjaxFileList()
-    uuid_string = ",".join((
-        "4dec34db-930f-48be-bb65-d7f8319ff654",
-        "5d901b2c-7cd1-416e-9952-d30b6a0edcba",
-        "4a3c5731-0050-4489-8364-282278f7190f"))
+    uuid_string = ",".join(
+        (
+            "4dec34db-930f-48be-bb65-d7f8319ff654",
+            "5d901b2c-7cd1-416e-9952-d30b6a0edcba",
+            "4a3c5731-0050-4489-8364-282278f7190f",
+        )
+    )
     staged_files = form_field.to_python(uuid_string)
     assert ",".join(str(sf.uuid) for sf in staged_files) == uuid_string
     with pytest.raises(ValidationError):
@@ -216,11 +225,7 @@ def test_upload_validator_using_wrong_extension(rf: RequestFactory):
     widget = AjaxUploadWidget(
         ajax_target_path="/ajax",
         upload_validators=[
-            ExtensionValidator(
-                allowed_extensions=(
-                    '.allowed-extension',
-                )
-            )
+            ExtensionValidator(allowed_extensions=(".allowed-extension",))
         ],
     )
     widget.timeout = timedelta(seconds=1)
@@ -231,15 +236,13 @@ def test_upload_validator_using_wrong_extension(rf: RequestFactory):
     )
 
     request = create_upload_file_request(
-        rf,
-        content=b"should error",
-        filename="test.wrong_extension")
+        rf, content=b"should error", filename="test.wrong_extension"
+    )
     response = widget.handle_ajax(request)
     assert response.status_code == 403
 
     request = create_upload_file_request(
-        rf,
-        content=b"should error",
-        filename="test.allowed-extension")
+        rf, content=b"should error", filename="test.allowed-extension"
+    )
     response = widget.handle_ajax(request)
     assert response.status_code == 200

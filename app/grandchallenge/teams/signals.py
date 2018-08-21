@@ -14,4 +14,4 @@ def create_team_admin(
 ):
     if created and instance.owner.username != settings.ANONYMOUS_USER_NAME:
         TeamMember.objects.create(user=instance.owner, team=instance)
-        assign_perm('change_team', instance.owner, instance)
+        assign_perm("change_team", instance.owner, instance)

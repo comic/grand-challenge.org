@@ -8,24 +8,28 @@ from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd
-)
+from grandchallenge.cases.image_builders.metaio_mhd_mha import image_builder_mhd
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
-    RawImageUploadSession, UPLOAD_SESSION_STATE, Image, ImageFile, RawImageFile
+    RawImageUploadSession,
+    UPLOAD_SESSION_STATE,
+    Image,
+    ImageFile,
+    RawImageFile,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
-    StagedAjaxFile, NotFoundError
+    StagedAjaxFile,
+    NotFoundError,
 )
 
 
-class ProvisioningError(Exception): pass
+class ProvisioningError(Exception):
+    pass
 
 
 def populate_provisioning_directory(
-        raw_files: Sequence[RawImageFile],
-        provisioning_dir: Path):
+    raw_files: Sequence[RawImageFile], provisioning_dir: Path
+):
     """
     Provisions provisioning_dir with the files associated using the given
     list of RawImageFile objects.
@@ -50,7 +54,8 @@ def populate_provisioning_directory(
         staged_file = StagedAjaxFile(image_file.staged_file_id)
         if not staged_file.exists:
             raise ValueError(
-                f"staged file {image_file.staged_file_id} does not exist")
+                f"staged file {image_file.staged_file_id} does not exist"
+            )
 
         with open(provisioning_dir / staged_file.name, "wb") as dest_file:
             with staged_file.open() as src_file:
@@ -68,13 +73,15 @@ def populate_provisioning_directory(
         except Exception as e:
             logger.exception(
                 f"populate_provisioning_directory exception "
-                f"for file: '{raw_file.filename}'")
+                f"for file: '{raw_file.filename}'"
+            )
             exceptions_raised += 1
 
     if exceptions_raised > 0:
         raise ProvisioningError(
             f"{exceptions_raised} errors occurred during provisioning of the "
-            f"image construction directory")
+            f"image construction directory"
+        )
 
 
 @transaction.atomic
@@ -97,22 +104,18 @@ def store_image(image: Image, all_image_files: Sequence[ImageFile]):
         extracts related images from the all_image_files argument to store
         alongside the given image.
     """
-    associated_files = [
-        _if for _if in all_image_files
-        if _if.image == image
-    ]
+    associated_files = [_if for _if in all_image_files if _if.image == image]
     image.save()
     for af in associated_files:
         af.save()
 
 
-IMAGE_BUILDER_ALGORITHMS = [
-    image_builder_mhd
-]
+IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd]
 
 
-def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[
-    Sequence[RawImageFile], Sequence[RawImageFile]]:
+def remove_duplicate_files(
+    session_files: Sequence[RawImageFile]
+) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
     that have a nun-unqie filename.
@@ -142,7 +145,7 @@ def remove_duplicate_files(session_files: Sequence[RawImageFile]) -> Tuple[
             filename_lookup[file.filename] = file
     return (
         tuple(x for x in filename_lookup.values() if x is not None),
-        tuple(duplicates)
+        tuple(duplicates),
     )
 
 
@@ -185,11 +188,13 @@ def build_images(upload_session_uuid: UUID):
                 upload_session.save()
 
                 session_files = RawImageFile.objects.filter(
-                    upload_session=upload_session.pk).all()
+                    upload_session=upload_session.pk
+                ).all()
                 session_files: Tuple[RawImageFile]
 
-                session_files, duplicates = \
-                    remove_duplicate_files(session_files)
+                session_files, duplicates = remove_duplicate_files(
+                    session_files
+                )
                 for duplicate in duplicates:
                     duplicate: RawImageFile
                     duplicate.error = "Filename not unique"
@@ -202,7 +207,8 @@ def build_images(upload_session_uuid: UUID):
 
                 filename_lookup = {
                     StagedAjaxFile(
-                        raw_image_file.staged_file_id).name: raw_image_file
+                        raw_image_file.staged_file_id
+                    ).name: raw_image_file
                     for raw_image_file in session_files
                 }
                 unconsumed_filenames = set(filename_lookup.keys())
@@ -214,13 +220,17 @@ def build_images(upload_session_uuid: UUID):
                     algorithm_result: ImageBuilderResult
 
                     collected_images += list(algorithm_result.new_images)
-                    collected_associated_files += \
-                        list(algorithm_result.new_image_files)
+                    collected_associated_files += list(
+                        algorithm_result.new_image_files
+                    )
 
                     for filename in algorithm_result.consumed_files:
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
-                    for filename, msg in algorithm_result.file_errors_map.items():
+                    for (
+                        filename,
+                        msg,
+                    ) in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[filename]
@@ -233,8 +243,9 @@ def build_images(upload_session_uuid: UUID):
                     store_image(image, collected_associated_files)
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]
-                    raw_file.error = \
+                    raw_file.error = (
                         "File could not be processed by any image builder"
+                    )
 
                 # Delete any touched file data
                 for file in session_files:

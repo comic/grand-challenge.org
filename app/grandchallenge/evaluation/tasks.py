@@ -18,8 +18,8 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         queryset=valid_results,
         metric_paths=(challenge.evaluation_config.score_jsonpath,),
         metric_reverse=(
-            challenge.evaluation_config.score_default_sort ==
-            challenge.evaluation_config.DESCENDING,
+            challenge.evaluation_config.score_default_sort
+            == challenge.evaluation_config.DESCENDING,
         ),
     )
     for res in Result.objects.filter(Q(challenge=challenge)):

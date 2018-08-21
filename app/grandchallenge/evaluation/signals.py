@@ -8,7 +8,11 @@ from rest_framework.authtoken.models import Token
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
-    Submission, Job, Method, Result, Config,
+    Submission,
+    Job,
+    Method,
+    Result,
+    Config,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 
@@ -19,9 +23,11 @@ def create_evaluation_job(
     instance: Submission = None, created: bool = False, *_, **__
 ):
     if created:
-        method = Method.objects.filter(challenge=instance.challenge).order_by(
-            '-created'
-        ).first()
+        method = (
+            Method.objects.filter(challenge=instance.challenge)
+            .order_by("-created")
+            .first()
+        )
 
         if method is None:
             # TODO: Email here, do not raise
@@ -36,7 +42,7 @@ def create_evaluation_job(
 @disable_for_loaddata
 def recalculate_ranks(instance: Union[Result, Config] = None, *_, **__):
     """Recalculates the ranking on a new result"""
-    calculate_ranks.apply_async(kwargs={'challenge_pk': instance.challenge.pk})
+    calculate_ranks.apply_async(kwargs={"challenge_pk": instance.challenge.pk})
 
 
 @receiver(post_save, sender=Result)

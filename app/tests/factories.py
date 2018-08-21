@@ -10,17 +10,17 @@ from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 
-SUPER_SECURE_TEST_PASSWORD = 'testpasswd'
+SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
 
 class UserFactory(factory.DjangoModelFactory):
     class Meta:
         model = settings.AUTH_USER_MODEL
 
-    username = factory.Sequence(lambda n: f'test_user_{n:04}')
-    email = factory.LazyAttribute(lambda u: '%s@test.com' % u.username)
+    username = factory.Sequence(lambda n: f"test_user_{n:04}")
+    email = factory.LazyAttribute(lambda u: "%s@test.com" % u.username)
     password = factory.PostGenerationMethodCall(
-        'set_password', SUPER_SECURE_TEST_PASSWORD
+        "set_password", SUPER_SECURE_TEST_PASSWORD
     )
     is_active = True
     is_staff = False
@@ -31,7 +31,7 @@ class ChallengeFactory(factory.DjangoModelFactory):
     class Meta:
         model = Challenge
 
-    short_name = factory.Sequence(lambda n: f'test_challenge_{n}')
+    short_name = factory.Sequence(lambda n: f"test_challenge_{n}")
     creator = factory.SubFactory(UserFactory)
 
 
@@ -39,8 +39,8 @@ class ExternalChallengeFactory(factory.DjangoModelFactory):
     class Meta:
         model = ExternalChallenge
 
-    short_name = factory.Sequence(lambda n: f'test_external_challenge{n}')
-    homepage = factory.Faker('url')
+    short_name = factory.Sequence(lambda n: f"test_external_challenge{n}")
+    homepage = factory.Faker("url")
 
 
 class PageFactory(factory.DjangoModelFactory):
@@ -48,8 +48,8 @@ class PageFactory(factory.DjangoModelFactory):
         model = Page
 
     challenge = factory.SubFactory(ChallengeFactory)
-    title = factory.Sequence(lambda n: f'page_{n}')
-    html = factory.LazyAttribute(lambda t: f'<h2>{t.title}</h2>')
+    title = factory.Sequence(lambda n: f"page_{n}")
+    html = factory.LazyAttribute(lambda t: f"<h2>{t.title}</h2>")
 
 
 class UploadFactory(factory.DjangoModelFactory):
@@ -59,7 +59,7 @@ class UploadFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
     file = factory.django.FileField()
     user = factory.SubFactory(UserFactory)
-    title = factory.Sequence(lambda n: f'file_{n}')
+    title = factory.Sequence(lambda n: f"file_{n}")
 
 
 class RegistrationRequestFactory(factory.DjangoModelFactory):
@@ -73,7 +73,7 @@ class RegistrationRequestFactory(factory.DjangoModelFactory):
 def hash_sha256(s):
     m = hashlib.sha256()
     m.update(s.encode())
-    return f'sha256:{m.hexdigest()}'
+    return f"sha256:{m.hexdigest()}"
 
 
 class MethodFactory(factory.DjangoModelFactory):
@@ -82,7 +82,7 @@ class MethodFactory(factory.DjangoModelFactory):
 
     challenge = factory.SubFactory(ChallengeFactory)
     image = factory.django.FileField()
-    image_sha256 = factory.sequence(lambda n: hash_sha256(f'image{n}'))
+    image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
 class SubmissionFactory(factory.DjangoModelFactory):
@@ -114,7 +114,7 @@ class TeamFactory(factory.DjangoModelFactory):
     class Meta:
         model = Team
 
-    name = factory.Sequence(lambda n: 'test_team_%s' % n)
+    name = factory.Sequence(lambda n: "test_team_%s" % n)
     challenge = factory.SubFactory(ChallengeFactory)
 
 

@@ -4,14 +4,14 @@ from rest_framework import routers
 from grandchallenge.api.views import SubmissionViewSet
 from grandchallenge.cases.views import AnnotationViewSet
 
-app_name = 'api'
+app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r'submissions', SubmissionViewSet)
-router.register(r'cases/annotations', AnnotationViewSet)
+router.register(r"submissions", SubmissionViewSet)
+router.register(r"cases/annotations", AnnotationViewSet)
 urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers
-    url(r'^v1/', include(router.urls)),
-    url(r'^auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r"^v1/", include(router.urls)),
+    url(r"^auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

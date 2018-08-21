@@ -21,27 +21,22 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "test_input, expected",
-    [
-        ("submission", "Submission List"),
-        ("annotation", "Annotation List"),
-    ],
+    [("submission", "Submission List"), ("annotation", "Annotation List")],
 )
 def test_api_pages(client, test_input, expected):
     _, token = get_staff_user_with_token()
 
     # Check for the correct HTML view
-    url = reverse(f'api:{test_input}-list')
+    url = reverse(f"api:{test_input}-list")
     response = client.get(
-        url, HTTP_ACCEPT='text/html', HTTP_AUTHORIZATION='Token ' + token,
+        url, HTTP_ACCEPT="text/html", HTTP_AUTHORIZATION="Token " + token
     )
     assert expected in force_text(response.content)
     assert response.status_code == 200
 
     # There should be no content, but we should be able to do json.loads
     response = client.get(
-        url,
-        HTTP_ACCEPT='application/json',
-        HTTP_AUTHORIZATION='Token ' + token,
+        url, HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token
     )
     assert response.status_code == 200
     assert not json.loads(response.content)
@@ -54,22 +49,22 @@ def test_api_pages(client, test_input, expected):
 )
 def test_upload_file(client, test_file, expected_response):
     submission_file = os.path.join(
-        os.path.split(__file__)[0], 'resources', test_file
+        os.path.split(__file__)[0], "resources", test_file
     )
 
     # Get the users token
     user, token = get_staff_user_with_token()
 
     challenge = ChallengeFactory()
-    submission_url = reverse('api:submission-list')
+    submission_url = reverse("api:submission-list")
 
     # Upload with token authorisation
-    with open(submission_file, 'rb') as f:
+    with open(submission_file, "rb") as f:
         response = client.post(
             submission_url,
-            {'file': f, 'challenge': challenge.short_name},
-            format='multipart',
-            HTTP_AUTHORIZATION='Token ' + token,
+            {"file": f, "challenge": challenge.short_name},
+            format="multipart",
+            HTTP_AUTHORIZATION="Token " + token,
         )
     assert response.status_code == expected_response
 

@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class ParticipantsConfig(AppConfig):
-    name = 'grandchallenge.participants'
+    name = "grandchallenge.participants"
 
     def ready(self):
         # noinspection PyUnresolvedReferences

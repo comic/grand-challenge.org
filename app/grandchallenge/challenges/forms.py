@@ -4,98 +4,93 @@ from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 from django_select2.forms import Select2MultipleWidget
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ExternalChallenge
-)
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 
 
 class ChallengeCreateForm(forms.ModelForm):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit('save', 'Save'))
+        self.helper.layout.append(Submit("save", "Save"))
 
     class Meta:
         model = Challenge
         fields = [
-            'short_name',
-            'description',
-            'require_participant_review',
-            'use_evaluation',
+            "short_name",
+            "description",
+            "require_participant_review",
+            "use_evaluation",
         ]
 
 
 class ChallengeUpdateForm(forms.ModelForm):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab('Information', 'title', 'description', ),
-                Tab('Images', 'logo', 'banner', ),
+                Tab("Information", "title", "description"),
+                Tab("Images", "logo", "banner"),
                 Tab(
-                    'Metadata',
+                    "Metadata",
                     "task_types",
                     "modalities",
                     "structures",
-                    'disclaimer',
-                    'workshop_date',
-                    'event_name',
-                    'event_url',
-                    'is_open_for_submissions',
-                    'submission_page_name',
-                    'number_of_submissions',
-                    'last_submission_date',
-                    'offers_data_download',
-                    'number_of_downloads',
-                    'publication_url',
-                    'publication_journal_name',
+                    "disclaimer",
+                    "workshop_date",
+                    "event_name",
+                    "event_url",
+                    "is_open_for_submissions",
+                    "submission_page_name",
+                    "number_of_submissions",
+                    "last_submission_date",
+                    "offers_data_download",
+                    "number_of_downloads",
+                    "publication_url",
+                    "publication_journal_name",
                 ),
                 Tab(
-                    'Registration',
-                    'use_registration_page',
-                    'require_participant_review',
-                    'registration_page_text',
+                    "Registration",
+                    "use_registration_page",
+                    "require_participant_review",
+                    "registration_page_text",
                 ),
-                Tab('Visibility', 'hidden', 'hide_signin', 'hide_footer'),
-                Tab('Automated Evaluation', 'use_evaluation'),
+                Tab("Visibility", "hidden", "hide_signin", "hide_footer"),
+                Tab("Automated Evaluation", "use_evaluation"),
             ),
-            ButtonHolder(Submit('save', 'Save')),
+            ButtonHolder(Submit("save", "Save")),
         )
 
     class Meta:
         model = Challenge
         fields = [
-            'title',
-            'description',
-            'logo',
-            'banner',
-            'disclaimer',
-            'workshop_date',
-            'event_name',
-            'event_url',
-            'is_open_for_submissions',
-            'submission_page_name',
-            'number_of_submissions',
-            'last_submission_date',
-            'offers_data_download',
-            'number_of_downloads',
-            'publication_url',
-            'publication_journal_name',
-            'use_registration_page',
-            'require_participant_review',
-            'registration_page_text',
-            'hidden',
-            'hide_signin',
-            'hide_footer',
-            'use_evaluation',
+            "title",
+            "description",
+            "logo",
+            "banner",
+            "disclaimer",
+            "workshop_date",
+            "event_name",
+            "event_url",
+            "is_open_for_submissions",
+            "submission_page_name",
+            "number_of_submissions",
+            "last_submission_date",
+            "offers_data_download",
+            "number_of_downloads",
+            "publication_url",
+            "publication_journal_name",
+            "use_registration_page",
+            "require_participant_review",
+            "registration_page_text",
+            "hidden",
+            "hide_signin",
+            "hide_footer",
+            "use_evaluation",
         ]
         widgets = {
-            "workshop_date": forms.TextInput(attrs={'type': 'date'}),
-            "last_submission_date": forms.TextInput(attrs={'type': 'date'}),
+            "workshop_date": forms.TextInput(attrs={"type": "date"}),
+            "last_submission_date": forms.TextInput(attrs={"type": "date"}),
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
@@ -113,11 +108,7 @@ information_items = (
     "logo",
     "hidden",
 )
-event_items = (
-    'event_name',
-    'event_url',
-    'workshop_date',
-)
+event_items = ("event_name", "event_url", "workshop_date")
 data_items = (
     "data_license_agreement",
     "data_stored",
@@ -133,10 +124,7 @@ submission_items = (
     "number_of_submissions",
     "last_submission_date",
 )
-publication_items = (
-    "publication_url",
-    "publication_journal_name",
-)
+publication_items = ("publication_url", "publication_journal_name")
 
 
 class ExternalChallengeUpdateForm(forms.ModelForm):
@@ -145,13 +133,13 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab('Information', *information_items, ),
-                Tab('Event', *event_items, ),
-                Tab('Data', *data_items, ),
-                Tab('Submissions', *submission_items, ),
-                Tab('Publication', *publication_items, ),
+                Tab("Information", *information_items),
+                Tab("Event", *event_items),
+                Tab("Data", *data_items),
+                Tab("Submissions", *submission_items),
+                Tab("Publication", *publication_items),
             ),
-            ButtonHolder(Submit('save', 'Save')),
+            ButtonHolder(Submit("save", "Save")),
         )
 
     class Meta:
@@ -164,8 +152,8 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             *publication_items,
         )
         widgets = {
-            "workshop_date": forms.TextInput(attrs={'type': 'date'}),
-            "last_submission_date": forms.TextInput(attrs={'type': 'date'}),
+            "workshop_date": forms.TextInput(attrs={"type": "date"}),
+            "last_submission_date": forms.TextInput(attrs={"type": "date"}),
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,

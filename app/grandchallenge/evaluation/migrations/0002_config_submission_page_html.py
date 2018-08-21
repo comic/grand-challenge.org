@@ -8,14 +8,15 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('evaluation', '0001_initial'),
-    ]
+    dependencies = [("evaluation", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='config',
-            name='submission_page_html',
-            field=ckeditor.fields.RichTextField(blank=True, help_text='HTML to include on the submission page for this challenge.'),
-        ),
+            model_name="config",
+            name="submission_page_html",
+            field=ckeditor.fields.RichTextField(
+                blank=True,
+                help_text="HTML to include on the submission page for this challenge.",
+            ),
+        )
     ]

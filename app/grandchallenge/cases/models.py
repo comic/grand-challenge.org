@@ -23,29 +23,19 @@ class RawImageUploadSession(UUIDModel):
     task that tries to make sense of the uploaded files to form normalized
     images that can be fed to processing tasks.
     """
+
     session_state = models.CharField(
-        max_length=16,
-        default=UPLOAD_SESSION_STATE.created,
+        max_length=16, default=UPLOAD_SESSION_STATE.created
     )
 
-    processing_task = models.UUIDField(
-        null=True,
-        default=None,
-    )
+    processing_task = models.UUIDField(null=True, default=None)
 
     error_message = models.CharField(
-        max_length=256,
-        blank=False,
-        null=True,
-        default=None,
+        max_length=256, blank=False, null=True, default=None
     )
 
     def get_absolute_url(self):
-        return reverse(
-            "cases:raw-files-session-detail",
-            kwargs={
-                "pk": self.pk,
-            })
+        return reverse("cases:raw-files-session-detail", kwargs={"pk": self.pk})
 
 
 class RawImageFile(UUIDModel):
@@ -53,27 +43,18 @@ class RawImageFile(UUIDModel):
     A raw image file is a file that has been uploaded by a user but was not
     preprocessed to create a standardized image representation.
     """
+
     upload_session = models.ForeignKey(
-        RawImageUploadSession,
-        blank=False,
-        on_delete=models.CASCADE,
+        RawImageUploadSession, blank=False, on_delete=models.CASCADE
     )
 
     # Copy in case staged_file_id is set to None
-    filename = models.CharField(
-        max_length=128,
-        blank=False,
-    )
+    filename = models.CharField(max_length=128, blank=False)
 
-    staged_file_id = models.UUIDField(
-        blank=True,
-        null=True)
+    staged_file_id = models.UUIDField(blank=True, null=True)
 
     error = models.CharField(
-        max_length=256,
-        blank=False,
-        null=True,
-        default=None
+        max_length=256, blank=False, null=True, default=None
     )
 
 
@@ -100,24 +81,14 @@ class Image(UUIDModel):
 
     name = models.CharField(max_length=128)
     origin = models.ForeignKey(
-        to=RawImageUploadSession,
-        null=True,
-        on_delete=models.SET_NULL,
+        to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
     )
 
-    width = models.IntegerField(
-        blank=False,
-    )
-    height = models.IntegerField(
-        blank=False,
-    )
-    depth = models.IntegerField(
-        null=True,
-    )
+    width = models.IntegerField(blank=False)
+    height = models.IntegerField(blank=False)
+    depth = models.IntegerField(null=True)
     color_space = models.CharField(
-        max_length=4,
-        blank=False,
-        choices=COLOR_SPACES,
+        max_length=4, blank=False, choices=COLOR_SPACES
     )
 
     @property
@@ -140,15 +111,9 @@ class Image(UUIDModel):
 
 class ImageFile(UUIDModel):
     image = models.ForeignKey(
-        to=Image,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name="files",
+        to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
     )
-    file = models.FileField(
-        upload_to=image_file_path,
-        blank=False,
-    )
+    file = models.FileField(upload_to=image_file_path, blank=False)
 
 
 class Annotation(UUIDModel):
@@ -157,19 +122,17 @@ class Annotation(UUIDModel):
     image, for instance, a segmentation, or some metadata such as a
     classification, eg. {"cancer": False}.
     """
+
     base = models.ForeignKey(
-        Image, related_name="annotations", on_delete=models.CASCADE,
+        Image, related_name="annotations", on_delete=models.CASCADE
     )
     image = models.ForeignKey(
-        Image, null=True, blank=True, on_delete=models.CASCADE,
+        Image, null=True, blank=True, on_delete=models.CASCADE
     )
     metadata = JSONField(null=True, blank=True)
 
     def get_absolute_url(self):
         return reverse(
             "cases:annotation-detail",
-            kwargs={
-                "base_pk": self.base.pk,
-                "pk": self.pk,
-            }
+            kwargs={"base_pk": self.base.pk, "pk": self.pk},
         )

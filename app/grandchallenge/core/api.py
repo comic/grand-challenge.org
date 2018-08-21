@@ -1,4 +1,4 @@
-# The API class contains methods which can be called by javascript remote calls 
+# The API class contains methods which can be called by javascript remote calls
 # to give additional information about a project in JSON format
 import json
 from os import path

@@ -15,7 +15,7 @@ class SubmissionViewSet(ModelViewSet):
     def perform_create(self, serializer):
         # Validate that the challenge exists
         try:
-            short_name = self.request.data.get('challenge')
+            short_name = self.request.data.get("challenge")
             challenge = Challenge.objects.get(short_name=short_name)
         except Challenge.DoesNotExist:
             raise ValidationError(f"Challenge {short_name} does not exist.")
@@ -23,5 +23,5 @@ class SubmissionViewSet(ModelViewSet):
         serializer.save(
             creator=self.request.user,
             challenge=challenge,
-            file=self.request.data.get('file'),
+            file=self.request.data.get("file"),
         )

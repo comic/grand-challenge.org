@@ -19,13 +19,13 @@ def assert_redirect(uri: str, *args):
 
 
 def assert_status(
-        code: int,
-        user: settings.AUTH_USER_MODEL,
-        view: View,
-        challenge: Challenge,
-        rf: RequestFactory,
+    code: int,
+    user: settings.AUTH_USER_MODEL,
+    view: View,
+    challenge: Challenge,
+    rf: RequestFactory,
 ):
-    request = rf.get('/rand')
+    request = rf.get("/rand")
     request.challenge = challenge
     if user is not None:
         request.user = user
@@ -36,15 +36,15 @@ def assert_status(
 
 
 def get_view_for_user(
-        *,
-        viewname: str = None,
-        challenge: Challenge = None,
-        client: Client,
-        method: Callable = None,
-        user: settings.AUTH_USER_MODEL = None,
-        url: str = None,
-        reverse_kwargs: dict = None,
-        **kwargs
+    *,
+    viewname: str = None,
+    challenge: Challenge = None,
+    client: Client,
+    method: Callable = None,
+    user: settings.AUTH_USER_MODEL = None,
+    url: str = None,
+    reverse_kwargs: dict = None,
+    **kwargs,
 ):
     """ Returns the view for a particular user """
 
@@ -52,7 +52,7 @@ def get_view_for_user(
         extra_kwargs = {}
 
         if challenge:
-            extra_kwargs.update({'challenge_short_name': challenge.short_name})
+            extra_kwargs.update({"challenge_short_name": challenge.short_name})
 
         if reverse_kwargs is not None:
             for key, value in reverse_kwargs.items():
@@ -63,7 +63,7 @@ def get_view_for_user(
 
     elif viewname:
         raise AttributeError(
-            'You defined both a viewname and a url, only ' 'use one!'
+            "You defined both a viewname and a url, only " "use one!"
         )
 
     if user and not isinstance(user, AnonymousUser):
@@ -108,7 +108,7 @@ def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
         redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        **kwargs
+        **kwargs,
     )
 
     tests = [
@@ -133,12 +133,12 @@ def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
             challenge=two_challenge_set.ChallengeSet1.challenge,
             client=client,
             user=test[1],
-            **kwargs
+            **kwargs,
         )
 
 
 def validate_admin_or_participant_view(
-        *, two_challenge_set, client: Client, **kwargs
+    *, two_challenge_set, client: Client, **kwargs
 ):
     """ Assert that a view is only accessible to administrators or participants
     of that particular challenge """
@@ -148,7 +148,7 @@ def validate_admin_or_participant_view(
         redirect_url=settings.LOGIN_URL,
         challenge=two_challenge_set.ChallengeSet1.challenge,
         client=client,
-        **kwargs
+        **kwargs,
     )
 
     tests = [
@@ -173,7 +173,7 @@ def validate_admin_or_participant_view(
             challenge=two_challenge_set.ChallengeSet1.challenge,
             client=client,
             user=test[1],
-            **kwargs
+            **kwargs,
         )
 
 
@@ -193,7 +193,7 @@ def validate_open_view(*, challenge_set, client: Client, **kwargs):
             challenge=challenge_set.challenge,
             client=client,
             user=test[1],
-            **kwargs
+            **kwargs,
         )
 
 
@@ -202,7 +202,7 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
         redirect_url=settings.LOGIN_URL,
         challenge=challenge_set.challenge,
         client=client,
-        **kwargs
+        **kwargs,
     )
 
     tests = [
@@ -219,36 +219,28 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
             challenge=challenge_set.challenge,
             client=client,
             user=test[1],
-            **kwargs
+            **kwargs,
         )
 
 
 def validate_staff_only_view(*, client: Client, **kwargs):
     assert_viewname_redirect(
-        redirect_url=settings.LOGIN_URL,
-        client=client,
-        **kwargs,
+        redirect_url=settings.LOGIN_URL, client=client, **kwargs
     )
 
     user = UserFactory()
     staff_user = UserFactory(is_staff=True)
 
-    tests = [
-        (200, staff_user),
-        (403, user)
-    ]
+    tests = [(200, staff_user), (403, user)]
 
     for test in tests:
         assert_viewname_status(
-            code=test[0],
-            client=client,
-            user=test[1],
-            **kwargs,
+            code=test[0], client=client, user=test[1], **kwargs
         )
 
 
 def validate_admin_only_text_in_page(
-        *, expected_text, two_challenge_set, client: Client, **kwargs
+    *, expected_text, two_challenge_set, client: Client, **kwargs
 ):
     tests = [
         (False, None),
@@ -273,6 +265,6 @@ def validate_admin_only_text_in_page(
             challenge=two_challenge_set.ChallengeSet1.challenge,
             client=client,
             user=test[1],
-            **kwargs
+            **kwargs,
         )
         assert (expected_text in str(response.content)) == test[0]

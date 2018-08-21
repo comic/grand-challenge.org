@@ -3,8 +3,9 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest
 
 from grandchallenge.jqfileupload.models import StagedFile
-from grandchallenge.jqfileupload.widgets.uploader import \
+from grandchallenge.jqfileupload.widgets.uploader import (
     generate_upload_path_hash
+)
 
 
 def filter_requires_request_argument(f):
@@ -37,7 +38,7 @@ def reject_duplicate_filenames(file: UploadedFile, request: HttpRequest = None):
         Raised if a duplicate file has been detected.
 
     """
-    csrf_token = request.META.get('CSRF_COOKIE', None)
+    csrf_token = request.META.get("CSRF_COOKIE", None)
     client_id = request.META.get(
         "X-Upload-ID", request.POST.get("X-Upload-ID", None)
     )

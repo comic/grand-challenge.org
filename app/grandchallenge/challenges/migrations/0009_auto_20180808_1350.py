@@ -9,19 +9,41 @@ import re
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0008_auto_20180808_1338'),
-    ]
+    dependencies = [("challenges", "0008_auto_20180808_1338")]
 
     operations = [
         migrations.AlterField(
-            model_name='challenge',
-            name='short_name',
-            field=django.contrib.postgres.fields.citext.CICharField(help_text='short name used in url, specific css, files etc. No spaces allowed', max_length=50, unique=True, validators=[grandchallenge.challenges.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z'), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid')]),
+            model_name="challenge",
+            name="short_name",
+            field=django.contrib.postgres.fields.citext.CICharField(
+                help_text="short name used in url, specific css, files etc. No spaces allowed",
+                max_length=50,
+                unique=True,
+                validators=[
+                    grandchallenge.challenges.models.validate_nounderscores,
+                    django.core.validators.RegexValidator(
+                        re.compile("^[-a-zA-Z0-9_]+\\Z"),
+                        "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.",
+                        "invalid",
+                    ),
+                ],
+            ),
         ),
         migrations.AlterField(
-            model_name='externalchallenge',
-            name='short_name',
-            field=django.contrib.postgres.fields.citext.CICharField(help_text='short name used in url, specific css, files etc. No spaces allowed', max_length=50, unique=True, validators=[grandchallenge.challenges.models.validate_nounderscores, django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z'), "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.", 'invalid')]),
+            model_name="externalchallenge",
+            name="short_name",
+            field=django.contrib.postgres.fields.citext.CICharField(
+                help_text="short name used in url, specific css, files etc. No spaces allowed",
+                max_length=50,
+                unique=True,
+                validators=[
+                    grandchallenge.challenges.models.validate_nounderscores,
+                    django.core.validators.RegexValidator(
+                        re.compile("^[-a-zA-Z0-9_]+\\Z"),
+                        "Enter a valid 'slug' consisting of letters, numbers, underscores or hyphens.",
+                        "invalid",
+                    ),
+                ],
+            ),
         ),
     ]

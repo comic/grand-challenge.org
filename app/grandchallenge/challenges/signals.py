@@ -5,7 +5,8 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.emails import (
-    send_challenge_created_email, send_external_challenge_created_email
+    send_challenge_created_email,
+    send_external_challenge_created_email,
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.utils import disable_for_loaddata
@@ -20,7 +21,7 @@ def setup_challenge_groups(
     if created:
         # Create the evaluation config
         Config.objects.create(challenge=instance)
-        
+
         # Create the groups only on first save
         admins_group = Group.objects.create(name=instance.admin_group_name())
         participants_group = Group.objects.create(
@@ -40,6 +41,7 @@ def setup_challenge_groups(
             pass
 
         send_challenge_created_email(instance)
+
 
 @receiver(post_save, sender=ExternalChallenge)
 @disable_for_loaddata

@@ -7,11 +7,8 @@ from django.test import RequestFactory
 
 def load_test_data():
     with open(
-            os.path.join(
-                os.path.dirname(__file__),
-                "testdata",
-                "rnddata"),
-            'rb') as f:
+        os.path.join(os.path.dirname(__file__), "testdata", "rnddata"), "rb"
+    ) as f:
         return f.read()
 
 
@@ -32,13 +29,17 @@ def create_upload_file_request(
     if content is None:
         content = load_test_data()
     ##### Basic request #####
-    data = f"""
+    data = (
+        f"""
 --{boundary}\r
 Content-Disposition: form-data; name="files[]"; filename="{filename}"\r
 Content-Type: application/octet-stream\r
 \r
-""".lstrip().encode() + content + f"""\r
+""".lstrip().encode()
+        + content
+        + f"""\r
 --{boundary}--""".encode()
+    )
     ##### Add additional fields #####
     for key, value in extra_fields.items():
         extra_field_data = f"""
@@ -82,4 +83,3 @@ def create_partial_upload_file_request(
         url=url,
         csrf_token=csrf_token,
     )
-

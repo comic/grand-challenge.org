@@ -20,17 +20,18 @@ class Team(models.Model):
     )
 
     class Meta:
-        unique_together = (('name', 'challenge'),)
+        unique_together = (("name", "challenge"),)
 
     def validate_unique(self, exclude=None):
         super(Team, self).validate_unique(exclude)
-        if not any(
-            x in exclude for x in ['challenge', 'owner']
-        ) and TeamMember.objects.filter(
-            team__challenge=self.challenge, user=self.owner
-        ).exists():
+        if (
+            not any(x in exclude for x in ["challenge", "owner"])
+            and TeamMember.objects.filter(
+                team__challenge=self.challenge, user=self.owner
+            ).exists()
+        ):
             raise ValidationError(
-                'You are already a member of another team for this challenge'
+                "You are already a member of another team for this challenge"
             )
 
     def save(self, *args, **kwargs):
@@ -40,10 +41,10 @@ class Team(models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            'teams:detail',
+            "teams:detail",
             kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
+                "pk": self.pk,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
@@ -53,24 +54,23 @@ class Team(models.Model):
 
 
 class TeamMember(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     pending = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = (('user', 'team'),)
+        unique_together = (("user", "team"),)
 
     def validate_unique(self, exclude=None):
         super(TeamMember, self).validate_unique(exclude)
-        if not any(
-            x in exclude for x in ['user', 'team']
-        ) and TeamMember.objects.filter(
-            team__challenge=self.team.challenge, user=self.user
-        ).exists():
+        if (
+            not any(x in exclude for x in ["user", "team"])
+            and TeamMember.objects.filter(
+                team__challenge=self.team.challenge, user=self.user
+            ).exists()
+        ):
             raise ValidationError(
-                'You are already a member of another team for this challenge'
+                "You are already a member of another team for this challenge"
             )
 
     def save(self, *args, **kwargs):
@@ -79,6 +79,6 @@ class TeamMember(models.Model):
 
     def delete(self, *args, **kwargs):
         if self.team.owner == self.user:
-            raise PermissionDenied('The team owner cannot be removed')
+            raise PermissionDenied("The team owner cannot be removed")
 
         super(TeamMember, self).delete(*args, **kwargs)

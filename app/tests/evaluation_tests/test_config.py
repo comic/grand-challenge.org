@@ -6,12 +6,12 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_setting_submission_page_html(client, ChallengeSet):
-    custom_html = '<p>My custom html</p>'
+    custom_html = "<p>My custom html</p>"
 
     response = get_view_for_user(
         client=client,
         user=ChallengeSet.participant,
-        viewname='evaluation:submission-create',
+        viewname="evaluation:submission-create",
         challenge=ChallengeSet.challenge,
     )
 
@@ -24,7 +24,7 @@ def test_setting_submission_page_html(client, ChallengeSet):
     response = get_view_for_user(
         client=client,
         user=ChallengeSet.participant,
-        viewname='evaluation:submission-create',
+        viewname="evaluation:submission-create",
         challenge=ChallengeSet.challenge,
     )
 

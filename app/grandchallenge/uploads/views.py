@@ -26,7 +26,9 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.challenges.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.views import (
-    getSite, site_get_standard_vars, permissionMessage,
+    getSite,
+    site_get_standard_vars,
+    permissionMessage,
 )
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
@@ -48,8 +50,8 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            'uploads:list',
-            kwargs={'challenge_short_name': self.request.challenge.short_name},
+            "uploads:list",
+            kwargs={"challenge_short_name": self.request.challenge.short_name},
         )
 
     @method_decorator(csrf_exempt)  # Required by django-ckeditor
@@ -59,13 +61,13 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
     def form_valid(self, form):
         form.instance.challenge = self.request.challenge
         form.instance.user = self.request.user
-        form.instance.file = form.cleaned_data['upload']
+        form.instance.file = form.cleaned_data["upload"]
         super().form_valid(form)
         # Taken from ckeditor_uploader.views.ImageUploadView
         # Note that this function is heavily tied to the response there,
         # so check when updating django-ckeditor.
         # TODO: Write a selenium test to check this.
-        ck_func_num = self.request.GET.get('CKEditorFuncNum')
+        ck_func_num = self.request.GET.get("CKEditorFuncNum")
         if ck_func_num:
             ck_func_num = escape(ck_func_num)
         url = form.instance.file.url
@@ -75,20 +77,22 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
                 """
             <script type='text/javascript'>
                 window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
-            </script>""".format(ck_func_num, url)
+            </script>""".format(
+                    ck_func_num, url
+                )
             )
 
         else:
             retdata = {
-                'url': url,
-                'uploaded': '1',
-                'fileName': form.instance.file.name,
+                "url": url,
+                "uploaded": "1",
+                "fileName": form.instance.file.name,
             }
             return JsonResponse(retdata)
 
 
 class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
-    template_name = 'ckeditor/browse.html'
+    template_name = "ckeditor/browse.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,13 +104,13 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
             src = uf.file.url
             files.append(
                 {
-                    'thumb': src,
-                    'src': src,
-                    'is_image': False,
-                    'visible_filename': uf.file.name,
+                    "thumb": src,
+                    "src": src,
+                    "is_image": False,
+                    "visible_filename": uf.file.name,
                 }
             )
-        context.update({'show_dirs': False, 'files': files})
+        context.update({"show_dirs": False, "files": files})
         return context
 
 
@@ -121,9 +125,9 @@ def serve(request, challenge_short_name, path, document_root=None):
     if document_root is None:
         document_root = settings.MEDIA_ROOT
     path = posixpath.normpath(unquote(path))
-    path = path.lstrip('/')
-    newpath = ''
-    for part in path.split('/'):
+    path = path.lstrip("/")
+    newpath = ""
+    for part in path.split("/"):
         if not part:
             # Strip empty path components.
             continue
@@ -134,7 +138,7 @@ def serve(request, challenge_short_name, path, document_root=None):
             # Strip '.' and '..' in path.
             continue
 
-        newpath = os.path.join(newpath, part).replace('\\', '/')
+        newpath = os.path.join(newpath, part).replace("\\", "/")
     if newpath and path != newpath:
         return HttpResponseRedirect(newpath)
 
@@ -144,18 +148,20 @@ def serve(request, challenge_short_name, path, document_root=None):
         # On case sensitive filesystems you can have problems if the project
         # nameurl in the url is not exactly the same case as the filepath.
         # find the correct case for projectname then.
-        projectlist = Challenge.objects.filter(short_name__iexact=challenge_short_name)
+        projectlist = Challenge.objects.filter(
+            short_name__iexact=challenge_short_name
+        )
         if not projectlist:
             raise Http404("project '%s' does not exist" % challenge_short_name)
 
         challenge_short_name = projectlist[0].short_name
         fullpath = os.path.join(document_root, challenge_short_name, newpath)
     if not storage.exists(fullpath):
-        raise Http404('"%(path)s" does not exist' % {'path': fullpath})
+        raise Http404('"%(path)s" does not exist' % {"path": fullpath})
 
     if can_access(request.user, path, challenge_short_name):
         try:
-            f = storage.open(fullpath, 'rb')
+            f = storage.open(fullpath, "rb")
             file = File(f)  # create django file object
         except IOError:
             return HttpResponseForbidden("This is not a file")
@@ -174,9 +180,9 @@ def upload_handler(request, challenge_short_name):
     Upload a file to the given comicsite, display files previously uploaded
     """
     view_url = reverse(
-        'uploads:create', kwargs={'challenge_short_name': challenge_short_name}
+        "uploads:create", kwargs={"challenge_short_name": challenge_short_name}
     )
-    if request.method == 'POST':
+    if request.method == "POST":
         # set values excluded from form here to make the model validate
         site = getSite(challenge_short_name)
         uploadedFile = UploadModel(
@@ -219,10 +225,10 @@ def upload_handler(request, challenge_short_name):
         currentpage = permissionMessage(request, site, p)
         response = render(
             request,
-            'page.html',
+            "page.html",
             {
-                'site': site,
-                'currentpage': currentpage,
+                "site": site,
+                "currentpage": currentpage,
                 "pages": pages,
                 "metafooterpages": metafooterpages,
             },
@@ -232,12 +238,12 @@ def upload_handler(request, challenge_short_name):
 
     return render(
         request,
-        'uploads/comicupload.html',
+        "uploads/comicupload.html",
         {
-            'form': form,
-            'upload_url': view_url,
-            'site': site,
-            'pages': pages,
-            'metafooterpages': metafooterpages,
+            "form": form,
+            "upload_url": view_url,
+            "site": site,
+            "pages": pages,
+            "metafooterpages": metafooterpages,
         },
     )

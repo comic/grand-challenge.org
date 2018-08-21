@@ -1,7 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
-    ValidationError, NON_FIELD_ERRORS, ObjectDoesNotExist,
+    ValidationError,
+    NON_FIELD_ERRORS,
+    ObjectDoesNotExist,
 )
 from django.db.models import Q
 from django.forms.utils import ErrorList
@@ -18,11 +20,11 @@ from grandchallenge.participants.models import RegistrationRequest
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):
-    template_name = 'participants/participants_list.html'
+    template_name = "participants/participants_list.html"
 
     def get_queryset(self):
         challenge = self.request.challenge
-        return challenge.get_participants().select_related('user_profile')
+        return challenge.get_participants().select_related("user_profile")
 
 
 class RegistrationRequestCreate(
@@ -64,7 +66,7 @@ class RegistrationRequestCreate(
             ).status_to_string()
         except ObjectDoesNotExist:
             status = None
-        context.update({'existing_status': status})
+        context.update({"existing_status": status})
         return context
 
 
@@ -81,24 +83,20 @@ class RegistrationRequestUpdate(
     UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
 ):
     model = RegistrationRequest
-    fields = ('status',)
-    success_message = 'Registration successfully updated'
+    fields = ("status",)
+    success_message = "Registration successfully updated"
 
     def get_success_url(self):
         return reverse(
-            'participants:registration-list',
-            kwargs={'challenge_short_name': self.object.challenge.short_name},
+            "participants:registration-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
         # TODO: check if the status has actually changed
         if self.object.status == RegistrationRequest.ACCEPTED:
-            send_participation_request_accepted_email(
-                self.request, self.object
-            )
+            send_participation_request_accepted_email(self.request, self.object)
         if self.object.status == RegistrationRequest.REJECTED:
-            send_participation_request_rejected_email(
-                self.request, self.object
-            )
+            send_participation_request_rejected_email(self.request, self.object)
         return redirect

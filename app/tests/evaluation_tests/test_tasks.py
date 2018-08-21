@@ -11,13 +11,13 @@ from tests.factories import SubmissionFactory, MethodFactory
 
 @pytest.mark.django_db
 def test_submission_evaluation(
-        client, evaluation_image, submission_file, settings
+    client, evaluation_image, submission_file, settings
 ):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
     # Upload a submission and create a job
     dockerclient = docker.DockerClient(
@@ -52,7 +52,7 @@ def test_submission_evaluation(
 
     # Try with a csv file
     submission = SubmissionFactory(
-        file__from_path=Path(__file__).parent / 'resources' / 'submission.csv',
+        file__from_path=Path(__file__).parent / "resources" / "submission.csv",
         challenge=method.challenge,
     )
 
@@ -73,7 +73,7 @@ def test_method_validation(evaluation_image):
     validate_docker_image_async(
         pk=method.pk,
         app_label=method._meta.app_label,
-        model_name=method._meta.model_name
+        model_name=method._meta.model_name,
     )
 
     method = Method.objects.get(pk=method.pk)
@@ -91,12 +91,12 @@ def test_method_validation_invalid_dockefile(alpine_images):
         validate_docker_image_async(
             pk=method.pk,
             app_label=method._meta.app_label,
-            model_name=method._meta.model_name
+            model_name=method._meta.model_name,
         )
 
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
-    assert 'should only have 1 image' in method.status
+    assert "should only have 1 image" in method.status
 
 
 @pytest.mark.django_db
@@ -109,9 +109,9 @@ def test_method_validation_not_a_docker_tar(submission_file):
         validate_docker_image_async(
             pk=method.pk,
             app_label=method._meta.app_label,
-            model_name=method._meta.model_name
+            model_name=method._meta.model_name,
         )
 
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
-    assert 'manifest.json not found' in method.status
+    assert "manifest.json not found" in method.status

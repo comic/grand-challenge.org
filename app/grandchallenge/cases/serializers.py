@@ -7,18 +7,18 @@ from grandchallenge.cases.models import Image, ImageFile, Annotation
 class ImageFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageFile
-        fields = ("pk", "image", "file",)
+        fields = ("pk", "image", "file")
 
 
 class ImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
     annotations = serializers.HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:annotation-detail",
+        many=True, read_only=True, view_name="api:annotation-detail"
     )
 
     class Meta:
         model = Image
-        fields = ("pk", "name", "files", "annotations",)
+        fields = ("pk", "name", "files", "annotations")
 
 
 class AnnotationSerializer(serializers.ModelSerializer):
@@ -27,4 +27,4 @@ class AnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Annotation
-        fields = ("pk", "base", "image", "metadata",)
+        fields = ("pk", "base", "image", "metadata")

@@ -7,7 +7,7 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_participants_list_is_filtered(client, TwoChallengeSets):
     response = get_view_for_user(
-        viewname='participants:list',
+        viewname="participants:list",
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
         user=TwoChallengeSets.admin12,
@@ -30,7 +30,7 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
     ]
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
-    assert 'Participants for ' in response.rendered_content
+    assert "Participants for " in response.rendered_content
 
 
 @pytest.mark.django_db
@@ -42,7 +42,7 @@ def test_registration_list_is_filtered(client, TwoChallengeSets):
         challenge=TwoChallengeSets.ChallengeSet2.challenge
     )
     response = get_view_for_user(
-        viewname='participants:registration-list',
+        viewname="participants:registration-list",
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
         user=TwoChallengeSets.admin12,

@@ -3,16 +3,20 @@ from typing import List, Tuple, Dict
 import pytest
 
 from grandchallenge.cases.models import (
-    RawImageFile, RawImageUploadSession, UPLOAD_SESSION_STATE, Image
+    RawImageFile,
+    RawImageUploadSession,
+    UPLOAD_SESSION_STATE,
+    Image,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
-from tests.jqfileupload_tests.external_test_support import \
+from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath
+)
 
 
 def create_raw_upload_image_session(
-        images: List[str], delete_file=False,
+    images: List[str], delete_file=False
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
     upload_session = RawImageUploadSession()
 
@@ -28,7 +32,8 @@ def create_raw_upload_image_session(
 
     if delete_file:
         StagedAjaxFile(
-            uploaded_images["image10x10x10.zraw"].staged_file_id).delete()
+            uploaded_images["image10x10x10.zraw"].staged_file_id
+        ).delete()
 
     upload_session.save()
 
@@ -37,9 +42,7 @@ def create_raw_upload_image_session(
 
 @pytest.mark.django_db
 def test_file_session_creation():
-    images = [
-        "image10x10x10.zraw",
-    ]
+    images = ["image10x10x10.zraw"]
     _, uploaded_images = create_raw_upload_image_session(images)
 
     assert len(uploaded_images) == 1
@@ -52,10 +55,10 @@ def test_file_session_creation():
 @pytest.mark.django_db
 def test_mhd_file_creation(settings):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
     # with replace_var(signals, "build_images", task_collector):
     images = [
@@ -90,15 +93,12 @@ def test_mhd_file_creation(settings):
 @pytest.mark.django_db
 def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
-    images = [
-        "image10x10x10.zraw",
-        "image10x10x10.mhd",
-    ]
+    images = ["image10x10x10.zraw", "image10x10x10.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
         images, delete_file=True
     )
@@ -111,16 +111,12 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
 @pytest.mark.django_db
 def test_no_convertible_file(settings):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
-    images = [
-        "no_image",
-        "image10x10x10.mhd",
-        "referring_to_system_file.mhd",
-    ]
+    images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
@@ -143,10 +139,10 @@ def test_no_convertible_file(settings):
 @pytest.mark.django_db
 def test_errors_on_files_with_duplicate_file_names(settings):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
     images = [
         "image10x10x10.zraw",
@@ -155,8 +151,7 @@ def test_errors_on_files_with_duplicate_file_names(settings):
         "image10x10x10.mhd",
     ]
     session, uploaded_images = create_raw_upload_image_session(images)
-    uploaded_images = RawImageFile.objects.filter(
-        upload_session=session).all()
+    uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
     assert len(uploaded_images) == 4
 
     session.refresh_from_db()
@@ -171,15 +166,12 @@ def test_errors_on_files_with_duplicate_file_names(settings):
 @pytest.mark.django_db
 def test_mhd_file_annotation_creation(settings):
     # Override the celery settings
-    settings.task_eager_propagates = True,
-    settings.task_always_eager = True,
-    settings.broker_url = 'memory://',
-    settings.backend = 'memory'
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
 
-    images = [
-        "image5x6x7.mhd",
-        "image5x6x7.zraw",
-    ]
+    images = ["image5x6x7.mhd", "image5x6x7.zraw"]
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()

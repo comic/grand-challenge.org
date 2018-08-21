@@ -8,12 +8,12 @@ class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
         view_name="api:submission-detail"
     )
     creator = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
+        read_only=True, slug_field="username"
     )
     challenge = serializers.SlugRelatedField(
-        read_only=True, slug_field='short_name'
+        read_only=True, slug_field="short_name"
     )
 
     class Meta:
         model = Submission
-        fields = '__all__'
+        fields = "__all__"
