@@ -20,7 +20,7 @@ def test_upload_some_images(client: Client, ChallengeSet, settings):
     settings.broker_url = 'memory://',
     settings.backend = 'memory'
 
-    response = client.get("/cases/upload/")
+    response = client.get("/cases/uploads/")
     assert response.status_code != 200
 
     staff_user = UserFactory(is_staff=True)
@@ -29,13 +29,13 @@ def test_upload_some_images(client: Client, ChallengeSet, settings):
         username=staff_user.username, password=SUPER_SECURE_TEST_PASSWORD
     )
 
-    response = client.get("/cases/upload/")
+    response = client.get("/cases/uploads/")
     assert response.status_code == 200
 
     file1 = create_file_from_filepath(RESOURCE_PATH / "image10x10x10.mha")
 
     response = client.post(
-        "/cases/upload/",
+        "/cases/uploads/",
         data={
             "files": f"{file1.uuid}",
         }
@@ -43,7 +43,7 @@ def test_upload_some_images(client: Client, ChallengeSet, settings):
     assert response.status_code == 302
 
     redirect_match = re.match(
-        r"/cases/uploaded/(?P<uuid>[^/]+)/?$",
+        r"/cases/uploads/(?P<uuid>[^/]+)/?$",
         response["Location"])
 
     assert redirect_match is not None

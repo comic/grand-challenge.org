@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+
+    <h2>Annotations</h2>
+
+    {% for annotation in object_list %}
+        {{ annotation }}
+    {% endfor %}
+
+{% endblock %}

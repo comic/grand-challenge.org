@@ -22,10 +22,8 @@ def get_staff_user_with_token():
 @pytest.mark.parametrize(
     "test_input, expected",
     [
-        ("result", "Result List"),
         ("submission", "Submission List"),
-        ("job", "Job List"),
-        ("method", "Method List"),
+        ("annotation", "Annotation List"),
     ],
 )
 def test_api_pages(client, test_input, expected):
