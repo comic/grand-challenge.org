@@ -194,6 +194,7 @@ MIDDLEWARE = (
     # Sentry 404 must be as close as possible to the top
     "raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware",
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
+    "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -338,7 +339,9 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
     },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"
+    },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
     },
