@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.api import get_public_results
@@ -36,6 +37,10 @@ urlpatterns = [
     url(
         r"^(?P<challenge_short_name>[\w-]+)/uploads/",
         include("grandchallenge.uploads.urls", namespace="uploads"),
+    ),
+    path(
+        "<slug:challenge_short_name>/datasets/",
+        include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
     #################
     #
