@@ -2,16 +2,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.viewsets import ModelViewSet
 
-from grandchallenge.api.serializers import (
-    ResultSerializer, SubmissionSerializer, JobSerializer, MethodSerializer
-)
+from grandchallenge.api.serializers import SubmissionSerializer
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Result, Submission, Job, Method
-
-
-class ResultViewSet(ModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
+from grandchallenge.evaluation.models import Submission
 
 
 class SubmissionViewSet(ModelViewSet):
@@ -32,13 +25,3 @@ class SubmissionViewSet(ModelViewSet):
             challenge=challenge,
             file=self.request.data.get('file'),
         )
-
-
-class JobViewSet(ModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-
-
-class MethodViewSet(ModelViewSet):
-    queryset = Method.objects.all()
-    serializer_class = MethodSerializer
