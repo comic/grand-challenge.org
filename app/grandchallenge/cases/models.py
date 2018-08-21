@@ -2,6 +2,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 
