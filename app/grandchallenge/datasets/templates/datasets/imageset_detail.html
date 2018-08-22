@@ -18,13 +18,17 @@
            href="{% url 'datasets:imageset-update' challenge_short_name=site.short_name pk=object.pk %}">
             <i class="fas fa-edit"></i> Update the images used in this dataset
         </a>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=object.pk %}">
+            <i class="fas fa-plus"></i> Add a set of annotations to this dataset
+        </a>
     </p>
 
     <dl>
 
         <dt>Phase</dt>
         <dd>
-            {{ object.phase }}
+            {{ object.get_phase_display }}
         </dd>
 
         <dt>Upload Sessions</dt>
@@ -40,6 +44,13 @@
         <dd>
             {% for image in object.images.all %}
                 {{ image }}
+            {% endfor %}
+        </dd>
+
+        <dt>Annotations</dt>
+        <dd>
+            {% for annotationset in object.annotationset_set.all %}
+                <a href="{{ annotationset.get_absolute_url }}">{{ annotationset }}</a>
             {% endfor %}
         </dd>
 

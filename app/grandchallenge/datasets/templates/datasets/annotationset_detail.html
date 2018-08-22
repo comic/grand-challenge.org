@@ -10,13 +10,27 @@
     <h2>Annotations</h2>
 
     <dl>
+        <dt>Kind</dt>
+        <dd>{{ object.get_kind_display }}</dd>
 
+        <dt>Dataset</dt>
+        <dd>
+            <a href="{{ object.base.get_absolute_url }}">
+                {{ object.base }}
+            </a>
+        </dd>
         <dt>Upload Sessions</dt>
         <dd>
             {% for upload_session in object.rawimageuploadsession_set.all %}
                 <a href="{{ upload_session.get_absolute_url }}">
                     {{ upload_session.pk }}
                 </a>
+            {% endfor %}
+        </dd>
+        <dt>Images</dt>
+        <dd>
+            {% for image in object.images.all %}
+                {{ image }}
             {% endfor %}
         </dd>
 

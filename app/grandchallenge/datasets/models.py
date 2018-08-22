@@ -52,9 +52,16 @@ class AnnotationSet(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
-    annotations = models.ManyToManyField(
-        to=Annotation, related_name="annotationsets"
-    )
     kind = models.CharField(
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
+    images = models.ManyToManyField(to=Image, related_name="annotationsets")
+
+    def get_absolute_url(self):
+        return reverse(
+            "datasets:annotationset-detail",
+            kwargs={
+                "challenge_short_name": self.base.challenge.short_name,
+                "pk": self.pk,
+            },
+        )

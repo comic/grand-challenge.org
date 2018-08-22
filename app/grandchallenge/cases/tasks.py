@@ -254,6 +254,9 @@ def build_images(upload_session_uuid: UUID):
                 if upload_session.imageset:
                     upload_session.imageset.images.add(*collected_images)
 
+                if upload_session.annotationset:
+                    upload_session.annotationset.images.add(*collected_images)
+
                 # Delete any touched file data
                 for file in session_files:
                     try:
