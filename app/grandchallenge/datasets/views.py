@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.datasets.forms import ImageSetCreateForm
+from grandchallenge.datasets.forms import (
+    ImageSetCreateForm,
+    ImageSetUpdateForm,
+)
 from grandchallenge.datasets.models import ImageSet
 
 
@@ -56,6 +59,12 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
                 "pk": self.kwargs["pk"],
             },
         )
+
+
+class ImageSetUpdate(UserIsStaffMixin, UpdateView):
+    model = ImageSet
+    form_class = ImageSetUpdateForm
+    template_name_suffix = "_update"
 
 
 class ImageSetDetail(UserIsStaffMixin, DetailView):

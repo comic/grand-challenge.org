@@ -7,6 +7,7 @@ from grandchallenge.datasets.views import (
     ImageSetCreate,
     ImageSetDetail,
     AddImagesToImageSet,
+    ImageSetUpdate,
 )
 
 app_name = "datasets"
@@ -24,5 +25,8 @@ urlpatterns = [
         f"<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-raw-image-files-ajax",
+    ),
+    path(
+        "<uuid:pk>/update/", ImageSetUpdate.as_view(), name="imageset-update"
     ),
 ]

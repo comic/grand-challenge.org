@@ -9,6 +9,17 @@
 
     <h2>Dataset</h2>
 
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-add-images' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-plus"></i> Add images to this dataset
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-update' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-edit"></i> Update the images used in this dataset
+        </a>
+    </p>
+
     <dl>
 
         <dt>Phase</dt>
