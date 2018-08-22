@@ -4,6 +4,7 @@ from django.db import models
 from grandchallenge.cases.models import Image, Annotation
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.urlresolvers import reverse
 
 
 class ImageSet(UUIDModel):
@@ -17,6 +18,20 @@ class ImageSet(UUIDModel):
         max_length=3, default=TRAINING, choices=PHASE_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="imagesets")
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse(
+            "annotations:imageset-detail",
+            kwargs={
+                "challenge_short_name": self.challenge.short_name,
+                "pk": self.pk,
+            },
+        )
 
     class Meta:
         unique_together = ("challenge", "phase")

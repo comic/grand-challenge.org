@@ -1,0 +1,15 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+
+{% block pageName %}
+    Create Dataset - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Create a Dataset</h2>
+
+    {% crispy form %}
+
+{% endblock %}
