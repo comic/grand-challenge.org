@@ -8,7 +8,9 @@ from celery import shared_task
 from django.db import transaction
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.metaio_mhd_mha import image_builder_mhd
+from grandchallenge.cases.image_builders.metaio_mhd_mha import (
+    image_builder_mhd
+)
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     RawImageUploadSession,
@@ -177,8 +179,9 @@ def build_images(upload_session_uuid: UUID):
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
     """
-    upload_session = RawImageUploadSession.objects.get(pk=upload_session_uuid)
-    upload_session: RawImageUploadSession
+    upload_session = RawImageUploadSession.objects.get(
+        pk=upload_session_uuid
+    )  # type: RawImageUploadSession
 
     if upload_session.session_state == UPLOAD_SESSION_STATE.queued:
         tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
@@ -189,14 +192,12 @@ def build_images(upload_session_uuid: UUID):
 
                 session_files = RawImageFile.objects.filter(
                     upload_session=upload_session.pk
-                ).all()
-                session_files: Tuple[RawImageFile]
+                ).all()  # type: Tuple[RawImageFile]
 
                 session_files, duplicates = remove_duplicate_files(
                     session_files
                 )
-                for duplicate in duplicates:
-                    duplicate: RawImageFile
+                for duplicate in duplicates:  # type: RawImageFile
                     duplicate.error = "Filename not unique"
                     saf = StagedAjaxFile(duplicate.staged_file_id)
                     duplicate.staged_file_id = None
@@ -216,8 +217,9 @@ def build_images(upload_session_uuid: UUID):
                 collected_images = []
                 collected_associated_files = []
                 for algorithm in IMAGE_BUILDER_ALGORITHMS:
-                    algorithm_result = algorithm(tmp_dir)
-                    algorithm_result: ImageBuilderResult
+                    algorithm_result = algorithm(
+                        tmp_dir
+                    )  # type: ImageBuilderResult
 
                     collected_images += list(algorithm_result.new_images)
                     collected_associated_files += list(
@@ -233,19 +235,24 @@ def build_images(upload_session_uuid: UUID):
                     ) in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
-                            raw_image = filename_lookup[filename]
-                            raw_file: RawImageFile
+                            raw_image = filename_lookup[
+                                filename
+                            ]  # type: RawImageFile
                             raw_image.error = str(msg)[:256]
                             raw_image.save()
 
                 for image in collected_images:
                     image.origin = upload_session
                     store_image(image, collected_associated_files)
+
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]
                     raw_file.error = (
                         "File could not be processed by any image builder"
                     )
+
+                if upload_session.imageset:
+                    upload_session.imageset.images.add(*collected_images)
 
                 # Delete any touched file data
                 for file in session_files:
@@ -256,6 +263,7 @@ def build_images(upload_session_uuid: UUID):
                         file.save()
                     except NotFoundError:
                         pass
+
             except Exception as e:
                 upload_session.error_message = str(e)
         finally:

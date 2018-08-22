@@ -35,6 +35,20 @@ class RawImageUploadSession(UUIDModel):
         max_length=256, blank=False, null=True, default=None
     )
 
+    imageset = models.ForeignKey(
+        to="datasets.ImageSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    annotationset = models.ForeignKey(
+        to="datasets.AnnotationSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
     def get_absolute_url(self):
         return reverse(
             "cases:raw-files-session-detail", kwargs={"pk": self.pk}
@@ -93,6 +107,9 @@ class Image(UUIDModel):
     color_space = models.CharField(
         max_length=4, blank=False, choices=COLOR_SPACES
     )
+
+    def __str__(self):
+        return f"Image {self.name} {self.shape_without_color}."
 
     @property
     def shape_without_color(self):

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import ListView, CreateView, DetailView
 
+from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.datasets.forms import (
-    ImageSetCreateForm,
-    ImageSetUpdateForm,
-)
+from grandchallenge.datasets.forms import ImageSetCreateForm
 from grandchallenge.datasets.models import ImageSet
 
 
@@ -31,7 +30,7 @@ class ImageSetCreate(UserIsStaffMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "datasets:imageset-update",
+            "datasets:imageset-add-images",
             kwargs={
                 "challenge_short_name": self.object.challenge.short_name,
                 "pk": self.object.pk,
@@ -39,10 +38,24 @@ class ImageSetCreate(UserIsStaffMixin, CreateView):
         )
 
 
-class ImageSetUpdate(UserIsStaffMixin, UpdateView):
-    model = ImageSet
-    form_class = ImageSetUpdateForm
-    template_name_suffix = "_update"
+class AddImagesToImageSet(UserIsStaffMixin, CreateView):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "datasets/imageset_add_images.html"
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "datasets:imageset-detail",
+            kwargs={
+                "challenge_short_name": self.kwargs["challenge_short_name"],
+                "pk": self.kwargs["pk"],
+            },
+        )
 
 
 class ImageSetDetail(UserIsStaffMixin, DetailView):

@@ -1,0 +1,38 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Dataset - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Dataset</h2>
+
+    <dl>
+
+        <dt>Phase</dt>
+        <dd>
+            {{ object.phase }}
+        </dd>
+
+        <dt>Upload Sessions</dt>
+        <dd>
+            {% for upload_session in object.rawimageuploadsession_set.all %}
+                <a href="{{ upload_session.get_absolute_url }}">
+                    {{ upload_session.pk }}
+                </a>
+            {% endfor %}
+        </dd>
+
+        <dt>Images</dt>
+        <dd>
+            {% for image in object.images.all %}
+                {{ image }}
+            {% endfor %}
+        </dd>
+
+    </dl>
+
+
+{% endblock %}

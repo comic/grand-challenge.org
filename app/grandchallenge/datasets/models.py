@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
-from grandchallenge.cases.models import Image, Annotation
+from grandchallenge.cases.models import (
+    Image,
+    Annotation,
+    RawImageUploadSession,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
@@ -26,7 +30,7 @@ class ImageSet(UUIDModel):
 
     def get_absolute_url(self):
         return reverse(
-            "annotations:imageset-detail",
+            "datasets:imageset-detail",
             kwargs={
                 "challenge_short_name": self.challenge.short_name,
                 "pk": self.pk,
