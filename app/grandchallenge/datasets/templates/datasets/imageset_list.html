@@ -1,0 +1,26 @@
+{% extends "site.html" %}
+{% load evaluation_extras %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Datasets - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Datasets</h2>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-create' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a new dataset
+        </a>
+    </p>
+
+    {% for imageset in object_list %}
+        {{ imageset }}
+    {% empty %}
+        <p>No datasets found for this challenge.</p>
+    {% endfor %}
+
+{% endblock %}
