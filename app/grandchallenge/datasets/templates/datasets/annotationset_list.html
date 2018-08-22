@@ -1,0 +1,26 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Dataset Annotations - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Dataset Annotations</h2>
+    {% comment %}
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-create' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a new dataset
+        </a>
+    </p>
+    {% endcomment %}
+
+    {% for annotationset in object_list %}
+        {{ annotationset }}
+    {% empty %}
+        <p>No annotations found for this dataset.</p>
+    {% endfor %}
+
+{% endblock %}

@@ -8,6 +8,7 @@ from grandchallenge.datasets.views import (
     ImageSetDetail,
     AddImagesToImageSet,
     ImageSetUpdate,
+    AnnotationSetList,
 )
 
 app_name = "datasets"
@@ -28,5 +29,10 @@ urlpatterns = [
     ),
     path(
         "<uuid:pk>/update/", ImageSetUpdate.as_view(), name="imageset-update"
+    ),
+    path(
+        "<uuid:base_pk>/annotations/",
+        AnnotationSetList.as_view(),
+        name="annotationset-list",
     ),
 ]

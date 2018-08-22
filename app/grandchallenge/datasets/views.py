@@ -11,7 +11,7 @@ from grandchallenge.datasets.forms import (
     ImageSetCreateForm,
     ImageSetUpdateForm,
 )
-from grandchallenge.datasets.models import ImageSet
+from grandchallenge.datasets.models import ImageSet, AnnotationSet
 
 
 class ImageSetList(UserIsStaffMixin, ListView):
@@ -69,3 +69,11 @@ class ImageSetUpdate(UserIsStaffMixin, UpdateView):
 
 class ImageSetDetail(UserIsStaffMixin, DetailView):
     model = ImageSet
+
+
+class AnnotationSetList(UserIsStaffMixin, ListView):
+    model = AnnotationSet
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(base__pk=self.kwargs["base_pk"])

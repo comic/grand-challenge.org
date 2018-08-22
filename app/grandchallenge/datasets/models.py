@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.conf import settings
 from django.db import models
 
 from grandchallenge.cases.models import (
@@ -47,6 +48,9 @@ class AnnotationSet(UUIDModel):
 
     KIND_CHOICES = ((PREDICTION, "Prediction"), (GROUNDTRUTH, "Ground Truth"))
 
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
     annotations = models.ManyToManyField(
         to=Annotation, related_name="annotationsets"
