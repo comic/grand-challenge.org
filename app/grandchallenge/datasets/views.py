@@ -10,6 +10,7 @@ from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.datasets.forms import (
     ImageSetCreateForm,
     ImageSetUpdateForm,
+    AnnotationSetForm,
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 
@@ -26,10 +27,10 @@ class ImageSetCreate(UserIsStaffMixin, CreateView):
     def form_valid(self, form):
         form.instance.challenge = self.request.challenge
         try:
-            return super().form_valid(form)
+            return super().form_valid(form=form)
         except ValidationError as e:
             form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
-            return super().form_invalid(form)
+            return super().form_invalid(form=form)
 
     def get_success_url(self):
         return reverse(
@@ -77,3 +78,23 @@ class AnnotationSetList(UserIsStaffMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(base__pk=self.kwargs["base_pk"])
+
+
+class AnnotationSetCreate(UserIsStaffMixin, CreateView):
+    model = AnnotationSet
+    form_class = AnnotationSetForm
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        # TODO - there can only be 1 ground truth AnnotationSet for this ImageSet
+        form.instance.base = ImageSet.objects.get(pk=self.kwargs["base_pk"])
+        return super().form_valid(form=form)
+
+    def get_success_url(self):
+        return reverse(
+            "datasets:annotationset-add-images",
+            kwargs={
+                "challenge_short_name": self.object.base.challenge.short_name,
+                "pk": self.object.pk,
+            },
+        )

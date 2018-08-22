@@ -8,14 +8,13 @@
 {% block pagecontent %}
 
     <h2>Dataset Annotations</h2>
-    {% comment %}
+
     <p>
         <a class="btn btn-primary"
-           href="{% url 'datasets:imageset-create' site.short_name %}">
-            <i class="fas fa-plus"></i> Add a new dataset
+           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=view.kwargs.base_pk %}">
+            <i class="fas fa-plus"></i> Add annoations to this dataset
         </a>
     </p>
-    {% endcomment %}
 
     {% for annotationset in object_list %}
         {{ annotationset }}

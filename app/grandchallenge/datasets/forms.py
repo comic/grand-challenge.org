@@ -6,7 +6,7 @@ from django import forms
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.cases.models import Image
-from grandchallenge.datasets.models import ImageSet
+from grandchallenge.datasets.models import ImageSet, AnnotationSet
 
 
 class ImageSetCreateForm(forms.ModelForm):
@@ -35,3 +35,14 @@ class ImageSetUpdateForm(forms.ModelForm):
         model = ImageSet
         fields = ("images",)
         widgets = {"images": Select2MultipleWidget}
+
+
+class AnnotationSetForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
+
+    class Meta:
+        model = AnnotationSet
+        fields = ("kind",)
