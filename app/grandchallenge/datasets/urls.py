@@ -10,9 +10,12 @@ from grandchallenge.datasets.views import (
     ImageSetUpdate,
     AnnotationSetList,
     AnnotationSetCreate,
+    AddImagesToAnnotationSet,
+    AnnotationSetDetail,
 )
 
 app_name = "datasets"
+
 
 urlpatterns = [
     path("", ImageSetList.as_view(), name="imageset-list"),
@@ -26,7 +29,7 @@ urlpatterns = [
     path(
         f"<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
-        name="upload-raw-image-files-ajax",
+        name="upload-raw-imageset-image-files-ajax",
     ),
     path(
         "<uuid:pk>/update/", ImageSetUpdate.as_view(), name="imageset-update"
@@ -40,5 +43,20 @@ urlpatterns = [
         "<uuid:base_pk>/annotations/create/",
         AnnotationSetCreate.as_view(),
         name="annotationset-create",
+    ),
+    path(
+        "annotations/<uuid:pk>/add/",
+        AddImagesToAnnotationSet.as_view(),
+        name="annotationset-add-images",
+    ),
+    path(
+        f"annotations/<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
+        upload_raw_files_widget.handle_ajax,
+        name="upload-raw-annotationset-image-files-ajax",
+    ),
+    path(
+        "annotations/<uuid:pk>/",
+        AnnotationSetDetail.as_view(),
+        name="annotationset-detail",
     ),
 ]

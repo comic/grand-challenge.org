@@ -98,3 +98,29 @@ class AnnotationSetCreate(UserIsStaffMixin, CreateView):
                 "pk": self.object.pk,
             },
         )
+
+
+class AddImagesToAnnotationSet(UserIsStaffMixin, CreateView):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "datasets/annotationset_add_images.html"
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.annotationset = AnnotationSet.objects.get(
+            pk=self.kwargs["pk"]
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "datasets:annotationset-detail",
+            kwargs={
+                "challenge_short_name": self.kwargs["challenge_short_name"],
+                "pk": self.kwargs["pk"],
+            },
+        )
+
+
+class AnnotationSetDetail(UserIsStaffMixin, DetailView):
+    model = AnnotationSet

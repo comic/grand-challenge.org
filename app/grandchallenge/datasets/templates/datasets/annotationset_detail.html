@@ -1,0 +1,26 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Annotations - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Annotations</h2>
+
+    <dl>
+
+        <dt>Upload Sessions</dt>
+        <dd>
+            {% for upload_session in object.rawimageuploadsession_set.all %}
+                <a href="{{ upload_session.get_absolute_url }}">
+                    {{ upload_session.pk }}
+                </a>
+            {% endfor %}
+        </dd>
+
+    </dl>
+
+
+{% endblock %}
