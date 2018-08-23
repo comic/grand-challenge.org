@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
@@ -110,6 +112,22 @@ class Image(UUIDModel):
 
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
+
+    @property
+    def sorter_key(self) -> str:
+        """
+        For use in filtering.
+
+        Gets the first int in the name, and returns that string.
+        If an int cannot be found, returns the lower case name split at the
+        first full stop.
+        """
+        try:
+            r = re.compile(r"\D*((?:\d+\.?)+)\D*")
+            m = r.search(self.name)
+            return f"{int(m.group(1).replace('.', '')):>64}"
+        except AttributeError:
+            return self.name.split(".")[0].lower()
 
     @property
     def shape_without_color(self):

@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import logging
-import re
-
 from django.conf import settings
 from django.db import models
 
@@ -13,8 +10,6 @@ from grandchallenge.cases.models import (
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-
-logger = logging.getLogger(__name__)
 
 
 class ImageSet(UUIDModel):
@@ -29,9 +24,11 @@ class ImageSet(UUIDModel):
     )
     images = models.ManyToManyField(to=Image, related_name="imagesets")
 
-    def save(self, *args, **kwargs):
-        logger.debug("Saving ImageSet")
+    @property
+    def image_index(self):
+        return {i.sorter_key: i for i in self.images.all()}
 
+    def save(self, *args, **kwargs):
         if self._state.adding:
             self.full_clean()
         super().save(*args, **kwargs)
@@ -47,21 +44,6 @@ class ImageSet(UUIDModel):
 
     class Meta:
         unique_together = ("challenge", "phase")
-
-
-def get_first_int_in(s: str) -> str:
-    """
-    For use in filtering.
-
-    Gets the first int in a string, and returns that string. If an int cannot
-    be found, returns the lower case name split at the first full stop.
-    """
-    try:
-        r = re.compile(r"\D*((?:\d+\.?)+)\D*")
-        m = r.search(s)
-        return f"{int(m.group(1).replace('.', '')):>64}"
-    except AttributeError:
-        return s.split(".")[0].lower()
 
 
 class AnnotationSet(UUIDModel):
@@ -80,16 +62,12 @@ class AnnotationSet(UUIDModel):
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
 
     @property
-    def base_index(self):
-        return {get_first_int_in(s.name): s for s in self.base.images.all()}
-
-    @property
     def annotation_index(self):
-        return {get_first_int_in(s.name): s for s in self.images.all()}
+        return {i.sorter_key: i for i in self.images.all()}
 
     @property
     def missing_annotations(self):
-        base_index = self.base_index
+        base_index = self.base.image_index
         annotation_index = self.annotation_index
 
         missing = base_index.keys() - annotation_index.keys()
@@ -100,7 +78,7 @@ class AnnotationSet(UUIDModel):
 
     @property
     def extra_annotations(self):
-        base_index = self.base_index
+        base_index = self.base.image_index
         annotation_index = self.annotation_index
 
         extra = annotation_index.keys() - base_index.keys()
@@ -112,7 +90,7 @@ class AnnotationSet(UUIDModel):
 
     @property
     def matched_images(self):
-        base_index = self.base_index
+        base_index = self.base.image_index
         annotation_index = self.annotation_index
 
         matches = base_index.keys() & annotation_index.keys()
