@@ -38,6 +38,8 @@
                         <a href="{{ annotationset.get_absolute_url }}">
                             {{ annotationset }}
                         </a>
+                    {% empty %}
+                        No annotations found
                     {% endfor %}
                 </td>
             </tr>
