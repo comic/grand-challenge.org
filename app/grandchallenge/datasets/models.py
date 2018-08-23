@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from django.conf import settings
 from django.db import models
 
@@ -10,6 +12,8 @@ from grandchallenge.cases.models import (
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
+
+logger = logging.getLogger(__name__)
 
 
 class ImageSet(UUIDModel):
@@ -25,6 +29,8 @@ class ImageSet(UUIDModel):
     images = models.ManyToManyField(to=Image, related_name="imagesets")
 
     def save(self, *args, **kwargs):
+        logger.debug("Saving ImageSet")
+
         if self._state.adding:
             self.full_clean()
         super().save(*args, **kwargs)
@@ -56,6 +62,9 @@ class AnnotationSet(UUIDModel):
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
+
+    def match_images(self):
+        pass
 
     def get_absolute_url(self):
         return reverse(
