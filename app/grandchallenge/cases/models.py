@@ -51,6 +51,12 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
+    def __str__(self):
+        return (
+            f"Upload Session <{str(self.pk).split('-')[0]}>, "
+            f"({self.session_state})"
+        )
+
     def get_absolute_url(self):
         return reverse(
             "cases:raw-files-session-detail", kwargs={"pk": self.pk}

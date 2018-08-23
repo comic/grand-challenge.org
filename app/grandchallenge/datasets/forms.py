@@ -23,10 +23,8 @@ class ImageSetCreateForm(forms.ModelForm):
 class ImageSetUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
-
         self.fields["images"].queryset = Image.objects.filter(
             origin__imageset=self.instance
         )
@@ -46,3 +44,18 @@ class AnnotationSetForm(forms.ModelForm):
     class Meta:
         model = AnnotationSet
         fields = ("kind",)
+
+
+class AnnotationSetUpdateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
+        self.fields["images"].queryset = Image.objects.filter(
+            origin__annotationset=self.instance
+        )
+
+    class Meta:
+        model = AnnotationSet
+        fields = ("images",)
+        widgets = {"images": Select2MultipleWidget}

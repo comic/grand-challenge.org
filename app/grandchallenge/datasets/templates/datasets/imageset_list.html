@@ -16,10 +16,44 @@
         </a>
     </p>
 
-    {% for imageset in object_list %}
-        {{ imageset }}
-    {% empty %}
-        <p>No datasets found for this challenge.</p>
-    {% endfor %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Phase</th>
+            <th>Number of Images</th>
+            <th>Annotations</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for imageset in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ imageset.get_absolute_url }}">
+                        {{ imageset.get_phase_display }}
+                    </a>
+                </td>
+                <td>{{ imageset.images.all|length }}</td>
+                <td>
+                    {% for annotationset in imageset.annotationset_set.all %}
+                        <a href="{{ annotationset.get_absolute_url }}">
+                            {{ annotationset }}
+                        </a>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "asc"]],
+                "pageLength": 10,
+                ordering: true
+            });
+
+        });
+    </script>
 
 {% endblock %}

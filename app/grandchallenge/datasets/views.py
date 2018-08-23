@@ -11,6 +11,7 @@ from grandchallenge.datasets.forms import (
     ImageSetCreateForm,
     ImageSetUpdateForm,
     AnnotationSetForm,
+    AnnotationSetUpdateForm,
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 
@@ -86,7 +87,6 @@ class AnnotationSetCreate(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        # TODO - there can only be 1 ground truth AnnotationSet for this ImageSet
         form.instance.base = ImageSet.objects.get(pk=self.kwargs["base_pk"])
         return super().form_valid(form=form)
 
@@ -120,6 +120,12 @@ class AddImagesToAnnotationSet(UserIsStaffMixin, CreateView):
                 "pk": self.kwargs["pk"],
             },
         )
+
+
+class AnnotationSetUpdate(UserIsStaffMixin, UpdateView):
+    model = AnnotationSet
+    form_class = AnnotationSetUpdateForm
+    template_name_suffix = "_update"
 
 
 class AnnotationSetDetail(UserIsStaffMixin, DetailView):

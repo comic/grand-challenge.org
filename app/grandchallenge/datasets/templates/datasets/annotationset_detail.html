@@ -9,6 +9,17 @@
 
     <h2>Annotations</h2>
 
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:annotationset-add-images' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-plus"></i> Add images to this annotation set
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:annotationset-update' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-edit"></i> Update the images used in this annotation set
+        </a>
+    </p>
+
     <dl>
         <dt>Kind</dt>
         <dd>{{ object.get_kind_display }}</dd>
@@ -23,11 +34,10 @@
         <dd>
             {% for upload_session in object.rawimageuploadsession_set.all %}
                 <a href="{{ upload_session.get_absolute_url }}">
-                    {{ upload_session.pk }}
+                    {{ upload_session }}<br>
                 </a>
             {% endfor %}
         </dd>
-
     </dl>
 
     <h3>Matched Annotations</h3>
@@ -52,53 +62,55 @@
     </table>
 
     {% if object.missing_annotations|length > 0 %}
-    <h3>Missing Annotations</h3>
+        <h3>Missing Annotations</h3>
 
-    <p class="alert alert-danger">
-        <b>WARNING:</b> The following images in the dataset are missing annotations. Please upload the annotations with the correct key.
-    </p>
+        <p class="alert alert-danger">
+            <b>WARNING:</b> The following images in the dataset are missing
+            annotations. Please upload the annotations with the correct key.
+        </p>
 
-    <table class="table" id="MissingAnnotations">
-        <thead>
-        <tr>
-            <th>Key</th>
-            <th>Base Image</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for match in object.missing_annotations %}
+        <table class="table" id="MissingAnnotations">
+            <thead>
             <tr>
-                <td>{{ match.key }}</td>
-                <td>{{ match.base }}</td>
+                <th>Key</th>
+                <th>Base Image</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for missing in object.missing_annotations %}
+                <tr>
+                    <td>{{ missing.key }}</td>
+                    <td>{{ missing.base }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
 
     {% if object.extra_annotations|length > 0 %}
-    <h3>Extra Annotations</h3>
+        <h3>Extra Annotations</h3>
 
-    <p class="alert alert-danger">
-        <b>WARNING:</b> The following annotations could not be matched with a base image. Please remove these images from the annotation set.
-    </p>
+        <p class="alert alert-danger">
+            <b>WARNING:</b> The following annotations could not be matched with
+            a base image. Please remove these images from the annotation set.
+        </p>
 
-    <table class="table" id="ExtraAnnotations">
-        <thead>
-        <tr>
-            <th>Key</th>
-            <th>Annotation Image</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for match in object.extra_annotations %}
+        <table class="table" id="ExtraAnnotations">
+            <thead>
             <tr>
-                <td>{{ match.key }}</td>
-                <td>{{ match.annotation }}</td>
+                <th>Key</th>
+                <th>Annotation Image</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for extra in object.extra_annotations %}
+                <tr>
+                    <td>{{ extra.key }}</td>
+                    <td>{{ extra.annotation }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
 
     <script type="text/javascript">

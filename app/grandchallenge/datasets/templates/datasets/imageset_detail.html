@@ -20,7 +20,8 @@
         </a>
         <a class="btn btn-primary"
            href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=object.pk %}">
-            <i class="fas fa-plus"></i> Add a set of annotations to this dataset
+            <i class="fas fa-plus"></i> Add a set of annotations to this
+            dataset
         </a>
     </p>
 
@@ -35,15 +36,8 @@
         <dd>
             {% for upload_session in object.rawimageuploadsession_set.all %}
                 <a href="{{ upload_session.get_absolute_url }}">
-                    {{ upload_session.pk }}
+                    {{ upload_session }}<br>
                 </a>
-            {% endfor %}
-        </dd>
-
-        <dt>Images</dt>
-        <dd>
-            {% for image in object.images.all %}
-                {{ image }}
             {% endfor %}
         </dd>
 
@@ -56,5 +50,36 @@
 
     </dl>
 
+
+    <h3>Images</h3>
+
+    <table class="table" id="Images">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Image</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for im in object.images_with_keys %}
+            <tr>
+                <td>{{ im.key }}</td>
+                <td>{{ im.image }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "asc"]],
+                "pageLength": 10,
+                ordering: true
+            });
+
+        });
+    </script>
 
 {% endblock %}

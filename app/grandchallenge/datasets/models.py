@@ -28,6 +28,13 @@ class ImageSet(UUIDModel):
     def image_index(self):
         return {i.sorter_key: i for i in self.images.all()}
 
+    @property
+    def images_with_keys(self):
+        return [
+            {"key": key, "image": self.image_index[key]}
+            for key in sorted(self.image_index)
+        ]
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             self.full_clean()
@@ -60,6 +67,13 @@ class AnnotationSet(UUIDModel):
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
+
+    def __str__(self):
+        return (
+            f"{self.get_kind_display()} annotation set, "
+            f"{len(self.images.all())} images, "
+            f"created by {self.creator}"
+        )
 
     @property
     def annotation_index(self):
