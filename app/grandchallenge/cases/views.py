@@ -10,7 +10,10 @@ from grandchallenge.cases.models import (
     Image,
     Annotation,
 )
-from grandchallenge.cases.serializers import AnnotationSerializer
+from grandchallenge.cases.serializers import (
+    AnnotationSerializer,
+    ImageSerializer,
+)
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -72,3 +75,8 @@ class AnnotationDetail(UserIsStaffMixin, DetailView):
 class AnnotationViewSet(ReadOnlyModelViewSet):
     queryset = Annotation.objects.all()
     serializer_class = AnnotationSerializer
+
+
+class ImageViewSet(ReadOnlyModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer

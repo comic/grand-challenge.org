@@ -12,13 +12,10 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class ImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
-    annotations = serializers.HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:annotation-detail"
-    )
 
     class Meta:
         model = Image
-        fields = ("pk", "name", "files", "annotations")
+        fields = ("pk", "name", "files")
 
 
 class AnnotationSerializer(serializers.ModelSerializer):
