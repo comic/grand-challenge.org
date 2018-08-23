@@ -109,7 +109,7 @@ class Image(UUIDModel):
     )
 
     def __str__(self):
-        return f"Image {self.name} {self.shape_without_color}."
+        return f"Image {self.name} {self.shape_without_color}"
 
     @property
     def shape_without_color(self):

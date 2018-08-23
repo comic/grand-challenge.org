@@ -27,14 +27,89 @@
                 </a>
             {% endfor %}
         </dd>
-        <dt>Images</dt>
-        <dd>
-            {% for image in object.images.all %}
-                {{ image }}
-            {% endfor %}
-        </dd>
 
     </dl>
 
+    <h3>Matched Annotations</h3>
+
+    <table class="table" id="MatchedAnnotations">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Base Image</th>
+            <th>Annotation Image</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for match in object.matched_images %}
+            <tr>
+                <td>{{ match.key }}</td>
+                <td>{{ match.base }}</td>
+                <td>{{ match.annotation }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if object.missing_annotations|length > 0 %}
+    <h3>Missing Annotations</h3>
+
+    <p class="alert alert-danger">
+        <b>WARNING:</b> The following images in the dataset are missing annotations. Please upload the annotations with the correct key.
+    </p>
+
+    <table class="table" id="MissingAnnotations">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Base Image</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for match in object.missing_annotations %}
+            <tr>
+                <td>{{ match.key }}</td>
+                <td>{{ match.base }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if object.extra_annotations|length > 0 %}
+    <h3>Extra Annotations</h3>
+
+    <p class="alert alert-danger">
+        <b>WARNING:</b> The following annotations could not be matched with a base image. Please remove these images from the annotation set.
+    </p>
+
+    <table class="table" id="ExtraAnnotations">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Annotation Image</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for match in object.extra_annotations %}
+            <tr>
+                <td>{{ match.key }}</td>
+                <td>{{ match.annotation }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "asc"]],
+                "pageLength": 10,
+                ordering: true
+            });
+
+        });
+    </script>
 
 {% endblock %}
