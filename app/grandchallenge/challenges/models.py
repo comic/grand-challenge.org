@@ -584,7 +584,8 @@ class ExternalChallenge(ChallengeBase):
         help_text=("Where is the submissions page for this challenge?"),
     )
     download_page = models.URLField(
-        blank=True, help_text=("Where is the download page for this challenge?")
+        blank=True,
+        help_text=("Where is the download page for this challenge?"),
     )
 
     data_stored = models.BooleanField(
@@ -619,6 +620,7 @@ class ComicSiteModel(models.Model):
     ALL = "ALL"
     REGISTERED_ONLY = "REG"
     ADMIN_ONLY = "ADM"
+    STAFF_ONLY = "STF"
     PERMISSIONS_CHOICES = (
         (ALL, "All"),
         (REGISTERED_ONLY, "Registered users only"),

@@ -9,10 +9,6 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 
 
-def case_file_path(instance, filename):
-    return f"cases/{instance.case.pk}/{filename}"
-
-
 class UPLOAD_SESSION_STATE:
     created = "created"
     queued = "queued"
@@ -85,6 +81,11 @@ class RawImageFile(UUIDModel):
 
 def image_file_path(instance, filename):
     return f"images/{instance.image.pk}/{filename}"
+
+
+def case_file_path(instance, filename):
+    # legacy method, but used in a migration so cannot delete.
+    return image_file_path(instance, filename)
 
 
 class Image(UUIDModel):

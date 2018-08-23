@@ -17,7 +17,9 @@ def can_access(user, path, challenge_short_name):
         return True
 
     elif required == ComicSiteModel.REGISTERED_ONLY:
-        project = Challenge.objects.get(short_name__iexact=challenge_short_name)
+        project = Challenge.objects.get(
+            short_name__iexact=challenge_short_name
+        )
         if project.is_participant(user):
             return True
 
@@ -25,12 +27,17 @@ def can_access(user, path, challenge_short_name):
             return False
 
     elif required == ComicSiteModel.ADMIN_ONLY:
-        project = Challenge.objects.get(short_name__iexact=challenge_short_name)
+        project = Challenge.objects.get(
+            short_name__iexact=challenge_short_name
+        )
         if project.is_admin(user):
             return True
 
         else:
             return False
+
+    elif required == ComicSiteModel.STAFF_ONLY:
+        return user.is_staff
 
     else:
         return False
@@ -85,9 +92,9 @@ def _required_permission(path, challenge_short_name):
         # No one can download evaluation files
         return "nobody"
 
-    if challenge_short_name.lower() in ["cases", "images"]:
-        # Everyone can download cases and images
-        return ComicSiteModel.ALL
+    if challenge_short_name.lower() == "images":
+        # Only staff can download cases or images
+        return ComicSiteModel.STAFF_ONLY
 
     if challenge_short_name.lower() == "docker":
         # No one can download docker stuff
