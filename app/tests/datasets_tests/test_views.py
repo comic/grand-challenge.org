@@ -120,3 +120,36 @@ def test_annotationset_creation(client, settings):
     annotationset.refresh_from_db()
 
     assert len(annotationset.images.all()) == 1
+
+
+@pytest.mark.django_db
+def test_unique_dataset_phase(client):
+    challenge = ChallengeFactory()
+    ImageSetFactory(phase=ImageSet.TRAINING, challenge=challenge)
+
+    user = UserFactory(is_staff=True)
+    client.login(username=user.username, password=SUPER_SECURE_TEST_PASSWORD)
+
+    url = reverse(
+        "datasets:imageset-create",
+        kwargs={"challenge_short_name": challenge.short_name},
+    )
+
+    # Creating a training dataset for this challenge should fail
+    response = client.post(url, data={"phase": ImageSet.TRAINING})
+    assert response.status_code == 200
+    assert "already exists" in response.rendered_content
+
+    # But a test dataset should be ok
+    response = client.post(url, data={"phase": ImageSet.TESTING})
+    assert response.status_code == 302
+
+    # And a training dataset in another challenge should be fine
+    url = reverse(
+        "datasets:imageset-create",
+        kwargs={"challenge_short_name": ChallengeFactory()},
+    )
+    response = client.post(url, data={"phase": ImageSet.TRAINING})
+    assert response.status_code == 302
+
+    assert len(ImageSet.objects.all()) == 3
