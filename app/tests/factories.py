@@ -4,6 +4,7 @@ import factory
 from django.conf import settings
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -123,3 +124,10 @@ class TeamMemberFactory(factory.DjangoModelFactory):
         model = TeamMember
 
     team = factory.SubFactory(TeamFactory)
+
+
+class ImageSetFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = ImageSet
+
+    challenge = factory.SubFactory(ChallengeFactory)

@@ -1,0 +1,19 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}
+    Update Annotation Set - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Update the images used in an Annotation Set</h2>
+
+    {% crispy form %}
+
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+
+{% endblock %}

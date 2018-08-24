@@ -1,0 +1,85 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Dataset - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Dataset</h2>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-add-images' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-plus"></i> Add images to this dataset
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-update' challenge_short_name=site.short_name pk=object.pk %}">
+            <i class="fas fa-edit"></i> Update the images used in this dataset
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=object.pk %}">
+            <i class="fas fa-plus"></i> Add a set of annotations to this
+            dataset
+        </a>
+    </p>
+
+    <dl>
+
+        <dt>Phase</dt>
+        <dd>
+            {{ object.get_phase_display }}
+        </dd>
+
+        <dt>Upload Sessions</dt>
+        <dd>
+            {% for upload_session in object.rawimageuploadsession_set.all %}
+                <a href="{{ upload_session.get_absolute_url }}">
+                    {{ upload_session }}<br>
+                </a>
+            {% endfor %}
+        </dd>
+
+        <dt>Annotations</dt>
+        <dd>
+            {% for annotationset in object.annotationset_set.all %}
+                <a href="{{ annotationset.get_absolute_url }}">{{ annotationset }}</a>
+            {% endfor %}
+        </dd>
+
+    </dl>
+
+
+    <h3>Images</h3>
+
+    <table class="table" id="Images">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Image</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for im in object.images_with_keys %}
+            <tr>
+                <td>{{ im.key }}</td>
+                <td>{{ im.image }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "asc"]],
+                "pageLength": 10,
+                ordering: true
+            });
+
+        });
+    </script>
+
+{% endblock %}

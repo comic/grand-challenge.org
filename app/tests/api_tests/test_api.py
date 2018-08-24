@@ -21,7 +21,11 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "test_input, expected",
-    [("submission", "Submission List"), ("annotation", "Annotation List")],
+    [
+        ("submission", "Submission List"),
+        ("annotation", "Annotation List"),
+        ("image", "Image List"),
+    ],
 )
 def test_api_pages(client, test_input, expected):
     _, token = get_staff_user_with_token()
@@ -36,7 +40,9 @@ def test_api_pages(client, test_input, expected):
 
     # There should be no content, but we should be able to do json.loads
     response = client.get(
-        url, HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token
+        url,
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 200
     assert not json.loads(response.content)

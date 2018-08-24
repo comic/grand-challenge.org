@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
+import re
+
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-
-
-def case_file_path(instance, filename):
-    return f"cases/{instance.case.pk}/{filename}"
 
 
 class UPLOAD_SESSION_STATE:
@@ -33,6 +32,26 @@ class RawImageUploadSession(UUIDModel):
     error_message = models.CharField(
         max_length=256, blank=False, null=True, default=None
     )
+
+    imageset = models.ForeignKey(
+        to="datasets.ImageSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    annotationset = models.ForeignKey(
+        to="datasets.AnnotationSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return (
+            f"Upload Session <{str(self.pk).split('-')[0]}>, "
+            f"({self.session_state})"
+        )
 
     def get_absolute_url(self):
         return reverse(
@@ -64,6 +83,11 @@ def image_file_path(instance, filename):
     return f"images/{instance.image.pk}/{filename}"
 
 
+def case_file_path(instance, filename):
+    # legacy method, but used in a migration so cannot delete.
+    return image_file_path(instance, filename)
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
@@ -92,6 +116,25 @@ class Image(UUIDModel):
     color_space = models.CharField(
         max_length=4, blank=False, choices=COLOR_SPACES
     )
+
+    def __str__(self):
+        return f"Image {self.name} {self.shape_without_color}"
+
+    @property
+    def sorter_key(self) -> str:
+        """
+        For use in filtering.
+
+        Gets the first int in the name, and returns that string.
+        If an int cannot be found, returns the lower case name split at the
+        first full stop.
+        """
+        try:
+            r = re.compile(r"\D*((?:\d+\.?)+)\D*")
+            m = r.search(self.name)
+            return f"{int(m.group(1).replace('.', '')):>64}"
+        except AttributeError:
+            return self.name.split(".")[0].lower()
 
     @property
     def shape_without_color(self):

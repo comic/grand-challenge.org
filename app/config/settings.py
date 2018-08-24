@@ -253,6 +253,7 @@ LOCAL_APPS = [
     "grandchallenge.cases",
     "grandchallenge.algorithms",
     "grandchallenge.container_exec",
+    "grandchallenge.datasets",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -366,7 +367,8 @@ LOGGING = {
     },
     "handlers": {
         "sentry": {
-            "level": "ERROR",  # To capture more than ERROR, change to WARNING, INFO, etc.
+            "level": "ERROR",
+            # To capture more than ERROR, change to WARNING, INFO, etc.
             "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
         },
         "console": {

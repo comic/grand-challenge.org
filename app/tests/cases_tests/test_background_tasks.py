@@ -16,9 +16,11 @@ from tests.jqfileupload_tests.external_test_support import (
 
 
 def create_raw_upload_image_session(
-    images: List[str], delete_file=False
+    images: List[str], delete_file=False, imageset=None, annotationset=None
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
-    upload_session = RawImageUploadSession()
+    upload_session = RawImageUploadSession(
+        imageset=imageset, annotationset=annotationset
+    )
 
     uploaded_images = {}
     for image in images:

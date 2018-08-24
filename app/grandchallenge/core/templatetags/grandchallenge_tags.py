@@ -230,7 +230,10 @@ class comic_URLNode(defaulttags.URLNode):
         url = super().render(context)
 
         if subdomain_is_projectname() and (
-            (self.view_name.var in ["challenge-homepage", "project_serve_file"])
+            (
+                self.view_name.var
+                in ["challenge-homepage", "project_serve_file"]
+            )
             or (
                 self.view_name.var.split(":")[0]
                 in [
@@ -240,6 +243,7 @@ class comic_URLNode(defaulttags.URLNode):
                     "participants",
                     "admins",
                     "uploads",
+                    "datasets",
                 ]
             )
         ):
@@ -498,7 +502,8 @@ class ImageBrowserNode(template.Node):
         # create links. Using dummyfile because django resolution does not except
         # explicit empty strings.
         serve_file_prefix = reverse(
-            "project_serve_file", args=[context["site"].short_name, "dummyfile"]
+            "project_serve_file",
+            args=[context["site"].short_name, "dummyfile"],
         )
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see
         # much wrong with it here.
@@ -732,7 +737,9 @@ class InsertFileNode(template.Node):
         current_path = (
             ntpath.dirname(filename) + "/"
         )  # path of currently inserted file
-        replaced = self.replacer.replace_links(contents, base_url, current_path)
+        replaced = self.replacer.replace_links(
+            contents, base_url, current_path
+        )
         html_out = replaced
         return html_out
 
