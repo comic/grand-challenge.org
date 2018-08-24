@@ -85,8 +85,8 @@ def _required_permission(path, challenge_short_name):
         return "nobody"
 
     if challenge_short_name.lower() == "images":
-        # Only staff can download cases or images
-        return ComicSiteModel.STAFF_ONLY
+        # allow anyone to download images
+        return ComicSiteModel.ALL
 
     if challenge_short_name.lower() == "docker":
         # No one can download docker stuff
