@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import CICharField
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug, MinLengthValidator
+from django.core.validators import validate_slug
 from django.db import models
 from django.db.models import Q
 from guardian.shortcuts import assign_perm, remove_perm
@@ -487,40 +487,31 @@ class Challenge(ChallengeBase):
         This method is used for showin permissions for these groups, even
         if none are defined
         """
-        groups = Group.objects.filter(
+        return Group.objects.filter(
             Q(name=settings.EVERYONE_GROUP_NAME)
             | Q(pk=self.admins_group.pk)
             | Q(pk=self.participants_group.pk)
         )
-        return groups
 
-    def is_admin(self, user):
+    def is_admin(self, user) -> bool:
         """
         is user in the admins group for the comicsite to which this object
         belongs? superuser always passes
         """
-        if user.is_superuser:
-            return True
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.admins_group.pk).exists()
+        )
 
-        if user.groups.filter(pk=self.admins_group.pk).exists():
-            return True
-
-        else:
-            return False
-
-    def is_participant(self, user):
+    def is_participant(self, user) -> bool:
         """
         is user in the participants group for the comicsite to which this
         object belong? superuser always passes
         """
-        if user.is_superuser:
-            return True
-
-        if user.groups.filter(pk=self.participants_group.pk).exists():
-            return True
-
-        else:
-            return False
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.participants_group.pk).exists()
+        )
 
     def get_admins(self):
         """ Return all users that are in this comicsites admin group """

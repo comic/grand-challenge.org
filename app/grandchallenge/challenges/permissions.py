@@ -20,21 +20,13 @@ def can_access(user, path, challenge_short_name):
         project = Challenge.objects.get(
             short_name__iexact=challenge_short_name
         )
-        if project.is_participant(user):
-            return True
-
-        else:
-            return False
+        return project.is_participant(user)
 
     elif required == ComicSiteModel.ADMIN_ONLY:
         project = Challenge.objects.get(
             short_name__iexact=challenge_short_name
         )
-        if project.is_admin(user):
-            return True
-
-        else:
-            return False
+        return project.is_admin(user)
 
     elif required == ComicSiteModel.STAFF_ONLY:
         return user.is_staff
