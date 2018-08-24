@@ -4,8 +4,11 @@
 
 {% block pagecontent %}
 
-    <h2>Results</h2>
+    <div class="card-header">
+        <h2 class="my-0 font-weight-normal">Results</h2>
+    </div>
 
+    <div class="card-body">
     <table class="table" id="resultsTable">
         <thead>
         <tr>
@@ -72,6 +75,7 @@
         {% endfor %}
         </tbody>
     </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

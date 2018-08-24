@@ -136,8 +136,9 @@
 </head>
 <body>
 
+
 {% block topheader %}
-    <nav class="navbar navbar-light navbar-top navbar-expand-sm bg-light fixed-top">
+    <nav class="navbar navbar-light navbar-top navbar-expand-sm bg-white fixed-top">
 
         <a class="navbar-brand mr-md-2 text-capitalize"
            href="{% main_page_url %}">
@@ -156,7 +157,7 @@
                        href="{% url 'challenges:list' %}">All Challenges</a></li>
                 {% metafooterpages %}
             </ul>
-            <ul class="nav">
+            <ul class="navbar-nav">
                 {% if user.is_authenticated %}
                     <li class="dropdown">
                         <a href="#" class="nav-link dropdown-toggle"
@@ -190,6 +191,7 @@
     </nav>
 {% endblock topheader %}
 
+<main role="main">
 
 <div id="messagescontainer" class="container">
     {% block messages %}
@@ -212,77 +214,59 @@
     {% endblock messages %}
 </div>
 
-<div id="page">
 
     {% block jumbotron %}
-        <div id="header" class="container">
-            <a style="display:block"
-               href={% block headerLink %}"/"{% endblock %}>
-                <div id="headerTitle" class="jumbotron text-uppercase">
-                    <h1>
-                        {% block headerTitle %}
-                            <div class="noimage">
-                                {{ main_challenge_name }}
-                            </div>
-                        {% endblock %}
-                    </h1>
-                </div>
-            </a>
+        <div id="headerTitle" class="jumbotron p-3 p-md-5 text-dark rounded bg-light">
+            <!-- <a style="display:block" -->
+            <!--    href={% block headerLink %}"/"{% endblock %}> -->
+            <div class="container">
+                <h1 class="display-4">
+                    {% block headerTitle %}
+                        <div class="noimage">
+                            {{ main_challenge_name }}
+                        </div>
+                    {% endblock %}
+                </h1>
+            </div>
         </div>
     {% endblock %}
 
+<div id="page" class="container">
+
+    <div class="row">
+
     {% block challengeNav %}
 
-        <div class="container">
-            <nav class="navbar navbar-default">
-                <div id="navMenuContainer"
-                     class="container-fluid text-capitalize">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle collapsed"
-                                data-toggle="collapse"
-                                data-target="#bs-example-navbar-collapse-2"
-                                aria-expanded="false">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-
-                    </div>
-
-                    <div class="collapse navbar-collapse"
-                         id="bs-example-navbar-collapse-2">
-                        <div id="navMenu">
-                            <ul class="nav navbar-nav">
-                                {% block topmenu %} {% endblock %}
-                            </ul>
-                        </div>
-                        <div id="additionalNavigation">
-                            <ul class="nav navbar-nav navbar-right">
-                                {% block sitemenuloginbutton %} {% endblock %}
-                                {% block adminbutton %} {% endblock %}
-                            </ul>
-                        </div>
-                    </div>
+        <div class="col-md-3 sidebar-sticky">
+                <div class="card d-none d-md-block bg-white sidebar">
+                    <ul class="nav flex-column">
+                        {% block topmenu %} {% endblock %}
+                    </ul>
                 </div>
+                    <div id="additionalNavigation">
+                        <ul class="nav navbar-nav navbar-right">
+                            {% block sitemenuloginbutton %} {% endblock %}
+                            {% block adminbutton %} {% endblock %}
+                        </ul>
+                    </div>
             </nav>
         </div>
 
     {% endblock %}
 
-
-    <div id="container" class="container">
-        <div id="mainContent">
+        <div id="mainContent" class="p-0 mb-4 col-md-9 card shadow-sm ">
             {% block content %} content {% endblock %}
         </div>
+
     </div>
     <!-- container -->
 </div>
+</main>
 
 <!-- page -->
 {% block footer %}
-    <footer id="metafooter" class="container text-center">
-        <div id="copyrightNotice">
+    <footer class="footer">
+        <div id="metafooter" class="container text-center text-muted">
             Consortium for Open Medical Image Computing &copy;
             2012-{% now "Y" %}
         </div>

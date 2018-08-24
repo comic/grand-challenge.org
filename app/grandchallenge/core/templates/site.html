@@ -52,53 +52,46 @@
 
     {% for page in pages %}
         {% if not page.hidden %}
-            {% if not forloop.first %}
-                <li role="separator" class="divider"></li>
-            {% endif %}
-            <li {% if page == currentpage %}class="active"{% endif %}>
-                <a class="menuItem"
-                   href="{{ page.get_absolute_url }}">
-                    {% if page.display_title %}
-                        {{ page.display_title }}
-                    {% else %}
-                        {{ page.title }}
-                    {% endif %}
-                </a>
-            </li>
-
+        <li class="nav-item">
+            <a class="nav-link {% if page == currentpage %}active{% endif %}"
+               href="{{ page.get_absolute_url }}">
+                {% if page.display_title %}
+                    {{ page.display_title }}
+                {% else %}
+                    {{ page.title }}
+                {% endif %}
+            </a>
+        </li>
         {% endif %}
     {% endfor %}
 
     {% if site.use_registration_page %}
-
-        <li role="separator" class="divider"></li>
-        <li>
-            <a href="{% url 'participants:registration-create' site.short_name %}"><b>Join</b></a>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'participants:registration-create' site.short_name %}">
+                <b>Join</b>
+            </a>
         </li>
-
     {% endif %}
 
     {% if site.use_evaluation %}
 
         {% get_obj_perms user for site as "site_perms" %}
         {% if "change_challenge" in site_perms or user_is_participant %}
-            <li role="separator" class="divider"></li>
-
+            
             {% if site.evaluation_config.use_teams %}
-                <li>
-                    <a href="{% url 'teams:list' site.short_name %}"><b>Teams</b></a>
-                </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'teams:list' site.short_name %}"><b>Teams</b></a>
+            </li>
             {% endif %}
-            <li>
-                <a href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
             </li>
 
         {% endif %}
+            <li>
+                <a class="nav-link" href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
+            </li>
 
-        <li role="separator" class="divider"></li>
-        <li>
-            <a href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
-        </li>
     {% endif %}
 
 {% endblock %}
