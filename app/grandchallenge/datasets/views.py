@@ -14,9 +14,10 @@ from grandchallenge.datasets.forms import (
     AnnotationSetUpdateForm,
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 
 
-class ImageSetList(UserIsStaffMixin, ListView):
+class ImageSetList(UserIsStaffMixin, ChallengeFilteredQuerysetMixin, ListView):
     model = ImageSet
 
 
