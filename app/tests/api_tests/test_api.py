@@ -21,11 +21,7 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "test_input, expected",
-    [
-        ("submission", "Submission List"),
-        ("annotation", "Annotation List"),
-        ("image", "Image List"),
-    ],
+    [("submission", "Submission List"), ("image", "Image List")],
 )
 def test_api_pages(client, test_input, expected):
     _, token = get_staff_user_with_token()

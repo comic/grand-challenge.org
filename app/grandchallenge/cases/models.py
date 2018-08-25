@@ -159,25 +159,3 @@ class ImageFile(UUIDModel):
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
     )
     file = models.FileField(upload_to=image_file_path, blank=False)
-
-
-class Annotation(UUIDModel):
-    """
-    An object that represents an annotation of an image. This can be another
-    image, for instance, a segmentation, or some metadata such as a
-    classification, eg. {"cancer": False}.
-    """
-
-    base = models.ForeignKey(
-        Image, related_name="annotations", on_delete=models.CASCADE
-    )
-    image = models.ForeignKey(
-        Image, null=True, blank=True, on_delete=models.CASCADE
-    )
-    metadata = JSONField(null=True, blank=True)
-
-    def get_absolute_url(self):
-        return reverse(
-            "cases:annotation-detail",
-            kwargs={"base_pk": self.base.pk, "pk": self.pk},
-        )
