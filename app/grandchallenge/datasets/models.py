@@ -4,8 +4,17 @@ from django.db import models
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.container_exec.backends.docker import (
+    Executor,
+    put_file,
+    cleanup,
+)
+from grandchallenge.container_exec.exceptions import InputError
+from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.validators import get_file_mimetype
+from grandchallenge.evaluation.models import Submission
 
 
 class ImageSet(UUIDModel):
@@ -63,6 +72,9 @@ class AnnotationSet(UUIDModel):
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
+    submission = models.OneToOneField(
+        to=Submission, null=True, on_delete=models.SET_NULL, editable=False
+    )
 
     def __str__(self):
         return (
@@ -122,3 +134,103 @@ class AnnotationSet(UUIDModel):
                 "pk": self.pk,
             },
         )
+
+
+class SubmissionConversionExecutor(Executor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, results_file=None, **kwargs)
+
+    def _copy_input_files(self, writer):
+        for file in self._input_files:
+            dest_file = "/tmp/submission-src"
+            put_file(container=writer, src=file, dest=dest_file)
+
+            with file.open("rb") as f:
+                mimetype = get_file_mimetype(f)
+
+            if mimetype.lower() == "application/zip":
+                # Unzip the file in the container rather than in the python
+                # process. With resource limits this should provide some
+                # protection against zip bombs etc.
+                writer.exec_run(f"unzip {dest_file} -d /input/")
+            else:
+                # Not a zip file, so must be a csv
+                writer.exec_run(f"mv {dest_file} /input/submission.csv")
+
+    def _execute_container(self):
+        """ We do not need to do any conversion, so skip """
+        pass
+
+    def _get_result(self):
+        """
+        Reads all of the images in /output/ and converts to upload session
+        """
+        try:
+            with cleanup(
+                self._client.containers.run(
+                    image=self._io_image,
+                    volumes={
+                        self._input_volume: {"bind": "/output/", "mode": "ro"}
+                    },
+                    detach=True,
+                    tty=True,
+                    **self._run_kwargs,
+                )
+            ) as reader:
+                self._copy_output_files(container=reader)
+        except Exception as exc:
+            raise InputError(str(exc))
+
+    def _copy_output_files(self, *, container):
+        output_files = (
+            container.exec_run("ls /output/").output.decode().splitlines()
+        )
+
+        if not output_files:
+            raise ValueError("Output directory is empty")
+
+        # TODO: This thing should not interact with the database
+        job = SubmissionConversionJob.objects.get(pk=self._job_id)
+        annotationset = AnnotationSet.objects.create(
+            creator=job.submission.creator,
+            base=job.base,
+            submission=job.submission,
+            kind=AnnotationSet.PREDICTION,
+        )
+
+        # Create the upload session but do not save it until we have the files
+        upload_session = RawImageUploadSession(annotationset=annotationset)
+
+        for file in output_files:
+            tarstrm, info = container.get_archive(f"/output/{file}")
+
+            # TODO: Create a StagedFile and StagedAjaxFile from this
+            # see: create_file_from_filepath in tests
+            pass
+
+        print(output_files)
+
+
+class SubmissionConversionJob(ContainerExecJobModel):
+    base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
+    submission = models.OneToOneField(to=Submission, on_delete=models.CASCADE)
+
+    @property
+    def container(self):
+        class FakeContainer:
+            ready = True
+            image = settings.CONTAINER_EXEC_IO_IMAGE
+            image_sha256 = settings.CONTAINER_EXEC_IO_SHA256
+
+        return FakeContainer()
+
+    @property
+    def input_files(self):
+        return [self.submission.file]
+
+    @property
+    def executor_cls(self):
+        return SubmissionConversionExecutor
+
+    def create_result(self, *, result: dict):
+        super().create_result(result=result)

@@ -5,8 +5,9 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.container_exec.tasks import validate_docker_image_async
+from grandchallenge.datasets.models import SubmissionConversionJob
 from grandchallenge.evaluation.models import Method
-from tests.factories import SubmissionFactory, MethodFactory
+from tests.factories import SubmissionFactory, MethodFactory, ImageSetFactory
 
 
 @pytest.mark.django_db
@@ -49,6 +50,10 @@ def test_submission_evaluation(
     # The evaluation method should return the correct answer
     assert len(submission.job_set.all()) == 1
     assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
+
+    SubmissionConversionJob.objects.create(
+        base=ImageSetFactory(), submission=submission
+    )
 
     # Try with a csv file
     submission = SubmissionFactory(
