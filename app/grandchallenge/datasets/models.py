@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
-from django.conf import settings
-from django.db import models
+import uuid
+from datetime import timedelta
+from io import BytesIO
 
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from django.conf import settings
+from django.core import files
+from django.db import models
+from django.utils import timezone
+
+from grandchallenge.cases.models import (
+    Image,
+    RawImageUploadSession,
+    RawImageFile,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.backends.docker import (
     Executor,
@@ -15,6 +25,8 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 class ImageSet(UUIDModel):
@@ -181,6 +193,8 @@ class SubmissionConversionExecutor(Executor):
         except Exception as exc:
             raise InputError(str(exc))
 
+        return {}
+
     def _copy_output_files(self, *, container):
         output_files = (
             container.exec_run("ls /output/").output.decode().splitlines()
@@ -201,14 +215,45 @@ class SubmissionConversionExecutor(Executor):
         # Create the upload session but do not save it until we have the files
         upload_session = RawImageUploadSession(annotationset=annotationset)
 
+        images = []
         for file in output_files:
             tarstrm, info = container.get_archive(f"/output/{file}")
 
-            # TODO: Create a StagedFile and StagedAjaxFile from this
-            # see: create_file_from_filepath in tests
-            pass
+            new_uuid = uuid.uuid4()
 
-        print(output_files)
+            start = 0
+            for chunk in tarstrm:
+                staged_file = StagedFile(
+                    csrf="staging_conversion_csrf",
+                    client_id=self._job_id,
+                    client_filename=info["name"],
+                    file_id=new_uuid,
+                    timeout=timezone.now() + timedelta(minutes=120),
+                    start_byte=start,
+                    end_byte=len(chunk) - 1,
+                    total_size=info["size"],
+                )
+                string_file = BytesIO(chunk)
+                django_file = files.File(string_file)
+                staged_file.file.save(
+                    f"{info['name']}_{uuid.uuid4()}", django_file
+                )
+                staged_file.save()
+                assert staged_file.file.size == len(chunk) - start
+                start = len(chunk)
+
+            staged_file = StagedAjaxFile(new_uuid)
+
+            images.append(
+                RawImageFile(
+                    upload_session=upload_session,
+                    filename=staged_file.name,
+                    staged_file_id=staged_file.uuid,
+                )
+            )
+
+        upload_session.save()
+        RawImageFile.objects.bulk_create(images)
 
 
 class SubmissionConversionJob(ContainerExecJobModel):
@@ -233,4 +278,4 @@ class SubmissionConversionJob(ContainerExecJobModel):
         return SubmissionConversionExecutor
 
     def create_result(self, *, result: dict):
-        super().create_result(result=result)
+        pass
