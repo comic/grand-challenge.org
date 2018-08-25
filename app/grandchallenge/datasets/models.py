@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import tarfile
 import uuid
 from datetime import timedelta
 from io import BytesIO
@@ -216,31 +217,35 @@ class SubmissionConversionExecutor(Executor):
         upload_session = RawImageUploadSession(annotationset=annotationset)
 
         images = []
+
         for file in output_files:
             tarstrm, info = container.get_archive(f"/output/{file}")
 
+            file_obj = BytesIO()
+            for ts in tarstrm:
+                file_obj.write(ts)
+
+            file_obj.seek(0)
+            tar = tarfile.open(mode="r", fileobj=file_obj)
+            content = tar.extractfile(file)
+
             new_uuid = uuid.uuid4()
 
-            start = 0
-            for chunk in tarstrm:
-                staged_file = StagedFile(
-                    csrf="staging_conversion_csrf",
-                    client_id=self._job_id,
-                    client_filename=info["name"],
-                    file_id=new_uuid,
-                    timeout=timezone.now() + timedelta(minutes=120),
-                    start_byte=start,
-                    end_byte=len(chunk) - 1,
-                    total_size=info["size"],
-                )
-                string_file = BytesIO(chunk)
-                django_file = files.File(string_file)
-                staged_file.file.save(
-                    f"{info['name']}_{uuid.uuid4()}", django_file
-                )
-                staged_file.save()
-                assert staged_file.file.size == len(chunk) - start
-                start = len(chunk)
+            staged_file = StagedFile(
+                csrf="staging_conversion_csrf",
+                client_id=self._job_id,
+                client_filename=info["name"],
+                file_id=new_uuid,
+                timeout=timezone.now() + timedelta(minutes=120),
+                start_byte=0,
+                end_byte=content.raw.size - 1,
+                total_size=content.raw.size,
+            )
+            django_file = files.File(content)
+            staged_file.file.save(
+                f"{info['name']}_{uuid.uuid4()}", django_file
+            )
+            staged_file.save()
 
             staged_file = StagedAjaxFile(new_uuid)
 
@@ -252,8 +257,9 @@ class SubmissionConversionExecutor(Executor):
                 )
             )
 
-        upload_session.save()
+        upload_session.save(skip_processing=True)
         RawImageFile.objects.bulk_create(images)
+        upload_session.process_images()
 
 
 class SubmissionConversionJob(ContainerExecJobModel):
