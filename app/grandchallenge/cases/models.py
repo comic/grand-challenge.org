@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
