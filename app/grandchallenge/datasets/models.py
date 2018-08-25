@@ -2,11 +2,7 @@
 from django.conf import settings
 from django.db import models
 
-from grandchallenge.cases.models import (
-    Image,
-    Annotation,
-    RawImageUploadSession,
-)
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
