@@ -62,6 +62,7 @@ class RawImageUploadSession(UUIDModel):
             self.process_images()
 
     def process_images(self):
+        # Local import to avoid circular dependency
         from grandchallenge.cases.tasks import build_images
 
         try:

@@ -254,6 +254,7 @@ LOCAL_APPS = [
     "grandchallenge.algorithms",
     "grandchallenge.container_exec",
     "grandchallenge.datasets",
+    "grandchallenge.submission_conversion",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
