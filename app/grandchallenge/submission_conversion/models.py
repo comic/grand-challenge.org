@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-import tarfile
 import uuid
 from datetime import timedelta
-from io import BytesIO
+from pathlib import Path
 
 from django.conf import settings
-from django.core import files
 from django.db import models
 from django.utils import timezone
 
@@ -14,9 +12,11 @@ from grandchallenge.container_exec.backends.docker import (
     Executor,
     put_file,
     cleanup,
+    get_file,
 )
 from grandchallenge.container_exec.exceptions import InputError
 from grandchallenge.container_exec.models import ContainerExecJobModel
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.evaluation.models import Submission
@@ -24,7 +24,7 @@ from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
-class SubmissionConversionExecutor(Executor):
+class SubmissionToAnnotationSetExecutor(Executor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, results_file=None, **kwargs)
 
@@ -53,34 +53,41 @@ class SubmissionConversionExecutor(Executor):
         """
         Reads all of the images in /output/ and converts to upload session
         """
+        base_dir = "/output/"
+
         try:
             with cleanup(
                 self._client.containers.run(
                     image=self._io_image,
                     volumes={
-                        self._input_volume: {"bind": "/output/", "mode": "ro"}
+                        self._input_volume: {"bind": base_dir, "mode": "ro"}
                     },
                     detach=True,
                     tty=True,
                     **self._run_kwargs,
                 )
             ) as reader:
-                self._copy_output_files(container=reader)
+                self._copy_output_files(
+                    container=reader, base_dir=Path(base_dir)
+                )
         except Exception as exc:
             raise InputError(str(exc))
 
         return {}
 
-    def _copy_output_files(self, *, container):
-        output_files = (
-            container.exec_run("ls /output/").output.decode().splitlines()
-        )
+    def _copy_output_files(self, *, container, base_dir: Path):
+        output_files = [
+            base_dir / Path(f)
+            for f in container.exec_run(f"ls -1 {base_dir}")
+            .output.decode()
+            .splitlines()
+        ]
 
         if not output_files:
             raise ValueError("Output directory is empty")
 
         # TODO: This thing should not interact with the database
-        job = SubmissionConversionJob.objects.get(pk=self._job_id)
+        job = SubmissionToAnnotationSetJob.objects.get(pk=self._job_id)
         annotationset = AnnotationSet.objects.create(
             creator=job.submission.creator,
             base=job.base,
@@ -94,41 +101,30 @@ class SubmissionConversionExecutor(Executor):
         images = []
 
         for file in output_files:
-            tarstrm, info = container.get_archive(f"/output/{file}")
-
-            file_obj = BytesIO()
-            for ts in tarstrm:
-                file_obj.write(ts)
-
-            file_obj.seek(0)
-            tar = tarfile.open(mode="r", fileobj=file_obj)
-            content = tar.extractfile(file)
-
             new_uuid = uuid.uuid4()
+
+            django_file = get_file(container=container, src=file)
 
             staged_file = StagedFile(
                 csrf="staging_conversion_csrf",
                 client_id=self._job_id,
-                client_filename=info["name"],
+                client_filename=file.name,
                 file_id=new_uuid,
-                timeout=timezone.now() + timedelta(minutes=120),
+                timeout=timezone.now() + timedelta(hours=24),
                 start_byte=0,
-                end_byte=content.raw.size - 1,
-                total_size=content.raw.size,
+                end_byte=django_file.size - 1,
+                total_size=django_file.size,
             )
-            django_file = files.File(content)
-            staged_file.file.save(
-                f"{info['name']}_{uuid.uuid4()}", django_file
-            )
+            staged_file.file.save(f"{uuid.uuid4()}", django_file)
             staged_file.save()
 
-            staged_file = StagedAjaxFile(new_uuid)
+            staged_ajax_file = StagedAjaxFile(new_uuid)
 
             images.append(
                 RawImageFile(
                     upload_session=upload_session,
-                    filename=staged_file.name,
-                    staged_file_id=staged_file.uuid,
+                    filename=staged_ajax_file.name,
+                    staged_file_id=staged_ajax_file.uuid,
                 )
             )
 
@@ -137,7 +133,7 @@ class SubmissionConversionExecutor(Executor):
         upload_session.process_images()
 
 
-class SubmissionConversionJob(ContainerExecJobModel):
+class SubmissionToAnnotationSetJob(UUIDModel, ContainerExecJobModel):
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
     submission = models.OneToOneField(to=Submission, on_delete=models.CASCADE)
 
@@ -156,7 +152,7 @@ class SubmissionConversionJob(ContainerExecJobModel):
 
     @property
     def executor_cls(self):
-        return SubmissionConversionExecutor
+        return SubmissionToAnnotationSetExecutor
 
     def create_result(self, *, result: dict):
         pass

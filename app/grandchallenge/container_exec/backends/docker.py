@@ -187,3 +187,17 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
 
     tar_b.seek(0)
     container.put_archive(os.path.dirname(dest), tar_b)
+
+
+def get_file(*, container: ContainerApiMixin, src: Path) -> File:
+    tarstrm, info = container.get_archive(src)
+
+    file_obj = io.BytesIO()
+    for ts in tarstrm:
+        file_obj.write(ts)
+
+    file_obj.seek(0)
+    tar = tarfile.open(mode="r", fileobj=file_obj)
+    content = tar.extractfile(src.name)
+
+    return File(content)
