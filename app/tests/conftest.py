@@ -1,6 +1,7 @@
 import os
 import zipfile
 from collections import namedtuple
+from pathlib import Path
 
 import docker
 import pytest
@@ -71,7 +72,11 @@ def two_challenge_sets():
     ChallengeSet1.challenge.add_admin(admin1participant2)
     ChallengeSet2.challenge.add_participant(admin1participant2)
     return TwoChallengeSets(
-        ChallengeSet1, ChallengeSet2, admin12, participant12, admin1participant2
+        ChallengeSet1,
+        ChallengeSet2,
+        admin12,
+        participant12,
+        admin1participant2,
     )
 
 
@@ -140,17 +145,26 @@ def alpine_images(tmpdir_factory):
 def submission_file(tmpdir_factory):
     testfile = tmpdir_factory.mktemp("submission").join("submission.zip")
     z = zipfile.ZipFile(testfile, mode="w")
+
+    files = [
+        Path("evaluation_tests") / "resources" / "submission.csv",
+        Path("cases_tests") / "resources" / "image10x10x10.mhd",
+        Path("cases_tests") / "resources" / "image10x10x10.zraw",
+    ]
+
     try:
-        z.write(
-            os.path.join(
-                os.path.split(__file__)[0],
-                "evaluation_tests",
-                "resources",
-                "submission.csv",
-            ),
-            compress_type=zipfile.ZIP_DEFLATED,
-            arcname="submission.csv",
-        )
+        for file in files:
+            if "cases_tests" in str(file.parent):
+                arcname = Path("images") / file.name
+            else:
+                arcname = file.name
+
+            z.write(
+                Path(__file__).parent / file,
+                compress_type=zipfile.ZIP_DEFLATED,
+                arcname=arcname,
+            )
     finally:
         z.close()
+
     return testfile

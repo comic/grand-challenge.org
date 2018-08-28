@@ -40,3 +40,8 @@ def test_submission_conversion(capsys, submission_file, settings):
 
     assert annotation_set.submission == submission
     assert annotation_set.base == test_set
+
+    images = annotation_set.images.all()
+
+    assert len(images) == 1
+    assert images[0].name == "image10x10x10.mhd"

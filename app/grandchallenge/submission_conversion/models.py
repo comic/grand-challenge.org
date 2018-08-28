@@ -78,7 +78,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
     def _copy_output_files(self, *, container, base_dir: Path):
         output_files = [
             base_dir / Path(f)
-            for f in container.exec_run(f"ls -1 {base_dir}")
+            for f in container.exec_run(f"find {base_dir} -type f")
             .output.decode()
             .splitlines()
         ]
