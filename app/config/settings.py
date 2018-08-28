@@ -254,6 +254,7 @@ LOCAL_APPS = [
     "grandchallenge.algorithms",
     "grandchallenge.container_exec",
     "grandchallenge.datasets",
+    "grandchallenge.submission_conversion",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -414,6 +415,9 @@ CELERY_TASK_TIME_LIMIT = 7260
 CONTAINER_EXEC_DOCKER_BASE_URL = "unix://var/run/docker.sock"
 CONTAINER_EXEC_MEMORY_LIMIT = "4g"
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
+CONTAINER_EXEC_IO_SHA256 = (
+    "sha256:11cd0b38bc3ceb958ffb2f9bd70be3fb317ce7d255c8a4c3f4af30e298aa1aab"
+)
 CONTAINER_EXEC_CPU_QUOTA = 100000
 CONTAINER_EXEC_CPU_PERIOD = 100000
 

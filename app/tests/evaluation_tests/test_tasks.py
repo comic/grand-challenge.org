@@ -5,8 +5,11 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.container_exec.tasks import validate_docker_image_async
+from grandchallenge.submission_conversion.models import (
+    SubmissionToAnnotationSetJob
+)
 from grandchallenge.evaluation.models import Method
-from tests.factories import SubmissionFactory, MethodFactory
+from tests.factories import SubmissionFactory, MethodFactory, ImageSetFactory
 
 
 @pytest.mark.django_db

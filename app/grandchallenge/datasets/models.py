@@ -2,10 +2,17 @@
 from django.conf import settings
 from django.db import models
 
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    RawImageUploadSession,
+    RawImageFile,
+)
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.evaluation.models import Submission
+from grandchallenge.jqfileupload.models import StagedFile
 
 
 class ImageSet(UUIDModel):
@@ -63,6 +70,9 @@ class AnnotationSet(UUIDModel):
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
+    submission = models.OneToOneField(
+        to=Submission, null=True, on_delete=models.SET_NULL, editable=False
+    )
 
     def __str__(self):
         return (

@@ -52,6 +52,34 @@ class RawImageUploadSession(UUIDModel):
             f"({self.session_state})"
         )
 
+    def save(self, *args, skip_processing=False, **kwargs):
+
+        created = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if created and not skip_processing:
+            self.process_images()
+
+    def process_images(self):
+        # Local import to avoid circular dependency
+        from grandchallenge.cases.tasks import build_images
+
+        try:
+            RawImageUploadSession.objects.filter(pk=self.pk).update(
+                session_state=UPLOAD_SESSION_STATE.queued,
+                processing_task=self.pk,
+            )
+
+            build_images.apply_async(task_id=str(self.pk), args=(self.pk,))
+
+        except Exception as e:
+            RawImageUploadSession.objects.filter(pk=self.pk).update(
+                session_state=UPLOAD_SESSION_STATE.stopped,
+                error_message=f"Could not start job: {e}",
+            )
+            raise e
+
     def get_absolute_url(self):
         return reverse(
             "cases:raw-files-session-detail", kwargs={"pk": self.pk}
