@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 challenge=demo, title='adm', permission_lvl='ADM'
             )
 
-            ExternalChallenge.objects.create(
+            ex_challenge = ExternalChallenge.objects.create(
                 creator=demoadmin,
                 homepage="https://www.example.com",
                 short_name="EXAMPLE2018",
@@ -134,3 +134,7 @@ class Command(BaseCommand):
 
             for modality in modalities:
                 ImagingModality.objects.create(modality=modality)
+
+            mr_modality = ImagingModality.objects.get(modality="MR")
+            ex_challenge.modalities.add(mr_modality)
+            ex_challenge.save()

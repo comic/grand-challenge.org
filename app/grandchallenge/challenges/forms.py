@@ -166,6 +166,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         widgets = {
             "workshop_date": forms.TextInput(attrs={'type': 'date'}),
             "last_submission_date": forms.TextInput(attrs={'type': 'date'}),
+            "description": forms.Textarea,
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,

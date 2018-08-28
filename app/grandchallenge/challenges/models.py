@@ -285,6 +285,15 @@ class ChallengeBase(models.Model):
 
         classes.append(self.get_host_id())
 
+        #Filter by modality
+
+        filter_mod = "MR" #loop over all modalities or pk
+
+        for mod in self.modalities.all():
+            print(mod)
+            if mod.modality == filter_mod:
+                classes.append("modality-" + filter_mod)
+
         return " ".join(classes)
 
     def get_host_id(self):
