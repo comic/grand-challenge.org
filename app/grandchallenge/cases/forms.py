@@ -34,7 +34,7 @@ class UploadRawImagesForm(forms.ModelForm):
         self.helper.add_input(Submit("save", "Submit"))
 
     def save(self, commit=True):
-        instance = super().save(commit=False)
+        instance = super().save(commit=False)  # type: RawImageUploadSession
 
         # Create links between the created session and all uploaded files
         uploaded_files = self.cleaned_data[
@@ -51,8 +51,9 @@ class UploadRawImagesForm(forms.ModelForm):
         ]
 
         if commit:
-            instance.save()
+            instance.save(skip_processing=True)
             RawImageFile.objects.bulk_create(raw_files)
+            instance.process_images()
 
         return instance
 
