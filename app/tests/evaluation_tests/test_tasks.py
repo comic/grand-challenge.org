@@ -53,10 +53,6 @@ def test_submission_evaluation(
     assert len(submission.job_set.all()) == 1
     assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
 
-    SubmissionToAnnotationSetJob.objects.create(
-        base=ImageSetFactory(), submission=submission
-    )
-
     # Try with a csv file
     submission = SubmissionFactory(
         file__from_path=Path(__file__).parent / "resources" / "submission.csv",
