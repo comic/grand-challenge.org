@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from django.conf import settings
 from django.db import models
 
@@ -120,9 +121,15 @@ class AnnotationSet(UUIDModel):
                 "key": key,
                 "base": base_index[key],
                 "annotation": annotation_index[key],
+                "annotation_cirrus_link": self.create_cirrus_annotation_link(
+                    base=base_index[key], annotation=annotation_index[key]
+                ),
             }
             for key in sorted(matches)
         ]
+
+    def create_cirrus_annotation_link(self, *, base: Image, annotation: Image):
+        return f"{base.cirrus_link}&{settings.CIRRUS_ANNOATION_QUERY_PARAM}={annotation.pk}"
 
     def get_absolute_url(self):
         return reverse(

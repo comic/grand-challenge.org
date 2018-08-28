@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 
+from django.conf import settings
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
@@ -179,6 +180,10 @@ class Image(UUIDModel):
         if color_components > 1:
             result.append(color_components)
         return result
+
+    @property
+    def cirrus_link(self):
+        return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
 
 class ImageFile(UUIDModel):

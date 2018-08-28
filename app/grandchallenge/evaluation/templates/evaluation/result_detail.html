@@ -44,6 +44,13 @@
             </dd>
         {% endif %}
 
+        {% if request.user.is_staff and object.job.submission.annotationset %}
+            <dt>Predictions</dt>
+            <dd>
+                <a href="{{ object.job.submission.annotationset.get_absolute_url }}">View
+                    Predictions</a></dd>
+        {% endif %}
+
     </dl>
 
     {% get_obj_perms user for site as "site_perms" %}

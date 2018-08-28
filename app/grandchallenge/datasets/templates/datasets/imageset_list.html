@@ -36,7 +36,7 @@
                 <td>
                     {% for annotationset in imageset.annotationset_set.all %}
                         <a href="{{ annotationset.get_absolute_url }}">
-                            {{ annotationset }}
+                            {{ annotationset }}<br>
                         </a>
                     {% empty %}
                         No annotations found

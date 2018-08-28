@@ -444,6 +444,11 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 
+# CIRRUS Is an external application that can view images
+CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_be06d74c/#!/?workstation=BasicWorkstation"
+CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
+CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
+
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
 # current dir. XX should be a number which determines the order of execution.

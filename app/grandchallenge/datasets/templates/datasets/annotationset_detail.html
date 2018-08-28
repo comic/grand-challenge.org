@@ -16,7 +16,8 @@
         </a>
         <a class="btn btn-primary"
            href="{% url 'datasets:annotationset-update' challenge_short_name=site.short_name pk=object.pk %}">
-            <i class="fas fa-edit"></i> Update the images used in this annotation set
+            <i class="fas fa-edit"></i> Update the images used in this
+            annotation set
         </a>
     </p>
 
@@ -54,8 +55,12 @@
         {% for match in object.matched_images %}
             <tr>
                 <td>{{ match.key }}</td>
-                <td>{{ match.base }}</td>
-                <td>{{ match.annotation }}</td>
+                <td><a href="{{ match.annotation_cirrus_link }}"
+                       title="View Image and Annotation">{{ match.base }}</a>
+                </td>
+                <td><a href="{{ match.annotation_cirrus_link }}"
+                       title="View Image and Annotation">{{ match.annotation }}</a>
+                </td>
             </tr>
         {% endfor %}
         </tbody>

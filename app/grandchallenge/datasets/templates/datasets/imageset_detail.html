@@ -45,6 +45,7 @@
         <dd>
             {% for annotationset in object.annotationset_set.all %}
                 <a href="{{ annotationset.get_absolute_url }}">{{ annotationset }}</a>
+                <br>
             {% endfor %}
         </dd>
 
@@ -64,7 +65,8 @@
         {% for im in object.images_with_keys %}
             <tr>
                 <td>{{ im.key }}</td>
-                <td>{{ im.image }}</td>
+                <td><a href="{{ im.image.cirrus_link }}"
+                       title="View Image">{{ im.image }}</a></td>
             </tr>
         {% endfor %}
         </tbody>
