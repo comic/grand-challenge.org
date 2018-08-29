@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
 from django.db.models import Q
+from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -440,26 +441,13 @@ class Challenge(ChallengeBase):
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
         """
-        return os.path.join(settings.MEDIA_ROOT, self.short_name)
-
-    def upload_dir(self):
-        """Full path to get and put secure uploaded files. Files here cannot be
-        viewed directly by url
-        """
-        return os.path.join(settings.MEDIA_ROOT, self.upload_dir_rel())
+        return safe_join(settings.MEDIA_ROOT, self.short_name)
 
     def upload_dir_rel(self):
         """Path to get and put secure uploaded files relative to MEDIA_ROOT
 
         """
         return os.path.join(self.short_name, "uploads")
-
-    def public_upload_dir(self):
-        """Full path to get and put uploaded files. These files can be served
-        to anyone without checking
-
-         """
-        return os.path.join(settings.MEDIA_ROOT, self.public_upload_dir_rel())
 
     def public_upload_dir_rel(self):
         """ Path to public uploaded files, relative to MEDIA_ROOT
