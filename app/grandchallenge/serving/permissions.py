@@ -3,7 +3,7 @@ from django.conf import settings
 from grandchallenge.challenges.models import ComicSiteModel, Challenge
 
 
-def can_access(user, path, challenge_short_name):
+def can_access(user, path, *, challenge: Challenge):
     """ Does this user have permission to access folder path which is part of
     challenge named challenge_short_name?
     Override permission can be used to make certain folders servable through
@@ -16,16 +16,10 @@ def can_access(user, path, challenge_short_name):
         return True
 
     elif required == ComicSiteModel.REGISTERED_ONLY:
-        project = Challenge.objects.get(
-            short_name__iexact=challenge_short_name
-        )
-        return project.is_participant(user)
+        return challenge.is_participant(user)
 
     elif required == ComicSiteModel.ADMIN_ONLY:
-        project = Challenge.objects.get(
-            short_name__iexact=challenge_short_name
-        )
-        return project.is_admin(user)
+        return challenge.is_admin(user)
 
     elif required == ComicSiteModel.STAFF_ONLY:
         return user.is_staff

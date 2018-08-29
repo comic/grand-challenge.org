@@ -62,7 +62,7 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
         fullpath = os.path.join(
             settings.MEDIA_ROOT, challenge.short_name, newpath
         )
-        allowed = can_access(request.user, newpath, challenge.short_name)
+        allowed = can_access(request.user, newpath, challenge=challenge)
     elif folder:
         fullpath = os.path.join(settings.MEDIA_ROOT, folder, newpath)
         allowed = True

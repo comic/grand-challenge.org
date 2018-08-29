@@ -173,7 +173,9 @@ def inserted_file(request, challenge_short_name, filepath=""):
     data_folder_root = get_data_folder_path(challenge_short_name)
     filename = path.join(data_folder_root, filepath)
     # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(request.user, filepath, challenge_short_name)
+    serve_allowed = can_access(
+        request.user, filepath, challenge=request.challenge
+    )
     if not serve_allowed:
         raise PermissionDenied(
             "You do not have the correct permissions to access this page."
