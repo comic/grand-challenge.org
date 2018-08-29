@@ -6,12 +6,13 @@ from urllib.parse import unquote
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import get_object_or_404
 from django.views.generic import RedirectView
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.serving.permissions import can_access
 from grandchallenge.serving.api import serve_file
+from grandchallenge.serving.permissions import can_access
 
 
 def sanitize_path(*, path: str):
@@ -35,7 +36,7 @@ def sanitize_path(*, path: str):
     return newpath
 
 
-def serve(request, challenge_short_name, path):
+def serve_challenge_file(request, challenge_short_name, path):
     """
     Serve static file for a given project.
 
@@ -48,40 +49,25 @@ def serve(request, challenge_short_name, path):
     if path != newpath:
         return HttpResponseRedirect(newpath)
 
-    fullpath = os.path.join(settings.MEDIA_ROOT, challenge_short_name, newpath)
+    challenge = get_object_or_404(
+        Challenge, short_name__iexact=challenge_short_name
+    )
+
+    fullpath = os.path.join(settings.MEDIA_ROOT, challenge.short_name, newpath)
 
     storage = DefaultStorage()
-    if not storage.exists(fullpath):
-        # On case sensitive filesystems you can have problems if the project
-        # nameurl in the url is not exactly the same case as the filepath.
-        # find the correct case for projectname then.
-        projectlist = Challenge.objects.filter(
-            short_name__iexact=challenge_short_name
-        )
-        if not projectlist:
-            raise Http404("project '%s' does not exist" % challenge_short_name)
 
-        challenge_short_name = projectlist[0].short_name
-        fullpath = os.path.join(
-            settings.MEDIA_ROOT, challenge_short_name, newpath
-        )
-    if not storage.exists(fullpath):
-        raise Http404('"%(path)s" does not exist' % {"path": fullpath})
-
-    if can_access(request.user, path, challenge_short_name):
+    if storage.exists(fullpath) and can_access(
+        request.user, newpath, challenge.short_name
+    ):
         try:
             f = storage.open(fullpath, "rb")
-            file = File(f)  # create django file object
+            file = File(f)
+            return serve_file(file, save_as=True)
         except IOError:
-            return HttpResponseForbidden("This is not a file")
+            pass
 
-        # Do not offer to save images, but show them directly
-        return serve_file(file, save_as=True)
-
-    else:
-        return HttpResponseForbidden(
-            "This file is not available without credentials"
-        )
+    return Http404("File not found.")
 
 
 class ChallengeServeRedirect(RedirectView):
