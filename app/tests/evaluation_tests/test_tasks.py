@@ -35,7 +35,7 @@ def test_submission_evaluation(
 
     # We should not be able to download methods
     response = client.get(method.image.url)
-    assert response.status_code == 403
+    assert response.status_code == 404
 
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
