@@ -36,30 +36,42 @@ def sanitize_path(*, path: str):
     return newpath
 
 
-def serve_challenge_file(request, challenge_short_name, path):
+def serve_folder(request, *, challenge_short_name=None, folder=None, path):
     """
-    Serve static file for a given project.
+    Serve static files in a folder.
 
-    This is meant as a replacement for the inefficient debug only
-    'django.views.static.serve' way of serving files under /media urls.
+    If the file is in a challenge folder, then the subfolders of this challenge
+    will be checked for permissions, see `can_access`.
 
+    If the challenge_short_name is not set, then the folder must be set.
+    ALL FILES IN THIS FOLDER WILL BE AVAILABLE TO DOWNLOAD.
     """
     newpath = sanitize_path(path=path)
 
     if path != newpath:
         return HttpResponseRedirect(newpath)
 
-    challenge = get_object_or_404(
-        Challenge, short_name__iexact=challenge_short_name
-    )
-
-    fullpath = os.path.join(settings.MEDIA_ROOT, challenge.short_name, newpath)
+    if challenge_short_name:
+        if folder:
+            raise AttributeError(
+                "Only challenge_short_name or folder should be set"
+            )
+        challenge = get_object_or_404(
+            Challenge, short_name__iexact=challenge_short_name
+        )
+        fullpath = os.path.join(
+            settings.MEDIA_ROOT, challenge.short_name, newpath
+        )
+        allowed = can_access(request.user, newpath, challenge.short_name)
+    elif folder:
+        fullpath = os.path.join(settings.MEDIA_ROOT, folder, newpath)
+        allowed = True
+    else:
+        raise AttributeError("challenge_short_name or folder must be set")
 
     storage = DefaultStorage()
 
-    if storage.exists(fullpath) and can_access(
-        request.user, newpath, challenge.short_name
-    ):
+    if storage.exists(fullpath) and allowed:
         try:
             f = storage.open(fullpath, "rb")
             file = File(f)

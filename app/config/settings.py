@@ -497,3 +497,19 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
+
+if not COMIC_PUBLIC_FOLDER_NAME:
+    raise ImproperlyConfigured(
+        "Don't know from which folder serving publiv files"
+        "is allowed. Please add a setting like "
+        '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
+        " to your .conf file."
+    )
+
+if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
+    raise ImproperlyConfigured(
+        "Don't know from which folder serving protected files"
+        "is allowed. Please add a setting like "
+        '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
+        " to your .conf file."
+    )

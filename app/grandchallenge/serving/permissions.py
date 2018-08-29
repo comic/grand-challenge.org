@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 
 from grandchallenge.challenges.models import ComicSiteModel, Challenge
 
@@ -11,7 +10,7 @@ def can_access(user, path, challenge_short_name):
     code even though this would not be allowed otherwise
 
     """
-    required = _required_permission(path, challenge_short_name)
+    required = _required_permission(path)
 
     if required == ComicSiteModel.ALL:
         return True
@@ -35,63 +34,11 @@ def can_access(user, path, challenge_short_name):
         return False
 
 
-def _required_permission(path, challenge_short_name):
+def _required_permission(path):
     """ Given a file path on local filesystem, which permission level is needed
     to view this?
 
     """
-    # some config checking.
-    # TODO : check this once at server start but not every time this method is
-    # called. It is too late to throw this error once a user clicks
-    # something.
-    if not hasattr(settings, "COMIC_PUBLIC_FOLDER_NAME"):
-        raise ImproperlyConfigured(
-            "Don't know from which folder serving publiv files"
-            "is allowed. Please add a setting like "
-            '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
-            " to your .conf file."
-        )
-
-    if not hasattr(settings, "COMIC_REGISTERED_ONLY_FOLDER_NAME"):
-        raise ImproperlyConfigured(
-            "Don't know from which folder serving protected files"
-            "is allowed. Please add a setting like "
-            '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
-            " to your .conf file."
-        )
-
-    if challenge_short_name.lower() in [
-        "logos",
-        "banners",
-        "mugshots",
-        "favicon",
-    ]:
-        # Anyone can download logos, banners, mugshots and favicons
-        return ComicSiteModel.ALL
-
-    if challenge_short_name.lower() == "evaluation":
-        # No one can download evaluation files
-        return "nobody"
-
-    if challenge_short_name.lower() == "evaluation-supplementary":
-        # Anyone can download supplementary files
-        return ComicSiteModel.ALL
-
-    if (
-        challenge_short_name.lower()
-        == settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY
-    ):
-        # No one can download evaluation files
-        return "nobody"
-
-    if challenge_short_name.lower() == "images":
-        # allow anyone to download images
-        return ComicSiteModel.ALL
-
-    if challenge_short_name.lower() == "docker":
-        # No one can download docker stuff
-        return "nobody"
-
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
             return ComicSiteModel.ALL
