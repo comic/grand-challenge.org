@@ -1,20 +1,8 @@
 import ntpath
-import os
-import posixpath
-from urllib.parse import unquote
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.files import File
-from django.core.files.storage import DefaultStorage
-from django.http import (
-    HttpResponseRedirect,
-    Http404,
-    HttpResponseForbidden,
-    HttpResponse,
-    JsonResponse,
-)
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -22,8 +10,6 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView, TemplateView
 
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.challenges.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.views import (
     getSite,
@@ -32,7 +18,6 @@ from grandchallenge.core.views import (
 )
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
-from grandchallenge.uploads.api import serve_file
 from grandchallenge.uploads.emails import send_file_uploaded_notification_email
 from grandchallenge.uploads.forms import UserUploadForm, CKUploadForm
 from grandchallenge.uploads.models import UploadModel
@@ -112,67 +97,6 @@ class CKBrowseView(UserIsChallengeAdminMixin, TemplateView):
             )
         context.update({"show_dirs": False, "files": files})
         return context
-
-
-def serve(request, challenge_short_name, path, document_root=None):
-    """
-    Serve static file for a given project.
-
-    This is meant as a replacement for the inefficient debug only
-    'django.views.static.serve' way of serving files under /media urls.
-
-    """
-    if document_root is None:
-        document_root = settings.MEDIA_ROOT
-    path = posixpath.normpath(unquote(path))
-    path = path.lstrip("/")
-    newpath = ""
-    for part in path.split("/"):
-        if not part:
-            # Strip empty path components.
-            continue
-
-        drive, part = os.path.splitdrive(part)
-        head, part = os.path.split(part)
-        if part in (os.curdir, os.pardir):
-            # Strip '.' and '..' in path.
-            continue
-
-        newpath = os.path.join(newpath, part).replace("\\", "/")
-    if newpath and path != newpath:
-        return HttpResponseRedirect(newpath)
-
-    fullpath = os.path.join(document_root, challenge_short_name, newpath)
-    storage = DefaultStorage()
-    if not storage.exists(fullpath):
-        # On case sensitive filesystems you can have problems if the project
-        # nameurl in the url is not exactly the same case as the filepath.
-        # find the correct case for projectname then.
-        projectlist = Challenge.objects.filter(
-            short_name__iexact=challenge_short_name
-        )
-        if not projectlist:
-            raise Http404("project '%s' does not exist" % challenge_short_name)
-
-        challenge_short_name = projectlist[0].short_name
-        fullpath = os.path.join(document_root, challenge_short_name, newpath)
-    if not storage.exists(fullpath):
-        raise Http404('"%(path)s" does not exist' % {"path": fullpath})
-
-    if can_access(request.user, path, challenge_short_name):
-        try:
-            f = storage.open(fullpath, "rb")
-            file = File(f)  # create django file object
-        except IOError:
-            return HttpResponseForbidden("This is not a file")
-
-        # Do not offer to save images, but show them directly
-        return serve_file(file, save_as=True)
-
-    else:
-        return HttpResponseForbidden(
-            "This file is not available without " "credentials"
-        )
 
 
 def upload_handler(request, challenge_short_name):
