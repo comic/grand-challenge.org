@@ -16,7 +16,7 @@ from django.views.generic import (
 )
 from favicon.models import Favicon
 
-from grandchallenge.challenges.permissions import can_access
+from grandchallenge.serving.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.views import (
@@ -26,7 +26,7 @@ from grandchallenge.core.views import (
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
-from grandchallenge.uploads.api import serve_file
+from grandchallenge.serving.api import serve_file
 
 
 class ChallengeFilteredQuerysetMixin(object):
