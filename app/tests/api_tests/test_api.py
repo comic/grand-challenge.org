@@ -79,7 +79,7 @@ def test_upload_file(client, test_file, expected_response):
     # We should not be able to download submissions
     for submission in Submission.objects.all():
         response = client.get(submission.file.url)
-        assert response.status_code == 403
+        assert response.status_code == 404
 
     # Cleanup
     for submission in submissions:

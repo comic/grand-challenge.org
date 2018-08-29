@@ -419,10 +419,10 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:
             downloadlink = reverse(
-                "project_serve_file",
+                "serving:challenge-file",
                 kwargs={
                     "challenge_short_name": challenge_short_name,
-                    "path": self.path + "/" + filename,
+                    "path": f"{self.path}/{filename}",
                 },
             )
             links.append(
@@ -503,7 +503,10 @@ class ImageBrowserNode(template.Node):
         # explicit empty strings.
         serve_file_prefix = reverse(
             "project_serve_file",
-            args=[context["site"].short_name, "dummyfile"],
+            kwargs={
+                "challenge_short_name": context["site"].short_name,
+                "path": "dummyfile",
+            },
         )
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see
         # much wrong with it here.
