@@ -14,18 +14,10 @@ from grandchallenge.serving.permissions import can_access
 from grandchallenge.serving.api import serve_file
 
 
-def serve(request, challenge_short_name, path, document_root=None):
-    """
-    Serve static file for a given project.
-
-    This is meant as a replacement for the inefficient debug only
-    'django.views.static.serve' way of serving files under /media urls.
-
-    """
-    if document_root is None:
-        document_root = settings.MEDIA_ROOT
+def sanitize_path(*, path: str):
     path = posixpath.normpath(unquote(path))
     path = path.lstrip("/")
+
     newpath = ""
     for part in path.split("/"):
         if not part:
@@ -39,10 +31,25 @@ def serve(request, challenge_short_name, path, document_root=None):
             continue
 
         newpath = os.path.join(newpath, part).replace("\\", "/")
-    if newpath and path != newpath:
+
+    return newpath
+
+
+def serve(request, challenge_short_name, path):
+    """
+    Serve static file for a given project.
+
+    This is meant as a replacement for the inefficient debug only
+    'django.views.static.serve' way of serving files under /media urls.
+
+    """
+    newpath = sanitize_path(path=path)
+
+    if path != newpath:
         return HttpResponseRedirect(newpath)
 
-    fullpath = os.path.join(document_root, challenge_short_name, newpath)
+    fullpath = os.path.join(settings.MEDIA_ROOT, challenge_short_name, newpath)
+
     storage = DefaultStorage()
     if not storage.exists(fullpath):
         # On case sensitive filesystems you can have problems if the project
@@ -55,7 +62,9 @@ def serve(request, challenge_short_name, path, document_root=None):
             raise Http404("project '%s' does not exist" % challenge_short_name)
 
         challenge_short_name = projectlist[0].short_name
-        fullpath = os.path.join(document_root, challenge_short_name, newpath)
+        fullpath = os.path.join(
+            settings.MEDIA_ROOT, challenge_short_name, newpath
+        )
     if not storage.exists(fullpath):
         raise Http404('"%(path)s" does not exist' % {"path": fullpath})
 
@@ -71,7 +80,7 @@ def serve(request, challenge_short_name, path, document_root=None):
 
     else:
         return HttpResponseForbidden(
-            "This file is not available without " "credentials"
+            "This file is not available without credentials"
         )
 
 
@@ -79,4 +88,4 @@ class ChallengeServeRedirect(RedirectView):
     # Do not redirect to a view name as this could skip some other handlers
 
     def get_redirect_url(self, *args, **kwargs):
-        return f"/media/{kwargs['challenge_short_name']}/{kwargs['path']}"
+        return f"/media/{kwargs['challenge_short_name']}/{kwargs['path']}/"
