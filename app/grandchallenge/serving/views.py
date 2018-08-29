@@ -1,39 +1,17 @@
 # -*- coding: utf-8 -*-
-import os
 import posixpath
-from urllib.parse import unquote
 
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import DefaultStorage
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils._os import safe_join
 from django.views.generic import RedirectView
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import can_access
-
-
-def sanitize_path(*, path: str):
-    path = posixpath.normpath(unquote(path))
-    path = path.lstrip("/")
-
-    newpath = ""
-    for part in path.split("/"):
-        if not part:
-            # Strip empty path components.
-            continue
-
-        drive, part = os.path.splitdrive(part)
-        head, part = os.path.split(part)
-        if part in (os.curdir, os.pardir):
-            # Strip '.' and '..' in path.
-            continue
-
-        newpath = os.path.join(newpath, part).replace("\\", "/")
-
-    return newpath
 
 
 def serve_folder(request, *, challenge_short_name=None, folder=None, path):
@@ -46,10 +24,7 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
     If the challenge_short_name is not set, then the folder must be set.
     ALL FILES IN THIS FOLDER WILL BE AVAILABLE TO DOWNLOAD.
     """
-    newpath = sanitize_path(path=path)
-
-    if path != newpath:
-        return HttpResponseRedirect(newpath)
+    path = posixpath.normpath(path).lstrip("/")
 
     if challenge_short_name:
         if folder:
@@ -59,15 +34,23 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
         challenge = get_object_or_404(
             Challenge, short_name__iexact=challenge_short_name
         )
-        fullpath = os.path.join(
-            settings.MEDIA_ROOT, challenge.short_name, newpath
-        )
-        allowed = can_access(request.user, newpath, challenge=challenge)
+        document_root = safe_join(settings.MEDIA_ROOT, challenge.short_name)
     elif folder:
-        fullpath = os.path.join(settings.MEDIA_ROOT, folder, newpath)
-        allowed = True
+        challenge = None
+        document_root = safe_join(settings.MEDIA_ROOT, folder)
     else:
         raise AttributeError("challenge_short_name or folder must be set")
+
+    fullpath = safe_join(document_root, path)
+
+    if challenge:
+        allowed = can_access(
+            request.user,
+            fullpath[len(document_root) :].lstrip("/"),
+            challenge=challenge,
+        )
+    else:
+        allowed = True
 
     storage = DefaultStorage()
 
