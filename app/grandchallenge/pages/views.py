@@ -1,5 +1,5 @@
 import mimetypes
-from os import path
+import posixpath
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -7,6 +7,7 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
+from django.utils._os import safe_join
 from django.views.generic import (
     ListView,
     CreateView,
@@ -16,7 +17,6 @@ from django.views.generic import (
 )
 from favicon.models import Favicon
 
-from grandchallenge.serving.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.views import (
@@ -27,6 +27,7 @@ from grandchallenge.core.views import (
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.serving.api import serve_file
+from grandchallenge.serving.permissions import can_access
 
 
 class ChallengeFilteredQuerysetMixin(object):
@@ -171,7 +172,8 @@ def inserted_file(request, challenge_short_name, filepath=""):
 
     """
     data_folder_root = get_data_folder_path(challenge_short_name)
-    filename = path.join(data_folder_root, filepath)
+    filepath = posixpath.normpath(filepath).lstrip("/")
+    filename = safe_join(data_folder_root, filepath)
     # can this location be served regularly (e.g. it is in public folder)?
     serve_allowed = can_access(
         request.user, filepath, challenge=request.challenge

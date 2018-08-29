@@ -1,11 +1,10 @@
-from os import path
-
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
+from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.template.context import ComicSiteRequestContext
@@ -174,7 +173,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
 def get_data_folder_path(challenge_short_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
-    return path.join(settings.MEDIA_ROOT, challenge_short_name)
+    return safe_join(settings.MEDIA_ROOT, challenge_short_name)
 
 
 def get_dirnames(path):
