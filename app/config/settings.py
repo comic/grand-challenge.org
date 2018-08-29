@@ -445,7 +445,7 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 
 # CIRRUS Is an external application that can view images
-CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_be06d74c/#!/?workstation=BasicWorkstation"
+CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
