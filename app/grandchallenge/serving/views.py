@@ -67,7 +67,7 @@ def serve_challenge_file(request, challenge_short_name, path):
         except IOError:
             pass
 
-    return Http404("File not found.")
+    raise Http404("File not found.")
 
 
 class ChallengeServeRedirect(RedirectView):
