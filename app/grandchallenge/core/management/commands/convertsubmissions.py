@@ -26,8 +26,7 @@ class Command(BaseCommand):
             challenge=challenge, annotationset=None
         )
 
-        for submission in submissions:
-            j = SubmissionToAnnotationSetJob.objects.create(
-                base=base, submission=submission
-            )
-            print(f"Created job {j}")
+        j = SubmissionToAnnotationSetJob.objects.create(
+            base=base, submission=submissions[0]
+        )
+        print(f"Created job {j}")
