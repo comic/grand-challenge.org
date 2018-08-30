@@ -9,6 +9,8 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.views.generic import RedirectView
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -89,10 +91,15 @@ def serve_images(request, *, pk, path):
     except ImageFile.DoesNotExist:
         raise Http404("File not found.")
 
-    if not user_can_download_image(user=request.user, image=imagefile.image):
-        raise Http404("File not found.")
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
 
-    return serve_fullpath(fullpath=fullpath)
+    if user_can_download_image(user=user, image=imagefile.image):
+        return serve_fullpath(fullpath=fullpath)
+
+    raise Http404("File not found.")
 
 
 class ChallengeServeRedirect(RedirectView):

@@ -80,6 +80,9 @@ def user_can_download_annotationset(
 
 
 def user_can_download_image(*, user, image: Image) -> bool:
+    if user.is_staff:
+        return True
+
     imagesets = image.imagesets.all().select_related("challenge")
 
     for imageset in imagesets:

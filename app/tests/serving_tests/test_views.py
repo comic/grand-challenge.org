@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
+from rest_framework.authtoken.models import Token
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from tests.factories import (
     ImageSetFactory,
     ImageFileFactory,
     AnnotationSetFactory,
+    UserFactory,
 )
 from tests.utils import get_view_for_user
 
@@ -32,6 +34,9 @@ def test_imageset_annotationset_download(
     annotation_file = ImageFileFactory()
     annotationset.images.add(annotation_file.image)
 
+    staff_user = UserFactory(is_staff=True)
+    staff_token = Token.objects.create(user=staff_user)
+
     tests = [
         # (
         #   image response + annotation response not test ground truth,
@@ -39,6 +44,7 @@ def test_imageset_annotationset_download(
         #   user
         # )
         (404, 404, None),
+        (200, 200, staff_user),
         (404, 404, TwoChallengeSets.ChallengeSet1.non_participant),
         (200, 404, TwoChallengeSets.ChallengeSet1.participant),
         (200, 404, TwoChallengeSets.ChallengeSet1.participant1),
@@ -55,6 +61,7 @@ def test_imageset_annotationset_download(
     ]
 
     for test in tests:
+
         response = get_view_for_user(
             url=image_file.file.url, client=client, user=test[2]
         )
@@ -70,3 +77,14 @@ def test_imageset_annotationset_download(
             # training ground truth, training predictions and
             # ground truth predictions
             assert response.status_code == test[0]
+
+    # Someone with a staff token should be able to get all images
+    response = client.get(
+        image_file.file.url, HTTP_AUTHORIZATION=f"Token {staff_token.key}"
+    )
+    assert response.status_code == 200
+
+    response = client.get(
+        annotation_file.file.url, HTTP_AUTHORIZATION=f"Token {staff_token.key}"
+    )
+    assert response.status_code == 200
