@@ -123,7 +123,9 @@ class ComicframeworkTestCase(TestCase):
         admin for every project
         """
         if (
-            len(Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME))
+            len(
+                Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
+            )
             == 0
         ):
             main = Challenge.objects.create(
@@ -157,7 +159,9 @@ class ComicframeworkTestCase(TestCase):
         # to maximize test coverage.
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin")
-        testproject = self._create_comicsite_in_admin(projectadmin, projectname)
+        testproject = self._create_comicsite_in_admin(
+            projectadmin, projectname
+        )
         create_page(testproject, "testpage1")
         create_page(testproject, "testpage2")
         # a user who explicitly signed up to testproject
@@ -318,7 +322,8 @@ class ComicframeworkTestCase(TestCase):
         validation_mail = mail.outbox[-1]
         self.assertTrue(
             "signup" in validation_mail.subject,
-            "There was no email" " sent which had 'signup' in the subject line",
+            "There was no email"
+            " sent which had 'signup' in the subject line",
         )
         # validate the user with the link that was emailed
         pattern = "/example.com(.*)" + PI_LINE_END_REGEX
@@ -509,6 +514,18 @@ class CreateProjectTest(ComicframeworkTestCase):
             ),
         )
         challenge_short_name = "project-with-w#$%^rd-items"
+        response = self._try_create_comicsite(
+            self.projectadmin, challenge_short_name
+        )
+        errors = self._find_errors_in_page(response)
+        self.assertTrue(
+            errors,
+            "Creating a project called '{0}' should not be \
+            possible. But is seems to have been created anyway.".format(
+                challenge_short_name
+            ),
+        )
+        challenge_short_name = "images"
         response = self._try_create_comicsite(
             self.projectadmin, challenge_short_name
         )
@@ -724,7 +741,9 @@ class LinkReplacerTest(ComicframeworkTestCase):
         self.assert_substring_in_string(moveuplink_expected, moveuplink)
         self.assert_substring_in_string(absolute_expected, absolute)
         self.assert_substring_in_string(notafile_expected, notafile)
-        self.assert_substring_in_string(notafile_slash_expected, notafile_slash)
+        self.assert_substring_in_string(
+            notafile_slash_expected, notafile_slash
+        )
 
 
 class UploadTest(ComicframeworkTestCase):
@@ -997,7 +1016,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
         # Extract rendered content from included file, see if it has been rendered
         # In the correct way
-        somecss = find_text_between("<somecss>", "</somecss>", response.content)
+        somecss = find_text_between(
+            "<somecss>", "</somecss>", response.content
+        )
         nonexistant = find_text_between(
             "<nonexistant>", "</nonexistant>", response.content
         )
@@ -1040,7 +1061,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
     def assertText(self, content, expected_text, description=""):
         """ assert that expected_text can be found in text, 
-        description can describe what this link should do, like 
+        description can describe what this link should do, like
         "register user without permission", for better fail messages
                 
         """
@@ -1070,7 +1091,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
             ),
         )
         description = (
-            "Rendering tag between <{0}> </{0}>, ".format(tagname) + description
+            "Rendering tag between <{0}> </{0}>, ".format(tagname)
+            + description
         )
         self.assertText(text, expected_text, description)
 

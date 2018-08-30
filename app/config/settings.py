@@ -123,10 +123,6 @@ COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 # downloaded by registered members of that project
 COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
-# All tags that search for results search in the following folder in the project's
-# data folder by default
-COMIC_RESULTS_FOLDER_NAME = "results"
-
 # the name of the main project: this project is shown when url is loaded without
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = "comic"
@@ -448,6 +444,25 @@ JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
+
+# Disallow some challenge names due to subdomain or media folder clashes
+DISALLOWED_CHALLENGE_NAMES = [
+    "www",
+    "m",
+    "mx",
+    "mobile",
+    "mail",
+    "webmail",
+    "images",
+    "logos",
+    "banners",
+    "mugshots",
+    "docker",
+    "evaluation",
+    "evaluation-supplementary",
+    "favicon",
+    JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+]
 
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the

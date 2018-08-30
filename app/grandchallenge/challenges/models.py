@@ -36,6 +36,11 @@ def validate_nounderscores(value):
         )
 
 
+def validate_short_name(value):
+    if value.lower() in settings.DISALLOWED_CHALLENGE_NAMES:
+        raise ValidationError("That name is not allowed.")
+
+
 def get_logo_path(instance, filename):
     return (
         f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
@@ -116,7 +121,11 @@ class ChallengeBase(models.Model):
             "short name used in url, specific css, files etc. "
             "No spaces allowed"
         ),
-        validators=[validate_nounderscores, validate_slug],
+        validators=[
+            validate_nounderscores,
+            validate_slug,
+            validate_short_name,
+        ],
         unique=True,
     )
     description = models.CharField(
