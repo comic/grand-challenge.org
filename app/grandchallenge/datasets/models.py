@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from os.path import commonprefix
+from typing import Union
 
 from django.conf import settings
 from django.db import models
@@ -19,9 +20,9 @@ from grandchallenge.jqfileupload.models import StagedFile
 
 class IndexMixin:
     @property
-    def index(self):
+    def index(self: Union["ImageSet", "AnnotationSet"]):
         images = self.images.all()
-        common_prefix = commonprefix([i.name for i in images])
+        common_prefix = commonprefix([i.name.lower() for i in images])
         return {i.sorter_key(start=len(common_prefix)): i for i in images}
 
 
