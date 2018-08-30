@@ -184,6 +184,9 @@ class Image(UUIDModel):
     def cirrus_link(self):
         return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
+    class Meta:
+        ordering = ("name",)
+
 
 class ImageFile(UUIDModel):
     image = models.ForeignKey(
