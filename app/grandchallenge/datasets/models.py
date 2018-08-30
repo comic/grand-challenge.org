@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from os.path import commonprefix
 
 from django.conf import settings
 from django.db import models
@@ -16,7 +17,15 @@ from grandchallenge.evaluation.models import Submission
 from grandchallenge.jqfileupload.models import StagedFile
 
 
-class ImageSet(UUIDModel):
+class IndexMixin:
+    @property
+    def index(self):
+        images = self.images.all()
+        common_prefix = commonprefix([i.name for i in images])
+        return {i.sorter_key(start=len(common_prefix)): i for i in images}
+
+
+class ImageSet(UUIDModel, IndexMixin):
     TRAINING = "TRN"
     TESTING = "TST"
 
@@ -29,14 +38,10 @@ class ImageSet(UUIDModel):
     images = models.ManyToManyField(to=Image, related_name="imagesets")
 
     @property
-    def image_index(self):
-        return {i.sorter_key: i for i in self.images.all()}
-
-    @property
     def images_with_keys(self):
         return [
-            {"key": key, "image": self.image_index[key]}
-            for key in sorted(self.image_index)
+            {"key": key, "image": self.index[key]}
+            for key in sorted(self.index)
         ]
 
     def save(self, *args, **kwargs):
@@ -57,7 +62,7 @@ class ImageSet(UUIDModel):
         unique_together = ("challenge", "phase")
 
 
-class AnnotationSet(UUIDModel):
+class AnnotationSet(UUIDModel, IndexMixin):
     PREDICTION = "P"
     GROUNDTRUTH = "G"
 
@@ -83,13 +88,9 @@ class AnnotationSet(UUIDModel):
         )
 
     @property
-    def annotation_index(self):
-        return {i.sorter_key: i for i in self.images.all()}
-
-    @property
     def missing_annotations(self):
-        base_index = self.base.image_index
-        annotation_index = self.annotation_index
+        base_index = self.base.index
+        annotation_index = self.index
 
         missing = base_index.keys() - annotation_index.keys()
 
@@ -99,8 +100,8 @@ class AnnotationSet(UUIDModel):
 
     @property
     def extra_annotations(self):
-        base_index = self.base.image_index
-        annotation_index = self.annotation_index
+        base_index = self.base.index
+        annotation_index = self.index
 
         extra = annotation_index.keys() - base_index.keys()
 
@@ -111,8 +112,8 @@ class AnnotationSet(UUIDModel):
 
     @property
     def matched_images(self):
-        base_index = self.base.image_index
-        annotation_index = self.annotation_index
+        base_index = self.base.index
+        annotation_index = self.index
 
         matches = base_index.keys() & annotation_index.keys()
 

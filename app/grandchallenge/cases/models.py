@@ -148,8 +148,7 @@ class Image(UUIDModel):
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
 
-    @property
-    def sorter_key(self) -> str:
+    def sorter_key(self, *, start: int = 0) -> str:
         """
         For use in filtering.
 
@@ -159,7 +158,7 @@ class Image(UUIDModel):
         """
         try:
             r = re.compile(r"\D*((?:\d+\.?)+)\D*")
-            m = r.search(self.name)
+            m = r.search(self.name[start:])
             return f"{int(m.group(1).replace('.', '')):>64}"
         except AttributeError:
             return self.name.split(".")[0].lower()
