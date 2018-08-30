@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from typing import List
 
 from django.conf import settings
 from django.db import models
@@ -166,7 +167,7 @@ class Image(UUIDModel):
         return (key, *self.shape)
 
     @property
-    def shape_without_color(self):
+    def shape_without_color(self) -> List[int]:
         result = []
         if self.depth is not None:
             result.append(self.depth)
@@ -175,7 +176,7 @@ class Image(UUIDModel):
         return result
 
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
         if color_components > 1:
@@ -183,7 +184,7 @@ class Image(UUIDModel):
         return result
 
     @property
-    def cirrus_link(self):
+    def cirrus_link(self) -> str:
         return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
     class Meta:
