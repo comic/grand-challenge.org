@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from django.urls import path
 
-from grandchallenge.serving.views import serve_folder
+from grandchallenge.serving.views import serve_folder, serve_images
 
 app_name = "serving"
 
 urlpatterns = [
-    path("images/<path:path>", serve_folder, {"folder": "images"}),
+    path("images/<uuid:pk>/<path:path>", serve_images),
     path("logos/<path:path>", serve_folder, {"folder": "logos"}),
     path("banners/<path:path>", serve_folder, {"folder": "banners"}),
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),

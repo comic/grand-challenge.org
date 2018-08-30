@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from grandchallenge.challenges.models import ComicSiteModel, Challenge
+from grandchallenge.datasets.models import ImageSet
 
 
 def can_access(user, path, *, challenge: Challenge):
@@ -57,3 +58,9 @@ def startwith_any(path, start_options):
             return True
 
     return False
+
+
+def user_can_download_imageset(*, user, imageset: ImageSet) -> bool:
+    return imageset.challenge.is_participant(
+        user
+    ) or imageset.challenge.is_admin(user)

@@ -123,10 +123,6 @@ COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 # downloaded by registered members of that project
 COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
-# All tags that search for results search in the following folder in the project's
-# data folder by default
-COMIC_RESULTS_FOLDER_NAME = "results"
-
 # the name of the main project: this project is shown when url is loaded without
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = "comic"
