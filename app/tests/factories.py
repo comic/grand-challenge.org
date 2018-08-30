@@ -3,8 +3,9 @@ import hashlib
 import factory
 from django.conf import settings
 
+from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
-from grandchallenge.datasets.models import ImageSet
+from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -126,8 +127,38 @@ class TeamMemberFactory(factory.DjangoModelFactory):
     team = factory.SubFactory(TeamFactory)
 
 
+class UploadSessionFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = RawImageUploadSession
+
+
+class ImageFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Image
+
+    origin = factory.SubFactory(UploadSessionFactory)
+    width = 128
+    height = 128
+
+
+class ImageFileFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = ImageFile
+
+    image = factory.SubFactory(ImageFactory)
+    file = factory.django.FileField()
+
+
 class ImageSetFactory(factory.DjangoModelFactory):
     class Meta:
         model = ImageSet
 
     challenge = factory.SubFactory(ChallengeFactory)
+
+
+class AnnotationSetFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = AnnotationSet
+
+    creator = factory.SubFactory(UserFactory)
+    base = factory.SubFactory(ImageSetFactory)
