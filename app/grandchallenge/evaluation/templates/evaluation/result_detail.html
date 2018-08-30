@@ -47,11 +47,16 @@
         {% if request.user.is_staff and object.job.submission.annotationset %}
             <dt>Predictions</dt>
             <dd>
-                <a href="{{ object.job.submission.annotationset.get_absolute_url }}">View
-                    Predictions</a></dd>
+                <a class="btn btn-primary"
+                   href="{{ object.job.submission.annotationset.get_absolute_url }}">
+                   <i class="fa fa-eye"></i> View Predictions</a>
+            </dd>
         {% endif %}
 
     </dl>
+
+    <h3>Metrics</h3>
+    <pre>{{ object.metrics|json_dumps }}</pre>
 
     {% get_obj_perms user for site as "site_perms" %}
     {% if "change_challenge" in site_perms %}
@@ -73,10 +78,5 @@
             {% endif %}
         </form>
     {% endif %}
-
-
-    <h3>Metrics</h3>
-    <pre>{{ object.metrics|json_dumps }}</pre>
-
 
 {% endblock %}
