@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.views.generic import RedirectView
 
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import ImageFile
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import (
@@ -78,20 +78,19 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
 
 
 def serve_images(request, *, pk, path):
-    try:
-        # TODO: make sure that this imagefile belongs to this image
-        image = Image.objects.get(pk=pk)
-
-    except Image.DoesNotExist:
-        raise Http404("File not found.")
-
-    if not user_can_download_image(user=request.user, image=image):
-        raise Http404("File not found.")
-
     document_root = safe_join(settings.MEDIA_ROOT, "images", pk)
     path = posixpath.normpath(path).lstrip("/")
-
     fullpath = safe_join(document_root, path)
+
+    try:
+        imagefile = ImageFile.objects.get(
+            file__exact=fullpath[len(settings.MEDIA_ROOT) :].lstrip("/")
+        )
+    except ImageFile.DoesNotExist:
+        raise Http404("File not found.")
+
+    if not user_can_download_image(user=request.user, image=imagefile.image):
+        raise Http404("File not found.")
 
     return serve_fullpath(fullpath=fullpath)
 

@@ -33,7 +33,11 @@ def test_imageset_annotationset_download(
     annotationset.images.add(annotation_file.image)
 
     tests = [
-        # (image response + annotation response not test ground truth, annoation response - testing gt, user)
+        # (
+        #   image response + annotation response not test ground truth,
+        #   annotation response - testing gt,
+        #   user
+        # )
         (404, 404, None),
         (404, 404, TwoChallengeSets.ChallengeSet1.non_participant),
         (200, 404, TwoChallengeSets.ChallengeSet1.participant),
@@ -63,5 +67,6 @@ def test_imageset_annotationset_download(
             # testing ground truth
             assert response.status_code == test[1]
         else:
-            # training ground truth, training predictions and ground truth predictions
+            # training ground truth, training predictions and
+            # ground truth predictions
             assert response.status_code == test[0]
