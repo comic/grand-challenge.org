@@ -445,6 +445,25 @@ CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
+# Disallow some challenge names due to subdomain or media folder clashes
+DISALLOWED_CHALLENGE_NAMES = [
+    "www",
+    "m",
+    "mx",
+    "mobile",
+    "mail",
+    "webmail",
+    "images",
+    "logos",
+    "banners",
+    "mugshots",
+    "docker",
+    "evaluation",
+    "evaluation-supplementary",
+    "favicon",
+    JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+]
+
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
 # current dir. XX should be a number which determines the order of execution.
