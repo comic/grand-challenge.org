@@ -15,7 +15,7 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import (
     can_access,
-    user_can_download_imageset,
+    user_can_download_image,
 )
 
 
@@ -82,20 +82,10 @@ def serve_images(request, *, pk, path):
         # TODO: make sure that this imagefile belongs to this image
         image = Image.objects.get(pk=pk)
 
-        imagesets = image.imagesets.all().select_related("challenge")
-
-        for imageset in imagesets:
-            if user_can_download_imageset(
-                user=request.user, imageset=imageset
-            ):
-                # This image belongs to an imageset that
-                # this user has access to
-                break
-        else:
-            # No break in for loop, so user cannot download this
-            raise Http404("File not found.")
-
     except Image.DoesNotExist:
+        raise Http404("File not found.")
+
+    if not user_can_download_image(user=request.user, image=image):
         raise Http404("File not found.")
 
     document_root = safe_join(settings.MEDIA_ROOT, "images", pk)

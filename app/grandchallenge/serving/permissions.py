@@ -1,7 +1,8 @@
 from django.conf import settings
 
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ComicSiteModel, Challenge
-from grandchallenge.datasets.models import ImageSet
+from grandchallenge.datasets.models import ImageSet, AnnotationSet
 
 
 def can_access(user, path, *, challenge: Challenge):
@@ -61,6 +62,38 @@ def startwith_any(path, start_options):
 
 
 def user_can_download_imageset(*, user, imageset: ImageSet) -> bool:
-    return imageset.challenge.is_participant(
-        user
-    ) or imageset.challenge.is_admin(user)
+    challenge = imageset.challenge
+    return challenge.is_participant(user) or challenge.is_admin(user)
+
+
+def user_can_download_annotationset(
+    *, user, annotationset: AnnotationSet
+) -> bool:
+    challenge = annotationset.base.challenge
+    if (
+        annotationset.base.phase == ImageSet.TESTING
+        and annotationset.kind == AnnotationSet.GROUNDTRUTH
+    ):
+        return challenge.is_admin(user)
+    else:
+        return challenge.is_participant(user) or challenge.is_admin(user)
+
+
+def user_can_download_image(*, user, image: Image) -> bool:
+    imagesets = image.imagesets.all().select_related("challenge")
+
+    for imageset in imagesets:
+        if user_can_download_imageset(user=user, imageset=imageset):
+            return True
+
+    annotationsets = image.annotationsets.all().select_related(
+        "base__challenge"
+    )
+
+    for annotationset in annotationsets:
+        if user_can_download_annotationset(
+            user=user, annotationset=annotationset
+        ):
+            return True
+
+    return False
