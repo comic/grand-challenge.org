@@ -50,6 +50,7 @@
 
 {% block topmenu %}
 
+    {% block additionalNavItems %}{% endblock %}
     {% for page in pages %}
         {% if not page.hidden %}
         <li class="nav-item">
@@ -88,7 +89,7 @@
             </li>
 
         {% endif %}
-            <li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'evaluation:result-list' site.short_name %}">Results</a>
             </li>
 
