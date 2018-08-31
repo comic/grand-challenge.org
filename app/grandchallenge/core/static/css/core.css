@@ -107,10 +107,6 @@ input[type=checkbox] {
   margin-right:0.3em;
 }
 
-/* Give navigation bar at the top fixed height */
-nav.navbar-top {
-  height:50px;
-}
 /* Style button */
 
 .btn {
