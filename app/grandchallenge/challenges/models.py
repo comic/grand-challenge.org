@@ -7,9 +7,10 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import CICharField
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug, MinLengthValidator
+from django.core.validators import validate_slug
 from django.db import models
 from django.db.models import Q
+from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -33,6 +34,11 @@ def validate_nounderscores(value):
             '{0}.{1}' would not be valid, "
             "please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
+
+
+def validate_short_name(value):
+    if value.lower() in settings.DISALLOWED_CHALLENGE_NAMES:
+        raise ValidationError("That name is not allowed.")
 
 
 def get_logo_path(instance, filename):
@@ -115,7 +121,11 @@ class ChallengeBase(models.Model):
             "short name used in url, specific css, files etc. "
             "No spaces allowed"
         ),
-        validators=[validate_nounderscores, validate_slug],
+        validators=[
+            validate_nounderscores,
+            validate_slug,
+            validate_short_name,
+        ],
         unique=True,
     )
     description = models.CharField(
@@ -440,26 +450,13 @@ class Challenge(ChallengeBase):
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
         """
-        return os.path.join(settings.MEDIA_ROOT, self.short_name)
-
-    def upload_dir(self):
-        """Full path to get and put secure uploaded files. Files here cannot be
-        viewed directly by url
-        """
-        return os.path.join(settings.MEDIA_ROOT, self.upload_dir_rel())
+        return safe_join(settings.MEDIA_ROOT, self.short_name)
 
     def upload_dir_rel(self):
         """Path to get and put secure uploaded files relative to MEDIA_ROOT
 
         """
         return os.path.join(self.short_name, "uploads")
-
-    def public_upload_dir(self):
-        """Full path to get and put uploaded files. These files can be served
-        to anyone without checking
-
-         """
-        return os.path.join(settings.MEDIA_ROOT, self.public_upload_dir_rel())
 
     def public_upload_dir_rel(self):
         """ Path to public uploaded files, relative to MEDIA_ROOT
@@ -487,40 +484,31 @@ class Challenge(ChallengeBase):
         This method is used for showin permissions for these groups, even
         if none are defined
         """
-        groups = Group.objects.filter(
+        return Group.objects.filter(
             Q(name=settings.EVERYONE_GROUP_NAME)
             | Q(pk=self.admins_group.pk)
             | Q(pk=self.participants_group.pk)
         )
-        return groups
 
-    def is_admin(self, user):
+    def is_admin(self, user) -> bool:
         """
         is user in the admins group for the comicsite to which this object
         belongs? superuser always passes
         """
-        if user.is_superuser:
-            return True
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.admins_group.pk).exists()
+        )
 
-        if user.groups.filter(pk=self.admins_group.pk).exists():
-            return True
-
-        else:
-            return False
-
-    def is_participant(self, user):
+    def is_participant(self, user) -> bool:
         """
         is user in the participants group for the comicsite to which this
         object belong? superuser always passes
         """
-        if user.is_superuser:
-            return True
-
-        if user.groups.filter(pk=self.participants_group.pk).exists():
-            return True
-
-        else:
-            return False
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.participants_group.pk).exists()
+        )
 
     def get_admins(self):
         """ Return all users that are in this comicsites admin group """
@@ -584,7 +572,8 @@ class ExternalChallenge(ChallengeBase):
         help_text=("Where is the submissions page for this challenge?"),
     )
     download_page = models.URLField(
-        blank=True, help_text=("Where is the download page for this challenge?")
+        blank=True,
+        help_text=("Where is the download page for this challenge?"),
     )
 
     data_stored = models.BooleanField(
@@ -619,6 +608,7 @@ class ComicSiteModel(models.Model):
     ALL = "ALL"
     REGISTERED_ONLY = "REG"
     ADMIN_ONLY = "ADM"
+    STAFF_ONLY = "STF"
     PERMISSIONS_CHOICES = (
         (ALL, "All"),
         (REGISTERED_ONLY, "Registered users only"),

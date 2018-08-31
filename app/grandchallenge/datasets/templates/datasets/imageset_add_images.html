@@ -1,0 +1,19 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}
+    Add images to a dataset - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Add images to a dataset</h2>
+
+    {% crispy form %}
+
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+
+{% endblock %}

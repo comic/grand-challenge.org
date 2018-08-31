@@ -1,9 +1,7 @@
 from typing import Union
 
-from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
 
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.evaluation.emails import send_new_result_email

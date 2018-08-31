@@ -1,0 +1,61 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Datasets - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Datasets</h2>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:imageset-create' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a new dataset
+        </a>
+    </p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Phase</th>
+            <th>Number of Images</th>
+            <th>Annotations</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for imageset in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ imageset.get_absolute_url }}">
+                        {{ imageset.get_phase_display }}
+                    </a>
+                </td>
+                <td>{{ imageset.images.all|length }}</td>
+                <td>
+                    {% for annotationset in imageset.annotationset_set.all %}
+                        <a href="{{ annotationset.get_absolute_url }}">
+                            {{ annotationset }}<br>
+                        </a>
+                    {% empty %}
+                        No annotations found
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "asc"]],
+                "pageLength": 10,
+                ordering: true
+            });
+
+        });
+    </script>
+
+{% endblock %}

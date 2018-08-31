@@ -217,20 +217,20 @@ def substitute(string, substitutions):
     > "my name is John"
     """
     for key, value in substitutions:
-        string = re.sub("{{" + key + "}}", value, string)
+        string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
 
 
 class comic_URLNode(defaulttags.URLNode):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render(self, context):
         # get the url the default django method would give.
         url = super().render(context)
 
         if subdomain_is_projectname() and (
-            (self.view_name.var in ["challenge-homepage", "project_serve_file"])
+            (
+                self.view_name.var
+                in ["challenge-homepage", "project_serve_file"]
+            )
             or (
                 self.view_name.var.split(":")[0]
                 in [
@@ -240,18 +240,22 @@ class comic_URLNode(defaulttags.URLNode):
                     "participants",
                     "admins",
                     "uploads",
+                    "datasets",
                 ]
             )
         ):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
+            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
             try:
                 project = args[0]
             except IndexError:
                 # No project was set, so must be part of the main site
-                project = settings.MAIN_PROJECT_NAME
+                project = kwargs.get(
+                    "challenge_short_name", settings.MAIN_PROJECT_NAME
+                )
 
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
@@ -415,10 +419,10 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:
             downloadlink = reverse(
-                "project_serve_file",
+                "serving:challenge-file",
                 kwargs={
                     "challenge_short_name": challenge_short_name,
-                    "path": self.path + "/" + filename,
+                    "path": f"{self.path}/{filename}",
                 },
             )
             links.append(
@@ -498,7 +502,11 @@ class ImageBrowserNode(template.Node):
         # create links. Using dummyfile because django resolution does not except
         # explicit empty strings.
         serve_file_prefix = reverse(
-            "project_serve_file", args=[context["site"].short_name, "dummyfile"]
+            "project_serve_file",
+            kwargs={
+                "challenge_short_name": context["site"].short_name,
+                "path": "dummyfile",
+            },
         )
         # remove "dummyfile/" from end of path again. This feels dirty but I cannot see
         # much wrong with it here.
@@ -732,7 +740,9 @@ class InsertFileNode(template.Node):
         current_path = (
             ntpath.dirname(filename) + "/"
         )  # path of currently inserted file
-        replaced = self.replacer.replace_links(contents, base_url, current_path)
+        replaced = self.replacer.replace_links(
+            contents, base_url, current_path
+        )
         html_out = replaced
         return html_out
 

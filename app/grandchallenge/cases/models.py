@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from django.contrib.postgres.fields import JSONField
+import re
+from typing import List
+
+from django.conf import settings
 from django.db import models
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
-
-
-def case_file_path(instance, filename):
-    return f"cases/{instance.case.pk}/{filename}"
 
 
 class UPLOAD_SESSION_STATE:
@@ -33,6 +33,54 @@ class RawImageUploadSession(UUIDModel):
     error_message = models.CharField(
         max_length=256, blank=False, null=True, default=None
     )
+
+    imageset = models.ForeignKey(
+        to="datasets.ImageSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    annotationset = models.ForeignKey(
+        to="datasets.AnnotationSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return (
+            f"Upload Session <{str(self.pk).split('-')[0]}>, "
+            f"({self.session_state})"
+        )
+
+    def save(self, *args, skip_processing=False, **kwargs):
+
+        created = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if created and not skip_processing:
+            self.process_images()
+
+    def process_images(self):
+        # Local import to avoid circular dependency
+        from grandchallenge.cases.tasks import build_images
+
+        try:
+            RawImageUploadSession.objects.filter(pk=self.pk).update(
+                session_state=UPLOAD_SESSION_STATE.queued,
+                processing_task=self.pk,
+            )
+
+            build_images.apply_async(task_id=str(self.pk), args=(self.pk,))
+
+        except Exception as e:
+            RawImageUploadSession.objects.filter(pk=self.pk).update(
+                session_state=UPLOAD_SESSION_STATE.stopped,
+                error_message=f"Could not start job: {e}",
+            )
+            raise e
 
     def get_absolute_url(self):
         return reverse(
@@ -64,6 +112,11 @@ def image_file_path(instance, filename):
     return f"images/{instance.image.pk}/{filename}"
 
 
+def case_file_path(instance, filename):
+    # legacy method, but used in a migration so cannot delete.
+    return image_file_path(instance, filename)
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
@@ -93,8 +146,28 @@ class Image(UUIDModel):
         max_length=4, blank=False, choices=COLOR_SPACES
     )
 
+    def __str__(self):
+        return f"Image {self.name} {self.shape_without_color}"
+
+    def sorter_key(self, *, start: int = 0) -> tuple:
+        """
+        For use in filtering.
+
+        Gets the first int in the name, and returns that string.
+        If an int cannot be found, returns the lower case name split at the
+        first full stop.
+        """
+        try:
+            r = re.compile(r"\D*((?:\d+\.?)+)\D*")
+            m = r.search(self.name[start:])
+            key = f"{int(m.group(1).replace('.', '')):>64}"
+        except AttributeError:
+            key = self.name.split(".")[0].lower()
+
+        return (key, *self.shape)
+
     @property
-    def shape_without_color(self):
+    def shape_without_color(self) -> List[int]:
         result = []
         if self.depth is not None:
             result.append(self.depth)
@@ -103,12 +176,19 @@ class Image(UUIDModel):
         return result
 
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
         if color_components > 1:
             result.append(color_components)
         return result
+
+    @property
+    def cirrus_link(self) -> str:
+        return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
+
+    class Meta:
+        ordering = ("name",)
 
 
 class ImageFile(UUIDModel):
@@ -116,25 +196,3 @@ class ImageFile(UUIDModel):
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
     )
     file = models.FileField(upload_to=image_file_path, blank=False)
-
-
-class Annotation(UUIDModel):
-    """
-    An object that represents an annotation of an image. This can be another
-    image, for instance, a segmentation, or some metadata such as a
-    classification, eg. {"cancer": False}.
-    """
-
-    base = models.ForeignKey(
-        Image, related_name="annotations", on_delete=models.CASCADE
-    )
-    image = models.ForeignKey(
-        Image, null=True, blank=True, on_delete=models.CASCADE
-    )
-    metadata = JSONField(null=True, blank=True)
-
-    def get_absolute_url(self):
-        return reverse(
-            "cases:annotation-detail",
-            kwargs={"base_pk": self.base.pk, "pk": self.pk},
-        )

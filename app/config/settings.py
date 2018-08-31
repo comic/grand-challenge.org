@@ -123,10 +123,6 @@ COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 # downloaded by registered members of that project
 COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
-# All tags that search for results search in the following folder in the project's
-# data folder by default
-COMIC_RESULTS_FOLDER_NAME = "results"
-
 # the name of the main project: this project is shown when url is loaded without
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = "comic"
@@ -253,6 +249,8 @@ LOCAL_APPS = [
     "grandchallenge.cases",
     "grandchallenge.algorithms",
     "grandchallenge.container_exec",
+    "grandchallenge.datasets",
+    "grandchallenge.submission_conversion",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -366,7 +364,8 @@ LOGGING = {
     },
     "handlers": {
         "sentry": {
-            "level": "ERROR",  # To capture more than ERROR, change to WARNING, INFO, etc.
+            "level": "ERROR",
+            # To capture more than ERROR, change to WARNING, INFO, etc.
             "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
         },
         "console": {
@@ -412,6 +411,9 @@ CELERY_TASK_TIME_LIMIT = 7260
 CONTAINER_EXEC_DOCKER_BASE_URL = "unix://var/run/docker.sock"
 CONTAINER_EXEC_MEMORY_LIMIT = "4g"
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
+CONTAINER_EXEC_IO_SHA256 = (
+    "sha256:11cd0b38bc3ceb958ffb2f9bd70be3fb317ce7d255c8a4c3f4af30e298aa1aab"
+)
 CONTAINER_EXEC_CPU_QUOTA = 100000
 CONTAINER_EXEC_CPU_PERIOD = 100000
 
@@ -437,6 +439,30 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
+
+# CIRRUS Is an external application that can view images
+CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
+CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
+CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
+
+# Disallow some challenge names due to subdomain or media folder clashes
+DISALLOWED_CHALLENGE_NAMES = [
+    "www",
+    "m",
+    "mx",
+    "mobile",
+    "mail",
+    "webmail",
+    "images",
+    "logos",
+    "banners",
+    "mugshots",
+    "docker",
+    "evaluation",
+    "evaluation-supplementary",
+    "favicon",
+    JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+]
 
 # Get *.conf from the directory this file is in and execute these in order.
 # To include your own local settings, put these in a  a 'XX-local.conf' file in the
@@ -486,3 +512,19 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
+
+if not COMIC_PUBLIC_FOLDER_NAME:
+    raise ImproperlyConfigured(
+        "Don't know from which folder serving publiv files"
+        "is allowed. Please add a setting like "
+        '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
+        " to your .conf file."
+    )
+
+if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
+    raise ImproperlyConfigured(
+        "Don't know from which folder serving protected files"
+        "is allowed. Please add a setting like "
+        '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
+        " to your .conf file."
+    )

@@ -1,0 +1,25 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Annotation Sets - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Dataset Annotations</h2>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=view.kwargs.base_pk %}">
+            <i class="fas fa-plus"></i> Add annoations to this dataset
+        </a>
+    </p>
+
+    {% for annotationset in object_list %}
+        {{ annotationset }}
+    {% empty %}
+        <p>No annotations found for this dataset.</p>
+    {% endfor %}
+
+{% endblock %}

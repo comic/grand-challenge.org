@@ -1,9 +1,10 @@
 from django.conf.urls import url, include
+from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.api import get_public_results
 from grandchallenge.core.views import site
-from grandchallenge.uploads.views import serve
+from grandchallenge.serving.views import ChallengeServeRedirect
 
 urlpatterns = [
     url(
@@ -37,6 +38,10 @@ urlpatterns = [
         r"^(?P<challenge_short_name>[\w-]+)/uploads/",
         include("grandchallenge.uploads.urls", namespace="uploads"),
     ),
+    path(
+        "<slug:challenge_short_name>/datasets/",
+        include("grandchallenge.datasets.urls", namespace="datasets"),
+    ),
     #################
     #
     # Legacy apps
@@ -47,7 +52,7 @@ urlpatterns = [
     ),
     url(
         r"^(?P<challenge_short_name>[\w-]+)/serve/(?P<path>.+)/$",
-        serve,
+        ChallengeServeRedirect.as_view(),
         name="project_serve_file",
     ),
     url(

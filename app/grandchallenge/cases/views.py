@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -8,9 +8,8 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
     UPLOAD_SESSION_STATE,
     Image,
-    Annotation,
 )
-from grandchallenge.cases.serializers import AnnotationSerializer
+from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -47,28 +46,6 @@ class ViewImage(UserIsStaffMixin, DetailView):
     template_name = "cases/view_image.html"
 
 
-class AnnotationList(UserIsStaffMixin, ListView):
-    model = Annotation
-
-    def get_queryset(self):
-        # TODO Filtering test
-        queryset = super().get_queryset()
-        return queryset.filter(base__pk=self.kwargs["base_pk"])
-
-
-class AnnotationCreate(UserIsStaffMixin, CreateView):
-    model = Annotation
-    fields = ("image", "metadata")
-
-    def form_valid(self, form):
-        form.instance.base = Image.objects.get(pk=self.kwargs["base_pk"])
-        return super().form_valid(form)
-
-
-class AnnotationDetail(UserIsStaffMixin, DetailView):
-    model = Annotation
-
-
-class AnnotationViewSet(ReadOnlyModelViewSet):
-    queryset = Annotation.objects.all()
-    serializer_class = AnnotationSerializer
+class ImageViewSet(ReadOnlyModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer

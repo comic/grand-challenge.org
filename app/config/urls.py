@@ -7,7 +7,6 @@ from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.pages.views import FaviconView
 from grandchallenge.core.views import comicmain
-from grandchallenge.uploads.views import serve
 
 admin.autodiscover()
 
@@ -29,7 +28,9 @@ urlpatterns = [
     ),
     # Favicons
     path(
-        "favicon.ico/", FaviconView.as_view(rel="shortcut icon"), name="favicon"
+        "favicon.ico/",
+        FaviconView.as_view(rel="shortcut icon"),
+        name="favicon",
     ),
     path(
         "apple-touch-icon.png/",
@@ -79,7 +80,9 @@ urlpatterns = [
     # keep this url at the bottom of this list, because urls are checked in
     # order
     url(r"^(?P<page_title>[\w-]+)/$", comicmain, name="mainproject-home"),
-    url(r"^media/(?P<challenge_short_name>[\w-]+)/(?P<path>.*)$", serve),
+    path(
+        "media/", include("grandchallenge.serving.urls", namespace="serving")
+    ),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar

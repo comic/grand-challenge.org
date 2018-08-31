@@ -21,7 +21,7 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "test_input, expected",
-    [("submission", "Submission List"), ("annotation", "Annotation List")],
+    [("submission", "Submission List"), ("image", "Image List")],
 )
 def test_api_pages(client, test_input, expected):
     _, token = get_staff_user_with_token()
@@ -36,7 +36,9 @@ def test_api_pages(client, test_input, expected):
 
     # There should be no content, but we should be able to do json.loads
     response = client.get(
-        url, HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token
+        url,
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 200
     assert not json.loads(response.content)
@@ -77,7 +79,7 @@ def test_upload_file(client, test_file, expected_response):
     # We should not be able to download submissions
     for submission in Submission.objects.all():
         response = client.get(submission.file.url)
-        assert response.status_code == 403
+        assert response.status_code == 404
 
     # Cleanup
     for submission in submissions:
