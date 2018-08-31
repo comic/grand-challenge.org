@@ -222,9 +222,6 @@ def substitute(string, substitutions):
 
 
 class comic_URLNode(defaulttags.URLNode):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render(self, context):
         # get the url the default django method would give.
         url = super().render(context)
@@ -250,12 +247,15 @@ class comic_URLNode(defaulttags.URLNode):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
+            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
             try:
                 project = args[0]
             except IndexError:
                 # No project was set, so must be part of the main site
-                project = settings.MAIN_PROJECT_NAME
+                project = kwargs.get(
+                    "challenge_short_name", settings.MAIN_PROJECT_NAME
+                )
 
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
