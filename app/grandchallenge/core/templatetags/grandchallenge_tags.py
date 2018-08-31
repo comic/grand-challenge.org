@@ -217,7 +217,7 @@ def substitute(string, substitutions):
     > "my name is John"
     """
     for key, value in substitutions:
-        string = re.sub("{{" + key + "}}", value, string)
+        string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
 
 
