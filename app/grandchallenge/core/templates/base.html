@@ -155,7 +155,6 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link"
                        href="{% url 'challenges:list' %}">All Challenges</a></li>
-                {% metafooterpages %}
             </ul>
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
@@ -216,11 +215,11 @@
 
 
     {% block jumbotron %}
-        <div id="headerTitle" class="jumbotron p-3 p-md-5 text-dark rounded bg-light">
+        <div id="headerTitle" class="text-dark rounded bg-light container mb-5">
             <!-- <a style="display:block" -->
             <!--    href={% block headerLink %}"/"{% endblock %}> -->
-            <div class="container">
-                <h1 class="display-4">
+            <div class="col-10 p-0">
+                <h1 class="display-4 mb-2">
                     {% block headerTitle %}
                         <div class="noimage">
                             {{ main_challenge_name }}
@@ -231,14 +230,14 @@
         </div>
     {% endblock %}
 
-<div id="page" class="container">
+<div id="page" class="container mt-3">
 
     <div class="row">
 
     {% block challengeNav %}
 
         <div class="col-md-3 sidebar-sticky">
-                <div class="card d-none d-md-block bg-white sidebar">
+                <div class="sidebar card mb-3">
                     <ul class="nav flex-column">
                         {% block topmenu %} {% endblock %}
                     </ul>
@@ -253,11 +252,14 @@
         </div>
 
     {% endblock %}
-
+    
+    {% block maincontent %}
         <div id="mainContent" class="p-0 mb-4 col-md-9 card shadow-sm ">
-            {% block content %} content {% endblock %}
+    {% endblock %}
+            <div class="card-body">
+                {% block content %} content {% endblock %}
+            </div>
         </div>
-
     </div>
     <!-- container -->
 </div>
