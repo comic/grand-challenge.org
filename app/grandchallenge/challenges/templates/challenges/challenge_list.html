@@ -4,9 +4,23 @@
 
 {% block pageName %}All Challenges{% endblock %}
 
+{% block topmenu %}{% endblock %}
+
+{% block maincontent %}
+<div id="mainContent" class="mt-0 p-0 mb-4 col-md-12 card shadow-sm ">
+{% endblock %}
+
+{% block challengeNav %} {% endblock %}
+
 {% block pagecontent %}
 
-    <h2>All Challenges</h2>
+    <h1>All Challenges</h1>
+
+    <p>Here is an overview of all challenges that have been organized within
+        the area of medical image analysis that we are aware of. If you know
+        any study that would fit in this overview, or want to advertise your
+        challenge, please send an email to support@grand-challenge.org and we
+        will add the challenge to the list on this page.</p>
 
     {% if request.user.is_staff %}
         <p>
@@ -21,20 +35,11 @@
         </p>
     {% endif %}
 
-    <p>Here is an overview of all challenges that have been organized within
-        the area of medical image analysis that we are aware of. If you know
-        any study that would fit in this overview, or want to advertise your
-        challenge, please send an email to support@grand-challenge.org and we
-        will add the challenge to the list on this page.</p>
+    <div id="projectfilterbuttons" class="mt-4">
 
-    <div id="projectfilterbuttons">
+        <div id="buttonbar" class="alert alert-secondary bg-light">
 
-        <div id="info">Showing <span class="counter" id="projectlink"></span>
-            projects of <span class="counter"
-                              id="total"></span></div>
-        <div id="buttonbar">
-
-            <div id="filterby">Filter by:</div>
+            <div id="filterby"><h4 class="mt-0 mb-1">Filter by:</h4></div>
 
             <div id="projectLinksFilters">
                 <form class="form-inline">
@@ -46,31 +51,33 @@
                     </label>
 
                     <label id="open"
-                           class="checkbox-inline no_indent projectLinkFilter"
+                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
                            title="Show projects that accept new submissions">
                         <input type="checkbox" class="filter" id="open">
-                        Open for submissions (<span
-                            class="counter" id="open"></span>)
+                        Open for submissions <span
+                            class="counter ml-1 badge badge-pill badge-info" id="open"></span>
                     </label>
 
                     <label id="datadownload"
-                           class="checkbox-inline no_indent projectLinkFilter"
+                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
                            title="Show projects that offer data download">
                         <input type="checkbox" class="filter"
                                id="datadownload">
-                        Data download (<span
-                            class="counter" id="datadownload"></span>)
+                        Data download <span
+                            class="counter ml-1 badge badge-pill badge-info" id="datadownload"></span>
                     </label>
 
                     <label id="grand-challenge"
                            class="checkbox-inline no_indent projectLinkFilter">
                         <input type="checkbox" class="filter"
                                id="grand-challenge">
-                        Hosted on Grand-challenge (<span
-                            class="counter"
-                            id="grand-challenge"></span>)
+                        Hosted on Grand-challenge <span
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="grand-challenge"></span>
                     </label>
                 </form>
+                <span id="info" class="badge badge-info">Showing <span class="counter" id="projectlink"></span>
+                    projects of <span class="counter" id="total"></span></span>
 
             </div>
         </div>
@@ -90,12 +97,12 @@
 
                     {% for challenge in challenges %}
 
-                        <div class="col-sm-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
-                            <div class="panel panel-default">
+                        <div class="col-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
+                            <div class="card" style="height:400px">
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block">
-                                    <div class="panel-heading projectLinkHeading">
+                                    <div class="card-header projectLinkHeading" style="height:110px;">
                                         <div class="projectLinkImage">
                                             <img alt=""
                                                  src="{{ challenge.thumb_image_url }}">
@@ -112,11 +119,11 @@
                                     </div>
                                 </a>
 
-                                <div class="panel-body projectLinkBody">
+                                <div class="card-body projectLinkBody small" style="overflow: hidden; height:250px; line-height:1.5em">
                                     {{ challenge.description }}
                                 </div>
 
-                                <div class="panel-footer projectLinkFooter">
+                                <div class="card-footer small projectLinkFooter" style="line-height:1.5em">
 
                                     {% if challenge.is_open_for_submissions %}
                                         <div>
