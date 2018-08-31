@@ -7,37 +7,16 @@
 
 {% block headerLink %}"/"{% endblock %}
 
-<div id="page" class="container">
+{% block jumbotron %}{% endblock %}
 
-    <div class="row">
-
-    {% block challengeNav %}
-
-        <div class="col-md-3 sidebar-sticky">
-                <div class="card d-none d-md-block bg-white sidebar">
-                    <ul class="nav flex-column">
-                        {% block topmenu %} {% endblock %}
-                    </ul>
-                </div>
-                    <div id="additionalNavigation">
-                        <ul class="nav navbar-nav navbar-right">
-                            {% block sitemenuloginbutton %} {% endblock %}
-                            {% block adminbutton %} {% endblock %}
-                        </ul>
-                    </div>
-            </nav>
-        </div>
-
-    {% endblock %}
-
-    </div>
-    <!-- container -->
-</div>
-</main>
+{% block additionalNavItems %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'challenges:list' %}"><strong>All Challenges</strong></a></li>  
+</li>
+{% endblock %}
 
 {% block pagecontent %}
 
-    <div class="card-body">
     {% if site.disclaimer %}
         <div class="disclaimer"
              style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
@@ -58,7 +37,6 @@
             Edit this page
         </a>
     {% endif %}
-    </div>
 
 {% endblock %}
 
