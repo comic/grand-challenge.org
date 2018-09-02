@@ -49,6 +49,12 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
     form_class = UploadRawImagesForm
     template_name = "datasets/imageset_add_images.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
+        context.update({"phase_display": imageset.get_phase_display()})
+        return context
+
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
@@ -105,6 +111,17 @@ class AddImagesToAnnotationSet(UserIsStaffMixin, CreateView):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "datasets/annotationset_add_images.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        annotationset = AnnotationSet.objects.get(pk=self.kwargs["pk"])
+        context.update(
+            {
+                "kind_display": annotationset.get_kind_display(),
+                "phase_display": annotationset.base.get_phase_display(),
+            }
+        )
+        return context
 
     def form_valid(self, form):
         form.instance.creator = self.request.user

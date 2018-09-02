@@ -4,12 +4,12 @@
 {% load static %}
 
 {% block pageName %}
-    Add images to a dataset - {{ block.super }}
+    Add images to the {{ phase_display }} dataset - {{ block.super }}
 {% endblock %}
 
 {% block pagecontent %}
 
-    <h2>Add images to a dataset</h2>
+    <h2>Add images to the {{ phase_display }} dataset</h2>
 
     {% crispy form %}
 
