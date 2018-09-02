@@ -3,6 +3,7 @@ from os.path import commonprefix
 from typing import Union
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.cases.models import (
@@ -77,6 +78,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
         max_length=1, default=GROUNDTRUTH, choices=KIND_CHOICES
     )
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
+    labels = JSONField(blank=True, default=dict, editable=False)
     submission = models.OneToOneField(
         to=Submission, null=True, on_delete=models.SET_NULL, editable=False
     )
