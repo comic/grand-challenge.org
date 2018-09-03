@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import re
 from os.path import commonprefix
 from typing import Union
@@ -18,6 +19,8 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.jqfileupload.models import StagedFile
+
+logger = logging.getLogger(__name__)
 
 
 def find_first_int(*, instr) -> tuple:
@@ -72,8 +75,8 @@ class ImageSet(UUIDModel, IndexMixin):
     @property
     def images_with_keys(self):
         return [
-            {"key": key, "image": self.index[key]}
-            for key in sorted(self.index)
+            {"key": key, "image": self.index()[key]}
+            for key in sorted(self.index())
         ]
 
     def save(self, *args, **kwargs):
@@ -121,13 +124,22 @@ class AnnotationSet(UUIDModel, IndexMixin):
         )
 
     @property
-    def label_keys(self):
+    def label_index(self) -> dict:
         join_key = (
-            self.submission.challenge.evaluation_config.submission_join_key
+            self.base.challenge.evaluation_config.submission_join_key.lower()
         )
-        common_prefix = commonprefix(
-            [l[join_key].lower() for l in self.labels]
-        )
+
+        try:
+            common_prefix = commonprefix(
+                [l[join_key].lower() for l in self.labels]
+            )
+        except KeyError:
+            logger.warning(
+                f"The join key, {join_key}, was not found for "
+                f"{self.base.challenge}"
+            )
+            return {}
+
         return {
             find_first_int(instr=l[join_key][len(common_prefix) :]): l
             for l in self.labels
@@ -172,6 +184,40 @@ class AnnotationSet(UUIDModel, IndexMixin):
                     base=base_index[key], annotation=annotation_index[key]
                 ),
             }
+            for key in sorted(matches)
+        ]
+
+    @property
+    def missing_labels(self):
+        base_index = self.base.index(include_shape=False)
+        label_index = self.label_index
+
+        missing = base_index.keys() - label_index.keys()
+
+        return [
+            {"key": key, "base": base_index[key]} for key in sorted(missing)
+        ]
+
+    @property
+    def extra_labels(self):
+        base_index = self.base.index(include_shape=False)
+        label_index = self.label_index
+
+        extra = label_index.keys() - base_index.keys()
+
+        return [
+            {"key": key, "label": label_index[key]} for key in sorted(extra)
+        ]
+
+    @property
+    def matched_labels(self):
+        base_index = self.base.index(include_shape=False)
+        label_index = self.label_index
+
+        matches = base_index.keys() & label_index.keys()
+
+        return [
+            {"key": key, "base": base_index[key], "label": label_index[key]}
             for key in sorted(matches)
         ]
 

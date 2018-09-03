@@ -32,6 +32,7 @@ class ConfigForm(forms.ModelForm):
             "supplementary_file_label",
             "supplementary_file_help_text",
             "show_supplementary_file_link",
+            "submission_join_key",
         )
 
 
@@ -80,7 +81,9 @@ class SubmissionForm(forms.ModelForm):
         """
         display_comment_field = kwargs.pop("display_comment_field", False)
 
-        allow_supplementary_file = kwargs.pop("allow_supplementary_file", False)
+        allow_supplementary_file = kwargs.pop(
+            "allow_supplementary_file", False
+        )
 
         require_supplementary_file = kwargs.pop(
             "require_supplementary_file", False

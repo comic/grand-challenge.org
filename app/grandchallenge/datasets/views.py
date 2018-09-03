@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import csv
+import itertools
 from codecs import iterdecode
 
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
@@ -159,6 +160,11 @@ class AddImagesToAnnotationSet(
         )
 
 
+def lower_first(iterator):
+    """ Lowers the first line of a file """
+    return itertools.chain([next(iterator).lower()], iterator)
+
+
 class AnnotationSetUpdateLabels(
     UserIsStaffMixin, AnnotationSetUpdateContextMixin, UpdateView
 ):
@@ -171,7 +177,7 @@ class AnnotationSetUpdateLabels(
 
         with uploaded_file.open() as f:
             reader = csv.DictReader(
-                iterdecode(f, encoding=self.request.encoding),
+                lower_first(iterdecode(f, encoding="utf-8")),
                 skipinitialspace=True,
             )
             form.instance.labels = [row for row in reader]

@@ -7,6 +7,12 @@
 
 {% block pagecontent %}
 
+    {% if object.labels and not object.base.challenge.evaluation_config.submission_join_key %}
+        <p class="alert alert-danger">
+            <b>WARNING:</b> You have uploaded labels but the join key is not set, please set it in challenge settings.
+        </p>
+    {% endif %}
+
     <h2>Annotations</h2>
 
     <p>
@@ -116,6 +122,81 @@
                 <tr>
                     <td>{{ extra.key }}</td>
                     <td>{{ extra.annotation }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <h3>Matched Labels</h3>
+
+    <table class="table" id="MatchedLabels">
+        <thead>
+        <tr>
+            <th>Key</th>
+            <th>Base Image</th>
+            <th>Label</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for match in object.matched_labels %}
+            <tr>
+                <td>{{ match.key }}</td>
+                <td><a href="{{ match.base.cirrus_link }}"
+                       title="View Image">{{ match.base }}</a>
+                </td>
+                <td><{{ match.label }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if object.missing_labels|length > 0 %}
+        <h3>Missing Labels</h3>
+
+        <p class="alert alert-danger">
+            <b>WARNING:</b> The following images in the dataset are missing
+            labels. Please upload the labels with the correct key.
+        </p>
+
+        <table class="table" id="MissingLabels">
+            <thead>
+            <tr>
+                <th>Key</th>
+                <th>Base Image</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for missing in object.missing_labels %}
+                <tr>
+                    <td>{{ missing.key }}</td>
+                    <td>{{ missing.base }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if object.extra_labels|length > 0 %}
+        <h3>Extra Labels</h3>
+
+        <p class="alert alert-danger">
+            <b>WARNING:</b> The following labels could not be matched with
+            a base image. Please upload a new set of labels.
+        </p>
+
+        <table class="table" id="ExtraLabels">
+            <thead>
+            <tr>
+                <th>Key</th>
+                <th>Label</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for extra in object.extra_labels %}
+                <tr>
+                    <td>{{ extra.key }}</td>
+                    <td>{{ extra.label }}</td>
                 </tr>
             {% endfor %}
             </tbody>
