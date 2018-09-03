@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
-import itertools
-from codecs import iterdecode
 
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
@@ -19,6 +16,7 @@ from grandchallenge.datasets.forms import (
     AnnotationSetUpdateLabelsForm,
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 
 
@@ -160,11 +158,6 @@ class AddImagesToAnnotationSet(
         )
 
 
-def lower_first(iterator):
-    """ Lowers the first line of a file """
-    return itertools.chain([next(iterator).lower()], iterator)
-
-
 class AnnotationSetUpdateLabels(
     UserIsStaffMixin, AnnotationSetUpdateContextMixin, UpdateView
 ):
@@ -176,11 +169,7 @@ class AnnotationSetUpdateLabels(
         uploaded_file = form.cleaned_data["chunked_upload"][0]
 
         with uploaded_file.open() as f:
-            reader = csv.DictReader(
-                lower_first(iterdecode(f, encoding="utf-8")),
-                skipinitialspace=True,
-            )
-            form.instance.labels = [row for row in reader]
+            form.instance.labels = process_csv_file(f)
 
         return super().form_valid(form)
 

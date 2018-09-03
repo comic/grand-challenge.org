@@ -189,7 +189,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     container.put_archive(os.path.dirname(dest), tar_b)
 
 
-def get_file(*, container: ContainerApiMixin, src: Path) -> File:
+def get_file(*, container: ContainerApiMixin, src: Path):
     tarstrm, info = container.get_archive(src)
 
     if info["size"] > 2E9:
@@ -203,4 +203,4 @@ def get_file(*, container: ContainerApiMixin, src: Path) -> File:
     tar = tarfile.open(mode="r", fileobj=file_obj)
     content = tar.extractfile(src.name)
 
-    return File(content)
+    return content
