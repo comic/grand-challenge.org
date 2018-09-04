@@ -7,7 +7,7 @@ def get_classes(csvfile: str):
     with open(csvfile, "r") as f:
         reader = DictReader(f)
         for row in reader:
-            output.append(float(row["class"]))
+            output.append(float(row["Class"]))
     return output
 
 

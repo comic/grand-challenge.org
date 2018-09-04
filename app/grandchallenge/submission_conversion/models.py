@@ -140,7 +140,6 @@ class SubmissionToAnnotationSetExecutor(Executor):
             upload_session.process_images()
 
         else:
-
             assert len(output_files) == 1
 
             f = get_file(container=container, src=output_files[0])
