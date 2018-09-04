@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
@@ -12,8 +13,10 @@ from grandchallenge.datasets.forms import (
     ImageSetUpdateForm,
     AnnotationSetForm,
     AnnotationSetUpdateForm,
+    AnnotationSetUpdateLabelsForm,
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 
 
@@ -107,7 +110,22 @@ class AnnotationSetCreate(UserIsStaffMixin, CreateView):
         )
 
 
-class AddImagesToAnnotationSet(UserIsStaffMixin, CreateView):
+class AnnotationSetUpdateContextMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        annotationset = AnnotationSet.objects.get(pk=self.kwargs["pk"])
+        context.update(
+            {
+                "kind_display": annotationset.get_kind_display(),
+                "phase_display": annotationset.base.get_phase_display(),
+            }
+        )
+        return context
+
+
+class AddImagesToAnnotationSet(
+    UserIsStaffMixin, AnnotationSetUpdateContextMixin, CreateView
+):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "datasets/annotationset_add_images.html"
@@ -128,6 +146,31 @@ class AddImagesToAnnotationSet(UserIsStaffMixin, CreateView):
         form.instance.annotationset = AnnotationSet.objects.get(
             pk=self.kwargs["pk"]
         )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "datasets:annotationset-detail",
+            kwargs={
+                "challenge_short_name": self.kwargs["challenge_short_name"],
+                "pk": self.kwargs["pk"],
+            },
+        )
+
+
+class AnnotationSetUpdateLabels(
+    UserIsStaffMixin, AnnotationSetUpdateContextMixin, UpdateView
+):
+    model = AnnotationSet
+    form_class = AnnotationSetUpdateLabelsForm
+    template_name_suffix = "_update_labels"
+
+    def form_valid(self, form):
+        uploaded_file = form.cleaned_data["chunked_upload"][0]
+
+        with uploaded_file.open() as f:
+            form.instance.labels = process_csv_file(f)
+
         return super().form_valid(form)
 
     def get_success_url(self):

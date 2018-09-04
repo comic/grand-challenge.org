@@ -159,6 +159,15 @@ class Config(UUIDModel):
             "result."
         ),
     )
+    submission_join_key = models.CharField(
+        blank=True,
+        default="",
+        max_length=32,
+        help_text=(
+            "If predictions are submitted as csv files, which column should "
+            "be used to join the data? eg. case_id"
+        ),
+    )
 
     def get_absolute_url(self):
         return reverse(

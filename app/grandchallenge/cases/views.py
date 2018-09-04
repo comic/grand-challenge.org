@@ -41,11 +41,6 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
         return result
 
 
-class ViewImage(UserIsStaffMixin, DetailView):
-    model = Image
-    template_name = "cases/view_image.html"
-
-
 class ImageViewSet(ReadOnlyModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
