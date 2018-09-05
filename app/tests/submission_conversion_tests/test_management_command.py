@@ -7,11 +7,7 @@ from django.db.models.signals import post_save
 from factory.django import mute_signals
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from tests.factories import (
-    ChallengeFactory,
-    ImageSetFactory,
-    SubmissionFactory,
-)
+from tests.factories import ChallengeFactory, SubmissionFactory
 
 
 @pytest.mark.django_db
@@ -24,8 +20,7 @@ def test_submission_conversion(capsys, submission_file, settings):
 
     challenge = ChallengeFactory()
 
-    ImageSetFactory(phase=ImageSet.TRAINING, challenge=challenge)
-    test_set = ImageSetFactory(phase=ImageSet.TESTING, challenge=challenge)
+    test_set = challenge.imageset_set.get(phase=ImageSet.TESTING)
 
     with mute_signals(post_save):
         submission = SubmissionFactory(

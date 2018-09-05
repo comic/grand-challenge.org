@@ -5,7 +5,6 @@ from grandchallenge.cases.forms import upload_raw_files_widget
 from grandchallenge.datasets.forms import labels_upload_widget
 from grandchallenge.datasets.views import (
     ImageSetList,
-    ImageSetCreate,
     ImageSetDetail,
     AddImagesToImageSet,
     ImageSetUpdate,
@@ -19,10 +18,8 @@ from grandchallenge.datasets.views import (
 
 app_name = "datasets"
 
-
 urlpatterns = [
     path("", ImageSetList.as_view(), name="imageset-list"),
-    path("create/", ImageSetCreate.as_view(), name="imageset-create"),
     path("<uuid:pk>/", ImageSetDetail.as_view(), name="imageset-detail"),
     path(
         "<uuid:pk>/add/",

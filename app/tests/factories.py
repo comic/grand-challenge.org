@@ -153,8 +153,6 @@ class ImageSetFactory(factory.DjangoModelFactory):
     class Meta:
         model = ImageSet
 
-    challenge = factory.SubFactory(ChallengeFactory)
-
 
 class AnnotationSetFactory(factory.DjangoModelFactory):
     class Meta:
