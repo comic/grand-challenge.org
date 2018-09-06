@@ -120,6 +120,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
         return (
             f"{self.get_kind_display()} annotation set, "
             f"{len(self.images.all())} images, "
+            f"{len(self.labels)} labels, "
             f"created by {self.creator}"
         )
 
