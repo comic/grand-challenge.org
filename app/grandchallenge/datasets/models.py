@@ -132,7 +132,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
 
         try:
             common_prefix = commonprefix(
-                [l[join_key].lower() for l in self.labels]
+                [str(l[join_key]).lower() for l in self.labels]
             )
         except KeyError:
             logger.warning(
@@ -142,7 +142,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
             return {}
 
         return {
-            find_first_int(instr=l[join_key][len(common_prefix) :]): l
+            find_first_int(instr=str(l[join_key])[len(common_prefix) :]): l
             for l in self.labels
         }
 
