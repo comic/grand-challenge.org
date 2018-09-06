@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
 from docker.errors import ContainerError, APIError
+from requests import HTTPError
 
 from grandchallenge.container_exec.exceptions import (
     InputError,
@@ -174,7 +175,7 @@ def cleanup(container: ContainerApiMixin):
             try:
                 container.remove(force=True)
                 break
-            except APIError as e:
+            except (APIError, HTTPError) as e:
                 num_retries += 1
                 sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
         else:
