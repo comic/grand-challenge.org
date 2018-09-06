@@ -79,7 +79,7 @@ class Executor(object):
         e = APIError
         while num_retries < 3:
             try:
-                obj.remove(filters=filters)
+                obj.prune(filters=filters)
                 break
             except (APIError, HTTPError) as e:
                 num_retries += 1

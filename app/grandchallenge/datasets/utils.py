@@ -28,7 +28,7 @@ def infer_type(value: str) -> Union[str, float, int, None]:
             else:
                 return val
 
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
     return value
