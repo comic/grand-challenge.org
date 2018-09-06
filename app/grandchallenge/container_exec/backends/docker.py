@@ -7,13 +7,15 @@ import uuid
 from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
+from random import randint
+from time import sleep
 from typing import Tuple
 
 import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError
+from docker.errors import ContainerError, APIError
 
 from grandchallenge.container_exec.exceptions import (
     InputError,
@@ -163,7 +165,20 @@ def cleanup(container: ContainerApiMixin):
 
     finally:
         container.stop()
-        container.remove(force=True)
+
+        # Retry and exponential backoff of the remove command as only 1 prune
+        # operation can occur at a time on a docker host
+        num_retries = 0
+        e = APIError
+        while num_retries < 3:
+            try:
+                container.remove(force=True)
+                break
+            except APIError as e:
+                num_retries += 1
+                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+        else:
+            raise e
 
 
 def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
