@@ -66,8 +66,26 @@ class Executor(object):
         for container in self._client.containers.list(filters=filter):
             container.stop()
 
-        self._client.containers.prune(filters=filter)
-        self._client.volumes.prune(filters=filter)
+        self.__retry_docker_obj_prune(
+            obj=self._client.containers, filters=filter
+        )
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=filter)
+
+    @staticmethod
+    def __retry_docker_obj_prune(*, obj, filters: dict):
+        # Retry and exponential backoff of the prune command as only 1 prune
+        # operation can occur at a time on a docker host
+        num_retries = 0
+        e = APIError
+        while num_retries < 3:
+            try:
+                obj.remove(filters=filters)
+                break
+            except (APIError, HTTPError) as e:
+                num_retries += 1
+                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+        else:
+            raise e
 
     def execute(self) -> dict:
         self._pull_images()
@@ -166,20 +184,7 @@ def cleanup(container: ContainerApiMixin):
 
     finally:
         container.stop()
-
-        # Retry and exponential backoff of the remove command as only 1 prune
-        # operation can occur at a time on a docker host
-        num_retries = 0
-        e = APIError
-        while num_retries < 3:
-            try:
-                container.remove(force=True)
-                break
-            except (APIError, HTTPError) as e:
-                num_retries += 1
-                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
-        else:
-            raise e
+        container.remove(force=True)
 
 
 def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
