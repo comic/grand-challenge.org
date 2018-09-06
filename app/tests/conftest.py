@@ -155,9 +155,9 @@ def submission_file(tmpdir_factory):
     try:
         for file in files:
             if "cases_tests" in str(file.parent):
-                arcname = Path("images") / file.name
+                arcname = Path("submission") / Path("images") / file.name
             else:
-                arcname = file.name
+                arcname = Path("submission") / file.name
 
             z.write(
                 Path(__file__).parent / file,

@@ -290,6 +290,25 @@ class SubmissionEvaluator(Executor):
                 # process. With resource limits this should provide some
                 # protection against zip bombs etc.
                 writer.exec_run(f"unzip {dest_file} -d /input/")
+
+                # Remove a duplicated directory
+                input_files = (
+                    writer.exec_run(f"ls -1 /input/")
+                    .output.decode()
+                    .splitlines()
+                )
+
+                if (
+                    len(input_files) == 1
+                    and not writer.exec_run(
+                        f"ls -d /input/{input_files[0]}/"
+                    ).exit_code
+                ):
+                    writer.exec_run(
+                        f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
+                        f'&& rm -r /input/{input_files[0]}/"'
+                    )
+
             else:
                 # Not a zip file, so must be a csv
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
