@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.urls import path
 
 from grandchallenge.participants.views import (
     RegistrationRequestList,
@@ -10,19 +10,19 @@ from grandchallenge.participants.views import (
 app_name = "participants"
 
 urlpatterns = [
-    url(r"^$", ParticipantsList.as_view(), name="list"),
-    url(
-        r"^registration/$",
+    path("", ParticipantsList.as_view(), name="list"),
+    path(
+        "registration/",
         RegistrationRequestList.as_view(),
         name="registration-list",
     ),
-    url(
-        r"^registration/create/$",
+    path(
+        "registration/create/",
         RegistrationRequestCreate.as_view(),
         name="registration-create",
     ),
-    url(
-        r"^registration/(?P<pk>\d+)/update/$",
+    path(
+        "registration/<int:pk>/update/",
         RegistrationRequestUpdate.as_view(),
         name="registration-update",
     ),
