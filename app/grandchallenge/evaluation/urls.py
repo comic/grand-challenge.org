@@ -28,7 +28,7 @@ urlpatterns = [
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
     path(
-        f"^methods/create/{method_upload_widget.ajax_target_path}$",
+        f"methods/create/{method_upload_widget.ajax_target_path}",
         method_upload_widget.handle_ajax,
         name="method-upload-ajax",
     ),
