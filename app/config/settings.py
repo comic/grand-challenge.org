@@ -255,7 +255,7 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
-ADMIN_URL = f'^{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
+ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.google.GoogleOAuth2",
