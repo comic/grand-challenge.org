@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.contrib import admin
 from django.template.response import TemplateResponse
 from django.urls import re_path, path
@@ -18,10 +18,9 @@ def handler500(request):
 
 
 urlpatterns = [
-    # main page
-    url(r"^$", comicmain, name="home"),
-    url(
-        r"^robots\.txt/$",
+    path("", comicmain, name="home"),
+    path(
+        "robots.txt/",
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
@@ -52,18 +51,18 @@ urlpatterns = [
         FaviconView.as_view(rel="apple-touch-icon-precomposed"),
         name="apple-touch-icon-precomposed-sized",
     ),
-    url(settings.ADMIN_URL, admin.site.urls),
-    url(r"^site/", include("grandchallenge.core.urls"), name="site"),
-    # Do not change the namespace without updating the view names in
-    # evaluation.serializers
-    url(r"^api/", include("grandchallenge.api.urls", namespace="api")),
+    path(settings.ADMIN_URL, admin.site.urls),
+    path("site/", include("grandchallenge.core.urls"), name="site"),
+    # Do not change the api namespace without updating the view names in
+    # all of the serializers
+    path("api/", include("grandchallenge.api.urls", namespace="api")),
     # Used for logging in and managing grandchallenge.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
-    url(r"^accounts/", include("grandchallenge.profiles.urls")),
-    url(r"^socialauth/", include("social_django.urls", namespace="social")),
-    url(
-        r"^challenges/",
+    path("accounts/", include("grandchallenge.profiles.urls")),
+    path("socialauth/", include("social_django.urls", namespace="social")),
+    path(
+        "challenges/",
         include("grandchallenge.challenges.urls", namespace="challenges"),
     ),
     re_path(
@@ -79,7 +78,7 @@ urlpatterns = [
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
     # order
-    url(r"^(?P<page_title>[\w-]+)/$", comicmain, name="mainproject-home"),
+    path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving")
     ),
@@ -88,5 +87,5 @@ if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns = [
-        url(r"^__debug__/", include(debug_toolbar.urls))
+        path("__debug__/", include(debug_toolbar.urls))
     ] + urlpatterns
