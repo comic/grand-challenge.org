@@ -5,8 +5,8 @@ from django.template.response import TemplateResponse
 from django.urls import re_path, path
 from django.views.generic import TemplateView, RedirectView
 
-from grandchallenge.pages.views import FaviconView
 from grandchallenge.core.views import comicmain
+from grandchallenge.pages.views import FaviconView
 
 admin.autodiscover()
 
@@ -52,7 +52,11 @@ urlpatterns = [
         name="apple-touch-icon-precomposed-sized",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
-    path("site/", include("grandchallenge.core.urls"), name="site"),
+    path(
+        "site/<slug:challenge_short_name>/",
+        include("grandchallenge.core.urls"),
+        name="site",
+    ),
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),

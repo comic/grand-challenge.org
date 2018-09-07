@@ -7,9 +7,9 @@ from grandchallenge.core.views import site
 from grandchallenge.serving.views import ChallengeServeRedirect
 
 urlpatterns = [
-    path("<slug:challenge_short_name>/", site, name="challenge-homepage"),
+    path("", site, name="challenge-homepage"),
     path(
-        "<slug:challenge_short_name>/robots.txt/",
+        "robots.txt/",
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
@@ -17,27 +17,20 @@ urlpatterns = [
     ),
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
     path(
-        "<slug:challenge_short_name>/evaluation/",
+        "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
+    path("teams/", include("grandchallenge.teams.urls", namespace="teams")),
     path(
-        "<slug:challenge_short_name>/teams/",
-        include("grandchallenge.teams.urls", namespace="teams"),
-    ),
-    path(
-        "<slug:challenge_short_name>/participants/",
+        "participants/",
         include("grandchallenge.participants.urls", namespace="participants"),
     ),
+    path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
     path(
-        "<slug:challenge_short_name>/admins/",
-        include("grandchallenge.admins.urls", namespace="admins"),
+        "uploads/", include("grandchallenge.uploads.urls", namespace="uploads")
     ),
     path(
-        "<slug:challenge_short_name>/uploads/",
-        include("grandchallenge.uploads.urls", namespace="uploads"),
-    ),
-    path(
-        "<slug:challenge_short_name>/datasets/",
+        "datasets/",
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
     #################
@@ -45,25 +38,19 @@ urlpatterns = [
     # Legacy apps
     #
     path(
-        "<slug:challenge_short_name>/files/$",
+        "files/",
         RedirectView.as_view(pattern_name="uploads:create", permanent=False),
     ),
     path(
-        "<slug:challenge_short_name>/serve/<path:path>/",
+        "serve/<path:path>/",
         ChallengeServeRedirect.as_view(),
         name="project_serve_file",
     ),
-    path(
-        "<slug:challenge_short_name>/api/get_public_results/",
-        get_public_results,
-    ),
+    path("api/get_public_results/", get_public_results),
     #
     # End Legacy
     #
     #################
     # If nothing specific matches, try to resolve the url as project/pagename
-    path(
-        "<slug:challenge_short_name>/",
-        include("grandchallenge.pages.urls", namespace="pages"),
-    ),
+    path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]
