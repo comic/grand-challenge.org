@@ -219,8 +219,9 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "raven.contrib.django.raven_compat",  # error logging
-    "djcelery_email",  # asynchronous emails
+    "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
+    "djcelery_email",  # asynchronous emails
     "userena",  # user profiles
     "guardian",  # userena dependency, per object permissions
     "easy_thumbnails",  # userena dependency
@@ -403,7 +404,7 @@ REST_FRAMEWORK = {
 }
 
 CELERY_BROKER_URL = "redis://redis:6379/0"
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "django-db"
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
