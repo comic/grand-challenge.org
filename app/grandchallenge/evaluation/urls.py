@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.conf.urls import url
 
 from grandchallenge.evaluation.forms import (
@@ -21,11 +20,6 @@ from grandchallenge.evaluation.views import (
     ResultUpdate,
     LegacySubmissionCreate,
 )
-from grandchallenge.jqfileupload.forms import (
-    test_upload_widget,
-    test_upload_widget2,
-)
-from grandchallenge.jqfileupload.views import uploader_widget_test
 
 app_name = "evaluation"
 
@@ -72,7 +66,9 @@ urlpatterns = [
     url(r"^jobs/$", JobList.as_view(), name="job-list"),
     url(r"^jobs/create/$", JobCreate.as_view(), name="job-create"),
     url(
-        r"^jobs/(?P<pk>[0-9a-fA-F-]+)/$", JobDetail.as_view(), name="job-detail"
+        r"^jobs/(?P<pk>[0-9a-fA-F-]+)/$",
+        JobDetail.as_view(),
+        name="job-detail",
     ),
     url(r"^results/$", ResultList.as_view(), name="result-list"),
     url(
@@ -86,18 +82,3 @@ urlpatterns = [
         name="result-update",
     ),
 ]
-
-if settings.DEBUG:
-    urlpatterns.append(
-        url(
-            f"^{test_upload_widget.ajax_target_path}$",
-            test_upload_widget.handle_ajax,
-        )
-    )
-    urlpatterns.append(
-        url(
-            f"^{test_upload_widget2.ajax_target_path}$",
-            test_upload_widget2.handle_ajax,
-        )
-    )
-    urlpatterns.append(url(r"^testwidget/$", uploader_widget_test))
