@@ -264,6 +264,11 @@ def build_images(upload_session_uuid: UUID):
                             algorithm=upload_session.algorithm, image=image
                         )
 
+                if upload_session.algorithm_result:
+                    upload_session.algorithm_result.images.add(
+                        *collected_images
+                    )
+
                 # Delete any touched file data
                 for file in session_files:
                     try:

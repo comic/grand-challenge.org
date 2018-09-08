@@ -61,6 +61,13 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
+    algorithm_result = models.OneToOneField(
+        to="algorithms.Result",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "

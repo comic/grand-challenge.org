@@ -30,6 +30,10 @@
         <dd>
             <a href="{{ object.image.get_absolute_url }}">{{ object.image }}</a>
         </dd>
+        <dt>Errors</dt>
+        <dd>
+            {{ object.output }}
+        </dd>
         <dt>Result</dt>
         <dd>
             <a href="{{ object.result.get_absolute_url }}">{{ object.result }}</a>
