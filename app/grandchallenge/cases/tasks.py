@@ -7,6 +7,7 @@ from uuid import UUID
 from celery import shared_task
 from django.db import transaction
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd
@@ -256,6 +257,12 @@ def build_images(upload_session_uuid: UUID):
 
                 if upload_session.annotationset:
                     upload_session.annotationset.images.add(*collected_images)
+
+                if upload_session.algorithm:
+                    for image in collected_images:
+                        Job.objects.create(
+                            algorithm=upload_session.algorithm, image=image
+                        )
 
                 # Delete any touched file data
                 for file in session_files:

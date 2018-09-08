@@ -15,6 +15,7 @@ from grandchallenge.core.urlresolvers import reverse
 
 
 class Algorithm(UUIDModel, ContainerImageModel):
+    # TODO: add name and slug
     description_html = RichTextField(blank=True)
 
     def get_absolute_url(self):
@@ -22,6 +23,7 @@ class Algorithm(UUIDModel, ContainerImageModel):
 
 
 class Result(UUIDModel):
+    # TODO: add images
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     output = JSONField(default=dict)
 
@@ -30,6 +32,7 @@ class Result(UUIDModel):
 
 
 class AlgorithmExecutor(Executor):
+    # TODO: load images too
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args, results_file=Path("/output/results.json"), **kwargs
@@ -46,7 +49,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     @property
     def input_files(self):
-        return [c.file for c in self.image.imagefile_set.all()]
+        return [c.file for c in self.image.files.all()]
 
     @property
     def executor_cls(self):

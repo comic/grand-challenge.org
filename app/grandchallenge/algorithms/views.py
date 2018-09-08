@@ -5,8 +5,10 @@ from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
 
-from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
+from grandchallenge.algorithms.forms import AlgorithmForm
 from grandchallenge.algorithms.models import Algorithm, Job, Result
+from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 logger = logging.getLogger(__name__)
@@ -51,13 +53,18 @@ class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
 
 
+class AlgorithmExecutionSessionCreate(UserIsStaffMixin, CreateView):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.algorithm = Algorithm.objects.get(pk=self.kwargs["pk"])
+        return super().form_valid(form)
+
+
 class JobList(UserIsStaffMixin, ListView):
     model = Job
-
-
-class JobCreate(UserIsStaffMixin, CreateView):
-    model = Job
-    form_class = JobForm
 
 
 class JobDetail(UserIsStaffMixin, DetailView):

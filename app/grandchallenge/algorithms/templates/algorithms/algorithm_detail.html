@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "mainpage.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
 
@@ -31,8 +31,8 @@
 
     <p>
     <a class="btn btn-primary"
-       href="{% url 'algorithms:jobs-create' %}">
-        Run this algorithm on a case
+       href="{% url 'algorithms:execution-session-create' pk=object.pk %}">
+        Try out this algorithm
             </a>
     </p>
 
