@@ -16,6 +16,7 @@ services:
       service: web
     links:
       - memcached
+      - postgres
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
