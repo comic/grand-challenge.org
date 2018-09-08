@@ -104,7 +104,7 @@ class AjaxUploadWidget(Widget):
         upload_validators=(),
         **kwargs,
     ):
-        super(AjaxUploadWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if ajax_target_path is None:
             raise ValueError("AJAX target path required")
 
@@ -115,7 +115,10 @@ class AjaxUploadWidget(Widget):
         self.__upload_validators = tuple(upload_validators)
 
     def _handle_complete(
-        self, request: HttpRequest, csrf_token: str, uploaded_file: UploadedFile
+        self,
+        request: HttpRequest,
+        csrf_token: str,
+        uploaded_file: UploadedFile,
     ) -> dict:
         new_staged_file = StagedFile.objects.create(
             csrf=csrf_token,
@@ -136,7 +139,10 @@ class AjaxUploadWidget(Widget):
         }
 
     def _handle_chunked(
-        self, request: HttpRequest, csrf_token: str, uploaded_file: UploadedFile
+        self,
+        request: HttpRequest,
+        csrf_token: str,
+        uploaded_file: UploadedFile,
     ) -> dict:
         # Only content ranges of the form
         #
@@ -146,7 +152,9 @@ class AjaxUploadWidget(Widget):
         # https://tools.ietf.org/html/rfc7233#appendix-C
         range_header = request.META.get("HTTP_CONTENT_RANGE", None)
         if not range_header:
-            raise InvalidRequestException("Client did not supply Content-Range")
+            raise InvalidRequestException(
+                "Client did not supply Content-Range"
+            )
 
         range_match = re.match(
             r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
@@ -176,7 +184,9 @@ class AjaxUploadWidget(Widget):
             "X-Upload-ID", request.POST.get("X-Upload-ID", None)
         )
         if not client_id:
-            raise InvalidRequestException("Client did not supply a X-Upload-ID")
+            raise InvalidRequestException(
+                "Client did not supply a X-Upload-ID"
+            )
 
         if len(client_id) > 128:
             raise InvalidRequestException("X-Upload-ID is too long")
@@ -305,7 +315,7 @@ class OpenedStagedAjaxFile(BufferedIOBase):
     """
 
     def __init__(self, _uuid):
-        super(OpenedStagedAjaxFile, self).__init__()
+        super().__init__()
         self.__uuid = _uuid
         self.__chunks = list(
             StagedFile.objects.filter(file_id=self.__uuid).all()
@@ -431,7 +441,7 @@ class StagedAjaxFile:
     """
 
     def __init__(self, _uuid: uuid.UUID):
-        super(StagedAjaxFile, self).__init__()
+        super().__init__()
         if not isinstance(_uuid, uuid.UUID):
             raise TypeError("uuid parameter must be uuid.UUID")
 

@@ -12,7 +12,7 @@ class MimeTypeValidator(object):
 
     def __init__(self, *, allowed_types: Tuple[str, ...]):
         self.allowed_types = tuple(x.lower() for x in allowed_types)
-        super(MimeTypeValidator, self).__init__()
+        super().__init__()
 
     def __call__(self, value):
         mimetype = get_file_mimetype(value)
@@ -54,7 +54,7 @@ class ExtensionValidator(object):
 
     def __init__(self, *, allowed_extensions: Tuple[str, ...]):
         self.allowed_extensions = tuple(x.lower() for x in allowed_extensions)
-        super(ExtensionValidator, self).__init__()
+        super().__init__()
 
     def __call__(self, value):
         try:

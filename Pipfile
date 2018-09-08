@@ -12,6 +12,7 @@ django-debug-toolbar = "*"
 black = "==18.6b4"
 sphinx-autobuild = "*"
 sphinx = "*"
+pyupgrade = "*"
 
 [packages]
 "beautifulsoup4" = "*"

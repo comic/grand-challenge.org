@@ -67,5 +67,5 @@ class SignupFormExtra(userena_forms.SignupForm):
 
 class EditProfileForm(userena_forms.EditProfileForm):
     def __init__(self, *args, **kwargs):
-        super(EditProfileForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         del self.fields["privacy"]

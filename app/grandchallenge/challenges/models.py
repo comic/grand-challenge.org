@@ -31,7 +31,7 @@ def validate_nounderscores(value):
     if "_" in value:
         raise ValidationError(
             "underscores not allowed. The url \
-            '{0}.{1}' would not be valid, "
+            '{}.{}' would not be valid, "
             "please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
 
@@ -666,11 +666,11 @@ class ComicSiteModel(models.Model):
         setting permissions needs a persisted object. This method makes sure.
         """
         if not self.id:
-            super(ComicSiteModel, self).save()
+            super().save()
 
     def save(self, *args, **kwargs):
         self.setpermissions(self.permission_lvl)
-        super(ComicSiteModel, self).save()
+        super().save()
 
     class Meta:
         abstract = True

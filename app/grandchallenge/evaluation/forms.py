@@ -54,7 +54,7 @@ class MethodForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(MethodForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
 
     class Meta:
@@ -95,7 +95,7 @@ class SubmissionForm(forms.ModelForm):
             "supplementary_file_help_text", ""
         )
 
-        super(SubmissionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if not display_comment_field:
             del self.fields["comment"]

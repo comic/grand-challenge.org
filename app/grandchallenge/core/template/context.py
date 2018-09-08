@@ -19,7 +19,7 @@ class ComicSiteRequestContext(RequestContext):
     # in TEMPLATE_CONTEXT_PROCESSORS and adds the current page to the context.
     # see https://docs.djangoproject.com/en/dev/ref/templates/api/#subclassing-context-requestcontext
     def __init__(self, request, page=None, *args, **kwargs):
-        super(ComicSiteRequestContext, self).__init__(request, *args, **kwargs)
+        super().__init__(request, *args, **kwargs)
         self.page = page
         self.fullpath = (
             request.get_full_path()

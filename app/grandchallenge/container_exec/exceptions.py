@@ -1,7 +1,7 @@
 class ContainerExecException(Exception):
     def __init__(self, message):
         self.message = message
-        super(ContainerExecException, self).__init__()
+        super().__init__()
 
 
 class ExecContainerError(ContainerExecException):

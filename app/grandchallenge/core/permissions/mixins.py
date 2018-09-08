@@ -38,9 +38,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
         if not user_test_result:
             return HttpResponseForbidden(self.get_permission_denied_message())
 
-        return super(UserAuthAndTestMixin, self).dispatch(
-            request, *args, **kwargs
-        )
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserIsChallengeAdminMixin(UserAuthAndTestMixin):
