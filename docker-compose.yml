@@ -11,9 +11,24 @@ services:
     restart: always
 
   web:
-    extends:
-      file: docker-compose.common.yml
-      service: web
+    build:
+      context: .
+      dockerfile: ./dockerfiles/web/Dockerfile
+      args:
+       - PIPENV_DEV=--dev
+    environment:
+      - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
+    command: >-
+        dockerize -wait tcp://postgres:5432 -timeout 120s bash -c "
+        [ -e /static ] || rm -rf /static
+        && python manage.py collectstatic --noinput
+        && mkdir -p /dbox/Dropbox/media/
+        && python manage.py migrate
+        && python manage.py check_permissions
+        && python manage.py initcomicdemo
+        && gunicorn -b 0.0.0.0 config.wsgi
+        "
+    restart: always
     links:
       - memcached
       - postgres
@@ -25,14 +40,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
       - 999 # The docker group is only needed for testing
-    build:
-      args:
-        - PIPENV_DEV=--dev
 
   http:
-    extends:
-      file: docker-compose.common.yml
-      service: http
+    build: ./dockerfiles/http
+    environment:
+      - SERVER_NAME=localhost
+      - SENDFILE_STATUS=off
+    command: >-
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
+        && nginx -g 'daemon off;'"
+    restart: always
     ports:
       - "80:80"
       - "443:443"
@@ -43,19 +61,19 @@ services:
       - media:/dbox/Dropbox/media/:ro
 
   memcached:
-    extends:
-      file: docker-compose.common.yml
-      service: memcached
+    image: memcached:1.4
+    restart: always
 
   redis:
-    extends:
-      file: docker-compose.common.yml
-      service: redis
+    image: redis:4.0
+    command: redis-server --appendonly yes
+    restart: always
 
   celery_worker:
-    extends:
-      file: docker-compose.common.yml
-      service: web
+    build:
+      context: .
+      dockerfile: ./dockerfiles/web/Dockerfile
+    restart: always
     command: >-
       bash -c "
       sleep 120
@@ -69,9 +87,10 @@ services:
       - web
 
   celery_worker_evaluation:
-    extends:
-      file: docker-compose.common.yml
-      service: web
+    build:
+      context: .
+      dockerfile: ./dockerfiles/web/Dockerfile
+    restart: always
     command: >-
       bash -c "
       sleep 120
@@ -89,9 +108,10 @@ services:
       - 999
 
   celery_beat:
-    extends:
-      file: docker-compose.common.yml
-      service: web
+    build:
+      context: .
+      dockerfile: ./dockerfiles/web/Dockerfile
+    restart: always
     command: >-
       bash -c "
       sleep 120
