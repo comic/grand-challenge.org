@@ -46,6 +46,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
       - 999 # The docker group is only needed for testing
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://web:8000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   http:
     build: ./dockerfiles/http
