@@ -8,6 +8,11 @@ services:
       - POSTGRES_PASSWORD=secretpassword
       - POSTGRES_USER=comic
       - POSTGRES_DB=comic
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "comic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   web:
@@ -19,19 +24,20 @@ services:
     environment:
       - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
     command: >-
-        dockerize -wait tcp://postgres:5432 -timeout 120s bash -c "
-        [ -e /static ] || rm -rf /static
-        && python manage.py collectstatic --noinput
-        && mkdir -p /dbox/Dropbox/media/
-        && python manage.py migrate
-        && python manage.py check_permissions
-        && python manage.py initcomicdemo
-        && gunicorn -b 0.0.0.0 config.wsgi
-        "
+      bash -c "
+      python manage.py collectstatic --noinput
+      && mkdir -p /dbox/Dropbox/media/
+      && python manage.py migrate
+      && python manage.py check_permissions
+      && python manage.py initcomicdemo
+      && gunicorn -b 0.0.0.0 config.wsgi
+      "
     restart: always
-    links:
-      - memcached
-      - postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      memcached:
+        condition: service_started
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
