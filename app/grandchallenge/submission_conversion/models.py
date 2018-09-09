@@ -15,7 +15,6 @@ from grandchallenge.container_exec.backends.docker import (
     cleanup,
     get_file,
 )
-from grandchallenge.container_exec.exceptions import InputError
 from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import get_file_mimetype
@@ -75,7 +74,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
                     container=reader, base_dir=Path(base_dir)
                 )
         except Exception as exc:
-            raise InputError(str(exc))
+            raise RuntimeError(str(exc))
 
         return {}
 

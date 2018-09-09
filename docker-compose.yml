@@ -39,7 +39,7 @@ services:
       memcached:
         condition: service_started
     volumes:
-      - static:/static/
+      - /tmp/static:/static/
       - media:/dbox/Dropbox/media/
       - ./app:/app/
       # The docker socket is only needed for testing
@@ -69,7 +69,7 @@ services:
       web:
         condition: service_healthy
     volumes:
-      - static:/srv/public/static/:ro
+      - /tmp/static:/srv/public/static/:ro
       - media:/dbox/Dropbox/media/:ro
 
   memcached:
@@ -145,5 +145,4 @@ services:
     restart: always
 
 volumes:
-  static:
   media:

@@ -3,12 +3,14 @@
 {% load grandchallenge_tags %}
 
 {% block pageName %}
-    Create An Algorithm - {{ block.super }}
+    Run an algorithm - {{ block.super }}
 {% endblock %}
 
 {% block content %}
 
-    <h2>Create An Algorithm</h2>
+    <h2>Run an algorithm</h2>
+
+    <p>Select the images that you would like to run the algorithm on.</p>
 
     {% crispy form %}
 

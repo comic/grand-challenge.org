@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
 
-from grandchallenge.algorithms.forms import AlgorithmForm, JobForm
-from grandchallenge.algorithms.models import Algorithm, Job, Result
+from grandchallenge.algorithms.forms import AlgorithmForm
+from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.core.urlresolvers import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,8 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
     form_class = AlgorithmForm
 
     def form_valid(self, form):
+        form.instance.creator = self.request.user
+
         try:
             form.instance.description_html = ipynb_to_html(
                 notebook=form.cleaned_data["ipython_notebook"]
@@ -39,7 +45,6 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
         except AttributeError:
             logger.warning("Could not convert notebook to html.")
 
-        form.instance.creator = self.request.user
         uploaded_file = form.cleaned_data["chunked_upload"][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
@@ -51,22 +56,25 @@ class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
 
 
-class JobList(UserIsStaffMixin, ListView):
-    model = Job
+class AlgorithmExecutionSessionCreate(
+    UserIsStaffMixin, SuccessMessageMixin, CreateView
+):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "algorithms/algorithm_execution_session_create.html"
+    success_message = (
+        "Your images have been uploaded, "
+        "please check back here to see the processing status."
+    )
 
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.algorithm = Algorithm.objects.get(
+            slug=self.kwargs["slug"]
+        )
+        return super().form_valid(form)
 
-class JobCreate(UserIsStaffMixin, CreateView):
-    model = Job
-    form_class = JobForm
-
-
-class JobDetail(UserIsStaffMixin, DetailView):
-    model = Job
-
-
-class ResultList(UserIsStaffMixin, ListView):
-    model = Result
-
-
-class ResultDetail(UserIsStaffMixin, DetailView):
-    model = Result
+    def get_success_url(self):
+        return reverse(
+            "algorithms:detail", kwargs={"slug": self.kwargs["slug"]}
+        )

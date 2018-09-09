@@ -1,7 +1,8 @@
 #!/bin/bash
 
-trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
+mkdir -p -m 777 /tmp/static/
 
+trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
 
 echo "Starting docker-compose, press Ctrl+D to cycle docker compose using a down-up cycle"
 echo "Press Ctrl+C (once) to stop"

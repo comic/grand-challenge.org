@@ -23,6 +23,13 @@ class RawImageUploadSession(UUIDModel):
     images that can be fed to processing tasks.
     """
 
+    creator = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
     session_state = models.CharField(
         max_length=16, default=UPLOAD_SESSION_STATE.created
     )
@@ -42,6 +49,20 @@ class RawImageUploadSession(UUIDModel):
 
     annotationset = models.ForeignKey(
         to="datasets.AnnotationSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    algorithm = models.ForeignKey(
+        to="algorithms.Algorithm",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    algorithm_result = models.OneToOneField(
+        to="algorithms.Result",
         null=True,
         default=None,
         on_delete=models.CASCADE,

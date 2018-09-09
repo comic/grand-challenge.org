@@ -129,8 +129,8 @@ def alpine_images(tmpdir_factory):
     client = docker.DockerClient(
         base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
     )
-    client.images.pull("alpine:3.6")
     client.images.pull("alpine:3.7")
+    client.images.pull("alpine:3.8")
     cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
     # get all images and put them in a tar archive
     image = cli.get_image("alpine")
