@@ -105,7 +105,7 @@ def execute_job(
         ) as ev:
             result = ev.execute()  # This call is potentially very long
 
-    except RuntimeError as exc:
+    except Exception as exc:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
