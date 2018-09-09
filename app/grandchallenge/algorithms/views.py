@@ -7,7 +7,7 @@ from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
 
 from grandchallenge.algorithms.forms import AlgorithmForm
-from grandchallenge.algorithms.models import Algorithm, Job, Result
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
@@ -36,6 +36,8 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
     form_class = AlgorithmForm
 
     def form_valid(self, form):
+        form.instance.creator = self.request.user
+
         try:
             form.instance.description_html = ipynb_to_html(
                 notebook=form.cleaned_data["ipython_notebook"]
@@ -43,7 +45,6 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
         except AttributeError:
             logger.warning("Could not convert notebook to html.")
 
-        form.instance.creator = self.request.user
         uploaded_file = form.cleaned_data["chunked_upload"][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
@@ -77,19 +78,3 @@ class AlgorithmExecutionSessionCreate(
         return reverse(
             "algorithms:detail", kwargs={"slug": self.kwargs["slug"]}
         )
-
-
-class JobList(UserIsStaffMixin, ListView):
-    model = Job
-
-
-class JobDetail(UserIsStaffMixin, DetailView):
-    model = Job
-
-
-class ResultList(UserIsStaffMixin, ListView):
-    model = Result
-
-
-class ResultDetail(UserIsStaffMixin, DetailView):
-    model = Result

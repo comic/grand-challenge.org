@@ -6,11 +6,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmList,
     AlgorithmCreate,
     AlgorithmDetail,
-    ResultList,
-    ResultDetail,
     AlgorithmExecutionSessionCreate,
-    JobList,
-    JobDetail,
 )
 from grandchallenge.cases.forms import upload_raw_files_widget
 
@@ -35,8 +31,4 @@ urlpatterns = [
         upload_raw_files_widget.handle_ajax,
         name="upload-execution-session-image-files-ajax",
     ),
-    path("jobs/", JobList.as_view(), name="jobs-list"),
-    path("jobs/<uuid:pk>/", JobDetail.as_view(), name="jobs-detail"),
-    path("results/", ResultList.as_view(), name="results-list"),
-    path("results/<uuid:pk>/", ResultDetail.as_view(), name="results-detail"),
 ]
