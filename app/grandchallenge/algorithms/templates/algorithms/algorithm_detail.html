@@ -2,6 +2,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
+{% load user_profile_link from profiles %}
 
 {% block pageName %}
     {{ object.title }} - {{ block.super }}
@@ -32,16 +33,50 @@
 
     <h2>Jobs for this algorithm</h2>
 
-    <ul>
-    {% for job in object.job_set.all %}
-        <li><a href="{{ job.get_absolute_url }}">{{ job.created }}</a>
-        <ul>
-        {% for result in job.result_set.all %}
-            <li><a href="{{ result.get_absolute_url }}">{{ result.output }}</a></li>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Created</th>
+            <th>Creator</th>
+            <th>Image</th>
+            <th>Status</th>
+            <th>Result</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for job in object.job_set.all %}
+            <tr>
+                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                <td>{{ job.image.origin.creator|user_profile_link }}</td>
+                <td><a href="{{ job.image.cirrus_link }}">{{ job.image }}</a></td>
+                <td>
+                    <span class="label
+                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                        label-danger
+                    {% elif job.status == job.RETRY %}
+                        label-warning
+                    {% elif job.status == job.SUCCESS %}
+                        label-success
+                    {% else %}
+                        label-info
+                    {% endif %}">
+                        {{ job.get_status_display }}
+                    </span>
+                </td>
+                <td>{{ job.result.output }}</td>
+            </tr>
         {% endfor %}
-        </ul>
-        </li>
-    {% endfor %}
-    </ul>
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "desc"]],
+                "pageLength": 50,
+                ordering: true
+            });
+        });
+    </script>
 
 {% endblock %}
