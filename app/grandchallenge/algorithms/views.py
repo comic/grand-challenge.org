@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
@@ -10,6 +11,7 @@ from grandchallenge.algorithms.models import Algorithm, Job, Result
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.core.urlresolvers import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +55,16 @@ class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
 
 
-class AlgorithmExecutionSessionCreate(UserIsStaffMixin, CreateView):
+class AlgorithmExecutionSessionCreate(
+    UserIsStaffMixin, SuccessMessageMixin, CreateView
+):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
+    template_name = "algorithms/algorithm_execution_session_create.html"
+    success_message = (
+        "Your images have been uploaded, "
+        "please check back here to see the processing status."
+    )
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -63,6 +72,11 @@ class AlgorithmExecutionSessionCreate(UserIsStaffMixin, CreateView):
             slug=self.kwargs["slug"]
         )
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:detail", kwargs={"slug": self.kwargs["slug"]}
+        )
 
 
 class JobList(UserIsStaffMixin, ListView):

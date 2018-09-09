@@ -1,6 +1,11 @@
 {% extends "mainpage.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Algorithm Result - {{ block.super }}
+{% endblock %}
 
 {% block content %}
 

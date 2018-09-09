@@ -1,4 +1,9 @@
 {% extends "mainpage.html" %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Algorithm Results - {{ block.super }}
+{% endblock %}
 
 {% block content %}
 
