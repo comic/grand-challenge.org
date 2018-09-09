@@ -59,7 +59,9 @@ class AlgorithmExecutionSessionCreate(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm = Algorithm.objects.get(pk=self.kwargs["pk"])
+        form.instance.algorithm = Algorithm.objects.get(
+            slug=self.kwargs["slug"]
+        )
         return super().form_valid(form)
 
 

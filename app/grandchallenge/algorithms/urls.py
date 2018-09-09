@@ -24,14 +24,14 @@ urlpatterns = [
         algorithm_upload_widget.handle_ajax,
         name="algorithm-upload-ajax",
     ),
-    path("<uuid:pk>/", AlgorithmDetail.as_view(), name="detail"),
+    path("<slug:slug>/", AlgorithmDetail.as_view(), name="detail"),
     path(
-        "<uuid:pk>/run/",
+        "<slug:slug>/run/",
         AlgorithmExecutionSessionCreate.as_view(),
         name="execution-session-create",
     ),
     path(
-        f"<uuid:pk>/run/{upload_raw_files_widget.ajax_target_path}",
+        f"<slug:slug>/run/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-execution-session-image-files-ajax",
     ),

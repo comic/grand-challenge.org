@@ -9,6 +9,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.container_exec.backends.docker import (
@@ -29,11 +30,18 @@ logger = logging.getLogger(__name__)
 
 
 class Algorithm(UUIDModel, ContainerImageModel):
-    # TODO: add name and slug
+    title = models.CharField(max_length=32, unique=True, null=True)
+    slug = models.SlugField(
+        max_length=32, editable=False, unique=True, null=True
+    )
     description_html = RichTextField(blank=True)
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self):
-        return reverse("algorithms:detail", kwargs={"pk": self.pk})
+        return reverse("algorithms:detail", kwargs={"slug": self.slug})
 
 
 class Result(UUIDModel):

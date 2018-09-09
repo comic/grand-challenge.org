@@ -15,7 +15,7 @@
 
     <ul>
     {% for algorithm in object_list %}
-        <li><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.pk }}</a></li>
+        <li><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a></li>
     {% endfor %}
     </ul>
 

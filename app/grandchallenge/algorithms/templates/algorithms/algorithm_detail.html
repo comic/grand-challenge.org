@@ -6,14 +6,26 @@
 
 {% block content %}
 
-    <h2>Algorithm Description</h2>
+    <h2>{{ object.title }}</h2>
 
+    {% if object.ready %}
+    <p>
+    <a class="btn btn-primary"
+       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+        Try out this algorithm
+            </a>
+    </p>
+    {% else %}
+    <div class="alert alert-warning">
+        Algorithm is not ready to be used yet. Please try again later.
+    </div>
+    {% endif %}
+
+    {% if object.description_html %}
     <iframe srcdoc="{{ object.description_html }}"
             style="width: 100%; height: 600px;">
     </iframe>
-
-    {{ object.ready }}
-    {{ object.image_sha256 }}
+    {% endif %}
 
     <h2>Jobs for this algorithm</h2>
 
@@ -28,14 +40,5 @@
         </li>
     {% endfor %}
     </ul>
-
-    <p>
-    <a class="btn btn-primary"
-       href="{% url 'algorithms:execution-session-create' pk=object.pk %}">
-        Try out this algorithm
-            </a>
-    </p>
-
-
 
 {% endblock %}
