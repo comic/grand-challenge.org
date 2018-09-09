@@ -18,11 +18,6 @@ from docker.api.container import ContainerApiMixin
 from docker.errors import ContainerError, APIError
 from requests import HTTPError
 
-from grandchallenge.container_exec.exceptions import (
-    InputError,
-    ExecContainerError,
-)
-
 
 class Executor(object):
     def __init__(
@@ -124,7 +119,7 @@ class Executor(object):
             ) as writer:
                 self._copy_input_files(writer=writer)
         except Exception as exc:
-            raise InputError(str(exc))
+            raise RuntimeError(str(exc))
 
     def _copy_input_files(self, writer):
         for file in self._input_files:
@@ -145,7 +140,7 @@ class Executor(object):
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
     def _get_result(self) -> dict:
         try:
@@ -158,7 +153,7 @@ class Executor(object):
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
         try:
             result = json.loads(
@@ -166,7 +161,7 @@ class Executor(object):
                 parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
         except JSONDecodeError as exc:
-            raise ExecContainerError(exc.msg)
+            raise RuntimeError(exc.msg)
 
         return result
 

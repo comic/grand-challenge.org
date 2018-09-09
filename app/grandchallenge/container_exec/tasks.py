@@ -8,8 +8,6 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.db import OperationalError
 
-from grandchallenge.container_exec.exceptions import ContainerExecException
-
 
 @shared_task()
 def validate_docker_image_async(
@@ -96,7 +94,7 @@ def execute_job(
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used."
         job.update_status(status=job.FAILURE, output=msg)
-        raise AttributeError(msg)
+        raise RuntimeError(msg)
 
     try:
         with job.executor_cls(
@@ -104,14 +102,14 @@ def execute_job(
             input_files=job.input_files,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
-        ) as e:
-            result = e.execute()  # This call is potentially very long
+        ) as ev:
+            result = ev.execute()  # This call is potentially very long
 
-    except ContainerExecException as exc:
+    except RuntimeError as exc:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=job.FAILURE, output=exc.message)
+        job.update_status(status=job.FAILURE, output=str(exc))
         raise
 
     job = get_model_instance(

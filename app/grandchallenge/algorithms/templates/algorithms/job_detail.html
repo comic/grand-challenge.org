@@ -22,22 +22,31 @@
     </div>
 
     <dl>
+
         <dt>Algorithm</dt>
         <dd>
             <a href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm }}</a>
         </dd>
+
         <dt>Case</dt>
         <dd>
             <a href="{{ object.image.get_absolute_url }}">{{ object.image }}</a>
         </dd>
+
+        {% if object.output %}
         <dt>Errors</dt>
         <dd>
             {{ object.output }}
         </dd>
+        {% endif %}
+
+        {% if object.result %}
         <dt>Result</dt>
         <dd>
             <a href="{{ object.result.get_absolute_url }}">{{ object.result }}</a>
         </dd>
+        {% endif %}
+
     </dl>
 
 

@@ -16,7 +16,6 @@ from grandchallenge.container_exec.backends.docker import (
     cleanup,
     get_file,
 )
-from grandchallenge.container_exec.exceptions import ExecContainerError
 from grandchallenge.container_exec.models import (
     ContainerExecJobModel,
     ContainerImageModel,
@@ -76,7 +75,7 @@ class AlgorithmExecutor(Executor):
                     container=reader, base_dir=Path(self.output_images_dir)
                 )
         except Exception as exc:
-            raise ExecContainerError(str(exc))
+            raise RuntimeError(str(exc))
 
         return super()._get_result()
 
@@ -155,7 +154,7 @@ class Job(UUIDModel, ContainerExecJobModel):
         return AlgorithmExecutor
 
     def create_result(self, *, result: dict):
-        instance, _ = Result.objects.get_or_create(pk=self.pk)
+        instance, _ = Result.objects.get_or_create(job_id=self.pk)
         instance.output = result
         instance.save()
 
