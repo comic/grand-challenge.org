@@ -51,7 +51,7 @@ class Page(ComicSiteModel):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
-        super(Page, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def raw_html(self):
         """

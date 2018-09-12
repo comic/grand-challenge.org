@@ -4,7 +4,10 @@ from crispy_forms.layout import Submit
 from django import forms
 
 from grandchallenge.algorithms.models import Algorithm, Job
-from grandchallenge.core.validators import ExtensionValidator, MimeTypeValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+)
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
@@ -38,15 +41,4 @@ class AlgorithmForm(forms.ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ("ipython_notebook", "chunked_upload")
-
-
-class JobForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
-    class Meta:
-        model = Job
-        fields = ("algorithm", "image")
+        fields = ("title", "ipython_notebook", "chunked_upload")

@@ -19,9 +19,7 @@ class UploadRawFiles(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        redirect = super().form_valid(form)
-
-        return redirect
+        return super().form_valid(form)
 
 
 class ShowUploadSessionState(UserIsStaffMixin, DetailView):
@@ -39,11 +37,6 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
             result["object"].session_state == UPLOAD_SESSION_STATE.stopped
         )
         return result
-
-
-class ViewImage(UserIsStaffMixin, DetailView):
-    model = Image
-    template_name = "cases/view_image.html"
 
 
 class ImageViewSet(ReadOnlyModelViewSet):

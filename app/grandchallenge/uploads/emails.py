@@ -7,9 +7,8 @@ def send_file_uploaded_notification_email(**kwargs):
     uploader = kwargs["uploader"]
     challenge = kwargs["challenge"]
     site = kwargs["site"]
-    title = "New upload for %s: '%s' " % (
-        challenge.short_name,
-        kwargs["filename"],
+    title = "New upload for {}: '{}' ".format(
+        challenge.short_name, kwargs["filename"]
     )
     admins = challenge.get_admins()
     if not admins:

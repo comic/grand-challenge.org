@@ -2,9 +2,9 @@
 from django.urls import path
 
 from grandchallenge.cases.forms import upload_raw_files_widget
+from grandchallenge.datasets.forms import labels_upload_widget
 from grandchallenge.datasets.views import (
     ImageSetList,
-    ImageSetCreate,
     ImageSetDetail,
     AddImagesToImageSet,
     ImageSetUpdate,
@@ -13,14 +13,13 @@ from grandchallenge.datasets.views import (
     AddImagesToAnnotationSet,
     AnnotationSetDetail,
     AnnotationSetUpdate,
+    AnnotationSetUpdateLabels,
 )
 
 app_name = "datasets"
 
-
 urlpatterns = [
     path("", ImageSetList.as_view(), name="imageset-list"),
-    path("create/", ImageSetCreate.as_view(), name="imageset-create"),
     path("<uuid:pk>/", ImageSetDetail.as_view(), name="imageset-detail"),
     path(
         "<uuid:pk>/add/",
@@ -54,6 +53,16 @@ urlpatterns = [
         f"annotations/<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-raw-annotationset-image-files-ajax",
+    ),
+    path(
+        "annotations/<uuid:pk>/label/",
+        AnnotationSetUpdateLabels.as_view(),
+        name="annotationset-update-labels",
+    ),
+    path(
+        f"annotations/<uuid:pk>/label/{labels_upload_widget.ajax_target_path}",
+        labels_upload_widget.handle_ajax,
+        name="labels-upload-ajax",
     ),
     path(
         "annotations/<uuid:pk>/",

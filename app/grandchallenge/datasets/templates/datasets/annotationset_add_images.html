@@ -4,12 +4,12 @@
 {% load static %}
 
 {% block pageName %}
-    Add Images to an Annotation Set - {{ block.super }}
+    Add {{ kind_display }} images to the {{ phase_display }} dataset - {{ block.super }}
 {% endblock %}
 
 {% block pagecontent %}
 
-    <h2>Add Images to an Annotation Set</h2>
+    <h2>Add {{ kind_display }} images to the {{ phase_display }} dataset</h2>
 
     {% crispy form %}
 

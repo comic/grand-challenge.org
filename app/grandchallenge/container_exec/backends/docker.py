@@ -7,18 +7,16 @@ import uuid
 from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
+from random import randint
+from time import sleep
 from typing import Tuple
 
 import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError
-
-from grandchallenge.container_exec.exceptions import (
-    InputError,
-    ExecContainerError,
-)
+from docker.errors import ContainerError, APIError
+from requests import HTTPError
 
 
 class Executor(object):
@@ -63,8 +61,26 @@ class Executor(object):
         for container in self._client.containers.list(filters=filter):
             container.stop()
 
-        self._client.containers.prune(filters=filter)
-        self._client.volumes.prune(filters=filter)
+        self.__retry_docker_obj_prune(
+            obj=self._client.containers, filters=filter
+        )
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=filter)
+
+    @staticmethod
+    def __retry_docker_obj_prune(*, obj, filters: dict):
+        # Retry and exponential backoff of the prune command as only 1 prune
+        # operation can occur at a time on a docker host
+        num_retries = 0
+        e = APIError
+        while num_retries < 3:
+            try:
+                obj.prune(filters=filters)
+                break
+            except (APIError, HTTPError) as e:
+                num_retries += 1
+                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+        else:
+            raise e
 
     def execute(self) -> dict:
         self._pull_images()
@@ -103,7 +119,7 @@ class Executor(object):
             ) as writer:
                 self._copy_input_files(writer=writer)
         except Exception as exc:
-            raise InputError(str(exc))
+            raise RuntimeError(str(exc))
 
     def _copy_input_files(self, writer):
         for file in self._input_files:
@@ -124,7 +140,7 @@ class Executor(object):
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
     def _get_result(self) -> dict:
         try:
@@ -137,7 +153,7 @@ class Executor(object):
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
         try:
             result = json.loads(
@@ -145,7 +161,7 @@ class Executor(object):
                 parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
         except JSONDecodeError as exc:
-            raise ExecContainerError(exc.msg)
+            raise RuntimeError(exc.msg)
 
         return result
 
@@ -189,7 +205,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     container.put_archive(os.path.dirname(dest), tar_b)
 
 
-def get_file(*, container: ContainerApiMixin, src: Path) -> File:
+def get_file(*, container: ContainerApiMixin, src: Path):
     tarstrm, info = container.get_archive(src)
 
     if info["size"] > 2E9:
@@ -203,4 +219,4 @@ def get_file(*, container: ContainerApiMixin, src: Path) -> File:
     tar = tarfile.open(mode="r", fileobj=file_obj)
     content = tar.extractfile(src.name)
 
-    return File(content)
+    return content

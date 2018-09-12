@@ -23,7 +23,7 @@ class Team(models.Model):
         unique_together = (("name", "challenge"),)
 
     def validate_unique(self, exclude=None):
-        super(Team, self).validate_unique(exclude)
+        super().validate_unique(exclude)
         if (
             not any(x in exclude for x in ["challenge", "owner"])
             and TeamMember.objects.filter(
@@ -37,7 +37,7 @@ class Team(models.Model):
     def save(self, *args, **kwargs):
         if self.pk is None:
             self.full_clean()
-        super(Team, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(
@@ -54,7 +54,9 @@ class Team(models.Model):
 
 
 class TeamMember(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     pending = models.BooleanField(default=True)
 
@@ -62,7 +64,7 @@ class TeamMember(models.Model):
         unique_together = (("user", "team"),)
 
     def validate_unique(self, exclude=None):
-        super(TeamMember, self).validate_unique(exclude)
+        super().validate_unique(exclude)
         if (
             not any(x in exclude for x in ["user", "team"])
             and TeamMember.objects.filter(
@@ -75,10 +77,10 @@ class TeamMember(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
-        super(TeamMember, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.team.owner == self.user:
             raise PermissionDenied("The team owner cannot be removed")
 
-        super(TeamMember, self).delete(*args, **kwargs)
+        super().delete(*args, **kwargs)

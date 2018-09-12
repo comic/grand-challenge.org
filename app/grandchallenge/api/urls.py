@@ -1,4 +1,5 @@
-from django.conf.urls import url, include
+from django.conf.urls import include
+from django.urls import path
 from rest_framework import routers
 
 from grandchallenge.api.views import SubmissionViewSet
@@ -12,6 +13,6 @@ router.register(r"cases/images", ImageViewSet)
 urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers
-    url(r"^v1/", include(router.urls)),
-    url(r"^auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("v1/", include(router.urls)),
+    path("auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

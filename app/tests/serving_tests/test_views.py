@@ -24,8 +24,8 @@ def test_imageset_annotationset_download(
     Only participants of a challenge should be able to download imageset images
     """
 
-    imageset = ImageSetFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge, phase=phase
+    imageset = TwoChallengeSets.ChallengeSet1.challenge.imageset_set.get(
+        phase=phase
     )
     image_file = ImageFileFactory()
     imageset.images.add(image_file.image)

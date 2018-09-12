@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.conf.urls import include
 from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
@@ -7,65 +7,50 @@ from grandchallenge.core.views import site
 from grandchallenge.serving.views import ChallengeServeRedirect
 
 urlpatterns = [
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/$", site, name="challenge-homepage"
-    ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/robots\.txt/$",
+    path("", site, name="challenge-homepage"),
+    path(
+        "robots.txt/",
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
         name="comicsite_robots_txt",
     ),
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/evaluation/",
+    path(
+        "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/teams/",
-        include("grandchallenge.teams.urls", namespace="teams"),
-    ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/participants/",
+    path("teams/", include("grandchallenge.teams.urls", namespace="teams")),
+    path(
+        "participants/",
         include("grandchallenge.participants.urls", namespace="participants"),
     ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/admins/",
-        include("grandchallenge.admins.urls", namespace="admins"),
-    ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/uploads/",
-        include("grandchallenge.uploads.urls", namespace="uploads"),
+    path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
+    path(
+        "uploads/", include("grandchallenge.uploads.urls", namespace="uploads")
     ),
     path(
-        "<slug:challenge_short_name>/datasets/",
+        "datasets/",
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
     #################
     #
     # Legacy apps
     #
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/files/$",
+    path(
+        "files/",
         RedirectView.as_view(pattern_name="uploads:create", permanent=False),
     ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/serve/(?P<path>.+)/$",
+    path(
+        "serve/<path:path>/",
         ChallengeServeRedirect.as_view(),
         name="project_serve_file",
     ),
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/api/get_public_results/$",
-        get_public_results,
-    ),
+    path("api/get_public_results/", get_public_results),
     #
     # End Legacy
     #
     #################
     # If nothing specific matches, try to resolve the url as project/pagename
-    url(
-        r"^(?P<challenge_short_name>[\w-]+)/",
-        include("grandchallenge.pages.urls", namespace="pages"),
-    ),
+    path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]

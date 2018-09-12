@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
 from typing import List
 
 from django.conf import settings
@@ -24,6 +23,13 @@ class RawImageUploadSession(UUIDModel):
     images that can be fed to processing tasks.
     """
 
+    creator = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
     session_state = models.CharField(
         max_length=16, default=UPLOAD_SESSION_STATE.created
     )
@@ -43,6 +49,20 @@ class RawImageUploadSession(UUIDModel):
 
     annotationset = models.ForeignKey(
         to="datasets.AnnotationSet",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    algorithm = models.ForeignKey(
+        to="algorithms.Algorithm",
+        null=True,
+        default=None,
+        on_delete=models.CASCADE,
+    )
+
+    algorithm_result = models.OneToOneField(
+        to="algorithms.Result",
         null=True,
         default=None,
         on_delete=models.CASCADE,
@@ -148,23 +168,6 @@ class Image(UUIDModel):
 
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
-
-    def sorter_key(self, *, start: int = 0) -> tuple:
-        """
-        For use in filtering.
-
-        Gets the first int in the name, and returns that string.
-        If an int cannot be found, returns the lower case name split at the
-        first full stop.
-        """
-        try:
-            r = re.compile(r"\D*((?:\d+\.?)+)\D*")
-            m = r.search(self.name[start:])
-            key = f"{int(m.group(1).replace('.', '')):>64}"
-        except AttributeError:
-            key = self.name.split(".")[0].lower()
-
-        return (key, *self.shape)
 
     @property
     def shape_without_color(self) -> List[int]:

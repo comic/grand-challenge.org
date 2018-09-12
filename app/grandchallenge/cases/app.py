@@ -5,7 +5,7 @@ class Config(AppConfig):
     name = "grandchallenge.cases"
 
     def ready(self):
-        super(Config, self).ready()
+        super().ready()
 
         # noinspection PyUnresolvedReferences
         import grandchallenge.cases.signals

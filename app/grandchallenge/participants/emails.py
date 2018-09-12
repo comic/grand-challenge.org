@@ -11,7 +11,7 @@ def send_participation_request_notification_email(request, obj):
                  participation for which project
 
     """
-    title = "New participation request for {0}".format(obj.challenge.short_name)
+    title = f"New participation request for {obj.challenge.short_name}"
     mainportal = get_current_site(request)
     kwargs = {"user": obj.user, "site": mainportal, "challenge": obj.challenge}
     for admin in obj.challenge.get_admins():

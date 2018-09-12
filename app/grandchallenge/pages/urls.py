@@ -1,4 +1,3 @@
-from django.conf.urls import url
 from django.urls import path
 
 from grandchallenge.pages.views import (
@@ -14,11 +13,13 @@ from grandchallenge.pages.views import (
 app_name = "pages"
 
 urlpatterns = [
-    url(r"^pages/$", PageList.as_view(), name="list"),
-    url(r"^pages/create/$", PageCreate.as_view(), name="create"),
+    path("pages/", PageList.as_view(), name="list"),
+    path("pages/create/", PageCreate.as_view(), name="create"),
     # Favicons
     path(
-        "favicon.ico/", FaviconView.as_view(rel="shortcut icon"), name="favicon"
+        "favicon.ico/",
+        FaviconView.as_view(rel="shortcut icon"),
+        name="favicon",
     ),
     path(
         "apple-touch-icon.png/",
@@ -40,15 +41,11 @@ urlpatterns = [
         FaviconView.as_view(rel="apple-touch-icon-precomposed"),
         name="apple-touch-icon-precomposed-sized",
     ),
-    url(r"^(?P<page_title>[\w-]+)/$", page, name="detail"),
-    url(
-        r"^(?P<page_title>[\w-]+)/update/$", PageUpdate.as_view(), name="update"
-    ),
-    url(
-        r"^(?P<page_title>[\w-]+)/delete/$", PageDelete.as_view(), name="delete"
-    ),
-    url(
-        r"^(?P<page_title>[\w-]+)/insert/(?P<dropboxpath>.+)/$",
+    path("<slug:page_title>/", page, name="detail"),
+    path("<slug:page_title>/update/", PageUpdate.as_view(), name="update"),
+    path("<slug:page_title>/delete/", PageDelete.as_view(), name="delete"),
+    path(
+        "<slug:page_title>/insert/<path:dropboxpath>/",
         insertedpage,
         name="insert-detail",
     ),

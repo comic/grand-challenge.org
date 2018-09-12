@@ -405,8 +405,7 @@ class ComicframeworkTestCase(TestCase):
         errors = self._find_errors_in_page(response)
         if errors:
             self.assertFalse(
-                errors,
-                "Error creating project '%s':\n %s" % (short_name, errors),
+                errors, f"Error creating project '{short_name}':\n {errors}"
             )
         # ad.set_base_permissions(request,project)
         project = Challenge.objects.get(short_name=short_name)
@@ -441,8 +440,8 @@ class ComicframeworkTestCase(TestCase):
                 found = getattr(email, attr)
             except AttributeError as e:
                 raise AttributeError(
-                    "Could not find attribute '{0}' for this email.\
-                                     are you sure it exists? - {1}".format(
+                    "Could not find attribute '{}' for this email.\
+                                     are you sure it exists? - {}".format(
                         attr, str(e)
                     )
                 )
@@ -452,8 +451,8 @@ class ComicframeworkTestCase(TestCase):
                 expected == found
                 or is_subset(found, expected)
                 or (expected in found),
-                "Expected to find '{0}' for email attribute \
-                '{1}' but found '{2}' instead".format(
+                "Expected to find '{}' for email attribute \
+                '{}' but found '{}' instead".format(
                     expected, attr, found
                 ),
             )
@@ -496,7 +495,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            "Creating a project called '{0}' should not be \
+            "Creating a project called '{}' should not be \
             possible. But is seems to have been created anyway.".format(
                 challenge_short_name
             ),
@@ -508,7 +507,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            "Creating a project called '{0}' should not be \
+            "Creating a project called '{}' should not be \
             possible. But is seems to have been created anyway.".format(
                 challenge_short_name
             ),
@@ -520,7 +519,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            "Creating a project called '{0}' should not be \
+            "Creating a project called '{}' should not be \
             possible. But is seems to have been created anyway.".format(
                 challenge_short_name
             ),
@@ -532,7 +531,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            "Creating a project called '{0}' should not be \
+            "Creating a project called '{}' should not be \
             possible. But is seems to have been created anyway.".format(
                 challenge_short_name
             ),
@@ -821,7 +820,7 @@ class UploadTest(ComicframeworkTestCase):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
         """
-        return "%s_%s_%s" % (
+        return "{}_{}_{}".format(
             user.username,
             str(randint(10000, 99999)),
             "testfile%s.txt" % postfix,
@@ -1067,8 +1066,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         self.assertTrue(
             expected_text in content.decode(),
-            "expected to find '{0}' but found '{1}' instead.\
-                         Attemted action: {2}".format(
+            "expected to find '{}' but found '{}' instead.\
+                         Attemted action: {}".format(
                 expected_text, content, description
             ),
         )

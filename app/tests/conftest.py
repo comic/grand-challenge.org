@@ -129,8 +129,8 @@ def alpine_images(tmpdir_factory):
     client = docker.DockerClient(
         base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
     )
-    client.images.pull("alpine:3.6")
     client.images.pull("alpine:3.7")
+    client.images.pull("alpine:3.8")
     cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
     # get all images and put them in a tar archive
     image = cli.get_image("alpine")
@@ -155,9 +155,9 @@ def submission_file(tmpdir_factory):
     try:
         for file in files:
             if "cases_tests" in str(file.parent):
-                arcname = Path("images") / file.name
+                arcname = Path("submission") / Path("images") / file.name
             else:
-                arcname = file.name
+                arcname = Path("submission") / file.name
 
             z.write(
                 Path(__file__).parent / file,

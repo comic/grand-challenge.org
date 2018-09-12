@@ -61,7 +61,7 @@ class CKUploadView(UserIsChallengeAdminMixin, CreateView):
             return HttpResponse(
                 """
             <script type='text/javascript'>
-                window.parent.CKEDITOR.tools.callFunction({0}, '{1}');
+                window.parent.CKEDITOR.tools.callFunction({}, '{}');
             </script>""".format(
                     ck_func_num, url
                 )

@@ -32,6 +32,7 @@ class ConfigForm(forms.ModelForm):
             "supplementary_file_label",
             "supplementary_file_help_text",
             "show_supplementary_file_link",
+            "submission_join_key",
         )
 
 
@@ -53,7 +54,7 @@ class MethodForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(MethodForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
 
     class Meta:
@@ -80,7 +81,9 @@ class SubmissionForm(forms.ModelForm):
         """
         display_comment_field = kwargs.pop("display_comment_field", False)
 
-        allow_supplementary_file = kwargs.pop("allow_supplementary_file", False)
+        allow_supplementary_file = kwargs.pop(
+            "allow_supplementary_file", False
+        )
 
         require_supplementary_file = kwargs.pop(
             "require_supplementary_file", False
@@ -92,7 +95,7 @@ class SubmissionForm(forms.ModelForm):
             "supplementary_file_help_text", ""
         )
 
-        super(SubmissionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if not display_comment_field:
             del self.fields["comment"]

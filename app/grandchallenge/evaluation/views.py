@@ -53,7 +53,7 @@ class MethodList(UserIsChallengeAdminMixin, ListView):
     model = Method
 
     def get_queryset(self):
-        queryset = super(MethodList, self).get_queryset()
+        queryset = super().get_queryset()
         return queryset.filter(challenge=self.request.challenge)
 
 
@@ -196,7 +196,7 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their submissions """
-        queryset = super(SubmissionList, self).get_queryset()
+        queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
@@ -223,7 +223,7 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
-        queryset = super(JobList, self).get_queryset()
+        queryset = super().get_queryset()
         queryset = queryset.select_related("result")
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
@@ -245,7 +245,7 @@ class ResultList(ListView):
     model = Result
 
     def get_queryset(self):
-        queryset = super(ResultList, self).get_queryset()
+        queryset = super().get_queryset()
         queryset = queryset.select_related(
             "job__submission__creator__user_profile"
         )

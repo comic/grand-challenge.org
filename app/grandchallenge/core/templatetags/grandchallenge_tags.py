@@ -752,7 +752,7 @@ class InsertFileNode(template.Node):
         try:
             filename = resolve_path(token, self.parser, context)
         except PathResolutionException as e:
-            return self.make_error_msg("Path Resolution failed: {}".format(e))
+            return self.make_error_msg(f"Path Resolution failed: {e}")
 
         challenge_short_name = context["site"].short_name
         filepath = os.path.join(
