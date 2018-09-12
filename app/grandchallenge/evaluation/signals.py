@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
     Submission,
@@ -13,6 +14,9 @@ from grandchallenge.evaluation.models import (
     Config,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.submission_conversion.models import (
+    SubmissionToAnnotationSetJob
+)
 
 
 @receiver(post_save, sender=Submission)
