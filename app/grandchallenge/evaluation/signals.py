@@ -34,6 +34,12 @@ def create_evaluation_job(
         else:
             Job.objects.create(submission=instance, method=method)
 
+        # Convert this submission to an annotation set
+        base = ImageSet.objects.get(
+            challenge=instance.challenge, phase=ImageSet.TESTING
+        )
+        SubmissionToAnnotationSetJob.create(base=base, submission=instance)
+
 
 @receiver(post_save, sender=Config)
 @receiver(post_save, sender=Result)
