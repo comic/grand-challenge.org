@@ -42,7 +42,9 @@ def create_evaluation_job(
         base = ImageSet.objects.get(
             challenge=instance.challenge, phase=ImageSet.TESTING
         )
-        SubmissionToAnnotationSetJob.create(base=base, submission=instance)
+        SubmissionToAnnotationSetJob.objects.create(
+            base=base, submission=instance
+        )
 
 
 @receiver(post_save, sender=Config)
