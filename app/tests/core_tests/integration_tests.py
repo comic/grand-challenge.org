@@ -251,7 +251,7 @@ class ComicframeworkTestCase(TestCase):
         else:
             # See if there are any new style errors
             soup = BeautifulSoup(response.content, "html.parser")
-            errors = soup.findAll("div", attrs={"class": "has-error"})
+            errors = soup.findAll("span", attrs={"class": "invalid-feedback"})
             if len(errors) > 0:
                 return str(errors)
 

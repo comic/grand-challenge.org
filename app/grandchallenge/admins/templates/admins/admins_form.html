@@ -2,15 +2,6 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-
-{% block html_header %}
-    {{ block.super }}
-    <link rel="stylesheet"
-          href="{% static 'bootstrap-select-1.12.4/css/bootstrap-select.min.css' %}">
-    <script src="{% static 'bootstrap-select-1.12.4/js/bootstrap-select.min.js' %}"></script>
-{% endblock %}
-
-
 {% block pagecontent %}
 
     <h2>Add another admin to {{ site.short_name }}</h2>
@@ -20,15 +11,4 @@
         {{ form | crispy }}
         <input type="submit" value="Save" class="btn btn-primary"/>
     </form>
-
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#id_user').selectpicker(
-                {
-                    'liveSearch': true,
-                    'dropupAuto': false
-                }
-            );
-        });
-    </script>
 {% endblock %}
