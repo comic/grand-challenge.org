@@ -157,38 +157,39 @@
                     Challenges</a></li>
             </ul>
             <ul class="navbar-nav">
-                {% if user.is_authenticated %}
-                    <li class="dropdown">
-                        <a href="#" class="nav-link dropdown-toggle"
-                           data-toggle="dropdown" role="menu"
-                           aria-haspopup="true"
-                           aria-expanded="false">
-                            <img class="mugshot"
-                                 src="{{ user.user_profile.get_mugshot_url }}"
-                                 alt="User Mugshot"
-                                 style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                            <a class="dropdown-item"
-                               href="{% url 'userena_profile_detail' user.username %}">
-                                My Profile</a>
-                            <a class="dropdown-item"
-                               href="{% url 'challenges:users-list' %}">
-                                My Challenges</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item"
-                               href="{% url 'userena_signout' %}?next=/">
-                                Sign out</a>
-                        </div>
-                    </li>
-                {% else %}
-                    {% block loginbutton %}
+                {% block loginbutton %}
+                    {% if user.is_authenticated %}
+                        <li class="dropdown">
+                            <a href="#" class="nav-link dropdown-toggle"
+                               data-toggle="dropdown" role="menu"
+                               aria-haspopup="true"
+                               aria-expanded="false">
+                                <img class="mugshot"
+                                     src="{{ user.user_profile.get_mugshot_url }}"
+                                     alt="User Mugshot"
+                                     style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                <a class="dropdown-item"
+                                   href="{% url 'userena_profile_detail' user.username %}">
+                                    My Profile</a>
+                                <a class="dropdown-item"
+                                   href="{% url 'challenges:users-list' %}">
+                                    My Challenges</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item"
+                                   href="{% url 'userena_signout' %}?next=/">
+                                    Sign out</a>
+                            </div>
+                        </li>
+                    {% else %}
                         <li class="nav-item"><a
                                 class="nav-link metaFooterMenuItem last"
                                 href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
                             in / Register</a></li>
-                    {% endblock %}
-                {% endif %}
+
+                    {% endif %}
+                {% endblock %}
             </ul>
         </div>
     </nav>
@@ -222,17 +223,18 @@
     {% block jumbotron %}
         <div id="headerTitle"
              class="text-dark rounded bg-light container mb-5">
-            <!-- <a style="display:block" -->
-            <!--    href={% block headerLink %}"/"{% endblock %}> -->
-            <div class="col-10 p-0">
-                <h1 class="display-4 mb-2">
-                    {% block headerTitle %}
-                        <div class="noimage">
-                            {{ main_challenge_name }}
-                        </div>
-                    {% endblock %}
-                </h1>
-            </div>
+            <a style="display:block"
+               href={% block headerLink %}"/"{% endblock %}>
+                <div class="col-10 p-0">
+                    <h1 class="display-4 mb-2">
+                        {% block headerTitle %}
+                            <div class="noimage">
+                                {{ main_challenge_name }}
+                            </div>
+                        {% endblock %}
+                    </h1>
+                </div>
+            </a>
         </div>
     {% endblock %}
 
@@ -241,30 +243,25 @@
         <div class="row">
 
             <div class="col-md-3 sidebar-sticky">
-
                 {% block challengeNav %}
                     <div class="sidebar card mb-3">
                         <ul class="nav flex-column">
                             {% block topmenu %} {% endblock %}
-                        </ul>
-                    </div>
-                    <div id="additionalNavigation">
-                        <ul class="nav navbar-nav navbar-right">
                             {% block sitemenuloginbutton %} {% endblock %}
                             {% block adminbutton %} {% endblock %}
                         </ul>
                     </div>
                 {% endblock %}
-
             </div>
 
-            {% block maincontent %}
-                <div id="mainContent"
-                     class="p-0 mb-4 col-md-9 card shadow-sm ">
+            <div id="mainContent" class="p-0
+            {% block mainContentSizeClasses %}
+                mb-4 col-md-9
             {% endblock %}
-            <div class="card-body">
-                {% block content %} content {% endblock %}
-            </div>
+            card shadow-sm">
+                <div class="card-body">
+                    {% block content %} content {% endblock %}
+                </div>
             </div>
         </div>
         <!-- container -->
