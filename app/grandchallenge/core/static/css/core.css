@@ -113,7 +113,7 @@ div.sidebar a.active {
 /* Little more spacing for checkbox */
 
 input[type=checkbox] {
-    margin-right: 0.3em;
+    margin-top: .3rem !important;
 }
 
 /* Style button */
