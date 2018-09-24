@@ -92,10 +92,8 @@
                 </div>
 
                 <div class='row'>
-
                     {% for challenge in challenges %}
-
-                        <div class="col-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
+                        <div class="col-sm-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
@@ -178,12 +176,12 @@
                                                     <a class="btn btn-primary"
                                                        href="{% url 'challenges:external-update' challenge.short_name %}">
                                                         <i class="fas fa-edit"></i>
-                                                        Edit challenge
+                                                        Edit
                                                     </a>
                                                     <a class="btn btn-danger"
                                                        href="{% url 'challenges:external-delete' challenge.short_name %}">
                                                         <i class="fas fa-trash"></i>
-                                                        Delete challenge
+                                                        Delete
                                                     </a>
                                                 </p>
                                             </div>
@@ -193,25 +191,10 @@
                                 </div>
                             </div>
                         </div>
-
-
-                        {# Invisible block needed for proper wrapping #}
-                        <div class="clearfix visible-xs-block"></div>
-
-                        {# We're displaying 3 items in a row on small, medium and large screens #}
-                        {% if forloop.counter|divisibleby:3 %}
-                            <div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>
-                        {% endif %}
-
-
                     {% endfor %}
-
                 </div>
-
             </div>
-
         {% endfor %}
-
     </div>
 
     <script type="text/javascript"
