@@ -19,7 +19,9 @@ class Command(BaseCommand):
         Creates the main project, demo user and demo challenge
         """
         challenge, created = Challenge.objects.get_or_create(
-            short_name=settings.MAIN_PROJECT_NAME, description="main project"
+            short_name=settings.MAIN_PROJECT_NAME,
+            description="main project",
+            use_registration_page=False,
         )
         if created:
             Page.objects.create(
