@@ -36,7 +36,7 @@
             {% for result in object_list %}
                 <tr>
 
-                    <td>{{ result.rank|ordinal }}</td>
+                    <td data-order="{{ result.rank }}">{{ result.rank|ordinal }}</td>
 
                     <td>
                         {{ result.job.submission.creator|user_profile_link }}
