@@ -61,7 +61,7 @@
         <li class="nav-item">
             <a class="nav-link"
                href="{% url 'participants:registration-create' site.short_name %}">
-                <b>Join</b>
+                Join
             </a>
         </li>
     {% endif %}
@@ -74,12 +74,12 @@
             {% if site.evaluation_config.use_teams %}
                 <li class="nav-item">
                     <a class="nav-link"
-                       href="{% url 'teams:list' site.short_name %}"><b>Teams</b></a>
+                       href="{% url 'teams:list' site.short_name %}">Teams</a>
                 </li>
             {% endif %}
             <li class="nav-item">
                 <a class="nav-link"
-                   href="{% url 'evaluation:submission-create' site.short_name %}"><b>Submit</b></a>
+                   href="{% url 'evaluation:submission-create' site.short_name %}">Submit</a>
             </li>
 
         {% endif %}
