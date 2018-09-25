@@ -109,11 +109,7 @@
                                         </div>
                                         <div class="projectLinkName">
                                             <h3>
-                                                {% if challenge.title %}
-                                                    {{ challenge.title }}
-                                                {% else %}
-                                                    {{ challenge.short_name }}
-                                                {% endif %}
+                                                {% firstof challenge.title challenge.short_name %}
                                             </h3>
                                         </div>
                                     </div>
