@@ -246,7 +246,7 @@ def comicmain(request, page_title=""):
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     return render(
         request,
-        "mainpage.html",
+        "page.html",
         {
             "site": p.challenge,
             "currentpage": p,
