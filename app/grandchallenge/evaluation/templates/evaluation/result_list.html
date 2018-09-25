@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
+{% load humanize %}
 
 {% block pagecontent %}
 
@@ -15,7 +16,7 @@
                 {% if site.evaluation_config.use_teams %}
                     <th>Team</th>
                 {% endif %}
-                <th>Date</th>
+                <th>Created</th>
                 <th>{{ site.evaluation_config.score_title }}</th>
 
                 {% for col in site.evaluation_config.extra_results_columns %}
@@ -35,7 +36,7 @@
             {% for result in object_list %}
                 <tr>
 
-                    <td>{{ result.rank }}</td>
+                    <td>{{ result.rank|ordinal }}</td>
 
                     <td>
                         {{ result.job.submission.creator|user_profile_link }}
@@ -47,7 +48,9 @@
                         </td>
                     {% endif %}
 
-                    <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+                    <td data-order="{{ result.created|date:"U" }}">
+                            {{ result.created|naturaltime }}
+                    </td>
 
                     <td>
                         <a href="{{ result.get_absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a>
