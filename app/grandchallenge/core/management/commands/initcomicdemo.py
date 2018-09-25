@@ -1,4 +1,7 @@
+import base64
+
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
@@ -10,6 +13,7 @@ from grandchallenge.challenges.models import (
     BodyStructure,
     ImagingModality,
 )
+from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
 
 
@@ -80,6 +84,25 @@ class Command(BaseCommand):
             Page.objects.create(
                 challenge=demo, title="adm", permission_lvl="ADM"
             )
+
+            method = Method(challenge=demo)
+            container = ContentFile(base64.b64decode(b""))
+            method.image.save("test.tar", container)
+            method.save()
+
+            submission = Submission(challenge=demo, creator=demoparticipant)
+            content = ContentFile(base64.b64decode(b""))
+            submission.file.save("test.csv", content)
+            submission.save()
+
+            job = Job.objects.create(submission=submission, method=method)
+
+            Result.objects.create(
+                challenge=demo, metrics={"acc": 0.5}, job=job
+            )
+
+            demo.evaluation_config.score_jsonpath = "acc"
+            demo.evaluation_config.save()
 
             ExternalChallenge.objects.create(
                 creator=demoadmin,
