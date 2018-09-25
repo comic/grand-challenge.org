@@ -49,7 +49,7 @@
                 {% if job.output %}
                     <td>{{ job.output|user_error }}</td>
                 {% elif job.result.metrics and job.result.public %}
-                    <td><a href="{{ job.result.absolute_url }}">Result</a></td>
+                    <td><a href="{{ job.result.get_absolute_url }}">Result</a></td>
                 {% else %}
                     <td></td>
                 {% endif %}
