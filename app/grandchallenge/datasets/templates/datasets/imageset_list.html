@@ -9,36 +9,38 @@
 
     <h2>Datasets</h2>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Phase</th>
-            <th>Number of Images</th>
-            <th>Annotations</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for imageset in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
             <tr>
-                <td>
-                    <a href="{{ imageset.get_absolute_url }}">
-                        {{ imageset.get_phase_display }}
-                    </a>
-                </td>
-                <td>{{ imageset.images.all|length }}</td>
-                <td>
-                    {% for annotationset in imageset.annotationset_set.all %}
-                        <a href="{{ annotationset.get_absolute_url }}">
-                            {{ annotationset }}<br>
-                        </a>
-                    {% empty %}
-                        No annotations found
-                    {% endfor %}
-                </td>
+                <th>Phase</th>
+                <th>Number of Images</th>
+                <th>Annotations</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for imageset in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ imageset.get_absolute_url }}">
+                            {{ imageset.get_phase_display }}
+                        </a>
+                    </td>
+                    <td>{{ imageset.images.all|length }}</td>
+                    <td>
+                        {% for annotationset in imageset.annotationset_set.all %}
+                            <a href="{{ annotationset.get_absolute_url }}">
+                                {{ annotationset }}<br>
+                            </a>
+                        {% empty %}
+                            No annotations found
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

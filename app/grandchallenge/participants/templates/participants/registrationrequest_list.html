@@ -5,84 +5,86 @@
 
     <h2>Registration Requests for {{ site.short_name }}</h2>
 
-    <table class="table" id="participantsTable">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Username</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Affiliation</th>
-            <th>Status</th>
-            <th>Accept / Reject</th>
-        </tr>
-        </thead>
-        <tbody>
-
-        {% for regrequest in object_list %}
-
+    <div class="table-responsive">
+        <table class="table table-sm" id="participantsTable">
+            <thead>
             <tr>
-                <td data-order="{{ regrequest.created|date:"U" }}">
-                    {{ regrequest.created }}
-                </td>
-                <td data-order="{{ regrequest.changed|date:"U" }}">
-                    {{ regrequest.changed }}
-                </td>
-                <td>
-                    {{ regrequest.user|user_profile_link }}
-                </td>
-                <td>
-                    {{ regrequest.user.get_full_name }}
-                </td>
-                <td>
-                    {{ regrequest.user.email }}
-                </td>
-                <td>
-                    {{ regrequest.user_affiliation }}
-                </td>
-                <td data-order="{{ regrequest.status }}">
-                    {% if regrequest.status == regrequest.PENDING %}
-                        <i class="far fa-hourglass" title="Pending"></i>
-                    {% elif regrequest.status == regrequest.ACCEPTED %}
-                        <i class="fas fa-check text-success"
-                           title="Accepted"></i>
-                    {% elif regrequest.status == regrequest.REJECTED %}
-                        <i class="fas fa-times text-danger"
-                           title="Rejected"></i>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if regrequest.status != regrequest.ACCEPTED %}
-                        <form method="post"
-                              action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="status"
-                                   value="{{ regrequest.ACCEPTED }}">
-                            <button type="submit"
-                                    class="btn btn-xs btn-success">Accept
-                            </button>
-                        </form>
-                    {% endif %}
-                    {% if regrequest.status != regrequest.REJECTED %}
-                        <form method="post"
-                              action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="status"
-                                   value="{{ regrequest.REJECTED }}">
-                            <button type="submit"
-                                    class="btn btn-xs btn-danger">Reject
-                            </button>
-                        </form>
-                    {% endif %}
-                </td>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Affiliation</th>
+                <th>Status</th>
+                <th>Accept / Reject</th>
             </tr>
+            </thead>
+            <tbody>
 
-        {% endfor %}
+            {% for regrequest in object_list %}
 
-        </tbody>
+                <tr>
+                    <td data-order="{{ regrequest.created|date:"U" }}">
+                        {{ regrequest.created }}
+                    </td>
+                    <td data-order="{{ regrequest.changed|date:"U" }}">
+                        {{ regrequest.changed }}
+                    </td>
+                    <td>
+                        {{ regrequest.user|user_profile_link }}
+                    </td>
+                    <td>
+                        {{ regrequest.user.get_full_name }}
+                    </td>
+                    <td>
+                        {{ regrequest.user.email }}
+                    </td>
+                    <td>
+                        {{ regrequest.user_affiliation }}
+                    </td>
+                    <td data-order="{{ regrequest.status }}">
+                        {% if regrequest.status == regrequest.PENDING %}
+                            <i class="far fa-hourglass" title="Pending"></i>
+                        {% elif regrequest.status == regrequest.ACCEPTED %}
+                            <i class="fas fa-check text-success"
+                               title="Accepted"></i>
+                        {% elif regrequest.status == regrequest.REJECTED %}
+                            <i class="fas fa-times text-danger"
+                               title="Rejected"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if regrequest.status != regrequest.ACCEPTED %}
+                            <form method="post"
+                                  action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="status"
+                                       value="{{ regrequest.ACCEPTED }}">
+                                <button type="submit"
+                                        class="btn btn-xs btn-success">Accept
+                                </button>
+                            </form>
+                        {% endif %}
+                        {% if regrequest.status != regrequest.REJECTED %}
+                            <form method="post"
+                                  action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="status"
+                                       value="{{ regrequest.REJECTED }}">
+                                <button type="submit"
+                                        class="btn btn-xs btn-danger">Reject
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
 
-    </table>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

@@ -12,34 +12,37 @@
     </p>
     <p><strong>Created at:</strong> {{ object.created }}</p>
 
-    <p><strong>Image:</strong> <a href="{{ object.image.url }}">{{ object.image.name }}</a></p>
+    <p><strong>Image:</strong> <a
+            href="{{ object.image.url }}">{{ object.image.name }}</a></p>
     <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
 
     <p><strong>Ready:</strong> {{ object.ready }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
 
     <h2>Evaluations for this method</h2>
-    <table class="table" id="evaluationTable">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Job</th>
-            <th>Submission</th>
-            <th>Status</th>
-            <th>Result</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for job in object.job_set.all %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="evaluationTable">
+            <thead>
             <tr>
-                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
-                <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
-                <td>
-                    <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
-                </td>
-                <td>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Job</th>
+                <th>Submission</th>
+                <th>Status</th>
+                <th>Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for job in object.job_set.all %}
+                <tr>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
+                    <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
+                    </td>
+                    <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                         label-danger
@@ -52,14 +55,15 @@
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>
-                </td>
-                <td>
-                    <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>
+                        <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {
