@@ -33,11 +33,7 @@
                     </td>
                     <td>
                         <a href="{{ page.get_absolute_url }}">
-                            {% if page.display_title %}
-                                {{ page.display_title }}
-                            {% else %}
-                                {{ page.title }}
-                            {% endif %}
+                            {% firstof page.display_title page.title %}
                         </a>
                     </td>
                     <td data-order="{{ page.hidden }}">
