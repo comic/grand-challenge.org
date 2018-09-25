@@ -220,47 +220,35 @@
     </div>
 
 
-    {% block jumbotron %}
-        <div id="headerTitle"
-             class="text-dark rounded bg-light container mb-5">
-            <a style="display:block"
-               href={% block headerLink %}"/"{% endblock %}>
-                <div class="col-10 p-0">
-                    <h1 class="display-4 mb-2">
-                        {% block headerTitle %}
-                            <div class="noimage">
-                                {{ main_challenge_name }}
-                            </div>
-                        {% endblock %}
-                    </h1>
-                </div>
-            </a>
-        </div>
-    {% endblock %}
+    {% block jumbotron %}{% endblock %}
 
     <div id="page" class="container mt-3">
-
         <div class="row">
 
-            <div class="col-md-3 sidebar-sticky">
-                {% block challengeNav %}
-                    <div class="sidebar card mb-3">
+            {% block challengeNav %}
+                <div class="col-md-3">
+                    <div class="card sidebar shadow-sm">
+                        <div class="card-body">
+                            <h1>{{ site.short_name }}</h1>
                         <ul class="nav flex-column">
                             {% block topmenu %} {% endblock %}
                             {% block sitemenuloginbutton %} {% endblock %}
                             {% block adminbutton %} {% endblock %}
                         </ul>
+                        </div>
                     </div>
-                {% endblock %}
-            </div>
-
-            <div id="mainContent" class="p-0
-            {% block mainContentSizeClasses %}
-                mb-4 col-md-9
+                </div>
             {% endblock %}
-            card shadow-sm">
+
+            <div id="mainContent" class="
+            {% block mainContentSizeClasses %}
+                col-md-9
+            {% endblock %}
+            ">
+                <div class="card shadow-sm">
                 <div class="card-body">
                     {% block content %} content {% endblock %}
+                </div>
                 </div>
             </div>
         </div>

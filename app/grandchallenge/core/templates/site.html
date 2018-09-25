@@ -22,30 +22,22 @@
     {% endif %}
 {% endblock topheader %}
 
-{% block headerLink %}"{% url 'challenge-homepage' site.short_name %}"
+{% block headerLink %}""
 {% endblock %}
 
-{% block headerTitle %}
+{% block jumbotron %}
     {% if site.banner %}
-        <style>
-            #headerTitle {
-                padding: 0;
-            }
-        </style>
-        <div class="image">
-            <img src="{{ site.banner.url }}" class="headerImage">
-        </div>
-    {% else %}
-        <div class="noimage">
-            {% if site.title %}
-                {{ site.title }}
-            {% else %}
-                {{ site.short_name }}
-            {% endif %}
+        <div id="headerTitle"
+             class="container">
+            <div class="row mt-3">
+                <a style="display:block"
+                   href="{% url 'challenge-homepage' site.short_name %}">
+                    <img src="{{ site.banner.url }}" class="headerImage">
+                </a>
+            </div>
         </div>
     {% endif %}
 {% endblock %}
-
 
 
 {% block topmenu %}
@@ -125,16 +117,16 @@
                 </a>
                 <div class="dropdown-menu">
                     <a class="dropdown-item"
-                           href="{% url 'userena_profile_detail' user.username %}">My
+                       href="{% url 'userena_profile_detail' user.username %}">My
                         profile</a>
-                    <hr />
+                    <hr/>
                     <a class="dropdown-item"
-                           href="{% url 'userena_signout' %}?next=/">Signout</a>
+                       href="{% url 'userena_signout' %}?next=/">Signout</a>
                 </div>
             </li>
         {% else %}
             <li class="nav-item"><a class="nav-link"
-                   href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
+                                    href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
                 In / Register</a>
             </li>
         {% endif %}
