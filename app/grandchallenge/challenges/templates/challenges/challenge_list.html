@@ -173,12 +173,12 @@
                                         {% if request.user.is_staff %}
                                             <div class="projectLinkEdit">
                                                 <p>
-                                                    <a class="btn btn-primary"
+                                                    <a class="btn btn-primary btn-sm"
                                                        href="{% url 'challenges:external-update' challenge.short_name %}">
                                                         <i class="fas fa-edit"></i>
                                                         Edit
                                                     </a>
-                                                    <a class="btn btn-danger"
+                                                    <a class="btn btn-danger btn-sm"
                                                        href="{% url 'challenges:external-delete' challenge.short_name %}">
                                                         <i class="fas fa-trash"></i>
                                                         Delete
