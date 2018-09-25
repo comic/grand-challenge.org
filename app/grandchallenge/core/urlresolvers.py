@@ -20,7 +20,12 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
 
         protocol, domainname = settings.MAIN_HOST_NAME.split("//")
 
-        base_url = f"{protocol}//{challenge_short_name}.{domainname}".lower()
+        if challenge_short_name == settings.MAIN_PROJECT_NAME:
+            base_url = f"{protocol}//{domainname}".lower()
+        else:
+            base_url = (
+                f"{protocol}//{challenge_short_name}.{domainname}".lower()
+            )
 
         site_url = reverse_org(
             "challenge-homepage", args=[challenge_short_name]
