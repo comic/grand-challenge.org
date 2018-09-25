@@ -53,7 +53,8 @@
                            title="Show projects that accept new submissions">
                         <input type="checkbox" class="filter" id="open">
                         Open for submissions <span
-                            class="counter ml-1 badge badge-pill badge-info" id="open"></span>
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="open"></span>
                     </label>
 
                     <label id="datadownload"
@@ -62,7 +63,8 @@
                         <input type="checkbox" class="filter"
                                id="datadownload">
                         Data download <span
-                            class="counter ml-1 badge badge-pill badge-info" id="datadownload"></span>
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="datadownload"></span>
                     </label>
 
                     <label id="grand-challenge"
@@ -74,7 +76,8 @@
                             id="grand-challenge"></span>
                     </label>
                 </form>
-                <span id="info" class="badge badge-info">Showing <span class="counter" id="projectlink"></span>
+                <span id="info" class="badge badge-info">Showing <span
+                        class="counter" id="projectlink"></span>
                     projects of <span class="counter" id="total"></span></span>
 
             </div>
@@ -98,7 +101,8 @@
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block">
-                                    <div class="card-header projectLinkHeading" style="height:110px;">
+                                    <div class="card-header projectLinkHeading"
+                                         style="height:110px;">
                                         <div class="projectLinkImage">
                                             <img alt=""
                                                  src="{{ challenge.thumb_image_url }}">
@@ -115,21 +119,25 @@
                                     </div>
                                 </a>
 
-                                <div class="card-body projectLinkBody small" style="overflow: hidden; height:250px; line-height:1.5em">
+                                <div class="card-body projectLinkBody small"
+                                     style="overflow: hidden; height:250px; line-height:1.5em">
                                     {{ challenge.description }}
                                 </div>
 
-                                <div class="card-footer small projectLinkFooter" style="line-height:1.5em">
+                                <div class="card-footer small projectLinkFooter"
+                                     style="line-height:1.5em">
 
                                     {% if challenge.is_open_for_submissions %}
                                         <div>
-                                            <a href="{{ challenge.get_submission_link }}">Open for submissions</a>
+                                            <a href="{{ challenge.get_submission_link }}">Open
+                                                for submissions</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.offers_data_download %}
                                         <div>
-                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data download</a>
+                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data
+                                                download</a>
                                         </div>
                                     {% endif %}
 
@@ -141,7 +149,8 @@
 
                                     {% if challenge.last_submission_date %}
                                         <div>
-                                            Latest result: {{ challenge.last_submission_date }}
+                                            Latest
+                                            result: {{ challenge.last_submission_date }}
                                         </div>
                                     {% endif %}
 
@@ -153,41 +162,41 @@
 
                                     {% if challenge.event_name %}
                                         <div>
-                                            Associated with: <a href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                            Associated with: <a
+                                                href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.publication_journal_name or challenge.publication_url %}
                                         <div>
-                                            Article: <a href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                            Article: <a
+                                                href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.get_host_link %}
                                         <div>
-                                            Hosted on: {{ challenge.get_host_link|safe }}
+                                            Hosted
+                                            on: {{ challenge.get_host_link|safe }}
                                         </div>
                                     {% endif %}
 
                                     {% if not challenge.hosted_on_comic %}
                                         {% if request.user.is_staff %}
                                             <div class="projectLinkEdit">
-                                                <p>
-                                                    <a class="btn btn-primary btn-sm"
-                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
-                                                        <i class="fas fa-edit"></i>
-                                                        Edit
-                                                    </a>
-                                                    <a class="btn btn-danger btn-sm"
-                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
-                                                        <i class="fas fa-trash"></i>
-                                                        Delete
-                                                    </a>
-                                                </p>
+                                                <a class="btn btn-primary btn-sm"
+                                                   href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                    <i class="fas fa-edit"></i>
+                                                    Edit
+                                                </a>
+                                                <a class="btn btn-danger btn-sm"
+                                                   href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                    <i class="fas fa-trash"></i>
+                                                    Delete
+                                                </a>
                                             </div>
                                         {% endif %}
                                     {% endif %}
-
                                 </div>
                             </div>
                         </div>
