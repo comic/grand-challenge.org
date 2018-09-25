@@ -22,6 +22,7 @@ class Command(BaseCommand):
             short_name=settings.MAIN_PROJECT_NAME,
             description="main project",
             use_registration_page=False,
+            disclaimer="You <b>must</b> delete the admin, demo, and demop users before deploying to production!",
         )
         if created:
             Page.objects.create(

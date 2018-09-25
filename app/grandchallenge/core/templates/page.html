@@ -7,12 +7,11 @@
 
 {% block pagecontent %}
     {% if site.disclaimer %}
-        <div class="disclaimer"
-             style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
-
-            <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
+        <div class="disclaimer alert alert-warning" role="alert">
+            {{ site.disclaimer|safe }}
         </div>
     {% endif %}
+
     <div id=pageContainer>{{ currentpage.raw_html }}</div>
 
     <br/>
