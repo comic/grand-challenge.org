@@ -31,3 +31,8 @@ after_success:
   - coverage combine
   - codecov
 
+deploy:
+  provider: script
+  script: bash dockerfiles/deploy.sh
+  on:
+    all_branches: true
