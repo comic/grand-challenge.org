@@ -9,8 +9,6 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
 # Default COMIC settings, to be included by settings.py
-# To overwrite these settings local-only, please add a file XX-local.conf.py in the same dir
-# and make XX higher then 00
 
 DEBUG = strtobool(os.environ.get("DJANGO_DEBUG", "True"))
 
@@ -496,28 +494,6 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
-
-# Get *.conf from the directory this file is in and execute these in order.
-# To include your own local settings, put these in a  a 'XX-local.conf' file in the
-# current dir. XX should be a number which determines the order of execution.
-# Executed last overwrites previous settings.
-
-path = os.path.join(os.path.dirname(__file__), "settings", "*.conf")
-conf_files = glob.glob(path)
-
-if len(conf_files) == 0:
-    msg = (
-        "Could not find any files matching '"
-        + path
-        + "'. There should be at least one configuration file containing django settings at that location."
-    )
-    raise ImproperlyConfigured(msg)
-
-conf_files.sort()
-for conf_file in conf_files:
-    with open(conf_file) as f:
-        code = compile(f.read(), conf_file, "exec")
-        six.exec_(code)
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
