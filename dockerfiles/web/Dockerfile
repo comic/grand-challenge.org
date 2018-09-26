@@ -23,7 +23,7 @@ ADD Pipfile.lock /app/
 RUN python -m pip install -U pipenv
 RUN pipenv install --system
 
-RUN chown 2001:2001 /app /static /dbox/Dropbox/media
+RUN chown 2001:2001 /static /dbox/Dropbox/media
 
 USER 2001:2001
 
