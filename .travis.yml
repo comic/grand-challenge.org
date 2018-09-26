@@ -21,9 +21,7 @@ before_install:
   - sudo chmod a+w /tmp/coverage
 
 install:
-  - docker build --target base -t grandchallenge/web:"$TRAVIS_BUILD_NUMBER" -f dockerfiles/web/Dockerfile .
-  - docker build -f dockerfiles/web/Dockerfile .
-  - docker build -t grandchallenge/http:"$TRAVIS_BUILD_NUMBER" dockerfiles/http
+  - make build
   - docker-compose up -d
 
 script:
@@ -36,6 +34,6 @@ after_success:
 
 deploy:
   provider: script
-  script: bash dockerfiles/deploy.sh
+  script: bash -c "echo $(DOCKER_PASSWORD) | docker login --username grandchallenge --password-stdin && make push"
   on:
     all_branches: true
