@@ -10,7 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 # Default COMIC settings, to be included by settings.py
 
-DEBUG = strtobool(os.environ.get("DJANGO_DEBUG", "True"))
+DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
