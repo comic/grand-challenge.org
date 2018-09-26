@@ -4,10 +4,10 @@ services:
 
   postgres:
     image: postgres:10.4
-    environment:
-      - POSTGRES_PASSWORD=secretpassword
-      - POSTGRES_USER=comic
-      - POSTGRES_DB=comic
+    environment: &postgresenv
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_USER: comic
+      POSTGRES_DB: comic
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
@@ -22,7 +22,8 @@ services:
       args:
        - PIPENV_DEV=--dev
     environment:
-      - GOOGLE_ANALYTICS_ID=UA-XXXXX-Y
+      <<: *postgresenv
+      GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
       python manage.py collectstatic --noinput
@@ -85,6 +86,8 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/web/Dockerfile
+    environment:
+      <<: *postgresenv
     restart: always
     command: "celery -A config worker -l info -c 2"
     depends_on:
@@ -101,6 +104,8 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/web/Dockerfile
+    environment:
+      <<: *postgresenv
     restart: always
     command: "celery -A config worker -l info -Q evaluation -c 2"
     depends_on:
@@ -121,6 +126,8 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/web/Dockerfile
+    environment:
+      <<: *postgresenv
     restart: always
     command: "celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\""
     depends_on:
