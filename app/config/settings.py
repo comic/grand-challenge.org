@@ -4,7 +4,6 @@ import os
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
-import six
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
