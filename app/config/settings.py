@@ -2,14 +2,19 @@
 import glob
 import os
 from datetime import timedelta
-from distutils.util import strtobool
+from distutils.util import strtobool as strtobool_i
 
 import six
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
-# Default COMIC settings, to be included by settings.py
 
+def strtobool(val) -> bool:
+    """ Returns disutils.util.strtobool as a boolean """
+    return bool(strtobool_i(val))
+
+
+# Default COMIC settings, to be included by settings.py
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
