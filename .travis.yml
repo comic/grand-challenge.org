@@ -34,6 +34,6 @@ after_success:
 
 deploy:
   provider: script
-  script: bash -c "echo $(DOCKER_PASSWORD) | docker login --username grandchallenge --password-stdin && make push"
+  script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
   on:
     all_branches: true
