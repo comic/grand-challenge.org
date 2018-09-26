@@ -1,10 +1,9 @@
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
-from six import StringIO
 
 
 def fake_file(filename, content="mock content"):
@@ -50,7 +49,9 @@ class MockStorage(FileSystemStorage):
         
         """
         if not self.exists(path):
-            raise OSError("Mockstorage: '%s' No such file or directory." % path)
+            raise OSError(
+                "Mockstorage: '%s' No such file or directory." % path
+            )
 
         if path in self.saved_files.keys():
             return self.saved_files[path]

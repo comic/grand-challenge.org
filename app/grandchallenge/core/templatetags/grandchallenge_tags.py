@@ -5,6 +5,7 @@ import random
 import re
 import string
 import traceback
+from io import StringIO
 from urllib.parse import urljoin
 
 from django import template
@@ -20,14 +21,13 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
-from six import StringIO, iteritems
 
 import grandchallenge.core.views
 from grandchallenge.core.api import get_public_results_by_challenge_name
-from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
@@ -292,7 +292,7 @@ class TagListNode(template.Node):
         html_out = '<table class ="comictable taglist">'
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
-        for key, val in iteritems(register.usagestrings):
+        for key, val in register.usagestrings.items():
             if not val == "":
                 html_out = (
                     html_out
@@ -1066,13 +1066,13 @@ def render_anode09_table(filename):
     table_id = id_generator()
     tableHTML = (
         """<table border=1 class = "comictable csvtable sortable" id="%s">
-        <thead><tr>
-            <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-            <td align=center width='54'>1/4</td>
-            <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-            <td align=center width='54'>2</td><td align=center width='54'>4</td>
-            <td align=center width='54'>8</td><td align=center width='54'>average</td>
-        </tr></thead>"""
+            <thead><tr>
+                <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                <td align=center width='54'>1/4</td>
+                <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                <td align=center width='54'>8</td><td align=center width='54'>average</td>
+            </tr></thead>"""
         % table_id
     )
     tableHTML = tableHTML + "<tbody>"
@@ -1153,7 +1153,7 @@ def parse_php_arrays(filename):
             if result is None:
                 msg = (
                     "Could not match regex pattern '%s' to '%s'\
-                                    "
+                                        "
                     % (phpvar.pattern, var)
                 )
                 continue
@@ -1161,7 +1161,7 @@ def parse_php_arrays(filename):
             if len(result.groups()) != 2:
                 msg = (
                     "Expected to find  varname and content,\
-                      but regex '%s' found %d items:%s "
+                          but regex '%s' found %d items:%s "
                     % (
                         phpvar.pattern,
                         len(result.groups()),

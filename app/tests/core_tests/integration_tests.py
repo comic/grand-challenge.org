@@ -1,4 +1,5 @@
 import re
+from io import StringIO
 from random import choice, randint
 
 from bs4 import BeautifulSoup
@@ -13,7 +14,6 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from django.urls import reverse
-from six import StringIO
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge

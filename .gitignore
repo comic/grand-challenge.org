@@ -66,10 +66,6 @@ local.properties
 # # PDT-specific
 .buildpath
 
-# ignore any specific conf files, execept the default one
-app/config/settings/*.conf
-!app/config/settings/00_default.conf
-
 # Ignore intellij stuff
 **/.idea
 
