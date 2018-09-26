@@ -21,7 +21,8 @@ before_install:
   - sudo chmod a+w /tmp/coverage
 
 install:
-  - docker-compose up --build -d
+  - make build
+  - docker-compose up -d
 
 script:
   - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
@@ -31,3 +32,8 @@ after_success:
   - coverage combine
   - codecov
 
+deploy:
+  provider: script
+  script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
+  on:
+    all_branches: true

@@ -16,11 +16,7 @@ services:
     restart: always
 
   web:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/web/Dockerfile
-      args:
-       - PIPENV_DEV=--dev
+    image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
@@ -42,7 +38,6 @@ services:
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
-      - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
@@ -54,7 +49,7 @@ services:
       retries: 5
 
   http:
-    build: ./dockerfiles/http
+    image: grandchallenge/http:latest
     environment:
       - SERVER_NAME=localhost
       - SENDFILE_STATUS=off
@@ -83,9 +78,7 @@ services:
     restart: always
 
   celery_worker:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/web/Dockerfile
+    image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
     restart: always
@@ -101,9 +94,7 @@ services:
       - web
 
   celery_worker_evaluation:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/web/Dockerfile
+    image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
     restart: always
@@ -123,9 +114,7 @@ services:
       - 999
 
   celery_beat:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/web/Dockerfile
+    image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
     restart: always
