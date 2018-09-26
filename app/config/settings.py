@@ -2,16 +2,19 @@
 import glob
 import os
 from datetime import timedelta
+from distutils.util import strtobool as strtobool_i
 
-import six
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
-# Default COMIC settings, to be included by settings.py
-# To overwrite these settings local-only, please add a file XX-local.conf.py in the same dir
-# and make XX higher then 00
 
-DEBUG = True
+def strtobool(val) -> bool:
+    """ Returns disutils.util.strtobool as a boolean """
+    return bool(strtobool_i(val))
+
+
+# Default COMIC settings, to be included by settings.py
+DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -31,18 +34,24 @@ MANAGERS = ADMINS
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "comic",
-        "USER": "comic",
-        "PASSWORD": "secretpassword",
+        "NAME": os.environ["POSTGRES_DB"],
+        "USER": os.environ["POSTGRES_USER"],
+        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": "postgres",
-        "PORT": "5432",
+        "PORT": "",
     }
 }
 
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-EMAIL_HOST = ""  # something like smtp.mydomain.com
-EMAIL_PORT = 25
-DEFAULT_FROM_EMAIL = "noreply@comicframework.org"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "25"))
+EMAIL_USE_TLS = strtobool(os.environ.get("EMAIL_USE_TLS", "False"))
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "webmaster@localhost"
+)
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
 EVERYONE_GROUP_NAME = "everyone"
@@ -73,7 +82,7 @@ TIME_ZONE = "UTC"
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = "en-us"
 
-SITE_ID = 1
+SITE_ID = int(os.environ.get("SITE_ID", "1"))
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -88,7 +97,7 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = "/dbox/Dropbox/media/"
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -125,22 +134,45 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
 # the name of the main project: this project is shown when url is loaded without
 # arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = "comic"
+MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
 # The url for a project in comic is /site/<challenge>. This is quite ugly. It
 # would be nicer to be able to use <challenge>.examplehost.com/, like blogger
 # does.
 # True: Changes links on pages where possible to use subdomain.
-SUBDOMAIN_IS_PROJECTNAME = False
+SUBDOMAIN_IS_PROJECTNAME = strtobool(
+    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "False")
+)
 
 # For links to basic comicframework content, for example the main comic help
 # page, django needs to know the hostname. This setting is only used when
 # SUBDOMAIN_IS_PROJECTNAME = True
-MAIN_HOST_NAME = "https://localhost"
+MAIN_HOST_NAME = os.environ.get("MAIN_HOST_NAME", "https://localhost")
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
-SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", None)
+SESSION_COOKIE_SECURE = strtobool(
+    os.environ.get("SESSION_COOKIE_SECURE", "False")
+)
+CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
+
+# Set the allowed hosts to the cookie domain
+if SESSION_COOKIE_DOMAIN:
+    ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+
+# Security options
+SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = strtobool(
+    os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False")
+)
+SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
+    os.environ.get("SECURE_CONTENT_TYPE_NOSNIFF", "False")
+)
+SECURE_BROWSER_XSS_FILTER = strtobool(
+    os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
+)
+X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -161,7 +193,9 @@ STATICFILES_STORAGE = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
+)
 
 TEMPLATES = [
     {
@@ -464,28 +498,6 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
-
-# Get *.conf from the directory this file is in and execute these in order.
-# To include your own local settings, put these in a  a 'XX-local.conf' file in the
-# current dir. XX should be a number which determines the order of execution.
-# Executed last overwrites previous settings.
-
-path = os.path.join(os.path.dirname(__file__), "settings", "*.conf")
-conf_files = glob.glob(path)
-
-if len(conf_files) == 0:
-    msg = (
-        "Could not find any files matching '"
-        + path
-        + "'. There should be at least one configuration file containing django settings at that location."
-    )
-    raise ImproperlyConfigured(msg)
-
-conf_files.sort()
-for conf_file in conf_files:
-    with open(conf_file) as f:
-        code = compile(f.read(), conf_file, "exec")
-        six.exec_(code)
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
