@@ -21,7 +21,10 @@ before_install:
   - sudo chmod a+w /tmp/coverage
 
 install:
-  - docker-compose up --build -d
+  - docker build --target base -t grandchallenge/web:"$TRAVIS_BUILD_NUMBER" -f dockerfiles/web/Dockerfile .
+  - docker build -f dockerfiles/web/Dockerfile .
+  - docker build -t grandchallenge/http:"$TRAVIS_BUILD_NUMBER" dockerfiles/http
+  - docker-compose up -d
 
 script:
   - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."

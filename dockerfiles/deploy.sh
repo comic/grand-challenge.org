@@ -1,9 +1,6 @@
 #!/bin/bash
 
-TAG=$(git log -1 --pretty=%h)
-
-docker tag grand-challengeorg_http grandchallenge/http:"$TAG"
-
 echo "$DOCKER_PASSWORD" | docker login --username grandchallenge --password-stdin
 
-docker push grandchallenge/http:"$TAG"
+docker push grandchallenge/http:"$TRAVIS_BUILD_NUMBER"
+docker push grandchallenge/web:"$TRAVIS_BUILD_NUMBER"
