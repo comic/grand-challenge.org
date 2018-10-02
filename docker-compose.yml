@@ -27,7 +27,7 @@ services:
       && python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
-      && gunicorn -b 0.0.0.0 config.wsgi
+      && gunicorn -w 1 -b 0.0.0.0 config.wsgi
       "
     restart: always
     depends_on:
@@ -82,7 +82,8 @@ services:
     environment:
       <<: *postgresenv
     restart: always
-    command: "celery -A config worker -l info -c 2"
+    command: "celery -A config worker -l info -c 1"
+    scale: 1
     depends_on:
       web:
         condition: service_healthy
@@ -98,7 +99,8 @@ services:
     environment:
       <<: *postgresenv
     restart: always
-    command: "celery -A config worker -l info -Q evaluation -c 2"
+    command: "celery -A config worker -l info -Q evaluation -c 1"
+    scale: 1
     depends_on:
       web:
         condition: service_healthy
