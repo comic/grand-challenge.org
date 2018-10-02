@@ -1,10 +1,9 @@
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
-from six import StringIO
 
 
 def fake_file(filename, content="mock content"):
@@ -18,6 +17,7 @@ class MockStorage(FileSystemStorage):
     """
     For testing, A storage class which does not write anything to disk.
     """
+
     # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES
     FAKE_DIRS = [
         "fake_test_dir",
@@ -43,7 +43,7 @@ class MockStorage(FileSystemStorage):
         self.saved_files[name] = mockfile
         return name
 
-    def _open(self, path, mode='rb'):
+    def _open(self, path, mode="rb"):
         """ Return a memory only file which will not be saved to disk
         If an image is requested, fake image content using PIL
         
@@ -57,10 +57,13 @@ class MockStorage(FileSystemStorage):
             return self.saved_files[path]
 
         if os.path.splitext(path)[1].lower() in [
-            ".jpg", ".png", ".gif", ".bmp"
+            ".jpg",
+            ".png",
+            ".gif",
+            ".bmp",
         ]:
             # 1px test image
-            binary_image_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
+            binary_image_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82"
             img = BytesIO(binary_image_data)
             mockfile = File(img)
             mockfile.name = "MOCKED_IMAGE_" + path
@@ -69,8 +72,8 @@ class MockStorage(FileSystemStorage):
             # If a predefined fake file is asked for, return predefined content
             filename = os.path.split(path)[1]
             for content_name in self.FAKE_FILES:
-                mockfilename = content_name['filename']
-                mockcontent = content_name['content']
+                mockfilename = content_name["filename"]
+                mockcontent = content_name["content"]
                 if filename == mockfilename:
                     content = mockcontent
             mockfile = File(StringIO(content))
@@ -139,7 +142,9 @@ class MockStorage(FileSystemStorage):
         
         """
         for directory in self.FAKE_DIRS:
-            if directory in path:  # very rough test. But this is only for testing
+            if (
+                directory in path
+            ):  # very rough test. But this is only for testing
                 return True
 
         return False

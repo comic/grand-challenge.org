@@ -4,82 +4,110 @@ services:
 
   postgres:
     image: postgres:10.4
-    environment:
-      - POSTGRES_PASSWORD=secretpassword
-      - POSTGRES_USER=comic
-      - POSTGRES_DB=comic
+    environment: &postgresenv
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_USER: comic
+      POSTGRES_DB: comic
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "comic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   web:
-    extends:
-      file: docker-compose.common.yml
-      service: web
-    links:
-      - memcached
+    image: grandchallenge/web-test:latest
+    environment:
+      <<: *postgresenv
+      GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
+    command: >-
+      bash -c "
+      python manage.py collectstatic --noinput
+      && mkdir -p /dbox/Dropbox/media/
+      && python manage.py migrate
+      && python manage.py check_permissions
+      && python manage.py initcomicdemo
+      && gunicorn -w 1 -b 0.0.0.0 config.wsgi
+      "
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      memcached:
+        condition: service_started
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
-      - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
       - 999 # The docker group is only needed for testing
-    build:
-      args:
-        - PIPENV_DEV=--dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://web:8000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   http:
-    extends:
-      file: docker-compose.common.yml
-      service: http
+    image: grandchallenge/http:latest
+    environment:
+      - SERVER_NAME=localhost
+      - SENDFILE_STATUS=off
+    command: >-
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
+        && nginx -g 'daemon off;'"
+    restart: always
     ports:
       - "80:80"
       - "443:443"
-    links:
-      - web
+    depends_on:
+      web:
+        condition: service_healthy
     volumes:
       - static:/srv/public/static/:ro
       - media:/dbox/Dropbox/media/:ro
 
   memcached:
-    extends:
-      file: docker-compose.common.yml
-      service: memcached
+    image: memcached:1.4
+    restart: always
 
   redis:
-    extends:
-      file: docker-compose.common.yml
-      service: redis
+    image: redis:4.0
+    command: redis-server --appendonly yes
+    restart: always
 
   celery_worker:
-    extends:
-      file: docker-compose.common.yml
-      service: web
-    command: >-
-      bash -c "
-      sleep 120
-      && celery -A config worker -l info -c 2
-      "
-    links:
-      - postgres
-      - redis
-      - web
+    image: grandchallenge/web-test:latest
+    environment:
+      <<: *postgresenv
+    restart: always
+    command: "celery -A config worker -l info -c 1"
+    scale: 1
+    depends_on:
+      web:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes_from:
       - web
 
   celery_worker_evaluation:
-    extends:
-      file: docker-compose.common.yml
-      service: web
-    command: >-
-      bash -c "
-      sleep 120
-      && celery -A config worker -l info -Q evaluation -c 2
-      "
-    links:
-      - postgres
-      - redis
-      - web
+    image: grandchallenge/web-test:latest
+    environment:
+      <<: *postgresenv
+    restart: always
+    command: "celery -A config worker -l info -Q evaluation -c 1"
+    scale: 1
+    depends_on:
+      web:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes_from:
       - web
     volumes:
@@ -88,18 +116,18 @@ services:
       - 999
 
   celery_beat:
-    extends:
-      file: docker-compose.common.yml
-      service: web
-    command: >-
-      bash -c "
-      sleep 120
-      && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
-      "
-    links:
-      - postgres
-      - redis
-      - web
+    image: grandchallenge/web-test:latest
+    environment:
+      <<: *postgresenv
+    restart: always
+    command: "celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\""
+    depends_on:
+      web:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes_from:
       - web
 
@@ -109,8 +137,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
     ports:
       - "5555:5555"
-    links:
-      - redis
+    depends_on:
+      redis:
+        condition: service_started
     restart: always
 
 volumes:

@@ -11,8 +11,8 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     """
     if args is not None:
         challenge_short_name = args[0]
-    elif kwargs is not None and 'challenge_short_name' in kwargs:
-        challenge_short_name = kwargs['challenge_short_name']
+    elif kwargs is not None and "challenge_short_name" in kwargs:
+        challenge_short_name = kwargs["challenge_short_name"]
     else:
         challenge_short_name = None
 
@@ -23,7 +23,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
         base_url = f"{protocol}//{challenge_short_name}.{domainname}".lower()
 
         site_url = reverse_org(
-            'challenge-homepage', args=[challenge_short_name]
+            "challenge-homepage", args=[challenge_short_name]
         )
 
         target_url = reverse_org(

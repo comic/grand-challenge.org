@@ -1,11 +1,10 @@
-from os import path
-
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError
 from django.template.defaulttags import VerbatimNode
+from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.template.context import ComicSiteRequestContext
@@ -17,7 +16,7 @@ def site(request, challenge_short_name):
     # TODO: Doing two calls to getSite here. (second one in site_get_standard_vars)
     # How to handle not found nicely? Throwing exception in site_get_standard_vars
     # seems like a nice start, but this function is called throughout the code
-    # also outside views (in contextprocessor). Throwing Http404 there will 
+    # also outside views (in contextprocessor). Throwing Http404 there will
     # result in server error..
     try:
         site = getSite(challenge_short_name)
@@ -40,8 +39,8 @@ def site(request, challenge_short_name):
     currentpage = getRenderedPageIfAllowed(currentpage, request, site)
     return render(
         request,
-        'page.html',
-        {'site': site, 'currentpage': currentpage, "pages": pages},
+        "page.html",
+        {"site": site, "currentpage": currentpage, "pages": pages},
     )
 
 
@@ -75,14 +74,18 @@ def renderTags(request, p, recursecount=0):
         t = Template("{% load grandchallenge_tags %}" + p.html)
     except TemplateSyntaxError as e:
         # when page contents cannot be rendered, just display raw contents and include error message on page
-        errormsg = "<span class=\"pageError\"> Error rendering template: %s </span>" % e
+        errormsg = (
+            '<span class="pageError"> Error rendering template: %s </span>' % e
+        )
         pagecontents = p.html + errormsg
         return pagecontents
 
     t = escape_verbatim_node_contents(t)
     # pass page to context here to be able to render tags based on which page does the rendering
     pagecontents = t.render(ComicSiteRequestContext(request, p))
-    if "{%" in pagecontents or "{{" in pagecontents:  # if rendered tags results in another tag, try to render this as well
+    if (
+        "{%" in pagecontents or "{{" in pagecontents
+    ):  # if rendered tags results in another tag, try to render this as well
         if recursecount < recurselimit:
             p2 = copy_page(p)
             p2.html = pagecontents
@@ -90,9 +93,11 @@ def renderTags(request, p, recursecount=0):
 
         else:
             # when page contents cannot be rendered, just display raw contents and include error message on page
-            errormsg = "<span class=\"pageError\"> Error rendering template: rendering recursed further than" + str(
-                recurselimit
-            ) + " </span>"
+            errormsg = (
+                '<span class="pageError"> Error rendering template: rendering recursed further than'
+                + str(recurselimit)
+                + " </span>"
+            )
             pagecontents = p.html + errormsg
     return pagecontents
 
@@ -119,7 +124,7 @@ def permissionMessage(request, site, p):
                 <h2> Restricted page</h2>
                   This page can only be viewed by participants of this project to view this page please make sure of the following:
                   <ul>
-                      <li>First, log in to {0} by using the 'Sign in' button at the top right.</li>
+                      <li>First, log in to {} by using the 'Sign in' button at the top right.</li>
                       <li>Second, you need to join / register with the specific project you are interested in as a participant. 
                       The link to do this is provided by the project organizers on the project website.</li>
                   </ul>
@@ -129,7 +134,11 @@ def permissionMessage(request, site, p):
         )
         title = p.title
     else:
-        msg = "The page '" + p.title + "' can only be viewed by registered users. Please sign in to view this page."
+        msg = (
+            "The page '"
+            + p.title
+            + "' can only be viewed by registered users. Please sign in to view this page."
+        )
         title = p.title
     page = ErrorPage(challenge=site, title=title, html=msg)
     currentpage = page
@@ -164,7 +173,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
 def get_data_folder_path(challenge_short_name):
     """ Returns physical base path to the root of the folder where all files for
     this project are kept """
-    return path.join(settings.MEDIA_ROOT, challenge_short_name)
+    return safe_join(settings.MEDIA_ROOT, challenge_short_name)
 
 
 def get_dirnames(path):
@@ -182,32 +191,36 @@ def comicmain(request, page_title=""):
     """ show content as main page item. Loads pages from the main project """
     challenge_short_name = settings.MAIN_PROJECT_NAME
     if Challenge.objects.filter(short_name=challenge_short_name).count() == 0:
-        link = reverse('challenges:create')
+        link = reverse("challenges:create")
         link = link + "?short_name=%s" % challenge_short_name
         link_html = create_HTML_a(
             link, "Create project '%s'" % challenge_short_name
         )
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' does not exist. %s.""" % (
-            challenge_short_name, challenge_short_name, link_html
+            challenge_short_name,
+            challenge_short_name,
+            link_html,
         )
         p = create_temp_page(title="no_pages_found", html=html)
         return render(
-            request, 'temppage.html', {'site': p.challenge, 'currentpage': p}
+            request, "temppage.html", {"site": p.challenge, "currentpage": p}
         )
 
     pages = getPages(challenge_short_name)
     if pages.count() == 0:
-        link = reverse('pages:list', args=[challenge_short_name])
+        link = reverse("pages:list", args=[challenge_short_name])
         link_html = create_HTML_a(link, "admin interface")
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' contains no pages. Please add
         some in the %s.""" % (
-            challenge_short_name, challenge_short_name, link_html
+            challenge_short_name,
+            challenge_short_name,
+            link_html,
         )
         p = create_temp_page(title="no_pages_found", html=html)
         return render(
-            request, 'temppage.html', {'site': p.challenge, 'currentpage': p}
+            request, "temppage.html", {"site": p.challenge, "currentpage": p}
         )
 
     elif page_title == "":
@@ -217,7 +230,8 @@ def comicmain(request, page_title=""):
     else:
         try:
             p = Page.objects.get(
-                challenge__short_name=challenge_short_name, title__iexact=page_title
+                challenge__short_name=challenge_short_name,
+                title__iexact=page_title,
             )
         except Page.DoesNotExist:
             raise Http404
@@ -230,10 +244,10 @@ def comicmain(request, page_title=""):
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     return render(
         request,
-        'mainpage.html',
+        "mainpage.html",
         {
-            'site': p.challenge,
-            'currentpage': p,
+            "site": p.challenge,
+            "currentpage": p,
             "pages": pages,
             "metafooterpages": metafooterpages,
         },
@@ -249,7 +263,9 @@ def getSite(challenge_short_name):
 def getPages(challenge_short_name):
     """ get all pages of the given site from db"""
     try:
-        pages = Page.objects.filter(challenge__short_name__iexact=challenge_short_name)
+        pages = Page.objects.filter(
+            challenge__short_name__iexact=challenge_short_name
+        )
     except Page.DoesNotExist:
         raise Http404("Page '%s' not found" % challenge_short_name)
 
@@ -257,12 +273,12 @@ def getPages(challenge_short_name):
 
 
 def create_HTML_a(link_url, link_text):
-    return "<a href=\"" + link_url + "\">" + link_text + "</a>"
+    return '<a href="' + link_url + '">' + link_text + "</a>"
 
 
 def create_HTML_a_img(link_url, image_url):
     """ create a linked image """
-    img = "<img src=\"" + image_url + "\">"
+    img = '<img src="' + image_url + '">'
     linked_image = create_HTML_a(link_url, img)
     return linked_image
 

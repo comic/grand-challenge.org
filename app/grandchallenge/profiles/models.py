@@ -14,8 +14,8 @@ class UserProfile(UserenaBaseProfile):
     user = models.OneToOneField(
         User,
         unique=True,
-        verbose_name=_('user'),
-        related_name='user_profile',
+        verbose_name=_("user"),
+        related_name="user_profile",
         on_delete=models.CASCADE,
     )
 
@@ -27,9 +27,7 @@ class UserProfile(UserenaBaseProfile):
     def get_challenges_as_participant(self):
         return Challenge.objects.filter(
             participants_group__in=self.user.groups.all()
-        ).filter(
-            hidden=False
-        )
+        ).filter(hidden=False)
 
 
 @disable_for_loaddata

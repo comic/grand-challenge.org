@@ -10,7 +10,8 @@ from django.db.models import BooleanField
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.backends.docker import Executor, put_file
 from grandchallenge.container_exec.models import (
-    ContainerExecJobModel, ContainerImageModel
+    ContainerExecJobModel,
+    ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.urlresolvers import reverse
@@ -25,41 +26,42 @@ from grandchallenge.evaluation.emails import send_failed_job_email
 class Config(UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
-    ASCENDING = 'asc'
-    DESCENDING = 'desc'
+    ASCENDING = "asc"
+    DESCENDING = "desc"
     EVALUATION_SCORE_SORT_CHOICES = (
-        (ASCENDING, 'Ascending'), (DESCENDING, 'Descending')
+        (ASCENDING, "Ascending"),
+        (DESCENDING, "Descending"),
     )
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
-        related_name='evaluation_config',
+        related_name="evaluation_config",
         editable=False,
     )
     use_teams = models.BooleanField(
         default=False,
         help_text=(
-            'If true, users are able to form teams together to participate in '
-            'challenges.'
+            "If true, users are able to form teams together to participate in "
+            "challenges."
         ),
     )
     score_jsonpath = models.CharField(
         max_length=255,
         blank=True,
         help_text=(
-            'The jsonpath of the field in metrics.json that will be used '
-            'for the overall scores on the results page. See '
-            'http://goessner.net/articles/JsonPath/ for syntax. For example:'
-            '\n\ndice.mean'
+            "The jsonpath of the field in metrics.json that will be used "
+            "for the overall scores on the results page. See "
+            "http://goessner.net/articles/JsonPath/ for syntax. For example:"
+            "\n\ndice.mean"
         ),
     )
     score_title = models.CharField(
         max_length=32,
         blank=False,
-        default='Score',
+        default="Score",
         help_text=(
-            'The name that will be displayed for the scores column, for '
-            'instance:\n\nScore (log-loss)'
+            "The name that will be displayed for the scores column, for "
+            "instance:\n\nScore (log-loss)"
         ),
     )
     score_default_sort = models.CharField(
@@ -67,112 +69,121 @@ class Config(UUIDModel):
         choices=EVALUATION_SCORE_SORT_CHOICES,
         default=DESCENDING,
         help_text=(
-            'The default sorting to use for the scores on the results ' 'page.'
+            "The default sorting to use for the scores on the results " "page."
         ),
     )
     extra_results_columns = JSONField(
         default=dict,
         blank=True,
         help_text=(
-            'A JSON object that contains the extra columns from metrics.json '
-            'that will be displayed on the results page. '
-            'Where the KEYS contain the titles of the columns, '
-            'and the VALUES contain the JsonPath to the corresponding metric '
-            'in metrics.json. '
-            'For example:\n\n'
+            "A JSON object that contains the extra columns from metrics.json "
+            "that will be displayed on the results page. "
+            "Where the KEYS contain the titles of the columns, "
+            "and the VALUES contain the JsonPath to the corresponding metric "
+            "in metrics.json. "
+            "For example:\n\n"
             '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
         ),
     )
     allow_submission_comments = models.BooleanField(
         default=False,
         help_text=(
-            'Allow users to submit comments as part of their submission.'
+            "Allow users to submit comments as part of their submission."
         ),
     )
     display_submission_comments = models.BooleanField(
         default=False,
         help_text=(
-            'If true, submission comments are shown on the results page.'
+            "If true, submission comments are shown on the results page."
         ),
     )
     allow_supplementary_file = models.BooleanField(
         default=False,
         help_text=(
-            'Show a supplementary file field on the submissions page so that '
-            'users can upload an additional file along with their predictions '
-            'file as part of their submission (eg, include a pdf description '
-            'of their method).'
+            "Show a supplementary file field on the submissions page so that "
+            "users can upload an additional file along with their predictions "
+            "file as part of their submission (eg, include a pdf description "
+            "of their method)."
         ),
     )
     require_supplementary_file = models.BooleanField(
         default=False,
         help_text=(
-            'Force users to upload a supplementary file with their '
-            'predictions file.'
+            "Force users to upload a supplementary file with their "
+            "predictions file."
         ),
     )
     supplementary_file_label = models.CharField(
         max_length=32,
         blank=True,
-        default='Supplementary File',
+        default="Supplementary File",
         help_text=(
-            'The label that will be used on the submission and results page '
-            'for the supplementary file. For example: Algorithm Description.'
+            "The label that will be used on the submission and results page "
+            "for the supplementary file. For example: Algorithm Description."
         ),
     )
     supplementary_file_help_text = models.CharField(
         max_length=128,
         blank=True,
-        default='',
+        default="",
         help_text=(
-            'The help text to include on the submissions page to describe the '
+            "The help text to include on the submissions page to describe the "
             'submissions file. Eg: "A PDF description of the method.".'
         ),
     )
     show_supplementary_file_link = models.BooleanField(
         default=False,
         help_text=(
-            'Show a link to download the supplementary file on the results '
-            'page.'
+            "Show a link to download the supplementary file on the results "
+            "page."
         ),
     )
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
-            'The limit on the number of times that a user can make a '
-            'submission in a 24 hour period.'
+            "The limit on the number of times that a user can make a "
+            "submission in a 24 hour period."
         ),
     )
     submission_page_html = RichTextField(
         help_text=(
-            'HTML to include on the submission page for this challenge.'
+            "HTML to include on the submission page for this challenge."
         ),
         blank=True,
     )
     new_results_are_public = BooleanField(
         default=True,
         help_text=(
-            'If true, new results are automatically made public. If false, '
-            'the challenge administrator must manually publish each new '
-            'result.'
+            "If true, new results are automatically made public. If false, "
+            "the challenge administrator must manually publish each new "
+            "result."
+        ),
+    )
+    submission_join_key = models.CharField(
+        blank=True,
+        default="",
+        max_length=32,
+        help_text=(
+            "If predictions are submitted as csv files, which column should "
+            "be used to join the data? eg. case_id"
         ),
     )
 
     def get_absolute_url(self):
         return reverse(
-            'challenge-homepage',
-            kwargs={'challenge_short_name': self.challenge.short_name},
+            "challenge-homepage",
+            kwargs={"challenge_short_name": self.challenge.short_name},
         )
 
 
 def method_image_path(instance, filename):
     """ Deprecated: only used in a migration """
     return (
-        f'evaluation/'
-        f'{instance.challenge.pk}/'
-        f'methods/'
-        f'{instance.pk}/'
-        f'{filename}'
+        f"evaluation/"
+        f"{instance.challenge.pk}/"
+        f"methods/"
+        f"{instance.pk}/"
+        f"{filename}"
     )
 
 
@@ -180,38 +191,37 @@ class Method(UUIDModel, ContainerImageModel):
     """
     Stores the methods for performing an evaluation
     """
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
+
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
         return reverse(
-            'evaluation:method-detail',
+            "evaluation:method-detail",
             kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
+                "pk": self.pk,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
 
 def submission_file_path(instance, filename):
     return (
-        f'evaluation/'
-        f'{instance.challenge.pk}/'
-        f'submissions/'
-        f'{instance.creator.pk}/'
-        f'{instance.pk}/'
-        f'{filename}'
+        f"evaluation/"
+        f"{instance.challenge.pk}/"
+        f"submissions/"
+        f"{instance.creator.pk}/"
+        f"{instance.pk}/"
+        f"{filename}"
     )
 
 
 def submission_supplementary_file_path(instance, filename):
     return (
-        f'evaluation-supplementary/'
-        f'{instance.challenge.pk}/'
-        f'{instance.creator.pk}/'
-        f'{instance.pk}/'
-        f'{filename}'
+        f"evaluation-supplementary/"
+        f"{instance.challenge.pk}/"
+        f"{instance.creator.pk}/"
+        f"{instance.pk}/"
+        f"{filename}"
     )
 
 
@@ -219,45 +229,44 @@ class Submission(UUIDModel):
     """
     Stores files for evaluation
     """
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     # Limitation for now: only accept zip files as these are expanded in
     # evaluation.tasks.Evaluation. We could extend this first to csv file
     # submission with some validation
     file = models.FileField(
         upload_to=submission_file_path,
         validators=[
-            MimeTypeValidator(allowed_types=('application/zip', 'text/plain')),
-            ExtensionValidator(allowed_extensions=('.zip', '.csv')),
+            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
+            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
         validators=[
-            MimeTypeValidator(allowed_types=('text/plain', 'application/pdf'))
+            MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],
         blank=True,
     )
     comment = models.CharField(
         max_length=128,
         blank=True,
-        default='',
+        default="",
         help_text=(
-            'You can add a comment here to help you keep track of your '
-            'submissions.'
+            "You can add a comment here to help you keep track of your "
+            "submissions."
         ),
     )
 
     def get_absolute_url(self):
         return reverse(
-            'evaluation:submission-detail',
+            "evaluation:submission-detail",
             kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
+                "pk": self.pk,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
@@ -265,46 +274,60 @@ class Submission(UUIDModel):
 class SubmissionEvaluator(Executor):
     def __init__(self, *args, **kwargs):
         super().__init__(
-            *args,
-            results_file=Path("/output/metrics.json"),
-            **kwargs,
+            *args, results_file=Path("/output/metrics.json"), **kwargs
         )
 
     def _copy_input_files(self, writer):
         for file in self._input_files:
-            dest_file = '/tmp/submission-src'
-            put_file(
-                container=writer, src=file, dest=dest_file
-            )
+            dest_file = "/tmp/submission-src"
+            put_file(container=writer, src=file, dest=dest_file)
 
-            with file.open('rb') as f:
+            with file.open("rb") as f:
                 mimetype = get_file_mimetype(f)
 
-            if mimetype.lower() == 'application/zip':
+            if mimetype.lower() == "application/zip":
                 # Unzip the file in the container rather than in the python
                 # process. With resource limits this should provide some
                 # protection against zip bombs etc.
-                writer.exec_run(f'unzip {dest_file} -d /input/')
+                writer.exec_run(f"unzip {dest_file} -d /input/")
+
+                # Remove a duplicated directory
+                input_files = (
+                    writer.exec_run(f"ls -1 /input/")
+                    .output.decode()
+                    .splitlines()
+                )
+
+                if (
+                    len(input_files) == 1
+                    and not writer.exec_run(
+                        f"ls -d /input/{input_files[0]}/"
+                    ).exit_code
+                ):
+                    writer.exec_run(
+                        f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
+                        f'&& rm -r /input/{input_files[0]}/"'
+                    )
+
             else:
                 # Not a zip file, so must be a csv
-                writer.exec_run(f'mv {dest_file} /input/submission.csv')
+                writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
 
 class Result(UUIDModel):
     """
     Stores individual results for a challenges
     """
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
-    job = models.OneToOneField('Job', null=True, on_delete=models.CASCADE)
+
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
     public = models.BooleanField(default=True)
     rank = models.PositiveIntegerField(
         default=0,
         help_text=(
-            'The position of this result on the leaderboard. If the value is '
-            'zero, then the result is unranked.'
+            "The position of this result on the leaderboard. If the value is "
+            "zero, then the result is unranked."
         ),
     )
     # Cache the url as this is slow on the results list page
@@ -321,10 +344,10 @@ class Result(UUIDModel):
 
     def get_absolute_url(self):
         return reverse(
-            'evaluation:result-detail',
+            "evaluation:result-detail",
             kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
+                "pk": self.pk,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
@@ -334,11 +357,9 @@ class Job(UUIDModel, ContainerExecJobModel):
     Stores information about a job for a given upload
     """
 
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE
-    )
-    submission = models.ForeignKey('Submission', on_delete=models.CASCADE)
-    method = models.ForeignKey('Method', on_delete=models.CASCADE)
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
+    method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
     @property
     def container(self):
@@ -346,7 +367,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     @property
     def input_files(self):
-        return [self.submission.file, ]
+        return [self.submission.file]
 
     @property
     def executor_cls(self):
@@ -382,22 +403,22 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     def get_absolute_url(self):
         return reverse(
-            'evaluation:job-detail',
+            "evaluation:job-detail",
             kwargs={
-                'pk': self.pk,
-                'challenge_short_name': self.challenge.short_name,
+                "pk": self.pk,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
 
 def result_screenshot_path(instance, filename):
     return (
-        f'evaluation/'
-        f'{instance.challenge.pk}/'
-        f'screenshots/'
-        f'{instance.result.pk}/'
-        f'{instance.pk}/'
-        f'{filename}'
+        f"evaluation/"
+        f"{instance.challenge.pk}/"
+        f"screenshots/"
+        f"{instance.result.pk}/"
+        f"{instance.pk}/"
+        f"{filename}"
     )
 
 
@@ -405,5 +426,6 @@ class ResultScreenshot(UUIDModel):
     """
     Stores a screenshot that is generated during an evaluation
     """
-    result = models.ForeignKey('Result', on_delete=models.CASCADE)
+
+    result = models.ForeignKey("Result", on_delete=models.CASCADE)
     image = models.ImageField(upload_to=result_screenshot_path)

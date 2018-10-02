@@ -7,16 +7,14 @@ from tests.utils import validate_admin_only_view, get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view", ['pages:list', 'pages:create', 'pages:delete']
-)
+@pytest.mark.parametrize("view", ["pages:list", "pages:create", "pages:delete"])
 def test_page_admin_permissions(view, client, TwoChallengeSets):
-    if view == 'pages:delete':
+    if view == "pages:delete":
         PageFactory(
             challenge=TwoChallengeSets.ChallengeSet1.challenge,
-            title='challenge1pagepermtest',
+            title="challenge1pagepermtest",
         )
-        reverse_kwargs = {'page_title': 'challenge1pagepermtest'}
+        reverse_kwargs = {"page_title": "challenge1pagepermtest"}
     else:
         reverse_kwargs = None
     validate_admin_only_view(
@@ -31,13 +29,13 @@ def test_page_admin_permissions(view, client, TwoChallengeSets):
 def test_page_update_permissions(client, TwoChallengeSets):
     p1 = PageFactory(
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        title='challenge1page1permissiontest',
+        title="challenge1page1permissiontest",
     )
     validate_admin_only_view(
-        viewname='pages:update',
+        viewname="pages:update",
         two_challenge_set=TwoChallengeSets,
         client=client,
-        reverse_kwargs={'page_title': p1.title},
+        reverse_kwargs={"page_title": p1.title},
     )
 
 
@@ -46,14 +44,14 @@ def test_page_list_filter(client, TwoChallengeSets):
     """ Check that only pages related to this challenge are listed """
     p1 = PageFactory(
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        title='challenge1page1',
+        title="challenge1page1",
     )
     p2 = PageFactory(
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
-        title='challenge2page1',
+        title="challenge2page1",
     )
     response = get_view_for_user(
-        viewname='pages:list',
+        viewname="pages:list",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
@@ -61,7 +59,7 @@ def test_page_list_filter(client, TwoChallengeSets):
     assert p1.title in response.rendered_content
     assert p2.title not in response.rendered_content
     response = get_view_for_user(
-        viewname='pages:list',
+        viewname="pages:list",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
         user=TwoChallengeSets.admin12,
@@ -72,16 +70,18 @@ def test_page_list_filter(client, TwoChallengeSets):
 
 @pytest.mark.django_db
 def test_page_create(client, TwoChallengeSets):
-    page_html = '<h1>HELLO WORLD</h1>'
-    page_title = 'testpage1'
+    page_html = "<h1>HELLO WORLD</h1>"
+    page_title = "testpage1"
     response = get_view_for_user(
-        viewname='pages:create',
+        viewname="pages:create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.ChallengeSet1.admin,
         data={
-            'title': page_title, 'html': page_html, 'permission_lvl': Page.ALL
+            "title": page_title,
+            "html": page_html,
+            "permission_lvl": Page.ALL,
         },
     )
     assert response.status_code == 302
@@ -90,17 +90,17 @@ def test_page_create(client, TwoChallengeSets):
     assert page_html in str(response.content)
     # Check that it was created in the correct challenge
     response = get_view_for_user(
-        viewname='pages:detail',
+        viewname="pages:detail",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        reverse_kwargs={'page_title': page_title},
+        reverse_kwargs={"page_title": page_title},
     )
     assert response.status_code == 200
     response = get_view_for_user(
-        viewname='pages:detail',
+        viewname="pages:detail",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
-        reverse_kwargs={'page_title': page_title},
+        reverse_kwargs={"page_title": page_title},
     )
     assert response.status_code == 404
 
@@ -109,77 +109,77 @@ def test_page_create(client, TwoChallengeSets):
 def test_page_update(client, TwoChallengeSets):
     p1 = PageFactory(
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        title='page1updatetest',
-        html='oldhtml',
+        title="page1updatetest",
+        html="oldhtml",
     )
     # page with the same name in another challenge to check selection
     PageFactory(
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
-        title='page1updatetest',
-        html='oldhtml',
+        title="page1updatetest",
+        html="oldhtml",
     )
     response = get_view_for_user(
-        viewname='pages:update',
+        viewname="pages:update",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': p1.title},
+        reverse_kwargs={"page_title": p1.title},
     )
     assert response.status_code == 200
-    assert 'value=\"page1updatetest\"' in response.rendered_content
+    assert 'value="page1updatetest"' in response.rendered_content
     response = get_view_for_user(
-        viewname='pages:update',
+        viewname="pages:update",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': p1.title},
+        reverse_kwargs={"page_title": p1.title},
         data={
-            'title': 'editedtitle',
-            'permission_lvl': Page.ALL,
-            'html': 'newhtml',
+            "title": "editedtitle",
+            "permission_lvl": Page.ALL,
+            "html": "newhtml",
         },
     )
     assert response.status_code == 302
     response = get_view_for_user(
-        viewname='pages:detail',
+        viewname="pages:detail",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': 'editedtitle'},
+        reverse_kwargs={"page_title": "editedtitle"},
     )
     assert response.status_code == 200
-    assert 'newhtml' in str(response.content)
+    assert "newhtml" in str(response.content)
     # check that the other page is unaffected
     response = get_view_for_user(
-        viewname='pages:detail',
+        viewname="pages:detail",
         client=client,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': 'page1updatetest'},
+        reverse_kwargs={"page_title": "page1updatetest"},
     )
     assert response.status_code == 200
-    assert 'oldhtml' in str(response.content)
+    assert "oldhtml" in str(response.content)
 
 
 @pytest.mark.django_db
 def test_page_delete(client, TwoChallengeSets):
     # Two pages with the same title, make sure the right one is deleted
     c1p1 = PageFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge, title='page1'
+        challenge=TwoChallengeSets.ChallengeSet1.challenge, title="page1"
     )
     c2p1 = PageFactory(
-        challenge=TwoChallengeSets.ChallengeSet2.challenge, title='page1'
+        challenge=TwoChallengeSets.ChallengeSet2.challenge, title="page1"
     )
     assert Page.objects.filter(pk=c1p1.pk).exists()
     assert Page.objects.filter(pk=c2p1.pk).exists()
     response = get_view_for_user(
-        viewname='pages:delete',
+        viewname="pages:delete",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': 'page1'},
+        reverse_kwargs={"page_title": "page1"},
     )
     assert response.status_code == 302
     assert not Page.objects.filter(pk=c1p1.pk).exists()
@@ -223,17 +223,17 @@ def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
     assert_page_order(pages, [1, 2, 3, 4])
     assert_page_order(c2_pages, [1, 2, 3, 4])
     response = get_view_for_user(
-        viewname='pages:update',
+        viewname="pages:update",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': pages[page_to_move].title},
+        reverse_kwargs={"page_title": pages[page_to_move].title},
         data={
-            'title': pages[page_to_move].title,
-            'permission_lvl': pages[page_to_move].permission_lvl,
-            'html': pages[page_to_move].html,
-            'move': move_op,
+            "title": pages[page_to_move].title,
+            "permission_lvl": pages[page_to_move].permission_lvl,
+            "html": pages[page_to_move].html,
+            "move": move_op,
         },
     )
     assert response.status_code == 302
@@ -244,46 +244,46 @@ def test_page_move(page_to_move, move_op, expected, client, TwoChallengeSets):
 @pytest.mark.django_db
 def test_create_page_with_same_title(client, TwoChallengeSets):
     PageFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge, title='page1'
+        challenge=TwoChallengeSets.ChallengeSet1.challenge, title="page1"
     )
     # Creating a page with the same title should be denied
     response = get_view_for_user(
-        viewname='pages:create',
+        viewname="pages:create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.ChallengeSet1.admin,
-        data={'title': 'page1', 'html': 'hello', 'permission_lvl': Page.ALL},
+        data={"title": "page1", "html": "hello", "permission_lvl": Page.ALL},
     )
     assert response.status_code == 200
-    assert 'A page with that title already exists' in response.rendered_content
+    assert "A page with that title already exists" in response.rendered_content
     # Creating one in another challenge should work
     response = get_view_for_user(
-        viewname='pages:create',
+        viewname="pages:create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,
         user=TwoChallengeSets.ChallengeSet2.admin,
-        data={'title': 'page1', 'html': 'hello', 'permission_lvl': Page.ALL},
+        data={"title": "page1", "html": "hello", "permission_lvl": Page.ALL},
     )
     assert response.status_code == 302
     # Check the updating
     PageFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge, title='page2'
+        challenge=TwoChallengeSets.ChallengeSet1.challenge, title="page2"
     )
     response = get_view_for_user(
-        viewname='pages:update',
+        viewname="pages:update",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         user=TwoChallengeSets.admin12,
-        reverse_kwargs={'page_title': 'page2'},
+        reverse_kwargs={"page_title": "page2"},
         data={
-            'title': 'page1',
-            'html': ' ',
-            'permission_lvl': Page.ALL,
-            'move': BLANK_CHOICE_DASH[0],
+            "title": "page1",
+            "html": " ",
+            "permission_lvl": Page.ALL,
+            "move": BLANK_CHOICE_DASH[0],
         },
     )
     assert response.status_code == 200
-    assert 'A page with that title already exists' in response.rendered_content
+    assert "A page with that title already exists" in response.rendered_content

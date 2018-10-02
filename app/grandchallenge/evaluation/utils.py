@@ -3,7 +3,7 @@ from typing import Tuple
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
-    get_jsonpath,
+    get_jsonpath
 )
 
 
@@ -17,7 +17,7 @@ def generate_rank_dict(
     given metric path.
     """
     rank = defaultdict(dict)
-    pk_val = namedtuple('pk_val', ['pk', 'val'])
+    pk_val = namedtuple("pk_val", ["pk", "val"])
     if len(queryset) == 0:
         # No results to calculate
         return rank

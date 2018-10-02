@@ -15,11 +15,11 @@ def user_profile_link(user: AbstractUser) -> str:
             '  <a href="{0}">'
             '    <img class="mugshot" src="{1}" alt="User Mugshot" '
             '         style="height: 1.5em; vertical-align: middle;"/>'
-            '    {2}'
-            '  </a>'
-            '</div>'
+            "    {2}"
+            "  </a>"
+            "</div>"
         ),
-        reverse('userena_profile_detail', kwargs={'username': user.username}),
+        reverse("userena_profile_detail", kwargs={"username": user.username}),
         user.user_profile.get_mugshot_url(),
         user.username,
     )

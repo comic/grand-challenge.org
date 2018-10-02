@@ -11,15 +11,11 @@ from tests.jqfileupload_tests.external_test_support import UploadSession
 def test_upload_duplicate_images(rf: RequestFactory):
     widget1 = AjaxUploadWidget(
         ajax_target_path="/ajax",
-        upload_validators=(
-            reject_duplicate_filenames,
-        )
+        upload_validators=(reject_duplicate_filenames,),
     )
     widget2 = AjaxUploadWidget(
         ajax_target_path="/ajax2",
-        upload_validators=(
-            reject_duplicate_filenames,
-        )
+        upload_validators=(reject_duplicate_filenames,),
     )
 
     upload_session = UploadSession(test_upload_duplicate_images)
@@ -27,37 +23,39 @@ def test_upload_duplicate_images(rf: RequestFactory):
 
     content = b"0123456789" * int(1e6)
 
-    response = widget1.handle_ajax(upload_session.single_chunk_upload(
-        rf,
-        "test_duplicate_filename.txt",
-        content,
-        widget1.ajax_target_path
-    ))
+    response = widget1.handle_ajax(
+        upload_session.single_chunk_upload(
+            rf, "test_duplicate_filename.txt", content, widget1.ajax_target_path
+        )
+    )
     assert response.status_code == 200
 
-    response = widget1.handle_ajax(upload_session.single_chunk_upload(
-        rf,
-        "test_duplicate_filename.txt",
-        content,
-        widget1.ajax_target_path
-    ))
+    response = widget1.handle_ajax(
+        upload_session.single_chunk_upload(
+            rf, "test_duplicate_filename.txt", content, widget1.ajax_target_path
+        )
+    )
     assert response.status_code == 403
 
-    response = widget1.handle_ajax(upload_session.single_chunk_upload(
-        rf,
-        "test_different_filename.txt",
-        b"123456789",
-        widget1.ajax_target_path
-    ))
+    response = widget1.handle_ajax(
+        upload_session.single_chunk_upload(
+            rf,
+            "test_different_filename.txt",
+            b"123456789",
+            widget1.ajax_target_path,
+        )
+    )
     assert response.status_code == 200
 
     # Should work for the second session!
-    response = widget1.handle_ajax(upload_session2.single_chunk_upload(
-        rf,
-        "test_duplicate_filename.txt",
-        b"123456789",
-        widget1.ajax_target_path
-    ))
+    response = widget1.handle_ajax(
+        upload_session2.single_chunk_upload(
+            rf,
+            "test_duplicate_filename.txt",
+            b"123456789",
+            widget1.ajax_target_path,
+        )
+    )
     assert response.status_code == 200
 
     # Multi chunk uploads should not be special!

@@ -48,7 +48,6 @@ def test_parse_header_valid_mhd_with_extra_fields():
         "DimSize": "10 10 10",
         "ElementType": "MET_DOUBLE",
         "ElementDataFile": "image10x10x10.zraw",
-
         "# Extra stuff": None,
         "woohoo": None,
         "Some_values": '"Huh? \u2713\U0001f604"',

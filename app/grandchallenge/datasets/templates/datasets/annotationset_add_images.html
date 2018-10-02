@@ -1,0 +1,19 @@
+{% extends "site.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}
+    Add {{ kind_display }} images to the {{ phase_display }} dataset - {{ block.super }}
+{% endblock %}
+
+{% block pagecontent %}
+
+    <h2>Add {{ kind_display }} images to the {{ phase_display }} dataset</h2>
+
+    {% crispy form %}
+
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+
+{% endblock %}

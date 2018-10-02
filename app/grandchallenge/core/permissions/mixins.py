@@ -16,8 +16,9 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
     """
+
     permission_denied_message = (
-        'You do not have the correct permissions to access this page'
+        "You do not have the correct permissions to access this page"
     )
 
     def dispatch(self, request, *args, **kwargs):
@@ -25,7 +26,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
             messages.add_message(
                 self.request,
                 messages.INFO,
-                'You need to login to access this page.',
+                "You need to login to access this page.",
             )
             return redirect_to_login(
                 build_absolute_uri(self.request),
@@ -37,9 +38,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
         if not user_test_result:
             return HttpResponseForbidden(self.get_permission_denied_message())
 
-        return super(UserAuthAndTestMixin, self).dispatch(
-            request, *args, **kwargs
-        )
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserIsChallengeAdminMixin(UserAuthAndTestMixin):

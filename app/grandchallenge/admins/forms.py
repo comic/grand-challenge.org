@@ -8,16 +8,16 @@ from grandchallenge.challenges.models import Challenge
 
 
 class AdminsForm(forms.Form):
-    ADD = 'ADD'
-    REMOVE = 'REMOVE'
-    CHOICES = ((ADD, 'Add admin'), (REMOVE, 'Remove admin'))
+    ADD = "ADD"
+    REMOVE = "REMOVE"
+    CHOICES = ((ADD, "Add admin"), (REMOVE, "Remove admin"))
     user = forms.ModelChoiceField(
-        queryset=get_user_model().objects.all().order_by('username'),
+        queryset=get_user_model().objects.all().order_by("username"),
         help_text=(
-            'Select a user that will be added to the admins group for '
-            'this challenge. This user will have the ability to completely '
-            'manage this challenge, including updating the site, deleting '
-            'pages, etc.'
+            "Select a user that will be added to the admins group for "
+            "this challenge. This user will have the ability to completely "
+            "manage this challenge, including updating the site, deleting "
+            "pages, etc."
         ),
         required=True,
     )
@@ -26,19 +26,19 @@ class AdminsForm(forms.Form):
     )
 
     def clean_user(self):
-        user = self.cleaned_data['user']
+        user = self.cleaned_data["user"]
         if user == get_anonymous_user():
-            raise ValidationError('You cannot add this user as an admin!')
+            raise ValidationError("You cannot add this user as an admin!")
 
         return user
 
     def add_or_remove_user(self, *, challenge: Challenge, site):
-        if self.cleaned_data['action'] == AdminsForm.ADD:
-            challenge.add_admin(self.cleaned_data['user'])
+        if self.cleaned_data["action"] == AdminsForm.ADD:
+            challenge.add_admin(self.cleaned_data["user"])
             send_new_admin_notification_email(
                 challenge=challenge,
-                new_admin=self.cleaned_data['user'],
+                new_admin=self.cleaned_data["user"],
                 site=site,
             )
-        elif self.cleaned_data['action'] == AdminsForm.REMOVE:
-            challenge.remove_admin(self.cleaned_data['user'])
+        elif self.cleaned_data["action"] == AdminsForm.REMOVE:
+            challenge.remove_admin(self.cleaned_data["user"])

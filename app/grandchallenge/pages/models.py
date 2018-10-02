@@ -13,10 +13,11 @@ class Page(ComicSiteModel):
     """
     A single editable page containing html and maybe special output plugins
     """
-    UP = 'UP'
-    DOWN = 'DOWN'
-    FIRST = 'FIRST'
-    LAST = 'LAST'
+
+    UP = "UP"
+    DOWN = "DOWN"
+    FIRST = "FIRST"
+    LAST = "LAST"
     order = models.IntegerField(
         editable=False,
         default=1,
@@ -43,16 +44,14 @@ class Page(ComicSiteModel):
             try:
                 max_order = Page.objects.filter(
                     challenge=self.challenge
-                ).aggregate(
-                    Max('order')
-                )
+                ).aggregate(Max("order"))
             except ObjectDoesNotExist:
                 max_order = None
             try:
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
-        super(Page, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def raw_html(self):
         """
@@ -105,17 +104,18 @@ class Page(ComicSiteModel):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
         url = reverse(
-            'pages:detail', args=[self.challenge.short_name, self.title]
+            "pages:detail", args=[self.challenge.short_name, self.title]
         )
         return url
 
     class Meta(ComicSiteModel.Meta):
         """special class holding meta info for this class"""
+
         # make sure a single site never has two pages with the same name
         # because page names are used as keys in urls
         unique_together = (("challenge", "title"),)
         # when getting a list of these objects this ordering is used
-        ordering = ['challenge', 'order']
+        ordering = ["challenge", "order"]
 
 
 class ErrorPage(Page):
@@ -123,6 +123,7 @@ class ErrorPage(Page):
     Just the same as a Page, just that it does not display an edit button as
     admin
     """
+
     is_error_page = True
 
     def can_be_viewed_by(self, user):

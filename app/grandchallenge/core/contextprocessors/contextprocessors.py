@@ -29,7 +29,7 @@ def comic_site(request):
     try:
         [site, pages, metafooterpages] = site_get_standard_vars(sitename)
     except Challenge.DoesNotExist:
-        # Don't crash the system here, if a site cannot be found it will crash 
+        # Don't crash the system here, if a site cannot be found it will crash
         # in a more appropriate location
         return {}
 
@@ -44,8 +44,8 @@ def comic_site(request):
 
 def subdomain_absolute_uri(request):
     uri = build_absolute_uri(request)
-    return {'subdomain_absolute_uri': uri}
+    return {"subdomain_absolute_uri": uri}
 
 
 def google_analytics_id(*_, **__):
-    return {'google_analytics_id': settings.GOOGLE_ANALYTICS_ID}
+    return {"google_analytics_id": settings.GOOGLE_ANALYTICS_ID}

@@ -12,7 +12,6 @@ env:
   - DOCKER_COMPOSE_VERSION=1.21.2
 
 before_install:
-  - sudo apt-get update
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
@@ -22,13 +21,19 @@ before_install:
   - sudo chmod a+w /tmp/coverage
 
 install:
-  - docker-compose up --build -d
+  - make build
+  - docker-compose up -d
 
 script:
-  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web dockerize -wait tcp://postgres:5432 -timeout 30s bash -c "[ -e /static ] || rm -rf /static && python manage.py collectstatic --noinput && COVERAGE_FILE=/tmp/coverage/.coverage py.test --cov-report= --cov=."
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
 
 after_success:
   - mv /tmp/coverage/.coverage .coverage.docker
   - coverage combine
   - codecov
 
+deploy:
+  provider: script
+  script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
+  on:
+    all_branches: true

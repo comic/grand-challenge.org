@@ -51,7 +51,6 @@ class IntervalMap:
         self.__endpoints.sort()
 
     def __find_endpoint_index(self, i):
-
         def find(start, end):
             # use nested intervals to find correct label
             if start == end:
@@ -93,7 +92,7 @@ class IntervalMap:
             In case that i does not fall in any interval/
         """
         if not isinstance(i, int):
-            raise TypeError('index must be int')
+            raise TypeError("index must be int")
 
         endpoint_index = self.__find_endpoint_index(i)
         if endpoint_index is None:
@@ -107,7 +106,7 @@ class IntervalMap:
 
     def __getitem__(self, i):
         if not isinstance(i, int):
-            raise TypeError('index must be int')
+            raise TypeError("index must be int")
 
         if i < 0:
             raise IndexError()

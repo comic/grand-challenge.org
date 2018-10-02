@@ -1,9 +1,14 @@
-{% extends "base.html" %}
+{% extends "site_signin.html" %}
 {% load crispy_forms_tags %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Create An Algorithm - {{ block.super }}
+{% endblock %}
 
 {% block content %}
 
-    <h2>New Algorithm</h2>
+    <h2>Create An Algorithm</h2>
 
     {% crispy form %}
 

@@ -20,7 +20,7 @@ def test_external_challenge_buttons(client):
     user = UserFactory()
 
     response = get_view_for_user(
-        client=client, viewname="challenges:list", user=user,
+        client=client, viewname="challenges:list", user=user
     )
 
     assert create_url not in response.rendered_content
@@ -29,20 +29,19 @@ def test_external_challenge_buttons(client):
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        client=client, viewname="challenges:list", user=staff_user,
+        client=client, viewname="challenges:list", user=staff_user
     )
 
     assert create_url in response.rendered_content
     assert list_url in response.rendered_content
+
 
 @pytest.mark.django_db
 def test_challenge_list(client):
     c = ChallengeFactory(hidden=False)
     hidden = ChallengeFactory(hidden=True)
 
-    response = get_view_for_user(
-        client=client, viewname="challenges:list",
-    )
+    response = get_view_for_user(client=client, viewname="challenges:list")
 
     assert c.short_name in response.rendered_content
     assert hidden.short_name not in response.rendered_content

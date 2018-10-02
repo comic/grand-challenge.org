@@ -11,18 +11,17 @@ from grandchallenge.challenges.views import (
     ExternalChallengeDelete,
 )
 
-app_name = 'challenges'
+app_name = "challenges"
 
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
-    path('my-challenges/', UsersChallengeList.as_view(), name='users-list'),
-    path('create/', ChallengeCreate.as_view(), name='create'),
-
+    path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
+    path("create/", ChallengeCreate.as_view(), name="create"),
     path("external/", ExternalChallengeList.as_view(), name="external-list"),
     path(
-        'external/create/',
+        "external/create/",
         ExternalChallengeCreate.as_view(),
-        name='external-create'
+        name="external-create",
     ),
     path(
         "external/<slug:short_name>/update/",
@@ -34,10 +33,9 @@ urlpatterns = [
         ExternalChallengeDelete.as_view(),
         name="external-delete",
     ),
-
     path(
-        '<slug:challenge_short_name>/update/',
+        "<slug:challenge_short_name>/update/",
         ChallengeUpdate.as_view(),
-        name='update',
+        name="update",
     ),
 ]

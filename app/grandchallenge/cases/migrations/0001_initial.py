@@ -12,101 +12,197 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
+    dependencies = [migrations.swappable_dependency(settings.AUTH_USER_MODEL)]
 
     operations = [
         migrations.CreateModel(
-            name='Case',
+            name="Case",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "creator",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='CaseFile',
+            name="CaseFile",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(help_text='Select the file for this case.', upload_to=grandchallenge.cases.models.case_file_path, validators=[grandchallenge.core.validators.ExtensionValidator(allowed_extensions=('.mhd', '.raw', '.zraw'))])),
-                ('case', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Case')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "file",
+                    models.FileField(
+                        help_text="Select the file for this case.",
+                        upload_to=grandchallenge.cases.models.case_file_path,
+                        validators=[
+                            grandchallenge.core.validators.ExtensionValidator(
+                                allowed_extensions=(".mhd", ".raw", ".zraw")
+                            )
+                        ],
+                    ),
+                ),
+                (
+                    "case",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="cases.Case",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='Image',
+            name="Image",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=128)),
-                ('width', models.IntegerField()),
-                ('height', models.IntegerField()),
-                ('depth', models.IntegerField(null=True)),
-                ('color_space', models.CharField(choices=[('GRAY', 'GRAY'), ('RGB', 'RGB'), ('RGBA', 'RGBA')], max_length=4)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=128)),
+                ("width", models.IntegerField()),
+                ("height", models.IntegerField()),
+                ("depth", models.IntegerField(null=True)),
+                (
+                    "color_space",
+                    models.CharField(
+                        choices=[
+                            ("GRAY", "GRAY"),
+                            ("RGB", "RGB"),
+                            ("RGBA", "RGBA"),
+                        ],
+                        max_length=4,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='ImageFile',
+            name="ImageFile",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(upload_to=grandchallenge.cases.models.image_file_path)),
-                ('image', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='cases.Image')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "file",
+                    models.FileField(
+                        upload_to=grandchallenge.cases.models.image_file_path
+                    ),
+                ),
+                (
+                    "image",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="cases.Image",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='RawImageFile',
+            name="RawImageFile",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('filename', models.CharField(max_length=128)),
-                ('staged_file_id', models.UUIDField(blank=True, null=True)),
-                ('error', models.CharField(default=None, max_length=256, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("filename", models.CharField(max_length=128)),
+                ("staged_file_id", models.UUIDField(blank=True, null=True)),
+                (
+                    "error",
+                    models.CharField(default=None, max_length=256, null=True),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='RawImageUploadSession',
+            name="RawImageUploadSession",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('session_state', models.CharField(default='created', max_length=16)),
-                ('processing_task', models.UUIDField(default=None, null=True)),
-                ('error_message', models.CharField(default=None, max_length=256, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "session_state",
+                    models.CharField(default="created", max_length=16),
+                ),
+                ("processing_task", models.UUIDField(default=None, null=True)),
+                (
+                    "error_message",
+                    models.CharField(default=None, max_length=256, null=True),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.AddField(
-            model_name='rawimagefile',
-            name='upload_session',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.RawImageUploadSession'),
+            model_name="rawimagefile",
+            name="upload_session",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="cases.RawImageUploadSession",
+            ),
         ),
         migrations.AddField(
-            model_name='image',
-            name='origin',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='cases.RawImageUploadSession'),
+            model_name="image",
+            name="origin",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="cases.RawImageUploadSession",
+            ),
         ),
     ]

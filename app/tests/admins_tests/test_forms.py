@@ -12,11 +12,11 @@ def test_admins_add(client, TwoChallengeSets):
     assert not TwoChallengeSets.ChallengeSet1.challenge.is_admin(user=user)
     assert not TwoChallengeSets.ChallengeSet2.challenge.is_admin(user=user)
     response = get_view_for_user(
-        viewname='admins:update',
+        viewname="admins:update",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        data={'user': user.pk, 'action': AdminsForm.ADD},
+        data={"user": user.pk, "action": AdminsForm.ADD},
         user=TwoChallengeSets.ChallengeSet1.admin,
     )
     assert response.status_code == 302
@@ -36,13 +36,11 @@ def test_admins_remove(client, TwoChallengeSets):
         user=TwoChallengeSets.admin12
     )
     response = get_view_for_user(
-        viewname='admins:update',
+        viewname="admins:update",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        data={
-            'user': TwoChallengeSets.admin12.pk, 'action': AdminsForm.REMOVE
-        },
+        data={"user": TwoChallengeSets.admin12.pk, "action": AdminsForm.REMOVE},
         user=TwoChallengeSets.ChallengeSet1.admin,
     )
     assert response.status_code == 302

@@ -1,1 +1,1 @@
-default_app_config = 'grandchallenge.teams.apps.TeamsConfig'
+default_app_config = "grandchallenge.teams.apps.TeamsConfig"

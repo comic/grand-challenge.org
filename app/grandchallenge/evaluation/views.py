@@ -8,14 +8,22 @@ from django.utils import timezone
 from django.views.generic import CreateView, ListView, DetailView, UpdateView
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin, UserIsChallengeParticipantOrAdminMixin
+    UserIsChallengeAdminMixin,
+    UserIsChallengeParticipantOrAdminMixin,
 )
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.evaluation.forms import (
-    MethodForm, SubmissionForm, ConfigForm, LegacySubmissionForm
+    MethodForm,
+    SubmissionForm,
+    ConfigForm,
+    LegacySubmissionForm,
 )
 from grandchallenge.evaluation.models import (
-    Result, Submission, Job, Method, Config,
+    Result,
+    Submission,
+    Job,
+    Method,
+    Config,
 )
 
 
@@ -35,7 +43,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = self.request.challenge
-        uploaded_file = form.cleaned_data['chunked_upload'][0]
+        uploaded_file = form.cleaned_data["chunked_upload"][0]
         with uploaded_file.open() as f:
             form.instance.image.save(uploaded_file.name, File(f))
         return super().form_valid(form)
@@ -45,7 +53,7 @@ class MethodList(UserIsChallengeAdminMixin, ListView):
     model = Method
 
     def get_queryset(self):
-        queryset = super(MethodList, self).get_queryset()
+        queryset = super().get_queryset()
         return queryset.filter(challenge=self.request.challenge)
 
 
@@ -57,6 +65,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     """
     This class has no permissions, do not use it directly! See the subclasses
     """
+
     model = Submission
     success_message = (
         "Your submission was successful. "
@@ -70,11 +79,11 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         kwargs.update(
             {
-                'display_comment_field': config.allow_submission_comments,
-                'allow_supplementary_file': config.allow_supplementary_file,
-                'require_supplementary_file': config.require_supplementary_file,
-                'supplementary_file_label': config.supplementary_file_label,
-                'supplementary_file_help_text': config.supplementary_file_help_text,
+                "display_comment_field": config.allow_submission_comments,
+                "allow_supplementary_file": config.allow_supplementary_file,
+                "require_supplementary_file": config.require_supplementary_file,
+                "supplementary_file_label": config.supplementary_file_label,
+                "supplementary_file_help_text": config.supplementary_file_help_text,
             }
         )
 
@@ -95,7 +104,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
 
-        context.update({'pending_jobs': pending_jobs})
+        context.update({"pending_jobs": pending_jobs})
 
         return context
 
@@ -103,8 +112,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         self,
         *,
         max_subs: int,
-        period: timedelta=timedelta(days=1),
-        now: datetime=None
+        period: timedelta = timedelta(days=1),
+        now: datetime = None,
     ) -> Dict:
         """
         Determines the number of submissions left for the user in a given time
@@ -120,9 +129,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             challenge=self.request.challenge,
             creator=self.request.user,
             created__gte=now - period,
-        ).order_by(
-            '-created'
-        )
+        ).order_by("-created")
 
         try:
             next_sub_at = subs[max_subs - 1].created + period
@@ -130,8 +137,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             next_sub_at = now
 
         return {
-            'remaining_submissions': max_subs - len(subs),
-            'next_submission_at': next_sub_at,
+            "remaining_submissions": max_subs - len(subs),
+            "next_submission_at": next_sub_at,
         }
 
     def form_valid(self, form):
@@ -141,7 +148,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         form.instance.challenge = self.request.challenge
 
-        uploaded_file = form.cleaned_data['chunked_upload'][0]
+        uploaded_file = form.cleaned_data["chunked_upload"][0]
 
         with uploaded_file.open() as f:
             form.instance.file.save(uploaded_file.name, File(f))
@@ -150,8 +157,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            'evaluation:job-list',
-            kwargs={'challenge_short_name': self.object.challenge.short_name},
+            "evaluation:job-list",
+            kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
 
@@ -169,7 +176,7 @@ class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
         *,
         max_subs: int,
         period: timedelta = timedelta(days=1),
-        now: datetime = None
+        now: datetime = None,
     ):
         """
         Admins should always be able to upload legacy results, so set the
@@ -179,8 +186,8 @@ class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
             now = timezone.now()
 
         return {
-            'remaining_submissions': float('Inf'),
-            'next_submission_at': now,
+            "remaining_submissions": float("Inf"),
+            "next_submission_at": now,
         }
 
 
@@ -189,7 +196,7 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their submissions """
-        queryset = super(SubmissionList, self).get_queryset()
+        queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
@@ -208,7 +215,7 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
 
 class JobCreate(UserIsChallengeAdminMixin, CreateView):
     model = Job
-    fields = '__all__'
+    fields = "__all__"
 
 
 class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
@@ -216,8 +223,8 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
-        queryset = super(JobList, self).get_queryset()
-        queryset = queryset.select_related('result')
+        queryset = super().get_queryset()
+        queryset = queryset.select_related("result")
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
@@ -238,9 +245,9 @@ class ResultList(ListView):
     model = Result
 
     def get_queryset(self):
-        queryset = super(ResultList, self).get_queryset()
+        queryset = super().get_queryset()
         queryset = queryset.select_related(
-            'job__submission__creator__user_profile'
+            "job__submission__creator__user_profile"
         )
         return queryset.filter(
             Q(challenge=self.request.challenge), Q(public=True)
@@ -253,5 +260,5 @@ class ResultDetail(DetailView):
 
 class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     model = Result
-    fields = ('public',)
-    success_message = ('Result successfully updated.')
+    fields = ("public",)
+    success_message = "Result successfully updated."

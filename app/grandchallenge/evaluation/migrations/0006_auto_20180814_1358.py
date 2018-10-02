@@ -6,23 +6,21 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('evaluation', '0005_auto_20180606_1337'),
-    ]
+    dependencies = [("evaluation", "0005_auto_20180606_1337")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='job',
-            name='status_history',
+        migrations.RemoveField(model_name="job", name="status_history"),
+        migrations.AlterField(
+            model_name="config",
+            name="extra_results_columns",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                default=dict,
+                help_text='A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. Where the KEYS contain the titles of the columns, and the VALUES contain the JsonPath to the corresponding metric in metrics.json. For example:\n\n{"Accuracy": "aggregates.acc","Dice": "dice.mean"}',
+            ),
         ),
         migrations.AlterField(
-            model_name='config',
-            name='extra_results_columns',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. Where the KEYS contain the titles of the columns, and the VALUES contain the JsonPath to the corresponding metric in metrics.json. For example:\n\n{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'),
-        ),
-        migrations.AlterField(
-            model_name='result',
-            name='metrics',
+            model_name="result",
+            name="metrics",
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
         ),
     ]

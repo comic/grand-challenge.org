@@ -11,6 +11,8 @@ grand-challenge.org
 .. image:: https://readthedocs.org/projects/grand-challengeorg/badge/?version=latest
    :target: http://grand-challengeorg.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
 
 Fair and objective comparisons of machine learning algorithms improves the
 quality of research outputs in both academia and industry. This repo

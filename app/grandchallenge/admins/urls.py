@@ -1,10 +1,10 @@
-from django.conf.urls import url
+from django.urls import path
 
 from grandchallenge.admins.views import AdminsList, AdminsUpdate
 
-app_name = 'admins'
+app_name = "admins"
 
 urlpatterns = [
-    url(r'^$', AdminsList.as_view(), name='list'),
-    url(r'^update/$', AdminsUpdate.as_view(), name='update'),
+    path("", AdminsList.as_view(), name="list"),
+    path("update/", AdminsUpdate.as_view(), name="update"),
 ]

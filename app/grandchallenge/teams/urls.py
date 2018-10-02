@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.urls import path
 
 from grandchallenge.teams.views import (
     TeamList,
@@ -10,22 +10,20 @@ from grandchallenge.teams.views import (
     TeamDelete,
 )
 
-app_name = 'teams'
+app_name = "teams"
 
 urlpatterns = [
-    url(r'^$', TeamList.as_view(), name='list'),
-    url(r'^t/create/$', TeamCreate.as_view(), name='create'),
-    url(r'^t/(?P<pk>[0-9]+)/$', TeamDetail.as_view(), name='detail'),
-    url(r'^t/(?P<pk>[0-9]+)/update/$', TeamUpdate.as_view(), name='update'),
-    url(r'^t/(?P<pk>[0-9]+)/delete/$', TeamDelete.as_view(), name='delete'),
-    url(
-        r'^t/(?P<pk>[0-9]+)/create-member/$',
+    path("", TeamList.as_view(), name="list"),
+    path("t/create/", TeamCreate.as_view(), name="create"),
+    path("t/<int:pk>/", TeamDetail.as_view(), name="detail"),
+    path("t/<int:pk>/update/", TeamUpdate.as_view(), name="update"),
+    path("t/<int:pk>/delete/", TeamDelete.as_view(), name="delete"),
+    path(
+        "t/<int:pk>/create-member/",
         TeamMemberCreate.as_view(),
-        name='member-create',
+        name="member-create",
     ),
-    url(
-        r'^m/(?P<pk>[0-9]+)/delete/$',
-        TeamMemberDelete.as_view(),
-        name='member-delete',
+    path(
+        "m/<int:pk>/delete/", TeamMemberDelete.as_view(), name="member-delete"
     ),
 ]

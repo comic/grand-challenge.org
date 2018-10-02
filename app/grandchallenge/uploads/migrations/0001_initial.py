@@ -15,27 +15,68 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('challenges', '0001_initial'),
+        ("challenges", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UploadModel',
+            name="UploadModel",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.SlugField(max_length=64)),
-                ('permission_lvl', models.CharField(choices=[('ALL', 'All'), ('REG', 'Registered users only'), ('ADM', 'Administrators only')], default='ALL', max_length=3)),
-                ('file', models.FileField(max_length=255, upload_to=grandchallenge.uploads.models.giveFileUploadDestinationPath)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('challenge', models.ForeignKey(help_text='To which comicsite does this object belong?', on_delete=django.db.models.deletion.CASCADE, to='challenges.Challenge')),
-                ('user', models.ForeignKey(help_text='which user uploaded this?', on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.SlugField(max_length=64)),
+                (
+                    "permission_lvl",
+                    models.CharField(
+                        choices=[
+                            ("ALL", "All"),
+                            ("REG", "Registered users only"),
+                            ("ADM", "Administrators only"),
+                        ],
+                        default="ALL",
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "file",
+                    models.FileField(
+                        max_length=255,
+                        upload_to=grandchallenge.uploads.models.giveFileUploadDestinationPath,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "challenge",
+                    models.ForeignKey(
+                        help_text="To which comicsite does this object belong?",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="challenges.Challenge",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="which user uploaded this?",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'uploaded file',
-                'verbose_name_plural': 'uploaded files',
-                'permissions': (('view_ComicSiteModel', 'Can view Comic Site Model'),),
-                'abstract': False,
+                "verbose_name": "uploaded file",
+                "verbose_name_plural": "uploaded files",
+                "permissions": (
+                    ("view_ComicSiteModel", "Can view Comic Site Model"),
+                ),
+                "abstract": False,
             },
-        ),
+        )
     ]

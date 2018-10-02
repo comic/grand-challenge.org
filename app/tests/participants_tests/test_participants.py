@@ -12,7 +12,7 @@ def test_registration_request_create_post(client, TwoChallengeSets):
         user=user, challenge=TwoChallengeSets.ChallengeSet1.challenge
     ).exists()
     response = get_view_for_user(
-        viewname='participants:registration-create',
+        viewname="participants:registration-create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
@@ -37,7 +37,7 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
         user=user, challenge=TwoChallengeSets.ChallengeSet1.challenge
     ).exists()
     response = get_view_for_user(
-        viewname='participants:registration-create',
+        viewname="participants:registration-create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
@@ -50,7 +50,7 @@ def test_duplicate_registration_denied(client, TwoChallengeSets):
         user=user, challenge=TwoChallengeSets.ChallengeSet2.challenge
     ).exists()
     response = get_view_for_user(
-        viewname='participants:registration-create',
+        viewname="participants:registration-create",
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet2.challenge,

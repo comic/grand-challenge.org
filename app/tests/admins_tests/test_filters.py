@@ -6,7 +6,7 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_admins_list_is_filtered(client, TwoChallengeSets):
     response = get_view_for_user(
-        viewname='admins:list',
+        viewname="admins:list",
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
         client=client,
         user=TwoChallengeSets.admin12,
@@ -28,4 +28,4 @@ def test_admins_list_is_filtered(client, TwoChallengeSets):
     ]
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
-    assert 'Admins for ' in response.rendered_content
+    assert "Admins for " in response.rendered_content

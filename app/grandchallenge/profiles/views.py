@@ -7,7 +7,7 @@ from grandchallenge.profiles.forms import EditProfileForm
 
 
 def login_redirect(request):
-    next = request.GET.get('next', '/')
+    next = request.GET.get("next", "/")
     return redirect(next)
 
 
@@ -18,10 +18,10 @@ def profile(request):
     if request.user.is_authenticated:
         # print "username:", request.user.username
         # print "redirect to profile"
-        return redirect('/accounts/' + request.user.username)
+        return redirect("/accounts/" + request.user.username)
 
     else:
-        return redirect('/accounts/signin')
+        return redirect("/accounts/signin")
 
 
 def profile_edit_redirect(request):
@@ -36,14 +36,14 @@ def profile_edit_redirect(request):
             messages.INFO,
             "Please fill-in the missing information in the form form below.",
         )
-        return redirect('/accounts/' + request.user.username + '/edit')
+        return redirect("/accounts/" + request.user.username + "/edit")
 
     else:
-        return redirect('accounts/signin')
+        return redirect("accounts/signin")
 
 
 def profile_edit(*args, **kwargs):
-    kwargs['edit_profile_form'] = EditProfileForm
+    kwargs["edit_profile_form"] = EditProfileForm
     return userena_views.profile_edit(*args, **kwargs)
 
 
@@ -53,11 +53,11 @@ def signup(request, extra_context=None, **kwargs):
         request=request,
         extra_context=extra_context,
         success_url=success,
-        **kwargs
+        **kwargs,
     )
     return response
 
 
 def signup_complete(request):
-    response = render(request, 'userena/signup_complete.html')
+    response = render(request, "userena/signup_complete.html")
     return response

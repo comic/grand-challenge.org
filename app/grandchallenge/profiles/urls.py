@@ -1,4 +1,5 @@
-from django.conf.urls import include, url
+from django.conf.urls import include
+from django.urls import path, re_path
 
 from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
@@ -11,24 +12,20 @@ from grandchallenge.profiles.views import (
 )
 
 urlpatterns = [
-    url(
-        r'^signup/$',
+    path(
+        "signup/",
         signup,
-        {'signup_form': SignupFormExtra},
+        {"signup_form": SignupFormExtra},
         name="profile_signup",
     ),
-    url(
-        r'^signup_complete/$', signup_complete, name="profile_signup_complete"
-    ),
-    url(r'^login-redirect/$', login_redirect, name='login_redirect'),
-    url(
-        r'^profile/edit/$', profile_edit_redirect, name='profile_redirect_edit'
-    ),
-    url(r'^profile/$', profile, name='profile_redirect'),
-    url(
-        r'^(?P<username>[\@\.\+\w-]+)/edit/$',
+    path("signup_complete/", signup_complete, name="profile_signup_complete"),
+    path("login-redirect/", login_redirect, name="login_redirect"),
+    path("profile/edit/", profile_edit_redirect, name="profile_redirect_edit"),
+    path("profile/", profile, name="profile_redirect"),
+    re_path(
+        r"^(?P<username>[\@\.\+\w-]+)/edit/$",
         profile_edit,
-        name='userena_profile_edit',
+        name="userena_profile_edit",
     ),
-    url(r'^', include('userena.urls')),
+    path("", include("userena.urls")),
 ]

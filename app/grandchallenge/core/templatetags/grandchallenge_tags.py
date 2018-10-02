@@ -5,6 +5,7 @@ import random
 import re
 import string
 import traceback
+from io import StringIO
 from urllib.parse import urljoin
 
 from django import template
@@ -20,14 +21,13 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
-from six import StringIO, iteritems
 
 import grandchallenge.core.views
 from grandchallenge.core.api import get_public_results_by_challenge_name
-from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
 
 register = library_plus.LibraryPlus()
@@ -198,8 +198,9 @@ def resolve_path(path, parser, context):
         found_parameters = context["request"].GET.items()
         if not found_parameters:
             found_parameters = "None"
-        error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " "" % (
-            missed_parameters, found_parameters
+        error_msg = (
+            "I am missing required url parameter(s) %s, url parameter(s) found: %s "
+            "" % (missed_parameters, found_parameters)
         )
         raise PathResolutionException(error_msg)
 
@@ -216,45 +217,45 @@ def substitute(string, substitutions):
     > "my name is John"
     """
     for key, value in substitutions:
-        string = re.sub("{{" + key + "}}", value, string)
+        string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
 
 
 class comic_URLNode(defaulttags.URLNode):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def render(self, context):
         # get the url the default django method would give.
         url = super().render(context)
 
         if subdomain_is_projectname() and (
-                (
-                        self.view_name.var in [
-                    "challenge-homepage", "project_serve_file"
+            (
+                self.view_name.var
+                in ["challenge-homepage", "project_serve_file"]
+            )
+            or (
+                self.view_name.var.split(":")[0]
+                in [
+                    "evaluation",
+                    "teams",
+                    "pages",
+                    "participants",
+                    "admins",
+                    "uploads",
+                    "datasets",
                 ]
-                )
-                or (
-                        self.view_name.var.split(':')[0] in [
-                    'evaluation',
-                    'teams',
-                    'pages',
-                    'participants',
-                    'admins',
-                    'uploads',
-                ]
-                )
+            )
         ):
             # Interpret subdomain as a challenge. What would normally be the
             # path to this challenge?
             args = [arg.resolve(context) for arg in self.args]
+            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
             try:
                 project = args[0]
             except IndexError:
                 # No project was set, so must be part of the main site
-                project = settings.MAIN_PROJECT_NAME
+                project = kwargs.get(
+                    "challenge_short_name", settings.MAIN_PROJECT_NAME
+                )
 
             if project == settings.MAIN_PROJECT_NAME:
                 # this url cannot use the domain name shortcut, so it is
@@ -288,14 +289,16 @@ class TagListNode(template.Node):
         pass
 
     def render(self, context):
-        html_out = "<table class =\"comictable taglist\">"
+        html_out = '<table class ="comictable taglist">'
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
-        for key, val in iteritems(register.usagestrings):
+        for key, val in register.usagestrings.items():
             if not val == "":
-                html_out = html_out + "<tr class=\"%s\"><td>%s</td><td>%s</td></tr>\
-                        " % (
-                    rowclass, key, sanitize_django_items(val)
+                html_out = (
+                    html_out
+                    + '<tr class="%s"><td>%s</td><td>%s</td></tr>\
+                        '
+                    % (rowclass, key, sanitize_django_items(val))
                 )
                 if rowclass == "odd":
                     rowclass = "even"
@@ -327,7 +330,7 @@ def metafooterpages():
     pages = grandchallenge.core.views.getPages(settings.MAIN_PROJECT_NAME)
     for p in pages:
         if not p.hidden:
-            url = reverse('mainproject-home', kwargs={'page_title': p.title})
+            url = reverse("mainproject-home", kwargs={"page_title": p.title})
             if subdomain_is_projectname():
                 url = settings.MAIN_HOST_NAME + url
             # TODO: JM add class=active to the active link
@@ -364,11 +367,21 @@ def listdir(parser, token):
     try:
         args = parseKeyValueToken(token)
     except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        errormsg = (
+            "Error rendering {% "
+            + token.contents
+            + " %}: Error parsing token. "
+            + usagestr
+        )
         return TemplateErrorNode(errormsg)
 
     if "path" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: 'path' argument is missing." + usagestr
+        errormsg = (
+            "Error rendering {% "
+            + token.contents
+            + " %}: 'path' argument is missing."
+            + usagestr
+        )
         return TemplateErrorNode(errormsg)
 
     return ListDirNode(args)
@@ -377,10 +390,11 @@ def listdir(parser, token):
 class ListDirNode(template.Node):
     """ Show list of linked files for given directory
     """
+
     usagestr = get_usagestr("listdir")
 
     def __init__(self, args):
-        self.path = args['path']
+        self.path = args["path"]
         self.args = args
 
     def make_dataset_error_msg(self, msg):
@@ -399,26 +413,22 @@ class ListDirNode(template.Node):
 
         filenames.sort()
         # if extensionsFilter is given,  show only filenames with those extensions
-        if 'extensionFilter' in self.args.keys():
-            extensions = self.args['extensionFilter'].split(",")
+        if "extensionFilter" in self.args.keys():
+            extensions = self.args["extensionFilter"].split(",")
             filenames = filter_by_extension(filenames, extensions)
         links = []
         for filename in filenames:
             downloadlink = reverse(
-                'project_serve_file',
+                "serving:challenge-file",
                 kwargs={
-                    'challenge_short_name': challenge_short_name,
-                    'path': self.path + "/" + filename,
+                    "challenge_short_name": challenge_short_name,
+                    "path": f"{self.path}/{filename}",
                 },
             )
             links.append(
-                "<li><a href=\"" +
-                downloadlink +
-                "\">" +
-                filename +
-                " </a></li>"
+                '<li><a href="' + downloadlink + '">' + filename + " </a></li>"
             )
-        htmlOut = "<ul class=\"dataset\">" + "".join(links) + "</ul>"
+        htmlOut = '<ul class="dataset">' + "".join(links) + "</ul>"
         return htmlOut
 
 
@@ -433,11 +443,21 @@ def render_image_browser(parser, token):
     try:
         args = parseKeyValueToken(token)
     except ValueError:
-        errormsg = "Error rendering {% " + token.contents + " %}: Error parsing token. " + usagestr
+        errormsg = (
+            "Error rendering {% "
+            + token.contents
+            + " %}: Error parsing token. "
+            + usagestr
+        )
         return TemplateErrorNode(errormsg)
 
     if "path" not in args.keys():
-        errormsg = "Error rendering {% " + token.contents + " %}: path argument is missing." + usagestr
+        errormsg = (
+            "Error rendering {% "
+            + token.contents
+            + " %}: path argument is missing."
+            + usagestr
+        )
         return TemplateErrorNode(errormsg)
 
     return ImageBrowserNode(args, parser)
@@ -472,7 +492,7 @@ class ImageBrowserNode(template.Node):
 
         try:
             public_results = get_public_results_by_challenge_name(
-                context['site'].short_name
+                context["site"].short_name
             )
         except OSError as e:
             # if no results can be found just skip it
@@ -483,9 +503,12 @@ class ImageBrowserNode(template.Node):
         # explicit empty strings.
         serve_file_prefix = reverse(
             "project_serve_file",
-            args=[context['site'].short_name, "dummyfile"],
+            kwargs={
+                "challenge_short_name": context["site"].short_name,
+                "path": "dummyfile",
+            },
         )
-        # remove "dummyfile/" from end of path again. This feels dirty but I cannot see        
+        # remove "dummyfile/" from end of path again. This feels dirty but I cannot see
         # much wrong with it here.
         serve_file_prefix = serve_file_prefix[:-10]
         htmlOut = """
@@ -540,10 +563,10 @@ class ImageBrowserNode(template.Node):
         challenge_short_name = context.page.challenge.short_name
         if "config" in self.args:
             downloadlink = reverse(
-                'project_serve_file',
+                "project_serve_file",
                 kwargs={
-                    'challenge_short_name': challenge_short_name,
-                    'path': self.args["config"],
+                    "challenge_short_name": challenge_short_name,
+                    "path": self.args["config"],
                 },
             )
             return """<script type="text/javascript" src="{}"></script>""".format(
@@ -572,20 +595,20 @@ class ImageBrowserNode(template.Node):
         filenames = storage.listdir(projectpath)[1]
         filenames.sort()
         # if extensionsFilter is given,  show only filenames with those extensions
-        if 'extensionFilter' in self.args.keys():
-            extensions = self.args['extensionFilter'].split(",")
+        if "extensionFilter" in self.args.keys():
+            extensions = self.args["extensionFilter"].split(",")
             filenames = filter_by_extension(filenames, extensions)
         return filenames
 
 
-def add_quotes(s: str = ''):
+def add_quotes(s: str = ""):
     """ add quotes to string if not there
     """
     s = strip_quotes(s)
     return "'" + s + "'"
 
 
-def strip_quotes(s: str = ''):
+def strip_quotes(s: str = ""):
     """ strip outermost quotes from string if there
     """
     if len(s) >= 2 and (s[0] == s[-1]) and s[0] in ("'", '"'):
@@ -659,7 +682,6 @@ def insert_file(parser, token):
 
 
 class InsertFileNode(template.Node):
-
     def __init__(self, args, replacer, parser):
         self.args = args
         self.replacer = replacer
@@ -704,20 +726,20 @@ class InsertFileNode(template.Node):
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
         base_url = reverse(
-            'pages:insert-detail',
+            "pages:insert-detail",
             kwargs={
-                'challenge_short_name': currentpage.challenge.short_name,
-                'page_title': currentpage.title,
-                'dropboxpath': "remove",
+                "challenge_short_name": currentpage.challenge.short_name,
+                "page_title": currentpage.title,
+                "dropboxpath": "remove",
             },
         )
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(
-            filename
-        ) + "/"  # path of currently inserted file
+        current_path = (
+            ntpath.dirname(filename) + "/"
+        )  # path of currently inserted file
         replaced = self.replacer.replace_links(
             contents, base_url, current_path
         )
@@ -726,11 +748,11 @@ class InsertFileNode(template.Node):
 
     def render(self, context):
         # text typed in the tag
-        token = self.args['file']
+        token = self.args["file"]
         try:
             filename = resolve_path(token, self.parser, context)
         except PathResolutionException as e:
-            return self.make_error_msg("Path Resolution failed: {}".format(e))
+            return self.make_error_msg(f"Path Resolution failed: {e}")
 
         challenge_short_name = context["site"].short_name
         filepath = os.path.join(
@@ -814,24 +836,23 @@ def insert_graph(parser, token):
 
 
 class InsertGraphNode(template.Node):
-
     def __init__(self, args, replacer):
         self.args = args
         self.replacer = replacer
 
     def make_error_msg(self, msg):
         logger.error(
-            "Error rendering graph from file '" +
-            "," +
-            self.args["file"] +
-            "': " +
-            msg
+            "Error rendering graph from file '"
+            + ","
+            + self.args["file"]
+            + "': "
+            + msg
         )
         errormsg = "Error rendering graph from file"
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        filename_raw = self.args['file']
+        filename_raw = self.args["file"]
         filename_clean = substitute(
             filename_raw, context["request"].GET.items()
         )
@@ -842,8 +863,9 @@ class InsertGraphNode(template.Node):
             found_parameters = context["request"].GET.items()
             if not found_parameters:
                 found_parameters = "None"
-            error_msg = "I am missing required url parameter(s) %s, url parameter(s) found: %s " "" % (
-                missed_parameters, found_parameters
+            error_msg = (
+                "I am missing required url parameter(s) %s, url parameter(s) found: %s "
+                "" % (missed_parameters, found_parameters)
             )
             return self.make_error_msg(error_msg)
 
@@ -861,20 +883,20 @@ class InsertGraphNode(template.Node):
         # any relative link inside included file has to be replaced to make it work within the COMIC
         # context.
         base_url = reverse(
-            'pages:insert-detail',
+            "pages:insert-detail",
             kwargs={
-                'challenge_short_name': context.page.challenge.short_name,
-                'page_title': context.page.title,
-                'dropboxpath': "remove",
+                "challenge_short_name": context.page.challenge.short_name,
+                "page_title": context.page.title,
+                "dropboxpath": "remove",
             },
         )
         # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
         # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
         # nice.
         base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = ntpath.dirname(
-            filename_clean
-        ) + "/"  # path of currently inserted file
+        current_path = (
+            ntpath.dirname(filename_clean) + "/"
+        )  # path of currently inserted file
         try:
             render_function = getrenderer(self.args["type"])
         # (table,headers) = read_function(filename)
@@ -892,8 +914,8 @@ class InsertGraphNode(template.Node):
             if RENDER_FRIENDLY_ERRORS:
                 return self.make_error_msg(
                     str(
-                        "Error in render funtion '%s()' : %s" %
-                        (render_function.__name__, traceback.format_exc(0))
+                        "Error in render funtion '%s()' : %s"
+                        % (render_function.__name__, traceback.format_exc(0))
                     )
                 )
 
@@ -913,12 +935,13 @@ def getrenderer(renderer_format):
     only functions listed here can be called from the template tag render_graph.
     """
     renderers = {
-        "anode09": render_anode09_result, "anode09_table": render_anode09_table
+        "anode09": render_anode09_result,
+        "anode09_table": render_anode09_table,
     }
     if renderer_format not in renderers:
         raise Exception(
-            "reader for format '%s' not found. Available formats: %s" %
-            (renderer_format, ",".join(renderers.keys()))
+            "reader for format '%s' not found. Available formats: %s"
+            % (renderer_format, ",".join(renderers.keys()))
         )
 
     return renderers[renderer_format]
@@ -931,7 +954,7 @@ def canvas_to_svg(canvas):
     """
     imgdata = StringIO()
     imgdata.seek(0, os.SEEK_END)
-    canvas.print_svg(imgdata, format='svg')
+    canvas.print_svg(imgdata, format="svg")
     svg_data = imgdata.getvalue()
     imgdata.close()
     return svg_data
@@ -973,17 +996,19 @@ def render_anode09_result(filename):
     """
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
     variables = parse_php_arrays(filename)
-    assert variables != {}, "parsed result of '%s' was emtpy. I cannot plot anything" % filename
-    fig = Figure(facecolor='white')
+    assert variables != {}, (
+        "parsed result of '%s' was emtpy. I cannot plot anything" % filename
+    )
+    fig = Figure(facecolor="white")
     canvas = FigureCanvas(fig)
     classes = {
-        'small': 'nodules < 5mm',
-        'large': 'nodules > 5mm',
-        'isolated': 'isolated nodules',
-        'vascular': 'vascular nodules',
-        'pleural': 'pleural nodules',
-        'fissure': 'peri-fissural nodules',
-        'froc': 'all nodules',
+        "small": "nodules < 5mm",
+        "large": "nodules > 5mm",
+        "isolated": "isolated nodules",
+        "vascular": "vascular nodules",
+        "pleural": "pleural nodules",
+        "fissure": "peri-fissural nodules",
+        "froc": "all nodules",
     }
     for key, label in classes.items():
         fig.gca().plot(
@@ -991,11 +1016,11 @@ def render_anode09_result(filename):
         )
     fig.gca().set_xlim([10 ** -2, 10 ** 2])
     fig.gca().set_ylim([0, 1])
-    fig.gca().legend(loc='best', prop={'size': 10})
+    fig.gca().legend(loc="best", prop={"size": 10})
     fig.gca().grid()
-    fig.gca().grid(which='minor')
-    fig.gca().set_xlabel('Average FPs per scan')
-    fig.gca().set_ylabel('Sensitivity')
+    fig.gca().grid(which="minor")
+    fig.gca().set_xlabel("Average FPs per scan")
+    fig.gca().set_ylabel("Sensitivity")
     fig.gca().set_xscale("log")
     fig.set_size_inches(8, 6)
     return canvas_to_svg(canvas)
@@ -1035,16 +1060,21 @@ def render_anode09_table(filename):
     """
     # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
     variables = parse_php_arrays(filename)
-    assert variables != {}, "parsed result of '%s' was emtpy. I cannot create table" % filename
+    assert variables != {}, (
+        "parsed result of '%s' was emtpy. I cannot create table" % filename
+    )
     table_id = id_generator()
-    tableHTML = """<table border=1 class = "comictable csvtable sortable" id="%s">
-        <thead><tr>
-            <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-            <td align=center width='54'>1/4</td>
-            <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-            <td align=center width='54'>2</td><td align=center width='54'>4</td>
-            <td align=center width='54'>8</td><td align=center width='54'>average</td>
-        </tr></thead>""" % table_id
+    tableHTML = (
+        """<table border=1 class = "comictable csvtable sortable" id="%s">
+            <thead><tr>
+                <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                <td align=center width='54'>1/4</td>
+                <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                <td align=center width='54'>8</td><td align=center width='54'>average</td>
+            </tr></thead>"""
+        % table_id
+    )
     tableHTML = tableHTML + "<tbody>"
     tableHTML = tableHTML + array_to_table_row(
         ["small nodules"] + variables["smallscore"]
@@ -1069,16 +1099,16 @@ def render_anode09_table(filename):
     )
     tableHTML = tableHTML + "</tbody>"
     tableHTML = tableHTML + "</table>"
-    return "<div class=\"comictablecontainer\">" + tableHTML + "</div>"
+    return '<div class="comictablecontainer">' + tableHTML + "</div>"
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """ thanks to Ignacio Vazquez-Abrams on stackoverflow"""
-    return ''.join(random.choice(chars) for x in range(size))
+    return "".join(random.choice(chars) for x in range(size))
 
 
 def array_to_table_row(rowvalues, trclass=""):
-    output = "<tr class = \"%s\">" % trclass
+    output = '<tr class = "%s">' % trclass
     for value in rowvalues:
         if type(value) is float:
             output = output + "<td>%.3f</td>" % value
@@ -1098,15 +1128,18 @@ def parse_php_arrays(filename):
     verbose = False
     output = {}
     storage = DefaultStorage()
-    with storage.open(filename, 'r') as f:
+    with storage.open(filename, "r") as f:
         content = f.read()
         content = content.replace("\n", "")
         php = re.compile(r"\<\?php(.*?)\?\>", re.DOTALL)
         s = php.search(content)
-        assert s is not None, "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'" % filename
+        assert s is not None, (
+            "trying to parse a php array, but could not find anything like &lt;? php /?&gt; in '%s'"
+            % filename
+        )
         phpcontent = s.group(1)
         phpvars = phpcontent.split("$")
-        phpvars = [x for x in phpvars if x != '']  # remove empty
+        phpvars = [x for x in phpvars if x != ""]  # remove empty
         if verbose:
             print("found %d php variables in %s. " % (len(phpvars), filename))
             print("parsing %s into int arrays.. " % filename)
@@ -1118,18 +1151,22 @@ def parse_php_arrays(filename):
             result = phpvar.search(var)
             # TODO Log these messages as info
             if result is None:
-                msg = "Could not match regex pattern '%s' to '%s'\
-                                    " % (
-                    phpvar.pattern, var
+                msg = (
+                    "Could not match regex pattern '%s' to '%s'\
+                                        "
+                    % (phpvar.pattern, var)
                 )
                 continue
 
             if len(result.groups()) != 2:
-                msg = "Expected to find  varname and content,\
-                      but regex '%s' found %d items:%s " % (
-                    phpvar.pattern,
-                    len(result.groups()),
-                    "[" + ",".join(result.groups()) + "]",
+                msg = (
+                    "Expected to find  varname and content,\
+                          but regex '%s' found %d items:%s "
+                    % (
+                        phpvar.pattern,
+                        len(result.groups()),
+                        "[" + ",".join(result.groups()) + "]",
+                    )
                 )
                 continue
 
@@ -1160,7 +1197,6 @@ def url_parameter(parser, token):
 
 
 class UrlParameterNode(template.Node):
-
     def __init__(self, args):
         self.args = args
 
@@ -1172,19 +1208,20 @@ class UrlParameterNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        if self.args['url_parameter'] in context['request'].GET:
-            return context['request'].GET[self.args['url_parameter']]
+        if self.args["url_parameter"] in context["request"].GET:
+            return context["request"].GET[self.args["url_parameter"]]
 
         else:
             logger.error(
-                "Error rendering %s: Parameter '%s' not found in request URL" %
-                (
-                    "{%  " + self.args['token'].contents + "%}",
-                    self.args['url_parameter'],
+                "Error rendering %s: Parameter '%s' not found in request URL"
+                % (
+                    "{%  " + self.args["token"].contents + "%}",
+                    self.args["url_parameter"],
                 )
             )
             error_message = "Error rendering"
             return makeErrorMsgHtml(error_message)
+
 
 class TemplateErrorNode(template.Node):
     """Render error message in place of this template tag. This makes it directly obvious where the error occured
@@ -1207,9 +1244,11 @@ def HTML_encode_django_chars(string):
 
 
 def makeErrorMsgHtml(text):
-    errorMsgHTML = "<p><span class=\"pageError\"> " + HTML_encode_django_chars(
-        text
-    ) + " </span></p>"
+    errorMsgHTML = (
+        '<p><span class="pageError"> '
+        + HTML_encode_django_chars(text)
+        + " </span></p>"
+    )
     return errorMsgHTML
 
 
@@ -1239,7 +1278,6 @@ def display_project_statistics(parser, token):
 
 
 class ProjectStatisticsNode(template.Node):
-
     def __init__(self, allusers=False, include_header=True):
         """
         Allusers is meant to be used on the main website, and does not filter for
@@ -1256,7 +1294,7 @@ class ProjectStatisticsNode(template.Node):
         """
 
         all_users = self.allusers
-        key = 'ProjectStatisticsNode.{}.{}'.format(
+        key = "ProjectStatisticsNode.{}.{}".format(
             context.page.challenge.pk, all_users
         )
         content = cache.get(key)
@@ -1278,15 +1316,15 @@ class ProjectStatisticsNode(template.Node):
         else:
             users = challenge.get_participants()
 
-        country_counts = UserProfile.objects.filter(user__in=users).values(
-            'country'
-        ).annotate(
-            dcount=Count('country')
+        country_counts = (
+            UserProfile.objects.filter(user__in=users)
+            .values("country")
+            .annotate(dcount=Count("country"))
         )
-        chart_data = [['Country', '#Participants']]
+        chart_data = [["Country", "#Participants"]]
         for country_count in country_counts:
             chart_data.append(
-                [str(country_count['country']), country_count['dcount']]
+                [str(country_count["country"]), country_count["dcount"]]
             )
         snippet_geochart = """
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

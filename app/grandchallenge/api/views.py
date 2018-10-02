@@ -1,31 +1,21 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
 
-from grandchallenge.api.serializers import (
-    ResultSerializer, SubmissionSerializer, JobSerializer, MethodSerializer
-)
+from grandchallenge.api.serializers import SubmissionSerializer
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Result, Submission, Job, Method
-
-
-class ResultViewSet(ModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+from grandchallenge.evaluation.models import Submission
 
 
 class SubmissionViewSet(ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
         # Validate that the challenge exists
         try:
-            short_name = self.request.data.get('challenge')
+            short_name = self.request.data.get("challenge")
             challenge = Challenge.objects.get(short_name=short_name)
         except Challenge.DoesNotExist:
             raise ValidationError(f"Challenge {short_name} does not exist.")
@@ -33,17 +23,5 @@ class SubmissionViewSet(ModelViewSet):
         serializer.save(
             creator=self.request.user,
             challenge=challenge,
-            file=self.request.data.get('file'),
+            file=self.request.data.get("file"),
         )
-
-
-class JobViewSet(ModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-
-class MethodViewSet(ModelViewSet):
-    queryset = Method.objects.all()
-    serializer_class = MethodSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)

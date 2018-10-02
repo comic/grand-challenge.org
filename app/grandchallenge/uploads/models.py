@@ -17,7 +17,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     # a ComicSiteModel, meaning it is some inheriting class
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
-    if hasattr(uploadmodel, 'short_name'):
+    if hasattr(uploadmodel, "short_name"):
         is_comicsite = True
     else:
         is_comicsite = False
@@ -54,7 +54,7 @@ class UploadModel(ComicSiteModel):
 
     @property
     def filename(self):
-        return self.file.name.rsplit('/', 1)[-1]
+        return self.file.name.rsplit("/", 1)[-1]
 
     @property
     def localfileexists(self):

@@ -46,8 +46,8 @@ def send_templated_email(
     text_part = strip_tags(template.render(email_context, request=request))
     html_part = template.render(email_context, request=request)
     if type(recipients) == str:
-        if recipients.find(','):
-            recipients = recipients.split(',')
+        if recipients.find(","):
+            recipients = recipients.split(",")
     elif type(recipients) != list:
         recipients = [recipients]
     recipients = remove_empty(recipients)

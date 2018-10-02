@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 from django.views.generic import CreateView, DetailView
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
-    RawImageFile, RawImageUploadSession, UPLOAD_SESSION_STATE, Image
+    RawImageFile,
+    RawImageUploadSession,
+    UPLOAD_SESSION_STATE,
+    Image,
 )
+from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -14,9 +19,7 @@ class UploadRawFiles(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        redirect = super().form_valid(form)
-
-        return redirect
+        return super().form_valid(form)
 
 
 class ShowUploadSessionState(UserIsStaffMixin, DetailView):
@@ -27,13 +30,15 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 
         result["upload_session"] = result["object"]
         result["raw_files"] = RawImageFile.objects.filter(
-            upload_session=result["object"]).all()
+            upload_session=result["object"]
+        ).all()
         result["images"] = Image.objects.filter(origin=result["object"]).all()
-        result["process_finished"] = result[
-                                         "object"].session_state == UPLOAD_SESSION_STATE.stopped
+        result["process_finished"] = (
+            result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+        )
         return result
 
 
-class ViewImage(UserIsStaffMixin, DetailView):
-    model = Image
-    template_name = "cases/view_image.html"
+class ImageViewSet(ReadOnlyModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer

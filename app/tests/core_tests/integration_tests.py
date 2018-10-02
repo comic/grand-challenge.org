@@ -1,4 +1,5 @@
 import re
+from io import StringIO
 from random import choice, randint
 
 from bs4 import BeautifulSoup
@@ -13,7 +14,6 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from django.urls import reverse
-from six import StringIO
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
@@ -60,7 +60,7 @@ def find_text_between(start, end, haystack: bytes):
      
     """
     found = re.search(
-        start + '(.*)' + end, haystack.decode(), re.IGNORECASE | re.DOTALL
+        start + "(.*)" + end, haystack.decode(), re.IGNORECASE | re.DOTALL
     )
     if found:
         return found.group(1).strip()
@@ -86,10 +86,10 @@ def is_subset(listA, listB):
 
 
 @override_settings(
-    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
 )
 @override_settings(
-    PASSWORD_HASHERS=('django.contrib.auth.hashers.SHA1PasswordHasher',)
+    PASSWORD_HASHERS=("django.contrib.auth.hashers.SHA1PasswordHasher",)
 )
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
 @override_settings(SITE_ID=1)
@@ -98,7 +98,7 @@ class ComicframeworkTestCase(TestCase):
     """
 
     def setUp(self):
-        call_command('check_permissions')
+        call_command("check_permissions")
         self.setUp_base()
         self.setUp_extra()
 
@@ -122,9 +122,12 @@ class ComicframeworkTestCase(TestCase):
         Create root user to have an admin user for main project. Root is automatically
         admin for every project
         """
-        if len(
-            Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
-        ) == 0:
+        if (
+            len(
+                Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
+            )
+            == 0
+        ):
             main = Challenge.objects.create(
                 short_name=settings.MAIN_PROJECT_NAME,
                 description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
@@ -132,11 +135,11 @@ class ComicframeworkTestCase(TestCase):
             main.save()
         User = get_user_model()
         try:
-            self.root = User.objects.filter(username='root')[0]
+            self.root = User.objects.filter(username="root")[0]
         except IndexError:
             # A user who has created a project
             root = UserenaSignup.objects.create_user(
-                'root', 'w.s.kerkstra@gmail.com', 'testpassword', active=True
+                "root", "w.s.kerkstra@gmail.com", "testpassword", active=True
             )
             root.is_staff = True
             root.is_superuser = True
@@ -147,13 +150,13 @@ class ComicframeworkTestCase(TestCase):
         """ Create a project with some pages and users. In part this is 
         done through admin views, meaning admin views are also tested here.
         """
-        # Create three types of users that exist: Root, can do anything, 
+        # Create three types of users that exist: Root, can do anything,
         # projectadmin, cam do things to a project he or she owns. And logged in
-        # user 
+        # user
         # created in  _create_main_project_and_root.
         root = self.root
-        # non-root users are created as if they signed up through the project,    
-        # to maximize test coverage.                
+        # non-root users are created as if they signed up through the project,
+        # to maximize test coverage.
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin")
         testproject = self._create_comicsite_in_admin(
@@ -182,7 +185,7 @@ class ComicframeworkTestCase(TestCase):
 
     def _test_page_can_be_viewed(self, user, page):
         page_url = reverse(
-            'pages:detail',
+            "pages:detail",
             kwargs={
                 "challenge_short_name": page.challenge.short_name,
                 "page_title": page.title,
@@ -192,7 +195,7 @@ class ComicframeworkTestCase(TestCase):
 
     def _test_page_can_not_be_viewed(self, user, page):
         page_url = reverse(
-            'pages:detail',
+            "pages:detail",
             kwargs={
                 "challenge_short_name": page.challenge.short_name,
                 "page_title": page.title,
@@ -206,8 +209,8 @@ class ComicframeworkTestCase(TestCase):
             response.status_code,
             200,
             "could not load page"
-            "'%s' logged in as user '%s'. Expected HTML200, got HTML%s" %
-            (url, user, str(response.status_code)),
+            "'%s' logged in as user '%s'. Expected HTML200, got HTML%s"
+            % (url, user, str(response.status_code)),
         )
         return response
 
@@ -247,8 +250,8 @@ class ComicframeworkTestCase(TestCase):
 
         else:
             # See if there are any new style errors
-            soup = BeautifulSoup(response.content, 'html.parser')
-            errors = soup.findAll('div', attrs={'class': 'has-error'})
+            soup = BeautifulSoup(response.content, "html.parser")
+            errors = soup.findAll("div", attrs={"class": "has-error"})
             if len(errors) > 0:
                 return str(errors)
 
@@ -274,16 +277,16 @@ class ComicframeworkTestCase(TestCase):
         if overwrite_data is None:
             overwrite_data = {}
         data = {
-            'first_name': 'test',
-            'last_name': 'test',
-            'username': 'test',
-            'email': 'test@test.com',
-            'password1': 'testpassword',
-            'password2': 'testpassword',
-            'institution': 'test',
-            'department': 'test',
-            'country': 'NL',
-            'website': 'http://www.example.com',
+            "first_name": "test",
+            "last_name": "test",
+            "username": "test",
+            "email": "test@test.com",
+            "password1": "testpassword",
+            "password2": "testpassword",
+            "institution": "test",
+            "department": "test",
+            "country": "NL",
+            "website": "http://www.example.com",
         }
         data.update(overwrite_data)  # overwrite any key in default if in data
         signin_page = self.client.post(reverse("profile_signup"), data)
@@ -292,10 +295,10 @@ class ComicframeworkTestCase(TestCase):
         # items(). Don't know how to better check for type here.
         lst = [x[0] for x in signin_page.items()]
         self.assertTrue(
-            'Location' in lst,
+            "Location" in lst,
             "could not create user. errors in"
-            " html:\n %s \n posted data: %s" %
-            (extract_form_errors(signin_page.content), data),
+            " html:\n %s \n posted data: %s"
+            % (extract_form_errors(signin_page.content), data),
         )
 
     def _create_random_user(self, startname="", site=None):
@@ -303,9 +306,9 @@ class ComicframeworkTestCase(TestCase):
         predend startname if given
         """
         username = startname + "".join(
-            [choice('AEOUY') + choice('QWRTPSDFGHHKLMNB') for x in range(3)]
+            [choice("AEOUY") + choice("QWRTPSDFGHHKLMNB") for x in range(3)]
         )
-        data = {'username': username, 'email': username + "@test.com"}
+        data = {"username": username, "email": username + "@test.com"}
         return self._create_user(data)
 
     def _create_user(self, data):
@@ -314,7 +317,7 @@ class ComicframeworkTestCase(TestCase):
         unspecified values are given default values
         
         """
-        username = data['username']
+        username = data["username"]
         self._signup_user(data)
         validation_mail = mail.outbox[-1]
         self.assertTrue(
@@ -323,7 +326,7 @@ class ComicframeworkTestCase(TestCase):
             " sent which had 'signup' in the subject line",
         )
         # validate the user with the link that was emailed
-        pattern = '/example.com(.*)' + PI_LINE_END_REGEX
+        pattern = "/example.com(.*)" + PI_LINE_END_REGEX
         validationlink_result = re.search(
             pattern, validation_mail.body, re.IGNORECASE
         )
@@ -345,7 +348,7 @@ class ComicframeworkTestCase(TestCase):
                 response.status_code
             ),
         )
-        resp = self.client.get('/accounts/' + username + '/')
+        resp = self.client.get("/accounts/" + username + "/")
         self.assertEqual(
             resp.status_code,
             200,
@@ -377,9 +380,9 @@ class ComicframeworkTestCase(TestCase):
             "logo": "fakelogo.jpg",
             "banner": banner,
             "prefix": "form",
-            "page_set-TOTAL_FORMS": u"0",
-            "page_set-INITIAL_FORMS": u"0",
-            "page_set-MAX_NUM_FORMS": u"",
+            "page_set-TOTAL_FORMS": "0",
+            "page_set-INITIAL_FORMS": "0",
+            "page_set-MAX_NUM_FORMS": "",
         }
         success = self._login(user)
         response = self.client.post(url, data)
@@ -402,8 +405,7 @@ class ComicframeworkTestCase(TestCase):
         errors = self._find_errors_in_page(response)
         if errors:
             self.assertFalse(
-                errors,
-                "Error creating project '%s':\n %s" % (short_name, errors),
+                errors, f"Error creating project '{short_name}':\n {errors}"
             )
         # ad.set_base_permissions(request,project)
         project = Challenge.objects.get(short_name=short_name)
@@ -421,8 +423,8 @@ class ComicframeworkTestCase(TestCase):
         success = self.client.login(username=user.username, password=password)
         self.assertTrue(
             success,
-            "could not log in as user %s using password %s" %
-            (user.username, password),
+            "could not log in as user %s using password %s"
+            % (user.username, password),
         )
         return success
 
@@ -438,8 +440,10 @@ class ComicframeworkTestCase(TestCase):
                 found = getattr(email, attr)
             except AttributeError as e:
                 raise AttributeError(
-                    "Could not find attribute '{0}' for this email.\
-                                     are you sure it exists? - {1}".format(attr, str(e))
+                    "Could not find attribute '{}' for this email.\
+                                     are you sure it exists? - {}".format(
+                        attr, str(e)
+                    )
                 )
 
             expected = email_expected[attr]
@@ -447,8 +451,10 @@ class ComicframeworkTestCase(TestCase):
                 expected == found
                 or is_subset(found, expected)
                 or (expected in found),
-                "Expected to find '{0}' for email attribute \
-                '{1}' but found '{2}' instead".format(expected, attr, found),
+                "Expected to find '{}' for email attribute \
+                '{}' but found '{}' instead".format(
+                    expected, attr, found
+                ),
             )
 
     def apply_standard_middleware(self, request):
@@ -456,7 +462,9 @@ class ComicframeworkTestCase(TestCase):
         always present in admin. Apply this explicitly here.
         
         """
-        from django.contrib.sessions.middleware import SessionMiddleware  # Some admin actions render messages and will crash without explicit import
+        from django.contrib.sessions.middleware import (
+            SessionMiddleware
+        )  # Some admin actions render messages and will crash without explicit import
         from django.contrib.messages.middleware import MessageMiddleware
         from grandchallenge.core.middleware.project import ProjectMiddleware
 
@@ -469,15 +477,14 @@ class ComicframeworkTestCase(TestCase):
 
 
 class CreateProjectTest(ComicframeworkTestCase):
-
     def test_cannot_create_project_with_weird_name(self):
         """ Expose issue #222 : projects can be created with names which are
         not valid as hostname, for instance containing underscores. Make sure
         These cannot be created 
         
         """
-        # non-root users are created as if they signed up through the project,    
-        # to maximize test coverage.        
+        # non-root users are created as if they signed up through the project,
+        # to maximize test coverage.
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin")
         # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
@@ -488,8 +495,10 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            u"Creating a project called '{0}' should not be \
-            possible. But is seems to have been created anyway.".format(challenge_short_name),
+            "Creating a project called '{}' should not be \
+            possible. But is seems to have been created anyway.".format(
+                challenge_short_name
+            ),
         )
         challenge_short_name = "project with spaces"
         response = self._try_create_comicsite(
@@ -498,8 +507,10 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            u"Creating a project called '{0}' should not be \
-            possible. But is seems to have been created anyway.".format(challenge_short_name),
+            "Creating a project called '{}' should not be \
+            possible. But is seems to have been created anyway.".format(
+                challenge_short_name
+            ),
         )
         challenge_short_name = "project-with-w#$%^rd-items"
         response = self._try_create_comicsite(
@@ -508,13 +519,26 @@ class CreateProjectTest(ComicframeworkTestCase):
         errors = self._find_errors_in_page(response)
         self.assertTrue(
             errors,
-            u"Creating a project called '{0}' should not be \
-            possible. But is seems to have been created anyway.".format(challenge_short_name),
+            "Creating a project called '{}' should not be \
+            possible. But is seems to have been created anyway.".format(
+                challenge_short_name
+            ),
+        )
+        challenge_short_name = "images"
+        response = self._try_create_comicsite(
+            self.projectadmin, challenge_short_name
+        )
+        errors = self._find_errors_in_page(response)
+        self.assertTrue(
+            errors,
+            "Creating a project called '{}' should not be \
+            possible. But is seems to have been created anyway.".format(
+                challenge_short_name
+            ),
         )
 
 
 class ViewsTest(ComicframeworkTestCase):
-
     def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
@@ -527,9 +551,7 @@ class ViewsTest(ComicframeworkTestCase):
             self.projectadmin,
             self.participant,
             self.registered_user,
-        ] = self._create_dummy_project(
-            "view-test"
-        )
+        ] = self._create_dummy_project("view-test")
 
     def test_registered_user_can_create_project(self):
         """ A user freshly registered through the project can immediately create
@@ -602,7 +624,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         page_url = reverse(
-            'pages:detail',
+            "pages:detail",
             kwargs={
                 "challenge_short_name": self.testproject.short_name,
                 "page_title": "doesnotexistpage",
@@ -613,8 +635,8 @@ class ViewsTest(ComicframeworkTestCase):
             response.status_code,
             404,
             "Expected non existing page"
-            "'%s' to give 404, instead found %s" %
-            (page_url, response.status_code),
+            "'%s' to give 404, instead found %s"
+            % (page_url, response.status_code),
         )
 
     def test_non_exitant_project_gives_404(self):
@@ -624,7 +646,7 @@ class ViewsTest(ComicframeworkTestCase):
         """
         # main domain robots.txt
         non_existant_url = reverse(
-            'challenge-homepage',
+            "challenge-homepage",
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)
@@ -632,8 +654,8 @@ class ViewsTest(ComicframeworkTestCase):
             response.status_code,
             404,
             "Expected non existing url"
-            "'%s' to give 404, instead found %s" %
-            (non_existant_url, response.status_code),
+            "'%s' to give 404, instead found %s"
+            % (non_existant_url, response.status_code),
         )
 
 
@@ -653,9 +675,7 @@ class LinkReplacerTest(ComicframeworkTestCase):
             self.projectadmin,
             self.participant,
             self.signedup_user,
-        ] = self._create_dummy_project(
-            "linkreplacer-test"
-        )
+        ] = self._create_dummy_project("linkreplacer-test")
         self.replacer = HtmlLinkReplacer()
 
     def assert_substring_in_string(self, substring, string):
@@ -726,7 +746,6 @@ class LinkReplacerTest(ComicframeworkTestCase):
 
 
 class UploadTest(ComicframeworkTestCase):
-
     def setUp_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
@@ -737,9 +756,7 @@ class UploadTest(ComicframeworkTestCase):
             self.projectadmin,
             self.participant,
             self.signedup_user,
-        ] = self._create_dummy_project(
-            "test-project"
-        )
+        ] = self._create_dummy_project("test-project")
         self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
@@ -770,7 +787,7 @@ class UploadTest(ComicframeworkTestCase):
         request.user = user
         fakefile = File(StringIO("some uploaded content for" + testfilename))
         fakecontent = "some uploaded content for" + testfilename
-        request.FILES['file'] = SimpleUploadedFile(
+        request.FILES["file"] = SimpleUploadedFile(
             name=testfilename, content=fakecontent.encode()
         )
         request.method = "POST"
@@ -779,23 +796,23 @@ class UploadTest(ComicframeworkTestCase):
         # don't know what this does but if fixes the bug.
         from django.contrib.messages.storage.fallback import FallbackStorage
 
-        setattr(request, 'session', 'session')
+        setattr(request, "session", "session")
         messages = FallbackStorage(request)
-        setattr(request, '_messages', messages)
+        setattr(request, "_messages", messages)
         response = upload_handler(request, project.short_name)
         self.assertEqual(
             response.status_code,
             302,
             "Uploading file %s as "
-            "user %s to project %s did not load to expected 302 " %
-            (testfilename, user.username, project.short_name),
+            "user %s to project %s did not load to expected 302 "
+            % (testfilename, user.username, project.short_name),
         )
         errors = self._find_errors_in_page(response)
         if errors:
             self.assertFalse(
                 errors,
-                "Error uploading file '%s':\n %s" %
-                (testfilename, errors.group(1)),
+                "Error uploading file '%s':\n %s"
+                % (testfilename, errors.group(1)),
             )
         return response
 
@@ -803,7 +820,7 @@ class UploadTest(ComicframeworkTestCase):
         """ Create a filename where you can see from which user is came, but 
         you don't get any nameclashes when creating a few
         """
-        return "%s_%s_%s" % (
+        return "{}_{}_{}".format(
             user.username,
             str(randint(10000, 99999)),
             "testfile%s.txt" % postfix,
@@ -845,9 +862,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
             self.projectadmin,
             self.participant,
             self.signedup_user,
-        ] = self._create_dummy_project(
-            "test-project"
-        )
+        ] = self._create_dummy_project("test-project")
         self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
@@ -858,9 +873,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
             "fakeinclude.html",
             "This is some fake include content:"
             "here is the content of fakecss"
-            "<somecss>{% insert_file " +
-            default_storage.FAKE_DIRS[1] +
-            "/fakecss.css %} </somecss>and a "
+            "<somecss>{% insert_file "
+            + default_storage.FAKE_DIRS[1]
+            + "/fakecss.css %} </somecss>and a "
             "non-existant include: <nonexistant>{% insert_file nothing/nonexistant.txt %}</nonexistant> Also"
             " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>",
         )
@@ -885,8 +900,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
                 link = found_link.group(1).strip()
         self.assertTrue(
             link != "",
-            "Could not find any list of files after rendering html '%s'" %
-            response1.content,
+            "Could not find any list of files after rendering html '%s'"
+            % response1.content,
         )
         return link
 
@@ -900,7 +915,11 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # create a page containing the listdir tag on the public folder.
         # Path to browse is a special path for which Mockstorage will return some
         # file list even if it does not exist
-        content = "Here are all the files in dir: {% listdir path:" + settings.COMIC_PUBLIC_FOLDER_NAME + " extensionFilter:.mhd %} text after "
+        content = (
+            "Here are all the files in dir: {% listdir path:"
+            + settings.COMIC_PUBLIC_FOLDER_NAME
+            + " extensionFilter:.mhd %} text after "
+        )
         page1 = create_page(self.testproject, "listdirpage", content)
         # can everyone now view this?
         response1 = self._test_page_can_be_viewed(None, page1)
@@ -911,9 +930,13 @@ class TemplateTagsTest(ComicframeworkTestCase):
         link = self._extract_download_link(response1)
         self._test_url_can_be_viewed(self.root, link)
         self._test_url_can_be_viewed(self.signedup_user, link)
-        # Now check files listed in a restricted area. These should only be 
+        # Now check files listed in a restricted area. These should only be
         # accessible tp registered users
-        content = "Here are all the files in dir: {% listdir path:" + settings.COMIC_REGISTERED_ONLY_FOLDER_NAME + " extensionFilter:.mhd %} text after "
+        content = (
+            "Here are all the files in dir: {% listdir path:"
+            + settings.COMIC_REGISTERED_ONLY_FOLDER_NAME
+            + " extensionFilter:.mhd %} text after "
+        )
         page2 = create_page(self.testproject, "restrictedlistdirpage", content)
         # can everyone now view this page?
         response5 = self._test_page_can_be_viewed(self.root, page2)
@@ -939,16 +962,24 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         # Sanity check: do two different pages give different urls?
-        content = "-url1-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage1' %}-endurl1-"
-        content += "-url2-{% url 'pages:detail' '" + self.testproject.short_name + "' 'testurlfakepage2' %}-endurl2-"
+        content = (
+            "-url1-{% url 'pages:detail' '"
+            + self.testproject.short_name
+            + "' 'testurlfakepage1' %}-endurl1-"
+        )
+        content += (
+            "-url2-{% url 'pages:detail' '"
+            + self.testproject.short_name
+            + "' 'testurlfakepage2' %}-endurl2-"
+        )
         urlpage = create_page(self.testproject, "testurltagpage", content)
         # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
         with self.settings(SUBDOMAIN_IS_PROJECTNAME=False):
             response = self._test_page_can_be_viewed(
                 self.signedup_user, urlpage
             )
-            url1 = find_text_between('-url1-', '-endurl1', response.content)
-            url2 = find_text_between('-url2-', '-endurl2', response.content)
+            url1 = find_text_between("-url1-", "-endurl1", response.content)
+            url2 = find_text_between("-url2-", "-endurl2", response.content)
             self.assertTrue(
                 url1 != url2,
                 "With SUBDOMAIN_IS_PROJECTNAME = False"
@@ -960,8 +991,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
             response = self._test_page_can_be_viewed(
                 self.signedup_user, urlpage
             )
-            url1 = find_text_between('-url1-', '-endurl1', response.content)
-            url2 = find_text_between('-url2-', '-endurl2', response.content)
+            url1 = find_text_between("-url1-", "-endurl1", response.content)
+            url2 = find_text_between("-url2-", "-endurl2", response.content)
             self.assertTrue(
                 url1 != url2,
                 "With SUBDOMAIN_IS_PROJECTNAME = True"
@@ -985,12 +1016,12 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # Extract rendered content from included file, see if it has been rendered
         # In the correct way
         somecss = find_text_between(
-            '<somecss>', '</somecss>', response.content
+            "<somecss>", "</somecss>", response.content
         )
         nonexistant = find_text_between(
-            '<nonexistant>', '</nonexistant>', response.content
+            "<nonexistant>", "</nonexistant>", response.content
         )
-        scary = find_text_between('<scary>', '</scary>', response.content)
+        scary = find_text_between("<scary>", "</scary>", response.content)
         self.assertTrue(
             somecss != "",
             "Nothing was rendered when including an existing file. Some css should be here",
@@ -1029,14 +1060,16 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
     def assertText(self, content, expected_text, description=""):
         """ assert that expected_text can be found in text, 
-        description can describe what this link should do, like 
+        description can describe what this link should do, like
         "register user without permission", for better fail messages
                 
         """
         self.assertTrue(
             expected_text in content.decode(),
-            "expected to find '{0}' but found '{1}' instead.\
-                         Attemted action: {2}".format(expected_text, content, description),
+            "expected to find '{}' but found '{}' instead.\
+                         Attemted action: {}".format(
+                expected_text, content, description
+            ),
         )
 
     def assertTextBetweenTags(
@@ -1048,7 +1081,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         
         """
         content = find_text_between(
-            '<' + tagname + '>', '</' + tagname + '>', text
+            "<" + tagname + ">", "</" + tagname + ">", text
         )
         self.assertTrue(
             content != "",
@@ -1056,9 +1089,10 @@ class TemplateTagsTest(ComicframeworkTestCase):
                 tagname, description
             ),
         )
-        description = "Rendering tag between <{0}> </{0}>, ".format(
-            tagname
-        ) + description
+        description = (
+            "Rendering tag between <{0}> </{0}>, ".format(tagname)
+            + description
+        )
         self.assertText(text, expected_text, description)
 
 
@@ -1079,9 +1113,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
             self.projectadmin,
             self.participant,
             self.signedup_user,
-        ] = self._create_dummy_project(
-            "test-project"
-        )
+        ] = self._create_dummy_project("test-project")
         self.participant2 = self._create_random_user("participant2")
         self._register(self.participant2, self.testproject)
 
@@ -1101,12 +1133,12 @@ class ProjectLoginTest(ComicframeworkTestCase):
             self.signedup_user, profile_signup_complete_url
         )
         self._test_url_can_be_viewed(None, profile_signup_complete_url)
-        # password reset is in the "forgot password?" link on the project 
+        # password reset is in the "forgot password?" link on the project
         # based login page. Make sure this works right.
         self._test_url_can_be_viewed(
             self.participant, reverse("userena_password_reset")
         )
 
 
-# The other userena urls are not realy tied up with project so I will 
+# The other userena urls are not realy tied up with project so I will
 # leave to userena to test.

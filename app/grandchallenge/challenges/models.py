@@ -7,9 +7,10 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import CICharField
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug, MinLengthValidator
+from django.core.validators import validate_slug
 from django.db import models
 from django.db.models import Q
+from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
@@ -29,14 +30,21 @@ class ChallengeManager(models.Manager):
 def validate_nounderscores(value):
     if "_" in value:
         raise ValidationError(
-            u"underscores not allowed. The url \
-            '{0}.{1}' would not be valid, "
-            u"please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
+            "underscores not allowed. The url \
+            '{}.{}' would not be valid, "
+            "please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
         )
 
 
+def validate_short_name(value):
+    if value.lower() in settings.DISALLOWED_CHALLENGE_NAMES:
+        raise ValidationError("That name is not allowed.")
+
+
 def get_logo_path(instance, filename):
-    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
+    return (
+        f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
+    )
 
 
 def get_banner_path(instance, filename):
@@ -47,6 +55,7 @@ class TaskType(models.Model):
     """
     Stores the task type options, eg, Segmentation, Regression, Prediction, etc
     """
+
     type = CICharField(max_length=16, blank=False, unique=True)
 
     class Meta:
@@ -58,6 +67,7 @@ class TaskType(models.Model):
 
 class ImagingModality(models.Model):
     """ Stores the modality options, eg, MR, CT, PET, XR """
+
     modality = CICharField(max_length=16, blank=False, unique=True)
 
     class Meta:
@@ -69,6 +79,7 @@ class ImagingModality(models.Model):
 
 class BodyRegion(models.Model):
     """ Stores the anatomy options, eg, Head, Neck, Thorax, etc """
+
     region = CICharField(max_length=16, blank=False, unique=True)
 
     class Meta:
@@ -80,22 +91,23 @@ class BodyRegion(models.Model):
 
 class BodyStructure(models.Model):
     """ Stores the organ name and what region it belongs to """
+
     structure = CICharField(max_length=16, blank=False, unique=True)
     region = models.ForeignKey(
-        to=BodyRegion, on_delete=models.CASCADE, blank=False,
+        to=BodyRegion, on_delete=models.CASCADE, blank=False
     )
 
     class Meta:
-        ordering = ("region", "structure",)
+        ordering = ("region", "structure")
 
     def __str__(self):
         return f"{self.structure} ({self.region})"
 
 
 class ChallengeBase(models.Model):
-    CHALLENGE_ACTIVE = 'challenge_active'
-    CHALLENGE_INACTIVE = 'challenge_inactive'
-    DATA_PUB = 'data_pub'
+    CHALLENGE_ACTIVE = "challenge_active"
+    CHALLENGE_INACTIVE = "challenge_inactive"
+    DATA_PUB = "data_pub"
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -109,7 +121,11 @@ class ChallengeBase(models.Model):
             "short name used in url, specific css, files etc. "
             "No spaces allowed"
         ),
-        validators=[validate_nounderscores, validate_slug, ],
+        validators=[
+            validate_nounderscores,
+            validate_slug,
+            validate_short_name,
+        ],
         unique=True,
     )
     description = models.CharField(
@@ -121,17 +137,14 @@ class ChallengeBase(models.Model):
     title = models.CharField(
         max_length=64,
         blank=True,
-        default='',
+        default="",
         help_text=(
-            'The name of the challenge that is displayed on the All Challenges'
-            ' page. If this is blank the short name of the challenge will be '
-            'used.'
+            "The name of the challenge that is displayed on the All Challenges"
+            " page. If this is blank the short name of the challenge will be "
+            "used."
         ),
     )
-    logo = models.ImageField(
-        upload_to=get_logo_path,
-        blank=True,
-    )
+    logo = models.ImageField(upload_to=get_logo_path, blank=True)
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Project in any public overview",
@@ -211,9 +224,7 @@ class ChallengeBase(models.Model):
     )
 
     task_types = models.ManyToManyField(
-        TaskType,
-        blank=True,
-        help_text="What type of task is this challenge?",
+        TaskType, blank=True, help_text="What type of task is this challenge?"
     )
     modalities = models.ManyToManyField(
         ImagingModality,
@@ -347,17 +358,15 @@ class Challenge(ChallengeBase):
     A collection of HTML pages using a certain skin. Pages can be browsed and
     edited.
     """
+
     public_folder = "public_html"
     skin = models.CharField(
         max_length=225,
         default=public_folder + "/project.css",
         help_text="css file to include throughout this"
-                  " project. relative to project data folder",
+        " project. relative to project data folder",
     )
-    banner = models.ImageField(
-        upload_to=get_banner_path,
-        blank=True,
-    )
+    banner = models.ImageField(upload_to=get_banner_path, blank=True)
     hide_signin = models.BooleanField(
         default=False,
         help_text="Do no show the Sign in / Register link on any page",
@@ -390,21 +399,21 @@ class Challenge(ChallengeBase):
     allow_unfiltered_page_html = models.BooleanField(
         default=False,
         help_text=(
-            'If true, the page HTML is NOT filtered, allowing the challenge '
-            'administrator to have full control over the page contents when '
-            'they edit it in ckeditor.'
-        )
+            "If true, the page HTML is NOT filtered, allowing the challenge "
+            "administrator to have full control over the page contents when "
+            "they edit it in ckeditor."
+        ),
     )
     use_registration_page = models.BooleanField(
         default=True,
-        help_text='If true, show a registration page on the challenge site.',
+        help_text="If true, show a registration page on the challenge site.",
     )
     registration_page_text = models.TextField(
-        default='',
+        default="",
         blank=True,
         help_text=(
-            'The text to use on the registration page, you could include '
-            'a data usage agreement here. You can use HTML markup here.'
+            "The text to use on the registration page, you could include "
+            "a data usage agreement here. You can use HTML markup here."
         ),
     )
     use_evaluation = models.BooleanField(
@@ -419,14 +428,14 @@ class Challenge(ChallengeBase):
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='admins_of_challenge',
+        related_name="admins_of_challenge",
     )
     participants_group = models.OneToOneField(
         Group,
         null=True,
         editable=False,
         on_delete=models.CASCADE,
-        related_name='participants_of_challenge',
+        related_name="participants_of_challenge",
     )
     submission_page_name = models.CharField(
         blank=True,
@@ -450,26 +459,13 @@ class Challenge(ChallengeBase):
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
         """
-        return os.path.join(settings.MEDIA_ROOT, self.short_name)
-
-    def upload_dir(self):
-        """Full path to get and put secure uploaded files. Files here cannot be
-        viewed directly by url
-        """
-        return os.path.join(settings.MEDIA_ROOT, self.upload_dir_rel())
+        return safe_join(settings.MEDIA_ROOT, self.short_name)
 
     def upload_dir_rel(self):
         """Path to get and put secure uploaded files relative to MEDIA_ROOT
 
         """
         return os.path.join(self.short_name, "uploads")
-
-    def public_upload_dir(self):
-        """Full path to get and put uploaded files. These files can be served
-        to anyone without checking
-
-         """
-        return os.path.join(settings.MEDIA_ROOT, self.public_upload_dir_rel())
 
     def public_upload_dir_rel(self):
         """ Path to public uploaded files, relative to MEDIA_ROOT
@@ -497,40 +493,31 @@ class Challenge(ChallengeBase):
         This method is used for showin permissions for these groups, even
         if none are defined
         """
-        groups = Group.objects.filter(
-            Q(name=settings.EVERYONE_GROUP_NAME) |
-            Q(pk=self.admins_group.pk) |
-            Q(pk=self.participants_group.pk)
+        return Group.objects.filter(
+            Q(name=settings.EVERYONE_GROUP_NAME)
+            | Q(pk=self.admins_group.pk)
+            | Q(pk=self.participants_group.pk)
         )
-        return groups
 
-    def is_admin(self, user):
+    def is_admin(self, user) -> bool:
         """
         is user in the admins group for the comicsite to which this object
         belongs? superuser always passes
         """
-        if user.is_superuser:
-            return True
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.admins_group.pk).exists()
+        )
 
-        if user.groups.filter(pk=self.admins_group.pk).exists():
-            return True
-
-        else:
-            return False
-
-    def is_participant(self, user):
+    def is_participant(self, user) -> bool:
         """
         is user in the participants group for the comicsite to which this
         object belong? superuser always passes
         """
-        if user.is_superuser:
-            return True
-
-        if user.groups.filter(pk=self.participants_group.pk).exists():
-            return True
-
-        else:
-            return False
+        return (
+            user.is_superuser
+            or user.groups.filter(pk=self.participants_group.pk).exists()
+        )
 
     def get_admins(self):
         """ Return all users that are in this comicsites admin group """
@@ -542,18 +529,16 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        return reverse('challenge-homepage', args=[self.short_name])
+        return reverse("challenge-homepage", args=[self.short_name])
 
     @property
     def submission_url(self):
         """ What url can you go to to submit for this project? """
-        url = reverse('challenge-homepage', args=[self.short_name])
+        url = reverse("challenge-homepage", args=[self.short_name])
         if self.submission_page_name:
             if self.submission_page_name.startswith(
-                    "http://"
-            ) or self.submission_page_name.startswith(
-                "https://"
-            ):
+                "http://"
+            ) or self.submission_page_name.startswith("https://"):
                 # the url in the submission page box is a full url
                 return self.submission_page_name
 
@@ -568,7 +553,7 @@ class Challenge(ChallengeBase):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
         else:
-            raise ValueError('You cannot add the anonymous user to this group')
+            raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
@@ -577,7 +562,7 @@ class Challenge(ChallengeBase):
         if user != get_anonymous_user():
             user.groups.add(self.admins_group)
         else:
-            raise ValueError('You cannot add the anonymous user to this group')
+            raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
@@ -589,21 +574,20 @@ class Challenge(ChallengeBase):
 
 class ExternalChallenge(ChallengeBase):
     homepage = models.URLField(
-        blank=False,
-        help_text=("What is the homepage for this challenge?"),
+        blank=False, help_text=("What is the homepage for this challenge?")
     )
     submission_page = models.URLField(
         blank=True,
-        help_text=("Where is the submissions page for this challenge?")
+        help_text=("Where is the submissions page for this challenge?"),
     )
     download_page = models.URLField(
         blank=True,
-        help_text=("Where is the download page for this challenge?")
+        help_text=("Where is the download page for this challenge?"),
     )
 
     data_stored = models.BooleanField(
         default=False,
-        help_text=("Has the grand-challenge team stored the data?")
+        help_text=("Has the grand-challenge team stored the data?"),
     )
 
     def get_absolute_url(self):
@@ -623,19 +607,21 @@ class ComicSiteModel(models.Model):
     An object which can be shown or used in the comicsite framework.
     This base class should handle common functions such as authorization.
     """
+
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
         Challenge,
         help_text="To which comicsite does this object belong?",
         on_delete=models.CASCADE,
     )
-    ALL = 'ALL'
-    REGISTERED_ONLY = 'REG'
-    ADMIN_ONLY = 'ADM'
+    ALL = "ALL"
+    REGISTERED_ONLY = "REG"
+    ADMIN_ONLY = "ADM"
+    STAFF_ONLY = "STF"
     PERMISSIONS_CHOICES = (
-        (ALL, 'All'),
-        (REGISTERED_ONLY, 'Registered users only'),
-        (ADMIN_ONLY, 'Administrators only'),
+        (ALL, "All"),
+        (REGISTERED_ONLY, "Registered users only"),
+        (ADMIN_ONLY, "Administrators only"),
     )
     PERMISSION_WEIGHTS = ((ALL, 0), (REGISTERED_ONLY, 1), (ADMIN_ONLY, 2))
     permission_lvl = models.CharField(
@@ -689,11 +675,11 @@ class ComicSiteModel(models.Model):
         setting permissions needs a persisted object. This method makes sure.
         """
         if not self.id:
-            super(ComicSiteModel, self).save()
+            super().save()
 
     def save(self, *args, **kwargs):
         self.setpermissions(self.permission_lvl)
-        super(ComicSiteModel, self).save()
+        super().save()
 
     class Meta:
         abstract = True

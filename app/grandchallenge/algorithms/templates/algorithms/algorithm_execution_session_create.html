@@ -1,0 +1,17 @@
+{% extends "site_signin.html" %}
+{% load crispy_forms_tags %}
+{% load grandchallenge_tags %}
+
+{% block pageName %}
+    Run an algorithm - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+
+    <h2>Run an algorithm</h2>
+
+    <p>Select the images that you would like to run the algorithm on.</p>
+
+    {% crispy form %}
+
+{% endblock %}

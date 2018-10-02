@@ -5,17 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0006_externalchallenge'),
-    ]
+    dependencies = [("challenges", "0006_externalchallenge")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='challenge',
-            name='header_image',
-        ),
-        migrations.RemoveField(
-            model_name='challenge',
-            name='logo_path',
-        ),
+        migrations.RemoveField(model_name="challenge", name="header_image"),
+        migrations.RemoveField(model_name="challenge", name="logo_path"),
     ]

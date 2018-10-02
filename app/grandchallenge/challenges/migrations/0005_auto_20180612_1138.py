@@ -6,19 +6,23 @@ import grandchallenge.challenges.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0004_auto_20180612_1059'),
-    ]
+    dependencies = [("challenges", "0004_auto_20180612_1059")]
 
     operations = [
         migrations.AddField(
-            model_name='challenge',
-            name='banner',
-            field=models.ImageField(blank=True, upload_to=grandchallenge.challenges.models.get_banner_path),
+            model_name="challenge",
+            name="banner",
+            field=models.ImageField(
+                blank=True,
+                upload_to=grandchallenge.challenges.models.get_banner_path,
+            ),
         ),
         migrations.AddField(
-            model_name='challenge',
-            name='logo',
-            field=models.ImageField(blank=True, upload_to=grandchallenge.challenges.models.get_logo_path),
+            model_name="challenge",
+            name="logo",
+            field=models.ImageField(
+                blank=True,
+                upload_to=grandchallenge.challenges.models.get_logo_path,
+            ),
         ),
     ]

@@ -1,5 +1,5 @@
 import mimetypes
-from os import path
+import posixpath
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -7,34 +7,39 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
+from django.utils._os import safe_join
 from django.views.generic import (
-    ListView, CreateView, UpdateView, DeleteView, RedirectView
+    ListView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+    RedirectView,
 )
 from favicon.models import Favicon
 
-from grandchallenge.challenges.permissions import can_access
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.views import (
-    site_get_standard_vars, getRenderedPageIfAllowed, get_data_folder_path
+    site_get_standard_vars,
+    getRenderedPageIfAllowed,
+    get_data_folder_path,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
-from grandchallenge.uploads.api import serve_file
+from grandchallenge.serving.api import serve_file
+from grandchallenge.serving.permissions import can_access
 
 
 class ChallengeFilteredQuerysetMixin(object):
-
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(Q(challenge=self.request.challenge))
 
 
 class ChallengeFormKwargsMixin(object):
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({'challenge': self.request.challenge})
+        kwargs.update({"challenge": self.request.challenge})
         return kwargs
 
 
@@ -63,13 +68,13 @@ class PageUpdate(
 ):
     model = Page
     form_class = PageUpdateForm
-    slug_url_kwarg = 'page_title'
-    slug_field = 'title__iexact'
-    template_name_suffix = '_form_update'
+    slug_url_kwarg = "page_title"
+    slug_field = "title__iexact"
+    template_name_suffix = "_form_update"
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        self.object.move(form.cleaned_data['move'])
+        self.object.move(form.cleaned_data["move"])
         return response
 
 
@@ -77,14 +82,14 @@ class PageDelete(
     UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, DeleteView
 ):
     model = Page
-    slug_url_kwarg = 'page_title'
-    slug_field = 'title__iexact'
-    success_message = 'Page was successfully deleted'
+    slug_url_kwarg = "page_title"
+    slug_field = "title__iexact"
+    success_message = "Page was successfully deleted"
 
     def get_success_url(self):
         return reverse(
-            'pages:list',
-            kwargs={'challenge_short_name': self.request.challenge.short_name},
+            "pages:list",
+            kwargs={"challenge_short_name": self.request.challenge.short_name},
         )
 
     def delete(self, request, *args, **kwargs):
@@ -101,7 +106,7 @@ def page(request, challenge_short_name, page_title):
         challenge_short_name
     )
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
-    response = render(request, 'page.html', {'currentpage': currentpage})
+    response = render(request, "page.html", {"currentpage": currentpage})
     # TODO: THis has code smell. If page has to be checked like this, is it
     # ok to use a page object for error messages?
     if hasattr(currentpage, "is_error_page"):
@@ -116,7 +121,9 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     """
     (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
     if mimetype is None:
-        mimetype = "NoneType"  # make the next statement not crash on non-existant mimetype
+        mimetype = (
+            "NoneType"
+        )  # make the next statement not crash on non-existant mimetype
     if mimetype.startswith("image"):
         return inserted_file(request, challenge_short_name, dropboxpath)
 
@@ -130,22 +137,30 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
         Page, challenge__short_name=site.short_name, title=page_title
     )
     baselink = reverse(
-        'pages:detail',
+        "pages:detail",
         kwargs={
-            'challenge_short_name': p.challenge.short_name,
-            'page_title': p.title,
+            "challenge_short_name": p.challenge.short_name,
+            "page_title": p.title,
         },
     )
-    msg = "<div class=\"breadcrumbtrail\"> Displaying '" + dropboxpath + "' from local dropboxfolder, originally linked from\
-           page <a href=\"" + baselink + "\">" + p.title + "</a> </div>"
+    msg = (
+        '<div class="breadcrumbtrail"> Displaying \''
+        + dropboxpath
+        + "' from local dropboxfolder, originally linked from\
+           page <a href=\""
+        + baselink
+        + '">'
+        + p.title
+        + "</a> </div>"
+    )
     p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
     currentpage = getRenderedPageIfAllowed(p, request, site)
     return render(
         request,
-        'dropboxpage.html',
+        "dropboxpage.html",
         {
-            'site': site,
-            'currentpage': currentpage,
+            "site": site,
+            "currentpage": currentpage,
             "pages": pages,
             "metafooterpages": metafooterpages,
         },
@@ -157,9 +172,12 @@ def inserted_file(request, challenge_short_name, filepath=""):
 
     """
     data_folder_root = get_data_folder_path(challenge_short_name)
-    filename = path.join(data_folder_root, filepath)
+    filepath = posixpath.normpath(filepath).lstrip("/")
+    filename = safe_join(data_folder_root, filepath)
     # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(request.user, filepath, challenge_short_name)
+    serve_allowed = can_access(
+        request.user, filepath, challenge=request.challenge
+    )
     if not serve_allowed:
         raise PermissionDenied(
             "You do not have the correct permissions to access this page."
@@ -187,7 +205,7 @@ class FaviconView(RedirectView):
     """
 
     permanent = False
-    rel = 'shortcut icon'
+    rel = "shortcut icon"
 
     def get_redirect_url(self, *args, **kwargs):
         fav = Favicon.objects.filter(isFavicon=True).first()
@@ -195,12 +213,12 @@ class FaviconView(RedirectView):
         if not fav:
             return None
 
-        if self.rel == 'shortcut icon':
+        if self.rel == "shortcut icon":
             size = 32
         else:
             # This is the largest icon from
             # https://github.com/audreyr/favicon-cheat-sheet
-            size = kwargs.get('size', 180)
+            size = kwargs.get("size", 180)
 
         default_fav = fav.get_favicon(size=size, rel=self.rel)
 

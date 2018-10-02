@@ -21,15 +21,15 @@ class ContainerExecJobModel(models.Model):
     CANCELLED = 5
 
     STATUS_CHOICES = (
-        (PENDING, 'The task is waiting for execution'),
-        (STARTED, 'The task has been started'),
-        (RETRY, 'The task is to be retried, possibly because of failure'),
+        (PENDING, "The task is waiting for execution"),
+        (STARTED, "The task has been started"),
+        (RETRY, "The task is to be retried, possibly because of failure"),
         (
             FAILURE,
-            'The task raised an exception, or has exceeded the retry limit',
+            "The task raised an exception, or has exceeded the retry limit",
         ),
-        (SUCCESS, 'The task executed successfully'),
-        (CANCELLED, 'The task was cancelled'),
+        (SUCCESS, "The task executed successfully"),
+        (CANCELLED, "The task was cancelled"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -46,7 +46,7 @@ class ContainerExecJobModel(models.Model):
         self.save()
 
     @property
-    def container(self) -> 'ContainerImageModel':
+    def container(self) -> "ContainerImageModel":
         """
         Returns the container object associated with this instance, which
         should be a foreign key to an object that is a subclass of
@@ -81,10 +81,10 @@ class ContainerExecJobModel(models.Model):
         execute_job.apply_async(
             task_id=str(self.pk),
             kwargs={
-                'job_pk': self.pk,
-                'job_app_label': self._meta.app_label,
-                'job_model_name': self._meta.model_name,
-            }
+                "job_pk": self.pk,
+                "job_app_label": self._meta.app_label,
+                "job_model_name": self._meta.model_name,
+            },
         )
 
     class Meta:
@@ -93,12 +93,12 @@ class ContainerExecJobModel(models.Model):
 
 def docker_image_path(instance, filename):
     return (
-        f'docker/'
-        f'images/'
-        f'{instance._meta.app_label.lower()}/'
-        f'{instance._meta.model_name.lower()}/'
-        f'{instance.pk}/'
-        f'{filename}'
+        f"docker/"
+        f"images/"
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{instance.pk}/"
+        f"{filename}"
     )
 
 
@@ -108,11 +108,11 @@ class ContainerImageModel(models.Model):
     )
     image = models.FileField(
         upload_to=docker_image_path,
-        validators=[ExtensionValidator(allowed_extensions=('.tar',))],
+        validators=[ExtensionValidator(allowed_extensions=(".tar",))],
         help_text=(
-            'Tar archive of the container image produced from the command '
-            '`docker save IMAGE > IMAGE.tar`. See '
-            'https://docs.docker.com/engine/reference/commandline/save/'
+            "Tar archive of the container image produced from the command "
+            "`docker save IMAGE > IMAGE.tar`. See "
+            "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
     image_sha256 = models.CharField(editable=False, max_length=71)

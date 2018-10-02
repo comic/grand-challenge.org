@@ -1,8 +1,6 @@
-FROM python:3.6
+FROM python:3.6-alpine
 
 ENV PYTHONUNBUFFERED 1
-
-RUN pip install scikit-learn numpy scipy
 
 RUN mkdir /input
 RUN mkdir /output

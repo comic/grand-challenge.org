@@ -7,14 +7,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('evaluation', '0002_config_submission_page_html'),
-    ]
+    dependencies = [("evaluation", "0002_config_submission_page_html")]
 
     operations = [
         migrations.AddField(
-            model_name='config',
-            name='new_results_are_public',
-            field=models.BooleanField(default=True, help_text='If true, new results are automatically made public. If false, the challenge administrator must manually publish each new result.'),
-        ),
+            model_name="config",
+            name="new_results_are_public",
+            field=models.BooleanField(
+                default=True,
+                help_text="If true, new results are automatically made public. If false, the challenge administrator must manually publish each new result.",
+            ),
+        )
     ]

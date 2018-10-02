@@ -9,9 +9,11 @@ from django.core import files
 from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile, \
-    cleanup_stale_files, \
-    NotFoundError
+from grandchallenge.jqfileupload.widgets.uploader import (
+    StagedAjaxFile,
+    cleanup_stale_files,
+    NotFoundError,
+)
 
 
 def create_uploaded_file(
@@ -61,7 +63,7 @@ def do_default_content_tests(uploaded_file, file_content):
     assert uploaded_file.size == len(file_content)
     with uploaded_file.open() as file:
         assert file.read(l) == file_content[0:l]
-        assert file.read(l) == file_content[l:2 * l]
+        assert file.read(l) == file_content[l : 2 * l]
         assert file.seek(0) == file.tell()
         assert file.read() == file_content
         assert file.seek(-1, 1) == len(file_content) - 1
@@ -77,14 +79,14 @@ def do_default_content_tests(uploaded_file, file_content):
         assert file.read(l) == file_content[0:l]
         file.seek(0)
         assert file.read1(l) == file_content[0:l]
-        byte_buffer = bytearray(b'0' * l)
+        byte_buffer = bytearray(b"0" * l)
         file.seek(0)
         assert file.readinto(byte_buffer) == l
         assert byte_buffer == file_content[0:l]
         file.seek(len(file_content) + 10)
         assert file.readinto(byte_buffer) == 0
         assert byte_buffer == file_content[0:l]
-        byte_buffer = bytearray(b'0' * l)
+        byte_buffer = bytearray(b"0" * l)
         file.seek(0)
         assert file.readinto1(byte_buffer) == l
         assert byte_buffer == file_content[0:l]
@@ -202,9 +204,7 @@ def test_file_cleanup():
 @pytest.mark.django_db
 def test_missing_file():
     file_content = b"HelloWorld" * 5
-    uploaded_file_uuid = create_uploaded_file(
-        file_content, [len(file_content)]
-    )
+    uploaded_file_uuid = create_uploaded_file(file_content, [len(file_content)])
     tested_file = StagedAjaxFile(uploaded_file_uuid)
     assert tested_file.exists
     assert tested_file.is_complete

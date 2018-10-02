@@ -61,4 +61,7 @@ def test_two_challenge_sets_fixture(TwoChallengeSets):
 @pytest.mark.django_db
 def test_eval_challenge_set_fixture(EvalChallengeSet):
     assert EvalChallengeSet.ChallengeSet.challenge.use_evaluation
-    assert EvalChallengeSet.ChallengeSet.challenge == EvalChallengeSet.method.challenge
+    assert (
+        EvalChallengeSet.ChallengeSet.challenge
+        == EvalChallengeSet.method.challenge
+    )

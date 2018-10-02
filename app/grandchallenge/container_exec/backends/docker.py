@@ -7,29 +7,27 @@ import uuid
 from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
+from random import randint
+from time import sleep
 from typing import Tuple
 
 import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError
-
-from grandchallenge.container_exec.exceptions import (
-    InputError, ExecContainerError
-)
+from docker.errors import ContainerError, APIError
+from requests import HTTPError
 
 
 class Executor(object):
-
     def __init__(
-            self,
-            *,
-            job_id: uuid.UUID,
-            input_files: Tuple[File, ...],
-            exec_image: File,
-            exec_image_sha256: str,
-            results_file: Path,
+        self,
+        *,
+        job_id: uuid.UUID,
+        input_files: Tuple[File, ...],
+        exec_image: File,
+        exec_image_sha256: str,
+        results_file: Path,
     ):
         super().__init__()
         self._job_id = str(job_id)
@@ -43,28 +41,46 @@ class Executor(object):
             base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
         )
 
-        self._input_volume = f'{self._job_id}-input'
-        self._output_volume = f'{self._job_id}-output'
+        self._input_volume = f"{self._job_id}-input"
+        self._output_volume = f"{self._job_id}-output"
 
         self._run_kwargs = {
-            'labels': {'job_id': self._job_id},
-            'network_disabled': True,
-            'mem_limit': settings.CONTAINER_EXEC_MEMORY_LIMIT,
-            'cpu_period': settings.CONTAINER_EXEC_CPU_PERIOD,
-            'cpu_quota': settings.CONTAINER_EXEC_CPU_QUOTA,
+            "labels": {"job_id": self._job_id},
+            "network_disabled": True,
+            "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
+            "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
+            "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
         }
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        filter = {'label': f'job_id={self._job_id}'}
+        filter = {"label": f"job_id={self._job_id}"}
 
         for container in self._client.containers.list(filters=filter):
             container.stop()
 
-        self._client.containers.prune(filters=filter)
-        self._client.volumes.prune(filters=filter)
+        self.__retry_docker_obj_prune(
+            obj=self._client.containers, filters=filter
+        )
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=filter)
+
+    @staticmethod
+    def __retry_docker_obj_prune(*, obj, filters: dict):
+        # Retry and exponential backoff of the prune command as only 1 prune
+        # operation can occur at a time on a docker host
+        num_retries = 0
+        e = APIError
+        while num_retries < 3:
+            try:
+                obj.prune(filters=filters)
+                break
+            except (APIError, HTTPError) as e:
+                num_retries += 1
+                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+        else:
+            raise e
 
     def execute(self) -> dict:
         self._pull_images()
@@ -79,40 +95,38 @@ class Executor(object):
         if self._exec_image_sha256 not in [
             img.id for img in self._client.images.list()
         ]:
-            with self._exec_image.open('rb') as f:
+            with self._exec_image.open("rb") as f:
                 self._client.images.load(f)
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
             self._client.volumes.create(
-                name=volume, labels=self._run_kwargs["labels"],
+                name=volume, labels=self._run_kwargs["labels"]
             )
 
     def _provision_input_volume(self):
         try:
             with cleanup(
-                    self._client.containers.run(
-                        image=self._io_image,
-                        volumes={
-                            self._input_volume: {
-                                'bind': '/input/', 'mode': 'rw'
-                            }
-                        },
-                        detach=True,
-                        tty=True,
-                        **self._run_kwargs,
-                    )
+                self._client.containers.run(
+                    image=self._io_image,
+                    volumes={
+                        self._input_volume: {"bind": "/input/", "mode": "rw"}
+                    },
+                    detach=True,
+                    tty=True,
+                    **self._run_kwargs,
+                )
             ) as writer:
                 self._copy_input_files(writer=writer)
         except Exception as exc:
-            raise InputError(str(exc))
+            raise RuntimeError(str(exc))
 
     def _copy_input_files(self, writer):
         for file in self._input_files:
             put_file(
                 container=writer,
                 src=file,
-                dest=f"/input/{Path(file.name).name}"
+                dest=f"/input/{Path(file.name).name}",
             )
 
     def _execute_container(self):
@@ -120,34 +134,34 @@ class Executor(object):
             self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
-                    self._input_volume: {'bind': '/input/', 'mode': 'rw'},
-                    self._output_volume: {'bind': '/output/', 'mode': 'rw'},
+                    self._input_volume: {"bind": "/input/", "mode": "rw"},
+                    self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
     def _get_result(self) -> dict:
         try:
             result = self._client.containers.run(
                 image=self._io_image,
                 volumes={
-                    self._output_volume: {'bind': '/output/', 'mode': 'ro'}
+                    self._output_volume: {"bind": "/output/", "mode": "ro"}
                 },
                 command=f"cat {self._results_file}",
                 **self._run_kwargs,
             )
         except ContainerError as exc:
-            raise ExecContainerError(exc.stderr.decode())
+            raise RuntimeError(exc.stderr.decode())
 
         try:
             result = json.loads(
                 result.decode(),
-                parse_constant=lambda x: None, # Removes -inf, inf and NaN
+                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
         except JSONDecodeError as exc:
-            raise ExecContainerError(exc.msg)
+            raise RuntimeError(exc.msg)
 
         return result
 
@@ -184,8 +198,25 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
     tarinfo.size = src.size
 
-    with tarfile.open(fileobj=tar_b, mode='w') as tar, src.open('rb') as f:
+    with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
         tar.addfile(tarinfo, fileobj=f)
 
     tar_b.seek(0)
     container.put_archive(os.path.dirname(dest), tar_b)
+
+
+def get_file(*, container: ContainerApiMixin, src: Path):
+    tarstrm, info = container.get_archive(src)
+
+    if info["size"] > 2E9:
+        raise ValueError(f"File {src} is too big to be decompressed.")
+
+    file_obj = io.BytesIO()
+    for ts in tarstrm:
+        file_obj.write(ts)
+
+    file_obj.seek(0)
+    tar = tarfile.open(mode="r", fileobj=file_obj)
+    content = tar.extractfile(src.name)
+
+    return content

@@ -22,7 +22,7 @@ def get_jsonpath(obj: dict, jsonpath):
     """
 
     try:
-        keys = jsonpath.split('.')
+        keys = jsonpath.split(".")
         val = obj
 
         for key in keys:
@@ -31,7 +31,7 @@ def get_jsonpath(obj: dict, jsonpath):
         return val
 
     except KeyError:
-        return ''
+        return ""
 
 
 @register.filter
@@ -50,7 +50,7 @@ def user_error(obj: [str, bytes]):
         pass
 
     try:
-        lines = list(filter(None, obj.split('\n')))
+        lines = list(filter(None, obj.split("\n")))
         return lines[-1]
     except IndexError:
         return obj
@@ -75,8 +75,7 @@ def json_dumps(obj: dict):
 def get_team_html(obj):
     try:
         team = Team.objects.get(
-            challenge=obj.challenge,
-            teammember__user=obj.job.submission.creator,
+            challenge=obj.challenge, teammember__user=obj.job.submission.creator
         )
         return format_html(
             '<a href="{}">{}</a>', team.get_absolute_url(), team.name

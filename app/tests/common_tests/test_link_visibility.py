@@ -8,15 +8,15 @@ from tests.utils import validate_admin_only_text_in_page
 @pytest.mark.parametrize(
     "view",
     [
-        'participants:registration-list',
-        'participants:list',
-        'admins:list',
-        'uploads:list',
+        "participants:registration-list",
+        "participants:list",
+        "admins:list",
+        "uploads:list",
     ],
 )
 def test_admins_see_links(view, client, TwoChallengeSets):
     url = reverse(
-        'challenge-homepage',
+        "challenge-homepage",
         args=[TwoChallengeSets.ChallengeSet1.challenge.short_name],
     )
     expected = reverse(
