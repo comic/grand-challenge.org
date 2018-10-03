@@ -86,6 +86,13 @@ submission_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/submission-upload/", multifile=False
 )
 
+submission_fields = (
+    "comment",
+    "supplementary_file",
+    "publication_url",
+    "chunked_upload",
+)
+
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
@@ -142,15 +149,10 @@ class SubmissionForm(forms.ModelForm):
 
     class Meta:
         model = Submission
-        fields = (
-            "comment",
-            "supplementary_file",
-            "publication_url",
-            "chunked_upload",
-        )
+        fields = submission_fields
 
 
 class LegacySubmissionForm(SubmissionForm):
     class Meta:
         model = Submission
-        fields = ("creator", "comment", "supplementary_file", "chunked_upload")
+        fields = ("creator", *submission_fields)
