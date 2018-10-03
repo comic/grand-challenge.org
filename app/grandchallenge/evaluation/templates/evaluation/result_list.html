@@ -25,6 +25,10 @@
                 <th>Comment</th>
             {% endif %}
 
+            {% if site.evaluation_config.show_publication_url %}
+                <th>Publication</th>
+            {% endif %}
+
             {% if site.evaluation_config.show_supplementary_file_link %}
                 <th>{{ site.evaluation_config.supplementary_file_label }}</th>
             {% endif %}
@@ -48,14 +52,26 @@
 
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
 
-                <td><a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a></td>
+                <td>
+                    <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a>
+                </td>
 
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
-                    <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:"-4" }}</td>
+                    <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</td>
                 {% endfor %}
 
                 {% if site.evaluation_config.display_submission_comments %}
                     <td>{{ result.job.submission.comment }}</td>
+                {% endif %}
+
+                {% if site.evaluation_config.show_publication_url %}
+                    <td>
+                        {% if result.job.submission.publication_url %}
+                            <a href="{{ result.job.submission.publication_url }}">
+                                <i class="fa fa-file"></i>
+                            </a>
+                        {% endif %}
+                    </td>
                 {% endif %}
 
                 {% if site.evaluation_config.show_supplementary_file_link %}

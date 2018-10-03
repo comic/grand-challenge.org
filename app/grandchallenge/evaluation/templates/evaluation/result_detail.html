@@ -44,6 +44,17 @@
             </dd>
         {% endif %}
 
+        {% if site.evaluation_config.show_publication_url %}
+            <dt>Publication:</dt>
+            <dd>
+                {% if object.job.submission.publication_url %}
+                    <a href="{{ object.job.submission.publication_url }}">
+                        <i class="fa fa-file"></i>
+                    </a>
+                {% endif %}
+            </dd>
+        {% endif %}
+
         {% if request.user.is_staff and object.job.submission.annotationset %}
             <dt>Predictions</dt>
             <dd>

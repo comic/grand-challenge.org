@@ -38,6 +38,7 @@ services:
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
+      - ./app:/app/
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:

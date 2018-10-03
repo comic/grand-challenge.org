@@ -75,15 +75,17 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
 
-        config = Config.objects.get(challenge=self.request.challenge)
+        config = Config.objects.get(
+            challenge=self.request.challenge
+        )  # type: Config
 
         kwargs.update(
             {
                 "display_comment_field": config.allow_submission_comments,
-                "allow_supplementary_file": config.allow_supplementary_file,
-                "require_supplementary_file": config.require_supplementary_file,
+                "supplementary_file_choice": config.supplementary_file_choice,
                 "supplementary_file_label": config.supplementary_file_label,
                 "supplementary_file_help_text": config.supplementary_file_help_text,
+                "publication_url_choice": config.publication_url_choice,
             }
         )
 
