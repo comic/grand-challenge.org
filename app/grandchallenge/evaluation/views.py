@@ -85,6 +85,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "supplementary_file_choice": config.supplementary_file_choice,
                 "supplementary_file_label": config.supplementary_file_label,
                 "supplementary_file_help_text": config.supplementary_file_help_text,
+                "publication_url_choice": config.publication_url_choice,
             }
         )
 

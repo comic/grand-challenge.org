@@ -36,7 +36,7 @@ class Config(UUIDModel):
     OFF = "off"
     OPTIONAL = "opt"
     REQUIRED = "req"
-    SUPPLEMENTARY_FILE_CHOICES = (
+    PUBLICATION_LINK_CHOICES = SUPPLEMENTARY_FILE_CHOICES = (
         (OFF, "Off"),
         (OPTIONAL, "Optional"),
         (REQUIRED, "Required"),
@@ -112,6 +112,7 @@ class Config(UUIDModel):
             "If true, submission comments are shown on the results page."
         ),
     )
+
     supplementary_file_choice = models.CharField(
         max_length=3,
         choices=SUPPLEMENTARY_FILE_CHOICES,
@@ -150,6 +151,24 @@ class Config(UUIDModel):
             "page."
         ),
     )
+
+    publication_url_choice = models.CharField(
+        max_length=3,
+        choices=PUBLICATION_LINK_CHOICES,
+        default=OFF,
+        help_text=(
+            "Show a publication url field on the submission page so that "
+            "users can submit a link to a publication that corresponds to "
+            "their submission. Off turns this feature off, Optional means "
+            "that including the url is optional for the user, Required means "
+            "that the user must provide an url."
+        ),
+    )
+    show_publication_url = models.BooleanField(
+        default=False,
+        help_text=("Show a link to the publication on the results page"),
+    )
+
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
@@ -270,6 +289,12 @@ class Submission(UUIDModel):
         help_text=(
             "You can add a comment here to help you keep track of your "
             "submissions."
+        ),
+    )
+    publication_url = models.URLField(
+        blank=True,
+        help_text=(
+            "A URL for the publication associated with this submission."
         ),
     )
 

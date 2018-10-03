@@ -15,6 +15,7 @@ submission_options = (
     "supplementary_file_choice",
     "supplementary_file_label",
     "supplementary_file_help_text",
+    "publication_url_choice",
 )
 
 result_list_options = (
@@ -27,6 +28,7 @@ result_list_options = (
     "new_results_are_public",
     "display_submission_comments",
     "show_supplementary_file_link",
+    "show_publication_url",
 )
 
 result_detail_options = ("submission_join_key",)
@@ -100,13 +102,17 @@ class SubmissionForm(forms.ModelForm):
         display_comment_field = kwargs.pop("display_comment_field", False)
 
         supplementary_file_choice = kwargs.pop(
-            "supplementary_file_choice", False
+            "supplementary_file_choice", Config.OFF
         )
 
         supplementary_file_label = kwargs.pop("supplementary_file_label", "")
 
         supplementary_file_help_text = kwargs.pop(
             "supplementary_file_help_text", ""
+        )
+
+        publication_url_choice = kwargs.pop(
+            "publication_url_choice", Config.OFF
         )
 
         super().__init__(*args, **kwargs)
@@ -127,11 +133,21 @@ class SubmissionForm(forms.ModelForm):
         elif supplementary_file_choice == Config.OFF:
             del self.fields["supplementary_file"]
 
+        if publication_url_choice == Config.REQUIRED:
+            self.fields["publication_url"].required = True
+        elif publication_url_choice == Config.OFF:
+            del self.fields["publication_url"]
+
         self.helper = FormHelper(self)
 
     class Meta:
         model = Submission
-        fields = ("comment", "supplementary_file", "chunked_upload")
+        fields = (
+            "comment",
+            "supplementary_file",
+            "publication_url",
+            "chunked_upload",
+        )
 
 
 class LegacySubmissionForm(SubmissionForm):
