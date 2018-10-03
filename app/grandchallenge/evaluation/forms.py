@@ -22,6 +22,7 @@ result_list_options = (
     "score_title",
     "score_jsonpath",
     "score_default_sort",
+    "score_decimal_places",
     "extra_results_columns",
     "new_results_are_public",
     "display_submission_comments",

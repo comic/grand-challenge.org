@@ -82,6 +82,11 @@ class Config(UUIDModel):
             "The default sorting to use for the scores on the results " "page."
         ),
     )
+    score_decimal_places = models.PositiveSmallIntegerField(
+        blank=False,
+        default=4,
+        help_text=("The number of decimal places to display for the score"),
+    )
     extra_results_columns = JSONField(
         default=dict,
         blank=True,
