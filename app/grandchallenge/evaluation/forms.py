@@ -12,8 +12,7 @@ submission_options = (
     "submission_page_html",
     "daily_submission_limit",
     "allow_submission_comments",
-    "allow_supplementary_file",
-    "require_supplementary_file",
+    "supplementary_file_choice",
     "supplementary_file_label",
     "supplementary_file_help_text",
 )
@@ -99,12 +98,8 @@ class SubmissionForm(forms.ModelForm):
         """
         display_comment_field = kwargs.pop("display_comment_field", False)
 
-        allow_supplementary_file = kwargs.pop(
-            "allow_supplementary_file", False
-        )
-
-        require_supplementary_file = kwargs.pop(
-            "require_supplementary_file", False
+        supplementary_file_choice = kwargs.pop(
+            "supplementary_file_choice", False
         )
 
         supplementary_file_label = kwargs.pop("supplementary_file_label", "")
@@ -126,9 +121,9 @@ class SubmissionForm(forms.ModelForm):
                 "supplementary_file"
             ].help_text = supplementary_file_help_text
 
-        if require_supplementary_file:
+        if supplementary_file_choice == Config.REQUIRED:
             self.fields["supplementary_file"].required = True
-        elif not allow_supplementary_file:
+        elif supplementary_file_choice == Config.OFF:
             del self.fields["supplementary_file"]
 
         self.helper = FormHelper(self)

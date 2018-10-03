@@ -32,6 +32,16 @@ class Config(UUIDModel):
         (ASCENDING, "Ascending"),
         (DESCENDING, "Descending"),
     )
+
+    OFF = "off"
+    OPTIONAL = "opt"
+    REQUIRED = "req"
+    SUPPLEMENTARY_FILE_CHOICES = (
+        (OFF, "Off"),
+        (OPTIONAL, "Optional"),
+        (REQUIRED, "Required"),
+    )
+
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
@@ -97,20 +107,17 @@ class Config(UUIDModel):
             "If true, submission comments are shown on the results page."
         ),
     )
-    allow_supplementary_file = models.BooleanField(
-        default=False,
+    supplementary_file_choice = models.CharField(
+        max_length=3,
+        choices=SUPPLEMENTARY_FILE_CHOICES,
+        default=OFF,
         help_text=(
             "Show a supplementary file field on the submissions page so that "
             "users can upload an additional file along with their predictions "
             "file as part of their submission (eg, include a pdf description "
-            "of their method)."
-        ),
-    )
-    require_supplementary_file = models.BooleanField(
-        default=False,
-        help_text=(
-            "Force users to upload a supplementary file with their "
-            "predictions file."
+            "of their method). Off turns this feature off, Optional means "
+            "that including the file is optional for the user, Required means "
+            "that the user must upload a supplementary file."
         ),
     )
     supplementary_file_label = models.CharField(
