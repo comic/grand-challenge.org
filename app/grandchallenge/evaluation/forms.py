@@ -101,27 +101,20 @@ class SubmissionForm(forms.ModelForm):
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        display_comment_field=False,
+        supplementary_file_choice=Config.OFF,
+        supplementary_file_label="",
+        supplementary_file_help_text="",
+        publication_url_choice=Config.OFF,
+        **kwargs,
+    ):
         """
         Conditionally render the comment field based on the
         display_comment_field kwarg
         """
-        display_comment_field = kwargs.pop("display_comment_field", False)
-
-        supplementary_file_choice = kwargs.pop(
-            "supplementary_file_choice", Config.OFF
-        )
-
-        supplementary_file_label = kwargs.pop("supplementary_file_label", "")
-
-        supplementary_file_help_text = kwargs.pop(
-            "supplementary_file_help_text", ""
-        )
-
-        publication_url_choice = kwargs.pop(
-            "publication_url_choice", Config.OFF
-        )
-
         super().__init__(*args, **kwargs)
 
         if not display_comment_field:
