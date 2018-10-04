@@ -297,13 +297,18 @@ class ChallengeBase(models.Model):
         classes.append(self.get_host_id())
 
         #Filter by modality
-
-        filter_mod = "MR" #loop over all modalities or pk
-
         for mod in self.modalities.all():
-            print(mod)
-            if mod.modality == filter_mod:
-                classes.append("modality-" + filter_mod)
+            classes.append("modality-" + mod.modality)
+
+        # Filter by body region and structure
+        for struc in self.structures.all():
+            if ("region-" + struc.region.region) not in set(classes): #avoid region duplicates
+                classes.append("region-" + struc.region.region)
+            classes.append("structure-" + struc.structure)
+
+        # Filter by task type
+        for tas in self.task_types.all():
+            classes.append("task-" + tas.type)
 
         return " ".join(classes)
 

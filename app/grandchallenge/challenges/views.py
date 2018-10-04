@@ -17,7 +17,7 @@ from grandchallenge.challenges.forms import (
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import Challenge, ExternalChallenge, BodyRegion, BodyStructure, ImagingModality, TaskType
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
@@ -59,10 +59,19 @@ class ChallengeList(TemplateView):
             challenges_by_year,
         )
 
+        modalities = ImagingModality.objects.all()
+        task_types = TaskType.objects.all()
+        body_structures = BodyStructure.objects.all()
+        body_regions = [reg.region for reg in BodyRegion.objects.all()]
+
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display
         context.update(
             {
+                "modalities": modalities,
+                "body_regions": body_regions,
+                "body_structures": body_structures,
+                "task_types": task_types,
                 "challenges_by_year": OrderedDict(
                     sorted(
                         challenges_by_year.items(),

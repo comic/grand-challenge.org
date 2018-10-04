@@ -36,6 +36,7 @@ services:
       memcached:
         condition: service_started
     volumes:
+      - ./app/:/app/
       - static:/static/
       - media:/dbox/Dropbox/media/
       # The docker socket is only needed for testing
