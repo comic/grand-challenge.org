@@ -41,4 +41,4 @@ of the framework, please see
 Slack
 ~~~~~
 
-You can join the development slack `using this link <https://join.slack.com/t/grand-challenge-org/shared_invite/enQtNDUwNDk0OTM0MDcwLWM1YjhiMzM1ZGJhMDViMDkyOWRiMDQ5ZGY0ODc3MjUzM2YzNjkzYjcwYjRkNTVjMzIwYTNiMTg1NTE5NzE5NzE>`. 
+You can join the development slack `using this link <https://join.slack.com/t/grand-challenge-org/shared_invite/enQtNDUwNDk0OTM0MDcwLWM1YjhiMzM1ZGJhMDViMDkyOWRiMDQ5ZGY0ODc3MjUzM2YzNjkzYjcwYjRkNTVjMzIwYTNiMTg1NTE5NzE5NzE>`_. 
