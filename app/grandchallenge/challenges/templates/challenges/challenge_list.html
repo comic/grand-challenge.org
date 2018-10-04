@@ -70,17 +70,65 @@
                             class="counter"
                             id="grand-challenge"></span>)
                     </label>
-
-                    <label id="modality-MR"
-                           class="checkbox-inline no_indent projectLinkFilter">
-                        <input type="checkbox" class="filter"
-                               id="modality-MR">
-                        Modality MR (<span
-                            class="counter"
-                            id="modality-MR"></span>)
-                    </label>
-
                 </form>
+                <div id="filterbymodality">Modality:
+                    <form class="form-inline-modality">
+                        {% for modality in modalities %}
+                            <label id="modality-{{modality.modality}}"
+                                   class="checkbox-inline no_indent projectLinkFilter">
+                                <input type="checkbox" class="filter"
+                                       id="modality-{{modality.modality}}">
+                                {{modality.modality}} (<span
+                                    class="counter"
+                                    id="modality-{{modality.modality}}"></span>)
+                            </label>
+                         {% endfor %}
+                    </form>
+                </div>
+                <div id="filterbytask">Task type:
+                    <form class="form-inline-task">
+                        {% for task in task_types %}
+                            <label id="task-{{task.type|cut:" " }}"
+                                   class="checkbox-inline no_indent projectLinkFilter">
+                                <input type="checkbox" class="filter"
+                                       id="task-{{task.type|cut:" " }}">
+                                {{task.type}} (<span
+                                    class="counter"
+                                    id="task-{{task.type|cut:" " }}"></span>)
+                            </label>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div id="filterbyregionstructure">Body region and structure:
+                    {% for reg in body_regions %}
+                        <div id="filterbyregion-{{ reg }}">
+                            <label id="region-{{reg|cut:" " }}"
+                                   class="checkbox-inline no_indent projectLinkFilter">
+                                <input type="checkbox" class="filter"
+                                       id="region-{{reg|cut:" " }}">
+                                {{reg}} (<span
+                                    class="counter"
+                                    id="region-{{reg|cut:" " }}"></span>)
+                            </label>
+                            <form class="form-inline-region-{{ reg }}">
+                                {% for s in body_structures %}
+
+                                    {% ifequal s.region.region reg %}
+                                        <label id="structure-{{s.structure|cut:" " }}"
+                                               class="checkbox-inline no_indent projectLinkFilter">
+                                            <input type="checkbox" class="filter"
+                                                   id="structure-{{s.structure|cut:" " }}">
+                                            {{s.structure}} (<span
+                                                class="counter"
+                                                id="structure-{{s.structure|cut:" " }}"></span>)
+                                        </label>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </form>
+                        </div>
+                    {% endfor %}
+
+                </div>
 
             </div>
         </div>
