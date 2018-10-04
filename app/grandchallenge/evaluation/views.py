@@ -127,11 +127,16 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         if now is None:
             now = timezone.now()
 
-        subs = Submission.objects.filter(
-            challenge=self.request.challenge,
-            creator=self.request.user,
-            created__gte=now - period,
-        ).order_by("-created")
+        subs = (
+            Submission.objects.filter(
+                challenge=self.request.challenge,
+                creator=self.request.user,
+                created__gte=now - period,
+            )
+            .exclude(job__status=Job.FAILURE)
+            .order_by("-created")
+            .distinct()
+        )
 
         try:
             next_sub_at = subs[max_subs - 1].created + period
