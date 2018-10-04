@@ -53,7 +53,7 @@
                 <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
 
                 <td>
-                    <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:"-4" }}</a>
+                    <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
                 </td>
 
                 {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
