@@ -237,3 +237,11 @@ table.dataTable {
 .table td, .table th {
     border-top: 0;
 }
+
+/* resultsTable styling */
+
+div#resultsTable_wrapper div.col-sm-12 {
+    overflow-x: scroll;
+    font-size: 0.8em;
+    line-height: 1.1em;
+}
