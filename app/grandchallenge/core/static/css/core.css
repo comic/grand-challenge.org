@@ -128,7 +128,7 @@ div.sidebar h1 {
 /* Little more spacing for checkbox */
 
 input[type=checkbox] {
-    margin-top: .3rem !important;
+    margin-right: .3rem !important;
 }
 
 /* Style button */
