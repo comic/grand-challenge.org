@@ -10,15 +10,15 @@ def test_public_private_default():
 
     r1 = ResultFactory(challenge=c)
 
-    assert r1.public == True
+    assert r1.published == True
 
-    c.evaluation_config.new_results_are_public = False
+    c.evaluation_config.auto_publish_new_results = False
     c.evaluation_config.save()
 
     r2 = ResultFactory(challenge=c)
 
-    assert r2.public == False
+    assert r2.published == False
 
     # The public/private status should only update on first save
     r1.save()
-    assert r1.public == True
+    assert r1.published == True

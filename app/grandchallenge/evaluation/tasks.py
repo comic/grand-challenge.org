@@ -12,7 +12,7 @@ from grandchallenge.evaluation.utils import generate_rank_dict
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = Challenge.objects.get(pk=challenge_pk)
     valid_results = Result.objects.filter(
-        Q(challenge=challenge), Q(public=True)
+        Q(challenge=challenge), Q(published=True)
     )
     ranks = generate_rank_dict(
         queryset=valid_results,

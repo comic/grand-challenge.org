@@ -34,7 +34,7 @@ def send_new_result_email(result):
         f"There is a new result for {result.challenge.short_name} from "
         f"{result.job.submission.creator.username}."
     )
-    if result.public:
+    if result.published:
         leaderboard_url = reverse(
             "evaluation:result-list",
             kwargs={"challenge_short_name": result.challenge.short_name},

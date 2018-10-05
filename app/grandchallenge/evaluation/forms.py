@@ -25,7 +25,7 @@ result_list_options = (
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
-    "new_results_are_public",
+    "auto_publish_new_results",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
