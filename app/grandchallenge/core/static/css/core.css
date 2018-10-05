@@ -188,12 +188,9 @@ div.django-ckeditor-widget {
 .projectLinkImage {
     width: 30%;
     height: 100%;
-    display: flex;
     padding: 0;
-    justify-content: center;
-    align-items: center;
     float: left;
-    margin-left: 5px;
+    margin-left: 15px;
 }
 
 .projectLinkImage img {
