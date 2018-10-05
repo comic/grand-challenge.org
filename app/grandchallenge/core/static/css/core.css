@@ -78,7 +78,11 @@ h5, .h5 {
 /* First element of card-content (main column) shouldn't have top margin */
 div.card-body > h1, div.card-body :first-child,
 div.card-body div#pageContainer :first-child {
-    margin-top: 0em
+    margin-top: 0em;
+}
+
+div#pageContainer {
+    overflow-x: scroll;
 }
 
 /* Smaller padding in sidebar menu for space */
