@@ -110,6 +110,11 @@ div.sidebar a.active {
     color: black;
 }
 
+div.sidebar h1 {
+    font-size: 1em;
+    border-bottom: none;
+}
+
 /* Little more spacing for checkbox */
 
 input[type=checkbox] {
