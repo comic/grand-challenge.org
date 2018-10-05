@@ -50,6 +50,11 @@ h1, .h1, h2, .h2 {
     display: inline-block;
 }
 
+h1 a:hover, h2 a:hover {
+    text-decoration: none;
+    border-bottom: 3px solid #0056b3;
+}
+
 h3, .h3 {
     font-size: 1.25em;
     line-height: 1.3em;
