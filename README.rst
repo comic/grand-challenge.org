@@ -37,3 +37,8 @@ Medical Image Computing. It features:
 If you would like to start your own website, or contribute to the development
 of the framework, please see
 `the docs <http://grand-challengeorg.readthedocs.io>`_
+
+Slack
+~~~~~
+
+You can join the development slack `using this link <https://join.slack.com/t/grand-challenge-org/shared_invite/enQtNDUwNDk0OTM0MDcwLWM1YjhiMzM1ZGJhMDViMDkyOWRiMDQ5ZGY0ODc3MjUzM2YzNjkzYjcwYjRkNTVjMzIwYTNiMTg1NTE5NzE5NzE>`_. 

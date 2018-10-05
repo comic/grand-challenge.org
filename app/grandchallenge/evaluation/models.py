@@ -32,6 +32,16 @@ class Config(UUIDModel):
         (ASCENDING, "Ascending"),
         (DESCENDING, "Descending"),
     )
+
+    OFF = "off"
+    OPTIONAL = "opt"
+    REQUIRED = "req"
+    PUBLICATION_LINK_CHOICES = SUPPLEMENTARY_FILE_CHOICES = (
+        (OFF, "Off"),
+        (OPTIONAL, "Optional"),
+        (REQUIRED, "Required"),
+    )
+
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
@@ -72,6 +82,11 @@ class Config(UUIDModel):
             "The default sorting to use for the scores on the results " "page."
         ),
     )
+    score_decimal_places = models.PositiveSmallIntegerField(
+        blank=False,
+        default=4,
+        help_text=("The number of decimal places to display for the score"),
+    )
     extra_results_columns = JSONField(
         default=dict,
         blank=True,
@@ -97,20 +112,18 @@ class Config(UUIDModel):
             "If true, submission comments are shown on the results page."
         ),
     )
-    allow_supplementary_file = models.BooleanField(
-        default=False,
+
+    supplementary_file_choice = models.CharField(
+        max_length=3,
+        choices=SUPPLEMENTARY_FILE_CHOICES,
+        default=OFF,
         help_text=(
             "Show a supplementary file field on the submissions page so that "
             "users can upload an additional file along with their predictions "
             "file as part of their submission (eg, include a pdf description "
-            "of their method)."
-        ),
-    )
-    require_supplementary_file = models.BooleanField(
-        default=False,
-        help_text=(
-            "Force users to upload a supplementary file with their "
-            "predictions file."
+            "of their method). Off turns this feature off, Optional means "
+            "that including the file is optional for the user, Required means "
+            "that the user must upload a supplementary file."
         ),
     )
     supplementary_file_label = models.CharField(
@@ -138,6 +151,24 @@ class Config(UUIDModel):
             "page."
         ),
     )
+
+    publication_url_choice = models.CharField(
+        max_length=3,
+        choices=PUBLICATION_LINK_CHOICES,
+        default=OFF,
+        help_text=(
+            "Show a publication url field on the submission page so that "
+            "users can submit a link to a publication that corresponds to "
+            "their submission. Off turns this feature off, Optional means "
+            "that including the url is optional for the user, Required means "
+            "that the user must provide an url."
+        ),
+    )
+    show_publication_url = models.BooleanField(
+        default=False,
+        help_text=("Show a link to the publication on the results page"),
+    )
+
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
@@ -258,6 +289,12 @@ class Submission(UUIDModel):
         help_text=(
             "You can add a comment here to help you keep track of your "
             "submissions."
+        ),
+    )
+    publication_url = models.URLField(
+        blank=True,
+        help_text=(
+            "A URL for the publication associated with this submission."
         ),
     )
 

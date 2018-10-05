@@ -1,5 +1,6 @@
+from crispy_forms.bootstrap import TabHolder, Tab
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 
 from grandchallenge.evaluation.models import Method, Submission, Config
@@ -7,32 +8,51 @@ from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
+submission_options = (
+    "submission_page_html",
+    "daily_submission_limit",
+    "allow_submission_comments",
+    "supplementary_file_choice",
+    "supplementary_file_label",
+    "supplementary_file_help_text",
+    "publication_url_choice",
+)
+
+result_list_options = (
+    "use_teams",
+    "score_title",
+    "score_jsonpath",
+    "score_default_sort",
+    "score_decimal_places",
+    "extra_results_columns",
+    "new_results_are_public",
+    "display_submission_comments",
+    "show_supplementary_file_link",
+    "show_publication_url",
+)
+
+result_detail_options = ("submission_join_key",)
+
 
 class ConfigForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
+        self.helper.layout = Layout(
+            TabHolder(
+                Tab("Submission", *submission_options),
+                Tab("Result List", *result_list_options),
+                Tab("Result Detail", *result_detail_options),
+            ),
+            ButtonHolder(Submit("save", "Save")),
+        )
 
     class Meta:
         model = Config
         fields = (
-            "use_teams",
-            "daily_submission_limit",
-            "score_title",
-            "score_jsonpath",
-            "score_default_sort",
-            "extra_results_columns",
-            "submission_page_html",
-            "new_results_are_public",
-            "allow_submission_comments",
-            "display_submission_comments",
-            "allow_supplementary_file",
-            "require_supplementary_file",
-            "supplementary_file_label",
-            "supplementary_file_help_text",
-            "show_supplementary_file_link",
-            "submission_join_key",
+            *submission_options,
+            *result_list_options,
+            *result_detail_options,
         )
 
 
@@ -66,6 +86,13 @@ submission_upload_widget = uploader.AjaxUploadWidget(
     ajax_target_path="ajax/submission-upload/", multifile=False
 )
 
+submission_fields = (
+    "comment",
+    "supplementary_file",
+    "publication_url",
+    "chunked_upload",
+)
+
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
@@ -81,18 +108,18 @@ class SubmissionForm(forms.ModelForm):
         """
         display_comment_field = kwargs.pop("display_comment_field", False)
 
-        allow_supplementary_file = kwargs.pop(
-            "allow_supplementary_file", False
-        )
-
-        require_supplementary_file = kwargs.pop(
-            "require_supplementary_file", False
+        supplementary_file_choice = kwargs.pop(
+            "supplementary_file_choice", Config.OFF
         )
 
         supplementary_file_label = kwargs.pop("supplementary_file_label", "")
 
         supplementary_file_help_text = kwargs.pop(
             "supplementary_file_help_text", ""
+        )
+
+        publication_url_choice = kwargs.pop(
+            "publication_url_choice", Config.OFF
         )
 
         super().__init__(*args, **kwargs)
@@ -108,19 +135,24 @@ class SubmissionForm(forms.ModelForm):
                 "supplementary_file"
             ].help_text = supplementary_file_help_text
 
-        if require_supplementary_file:
+        if supplementary_file_choice == Config.REQUIRED:
             self.fields["supplementary_file"].required = True
-        elif not allow_supplementary_file:
+        elif supplementary_file_choice == Config.OFF:
             del self.fields["supplementary_file"]
+
+        if publication_url_choice == Config.REQUIRED:
+            self.fields["publication_url"].required = True
+        elif publication_url_choice == Config.OFF:
+            del self.fields["publication_url"]
 
         self.helper = FormHelper(self)
 
     class Meta:
         model = Submission
-        fields = ("comment", "supplementary_file", "chunked_upload")
+        fields = submission_fields
 
 
 class LegacySubmissionForm(SubmissionForm):
     class Meta:
         model = Submission
-        fields = ("creator", "comment", "supplementary_file", "chunked_upload")
+        fields = ("creator", *submission_fields)
