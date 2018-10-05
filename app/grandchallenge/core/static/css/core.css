@@ -96,10 +96,11 @@ div.sidebar li.nav-item {
 }
 
 div.sidebar li.nav-item, nav.navbar-top li.nav-item {
-    text-transform: lowercase;
-    font-variant: small-caps;
-    letter-spacing: 0.01rem;
-    font-size: 1.15em;
+    text-transform: uppercase;
+    letter-spacing: 0.015rem;
+    font-size: 0.8em;
+    position: relative;
+    top: 2px;
 }
 
 div.sidebar li.nav-item:hover {
