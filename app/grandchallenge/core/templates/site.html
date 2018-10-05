@@ -28,8 +28,8 @@
 {% block jumbotron %}
     {% if site.banner %}
         <div id="headerTitle"
-             class="container">
-            <div class="row mt-3">
+             class="container mt-3">
+            <div class="row p-3">
                 <a style="width: 100%;"
                    href="{% url 'challenge-homepage' site.short_name %}">
                     <img src="{{ site.banner.url }}" class="headerImage">
