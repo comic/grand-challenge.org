@@ -86,10 +86,6 @@ div.card-body div#pageContainer :first-child {
     margin-top: 0em;
 }
 
-div#pageContainer {
-    overflow-x: scroll;
-}
-
 /* Smaller padding in sidebar menu for space */
 div.sidebar .nav-link {
     padding: .5rem 0.8rem;
@@ -240,7 +236,6 @@ table.dataTable {
 /* resultsTable styling */
 
 div#resultsTable_wrapper div.col-sm-12 {
-    overflow-x: scroll;
     font-size: 0.8em;
     line-height: 1.1em;
 }
