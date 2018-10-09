@@ -226,7 +226,7 @@
         <div class="row">
 
             {% block challengeNav %}
-                <div class="col-md-3 mb-3">
+                <div class="col-12 col-md-3 col-xl-2 mb-3">
                     <div class="card sidebar">
                         <div class="card-body">
                             <h1 class="mb-0"><a href="{{ site.get_absolute_url }}">{% firstof site.title site.short_name %}</a></h1>
@@ -242,9 +242,9 @@
                 </div>
             {% endblock %}
 
-            <div id="mainContent" class="mb-3
+            <div id="mainContent" class="mb-3 col-12
             {% block mainContentSizeClasses %}
-                col-md-9
+                col-md-9 col-xl-10
             {% endblock %}
             ">
                 <div class="card shadow-sm">
