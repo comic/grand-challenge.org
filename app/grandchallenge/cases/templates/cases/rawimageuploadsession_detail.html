@@ -1,4 +1,4 @@
-{% extends "mainpage.html" %}
+{% extends "nobanner.html" %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 
@@ -14,41 +14,41 @@
     {% if process_finished %}
         <h2>Processed files</h2>
 
-        <div style="padding-left:1cm;">
-            <table>
+        <div class="table-responsive">
+            <table class="table table-sm">
                 <tbody>
-                    {% for raw_file in raw_files %}
-                        <tr>
-                            <td style="padding-right:1cm;">{{ raw_file.filename }}</td>
-                            <td>
-                                {% if raw_file.error  %}
-                                    {{ raw_file.error }}
-                                {% else %}
-                                    {{ "succeeded" }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
+                {% for raw_file in raw_files %}
+                    <tr>
+                        <td style="padding-right:1cm;">{{ raw_file.filename }}</td>
+                        <td>
+                            {% if raw_file.error %}
+                                {{ raw_file.error }}
+                            {% else %}
+                                {{ "succeeded" }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
 
         <h2>Images</h2>
 
-        <div style="padding-left:1cm;">
-            <table>
+        <div class="table-responsive">
+            <table class="table table-sm">
                 <tbody>
-                    {% for image in images %}
-                        <tr>
-                            <td style="padding-right:1cm;">{{ image.name }}</td>
-                            <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
-                            <td style="padding-right:1cm;">
-                                <a href="{{ image.cirrus_link }}">
-                                    Show image
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
+                {% for image in images %}
+                    <tr>
+                        <td style="padding-right:1cm;">{{ image.name }}</td>
+                        <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
+                        <td style="padding-right:1cm;">
+                            <a href="{{ image.cirrus_link }}">
+                                Show image
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>

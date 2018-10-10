@@ -5,39 +5,42 @@
     <h2>Evaluation Methods</h2>
 
     <p>
-    <a class="btn btn-primary"
-       href="{% url 'evaluation:method-create' site.short_name %}">
-                <i class="fas fa-plus"></i> Add a new method
-            </a>
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:method-create' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a new method
+        </a>
     </p>
 
-    <table class="table" id="methodsTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Created</th>
-            <th>User</th>
-            <th>SHA</th>
-            <th>Ready</th>
-            <th>Status</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for method in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="methodsTable">
+            <thead>
             <tr>
-                <td><a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
-                </td>
-                <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
-                <td><a
-                        href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
-                </td>
-                <td>{{ method.image_sha256 }}</td>
-                <td>{{ method.ready }}</td>
-                <td>{{ method.status }}</td>
+                <th>ID</th>
+                <th>Created</th>
+                <th>User</th>
+                <th>SHA</th>
+                <th>Ready</th>
+                <th>Status</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for method in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
+                    </td>
+                    <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
+                    <td><a
+                            href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
+                    </td>
+                    <td>{{ method.image_sha256 }}</td>
+                    <td>{{ method.ready }}</td>
+                    <td>{{ method.status }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

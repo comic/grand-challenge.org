@@ -1,4 +1,4 @@
-{% extends 'site_signin.html' %}
+{% extends 'userena/site_signin.html' %}
 {% load grandchallenge_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -7,17 +7,11 @@
 
 {% block content %}
 
-    <div class="white-box">
+    <div class="white-box text-center">
+        <h2>Register or sign in</h2>
         <div id="signincontainer" class="">
 
-            <div id="signinlist">
-                <div class="row">
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-8">
-                        <h2>Sign Up or Sign In with:</h2>
-                    </div>
-                    <div class="col-sm-2"></div>
-                </div>
+            <div id="signinlist" class="mt-2">
                 <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
                     {% if request.GET.next %}
@@ -25,56 +19,28 @@
                                value="{{ request.GET.next }}"/>
                     {% endif %}
                     <div class="row">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button class="btn btn-lg btn-primary btn-block">
-                                <i class="fab fa-google"></i> Google
-                            </button>
-                        </div>
-                        <div class="col-sm-4"></div>
+                        <button class="mx-auto btn btn-lg btn-primary btn-block" style="max-width:400px">
+                            <h4 class="mt-0"><i class="fab fa-google"></i> Login/register with Google</h3>
+                        </button>
                     </div>
                 </form>
-            </div>
-
-            <div class="containernews">
-                <div class="row">
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-8">
-                        <hr/>
-                        <h2>Sign Up with your own email:</h2>
-                    </div>
-                    <div class="col-sm-2"></div>
-                </div>
                 <form action="{% url 'profile_signup' %}"
-                      class="containernews">
+                      class="containernews mt-4">
                     {% csrf_token %}
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
 
                     {% endif %}
-                    <div class="row">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button type="submit"
-                                    class="btn btn-lg btn-primary btn-block">
-                                Register
-                            </button>
-                        </div>
-                        <div class="col-sm-4"></div>
-                    </div>
+                        <button type="submit"
+                                class="mx-auto btn btn-lg btn-primary btn-block" style="max-width:400px">
+                            <h4 class="mt-0">Register with your email</h4>
+                        </button>
                 </form>
             </div>
-
+            <div class="mt-5 dropdown-divider"></div>
             <div id="signinformcontainer">
-                <div class="row">
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-8">
-                        <hr/>
-                        <h2>Sign In to an existing account:</h2>
-                    </div>
-                    <div class="col-sm-2"></div>
-                </div>
+                <h2>Sign in with email</h2>
                 <form action="" method="post">
                     {% csrf_token %}
                 <div class="row">
@@ -88,32 +54,19 @@
                     </div>
                     <div class="col-sm-2"></div>
                 </div>
-                    <div class="row">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button class="btn btn-lg btn-primary btn-block"
-                                    type="submit">Login
-                            </button>
-                        </div>
-                        <div class="col-sm-4"></div>
-                    </div>
+                    <button class="mt-3 btn btn-lg btn-primary btn-block mx-auto" type="submit" style="max-width:300px">
+                        <h4 class="mt-0">Login</h4>
+                    </button>
                 </form>
-                <br>
-                <form action="{% url 'userena_password_reset' %}">
+                <form action="{% url 'userena_password_reset' %}" class="mt-3">
                     {% csrf_token %}
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
                                value="{{ request.GET.next }}"/>
                     {% endif %}
-                    <div class="row">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-4">
-                            <button class="btn btn-lg btn-block" type="submit">
-                                Forgot
-                                your password?
+                            <button class="btn btn-lg btn-block mx-auto" type="submit" style="max-width:300px; font-size:0.8rem">
+                                <h5 class="mt-0"> Forgot your password?</h5>
                             </button>
-                        </div>
-                        <div class="col-sm-4"></div>
                     </div>
                 </form>
             </div>

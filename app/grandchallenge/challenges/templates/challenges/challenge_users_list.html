@@ -1,4 +1,4 @@
-{% extends 'mainpage.html' %}
+{% extends 'nobanner.html' %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
@@ -9,56 +9,58 @@
     <h2>My Challenges</h2>
 
     <p>This is a list of the challenges that you are participating in on
-    {{ site.short_name }}.</p>
+        {{ site.short_name }}.</p>
 
-    <table class="table" id="challengesTable">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Created</th>
-            <th>Admins</th>
-            <th>Description</th>
-            <th>Automated Evaluation</th>
-        </tr>
-        </thead>
-        <tbody>
-
-        {% for challenge in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="challengesTable">
+            <thead>
             <tr>
-                <td>
-                    <a href="{{ challenge.get_absolute_url }}">
-                        {% firstof challenge.title challenge.short_name %}
-                    </a>
-                    {% if challenge.hidden %}
-                        <i class="fa fa-eye-slash text-danger"
-                           title="Challenge not listed on the all challenges page"></i>
-                    {% endif %}
-                </td>
-                <td data-order="{{ challenge.created|date:"U" }}">
-                    {{ challenge.created }}
-                </td>
-                <td>
-                    {% for user in challenge.get_admins %}
-                        {{ user|user_profile_link }}<br/>
-                    {% endfor %}
-                </td>
-                <td>{{ challenge.description }}</td>
-                {% if challenge.use_evaluation and challenge.method_set.all %}
-                    <td data-order="true">
-                        <i class="fas fa-check text-success"
-                           title="Challenge is using automated evaluation"></i>
-                        Submissions: {{ challenge.submission_set.all|length }}
-                        {% else %}
-                    <td data-order="false">
-                    <i class="fas fa-times text-danger"
-                       title="Challenge is not using automated evaluation"></i>
-                {% endif %}
-                </td>
+                <th>Name</th>
+                <th>Created</th>
+                <th>Admins</th>
+                <th>Description</th>
+                <th>Automated Evaluation</th>
             </tr>
-        {% endfor %}
+            </thead>
+            <tbody>
 
-        </tbody>
-    </table>
+            {% for challenge in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ challenge.get_absolute_url }}">
+                            {% firstof challenge.title challenge.short_name %}
+                        </a>
+                        {% if challenge.hidden %}
+                            <i class="fa fa-eye-slash text-danger"
+                               title="Challenge not listed on the all challenges page"></i>
+                        {% endif %}
+                    </td>
+                    <td data-order="{{ challenge.created|date:"U" }}">
+                        {{ challenge.created }}
+                    </td>
+                    <td>
+                        {% for user in challenge.get_admins %}
+                            {{ user|user_profile_link }}<br/>
+                        {% endfor %}
+                    </td>
+                    <td>{{ challenge.description }}</td>
+                    {% if challenge.use_evaluation and challenge.method_set.all %}
+                        <td data-order="true">
+                            <i class="fas fa-check text-success"
+                               title="Challenge is using automated evaluation"></i>
+                            Submissions: {{ challenge.submission_set.all|length }}
+                            {% else %}
+                        <td data-order="false">
+                        <i class="fas fa-times text-danger"
+                           title="Challenge is not using automated evaluation"></i>
+                    {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

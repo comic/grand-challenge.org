@@ -5,46 +5,48 @@
 {% block pagecontent %}
     <h2>Uploads for {{ site.short_name }}</h2>
 
-    <table class="table" id="uploadsTable">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>User</th>
-            <th>Title</th>
-            <th>File</th>
-            <th>Visible to</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for upload in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="uploadsTable">
+            <thead>
             <tr>
-                <td data-order="{{ upload.created|date:"U" }}">
-                    {{ upload.created }}
-                </td>
-                <td>
-                    {{ upload.user|user_profile_link }}
-                </td>
-                <td>
-                    {{ upload.title }}
-                </td>
-                <td>
-                    <a href="{{ upload.file.url }}">
-                        {{ upload.file }}
-                    </a>
-                </td>
-                <td>
-                    {% if upload.permission_lvl == upload.ADMIN_ONLY %}
-                        <span class="label label-danger">Admins Only</span>
-                    {% elif upload.permission_lvl == upload.REGISTERED_ONLY %}
-                        <span class="label label-warning">Participants Only</span>
-                    {% elif upload.permission_lvl == upload.ALL %}
-                        <span class="label label-success">Everyone</span>
-                    {% endif %}
-                </td>
+                <th>Created</th>
+                <th>User</th>
+                <th>Title</th>
+                <th>File</th>
+                <th>Visible to</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for upload in object_list %}
+                <tr>
+                    <td data-order="{{ upload.created|date:"U" }}">
+                        {{ upload.created }}
+                    </td>
+                    <td>
+                        {{ upload.user|user_profile_link }}
+                    </td>
+                    <td>
+                        {{ upload.title }}
+                    </td>
+                    <td>
+                        <a href="{{ upload.file.url }}">
+                            {{ upload.file }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if upload.permission_lvl == upload.ADMIN_ONLY %}
+                            <span class="label label-danger">Admins Only</span>
+                        {% elif upload.permission_lvl == upload.REGISTERED_ONLY %}
+                            <span class="label label-warning">Participants Only</span>
+                        {% elif upload.permission_lvl == upload.ALL %}
+                            <span class="label label-success">Everyone</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {
