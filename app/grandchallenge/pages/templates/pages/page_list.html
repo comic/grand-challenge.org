@@ -10,66 +10,64 @@
         <i class="fa fa-plus"></i> Add a new page
     </a></p>
 
-    <table class="table" id="pagesTable">
-        <thead>
-        <tr>
-            <th>Order</th>
-            <th>Title (in URL)</th>
-            <th>Display Title</th>
-            <th>Visible to</th>
-            <th>Edit</th>
-            <th>Delete</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for page in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="pagesTable">
+            <thead>
             <tr>
-                <td>
-                    {{ page.order }}
-                </td>
-                <td>
-                    <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
-                </td>
-                <td>
-                    <a href="{{ page.get_absolute_url }}">
-                        {% if page.display_title %}
-                            {{ page.display_title }}
-                        {% else %}
-                            {{ page.title }}
-                        {% endif %}
-                    </a>
-                </td>
-                <td data-order="{{ page.hidden }}">
-                    {% if page.hidden %}
-                        <i class="fa fa-eye-slash text-danger"
-                           title="Page is not listed in the challenge menu"></i>
-                    {% else %}
-                        <i class="fa fa-eye text-success"
-                           title="Page is listed in the challenge menu"></i>
-                    {% endif %}
-                    {% if page.permission_lvl == page.ADMIN_ONLY %}
-                        <span class="label label-danger">Admins Only</span>
-                    {% elif page.permission_lvl == page.REGISTERED_ONLY %}
-                        <span class="label label-warning">Participants Only</span>
-                    {% elif page.permission_lvl == page.ALL %}
-                        <span class="label label-success">Everyone</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'pages:update' site.short_name page.title %}">
-                        <i class="fa fa-edit" title="Edit Page"></i>
-                    </a>
-                </td>
-                <td>
-                    <a href="{% url 'pages:delete' site.short_name page.title %}">
-                        <i class="fa fa-trash text-danger"
-                           title="Delete Page"></i>
-                    </a>
-                </td>
+                <th>Order</th>
+                <th>Title (in URL)</th>
+                <th>Display Title</th>
+                <th>Visible to</th>
+                <th>Edit</th>
+                <th>Delete</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for page in object_list %}
+                <tr>
+                    <td>
+                        {{ page.order }}
+                    </td>
+                    <td>
+                        <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ page.get_absolute_url }}">
+                            {% firstof page.display_title page.title %}
+                        </a>
+                    </td>
+                    <td data-order="{{ page.hidden }}">
+                        {% if page.hidden %}
+                            <i class="fa fa-eye-slash text-danger"
+                               title="Page is not listed in the challenge menu"></i>
+                        {% else %}
+                            <i class="fa fa-eye text-success"
+                               title="Page is listed in the challenge menu"></i>
+                        {% endif %}
+                        {% if page.permission_lvl == page.ADMIN_ONLY %}
+                            <span class="label label-danger">Admins Only</span>
+                        {% elif page.permission_lvl == page.REGISTERED_ONLY %}
+                            <span class="label label-warning">Participants Only</span>
+                        {% elif page.permission_lvl == page.ALL %}
+                            <span class="label label-success">Everyone</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'pages:update' site.short_name page.title %}">
+                            <i class="fa fa-edit" title="Edit Page"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'pages:delete' site.short_name page.title %}">
+                            <i class="fa fa-trash text-danger"
+                               title="Delete Page"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

@@ -54,24 +54,25 @@
 
     <h3>Images</h3>
 
-    <table class="table" id="Images">
-        <thead>
-        <tr>
-            <th>Key</th>
-            <th>Image</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for im in object.images_with_keys %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="Images">
+            <thead>
             <tr>
-                <td>{{ im.key }}</td>
-                <td><a href="{{ im.image.cirrus_link }}"
-                       title="View Image">{{ im.image }}</a></td>
+                <th>Key</th>
+                <th>Image</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
+            </thead>
+            <tbody>
+            {% for im in object.images_with_keys %}
+                <tr>
+                    <td>{{ im.key }}</td>
+                    <td><a href="{{ im.image.cirrus_link }}"
+                           title="View Image">{{ im.image }}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

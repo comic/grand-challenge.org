@@ -1,4 +1,4 @@
-{% extends 'site_signin.html' %}
+{% extends 'nobanner.html' %}
 {% load i18n %}
 {% load url from grandchallenge_tags %}
 
@@ -11,18 +11,17 @@
         ){% endif %}</h2>{% endblock %}
 
 {% block content %}
+    <h2>User details</h2>
     <div class="white-box">
 
         <div id="details" class="row">
             {% block profile_details %}
                 <div class="col-sm-2">
-                    <h3></h3>
                     <img class="mugshot" src="{{ profile.get_mugshot_url }}"
                          style="display: block; margin: auto;"
                          alt="{% trans "Your mugshot" %}"/>
                 </div>
                 <div class="col-sm-10">
-                    <h3>User Details</h3>
                     <dl>
                         {% block profile_definition_list %}
                             <dt>{% trans "Username" %}</dt>

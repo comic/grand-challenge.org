@@ -27,7 +27,7 @@
             href="{{ object.method.get_absolute_url }}">{{ object.method.pk }}</a>
     </p>
     <p><b>Result:</b> <a
-            href="{{ object.result.absolute_url }}">{{ object.result.pk }}</a>
+            href="{{ object.result.get_absolute_url }}">{{ object.result.pk }}</a>
     </p>
     <p><b>Output:</b>
         {{ object.output }}

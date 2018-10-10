@@ -20,7 +20,10 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
 
         protocol, domainname = settings.MAIN_HOST_NAME.split("//")
 
-        base_url = f"{protocol}//{challenge_short_name}.{domainname}".lower()
+        if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
+            base_url = f"{protocol}//{challenge_short_name}.{domainname}"
+        else:
+            base_url = f"{protocol}//{domainname}"
 
         site_url = reverse_org(
             "challenge-homepage", args=[challenge_short_name]
@@ -37,7 +40,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
         if target_url.startswith(site_url):
             target_url = target_url.replace(site_url, "/")
 
-        return urljoin(base_url, target_url)
+        return urljoin(base_url.lower(), target_url)
 
     else:
         return reverse_org(

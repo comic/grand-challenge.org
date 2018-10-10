@@ -9,7 +9,9 @@
 
     {% if object.labels and not object.base.challenge.evaluation_config.submission_join_key %}
         <p class="alert alert-danger">
-            <b>WARNING:</b> You have uploaded labels but the join key is not set, please set it in challenge evaluation settings. The existing keys are {{ object.labels.0.keys }}.
+            <b>WARNING:</b> You have uploaded labels but the join key is not
+            set, please set it in challenge evaluation settings. The existing
+            keys are {{ object.labels.0.keys }}.
         </p>
     {% endif %}
 
@@ -53,28 +55,30 @@
 
     <h3>Matched Annotations</h3>
 
-    <table class="table" id="MatchedAnnotations">
-        <thead>
-        <tr>
-            <th>Key</th>
-            <th>Base Image</th>
-            <th>Annotation Image</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for match in object.matched_images %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="MatchedAnnotations">
+            <thead>
             <tr>
-                <td>{{ match.key }}</td>
-                <td><a href="{{ match.annotation_cirrus_link }}"
-                       title="View Image and Annotation">{{ match.base }}</a>
-                </td>
-                <td><a href="{{ match.annotation_cirrus_link }}"
-                       title="View Image and Annotation">{{ match.annotation }}</a>
-                </td>
+                <th>Key</th>
+                <th>Base Image</th>
+                <th>Annotation Image</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for match in object.matched_images %}
+                <tr>
+                    <td>{{ match.key }}</td>
+                    <td><a href="{{ match.annotation_cirrus_link }}"
+                           title="View Image and Annotation">{{ match.base }}</a>
+                    </td>
+                    <td><a href="{{ match.annotation_cirrus_link }}"
+                           title="View Image and Annotation">{{ match.annotation }}</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     {% if object.missing_annotations|length > 0 %}
         <h3>Missing Annotations</h3>
@@ -84,22 +88,24 @@
             annotations. Please upload the annotations with the correct key.
         </p>
 
-        <table class="table" id="MissingAnnotations">
-            <thead>
-            <tr>
-                <th>Key</th>
-                <th>Base Image</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for missing in object.missing_annotations %}
+        <div class="table-responsive">
+            <table class="table table-sm" id="MissingAnnotations">
+                <thead>
                 <tr>
-                    <td>{{ missing.key }}</td>
-                    <td>{{ missing.base }}</td>
+                    <th>Key</th>
+                    <th>Base Image</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for missing in object.missing_annotations %}
+                    <tr>
+                        <td>{{ missing.key }}</td>
+                        <td>{{ missing.base }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
     {% if object.extra_annotations|length > 0 %}
@@ -110,46 +116,50 @@
             a base image. Please remove these images from the annotation set.
         </p>
 
-        <table class="table" id="ExtraAnnotations">
-            <thead>
-            <tr>
-                <th>Key</th>
-                <th>Annotation Image</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for extra in object.extra_annotations %}
+        <div class="table-responsive">
+            <table class="table table-sm" id="ExtraAnnotations">
+                <thead>
                 <tr>
-                    <td>{{ extra.key }}</td>
-                    <td>{{ extra.annotation }}</td>
+                    <th>Key</th>
+                    <th>Annotation Image</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for extra in object.extra_annotations %}
+                    <tr>
+                        <td>{{ extra.key }}</td>
+                        <td>{{ extra.annotation }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
     <h3>Matched Labels</h3>
 
-    <table class="table" id="MatchedLabels">
-        <thead>
-        <tr>
-            <th>Key</th>
-            <th>Base Image</th>
-            <th>Label</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for match in object.matched_labels %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="MatchedLabels">
+            <thead>
             <tr>
-                <td>{{ match.key }}</td>
-                <td><a href="{{ match.base.cirrus_link }}"
-                       title="View Image">{{ match.base }}</a>
-                </td>
-                <td><{{ match.label }}</td>
+                <th>Key</th>
+                <th>Base Image</th>
+                <th>Label</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for match in object.matched_labels %}
+                <tr>
+                    <td>{{ match.key }}</td>
+                    <td><a href="{{ match.base.cirrus_link }}"
+                           title="View Image">{{ match.base }}</a>
+                    </td>
+                    <td><{{ match.label }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     {% if object.missing_labels|length > 0 %}
         <h3>Missing Labels</h3>
@@ -159,22 +169,24 @@
             labels. Please upload the labels with the correct key.
         </p>
 
-        <table class="table" id="MissingLabels">
-            <thead>
-            <tr>
-                <th>Key</th>
-                <th>Base Image</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for missing in object.missing_labels %}
+        <div class="table-responsive">
+            <table class="table table-sm" id="MissingLabels">
+                <thead>
                 <tr>
-                    <td>{{ missing.key }}</td>
-                    <td>{{ missing.base }}</td>
+                    <th>Key</th>
+                    <th>Base Image</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for missing in object.missing_labels %}
+                    <tr>
+                        <td>{{ missing.key }}</td>
+                        <td>{{ missing.base }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
     {% if object.extra_labels|length > 0 %}
@@ -185,22 +197,24 @@
             a base image. Please upload a new set of labels.
         </p>
 
-        <table class="table" id="ExtraLabels">
-            <thead>
-            <tr>
-                <th>Key</th>
-                <th>Label</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for extra in object.extra_labels %}
+        <div class="table-responsive">
+            <table class="table table-sm" id="ExtraLabels">
+                <thead>
                 <tr>
-                    <td>{{ extra.key }}</td>
-                    <td>{{ extra.label }}</td>
+                    <th>Key</th>
+                    <th>Label</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for extra in object.extra_labels %}
+                    <tr>
+                        <td>{{ extra.key }}</td>
+                        <td>{{ extra.label }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
     <script type="text/javascript">

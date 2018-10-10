@@ -1,9 +1,165 @@
 html {
     overflow-y: scroll;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-    padding-top: 70px;
+    margin-bottom: 60px; /* Margin bottom by footer height */
+    font-family: 'Merriweather', serif;
+    font-size: 15px;
+    line-height: 1.82em;
+}
+
+/* Make headers have Sans font */
+
+h1, h2, h3, h4, h5, h6, a.navbar-brand {
+    font-weight: 800;
+    font-family: 'Merriweather Sans', serif;
+}
+
+/* Nice color for brand */
+
+.navbar-light .navbar-brand {
+    color: #9A0000;
+}
+
+nav a.nav-link {
+    color: white !important;
+}
+
+/* vertical rhythm */
+html, .root {
+    font-size: 16px;
+    line-height: 26px;
+}
+
+body, .article {
+    font-family: sans-serif;
+    font-size: 1em;
+    line-height: 1.625em;
+}
+
+h1, .h1, h2, .h2 {
+    font-size: 1.625em;
+    line-height: 1.57575758em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+
+    border-bottom: 3px solid #DBEDFF;
+    display: inline-block;
+}
+
+h1 a:hover, h2 a:hover {
+    text-decoration: none;
+    border-bottom: 3px solid #0056b3;
+}
+
+h3, .h3 {
+    font-size: 1.25em;
+    line-height: 1.3em;
+    margin-top: 1.3em;
+}
+
+h4, .h4 {
+    font-size: 1em;
+    line-height: 1.625em;
+    margin-top: 1.625em;
+    margin-bottom: 0em;
+}
+
+h5, .h5 {
+    font-size: 1em;
+    line-height: 1.625em;
+    margin-top: 1.625em;
+    margin-bottom: 0em;
+}
+
+/* Increase shadow */
+.shadow-sm {
+    box-shadow: 0 .125rem 1rem rgba(0, 0, 0, .075) !important;
+}
+
+/* First element of card-content (main column) shouldn't have top margin */
+div.card-body > h1, div.card-body :first-child,
+div.card-body div#pageContainer :first-child {
+    margin-top: 0em;
+}
+
+/* Smaller padding in sidebar menu for space */
+div.sidebar .nav-link {
+    padding: .5rem 0.8rem;
+}
+
+/* Menu should be transparant + other styling */
+div.sidebar {
+    background-color: inherit
+}
+
+div.sidebar li.nav-item {
+    border-bottom: 1px solid #eee;
+}
+
+div.sidebar li.nav-item, nav.navbar-top li.nav-item {
+    text-transform: uppercase;
+    letter-spacing: 0.015rem;
+    font-size: 0.8em;
+    position: relative;
+    top: 2px;
+}
+
+div.sidebar li.nav-item:hover {
+    background-color: #eee;
+}
+
+div.sidebar a.active {
+    color: black;
+}
+
+div.sidebar h1 {
+    font-size: 1em;
+    border-bottom: none;
+}
+
+/* Little more spacing for checkbox */
+
+input[type=checkbox] {
+    margin-right: .3rem !important;
+}
+
+/* Style button */
+
+.btn {
+    border-radius: 2rem;
+}
+
+.btn-primary {
+    color: #007bff;
+    border-color: #DBEDFF;
+    background-color: #fff;
+    border-width: 3px;
+}
+
+/* Editor width */
+
+div#cke_id_html {
+    width: 100% !important;
+}
+
+div.django-ckeditor-widget {
+    display: inherit !important;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px; /* Set the fixed height of the footer here */
+    line-height: 60px; /* Vertically center the text there */
+    background-color: #f5f5f5;
 }
 
 .headerImage {
@@ -24,12 +180,11 @@ body {
 .projectLinkImage {
     width: 30%;
     height: 100%;
-    display: flex;
     padding: 0;
-    justify-content: center;
-    align-items: center;
     float: left;
     margin-left: 15px;
+    display: flex;
+    align-items: center;
 }
 
 .projectLinkImage img {
@@ -56,11 +211,6 @@ body {
     font-weight: bold;
 }
 
-#copyrightNotice {
-    padding-top: 50px;
-    padding-bottom: 50px;
-}
-
 .navbar-toggle {
     margin-left: 15px;
     float: left;
@@ -69,4 +219,23 @@ body {
 
 tbody tr:hover {
     background-color: #f5f5f5;
+}
+
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+.table td, .table th {
+    border-top: 0;
+}
+
+/* resultsTable styling */
+
+div#resultsTable_wrapper div.col-sm-12 {
+    font-size: 0.8em;
+    line-height: 1.1em;
+}
+
+div#pageContainer {
+    overflow-x: auto;
 }

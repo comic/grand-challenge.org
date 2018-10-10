@@ -32,7 +32,7 @@
 
             gtag('js', new Date());
 
-            gtag('config', "{{ google_analytics_id }}" );
+            gtag('config', "{{ google_analytics_id }}");
         </script>
 
         {% block jquery_js %}
@@ -43,20 +43,20 @@
         {% block bootstrap %}
             {# Latest compiled and minified CSS #}
             <link rel="stylesheet"
-                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-                  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+                  href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+                  integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
                   crossorigin="anonymous">
 
-            {# Optional theme #}
-            <link rel="stylesheet"
-                  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
-                  integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
-                  crossorigin="anonymous">
-
-            {# Latest compiled and minified JavaScript #}
-            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-                    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+                    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
                     crossorigin="anonymous"></script>
+
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+                    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+                    crossorigin="anonymous"></script>
+
+            <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
+                  rel="stylesheet">
 
             <meta name="viewport"
                   content="width=device-width, initial-scale=1">
@@ -67,7 +67,7 @@
                 Requires jquery from above, and uses bootstrap themes
             {% endcomment %}
             <link rel="stylesheet" type="text/css"
-                  href="{% static "DataTables-1.10.16/css/dataTables.bootstrap.min.css" %}"
+                  href="{% static "DataTables-1.10.16/css/dataTables.bootstrap4.min.css" %}"
                   crossorigin="anonymous"/>
 
             <script type="text/javascript"
@@ -75,7 +75,7 @@
                     crossorigin="anonymous"></script>
 
             <script type="text/javascript"
-                    src="{% static "DataTables-1.10.16/js/dataTables.bootstrap.min.js" %}"
+                    src="{% static "DataTables-1.10.16/js/dataTables.bootstrap4.min.js" %}"
                     crossorigin="anonymous"></script>
         {% endblock %}
 
@@ -112,18 +112,18 @@
             //url prefix for API functions
             API_PREFIX = "{% get_project_prefix %}api";
 
-                $(document).ready(function () {
+            $(document).ready(function () {
 
-                    $('table.sortable').dataTable({
-                        "bJQueryUI": false,
-                        "sPaginationType": "full_numbers",
-                        "bPaginate": false,
-                        "bLengthChange": false,
-                        "bFilter": false,
-                        "bInfo": false,
-                        "bAutoWidth": false
-                    });
+                $('table.sortable').dataTable({
+                    "bJQueryUI": false,
+                    "sPaginationType": "full_numbers",
+                    "bPaginate": false,
+                    "bLengthChange": false,
+                    "bFilter": false,
+                    "bInfo": false,
+                    "bAutoWidth": false
                 });
+            });
         </script>
 
         <style>
@@ -133,172 +133,141 @@
         <title> {% block pageName %} COMIC main portal {% endblock %} </title>
     {% endblock %}
 </head>
-<body>
+<body class='bg-light'>
+
 
 {% block topheader %}
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div id="topheader" class="container-fluid text-capitalize">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed"
-                        data-toggle="collapse"
-                        data-target="#bs-example-navbar-collapse-1"
-                        aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand text-capitalize"
-                   href="{% main_page_url %}">
-                    {{ main_challenge_name }}
-                </a>
-            </div>
+    <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
 
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse "
-                 id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li><a class="metaFooterMenuItem"
-                           href="{% url 'challenges:list' %}">All Challenges</a></li>
-                    {% metafooterpages %}
-                </ul>
-                <div id="topheader_right">
-                    <ul class="nav navbar-nav navbar-right">
-                        {% if user.is_authenticated %}
-                            <li class="dropdown">
-                                <a href="#" class="dropdown-toggle"
-                                   data-toggle="dropdown" role="button"
-                                   aria-haspopup="true"
-                                   aria-expanded="false">
-                                    <div style='vertical-align:middle; display:inline;'>
-                                        <img class="mugshot"
-                                             src="{{ user.user_profile.get_mugshot_url }}"
-                                             alt="User Mugshot"
-                                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                                        <span class="caret"></span>
-                                    </div>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="metaFooterMenuItem"
-                                           href="{% url 'userena_profile_detail' user.username %}">My
-                                        Profile</a>
-                                    </li>
-                                    <li><a href="{% url 'challenges:users-list' %}">My
-                                        Challenges</a></li>
-                                    <li role="separator" class="divider"></li>
-                                    <li><a class="metaFooterMenuItem last"
-                                           href="{% url 'userena_signout' %}?next=/">
-                                        Sign
-                                        out</a></li>
-                                </ul>
-                            </li>
-                        {% else %}
-                            {% block loginbutton %}
-                                <li><a class="metaFooterMenuItem last"
-                                       href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
-                                    in / Register</a></li>
-                            {% endblock %}
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
+        <a class="navbar-brand mr-md-2 text-capitalize"
+           href="{% main_page_url %}">
+            {{ main_challenge_name }}
+        </a>
+        <!-- Toggler/collapsibe Button -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link"
+                                        href="{% url 'challenges:list' %}">All
+                    Challenges</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% block loginbutton %}
+                    {% if user.is_authenticated %}
+                        <li class="dropdown">
+                            <a href="#" class="nav-link dropdown-toggle"
+                               data-toggle="dropdown" role="menu"
+                               aria-haspopup="true"
+                               aria-expanded="false">
+                                <img class="mugshot"
+                                     src="{{ user.user_profile.get_mugshot_url }}"
+                                     alt="User Mugshot"
+                                     style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                <a class="dropdown-item"
+                                   href="{% url 'userena_profile_detail' user.username %}">
+                                    My Profile</a>
+                                <a class="dropdown-item"
+                                   href="{% url 'challenges:users-list' %}">
+                                    My Challenges</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item"
+                                   href="{% url 'userena_signout' %}?next=/">
+                                    Sign out</a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a
+                                class="nav-link metaFooterMenuItem last"
+                                href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
+                            in / Register</a></li>
+
+                    {% endif %}
+                {% endblock %}
+            </ul>
         </div>
     </nav>
 {% endblock topheader %}
 
+<main role="main">
 
-<div id="messagescontainer" class="container">
-    {% block messages %}
-        {% if messages %}
-            <div class="messagelist">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.level_tag }}">
-                        {% if 'safe' in message.tags %}
-                            {{ message | safe }}
-                        {% else %}
-                            {{ message }}
-                        {% endif %}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endblock messages %}
-</div>
-
-<div id="page">
-
-    {% block jumbotron %}
-        <div id="header" class="container">
-            <a style="display:block"
-               href={% block headerLink %}"/"{% endblock %}>
-                <div id="headerTitle" class="jumbotron text-uppercase">
-                    <h1>
-                        {% block headerTitle %}
-                            <div class="noimage">
-                                {{ main_challenge_name }}
-                            </div>
-                        {% endblock %}
-                    </h1>
-                </div>
-            </a>
-        </div>
-    {% endblock %}
-
-    {% block challengeNav %}
-
-        <div class="container">
-            <nav class="navbar navbar-default">
-                <div id="navMenuContainer"
-                     class="container-fluid text-capitalize">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle collapsed"
-                                data-toggle="collapse"
-                                data-target="#bs-example-navbar-collapse-2"
-                                aria-expanded="false">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-
-                    </div>
-
-                    <div class="collapse navbar-collapse"
-                         id="bs-example-navbar-collapse-2">
-                        <div id="navMenu">
-                            <ul class="nav navbar-nav">
-                                {% block topmenu %} {% endblock %}
-                            </ul>
+    <div id="messagescontainer" class="container mt-3">
+        {% block messages %}
+            {% if messages %}
+                <div class="messagelist">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.level_tag }}">
+                            {% if 'safe' in message.tags %}
+                                {{ message | safe }}
+                            {% else %}
+                                {{ message }}
+                            {% endif %}
+                            <button type="button" class="close"
+                                    data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
-                        <div id="additionalNavigation">
-                            <ul class="nav navbar-nav navbar-right">
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endblock messages %}
+    </div>
+
+    <div id="page" class="container mt-3">
+
+        {% block jumbotron %}{% endblock %}
+
+        <div class="row">
+
+            {% block challengeNav %}
+                <div class="col-12 col-md-3 col-xl-2 mb-3">
+                    <div class="card sidebar">
+                        {% if not site.banner %}
+                            <div class="card-body">
+                                <h1 class="mb-0">
+                                    <a href="{{ site.get_absolute_url }}">
+                                        {% firstof site.title site.short_name %}
+                                    </a>
+                                </h1>
+                            </div>
+                        {% endif %}
+                        <div class="card-body p-0">
+                            <ul class="nav flex-column">
+                                {% block topmenu %} {% endblock %}
                                 {% block sitemenuloginbutton %} {% endblock %}
                                 {% block adminbutton %} {% endblock %}
                             </ul>
                         </div>
                     </div>
                 </div>
-            </nav>
+            {% endblock %}
+
+            <div id="mainContent" class="mb-3 col-12
+            {% block mainContentSizeClasses %}
+                col-md-9 col-xl-10
+            {% endblock %}
+            ">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        {% block content %} content {% endblock %}
+                    </div>
+                </div>
+            </div>
         </div>
-
-    {% endblock %}
-
-
-    <div id="container" class="container">
-        <div id="mainContent">
-            {% block content %} content {% endblock %}
-        </div>
+        <!-- container -->
     </div>
-    <!-- container -->
-</div>
+</main>
 
 <!-- page -->
 {% block footer %}
-    <footer id="metafooter" class="container text-center">
-        <div id="copyrightNotice">
+    <footer class="footer bg-light">
+        <div id="metafooter" class="container text-center text-muted">
             Consortium for Open Medical Image Computing &copy;
             2012-{% now "Y" %}
         </div>

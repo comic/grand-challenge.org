@@ -122,7 +122,9 @@ def permissionMessage(request, site, p):
     if request.user.is_authenticated:
         msg = """ <div class="system_message">
                 <h2> Restricted page</h2>
-                  This page can only be viewed by participants of this project to view this page please make sure of the following:
+                  
+                  <p>This page can only be viewed by participants of this project to view this page please make sure of the following:</p>
+                  
                   <ul>
                       <li>First, log in to {} by using the 'Sign in' button at the top right.</li>
                       <li>Second, you need to join / register with the specific project you are interested in as a participant. 
@@ -244,7 +246,7 @@ def comicmain(request, page_title=""):
     metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     return render(
         request,
-        "mainpage.html",
+        "page.html",
         {
             "site": p.challenge,
             "currentpage": p,

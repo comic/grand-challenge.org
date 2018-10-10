@@ -5,44 +5,46 @@
     <h2>Submissions</h2>
 
     <p>
-    <a class="btn btn-primary"
-       href="{% url 'evaluation:submission-create' site.short_name %}">
-                <i class="fas fa-plus"></i> Add a new submission
-            </a>
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:submission-create' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a new submission
+        </a>
     </p>
 
     <p>
-    <a class="btn btn-primary"
-       href="{% url 'evaluation:submission-create-legacy' site.short_name %}">
-                <i class="fas fa-plus"></i> Add a legacy submission
-            </a>
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:submission-create-legacy' site.short_name %}">
+            <i class="fas fa-plus"></i> Add a legacy submission
+        </a>
     </p>
 
-    <table class="table" id="submissionsTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Created</th>
-            <th>User</th>
-            <th>Comment</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for submission in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="submissionsTable">
+            <thead>
             <tr>
-                <td>
-                    <a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a>
-                </td>
-                <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
-                <td><a
-                        href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
-                </td>
-                <td>{{ submission.comment }}</td>
-
+                <th>ID</th>
+                <th>Created</th>
+                <th>User</th>
+                <th>Comment</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for submission in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a>
+                    </td>
+                    <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
+                    <td><a
+                            href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
+                    </td>
+                    <td>{{ submission.comment }}</td>
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

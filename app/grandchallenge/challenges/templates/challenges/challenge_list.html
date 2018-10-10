@@ -1,4 +1,4 @@
-{% extends 'mainpage.html' %}
+{% extends 'nobanner.html' %}
 {% load static %}
 {% load url from grandchallenge_tags %}
 
@@ -6,7 +6,13 @@
 
 {% block pagecontent %}
 
-    <h2>All Challenges</h2>
+    <h1>All Challenges</h1>
+
+    <p>Here is an overview of all challenges that have been organized within
+        the area of medical image analysis that we are aware of. If you know
+        any study that would fit in this overview, or want to advertise your
+        challenge, please send an email to support@grand-challenge.org and we
+        will add the challenge to the list on this page.</p>
 
     {% if request.user.is_staff %}
         <p>
@@ -21,20 +27,11 @@
         </p>
     {% endif %}
 
-    <p>Here is an overview of all challenges that have been organized within
-        the area of medical image analysis that we are aware of. If you know
-        any study that would fit in this overview, or want to advertise your
-        challenge, please send an email to support@grand-challenge.org and we
-        will add the challenge to the list on this page.</p>
+    <div id="projectfilterbuttons" class="mt-4">
 
-    <div id="projectfilterbuttons">
+        <div id="buttonbar" class="alert alert-secondary bg-light">
 
-        <div id="info">Showing <span class="counter" id="projectlink"></span>
-            projects of <span class="counter"
-                              id="total"></span></div>
-        <div id="buttonbar">
-
-            <div id="filterby">Filter by:</div>
+            <div id="filterby"><h4 class="mt-0 mb-1">Filter by:</h4></div>
 
             <div id="projectLinksFilters">
                 <form class="form-inline">
@@ -46,31 +43,36 @@
                     </label>
 
                     <label id="open"
-                           class="checkbox-inline no_indent projectLinkFilter"
+                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
                            title="Show projects that accept new submissions">
                         <input type="checkbox" class="filter" id="open">
-                        Open for submissions (<span
-                            class="counter" id="open"></span>)
+                        Open for submissions <span
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="open"></span>
                     </label>
 
                     <label id="datadownload"
-                           class="checkbox-inline no_indent projectLinkFilter"
+                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
                            title="Show projects that offer data download">
                         <input type="checkbox" class="filter"
                                id="datadownload">
-                        Data download (<span
-                            class="counter" id="datadownload"></span>)
+                        Data download <span
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="datadownload"></span>
                     </label>
 
                     <label id="grand-challenge"
                            class="checkbox-inline no_indent projectLinkFilter">
                         <input type="checkbox" class="filter"
                                id="grand-challenge">
-                        Hosted on Grand-challenge (<span
-                            class="counter"
-                            id="grand-challenge"></span>)
+                        Hosted on Grand-challenge <span
+                            class="counter ml-1 badge badge-pill badge-info"
+                            id="grand-challenge"></span>
                     </label>
                 </form>
+                <span id="info" class="badge badge-info">Showing <span
+                        class="counter" id="projectlink"></span>
+                    projects of <span class="counter" id="total"></span></span>
 
             </div>
         </div>
@@ -87,46 +89,45 @@
                 </div>
 
                 <div class='row'>
-
                     {% for challenge in challenges %}
-
-                        <div class="col-sm-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
-                            <div class="panel panel-default">
+                        <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
+                            <div class="card" style="height:400px">
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block">
-                                    <div class="panel-heading projectLinkHeading">
+                                    <div class="card-header projectLinkHeading"
+                                         style="min-height:110px;">
                                         <div class="projectLinkImage">
                                             <img alt=""
                                                  src="{{ challenge.thumb_image_url }}">
                                         </div>
                                         <div class="projectLinkName">
                                             <h3>
-                                                {% if challenge.title %}
-                                                    {{ challenge.title }}
-                                                {% else %}
-                                                    {{ challenge.short_name }}
-                                                {% endif %}
+                                                {% firstof challenge.title challenge.short_name %}
                                             </h3>
                                         </div>
                                     </div>
                                 </a>
 
-                                <div class="panel-body projectLinkBody">
+                                <div class="card-body projectLinkBody small"
+                                     style="overflow: hidden; height:250px; line-height:1.5em">
                                     {{ challenge.description }}
                                 </div>
 
-                                <div class="panel-footer projectLinkFooter">
+                                <div class="card-footer small projectLinkFooter"
+                                     style="line-height:1.5em">
 
                                     {% if challenge.is_open_for_submissions %}
                                         <div>
-                                            <a href="{{ challenge.get_submission_link }}">Open for submissions</a>
+                                            <a href="{{ challenge.get_submission_link }}">Open
+                                                for submissions</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.offers_data_download %}
                                         <div>
-                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data download</a>
+                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data
+                                                download</a>
                                         </div>
                                     {% endif %}
 
@@ -138,7 +139,8 @@
 
                                     {% if challenge.last_submission_date %}
                                         <div>
-                                            Latest result: {{ challenge.last_submission_date }}
+                                            Latest
+                                            result: {{ challenge.last_submission_date }}
                                         </div>
                                     {% endif %}
 
@@ -150,63 +152,48 @@
 
                                     {% if challenge.event_name %}
                                         <div>
-                                            Associated with: <a href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                            Associated with: <a
+                                                href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.publication_journal_name or challenge.publication_url %}
                                         <div>
-                                            Article: <a href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                            Article: <a
+                                                href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
                                         </div>
                                     {% endif %}
 
                                     {% if challenge.get_host_link %}
                                         <div>
-                                            Hosted on: {{ challenge.get_host_link|safe }}
+                                            Hosted
+                                            on: {{ challenge.get_host_link|safe }}
                                         </div>
                                     {% endif %}
 
                                     {% if not challenge.hosted_on_comic %}
                                         {% if request.user.is_staff %}
                                             <div class="projectLinkEdit">
-                                                <p>
-                                                    <a class="btn btn-primary"
-                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
-                                                        <i class="fas fa-edit"></i>
-                                                        Edit challenge
-                                                    </a>
-                                                    <a class="btn btn-danger"
-                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
-                                                        <i class="fas fa-trash"></i>
-                                                        Delete challenge
-                                                    </a>
-                                                </p>
+                                                <a class="btn btn-primary btn-sm"
+                                                   href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                    <i class="fas fa-edit"></i>
+                                                    Edit
+                                                </a>
+                                                <a class="btn btn-danger btn-sm"
+                                                   href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                    <i class="fas fa-trash"></i>
+                                                    Delete
+                                                </a>
                                             </div>
                                         {% endif %}
                                     {% endif %}
-
                                 </div>
                             </div>
                         </div>
-
-
-                        {# Invisible block needed for proper wrapping #}
-                        <div class="clearfix visible-xs-block"></div>
-
-                        {# We're displaying 3 items in a row on small, medium and large screens #}
-                        {% if forloop.counter|divisibleby:3 %}
-                            <div class="clearfix visible-sm-block visible-md-block visible-lg-block"></div>
-                        {% endif %}
-
-
                     {% endfor %}
-
                 </div>
-
             </div>
-
         {% endfor %}
-
     </div>
 
     <script type="text/javascript"
