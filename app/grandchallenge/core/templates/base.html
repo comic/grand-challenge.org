@@ -228,10 +228,16 @@
             {% block challengeNav %}
                 <div class="col-12 col-md-3 col-xl-2 mb-3">
                     <div class="card sidebar">
-                        <div class="card-body">
-                            <h1 class="mb-0"><a href="{{ site.get_absolute_url }}">{% firstof site.title site.short_name %}</a></h1>
-                        </div>
-                        <div class="card-content p-0">
+                        {% if not site.banner %}
+                            <div class="card-body">
+                                <h1 class="mb-0">
+                                    <a href="{{ site.get_absolute_url }}">
+                                        {% firstof site.title site.short_name %}
+                                    </a>
+                                </h1>
+                            </div>
+                        {% endif %}
+                        <div class="card-body p-0">
                             <ul class="nav flex-column">
                                 {% block topmenu %} {% endblock %}
                                 {% block sitemenuloginbutton %} {% endblock %}
@@ -248,9 +254,9 @@
             {% endblock %}
             ">
                 <div class="card shadow-sm">
-                <div class="card-body">
-                    {% block content %} content {% endblock %}
-                </div>
+                    <div class="card-body">
+                        {% block content %} content {% endblock %}
+                    </div>
                 </div>
             </div>
         </div>
