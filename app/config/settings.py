@@ -221,8 +221,6 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    # Sentry 404 must be as close as possible to the top
-    "raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware",
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
