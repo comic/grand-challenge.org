@@ -78,9 +78,9 @@
                                    class="checkbox-inline no_indent projectLinkFilter">
                                 <input type="checkbox" class="filter"
                                        id="modality-{{modality.modality}}">
-                                {{modality.modality}} (<span
-                                    class="counter"
-                                    id="modality-{{modality.modality}}"></span>)
+                                {{modality.modality}} <span
+                                    class="counter ml-1 badge badge-pill badge-info"
+                                    id="modality-{{modality.modality}}"></span>
                             </label>
                          {% endfor %}
                     </form>
@@ -92,9 +92,9 @@
                                    class="checkbox-inline no_indent projectLinkFilter">
                                 <input type="checkbox" class="filter"
                                        id="task-{{task.type|cut:" " }}">
-                                {{task.type}} (<span
-                                    class="counter"
-                                    id="task-{{task.type|cut:" " }}"></span>)
+                                {{task.type}} <span
+                                    class="counter ml-1 badge badge-pill badge-info"
+                                    id="task-{{task.type|cut:" " }}"></span>
                             </label>
                         {% endfor %}
                     </form>
@@ -106,9 +106,9 @@
                                    class="checkbox-inline no_indent projectLinkFilter">
                                 <input type="checkbox" class="filter"
                                        id="region-{{reg|cut:" " }}">
-                                {{reg}} (<span
-                                    class="counter"
-                                    id="region-{{reg|cut:" " }}"></span>)
+                                {{reg}} <span
+                                    class="counter ml-1 badge badge-pill badge-info"
+                                    id="region-{{reg|cut:" " }}"></span>
                             </label>
                             <form class="form-inline-region-{{ reg }}">
                                 {% for s in body_structures %}
@@ -118,9 +118,9 @@
                                                class="checkbox-inline no_indent projectLinkFilter">
                                             <input type="checkbox" class="filter"
                                                    id="structure-{{s.structure|cut:" " }}">
-                                            {{s.structure}} (<span
-                                                class="counter"
-                                                id="structure-{{s.structure|cut:" " }}"></span>)
+                                            {{s.structure}} <span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="structure-{{s.structure|cut:" " }}"></span>
                                         </label>
                                     {% endifequal %}
                                 {% endfor %}
