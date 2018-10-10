@@ -13,28 +13,31 @@
     <p><b>Comment:</b> {{ object.comment }}</p>
 
     <h3>Evaluations for this submission</h3>
-    <table class="table" id="evaluationTable">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Job</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Result</th>
-            <th>Comment</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for job in object.job_set.all %}
+
+    <div class="table-responsive">
+        <table class="table table-sm" id="evaluationTable">
+            <thead>
             <tr>
-                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
-                <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
-                <td>
-                    <a href="{{ job.method.get_absolute_url }}">{{ job.method.id }}</a>
-                </td>
-                <td>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Job</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Comment</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for job in object.job_set.all %}
+                <tr>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
+                    <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a>
+                    </td>
+                    <td>
+                        <a href="{{ job.method.get_absolute_url }}">{{ job.method.id }}</a>
+                    </td>
+                    <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                         label-danger
@@ -47,14 +50,15 @@
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>
-                </td>
-                <td>
-                    <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>
+                        <a href="{{ job.result.get_absolute_url }}">{{ job.result.metrics }}</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

@@ -5,8 +5,7 @@
     <h1>Upload</h1>
     <form action="{{ upload_url }}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <table>{{ form }}
-        </table>
+        {{ form }}
         <input type="submit" value="Upload"/>
     </form>
 {% endblock %}

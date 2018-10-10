@@ -1,4 +1,4 @@
-{% extends "site_signin.html" %}
+{% extends "nobanner.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
@@ -13,43 +13,46 @@
     <h2>{{ object.title }}</h2>
 
     {% if object.description_html %}
-    <iframe srcdoc="{{ object.description_html }}"
-            style="width: 100%; height: 600px;">
-    </iframe>
+        <iframe srcdoc="{{ object.description_html }}"
+                style="width: 100%; height: 600px;">
+        </iframe>
     {% endif %}
 
     {% if object.ready %}
-    <p>
-    <a class="btn btn-primary"
-       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-        Try out this algorithm
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                Try out this algorithm
             </a>
-    </p>
+        </p>
     {% else %}
-    <div class="alert alert-warning">
-        Algorithm is not ready to be used yet. Please try again later.
-    </div>
+        <div class="alert alert-warning">
+            Algorithm is not ready to be used yet. Please try again later.
+        </div>
     {% endif %}
 
     <h2>Jobs for this algorithm</h2>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Created</th>
-            <th>Creator</th>
-            <th>Image</th>
-            <th>Status</th>
-            <th>Result</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for job in object.job_set.all %}
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
             <tr>
-                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                <td>{{ job.image.origin.creator|user_profile_link }}</td>
-                <td><a href="{{ job.image.cirrus_link }}">{{ job.image }}</a></td>
-                <td>
+                <th>Created</th>
+                <th>Creator</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for job in object.job_set.all %}
+                <tr>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td>{{ job.image.origin.creator|user_profile_link }}</td>
+                    <td>
+                        <a href="{{ job.image.cirrus_link }}">{{ job.image }}</a>
+                    </td>
+                    <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                         label-danger
@@ -62,12 +65,13 @@
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>
-                </td>
-                <td>{{ job.result.output }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>{{ job.result.output }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

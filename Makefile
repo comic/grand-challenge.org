@@ -1,3 +1,4 @@
+USER_ID = $(shell id -u)
 
 build:
 	docker build \
@@ -20,3 +21,6 @@ build:
 push:
 	docker push grandchallenge/http:$(TRAVIS_BUILD_NUMBER)
 	docker push grandchallenge/web:$(TRAVIS_BUILD_NUMBER)
+
+migrations:
+	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations

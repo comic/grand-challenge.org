@@ -2,6 +2,7 @@
 {% load evaluation_extras %}
 {% load guardian_tags %}
 {% load user_profile_link from profiles %}
+{% load humanize %}
 
 {% block pagecontent %}
 
@@ -27,7 +28,7 @@
         <dt>Position on leaderboard</dt>
         <dd>
             {% if object.public and object.rank > 0 %}
-                {{ object.rank }}
+                {{ object.rank|ordinal }}
             {% else %}
                 This result has not been published on the leaderboard.
             {% endif %}
@@ -38,6 +39,17 @@
             <dd>
                 {% if object.job.submission.supplementary_file %}
                     <a href="{{ object.job.submission.supplementary_file.url }}">
+                        <i class="fa fa-file"></i>
+                    </a>
+                {% endif %}
+            </dd>
+        {% endif %}
+
+        {% if site.evaluation_config.show_publication_url %}
+            <dt>Publication:</dt>
+            <dd>
+                {% if object.job.submission.publication_url %}
+                    <a href="{{ object.job.submission.publication_url }}">
                         <i class="fa fa-file"></i>
                     </a>
                 {% endif %}

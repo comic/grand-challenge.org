@@ -8,57 +8,59 @@
 
 {% block pagecontent %}
 
-    <table class="table" id="usersTable">
-        <thead>
-        <tr>
-            <th>Username</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Institution</th>
-            <th>Department</th>
-            <th>Country</th>
-            <th>Website</th>
-            {% block tableExtraHeaders %}
-            {% endblock tableExtraHeaders %}
-        </tr>
-        </thead>
-        <tbody>
-
-        {% for user in object_list %}
-
+    <div class="table-responsive">
+        <table class="table table-sm" id="usersTable">
+            <thead>
             <tr>
-                <td>
-                    {{ user|user_profile_link }}
-                </td>
-                <td>
-                    {{ user.get_full_name }}
-                </td>
-                <td>
-                    {{ user.email }}
-                </td>
-                <td>
-                    {{ user.user_profile.institution }}
-                </td>
-                <td>
-                    {{ user.user_profile.department }}
-                </td>
-                <td>
-                    {{ user.user_profile.country.name }}
-                </td>
-                <td>
-                    <a href="{{ user.user_profile.website }}">
-                        {{ user.user_profile.website }}
-                    </a>
-                </td>
-                {% block tableExtraBody %}
-                {% endblock tableExtraBody %}
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Institution</th>
+                <th>Department</th>
+                <th>Country</th>
+                <th>Website</th>
+                {% block tableExtraHeaders %}
+                {% endblock tableExtraHeaders %}
             </tr>
+            </thead>
+            <tbody>
 
-        {% endfor %}
+            {% for user in object_list %}
 
-        </tbody>
+                <tr>
+                    <td>
+                        {{ user|user_profile_link }}
+                    </td>
+                    <td>
+                        {{ user.get_full_name }}
+                    </td>
+                    <td>
+                        {{ user.email }}
+                    </td>
+                    <td>
+                        {{ user.user_profile.institution }}
+                    </td>
+                    <td>
+                        {{ user.user_profile.department }}
+                    </td>
+                    <td>
+                        {{ user.user_profile.country.name }}
+                    </td>
+                    <td>
+                        <a href="{{ user.user_profile.website }}">
+                            {{ user.user_profile.website }}
+                        </a>
+                    </td>
+                    {% block tableExtraBody %}
+                    {% endblock tableExtraBody %}
+                </tr>
 
-    </table>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

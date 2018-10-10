@@ -11,7 +11,7 @@ register = template.Library()
 def user_profile_link(user: AbstractUser) -> str:
     return format_html(
         (
-            '<div style="vertical-align:middle; display:inline;">'
+            '<div style="vertical-align:middle; display:inline; white-space: nowrap;">'
             '  <a href="{0}">'
             '    <img class="mugshot" src="{1}" alt="User Mugshot" '
             '         style="height: 1.5em; vertical-align: middle;"/>'

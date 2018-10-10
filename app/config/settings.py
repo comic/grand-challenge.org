@@ -468,7 +468,7 @@ CELERY_TASK_ROUTES = {
 }
 
 # Set which template pack to use for forms
-CRISPY_TEMPLATE_PACK = "bootstrap3"
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}

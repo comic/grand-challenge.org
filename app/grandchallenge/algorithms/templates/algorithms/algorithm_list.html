@@ -1,4 +1,4 @@
-{% extends "site_signin.html" %}
+{% extends "nobanner.html" %}
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
@@ -19,26 +19,28 @@
 
     <h2>Existing Algorithms</h2>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Title</th>
-            <th>Created</th>
-            <th>Creator</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for algorithm in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
             <tr>
-                <td>
-                    <a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
-                </td>
-                <td data-order="{{ algorithm.created|date:"U" }}">{{ algorithm.created }}</td>
-                <td>{{ algorithm.creator|user_profile_link }}</td>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Creator</th>
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for algorithm in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+                    </td>
+                    <td data-order="{{ algorithm.created|date:"U" }}">{{ algorithm.created }}</td>
+                    <td>{{ algorithm.creator|user_profile_link }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

@@ -1,12 +1,8 @@
-{% extends "mainpage.html" %}
+{% extends "nobanner.html" %}
 {% load grandchallenge_tags %}
 {% load guardian_tags %}
 {% load admin_urls %}
 
 {% block pageName %} {{ main_challenge_name }} - Login {% endblock %}
 
-{% block jumbotron %}
-{% endblock %}
-
-{% block loginbutton %}
-{% endblock %}
+{% block loginbutton %}{% endblock %}

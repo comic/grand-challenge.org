@@ -5,71 +5,27 @@
 {% block pageName %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
-
-{% block sitemenuloginbutton %}
-    {% if site.hide_signin %}
-    {% elif site.hide_footer %}
-        {% if user.is_authenticated %}
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle"
-                   data-toggle="dropdown" role="button"
-                   aria-haspopup="true"
-                   aria-expanded="false">
-                    <div style='vertical-align:middle; display:inline;'>
-                        <img class="mugshot"
-                             src="{{ user.user_profile.get_mugshot_url }}"
-                             alt="User Mugshot"
-                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                        <span class="caret"></span>
-                    </div>
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a class="menuItem"
-                           href="{% url 'userena_profile_detail' user.username %}">My
-                        profile</a></li>
-                    <li role="separator" class="divider"></li>
-                    <li><a class="menuItem"
-                           href="{% url 'userena_signout' %}?next=/">Signout</a>
-                    </li>
-                </ul>
-            </li>
-        {% else %}
-            <li><a class="menuItem"
-                   href="{% url 'userena_signin' %}?next={{ subdomain_absolute_uri }}">Sign
-                In / Register</a>
-            </li>
-        {% endif %}
-    {% endif %}
-{% endblock %}
-
 {% block pagecontent %}
-
     {% if site.disclaimer %}
-        <div class="disclaimer"
-             style=" background-color: #FDFDD4; border: 1px solid black; clear: right; font-size: x-small; margin: 10px; padding-left: 10px;">
-
-            <p>{% autoescape off %}{{ site.disclaimer }}{% endautoescape %}</p>
+        <div class="disclaimer alert alert-warning" role="alert">
+            {{ site.disclaimer|safe }}
         </div>
     {% endif %}
+
     <div id=pageContainer>{{ currentpage.raw_html }}</div>
 
-    <br/>
     {% get_obj_perms user for site as "site_perms" %}
     {% if not currentpage.is_error_page %}
         {% block editlink %}
             {% if currentpage.pk %}
                 {% if "change_challenge" in site_perms %}
+                    <br>
                     <a class="editPageLink"
                        href="{% url 'pages:update' currentpage.challenge.short_name currentpage.title %}">Edit
                         this
                         page</a>
-
-                {% else %}
-
                 {% endif %}
             {% endif %}
         {% endblock %}
     {% endif %}
 {% endblock %}
-
-	

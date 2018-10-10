@@ -66,44 +66,46 @@
     {% endif %}
 
 
-    <table class="table" id="teamsTable">
-        <thead>
-        <tr>
-            <th>Team Name</th>
-            <th>Team Members</th>
-            {% if not users_teams %}
-                <th>Join Team</th>
-            {% endif %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for team in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="teamsTable">
+            <thead>
             <tr>
-                <td>
-                    <a href="{{ team.get_absolute_url }}">{{ team.name }}</a>
-                </td>
-                <td>
-                    {% for tm in team.teammember_set.all %}
-                        {{ tm.user|user_profile_link }}<br/>
-                    {% endfor %}
-                </td>
+                <th>Team Name</th>
+                <th>Team Members</th>
                 {% if not users_teams %}
-                    <td>
-                        <form method="post"
-                              action="{% url 'teams:member-create' site.short_name team.pk %}">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    class="btn btn-xs btn-primary">
-                                Join Team
-                            </button>
-                        </form>
-
-                    </td>
+                    <th>Join Team</th>
                 {% endif %}
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for team in object_list %}
+                <tr>
+                    <td>
+                        <a href="{{ team.get_absolute_url }}">{{ team.name }}</a>
+                    </td>
+                    <td>
+                        {% for tm in team.teammember_set.all %}
+                            {{ tm.user|user_profile_link }}<br/>
+                        {% endfor %}
+                    </td>
+                    {% if not users_teams %}
+                        <td>
+                            <form method="post"
+                                  action="{% url 'teams:member-create' site.short_name team.pk %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="btn btn-xs btn-primary">
+                                    Join Team
+                                </button>
+                            </form>
+
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

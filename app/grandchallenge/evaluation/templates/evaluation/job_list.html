@@ -8,30 +8,31 @@
 
     <h2>Evaluation Jobs</h2>
 
-    <table class="table" id="jobsTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Status</th>
-            <th>Output</th>
-            <th>Position</th>
-            {% if site.evaluation_config.allow_submission_comments %}
-                <th>Comment</th>
-            {% endif %}
-            {% if "change_challenge" in site_perms %}
-                <th>Hide/Publish</th>
-            {% endif %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for job in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="jobsTable">
+            <thead>
             <tr>
-                <td>{{ job.id }}</td>
-                <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
-                <td>
+                <th>ID</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Status</th>
+                <th>Output</th>
+                <th>Position</th>
+                {% if site.evaluation_config.allow_submission_comments %}
+                    <th>Comment</th>
+                {% endif %}
+                {% if "change_challenge" in site_perms %}
+                    <th>Hide/Publish</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for job in object_list %}
+                <tr>
+                    <td>{{ job.id }}</td>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
+                    <td>
                     <span class="label
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                         label-danger
@@ -44,51 +45,60 @@
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>
-                </td>
+                    </td>
 
-                {% if job.output %}
-                    <td>{{ job.output|user_error }}</td>
-                {% elif job.result.metrics and job.result.public %}
-                    <td><a href="{{ job.result.absolute_url }}">Result</a></td>
-                {% else %}
-                    <td></td>
-                {% endif %}
-
-                <td>
-                    {% if job.result and job.result.rank > 0 %}
-                        {{ job.result.rank }}
+                    {% if job.output %}
+                        <td>{{ job.output|user_error }}</td>
+                    {% elif job.result.metrics and job.result.public %}
+                        <td>
+                            <a href="{{ job.result.get_absolute_url }}">Result</a>
+                        </td>
+                    {% else %}
+                        <td></td>
                     {% endif %}
-                </td>
 
-                {% if site.evaluation_config.allow_submission_comments %}
-                    <td>{{ job.submission.comment }}</td>
-                {% endif %}
-
-                {% if "change_challenge" in site_perms %}
                     <td>
-                        {% if job.result %}
-                            <form method="post"
-                                  action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
-                                {% csrf_token %}
-                                {% if job.result.public %}
-                                    <input type="hidden" name="public"
-                                           value="false">
-                                    <button type="submit" class="btn btn-xs btn-danger">Hide Result</button>
-                                {% else %}
-                                    <input type="hidden" name="public"
-                                           value="true">
-                                    <button type="submit" class="btn btn-xs btn-primary">Publish Result</button>
-                                {% endif %}
-                            </form>
+                        {% if job.result and job.result.rank > 0 %}
+                            {{ job.result.rank }}
                         {% endif %}
                     </td>
-                {% endif %}
 
-            </tr>
-        {% endfor %}
+                    {% if site.evaluation_config.allow_submission_comments %}
+                        <td>{{ job.submission.comment }}</td>
+                    {% endif %}
 
-        </tbody>
-    </table>
+                    {% if "change_challenge" in site_perms %}
+                        <td>
+                            {% if job.result %}
+                                <form method="post"
+                                      action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
+                                    {% csrf_token %}
+                                    {% if job.result.public %}
+                                        <input type="hidden" name="public"
+                                               value="false">
+                                        <button type="submit"
+                                                class="btn btn-xs btn-danger">
+                                            Hide Result
+                                        </button>
+                                    {% else %}
+                                        <input type="hidden" name="public"
+                                               value="true">
+                                        <button type="submit"
+                                                class="btn btn-xs btn-primary">
+                                            Publish Result
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+
+                </tr>
+            {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {

@@ -1,4 +1,7 @@
+import base64
+
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
 
@@ -10,6 +13,7 @@ from grandchallenge.challenges.models import (
     BodyStructure,
     ImagingModality,
 )
+from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
 
 
@@ -19,14 +23,17 @@ class Command(BaseCommand):
         Creates the main project, demo user and demo challenge
         """
         challenge, created = Challenge.objects.get_or_create(
-            short_name=settings.MAIN_PROJECT_NAME, description="main project"
+            short_name=settings.MAIN_PROJECT_NAME,
+            description="main project",
+            use_registration_page=False,
+            disclaimer="You <b>must</b> delete the admin, demo, and demop users before deploying to production!",
         )
         if created:
             Page.objects.create(
                 title="home",
                 challenge=challenge,
                 hidden=True,
-                html='<h1>\r\n\tDefault Page</h1>\r\n<p>\r\n\tYou almost have COMIC framework up and running. Congratulations.<br />\r\n\tFor up to date info, please visit <a href="https://github.com/comic/grand-challenge.org">https://github.com/comic/grand-challenge.org</a></p>\r\n<p>\r\n\tOn COMIC framework anyone can sign up and create a project. A project is a collection of pages, data and software under a single name.<br />\r\n\tThe page you are reading now is the page "home" in the project "comic". The project "comic" is special in two ways:&nbsp; First, it is shown by default if you navigate to the root url and second, it\'s pages appear as a menu below each and every page of the framework. To make a project other than \'comic\' the main project, change the MAIN_PROJECT_NAME setting in comic/settings/00_default.conf.</p>\r\n<h2>\r\n\tUseful Code</h2>\r\n<p>\r\n\tAt the base level a project in COMIC framework is a collection of html pages under a single header. Most if the interesting functionality comes from using django <em>template tags</em> which you can use as functions inside you html code. They look like { % render_graph results.csv % } and are rendered by django when encountered. A list of template tags can be found on page "<a href="../template_tags">template tags</a>"</p>\r\n<p>\r\n\t\tcode for a sign in/ create new project button on a page:</p>\r\n<p>\r\n\t&nbsp;</p>\r\n<div style="text-align: center;background-color:#DFDFDF;float:none;margin-left:10px;margin-right:16px;margin-top:1px;padding:12px;width:164px;">\r\n\t\r\n\t<p>\r\n\t\t <a class="createNewComicSiteLink" href="{% url \'challenges:create\' %}">Create a new project</a></div>\r\n<p>There is a <a href=\'/site/testsite/\'>test site here</a>.</p><p> <h1>Site Stats</h1><div class=\'row\'><div class=\'col-sm-4\'></div><div class=\'col-sm-4\'>{% allusers_statistics False %}</div><div class=\'col-sm-4\'></div></div> </p>\r\n',
+                html='<h1>\r\n\tDefault Page</h1>\r\n<p>\r\n\tYou almost have COMIC framework up and running. Congratulations.<br />\r\n\tFor up to date info, please visit <a href="https://github.com/comic/grand-challenge.org">https://github.com/comic/grand-challenge.org</a></p>\r\n<p>\r\n\tOn COMIC framework anyone can sign up and create a project. A project is a collection of pages, data and software under a single name.<br />\r\n\tThe page you are reading now is the page "home" in the project "comic". The project "comic" is special in two ways:&nbsp; First, it is shown by default if you navigate to the root url and second, it\'s pages appear as a menu below each and every page of the framework. To make a project other than \'comic\' the main project, change the MAIN_PROJECT_NAME setting in comic/settings/00_default.conf.</p>\r\n<h2>\r\n\tUseful Code</h2>\r\n<p>\r\n\tAt the base level a project in COMIC framework is a collection of html pages under a single header. Most if the interesting functionality comes from using django <em>template tags</em> which you can use as functions inside you html code. They look like { % render_graph results.csv % } and are rendered by django when encountered. A list of template tags can be found on page "<a href="../template_tags">template tags</a>"</p>\r\n<p>\r\n\t\tcode for a sign in/ create new project button on a page:</p>\r\n<p>\r\n\t&nbsp;</p>\r\n<div style="text-align: center;background-color:#DFDFDF;float:none;margin-left:10px;margin-right:16px;margin-top:1px;padding:12px;width:164px;">\r\n\t\r\n\t<p>\r\n\t\t <a class="createNewComicSiteLink" href="{% url \'challenges:create\' %}">Create a new project</a></div>\r\n<p>There is a <a href=\'/site/testsite/\'>test site here</a>.</p><p> <h1>Site Stats</h1><div class=\'row no-gutters\'><div class=\'col-sm-4\'></div><div class=\'col-sm-4\'>{% allusers_statistics False %}</div><div class=\'col-sm-4\'></div></div> </p>\r\n',
             )
             Page.objects.create(
                 title="template_tags",
@@ -77,6 +84,25 @@ class Command(BaseCommand):
             Page.objects.create(
                 challenge=demo, title="adm", permission_lvl="ADM"
             )
+
+            method = Method(challenge=demo)
+            container = ContentFile(base64.b64decode(b""))
+            method.image.save("test.tar", container)
+            method.save()
+
+            submission = Submission(challenge=demo, creator=demoparticipant)
+            content = ContentFile(base64.b64decode(b""))
+            submission.file.save("test.csv", content)
+            submission.save()
+
+            job = Job.objects.create(submission=submission, method=method)
+
+            Result.objects.create(
+                challenge=demo, metrics={"acc": 0.5}, job=job
+            )
+
+            demo.evaluation_config.score_jsonpath = "acc"
+            demo.evaluation_config.save()
 
             ex_challenge = ExternalChallenge.objects.create(
                 creator=demoadmin,
