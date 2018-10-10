@@ -94,7 +94,7 @@
 
                 <div class='row'>
                     {% for challenge in challenges %}
-                        <div class="col-sm-4 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
+                        <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.get_link_classes }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
