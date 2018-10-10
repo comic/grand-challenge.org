@@ -6,88 +6,90 @@
 
     <h2>Results</h2>
 
-    <table class="table" id="resultsTable">
-        <thead>
-        <tr>
-            <th>Position</th>
-            <th>User</th>
-            {% if site.evaluation_config.use_teams %}
-                <th>Team</th>
-            {% endif %}
-            <th>Date</th>
-            <th>{{ site.evaluation_config.score_title }}</th>
-
-            {% for col in site.evaluation_config.extra_results_columns %}
-                <th>{{ col }}</th>
-            {% endfor %}
-
-            {% if site.evaluation_config.display_submission_comments %}
-                <th>Comment</th>
-            {% endif %}
-
-            {% if site.evaluation_config.show_publication_url %}
-                <th>Publication</th>
-            {% endif %}
-
-            {% if site.evaluation_config.show_supplementary_file_link %}
-                <th>{{ site.evaluation_config.supplementary_file_label }}</th>
-            {% endif %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for result in object_list %}
+    <div class="table-responsive">
+        <table class="table table-sm" id="resultsTable">
+            <thead>
             <tr>
-
-                <td>{{ result.rank }}</td>
-
-                <td>
-                    {{ result.job.submission.creator|user_profile_link }}
-                </td>
-
+                <th>Position</th>
+                <th>User</th>
                 {% if site.evaluation_config.use_teams %}
-                    <td>
-                        {{ result|get_team_html }}
-                    </td>
+                    <th>Team</th>
                 {% endif %}
+                <th>Date</th>
+                <th>{{ site.evaluation_config.score_title }}</th>
 
-                <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
-
-                <td>
-                    <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
-                </td>
-
-                {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
-                    <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</td>
+                {% for col in site.evaluation_config.extra_results_columns %}
+                    <th>{{ col }}</th>
                 {% endfor %}
 
                 {% if site.evaluation_config.display_submission_comments %}
-                    <td>{{ result.job.submission.comment }}</td>
+                    <th>Comment</th>
                 {% endif %}
 
                 {% if site.evaluation_config.show_publication_url %}
-                    <td>
-                        {% if result.job.submission.publication_url %}
-                            <a href="{{ result.job.submission.publication_url }}">
-                                <i class="fa fa-file"></i>
-                            </a>
-                        {% endif %}
-                    </td>
+                    <th>Publication</th>
                 {% endif %}
 
                 {% if site.evaluation_config.show_supplementary_file_link %}
-                    <th>
-                        {% if result.job.submission.supplementary_file %}
-                            <a href="{{ result.job.submission.supplementary_file.url }}">
-                                <i class="fa fa-file"></i>
-                            </a>
-                        {% endif %}
-                    </th>
+                    <th>{{ site.evaluation_config.supplementary_file_label }}</th>
                 {% endif %}
-
             </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            {% for result in object_list %}
+                <tr>
+
+                    <td>{{ result.rank }}</td>
+
+                    <td>
+                        {{ result.job.submission.creator|user_profile_link }}
+                    </td>
+
+                    {% if site.evaluation_config.use_teams %}
+                        <td>
+                            {{ result|get_team_html }}
+                        </td>
+                    {% endif %}
+
+                    <td data-order="{{ result.created|date:"U" }}">{{ result.created }}</td>
+
+                    <td>
+                        <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
+                    </td>
+
+                    {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
+                        <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</td>
+                    {% endfor %}
+
+                    {% if site.evaluation_config.display_submission_comments %}
+                        <td>{{ result.job.submission.comment }}</td>
+                    {% endif %}
+
+                    {% if site.evaluation_config.show_publication_url %}
+                        <td>
+                            {% if result.job.submission.publication_url %}
+                                <a href="{{ result.job.submission.publication_url }}">
+                                    <i class="fa fa-file"></i>
+                                </a>
+                            {% endif %}
+                        </td>
+                    {% endif %}
+
+                    {% if site.evaluation_config.show_supplementary_file_link %}
+                        <th>
+                            {% if result.job.submission.supplementary_file %}
+                                <a href="{{ result.job.submission.supplementary_file.url }}">
+                                    <i class="fa fa-file"></i>
+                                </a>
+                            {% endif %}
+                        </th>
+                    {% endif %}
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script type="text/javascript">
         $(document).ready(function () {
