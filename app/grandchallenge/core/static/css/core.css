@@ -239,3 +239,7 @@ div#resultsTable_wrapper div.col-sm-12 {
     font-size: 0.8em;
     line-height: 1.1em;
 }
+
+div#pageContainer {
+    overflow-x: auto;
+}

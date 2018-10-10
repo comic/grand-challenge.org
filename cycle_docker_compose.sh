@@ -16,7 +16,6 @@ while true ; do
 	read Input
 	if [ $? -eq 1 ]
 	    then
-	        make build
 	        docker-compose restart web
 	        docker-compose restart celery_worker
 	        docker-compose restart celery_worker_evaluation
