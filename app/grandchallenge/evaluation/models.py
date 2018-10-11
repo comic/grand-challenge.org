@@ -182,7 +182,7 @@ class Config(UUIDModel):
         ),
         blank=True,
     )
-    new_results_are_public = BooleanField(
+    auto_publish_new_results = BooleanField(
         default=True,
         help_text=(
             "If true, new results are automatically made public. If false, "
@@ -361,7 +361,7 @@ class Result(UUIDModel):
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
-    public = models.BooleanField(default=True)
+    published = models.BooleanField(default=True)
     rank = models.PositiveIntegerField(
         default=0,
         help_text=(
@@ -375,8 +375,8 @@ class Result(UUIDModel):
     def save(self, *args, **kwargs):
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
-            self.public = (
-                self.challenge.evaluation_config.new_results_are_public
+            self.published = (
+                self.challenge.evaluation_config.auto_publish_new_results
             )
 
         super().save(*args, **kwargs)

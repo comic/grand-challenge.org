@@ -49,9 +49,8 @@
 
                     {% if job.output %}
                         <td>{{ job.output|user_error }}</td>
-                    {% elif job.result.metrics and job.result.public %}
-                        <td>
-                            <a href="{{ job.result.get_absolute_url }}">Result</a>
+                    {% elif job.result.metrics and job.result.published %}
+                        <td><a href="{{ job.result.absolute_url }}">Result</a>
                         </td>
                     {% else %}
                         <td></td>
@@ -73,15 +72,15 @@
                                 <form method="post"
                                       action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
                                     {% csrf_token %}
-                                    {% if job.result.public %}
-                                        <input type="hidden" name="public"
+                                    {% if job.result.published %}
+                                        <input type="hidden" name="published"
                                                value="false">
                                         <button type="submit"
                                                 class="btn btn-xs btn-danger">
                                             Hide Result
                                         </button>
                                     {% else %}
-                                        <input type="hidden" name="public"
+                                        <input type="hidden" name="published"
                                                value="true">
                                         <button type="submit"
                                                 class="btn btn-xs btn-primary">

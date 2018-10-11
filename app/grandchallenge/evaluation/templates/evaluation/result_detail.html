@@ -27,8 +27,8 @@
 
         <dt>Position on leaderboard</dt>
         <dd>
-            {% if object.public and object.rank > 0 %}
-                {{ object.rank|ordinal }}
+            {% if object.published and object.rank > 0 %}
+                {{ object.rank }}
             {% else %}
                 This result has not been published on the leaderboard.
             {% endif %}
@@ -75,14 +75,14 @@
         <form method="post"
               action="{% url 'evaluation:result-update' site.short_name object.pk %}">
             {% csrf_token %}
-            {% if object.public %}
-                <input type="hidden" name="public"
+            {% if object.published %}
+                <input type="hidden" name="published"
                        value="false">
                 <button type="submit" class="btn btn-danger">Remove result from
                     leaderboard
                 </button>
             {% else %}
-                <input type="hidden" name="public"
+                <input type="hidden" name="published"
                        value="true">
                 <button type="submit" class="btn btn-primary">Publish result on
                     leaderboard

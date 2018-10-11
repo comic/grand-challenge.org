@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -34,11 +32,9 @@ def send_new_result_email(result):
     recipient_emails = [o.email for o in result.challenge.get_admins()]
     message = (
         f"There is a new result for {result.challenge.short_name} from "
-        f"{result.job.submission.creator.username}. The following metrics "
-        f"were calculated:\n\n"
-        f"{json.dumps(result.metrics, indent=2)}\n\n"
+        f"{result.job.submission.creator.username}."
     )
-    if result.public:
+    if result.published:
         leaderboard_url = reverse(
             "evaluation:result-list",
             kwargs={"challenge_short_name": result.challenge.short_name},
