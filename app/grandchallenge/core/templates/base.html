@@ -219,7 +219,7 @@
         {% endblock messages %}
     </div>
 
-    <div id="page" class="container mt-3">
+    <div id="page" class="{% block containerType %}container{% endblock %} mt-3">
 
         {% block jumbotron %}{% endblock %}
 
