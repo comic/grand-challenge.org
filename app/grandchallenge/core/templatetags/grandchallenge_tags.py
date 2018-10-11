@@ -6,6 +6,7 @@ import re
 import string
 import traceback
 from io import StringIO
+from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
@@ -15,7 +16,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
 from django.template import defaulttags
-from django.utils.html import format_html, conditional_escape
+from django.urls import reverse as reverse_djangocore
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
@@ -220,41 +222,63 @@ def substitute(string, substitutions):
 
 
 class comic_URLNode(defaulttags.URLNode):
-    """
-    Taken verbatim from the base, only the internal reverse is used.
-    """
-
     def render(self, context):
-        from django.urls import NoReverseMatch
+        # get the url the default django method would give.
+        url = super().render(context)
 
-        args = [arg.resolve(context) for arg in self.args]
-        kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
-        view_name = self.view_name.resolve(context)
-        try:
-            current_app = context.request.current_app
-        except AttributeError:
-            try:
-                current_app = context.request.resolver_match.namespace
-            except AttributeError:
-                current_app = None
-        # Try to look up the URL. If it fails, raise NoReverseMatch unless the
-        # {% url ... as var %} construct is used, in which case return nothing.
-        url = ""
-        try:
-            url = reverse(
-                view_name, args=args, kwargs=kwargs, current_app=current_app
+        if subdomain_is_projectname() and (
+            (
+                self.view_name.var
+                in ["challenge-homepage", "project_serve_file"]
             )
-        except NoReverseMatch:
-            if self.asvar is None:
-                raise
+            or (
+                self.view_name.var.split(":")[0]
+                in [
+                    "evaluation",
+                    "teams",
+                    "pages",
+                    "participants",
+                    "admins",
+                    "uploads",
+                    "datasets",
+                ]
+            )
+        ):
+            # Interpret subdomain as a challenge. What would normally be the
+            # path to this challenge?
+            args = [arg.resolve(context) for arg in self.args]
+            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
-        if self.asvar:
-            context[self.asvar] = url
-            return ""
-        else:
-            if context.autoescape:
-                url = conditional_escape(url)
-            return url
+            try:
+                project = args[0]
+            except IndexError:
+                # No project was set, so must be part of the main site
+                project = kwargs.get(
+                    "challenge_short_name", settings.MAIN_PROJECT_NAME
+                )
+
+            if project == settings.MAIN_PROJECT_NAME:
+                # this url cannot use the domain name shortcut, so it is
+                # probably meant as a link the main comicframework site.
+                # in that case hardcode the domain to make sure the sub-
+                # domain is gone after following this link
+                return settings.MAIN_HOST_NAME + url
+
+            else:
+                path_to_site = reverse_djangocore(
+                    "challenge-homepage", args=[project]
+                )
+
+                if url.startswith(path_to_site):
+                    url = url.replace(path_to_site, "/")
+
+                scheme_subsite_and_host = reverse(
+                    "challenge-homepage", args=[project]
+                )
+
+                return urljoin(scheme_subsite_and_host, url)
+
+        return url
 
 
 class TagListNode(template.Node):
