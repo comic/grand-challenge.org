@@ -65,9 +65,14 @@ class StatisticsDetail(UserIsStaffMixin, TemplateView):
             )
             .order_by("-num_submissions_period")
             .first(),
-            "latest_result": Result.objects.filter(published=True)
+            "latest_result": Result.objects.filter(
+                published=True, challenge__hidden=False
+            )
             .order_by("-created")
             .first(),
+            "using_auto_eval": Challenge.objects.filter(
+                use_evaluation=True
+            ).count(),
         }
 
         context.update(extra)

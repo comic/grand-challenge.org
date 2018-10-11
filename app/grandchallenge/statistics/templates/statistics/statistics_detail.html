@@ -1,5 +1,5 @@
 {% extends "nobanner.html" %}
-{% load naturaltime from humanize %}
+{% load humanize %}
 
 {% block pageName %}Statistics{% endblock %}
 
@@ -14,13 +14,13 @@
     <dl>
 
         <dt>Total users</dt>
-        <dd>{{ number_of_users }}</dd>
+        <dd>{{ number_of_users|intcomma }}</dd>
 
         <dt>New users (last {{ days }} days)</dt>
-        <dd>{{ new_users_period }}</dd>
+        <dd>{{ new_users_period|intcomma }}</dd>
 
         <dt>Users logged in (last {{ days }} days)</dt>
-        <dd>{{ logged_in_period }}</dd>
+        <dd>{{ logged_in_period|intcomma }}</dd>
 
     </dl>
 
@@ -29,17 +29,17 @@
     <dl>
 
         <dt>Open challenges</dt>
-        <dd>{{ open_challenges }}</dd>
+        <dd>{{ open_challenges|intcomma }}</dd>
 
         <dt>Hidden challenges</dt>
-        <dd>{{ hidden_challenges }}</dd>
+        <dd>{{ hidden_challenges|intcomma }}</dd>
 
 
         <dt>Challenge with the most participants</dt>
         <dd>
             <a href="{{ mp_group.participants_of_challenge.get_absolute_url }}">
                 {{ mp_group.participants_of_challenge }}
-                ({{ mp_group.num_users }}
+                ({{ mp_group.num_users|intcomma }}
                 Participant{{ mp_group.num_users|pluralize }})
             </a>
         </dd>
@@ -48,7 +48,7 @@
         <dd>
             <a href="{{ mp_challenge_registrations_period.get_absolute_url }}">
                 {{ mp_challenge_registrations_period }}
-                ({{ mp_challenge_registrations_period.num_registrations_period }}
+                ({{ mp_challenge_registrations_period.num_registrations_period|intcomma }}
                 Registration{{ mp_challenge_registrations_period.num_registrations_period|pluralize }})
             </a>
         </dd>
@@ -59,18 +59,20 @@
     <h3>Automated Evaluation</h3>
 
     <dl>
+        <dt>Challenges using automated evaluation</dt>
+        <dd>{{ using_auto_eval|intcomma }}</dd>
 
         <dt>Total submissions</dt>
-        <dd>{{ submissions }}</dd>
+        <dd>{{ submissions|intcomma }}</dd>
 
         <dt>Total submissions (last {{ days }} days)</dt>
-        <dd>{{ submissions_period }}</dd>
+        <dd>{{ submissions_period|intcomma }}</dd>
 
         <dt>Challenge with the most submissions</dt>
         <dd>
             <a href="{{ mp_challenge_submissions.get_absolute_url }}">
                 {{ mp_challenge_submissions }}
-                ({{ mp_challenge_submissions.num_submissions }}
+                ({{ mp_challenge_submissions.num_submissions|intcomma }}
                 Submission{{ mp_challenge_submissions.num_submissions|pluralize }})
             </a>
         </dd>
@@ -79,7 +81,7 @@
         <dd>
             <a href="{{ mp_challenge_submissions_period.get_absolute_url }}">
                 {{ mp_challenge_submissions_period }}
-                ({{ mp_challenge_submissions_period.num_submissions_period }}
+                ({{ mp_challenge_submissions_period.num_submissions_period|intcomma }}
                 Submission{{ mp_challenge_submissions_period.num_submissions_period|pluralize }})
             </a>
         </dd>
