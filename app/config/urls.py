@@ -57,6 +57,10 @@ urlpatterns = [
         include("grandchallenge.core.urls"),
         name="site",
     ),
+    path(
+        "stats/",
+        include("grandchallenge.statistics.urls", namespace="statistics"),
+    ),
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),
