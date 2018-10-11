@@ -1,6 +1,7 @@
 # Django settings for comic project.
 import glob
 import os
+import re
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -19,6 +20,16 @@ DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
+
+# Who gets the 404 notifications?
+manager_email = os.environ.get("MANAGER_EMAIL", None)
+if manager_email:
+    MANAGERS = ("Manager", manager_email)
+
+IGNORABLE_404_URLS = [
+    re.compile(r"\.(php|cgi)$"),
+    re.compile(r"^/phpmyadmin/"),
+]
 
 # Django will throw an exeception if the URL you type to load the framework is
 # not in the list below. This is a security measure.
@@ -221,6 +232,7 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
+    "django.middleware.common.BrokenLinkEmailsMiddleware",  # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
