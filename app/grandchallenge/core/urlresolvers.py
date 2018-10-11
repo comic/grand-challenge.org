@@ -9,21 +9,21 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     This means 'site1' will not get url 'hostname/site/site1' but rather
     'challenge.hostname'
     """
-    if args is not None:
-        challenge_short_name = args[0]
-    elif kwargs is not None and "challenge_short_name" in kwargs:
-        challenge_short_name = kwargs["challenge_short_name"]
-    else:
-        challenge_short_name = None
-
-    if settings.SUBDOMAIN_IS_PROJECTNAME and challenge_short_name:
+    if settings.SUBDOMAIN_IS_PROJECTNAME:
+        if args is not None:
+            challenge_short_name = args[0]
+        elif kwargs is not None and "challenge_short_name" in kwargs:
+            challenge_short_name = kwargs["challenge_short_name"]
+        else:
+            # No challenge short name, so must belong to main site
+            challenge_short_name = settings.MAIN_PROJECT_NAME
 
         protocol, domainname = settings.MAIN_HOST_NAME.split("//")
 
-        if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
-            base_url = f"{protocol}//{challenge_short_name}.{domainname}"
-        else:
+        if challenge_short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
             base_url = f"{protocol}//{domainname}"
+        else:
+            base_url = f"{protocol}//{challenge_short_name}.{domainname}"
 
         site_url = reverse_org(
             "challenge-homepage", args=[challenge_short_name]
@@ -43,6 +43,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
         return urljoin(base_url.lower(), target_url)
 
     else:
+
         return reverse_org(
             viewname,
             urlconf=urlconf,
