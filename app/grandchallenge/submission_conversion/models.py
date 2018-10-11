@@ -42,7 +42,9 @@ class SubmissionToAnnotationSetExecutor(Executor):
                 # Unzip the file in the container rather than in the python
                 # process. With resource limits this should provide some
                 # protection against zip bombs etc.
-                writer.exec_run(f"unzip {dest_file} -d /input/")
+                writer.exec_run(
+                    f"unzip {dest_file} -d /input/ -x '__MACOSX/*'"
+                )
                 self.__was_unzipped = True
             else:
                 # Not a zip file, so must be a csv

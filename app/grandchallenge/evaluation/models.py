@@ -326,7 +326,9 @@ class SubmissionEvaluator(Executor):
                 # Unzip the file in the container rather than in the python
                 # process. With resource limits this should provide some
                 # protection against zip bombs etc.
-                writer.exec_run(f"unzip {dest_file} -d /input/")
+                writer.exec_run(
+                    f"unzip {dest_file} -d /input/ -x '__MACOSX/*'"
+                )
 
                 # Remove a duplicated directory
                 input_files = (
