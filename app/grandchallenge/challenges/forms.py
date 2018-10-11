@@ -23,40 +23,44 @@ class ChallengeCreateForm(forms.ModelForm):
         ]
 
 
+common_information_items = (
+    "title",
+    "description",
+    "task_types",
+    "modalities",
+    "structures",
+    "hidden",
+)
+
+common_images_items = ("logo",)
+
+event_items = ("event_name", "event_url", "workshop_date")
+
+publication_items = (
+    "publication_url",
+    "publication_journal_name",
+    "publication_citation_count",
+    "publication_google_scholar_id",
+)
+registration_items = (
+    "use_registration_page",
+    "require_participant_review",
+    "registration_page_text",
+)
+
+
 class ChallengeUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab("Information", "title", "description"),
-                Tab("Images", "logo", "banner"),
-                Tab(
-                    "Metadata",
-                    "task_types",
-                    "modalities",
-                    "structures",
-                    "disclaimer",
-                    "workshop_date",
-                    "event_name",
-                    "event_url",
-                    "is_open_for_submissions",
-                    "submission_page_name",
-                    "number_of_submissions",
-                    "last_submission_date",
-                    "offers_data_download",
-                    "number_of_downloads",
-                    "publication_url",
-                    "publication_journal_name",
-                ),
-                Tab(
-                    "Registration",
-                    "use_registration_page",
-                    "require_participant_review",
-                    "registration_page_text",
-                ),
-                Tab("Visibility", "hidden", "hide_signin", "hide_footer"),
+                Tab("Information", *common_information_items, "disclaimer"),
+                Tab("Images", "banner", *common_images_items),
+                Tab("Event", *event_items),
+                Tab("Registration", *registration_items),
                 Tab("Automated Evaluation", "use_evaluation"),
+                Tab("Publication", *publication_items),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -64,51 +68,23 @@ class ChallengeUpdateForm(forms.ModelForm):
     class Meta:
         model = Challenge
         fields = [
-            "title",
-            "description",
-            "logo",
-            "banner",
+            *common_information_items,
             "disclaimer",
-            "workshop_date",
-            "event_name",
-            "event_url",
-            "is_open_for_submissions",
-            "submission_page_name",
-            "number_of_submissions",
-            "last_submission_date",
-            "offers_data_download",
-            "number_of_downloads",
-            "publication_url",
-            "publication_journal_name",
-            "use_registration_page",
-            "require_participant_review",
-            "registration_page_text",
-            "hidden",
-            "hide_signin",
-            "hide_footer",
+            "banner",
+            *common_images_items,
+            *event_items,
+            *registration_items,
             "use_evaluation",
+            *publication_items,
         ]
         widgets = {
             "workshop_date": forms.TextInput(attrs={"type": "date"}),
-            "last_submission_date": forms.TextInput(attrs={"type": "date"}),
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
         }
 
 
-information_items = (
-    "short_name",
-    "title",
-    "homepage",
-    "description",
-    "task_types",
-    "modalities",
-    "structures",
-    "logo",
-    "hidden",
-)
-event_items = ("event_name", "event_url", "workshop_date")
 data_items = (
     "data_license_agreement",
     "data_stored",
@@ -124,7 +100,6 @@ submission_items = (
     "number_of_submissions",
     "last_submission_date",
 )
-publication_items = ("publication_url", "publication_journal_name")
 
 
 class ExternalChallengeUpdateForm(forms.ModelForm):
@@ -133,7 +108,13 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab("Information", *information_items),
+                Tab(
+                    "Information",
+                    "short_name",
+                    "homepage",
+                    *common_information_items,
+                ),
+                Tab("Images", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Data", *data_items),
                 Tab("Submissions", *submission_items),
@@ -145,7 +126,10 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
     class Meta:
         model = ExternalChallenge
         fields = (
-            *information_items,
+            "short_name",
+            "homepage",
+            *common_information_items,
+            *common_images_items,
             *event_items,
             *data_items,
             *submission_items,
