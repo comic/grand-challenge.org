@@ -51,6 +51,7 @@ class StatisticsDetail(UserIsStaffMixin, TemplateView):
                     "registrationrequest", filter=Q(created__gt=time_period)
                 )
             )
+            .filter(num_registrations_period__gt=0)
             .order_by("-num_registrations_period")
             .first(),
             "mp_challenge_submissions": open_challenges.annotate(
@@ -63,6 +64,7 @@ class StatisticsDetail(UserIsStaffMixin, TemplateView):
                     "submission", filter=Q(created__gt=time_period)
                 )
             )
+            .filter(num_submissions_period__gt=0)
             .order_by("-num_submissions_period")
             .first(),
             "latest_result": Result.objects.filter(
