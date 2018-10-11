@@ -24,7 +24,7 @@ ADMINS = (
 # Who gets the 404 notifications?
 manager_email = os.environ.get("MANAGER_EMAIL", None)
 if manager_email:
-    MANAGERS = ("Manager", manager_email)
+    MANAGERS = [("Manager", manager_email)]
 
 IGNORABLE_404_URLS = [
     re.compile(r"\.(php|cgi)$"),
