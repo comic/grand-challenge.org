@@ -36,4 +36,4 @@ deploy:
   provider: script
   script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
   on:
-    all_branches: true
+    branch: master
