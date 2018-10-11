@@ -5,6 +5,8 @@
 
 {% block pageName %}External Challenges{% endblock %}
 
+{% block containerType %}container-fluid{% endblock %}
+
 {% block pagecontent %}
 
     <h2>External Challenges</h2>
@@ -118,8 +120,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
             $('#challengesTable').DataTable({
-                "bLengthChange": false,
-                "pageLength": 50,
+                "pageLength": 10,
                 "order": [[1, "desc"]]
             });
         });

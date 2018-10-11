@@ -217,6 +217,21 @@ class ChallengeBase(models.Model):
             "journal abbreviations</a> format"
         ),
     )
+    publication_citation_count = models.PositiveIntegerField(
+        blank=True,
+        default=0,
+        help_text="The number of citations for the publication",
+    )
+    publication_google_scholar_id = models.BigIntegerField(
+        blank=True,
+        null=True,
+        help_text=(
+            "The ID of the article in google scholar. For instance, setting "
+            "this to 5362332738201102290, which the ID for LeCun et al. "
+            "in Nature 2015, and corresponds to the url"
+            "https://scholar.google.com/scholar?cluster=5362332738201102290"
+        ),
+    )
 
     data_license_agreement = models.TextField(
         blank=True,
