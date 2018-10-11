@@ -9,14 +9,17 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     This means 'site1' will not get url 'hostname/site/site1' but rather
     'challenge.hostname'
     """
+    args = args or []
+    kwargs = kwargs or {}
+
     if settings.SUBDOMAIN_IS_PROJECTNAME:
-        if args is not None:
+
+        if args:
             challenge_short_name = args[0]
-        elif kwargs is not None and "challenge_short_name" in kwargs:
-            challenge_short_name = kwargs["challenge_short_name"]
         else:
-            # No challenge short name, so must belong to main site
-            challenge_short_name = settings.MAIN_PROJECT_NAME
+            challenge_short_name = kwargs.get(
+                "challenge_short_name", settings.MAIN_PROJECT_NAME
+            )
 
         protocol, domainname = settings.MAIN_HOST_NAME.split("//")
 
