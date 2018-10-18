@@ -27,7 +27,7 @@ $(document).ready(function () {
     }
 
     function updateTotalCounter() {
-        //Write the total number of projectlinks, invisible or visable, into
+        //Write the total number of projectlinks, invisible or visible, into
         //a span with class 'counter' and id 'total'
 
         var count = $("div." + BASE_SELECTOR).length;
@@ -58,10 +58,33 @@ $(document).ready(function () {
         //Make sure items shown correspond to checkboxes
         log("Refreshing all links");
         var projectlinks = {"show": $(), "hide": $()};
+
+        var active_filters = [];
+
         filterbuttons.each(function (i, d) {
             log("updating according to " + d.id);
-            projectlinks = modifyCollection($(d), projectlinks)
+            var checkbox = $(d);
+            if(checkbox.attr("class") === "filter" && checkbox.is(':checked')){
+                active_filters.push( checkbox);
+            }
+            projectlinks = modifyCollection(checkbox, projectlinks)
         });
+
+        //Update active filters and counter visualization
+        $('#active_filter_count').text(active_filters.length);
+        $('#all_active_filters').empty();
+        active_filters.forEach(function(checkbox){
+            var filter_tag = $('<span>', {'class': 'badge badge-info badge-info-filter'});
+            var close_button = $('<span>', {'class': 'filter-close'}).text('X');
+            close_button.click(function(){
+                checkbox.prop('checked', false);
+                updateAll();
+            });
+            var text = $('<span>', {'class': 'filter-text'}).text(checkbox.val());
+            filter_tag.append(close_button).append(text);
+            $('#all_active_filters').append(filter_tag);
+        });
+
 
         //after collection all modifications, apply these
         var show = projectlinks["show"];
@@ -135,7 +158,6 @@ $(document).ready(function () {
         } else {
             log("WARNING, checkbox having class " + checkbox.attr("class") + " did not have a known class. I don't know what to do when this box is checked")
         }
-
         collection = {"show": show, "hide": hide};
         return collection;
     }
@@ -200,9 +222,14 @@ $(document).ready(function () {
         return filtered;
     }
 
+    $('#btn_reset_filters').click(function(){
+        log("Clicked reset filters!");
+        $("#projectfilterbuttons input.filter").prop("checked",false);
+        updateAll();
+    });
 
     function log(msg) {
-        var logging = false;
+        var logging = true;
 
         if (logging) {
             console.log("* " + msg)
