@@ -11,11 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, CreateView, TemplateView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import (
-    getSite,
-    site_get_standard_vars,
-    permissionMessage,
-)
+from grandchallenge.core.views import getSite, permissionMessage
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from grandchallenge.uploads.emails import send_file_uploaded_notification_email
@@ -106,9 +102,11 @@ def upload_handler(request, challenge_short_name):
     view_url = reverse(
         "uploads:create", kwargs={"challenge_short_name": challenge_short_name}
     )
+
+    site = getSite(challenge_short_name)
+
     if request.method == "POST":
         # set values excluded from form here to make the model validate
-        site = getSite(challenge_short_name)
         uploadedFile = UploadModel(
             challenge=site,
             permission_lvl=UploadModel.ADMIN_ONLY,
@@ -141,7 +139,9 @@ def upload_handler(request, challenge_short_name):
             pass
     else:
         form = UserUploadForm()
-    site, pages = site_get_standard_vars(challenge_short_name)
+
+    pages = site.page_set.all()
+
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(challenge=site, title="files")
         currentpage = permissionMessage(request, site, p)

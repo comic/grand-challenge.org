@@ -8,11 +8,10 @@ from django.urls import resolve
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import build_absolute_uri
-from grandchallenge.core.views import site_get_standard_vars
 
 
 def comic_site(request):
-    """ Find out in which comic site this request is loaded. If you cannot
+    """ Find out in which challenge this request is for. If you cannot
     figure it out. Use main project. 
     
     """
@@ -22,20 +21,24 @@ def comic_site(request):
         # fail silently beacuse any exeception here will cause a 500 server error
         # on page. Let views show errors but not the context processor
         resolution = resolve("/")
-    if "challenge_short_name" in resolution.kwargs:
-        sitename = resolution.kwargs["challenge_short_name"]
-    else:
-        sitename = settings.MAIN_PROJECT_NAME
+
+    challenge_short_name = resolution.kwargs.get(
+        "challenge_short_name", settings.MAIN_PROJECT_NAME
+    )
+
     try:
-        site, pages = site_get_standard_vars(sitename)
+        challenge = Challenge.objects.get(
+            short_name__iexact=challenge_short_name
+        )
+        pages = challenge.page_set.all()
     except Challenge.DoesNotExist:
-        # Don't crash the system here, if a site cannot be found it will crash
+        # Don't crash the system here, if a challenge cannot be found it will crash
         # in a more appropriate location
         return {}
 
     return {
-        "site": site,
-        "user_is_participant": site.is_participant(request.user),
+        "site": challenge,
+        "user_is_participant": challenge.is_participant(request.user),
         "pages": pages,
         "main_challenge_name": settings.MAIN_PROJECT_NAME,
     }
