@@ -141,21 +141,14 @@ def upload_handler(request, challenge_short_name):
             pass
     else:
         form = UserUploadForm()
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+    site, pages = site_get_standard_vars(challenge_short_name)
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(challenge=site, title="files")
         currentpage = permissionMessage(request, site, p)
         response = render(
             request,
             "page.html",
-            {
-                "site": site,
-                "currentpage": currentpage,
-                "pages": pages,
-                "metafooterpages": metafooterpages,
-            },
+            {"site": site, "currentpage": currentpage, "pages": pages},
         )
         response.status_code = 403
         return response
@@ -163,11 +156,5 @@ def upload_handler(request, challenge_short_name):
     return render(
         request,
         "uploads/comicupload.html",
-        {
-            "form": form,
-            "upload_url": view_url,
-            "site": site,
-            "pages": pages,
-            "metafooterpages": metafooterpages,
-        },
+        {"form": form, "upload_url": view_url, "site": site, "pages": pages},
     )

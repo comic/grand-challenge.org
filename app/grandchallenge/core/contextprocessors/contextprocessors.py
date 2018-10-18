@@ -27,7 +27,7 @@ def comic_site(request):
     else:
         sitename = settings.MAIN_PROJECT_NAME
     try:
-        [site, pages, metafooterpages] = site_get_standard_vars(sitename)
+        site, pages = site_get_standard_vars(sitename)
     except Challenge.DoesNotExist:
         # Don't crash the system here, if a site cannot be found it will crash
         # in a more appropriate location
@@ -37,7 +37,6 @@ def comic_site(request):
         "site": site,
         "user_is_participant": site.is_participant(request.user),
         "pages": pages,
-        "metafooterpages": metafooterpages,
         "main_challenge_name": settings.MAIN_PROJECT_NAME,
     }
 

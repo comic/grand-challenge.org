@@ -23,9 +23,7 @@ def site(request, challenge_short_name):
     except Challenge.DoesNotExist:
         raise Http404("Project %s does not exist" % challenge_short_name)
 
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+    site, pages = site_get_standard_vars(challenge_short_name)
 
     if len(pages) == 0:
         page = ErrorPage(
@@ -53,13 +51,11 @@ def site_get_standard_vars(challenge_short_name):
     try:
         site = getSite(challenge_short_name)
         pages = getPages(challenge_short_name)
-        metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     except Challenge.DoesNotExist:
         # Site is not known, default to main project.
         site = getSite(settings.MAIN_PROJECT_NAME)
-        metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
         pages = []  # don't show any pages here
-    return [site, pages, metafooterpages]
+    return site, pages
 
 
 def renderTags(request, p, recursecount=0):
@@ -243,16 +239,10 @@ def comicmain(request, page_title=""):
     # This makes it possible to use tags like '{% dataset %}' in page
     # to display pages from main project at the very bottom of the site as
     # general links
-    metafooterpages = getPages(settings.MAIN_PROJECT_NAME)
     return render(
         request,
         "page.html",
-        {
-            "site": p.challenge,
-            "currentpage": p,
-            "pages": pages,
-            "metafooterpages": metafooterpages,
-        },
+        {"site": p.challenge, "currentpage": p, "pages": pages},
     )
 
 

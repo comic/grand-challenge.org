@@ -102,9 +102,7 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, challenge_short_name, page_title):
     """ show a single page on a site """
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+    site, pages = site_get_standard_vars(challenge_short_name)
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
     response = render(request, "page.html", {"currentpage": currentpage})
     # TODO: THis has code smell. If page has to be checked like this, is it
@@ -130,9 +128,7 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     if mimetype == "application/pdf" or mimetype == "application/zip":
         return inserted_file(request, challenge_short_name, dropboxpath)
 
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+    site, pages = site_get_standard_vars(challenge_short_name)
     p = get_object_or_404(
         Page, challenge__short_name=site.short_name, title=page_title
     )
@@ -158,12 +154,7 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     return render(
         request,
         "dropboxpage.html",
-        {
-            "site": site,
-            "currentpage": currentpage,
-            "pages": pages,
-            "metafooterpages": metafooterpages,
-        },
+        {"site": site, "currentpage": currentpage, "pages": pages},
     )
 
 

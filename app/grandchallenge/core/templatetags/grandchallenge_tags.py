@@ -324,26 +324,6 @@ def sanitize_django_items(string):
 
 
 @register.simple_tag
-def metafooterpages():
-    """ Get html for links to general pages like 'contact' """
-    html_string = mark_safe("")
-    pages = grandchallenge.core.views.getPages(settings.MAIN_PROJECT_NAME)
-    for p in pages:
-        if not p.hidden:
-            url = reverse("mainproject-home", kwargs={"page_title": p.title})
-            if subdomain_is_projectname():
-                url = settings.MAIN_HOST_NAME + url
-            # TODO: JM add class=active to the active link
-            # See https://getbootstrap.com/docs/3.3/components/#navbar
-            html_string += format_html(
-                "<li class='nav-item'><a class='nav-link metaFooterMenuItem' href='{}'>{}</a></li>",
-                url,
-                p.display_title if p.display_title else p.title,
-            )
-    return html_string
-
-
-@register.simple_tag
 def main_page_url():
     """ Gets the url to the main page """
     if settings.SUBDOMAIN_IS_PROJECTNAME:
