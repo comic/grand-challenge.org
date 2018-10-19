@@ -29,50 +29,244 @@
 
     <div id="projectfilterbuttons" class="mt-4">
 
+
         <div id="buttonbar" class="alert alert-secondary bg-light">
 
             <div id="filterby"><h4 class="mt-0 mb-1">Filter by:</h4></div>
 
-            <div id="projectLinksFilters">
-                <form class="form-inline">
-                    <!--Hidden checkbox to display all projectlinks by default -->
-                    <label class="checkbox-inline no_indent projectLinkFilter">
-                        <input type="checkbox" class="include" checked disabled
-                               id="projectlink"
-                               style="display:none;">
-                    </label>
+            <div id="filter_info">
+                <div id="filter_info1">
+                    <span id="filter_counter" class="badge badge-info">
+                        Active filters:
+                        <span class="counter" id="active_filter_count"></span>
+                    </span>
+                    <button id="btn_reset_filters"
+                            class="btn btn-danger btn-sm"
+                            value="Reset filters">
+                        Reset filters
+                    </button>
+                </div>
+                <div id="filter_info2" style="padding-top: 5px"
+                     style="padding-bottom: 5px">
+                    <div id="all_active_filters"></div>
+                </div>
+            </div>
 
-                    <label id="open"
-                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                           title="Show projects that accept new submissions">
-                        <input type="checkbox" class="filter" id="open">
-                        Open for submissions <span
-                            class="counter ml-1 badge badge-pill badge-info"
-                            id="open"></span>
-                    </label>
+            <div id="projectLinksFilters" style="padding-top: 5px">
 
-                    <label id="datadownload"
-                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                           title="Show projects that offer data download">
-                        <input type="checkbox" class="filter"
-                               id="datadownload">
-                        Data download <span
-                            class="counter ml-1 badge badge-pill badge-info"
-                            id="datadownload"></span>
-                    </label>
+                <div id="accordion">
 
-                    <label id="grand-challenge"
-                           class="checkbox-inline no_indent projectLinkFilter">
-                        <input type="checkbox" class="filter"
-                               id="grand-challenge">
-                        Hosted on Grand-challenge <span
-                            class="counter ml-1 badge badge-pill badge-info"
-                            id="grand-challenge"></span>
-                    </label>
-                </form>
+                    <div class="card">
+                        <div class="card-header" id="headingChallenge">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed"
+                                        data-toggle="collapse"
+                                        data-target="#collapseChallenge"
+                                        aria-expanded="false"
+                                        aria-controls="collapseChallenge">
+                                    Challenge
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseChallenge" class="collapse"
+                             aria-labelledby="headingChallenge"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form class="form-inline-challenge">
+                                    <!--Hidden checkbox to display all projectlinks by default -->
+                                    <label class="checkbox-inline no_indent projectLinkFilter">
+                                        <input type="checkbox" class="include"
+                                               checked disabled
+                                               id="projectlink"
+                                               style="display:none;">
+                                    </label>
+
+                                    <label id="open"
+                                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
+                                           title="Show projects that accept new submissions">
+                                        <input type="checkbox" class="filter"
+                                               id="open"
+                                               value="Open for submissions">
+                                        <span> Open for submissions </span>
+                                        <span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="open"></span>
+                                    </label>
+
+                                    <label id="datadownload"
+                                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
+                                           title="Show projects that offer data download">
+                                        <input type="checkbox" class="filter"
+                                               id="datadownload"
+                                               value="Data download">
+                                        <span> Data download </span><span
+                                            class="counter ml-1 badge badge-pill badge-info"
+                                            id="datadownload"></span>
+                                    </label>
+
+                                    <label id="grand-challenge"
+                                           class="checkbox-inline no_indent projectLinkFilter">
+                                        <input type="checkbox" class="filter"
+                                               id="grand-challenge"
+                                               value="Hosted on Grand-challenge">
+                                        <span> Hosted on Grand-challenge </span><span
+                                            class="counter ml-1 badge badge-pill badge-info"
+                                            id="grand-challenge"></span>
+                                    </label>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header" id="headingModality">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed"
+                                        data-toggle="collapse"
+                                        data-target="#collapseModality"
+                                        aria-expanded="false"
+                                        aria-controls="collapseModality">
+                                    Modality
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseModality" class="collapse"
+                             aria-labelledby="headingModality"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form class="form-inline-modality">
+                                    {% for modality in modalities %}
+                                        <label id="{{ modality.filter_tag }}"
+                                               class="checkbox-inline no_indent projectLinkFilter">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   value="{{ modality.modality }}"
+                                                   id="{{ modality.filter_tag }}">
+                                            <span>{{ modality.modality }}</span><span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="{{ modality.filter_tag }}"></span>
+                                        </label>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header" id="headingTask">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed"
+                                        data-toggle="collapse"
+                                        data-target="#collapseTask"
+                                        aria-expanded="false"
+                                        aria-controls="collapseTask">
+                                    Task type
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseTask" class="collapse"
+                             aria-labelledby="headingTask"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form class="form-inline-task">
+                                    {% for task in task_types %}
+                                        <label id="{{ task.filter_tag }}"
+                                               class="checkbox-inline no_indent projectLinkFilter">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   id="{{ task.filter_tag }}"
+                                                   value="{{ task.type }}">
+                                            <span>{{ task.type }}</span> <span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="{{ task.filter_tag }}"></span>
+                                        </label>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div Class="card">
+                        <div class="card-header" id="headingRegion">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed"
+                                        data-toggle="collapse"
+                                        data-target="#collapseRegion"
+                                        aria-expanded="false"
+                                        aria-controls="collapseRegion">
+                                    Body region and structure
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseRegion" class="collapse"
+                             aria-labelledby="headingRegion"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <div id="accordion1">
+                                    {% for r in body_regions %}
+                                        <div class="card">
+                                            <div class="card-header"
+                                                 id="filterbyregion-{{ r.filter_tag }}">
+                                                <button class="btn btn-link"
+                                                        data-toggle="collapse"
+                                                        data-target="#collapseRegion-{{ r.filter_tag }}"
+                                                        aria-expanded="true"
+                                                        aria-controls="collapseRegion-{{ r.filter_tag }}">
+                                                    <label id="{{ r.filter_tag }}"
+                                                           class="checkbox-inline no_indent projectLinkFilter">
+                                                        <input type="checkbox"
+                                                               class="filter"
+                                                               id="{{ r.filter_tag }}"
+                                                               value="{{ r.region }}">
+                                                        <span>{{ r.region }}</span>
+                                                        <span
+                                                                class="counter ml-1 badge badge-pill badge-info"
+                                                                id="{{ r.filter_tag }}"></span>
+                                                    </label>
+                                                </button>
+                                            </div>
+                                            <div id="collapseRegion{{ r.filter_tag }}"
+                                                 class="collapse show"
+                                                 aria-labelledby="filterbyregion-{{ r.filter_tag }}"
+                                                 data-parent="#accordion1">
+                                                <div class="card-body">
+                                                    <form class="form-inline-region-{{ r.filter_tag }}">
+                                                        {% for s in body_structures %}
+                                                            {% ifequal s.region.filter_tag r.filter_tag %}
+                                                                <label id="{{ s.filter_tag }}"
+                                                                       class="checkbox-inline no_indent projectLinkFilter">
+                                                                    <input type="checkbox"
+                                                                           class="filter"
+                                                                           id="{{ s.filter_tag }}"
+                                                                           value="{{ s.structure }}">
+                                                                    <span>{{ s.structure }}</span>
+                                                                    <span
+                                                                            class="counter ml-1 badge badge-pill badge-info"
+                                                                            id="{{ s.filter_tag }}"></span>
+                                                                </label>
+                                                            {% endifequal %}
+                                                        {% endfor %}
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
                 <span id="info" class="badge badge-info">Showing <span
                         class="counter" id="projectlink"></span>
                     projects of <span class="counter" id="total"></span></span>
+
 
             </div>
         </div>
