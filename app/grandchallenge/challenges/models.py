@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import logging
 import os
+import re
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -64,6 +65,11 @@ class TaskType(models.Model):
     def __str__(self):
         return self.type
 
+    @property
+    def filter_tag(self):
+        cls = re.sub(r"\W+", "", self.type)
+        return f"task-{cls}"
+
 
 class ImagingModality(models.Model):
     """ Stores the modality options, eg, MR, CT, PET, XR """
@@ -76,6 +82,11 @@ class ImagingModality(models.Model):
     def __str__(self):
         return self.modality
 
+    @property
+    def filter_tag(self):
+        cls = re.sub(r"\W+", "", self.modality)
+        return f"modality-{cls}"
+
 
 class BodyRegion(models.Model):
     """ Stores the anatomy options, eg, Head, Neck, Thorax, etc """
@@ -87,6 +98,11 @@ class BodyRegion(models.Model):
 
     def __str__(self):
         return self.region
+
+    @property
+    def filter_tag(self):
+        cls = re.sub(r"\W+", "", self.region)
+        return f"region-{cls}"
 
 
 class BodyStructure(models.Model):
@@ -102,6 +118,11 @@ class BodyStructure(models.Model):
 
     def __str__(self):
         return f"{self.structure} ({self.region})"
+
+    @property
+    def filter_tag(self):
+        cls = re.sub(r"\W+", "", self.structure)
+        return f"structure-{cls}"
 
 
 class ChallengeBase(models.Model):
@@ -296,19 +317,20 @@ class ChallengeBase(models.Model):
 
         classes.append(self.get_host_id())
 
-        #Filter by modality
+        # Filter by modality
         for mod in self.modalities.all():
-            classes.append("modality-" + mod.modality.replace(" ", ""))
+            classes.append(mod.filter_tag)
 
         # Filter by body region and structure
         for struc in self.structures.all():
-            if ("region-" + struc.region.region.replace(" ", "")) not in set(classes): #avoid region duplicates
-                classes.append("region-" + struc.region.region.replace(" ", ""))
-            classes.append("structure-" + struc.structure.replace(" ", ""))
+            if (struc.region.filter_tag) not in set(classes):
+                # avoid region duplicates
+                classes.append(struc.region.filter_tag)
+            classes.append(struc.filter_tag)
 
         # Filter by task type
         for tas in self.task_types.all():
-            classes.append("task-" + tas.type.replace(" ", ""))
+            classes.append(tas.filter_tag)
 
         return " ".join(classes)
 

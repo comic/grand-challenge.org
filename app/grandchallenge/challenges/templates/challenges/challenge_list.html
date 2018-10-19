@@ -138,15 +138,15 @@
                             <div class="card-body">
                                 <form class="form-inline-modality">
                                     {% for modality in modalities %}
-                                        <label id="modality-{{ modality.modality }}"
+                                        <label id="{{ modality.filter_tag }}"
                                                class="checkbox-inline no_indent projectLinkFilter">
                                             <input type="checkbox"
                                                    class="filter"
                                                    value="{{ modality.modality }}"
-                                                   id="modality-{{ modality.modality }}">
+                                                   id="{{ modality.filter_tag }}">
                                             <span>{{ modality.modality }}</span><span
                                                 class="counter ml-1 badge badge-pill badge-info"
-                                                id="modality-{{ modality.modality }}"></span>
+                                                id="{{ modality.filter_tag }}"></span>
                                         </label>
                                     {% endfor %}
                                 </form>
@@ -173,15 +173,15 @@
                             <div class="card-body">
                                 <form class="form-inline-task">
                                     {% for task in task_types %}
-                                        <label id="task-{{ task.type|cut:" " }}"
+                                        <label id="{{ task.filter_tag }}"
                                                class="checkbox-inline no_indent projectLinkFilter">
                                             <input type="checkbox"
                                                    class="filter"
-                                                   id="task-{{ task.type|cut:" " }}"
+                                                   id="{{ task.filter_tag }}"
                                                    value="{{ task.type }}">
                                             <span>{{ task.type }}</span> <span
                                                 class="counter ml-1 badge badge-pill badge-info"
-                                                id="task-{{ task.type|cut:" " }}"></span>
+                                                id="{{ task.filter_tag }}"></span>
                                         </label>
                                     {% endfor %}
                                 </form>
@@ -211,43 +211,43 @@
                                     {% for r in body_regions %}
                                         <div class="card">
                                             <div class="card-header"
-                                                 id="filterbyregion-{{ r.region }}">
+                                                 id="filterbyregion-{{ r.filter_tag }}">
                                                 <button class="btn btn-link"
                                                         data-toggle="collapse"
-                                                        data-target="#collapseRegion-{{ r.region }}"
+                                                        data-target="#collapseRegion-{{ r.filter_tag }}"
                                                         aria-expanded="true"
-                                                        aria-controls="collapseRegion-{{ r.region }}">
-                                                    <label id="region-{{ r.region|cut:" " }}"
+                                                        aria-controls="collapseRegion-{{ r.filter_tag }}">
+                                                    <label id="{{ r.filter_tag }}"
                                                            class="checkbox-inline no_indent projectLinkFilter">
                                                         <input type="checkbox"
                                                                class="filter"
-                                                               id="region-{{ r.region|cut:" " }}"
+                                                               id="{{ r.filter_tag }}"
                                                                value="{{ r.region }}">
                                                         <span>{{ r.region }}</span>
                                                         <span
                                                                 class="counter ml-1 badge badge-pill badge-info"
-                                                                id="region-{{ r.region|cut:" " }}"></span>
+                                                                id="{{ r.filter_tag }}"></span>
                                                     </label>
                                                 </button>
                                             </div>
-                                            <div id="collapseRegion{{ r.region }}"
+                                            <div id="collapseRegion{{ r.filter_tag }}"
                                                  class="collapse show"
-                                                 aria-labelledby="filterbyregion-{{ r.region }}"
+                                                 aria-labelledby="filterbyregion-{{ r.filter_tag }}"
                                                  data-parent="#accordion1">
                                                 <div class="card-body">
-                                                    <form class="form-inline-region-{{ r.region }}">
+                                                    <form class="form-inline-region-{{ r.filter_tag }}">
                                                         {% for s in body_structures %}
-                                                            {% ifequal s.region.region r.region %}
-                                                                <label id="structure-{{ s.structure|cut:" " }}"
+                                                            {% ifequal s.region.filter_tag r.filter_tag %}
+                                                                <label id="{{ s.filter_tag }}"
                                                                        class="checkbox-inline no_indent projectLinkFilter">
                                                                     <input type="checkbox"
                                                                            class="filter"
-                                                                           id="structure-{{ s.structure|cut:" " }}"
+                                                                           id="{{ s.filter_tag }}"
                                                                            value="{{ s.structure }}">
                                                                     <span>{{ s.structure }}</span>
                                                                     <span
                                                                             class="counter ml-1 badge badge-pill badge-info"
-                                                                            id="structure-{{ s.structure|cut:" " }}"></span>
+                                                                            id="{{ s.filter_tag }}"></span>
                                                                 </label>
                                                             {% endifequal %}
                                                         {% endfor %}
