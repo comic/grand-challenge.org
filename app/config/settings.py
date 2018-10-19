@@ -512,7 +512,7 @@ if MEDIA_ROOT[-1] != "/":
 if MAIN_HOST_NAME[-1] == "/":
     raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
