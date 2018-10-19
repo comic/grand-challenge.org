@@ -40,18 +40,70 @@
                         Active filters:
                         <span class="counter" id="active_filter_count"></span>
                     </span>
-                    <button type="button" id="btn_reset_filters" class="btn btn-reset-filters" value="Reset filters">
+                    <button id="btn_reset_filters" class="btn btn-danger btn-sm" value="Reset filters">
                         Reset filters
                     </button>
                 </div>
-                <div id="filter_info2">
-                    <span id="all_active_filters" class="badge badge-info"></span>
+                <div id="filter_info2" style="padding-top: 5px" style="padding-bottom: 5px" >
+                    <div id="all_active_filters"> </div>
                 </div>
             </div>
 
-            <div id="projectLinksFilters">
+            <div id="projectLinksFilters" style="padding-top: 5px">
 
                 <div id="accordion">
+
+                    <div class="card">
+                        <div class="card-header" id="headingChallenge">
+                          <h5 class="mb-0">
+                            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseChallenge" aria-expanded="false" aria-controls="collapseChallenge">
+                              Challenge
+                            </button>
+                          </h5>
+                        </div>
+
+                        <div id="collapseChallenge" class="collapse" aria-labelledby="headingChallenge" data-parent="#accordion">
+                          <div class="card-body">
+                            <form class="form-inline-challenge">
+                                <!--Hidden checkbox to display all projectlinks by default -->
+                                <label class="checkbox-inline no_indent projectLinkFilter">
+                                    <input type="checkbox" class="include" checked disabled
+                                           id="projectlink"
+                                           style="display:none;">
+                                </label>
+
+                                <label id="open"
+                                       class="mr-3 checkbox-inline no_indent projectLinkFilter"
+                                       title="Show projects that accept new submissions">
+                                    <input type="checkbox" class="filter" id="open" value="Open for submissions">
+                                    <span> Open for submissions </span> <span
+                                        class="counter ml-1 badge badge-pill badge-info"
+                                        id="open"></span>
+                                </label>
+
+                                <label id="datadownload"
+                                       class="mr-3 checkbox-inline no_indent projectLinkFilter"
+                                       title="Show projects that offer data download">
+                                    <input type="checkbox" class="filter"
+                                           id="datadownload" value="Data download">
+                                    <span> Data download </span><span
+                                        class="counter ml-1 badge badge-pill badge-info"
+                                        id="datadownload"></span>
+                                </label>
+
+                                <label id="grand-challenge"
+                                       class="checkbox-inline no_indent projectLinkFilter">
+                                    <input type="checkbox" class="filter"
+                                           id="grand-challenge" value="Hosted on Grand-challenge">
+                                    <span> Hosted on Grand-challenge </span><span
+                                        class="counter ml-1 badge badge-pill badge-info"
+                                        id="grand-challenge"></span>
+                                </label>
+                            </form>
+                          </div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header" id="headingModality">
                           <h5 class="mb-0">
@@ -160,44 +212,7 @@
                     </div>
                 </div>
 
-                <div id="otherfilters">
-                    <form class="form-inline">
-                        <!--Hidden checkbox to display all projectlinks by default -->
-                        <label class="checkbox-inline no_indent projectLinkFilter">
-                            <input type="checkbox" class="include" checked disabled
-                                   id="projectlink"
-                                   style="display:none;">
-                        </label>
 
-                        <label id="open"
-                               class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                               title="Show projects that accept new submissions">
-                            <input type="checkbox" class="filter" id="open" value="Open for submissions">
-                            <span> Open for submissions </span> <span
-                                class="counter ml-1 badge badge-pill badge-info"
-                                id="open"></span>
-                        </label>
-
-                        <label id="datadownload"
-                               class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                               title="Show projects that offer data download">
-                            <input type="checkbox" class="filter"
-                                   id="datadownload" value="Data download">
-                            <span> Data download </span><span
-                                class="counter ml-1 badge badge-pill badge-info"
-                                id="datadownload"></span>
-                        </label>
-
-                        <label id="grand-challenge"
-                               class="checkbox-inline no_indent projectLinkFilter">
-                            <input type="checkbox" class="filter"
-                                   id="grand-challenge" value="Hosted on Grand-challenge">
-                            <span> Hosted on Grand-challenge </span><span
-                                class="counter ml-1 badge badge-pill badge-info"
-                                id="grand-challenge"></span>
-                        </label>
-                    </form>
-                </div>
 
                 <span id="info" class="badge badge-info">Showing <span
                         class="counter" id="projectlink"></span>

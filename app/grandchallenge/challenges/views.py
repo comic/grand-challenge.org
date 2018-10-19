@@ -61,7 +61,7 @@ class ChallengeList(TemplateView):
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
-        body_structures = BodyStructure.objects.all()
+        body_structures = BodyStructure.objects.select_related("region").all()
         body_regions = [reg.region for reg in BodyRegion.objects.all()]
 
         # Cannot use a defaultdict in django template so convert to dict,

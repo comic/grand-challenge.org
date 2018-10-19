@@ -298,17 +298,17 @@ class ChallengeBase(models.Model):
 
         #Filter by modality
         for mod in self.modalities.all():
-            classes.append("modality-" + mod.modality)
+            classes.append("modality-" + mod.modality.replace(" ", ""))
 
         # Filter by body region and structure
         for struc in self.structures.all():
-            if ("region-" + struc.region.region) not in set(classes): #avoid region duplicates
-                classes.append("region-" + struc.region.region)
-            classes.append("structure-" + struc.structure)
+            if ("region-" + struc.region.region.replace(" ", "")) not in set(classes): #avoid region duplicates
+                classes.append("region-" + struc.region.region.replace(" ", ""))
+            classes.append("structure-" + struc.structure.replace(" ", ""))
 
         # Filter by task type
         for tas in self.task_types.all():
-            classes.append("task-" + tas.type)
+            classes.append("task-" + tas.type.replace(" ", ""))
 
         return " ".join(classes)
 

@@ -74,14 +74,22 @@ $(document).ready(function () {
         $('#active_filter_count').text(active_filters.length);
         $('#all_active_filters').empty();
         active_filters.forEach(function(checkbox){
-            var filter_tag = $('<span>', {'class': 'badge badge-info badge-info-filter'});
-            var close_button = $('<span>', {'class': 'filter-close'}).text('X');
-            close_button.click(function(){
+            var close_icon = $('<i>', {'class': 'fas fa-times'});
+            //var close_button = $('<span>', {'class': 'filter-close'}).text('X');
+
+            var text = $('<span>', {'class': 'filter-text'}).text(" "+checkbox.val());
+
+            //var filter_tag = $('<span>', {'class': 'badge badge-info badge-info-filter'});
+            var filter_tag = $('<button>', {'class' : 'btn btn-outline-info btn-sm'});
+
+            filter_tag.append(close_icon).append(text);
+
+            filter_tag.click(function(){
                 checkbox.prop('checked', false);
                 updateAll();
             });
-            var text = $('<span>', {'class': 'filter-text'}).text(checkbox.val());
-            filter_tag.append(close_button).append(text);
+
+
             $('#all_active_filters').append(filter_tag);
         });
 
