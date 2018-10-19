@@ -2,12 +2,11 @@ from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import render
-from django.template import Template, TemplateSyntaxError
+from django.template import Template, TemplateSyntaxError, RequestContext
 from django.template.defaulttags import VerbatimNode
 from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.template.context import ComicSiteRequestContext
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
@@ -57,8 +56,11 @@ def renderTags(request, p, recursecount=0):
         return pagecontents
 
     t = escape_verbatim_node_contents(t)
+
     # pass page to context here to be able to render tags based on which page does the rendering
-    pagecontents = t.render(ComicSiteRequestContext(request, p))
+    context = RequestContext(request, {"currentpage": p})
+    pagecontents = t.render(context)
+
     if (
         "{%" in pagecontents or "{{" in pagecontents
     ):  # if rendered tags results in another tag, try to render this as well
