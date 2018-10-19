@@ -6,7 +6,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import CICharField
+from django.contrib.postgres.fields import CICharField, ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
@@ -275,6 +275,9 @@ class ChallengeBase(models.Model):
 
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
+    filter_classes = ArrayField(
+        models.CharField(max_length=32), default=list, editable=False
+    )
 
     objects = ChallengeManager()
 
@@ -315,12 +318,10 @@ class ChallengeBase(models.Model):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
 
-    def get_link_classes(self):
+    def get_filter_classes(self):
         """
-        Copied from grandchallenge_tags
-
-        For adding this as id, for jquery filtering later on
-        returns a space separated list of classes to use in html
+        Warning! Do not call this directly, it takes a while. This is used
+        in a background task.
         """
         classes = set()
 
@@ -345,7 +346,7 @@ class ChallengeBase(models.Model):
         for tas in self.task_types.all():
             classes.add(tas.filter_tag)
 
-        return " ".join(classes)
+        return list(classes)
 
     def get_host_id(self):
         """

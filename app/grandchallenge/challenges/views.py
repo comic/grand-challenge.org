@@ -18,7 +18,13 @@ from grandchallenge.challenges.forms import (
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import (
+    Challenge,
+    ExternalChallenge,
+    ImagingModality,
+    TaskType,
+    BodyStructure,
+)
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
@@ -42,41 +48,33 @@ class ChallengeList(TemplateView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
 
-        lookup = ("task_types", "modalities", "structures__region", "creator")
-
         challenges = chain(
             Challenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related(*lookup),
+            .prefetch_related("creator"),
             ExternalChallenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related(*lookup),
+            .prefetch_related("creator"),
         )
 
         challenges_by_year = defaultdict(list)
 
-        modalities = set()
-        task_types = set()
-        structures = set()
-
         for c in challenges:
             challenges_by_year[c.year].append(c)
-            modalities |= {*c.modalities.all()}
-            task_types |= {*c.task_types.all()}
-            structures |= {*c.structures.all()}
 
+        modalities = ImagingModality.objects.all()
+        task_types = TaskType.objects.all()
+        structures = BodyStructure.objects.all().select_related("region")
         region = {s.region for s in structures}
 
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display
         context.update(
             {
-                "modalities": sorted(modalities, key=lambda m: m.modality),
+                "modalities": modalities,
                 "body_regions": sorted(region, key=lambda r: r.region),
-                "body_structures": sorted(
-                    structures, key=lambda s: s.structure
-                ),
-                "task_types": sorted(task_types, key=lambda t: t.type),
+                "body_structures": structures,
+                "task_types": task_types,
                 "challenges_by_year": OrderedDict(
                     sorted(
                         challenges_by_year.items(),
