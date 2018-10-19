@@ -307,30 +307,28 @@ class ChallengeBase(models.Model):
         For adding this as id, for jquery filtering later on
         returns a space separated list of classes to use in html
         """
-        classes = []
+        classes = set()
 
         if self.is_open_for_submissions:
-            classes.append("open")
+            classes.add("open")
 
         if self.offers_data_download:
-            classes.append("datadownload")
+            classes.add("datadownload")
 
-        classes.append(self.get_host_id())
+        classes.add(self.get_host_id())
 
         # Filter by modality
         for mod in self.modalities.all():
-            classes.append(mod.filter_tag)
+            classes.add(mod.filter_tag)
 
         # Filter by body region and structure
         for struc in self.structures.all():
-            if (struc.region.filter_tag) not in set(classes):
-                # avoid region duplicates
-                classes.append(struc.region.filter_tag)
-            classes.append(struc.filter_tag)
+            classes.add(struc.region.filter_tag)
+            classes.add(struc.filter_tag)
 
         # Filter by task type
         for tas in self.task_types.all():
-            classes.append(tas.filter_tag)
+            classes.add(tas.filter_tag)
 
         return " ".join(classes)
 
