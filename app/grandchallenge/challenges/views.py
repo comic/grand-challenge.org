@@ -1,4 +1,5 @@
 from collections import defaultdict, OrderedDict
+from itertools import chain
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -17,7 +18,7 @@ from grandchallenge.challenges.forms import (
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
-from grandchallenge.challenges.models import Challenge, ExternalChallenge, BodyRegion, BodyStructure, ImagingModality, TaskType
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
@@ -38,47 +39,51 @@ class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
 class ChallengeList(TemplateView):
     template_name = "challenges/challenge_list.html"
 
-    @staticmethod
-    def create_objects_by_year(queryset, existing=None):
-        if existing is None:
-            existing = defaultdict(list)
-
-        for q in queryset:
-            existing[q.year].append(q)
-
-        return existing
-
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
 
-        challenges_by_year = self.create_objects_by_year(
-            Challenge.objects.filter(hidden=False).order_by("-created")
-        )
-        challenges_by_year = self.create_objects_by_year(
-            ExternalChallenge.objects.filter(hidden=False).order_by("-created"),
-            challenges_by_year,
+        lookup = ("task_types", "modalities", "structures__region", "creator")
+
+        challenges = chain(
+            Challenge.objects.filter(hidden=False)
+            .order_by("-created")
+            .prefetch_related(*lookup),
+            ExternalChallenge.objects.filter(hidden=False)
+            .order_by("-created")
+            .prefetch_related(*lookup),
         )
 
-        modalities = ImagingModality.objects.all()
-        task_types = TaskType.objects.all()
-        body_structures = BodyStructure.objects.select_related("region").all()
-        body_regions = [reg.region for reg in BodyRegion.objects.all()]
+        challenges_by_year = defaultdict(list)
+
+        modalities = set()
+        task_types = set()
+        structures = set()
+
+        for c in challenges:
+            challenges_by_year[c.year].append(c)
+            modalities |= {*c.modalities.all()}
+            task_types |= {*c.task_types.all()}
+            structures |= {*c.structures.all()}
+
+        region = {s.region for s in structures}
 
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display
         context.update(
             {
-                "modalities": modalities,
-                "body_regions": body_regions,
-                "body_structures": body_structures,
-                "task_types": task_types,
+                "modalities": sorted(modalities, key=lambda m: m.modality),
+                "body_regions": sorted(region, key=lambda r: r.region),
+                "body_structures": sorted(
+                    structures, key=lambda s: s.structure
+                ),
+                "task_types": sorted(task_types, key=lambda t: t.type),
                 "challenges_by_year": OrderedDict(
                     sorted(
                         challenges_by_year.items(),
                         key=lambda t: t[0],
                         reverse=True,
                     )
-                )
+                ),
             }
         )
 
