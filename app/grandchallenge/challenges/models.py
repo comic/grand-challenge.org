@@ -276,7 +276,7 @@ class ChallengeBase(models.Model):
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
     filter_classes = ArrayField(
-        models.CharField(max_length=32), default=list, editable=False
+        CICharField(max_length=32), default=list, editable=False
     )
 
     objects = ChallengeManager()
