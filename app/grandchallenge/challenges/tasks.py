@@ -19,22 +19,22 @@ def update_filter_classes():
                     }
                 )
 
-            try:
-                kwargs.update(
-                    {
-                        "cached_num_results": c.result_set.filter(
-                            published=True
-                        ).count(),
-                        "cached_latest_result": c.result_set.filter(
-                            published=True
-                        )
-                        .order_by("-created")
-                        .first()
-                        .created,
-                    }
-                )
-            except AttributeError:
-                # This will fail if there are no results
-                pass
+                try:
+                    kwargs.update(
+                        {
+                            "cached_num_results": c.result_set.filter(
+                                published=True
+                            ).count(),
+                            "cached_latest_result": c.result_set.filter(
+                                published=True
+                            )
+                            .order_by("-created")
+                            .first()
+                            .created,
+                        }
+                    )
+                except AttributeError:
+                    # This will fail if there are no results
+                    pass
 
             obj.objects.filter(pk=c.pk).update(**kwargs)

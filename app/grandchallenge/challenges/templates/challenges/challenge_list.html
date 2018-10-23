@@ -283,11 +283,11 @@
                                         {% if challenge.cached_num_results %}
                                             <dt>Results</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge %}">{{ challenge.cached_num_results }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_num_results }}</a>
                                             </dd>
                                             <dt>Latest Result</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge %}">{{ challenge.cached_latest_result|naturaltime }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
                                             </dd>
                                         {% endif %}
 
