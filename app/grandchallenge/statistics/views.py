@@ -2,16 +2,15 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 from django.views.generic import TemplateView
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.evaluation.models import Submission, Result
 
 
-class StatisticsDetail(UserIsStaffMixin, TemplateView):
+class StatisticsDetail(TemplateView):
     template_name = "statistics/statistics_detail.html"
 
     def get_context_data(self, **kwargs):
@@ -23,7 +22,7 @@ class StatisticsDetail(UserIsStaffMixin, TemplateView):
 
         time_period = timezone.now() - timedelta(days=days)
 
-        open_challenges = Challenge.objects.filter(hidden=False)
+        public_challenges = Challenge.objects.filter(hidden=False)
 
         extra = {
             "days": days,
@@ -34,30 +33,33 @@ class StatisticsDetail(UserIsStaffMixin, TemplateView):
             "logged_in_period": User.objects.filter(
                 last_login__gt=time_period
             ).count(),
-            "open_challenges": open_challenges.count(),
+            "public_challenges": public_challenges.count(),
             "hidden_challenges": Challenge.objects.filter(hidden=True).count(),
             "submissions": Submission.objects.count(),
             "submissions_period": Submission.objects.filter(
                 created__gt=time_period
             ).count(),
+            "latest_public_challenge": public_challenges.order_by(
+                "-created"
+            ).first(),
             "mp_group": Group.objects.filter(
-                participants_of_challenge__in=open_challenges
+                participants_of_challenge__in=public_challenges
             )
             .annotate(num_users=Count("user"))
             .order_by("-num_users")
             .first(),
-            "mp_challenge_registrations_period": open_challenges.filter(
+            "mp_challenge_registrations_period": public_challenges.filter(
                 registrationrequest__created__gt=time_period
             )
             .annotate(num_registrations_period=Count("registrationrequest"))
             .order_by("-num_registrations_period")
             .first(),
-            "mp_challenge_submissions": open_challenges.annotate(
+            "mp_challenge_submissions": public_challenges.annotate(
                 num_submissions=Count("submission")
             )
             .order_by("-num_submissions")
             .first(),
-            "mp_challenge_submissions_period": open_challenges.filter(
+            "mp_challenge_submissions_period": public_challenges.filter(
                 submission__created__gt=time_period
             )
             .annotate(num_submissions_period=Count("submission"))

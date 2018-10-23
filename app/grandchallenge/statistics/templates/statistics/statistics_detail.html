@@ -1,17 +1,18 @@
 {% extends "nobanner.html" %}
 {% load humanize %}
+{% load grandchallenge_tags %}
 
 {% block pageName %}Statistics{% endblock %}
 
 {% block content %}
 
-    <h1>Site Statistics</h1>
-
-    <p></p>
+    <h1>Site Statistics</h1> <br/>
 
     <h2>Users</h2>
 
-    <dl>
+    {% allusers_statistics False %}
+
+    <dl class="inline">
 
         <dt>Total users</dt>
         <dd>{{ number_of_users|intcomma }}</dd>
@@ -26,16 +27,15 @@
 
     <h2>Challenges</h2>
 
-    <dl>
+    <dl class="inline">
 
-        <dt>Open challenges</dt>
-        <dd>{{ open_challenges|intcomma }}</dd>
+        <dt>Public challenges</dt>
+        <dd>{{ public_challenges|intcomma }}</dd>
 
         <dt>Hidden challenges</dt>
         <dd>{{ hidden_challenges|intcomma }}</dd>
 
-
-        <dt>Challenge with the most participants</dt>
+        <dt>Public challenge with the most participants</dt>
         <dd>
             <a href="{{ mp_group.participants_of_challenge.get_absolute_url }}">
                 {{ mp_group.participants_of_challenge }}
@@ -44,7 +44,7 @@
             </a>
         </dd>
 
-        <dt>Challenge with the most registrations (last {{ days }} days)</dt>
+        <dt>Public challenge with the most registrations (last {{ days }} days)</dt>
         <dd>
             <a href="{{ mp_challenge_registrations_period.get_absolute_url }}">
                 {{ mp_challenge_registrations_period }}
@@ -53,12 +53,15 @@
             </a>
         </dd>
 
+        <dt>Latest public challenge</dt>
+        <dd><a href="{{ latest_public_challenge.get_absolute_url }}">{{ latest_public_challenge }}</a></dd>
+
     </dl>
 
 
     <h3>Automated Evaluation</h3>
 
-    <dl>
+    <dl class="inline">
         <dt>Challenges using automated evaluation</dt>
         <dd>{{ using_auto_eval|intcomma }}</dd>
 
@@ -68,7 +71,7 @@
         <dt>Total submissions (last {{ days }} days)</dt>
         <dd>{{ submissions_period|intcomma }}</dd>
 
-        <dt>Challenge with the most submissions</dt>
+        <dt>Public challenge with the most submissions</dt>
         <dd>
             <a href="{{ mp_challenge_submissions.get_absolute_url }}">
                 {{ mp_challenge_submissions }}
@@ -77,7 +80,7 @@
             </a>
         </dd>
 
-        <dt>Challenge with the most submissions (last {{ days }} days)</dt>
+        <dt>Public challenge with the most submissions (last {{ days }} days)</dt>
         <dd>
             <a href="{{ mp_challenge_submissions_period.get_absolute_url }}">
                 {{ mp_challenge_submissions_period }}
@@ -86,10 +89,11 @@
             </a>
         </dd>
 
-        <dt>Latest Result</dt>
+        <dt>Latest public result</dt>
         <dd><a href="{{ latest_result.get_absolute_url }}">Result
             for {{ latest_result.challenge }},
-            created {{ latest_result.created|naturaltime }}.</a></dd>
+            created {{ latest_result.created|naturaltime }},
+            {{ latest_result.rank|ordinal }} position on leaderboard.</a></dd>
 
     </dl>
 
