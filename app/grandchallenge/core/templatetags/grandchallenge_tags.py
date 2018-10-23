@@ -1311,7 +1311,23 @@ class ProjectStatisticsNode(template.Node):
                 var data = google.visualization.arrayToDataTable(
                 {data}
                 );
-                var options = {{}};
+                var options = {{
+                    colorAxis: {{
+                        colors: [
+                            '#440154', 
+                            '#472d7b', 
+                            '#3b528b', 
+                            '#2c728e', 
+                            '#21918c', 
+                            '#28ae80', 
+                            '#5ec962', 
+                            '#addc30', 
+                            '#fde725'
+                        ]
+                    }},
+                    backgroundColor: '#c9eeff',
+                    datalessRegionColor: '#440154'
+                }};
                 var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
                 chart.draw(data, options);
             }};
