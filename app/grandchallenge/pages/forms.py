@@ -35,8 +35,12 @@ class PageCreateForm(forms.ModelForm):
             )
 
             if self.challenge.allow_unfiltered_page_html:
+                # See https://github.com/django-ckeditor/django-ckeditor#if-you-want-to-use-allowedcontent
                 self.fields["html"].widget.config.update(
-                    {"allowedContent": True}
+                    {
+                        "allowedContent": True,
+                        "removePlugins": "stylesheetparser",
+                    }
                 )
 
         self.helper = FormHelper(self)
