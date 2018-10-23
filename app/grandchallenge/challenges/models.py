@@ -10,7 +10,6 @@ from django.contrib.postgres.fields import CICharField, ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
-from django.db.models import Q
 from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -189,39 +188,6 @@ class ChallengeBase(models.Model):
         null=True,
         help_text="Website of the event which will host the workshop",
     )
-    is_open_for_submissions = models.BooleanField(
-        default=False,
-        help_text=(
-            "This project currently accepts new submissions. "
-            "Affects listing in projects overview"
-        ),
-    )
-    number_of_submissions = models.IntegerField(
-        blank=True,
-        null=True,
-        help_text=(
-            "The number of submissions have been evalutated for this project"
-        ),
-    )
-    last_submission_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="When was the last submission evaluated?",
-    )
-    offers_data_download = models.BooleanField(
-        default=False,
-        help_text=(
-            "This project currently accepts new submissions. Affects listing "
-            "in projects overview"
-        ),
-    )
-    number_of_downloads = models.IntegerField(
-        blank=True,
-        null=True,
-        help_text=(
-            "How often has the dataset for this project been downloaded?"
-        ),
-    )
     publication_url = models.URLField(
         blank=True,
         null=True,
@@ -253,7 +219,6 @@ class ChallengeBase(models.Model):
             "https://scholar.google.com/scholar?cluster=5362332738201102290"
         ),
     )
-
     data_license_agreement = models.TextField(
         blank=True,
         help_text="What is the data license agreement for this challenge?",
@@ -295,10 +260,6 @@ class ChallengeBase(models.Model):
                 f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
             )
 
-    @property
-    def submission_url(self):
-        raise NotImplementedError
-
     def get_absolute_url(self):
         raise NotImplementedError
 
@@ -324,12 +285,6 @@ class ChallengeBase(models.Model):
         in a background task.
         """
         classes = set()
-
-        if self.is_open_for_submissions:
-            classes.add("open")
-
-        if self.offers_data_download:
-            classes.add("datadownload")
 
         classes.add(self.get_host_id())
 
@@ -382,13 +337,6 @@ class ChallengeBase(models.Model):
             return None
 
         return f"<a href={framework_url}>{framework_name}</a>"
-
-    def get_submission_link(self):
-        """ Copied from grandchallenge tags """
-        if self.submission_url:
-            return self.submission_url
-        else:
-            return self.get_absolute_url()
 
     class Meta:
         abstract = True
@@ -478,16 +426,13 @@ class Challenge(ChallengeBase):
         on_delete=models.CASCADE,
         related_name="participants_of_challenge",
     )
-    submission_page_name = models.CharField(
-        blank=True,
-        null=True,
-        max_length=255,
-        help_text=(
-            "If the project allows submissions, there will be a link in "
-            "projects overview going directly to you "
-            "project/<submission_page_name>/. If empty, the projects main "
-            "page will be used instead"
-        ),
+
+    cached_num_participants = models.PositiveIntegerField(
+        editable=False, default=0
+    )
+    cached_num_results = models.PositiveIntegerField(editable=False, default=0)
+    cached_latest_result = models.DateTimeField(
+        editable=False, blank=True, null=True
     )
 
     # TODO check whether short name is really clean and short!
@@ -560,24 +505,6 @@ class Challenge(ChallengeBase):
         """ With this method, admin will show a 'view on site' button """
         return reverse("challenge-homepage", args=[self.short_name])
 
-    @property
-    def submission_url(self):
-        """ What url can you go to to submit for this project? """
-        url = reverse("challenge-homepage", args=[self.short_name])
-        if self.submission_page_name:
-            if self.submission_page_name.startswith(
-                "http://"
-            ) or self.submission_page_name.startswith("https://"):
-                # the url in the submission page box is a full url
-                return self.submission_page_name
-
-            else:
-                page = self.submission_page_name
-                if not page.endswith("/"):
-                    page += "/"
-                url += page
-        return url
-
     def add_participant(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
@@ -605,15 +532,6 @@ class ExternalChallenge(ChallengeBase):
     homepage = models.URLField(
         blank=False, help_text=("What is the homepage for this challenge?")
     )
-    submission_page = models.URLField(
-        blank=True,
-        help_text=("Where is the submissions page for this challenge?"),
-    )
-    download_page = models.URLField(
-        blank=True,
-        help_text=("Where is the download page for this challenge?"),
-    )
-
     data_stored = models.BooleanField(
         default=False,
         help_text=("Has the grand-challenge team stored the data?"),
@@ -621,10 +539,6 @@ class ExternalChallenge(ChallengeBase):
 
     def get_absolute_url(self):
         return self.homepage
-
-    @property
-    def submission_url(self):
-        return self.submission_page
 
     @property
     def hosted_on_comic(self):

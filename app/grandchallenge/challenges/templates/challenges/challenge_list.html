@@ -1,6 +1,7 @@
 {% extends 'nobanner.html' %}
 {% load static %}
 {% load url from grandchallenge_tags %}
+{% load humanize %}
 
 {% block pageName %}All Challenges{% endblock %}
 
@@ -55,69 +56,6 @@
             <div id="projectLinksFilters" style="padding-top: 5px">
 
                 <div id="accordion">
-
-                    <div class="card">
-                        <div class="card-header" id="headingChallenge">
-                            <h5 class="mb-0">
-                                <button class="btn btn-link collapsed"
-                                        data-toggle="collapse"
-                                        data-target="#collapseChallenge"
-                                        aria-expanded="false"
-                                        aria-controls="collapseChallenge">
-                                    Challenge
-                                </button>
-                            </h5>
-                        </div>
-
-                        <div id="collapseChallenge" class="collapse"
-                             aria-labelledby="headingChallenge"
-                             data-parent="#accordion">
-                            <div class="card-body">
-                                <form class="form-inline-challenge">
-                                    <!--Hidden checkbox to display all projectlinks by default -->
-                                    <label class="checkbox-inline no_indent projectLinkFilter">
-                                        <input type="checkbox" class="include"
-                                               checked disabled
-                                               id="projectlink"
-                                               style="display:none;">
-                                    </label>
-
-                                    <label id="open"
-                                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                                           title="Show projects that accept new submissions">
-                                        <input type="checkbox" class="filter"
-                                               id="open"
-                                               value="Open for submissions">
-                                        <span> Open for submissions </span>
-                                        <span
-                                                class="counter ml-1 badge badge-pill badge-info"
-                                                id="open"></span>
-                                    </label>
-
-                                    <label id="datadownload"
-                                           class="mr-3 checkbox-inline no_indent projectLinkFilter"
-                                           title="Show projects that offer data download">
-                                        <input type="checkbox" class="filter"
-                                               id="datadownload"
-                                               value="Data download">
-                                        <span> Data download </span><span
-                                            class="counter ml-1 badge badge-pill badge-info"
-                                            id="datadownload"></span>
-                                    </label>
-
-                                    <label id="grand-challenge"
-                                           class="checkbox-inline no_indent projectLinkFilter">
-                                        <input type="checkbox" class="filter"
-                                               id="grand-challenge"
-                                               value="Hosted on Grand-challenge">
-                                        <span> Hosted on Grand-challenge </span><span
-                                            class="counter ml-1 badge badge-pill badge-info"
-                                            id="grand-challenge"></span>
-                                    </label>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="card">
                         <div class="card-header" id="headingModality">
@@ -311,59 +249,52 @@
                                 <div class="card-footer small projectLinkFooter"
                                      style="line-height:1.5em">
 
-                                    {% if challenge.is_open_for_submissions %}
-                                        <div>
-                                            <a href="{{ challenge.get_submission_link }}">Open
-                                                for submissions</a>
-                                        </div>
-                                    {% endif %}
+                                    <dl class="inline">
 
-                                    {% if challenge.offers_data_download %}
-                                        <div>
-                                            <a href="{% firstof challenge.download_page challenge.get_absolute_url %}">Data
-                                                download</a>
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.cached_num_participants %}
+                                            <dt>Patricipants</dt>
+                                            <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
+                                        {% endif %}
 
-                                    {% if challenge.number_of_submissions %}
-                                        <div>
-                                            Results: {{ challenge.number_of_submissions }}
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.cached_num_results %}
+                                            <dt>Results</dt>
+                                            <dd><a href="{% url 'evaluation:result-list' challenge %}">{{ challenge.cached_num_results }}</a></dd>
+                                            <dt>Latest Result</dt>
+                                            <dd><a href="{% url 'evaluation:result-list' challenge %}">{{ challenge.cached_latest_result|naturaltime }}</a></dd>
+                                        {% endif %}
 
-                                    {% if challenge.last_submission_date %}
-                                        <div>
-                                            Latest
-                                            result: {{ challenge.last_submission_date }}
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.upcoming_workshop_date %}
+                                            <dt>Workshop</dt>
+                                            <dd>
+                                                {{ challenge.upcoming_workshop_date }}
+                                            </dd>
+                                        {% endif %}
 
-                                    {% if challenge.upcoming_workshop_date %}
-                                        <div>
-                                            Workshop: {{ challenge.upcoming_workshop_date }}
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.event_name %}
+                                            <dt>Associated with</dt>
+                                            <dd>
+                                                <a
+                                                        href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                            </dd>
+                                        {% endif %}
 
-                                    {% if challenge.event_name %}
-                                        <div>
-                                            Associated with: <a
-                                                href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
-                                        </div>
-                                    {% endif %}
 
-                                    {% if challenge.publication_journal_name or challenge.publication_url %}
-                                        <div>
-                                            Article: <a
-                                                href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.publication_journal_name or challenge.publication_url %}
+                                            <dt>Article</dt>
+                                            <dd>
+                                                <a
+                                                        href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                            </dd>
+                                        {% endif %}
 
-                                    {% if challenge.get_host_link %}
-                                        <div>
-                                            Hosted
-                                            on: {{ challenge.get_host_link|safe }}
-                                        </div>
-                                    {% endif %}
+                                        {% if challenge.get_host_link %}
+                                            <dt>Hosted on</dt>
+                                            <dd>
+                                                {{ challenge.get_host_link|safe }}
+                                            </dd>
+                                        {% endif %}
+
+                                    </dl>
 
                                     {% if not challenge.hosted_on_comic %}
                                         {% if request.user.is_staff %}
