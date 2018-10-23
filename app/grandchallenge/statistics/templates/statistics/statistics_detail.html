@@ -44,22 +44,19 @@
             </a>
         </dd>
 
-        <dt>Public challenge with the most registrations (last {{ days }} days)</dt>
-        <dd>
-            <a href="{{ mp_challenge_registrations_period.get_absolute_url }}">
-                {{ mp_challenge_registrations_period }}
-                ({{ mp_challenge_registrations_period.num_registrations_period|intcomma }}
-                Registration{{ mp_challenge_registrations_period.num_registrations_period|pluralize }})
-            </a>
-        </dd>
-
         <dt>Latest public challenge</dt>
-        <dd><a href="{{ latest_public_challenge.get_absolute_url }}">{{ latest_public_challenge }}</a></dd>
+        <dd>
+            <a href="{{ latest_public_challenge.get_absolute_url }}">{{ latest_public_challenge }}</a>
+        </dd>
 
     </dl>
 
+    <h3>Registrations to public challenges in the past {{ days }} days</h3>
 
-    <h3>Automated Evaluation</h3>
+    <canvas id="registrationsChart"></canvas>
+
+
+    <h2>Evaluations</h2>
 
     <dl class="inline">
         <dt>Challenges using automated evaluation</dt>
@@ -80,15 +77,6 @@
             </a>
         </dd>
 
-        <dt>Public challenge with the most submissions (last {{ days }} days)</dt>
-        <dd>
-            <a href="{{ mp_challenge_submissions_period.get_absolute_url }}">
-                {{ mp_challenge_submissions_period }}
-                ({{ mp_challenge_submissions_period.num_submissions_period|intcomma }}
-                Submission{{ mp_challenge_submissions_period.num_submissions_period|pluralize }})
-            </a>
-        </dd>
-
         <dt>Latest public result</dt>
         <dd><a href="{{ latest_result.get_absolute_url }}">Result
             for {{ latest_result.challenge }},
@@ -96,5 +84,70 @@
             {{ latest_result.rank|ordinal }} position on leaderboard.</a></dd>
 
     </dl>
+
+    <h3>Submissions to public challenges in the past {{ days }} days</h3>
+
+    <canvas id="submissionsChart"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"
+            integrity="sha256-CfcERD4Ov4+lKbWbYqXD6aFM9M51gN4GUEtDhkWABMo="
+            crossorigin="anonymous"></script>
+
+    <script>
+        var ctx = document.getElementById("registrationsChart");
+
+        var colormap = [
+                            '#440154',
+                            '#472d7b',
+                            '#3b528b',
+                            '#2c728e',
+                            '#21918c',
+                            '#28ae80',
+                            '#5ec962',
+                            '#addc30',
+                            '#fde725'
+                        ].reverse()
+
+        var registrationsChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [
+                    {% for challenge in challenge_registrations_period %}
+                        "{{ challenge }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '# of Registrations',
+                    data: [
+                        {% for challenge in challenge_registrations_period %}
+                            {{ challenge.num_registrations_period }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colormap
+                }]
+            },
+        });
+
+        ctx = document.getElementById("submissionsChart");
+        var submissionsChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [
+                    {% for challenge in challenge_submissions_period %}
+                        "{{ challenge }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '# of Submissions',
+                    data: [
+                        {% for challenge in challenge_submissions_period %}
+                            {{ challenge.num_submissions_period }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colormap
+                }]
+            },
+        });
+    </script>
 
 {% endblock %}

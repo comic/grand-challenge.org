@@ -48,23 +48,21 @@ class StatisticsDetail(TemplateView):
             .annotate(num_users=Count("user"))
             .order_by("-num_users")
             .first(),
-            "mp_challenge_registrations_period": public_challenges.filter(
+            "challenge_registrations_period": public_challenges.filter(
                 registrationrequest__created__gt=time_period
             )
             .annotate(num_registrations_period=Count("registrationrequest"))
-            .order_by("-num_registrations_period")
-            .first(),
+            .order_by("-num_registrations_period"),
             "mp_challenge_submissions": public_challenges.annotate(
                 num_submissions=Count("submission")
             )
             .order_by("-num_submissions")
             .first(),
-            "mp_challenge_submissions_period": public_challenges.filter(
+            "challenge_submissions_period": public_challenges.filter(
                 submission__created__gt=time_period
             )
             .annotate(num_submissions_period=Count("submission"))
-            .order_by("-num_submissions_period")
-            .first(),
+            .order_by("-num_submissions_period"),
             "latest_result": Result.objects.filter(
                 published=True, challenge__hidden=False
             )
