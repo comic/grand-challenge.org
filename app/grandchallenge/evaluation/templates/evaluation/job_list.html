@@ -4,8 +4,6 @@
 
 {% block pagecontent %}
 
-    {% get_obj_perms user for site as "site_perms" %}
-
     <h2>Evaluation Jobs</h2>
 
     <div class="table-responsive">
@@ -21,7 +19,7 @@
                 {% if site.evaluation_config.allow_submission_comments %}
                     <th>Comment</th>
                 {% endif %}
-                {% if "change_challenge" in site_perms %}
+                {% if "change_challenge" in challenge_perms %}
                     <th>Hide/Publish</th>
                 {% endif %}
             </tr>
@@ -66,7 +64,7 @@
                         <td>{{ job.submission.comment }}</td>
                     {% endif %}
 
-                    {% if "change_challenge" in site_perms %}
+                    {% if "change_challenge" in challenge_perms %}
                         <td>
                             {% if job.result %}
                                 <form method="post"

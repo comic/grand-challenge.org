@@ -63,8 +63,7 @@
 
     {% if site.use_evaluation %}
 
-        {% get_obj_perms user for site as "site_perms" %}
-        {% if "change_challenge" in site_perms or user_is_participant %}
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
 
             {% if site.evaluation_config.use_teams %}
                 <li class="nav-item">
@@ -129,8 +128,7 @@
 {% endblock %}
 
 {% block adminbutton %}
-    {% get_obj_perms user for site as "site_perms" %}
-    {% if "change_challenge" in site_perms %}
+    {% if "change_challenge" in challenge_perms %}
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"
                role="button" aria-haspopup="true"

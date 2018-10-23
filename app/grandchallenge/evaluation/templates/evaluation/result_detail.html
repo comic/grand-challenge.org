@@ -70,8 +70,7 @@
     <h3>Metrics</h3>
     <pre>{{ object.metrics|json_dumps }}</pre>
 
-    {% get_obj_perms user for site as "site_perms" %}
-    {% if "change_challenge" in site_perms %}
+    {% if "change_challenge" in challenge_perms %}
         <form method="post"
               action="{% url 'evaluation:result-update' site.short_name object.pk %}">
             {% csrf_token %}

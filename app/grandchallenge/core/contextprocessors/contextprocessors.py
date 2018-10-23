@@ -5,6 +5,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve
+from guardian.shortcuts import get_perms
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import build_absolute_uri
@@ -38,6 +39,7 @@ def comic_site(request):
 
     return {
         "site": challenge,
+        "challenge_perms": get_perms(request.user, challenge),
         "user_is_participant": challenge.is_participant(request.user),
         "pages": pages,
         "main_challenge_name": settings.MAIN_PROJECT_NAME,

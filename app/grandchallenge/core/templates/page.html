@@ -14,11 +14,10 @@
 
     <div id=pageContainer>{{ currentpage.raw_html }}</div>
 
-    {% get_obj_perms user for site as "site_perms" %}
     {% if not currentpage.is_error_page %}
         {% block editlink %}
             {% if currentpage.pk %}
-                {% if "change_challenge" in site_perms %}
+                {% if "change_challenge" in challenge_perms %}
                     <br>
                     <a class="editPageLink"
                        href="{% url 'pages:update' currentpage.challenge.short_name currentpage.title %}">Edit

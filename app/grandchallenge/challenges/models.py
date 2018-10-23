@@ -640,16 +640,7 @@ class ComicSiteModel(models.Model):
 
     def can_be_viewed_by(self, user):
         """ boolean, is user allowed to view this? """
-        # check whether everyone is allowed to view this. Anymous user is the
-        # only member of group 'everyone' for which permissions can be set
-        anonymous_user = get_anonymous_user()
-        if anonymous_user.has_perm("view_ComicSiteModel", self):
-            return True
-
-        else:
-            # if not everyone has access,
-            # check whether given user has permissions
-            return user.has_perm("view_ComicSiteModel", self)
+        return user.has_perm("view_ComicSiteModel", self)
 
     def setpermissions(self, lvl):
         """ Give the right groups permissions to this object
