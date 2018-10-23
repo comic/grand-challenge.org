@@ -11,9 +11,7 @@
 
     <h3>Create a new submission</h3>
 
-    {% get_obj_perms user for site as "site_perms" %}
-
-    {% if pending_jobs and "change_challenge" not in site_perms %}
+    {% if pending_jobs and "change_challenge" not in challenge_perms %}
 
         <p>You need to wait until all of your existing submissions have been
             evaluated before you can make another submission. <a

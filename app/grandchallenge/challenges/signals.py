@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -55,16 +54,3 @@ def setup_external_challenge(
 ):
     if created:
         send_external_challenge_created_email(instance)
-
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-@disable_for_loaddata
-def create_everyone_user_group(
-    instance: settings.AUTH_USER_MODEL = None, created: bool = False, *_, **__
-):
-    # Create the everyone usergroup when the anonymoususer is created
-    if created and instance.username == settings.ANONYMOUS_USER_NAME:
-        group, _ = Group.objects.get_or_create(
-            name=settings.EVERYONE_GROUP_NAME
-        )
-        instance.groups.add(group)

@@ -20,9 +20,9 @@ from favicon.models import Favicon
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.views import (
-    site_get_standard_vars,
     getRenderedPageIfAllowed,
     get_data_folder_path,
+    getSite,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -102,16 +102,19 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, challenge_short_name, page_title):
     """ show a single page on a site """
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+
+    site = getSite(challenge_short_name)
+
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
+
     response = render(request, "page.html", {"currentpage": currentpage})
+
     # TODO: THis has code smell. If page has to be checked like this, is it
     # ok to use a page object for error messages?
     if hasattr(currentpage, "is_error_page"):
         if currentpage.is_error_page:
             response.status_code = 403
+
     return response
 
 
@@ -130,12 +133,12 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     if mimetype == "application/pdf" or mimetype == "application/zip":
         return inserted_file(request, challenge_short_name, dropboxpath)
 
-    [site, pages, metafooterpages] = site_get_standard_vars(
-        challenge_short_name
-    )
+    site = getSite(challenge_short_name)
+
     p = get_object_or_404(
         Page, challenge__short_name=site.short_name, title=page_title
     )
+
     baselink = reverse(
         "pages:detail",
         kwargs={
@@ -154,16 +157,11 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
         + "</a> </div>"
     )
     p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
+
     currentpage = getRenderedPageIfAllowed(p, request, site)
+
     return render(
-        request,
-        "dropboxpage.html",
-        {
-            "site": site,
-            "currentpage": currentpage,
-            "pages": pages,
-            "metafooterpages": metafooterpages,
-        },
+        request, "dropboxpage.html", {"site": site, "currentpage": currentpage}
     )
 
 

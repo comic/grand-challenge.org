@@ -528,18 +528,6 @@ class Challenge(ChallengeBase):
         """
         return self.short_name + "_participants"
 
-    def get_relevant_perm_groups(self):
-        """
-        Return all auth groups which are directly relevant for this ComicSite.
-        This method is used for showin permissions for these groups, even
-        if none are defined
-        """
-        return Group.objects.filter(
-            Q(name=settings.EVERYONE_GROUP_NAME)
-            | Q(pk=self.admins_group.pk)
-            | Q(pk=self.participants_group.pk)
-        )
-
     def is_admin(self, user) -> bool:
         """
         is user in the admins group for the comicsite to which this object
@@ -675,15 +663,9 @@ class ComicSiteModel(models.Model):
 
     def can_be_viewed_by(self, user):
         """ boolean, is user allowed to view this? """
-        # check whether everyone is allowed to view this. Anymous user is the
-        # only member of group 'everyone' for which permissions can be set
-        anonymous_user = get_anonymous_user()
-        if anonymous_user.has_perm("view_ComicSiteModel", self):
+        if self.permission_lvl == self.ALL:
             return True
-
         else:
-            # if not everyone has access,
-            # check whether given user has permissions
             return user.has_perm("view_ComicSiteModel", self)
 
     def setpermissions(self, lvl):
@@ -691,20 +673,16 @@ class ComicSiteModel(models.Model):
             object needs to be saved before setting perms"""
         admingroup = self.challenge.admins_group
         participantsgroup = self.challenge.participants_group
-        everyonegroup = Group.objects.get(name=settings.EVERYONE_GROUP_NAME)
         self.persist_if_needed()
         if lvl == self.ALL:
             assign_perm("view_ComicSiteModel", admingroup, self)
             assign_perm("view_ComicSiteModel", participantsgroup, self)
-            assign_perm("view_ComicSiteModel", everyonegroup, self)
         elif lvl == self.REGISTERED_ONLY:
             assign_perm("view_ComicSiteModel", admingroup, self)
             assign_perm("view_ComicSiteModel", participantsgroup, self)
-            remove_perm("view_ComicSiteModel", everyonegroup, self)
         elif lvl == self.ADMIN_ONLY:
             assign_perm("view_ComicSiteModel", admingroup, self)
             remove_perm("view_ComicSiteModel", participantsgroup, self)
-            remove_perm("view_ComicSiteModel", everyonegroup, self)
         else:
             raise ValueError(
                 f"Unknown permissions level '{lvl}'. "

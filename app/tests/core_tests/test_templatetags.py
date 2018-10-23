@@ -25,8 +25,7 @@ def test_allusers_statistics():
         "{% load allusers_statistics from grandchallenge_tags %}"
         "{% allusers_statistics %}"
     )
-    context = Context()
-    context.page = p
+    context = Context({"currentpage": p})
     rendered = template.render(context)
     assert "['Country', '#Participants']" in rendered
 
@@ -39,8 +38,7 @@ def test_project_statistics():
         "{% load project_statistics from grandchallenge_tags %}"
         "{% project_statistics %}"
     )
-    context = Context()
-    context.page = p
+    context = Context({"currentpage": p})
     rendered = template.render(context)
     assert "Number of users: 0" in rendered
     assert "['Country', '#Participants']" in rendered
@@ -71,8 +69,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
         f"{view_type}"
         " %}"
     )
-    context = RequestContext(request=r)
-    context.page = p
+    context = RequestContext(r, {"currentpage": p})
     rendered = template.render(context)
     assert "pageError" not in rendered
     assert "Error rendering graph from file" not in rendered
@@ -93,9 +90,9 @@ def test_image_browser(rf: RequestFactory):
         "config:public_html/promise12_viewer_config_new.js %}"
     )
     context = RequestContext(
-        request=rf.get("/results/?id=CBA&folder=20120627202920_304_CBA_Results")
+        rf.get("/results/?id=CBA&folder=20120627202920_304_CBA_Results"),
+        {"currentpage": p},
     )
-    context.page = p
     context.update({"site": c})
     rendered = template.render(context)
     assert "pageError" not in rendered

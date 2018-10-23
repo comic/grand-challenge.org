@@ -5,8 +5,7 @@
 
 {% block pagecontent %}
 
-    {% get_obj_perms user for object as "object_perms" %}
-    {% get_obj_perms user for site as "site_perms" %}
+    {% get_obj_perms user for object as "team_perms" %}
 
     <h2>{{ object.name }}</h2>
 
@@ -37,7 +36,7 @@
         {% for tm in object.teammember_set.all %}
             <li>
                 {{ tm.user|user_profile_link }}
-                {% if "change_team" in object_perms and tm.user != object.owner %}
+                {% if "change_team" in team_perms and tm.user != object.owner %}
                     <form method="post"
                           action="{% url 'teams:member-delete' site.short_name tm.pk %}">
                         {% csrf_token %}
@@ -54,7 +53,7 @@
         {% endfor %}
     </ul>
 
-    {% if "change_team" in object_perms or "change_challenge" in site_perms %}
+    {% if "change_team" in team_perms or "change_challenge" in challenge_perms %}
         <h3>Team Owner Settings</h3>
         <a href="{% url 'teams:update' site.short_name object.pk %}"
            class="btn btn-primary">Edit
@@ -69,7 +68,7 @@
         </form>
     {% endif %}
 
-    {% if user_team and "change_team" not in object_perms %}
+    {% if user_team and "change_team" not in team_perms %}
 
         <h3>Team Member Settings</h3>
 
