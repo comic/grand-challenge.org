@@ -87,6 +87,14 @@ $(document).ready(function () {
             $('#all_active_filters').append(filter_tag);
         });
 
+        var reset_button = $('#btn_reset_filters');
+
+        if (active_filters.length > 0) {
+            reset_button.show();
+        } else {
+            reset_button.hide();
+        }
+
 
         //after collection all modifications, apply these
         var show = projectlinks["show"];

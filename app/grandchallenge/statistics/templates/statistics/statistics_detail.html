@@ -1,17 +1,18 @@
 {% extends "nobanner.html" %}
 {% load humanize %}
+{% load grandchallenge_tags %}
 
 {% block pageName %}Statistics{% endblock %}
 
 {% block content %}
 
-    <h1>Site Statistics</h1>
-
-    <p></p>
+    <h1>Site Statistics</h1> <br/>
 
     <h2>Users</h2>
 
-    <dl>
+    {% allusers_statistics False %}
+
+    <dl class="inline">
 
         <dt>Total users</dt>
         <dd>{{ number_of_users|intcomma }}</dd>
@@ -26,16 +27,15 @@
 
     <h2>Challenges</h2>
 
-    <dl>
+    <dl class="inline">
 
-        <dt>Open challenges</dt>
-        <dd>{{ open_challenges|intcomma }}</dd>
+        <dt>Public challenges</dt>
+        <dd>{{ public_challenges|intcomma }}</dd>
 
         <dt>Hidden challenges</dt>
         <dd>{{ hidden_challenges|intcomma }}</dd>
 
-
-        <dt>Challenge with the most participants</dt>
+        <dt>Public challenge with the most participants</dt>
         <dd>
             <a href="{{ mp_group.participants_of_challenge.get_absolute_url }}">
                 {{ mp_group.participants_of_challenge }}
@@ -44,21 +44,21 @@
             </a>
         </dd>
 
-        <dt>Challenge with the most registrations (last {{ days }} days)</dt>
+        <dt>Latest public challenge</dt>
         <dd>
-            <a href="{{ mp_challenge_registrations_period.get_absolute_url }}">
-                {{ mp_challenge_registrations_period }}
-                ({{ mp_challenge_registrations_period.num_registrations_period|intcomma }}
-                Registration{{ mp_challenge_registrations_period.num_registrations_period|pluralize }})
-            </a>
+            <a href="{{ latest_public_challenge.get_absolute_url }}">{{ latest_public_challenge }}</a>
         </dd>
 
     </dl>
 
+    <h3>Registrations to public challenges in the past {{ days }} days</h3>
 
-    <h3>Automated Evaluation</h3>
+    <canvas id="registrationsChart"></canvas>
 
-    <dl>
+
+    <h2>Evaluations</h2>
+
+    <dl class="inline">
         <dt>Challenges using automated evaluation</dt>
         <dd>{{ using_auto_eval|intcomma }}</dd>
 
@@ -68,7 +68,7 @@
         <dt>Total submissions (last {{ days }} days)</dt>
         <dd>{{ submissions_period|intcomma }}</dd>
 
-        <dt>Challenge with the most submissions</dt>
+        <dt>Public challenge with the most submissions</dt>
         <dd>
             <a href="{{ mp_challenge_submissions.get_absolute_url }}">
                 {{ mp_challenge_submissions }}
@@ -77,20 +77,77 @@
             </a>
         </dd>
 
-        <dt>Challenge with the most submissions (last {{ days }} days)</dt>
-        <dd>
-            <a href="{{ mp_challenge_submissions_period.get_absolute_url }}">
-                {{ mp_challenge_submissions_period }}
-                ({{ mp_challenge_submissions_period.num_submissions_period|intcomma }}
-                Submission{{ mp_challenge_submissions_period.num_submissions_period|pluralize }})
-            </a>
-        </dd>
-
-        <dt>Latest Result</dt>
+        <dt>Latest public result</dt>
         <dd><a href="{{ latest_result.get_absolute_url }}">Result
             for {{ latest_result.challenge }},
-            created {{ latest_result.created|naturaltime }}.</a></dd>
+            created {{ latest_result.created|naturaltime }},
+            {{ latest_result.rank|ordinal }} position on leaderboard.</a></dd>
 
     </dl>
+
+    <h3>Submissions to public challenges in the past {{ days }} days</h3>
+
+    <canvas id="submissionsChart"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"
+            integrity="sha256-CfcERD4Ov4+lKbWbYqXD6aFM9M51gN4GUEtDhkWABMo="
+            crossorigin="anonymous"></script>
+
+    <script>
+        var ctx = document.getElementById("registrationsChart");
+
+        var colormap = [
+                            '#440154',
+                            '#472d7b',
+                            '#3b528b',
+                            '#2c728e',
+                            '#21918c',
+                            '#28ae80',
+                            '#5ec962',
+                            '#addc30',
+                            '#fde725'
+                        ].reverse()
+
+        var registrationsChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [
+                    {% for challenge in challenge_registrations_period %}
+                        "{{ challenge }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '# of Registrations',
+                    data: [
+                        {% for challenge in challenge_registrations_period %}
+                            {{ challenge.num_registrations_period }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colormap
+                }]
+            },
+        });
+
+        ctx = document.getElementById("submissionsChart");
+        var submissionsChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [
+                    {% for challenge in challenge_submissions_period %}
+                        "{{ challenge }}",
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '# of Submissions',
+                    data: [
+                        {% for challenge in challenge_submissions_period %}
+                            {{ challenge.num_submissions_period }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: colormap
+                }]
+            },
+        });
+    </script>
 
 {% endblock %}

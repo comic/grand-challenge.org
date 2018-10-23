@@ -1264,21 +1264,24 @@ class ProjectStatisticsNode(template.Node):
         """
 
         all_users = self.allusers
-        key = "ProjectStatisticsNode.{}.{}".format(
-            context["currentpage"].challenge.pk, all_users
-        )
-        content = cache.get(key)
-        if content is None:
-            content = self._get_map(
-                context["currentpage"].challenge,
-                all_users,
-                self.include_header,
+
+        if all_users:
+            key = "ProjectStatisticsNode.AllUsers"
+        else:
+            key = "ProjectStatisticsNode.{}".format(
+                context["currentpage"].challenge.pk
             )
+
+        content = cache.get(key)
+
+        if content is None:
+            content = self._get_map(context, all_users, self.include_header)
             cache.set(key, content, 10 * 60)
+
         return content
 
     @classmethod
-    def _get_map(cls, challenge, all_users, include_header):
+    def _get_map(cls, context, all_users, include_header):
         snippet_header = "<div class='statistics'>"
         snippet_footer = "</div>"
 
@@ -1286,7 +1289,7 @@ class ProjectStatisticsNode(template.Node):
             User = get_user_model()
             users = User.objects.all().distinct()
         else:
-            users = challenge.get_participants()
+            users = context["currentpage"].challenge.get_participants()
 
         country_counts = (
             UserProfile.objects.filter(user__in=users)
@@ -1308,7 +1311,23 @@ class ProjectStatisticsNode(template.Node):
                 var data = google.visualization.arrayToDataTable(
                 {data}
                 );
-                var options = {{}};
+                var options = {{
+                    colorAxis: {{
+                        colors: [
+                            '#440154', 
+                            '#472d7b', 
+                            '#3b528b', 
+                            '#2c728e', 
+                            '#21918c', 
+                            '#28ae80', 
+                            '#5ec962', 
+                            '#addc30', 
+                            '#fde725'
+                        ]
+                    }},
+                    backgroundColor: '#c9eeff',
+                    datalessRegionColor: '#440154'
+                }};
                 var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
                 chart.draw(data, options);
             }};
@@ -1317,13 +1336,15 @@ class ProjectStatisticsNode(template.Node):
         """.format(
             data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY
         )
+
         snippet = ""
+
         if include_header:
             snippet += "<h1>Statistics</h1><br/>\n"
-        snippet += """
-        <p>Number of users: {num_users}</p>
-        {geochart}
-        """.format(
-            num_users=len(users), geochart=snippet_geochart
-        )
+
+        if not all_users:
+            snippet += f"<p>Number of users: {len(users)}</p>\n"
+
+        snippet += snippet_geochart
+
         return snippet_header + snippet + snippet_footer

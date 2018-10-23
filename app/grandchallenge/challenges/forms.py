@@ -90,15 +90,6 @@ data_items = (
     "data_stored",
     "number_of_training_cases",
     "number_of_test_cases",
-    "offers_data_download",
-    "download_page",
-    "number_of_downloads",
-)
-submission_items = (
-    "is_open_for_submissions",
-    "submission_page",
-    "number_of_submissions",
-    "last_submission_date",
 )
 
 
@@ -117,7 +108,6 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
                 Tab("Images", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Data", *data_items),
-                Tab("Submissions", *submission_items),
                 Tab("Publication", *publication_items),
             ),
             ButtonHolder(Submit("save", "Save")),
@@ -132,12 +122,10 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             *common_images_items,
             *event_items,
             *data_items,
-            *submission_items,
             *publication_items,
         )
         widgets = {
             "workshop_date": forms.TextInput(attrs={"type": "date"}),
-            "last_submission_date": forms.TextInput(attrs={"type": "date"}),
             "description": forms.Textarea,
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
