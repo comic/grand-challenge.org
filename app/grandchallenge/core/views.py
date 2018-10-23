@@ -3,7 +3,6 @@ from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError, RequestContext
-from django.template.defaulttags import VerbatimNode
 from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
@@ -55,8 +54,6 @@ def renderTags(request, p, recursecount=0):
         pagecontents = p.html + errormsg
         return pagecontents
 
-    t = escape_verbatim_node_contents(t)
-
     # pass page to context here to be able to render tags based on which page does the rendering
     context = RequestContext(request, {"currentpage": p})
     pagecontents = t.render(context)
@@ -78,22 +75,6 @@ def renderTags(request, p, recursecount=0):
             )
             pagecontents = p.html + errormsg
     return pagecontents
-
-
-def escape_verbatim_node_contents(template):
-    """ Page contents are possibly doing multiple passes through rendering. This
-    means the {% verbatim %} tag will usually now work as expected because its 
-    contents are rendered verbatim and then rendered again, actually evaluating
-    whatever the verbatim content should be. This method puts additional 
-    {% verbatim %} tags around any {% verbatim %} node found. 
-    
-    This crude method is a lot easier than defining a custom render()
-    method  
-    """
-    for node in template.nodelist:
-        if type(node) == VerbatimNode:
-            node.content = node.content.replace("%", "&#37")
-    return template
 
 
 def permissionMessage(request, site, p):
