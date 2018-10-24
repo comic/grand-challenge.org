@@ -23,7 +23,7 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
     ImagingModality,
     TaskType,
-    BodyStructure,
+    BodyRegion,
 )
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
@@ -64,16 +64,16 @@ class ChallengeList(TemplateView):
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
-        structures = BodyStructure.objects.all().select_related("region")
-        region = {s.region for s in structures}
+        regions = BodyRegion.objects.all().prefetch_related(
+            "bodystructure_set"
+        )
 
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display
         context.update(
             {
                 "modalities": modalities,
-                "body_regions": sorted(region, key=lambda r: r.region),
-                "body_structures": structures,
+                "body_regions": regions,
                 "task_types": task_types,
                 "challenges_by_year": OrderedDict(
                     sorted(

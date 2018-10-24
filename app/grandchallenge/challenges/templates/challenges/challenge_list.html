@@ -168,20 +168,19 @@
                                                          data-parent="#accordion1">
                                                         <div class="card-body">
                                                             <form class="form-inline-region-{{ r.filter_tag }}">
-                                                                {% for s in body_structures %}
-                                                                    {% ifequal s.region.filter_tag r.filter_tag %}
-                                                                        <label id="{{ s.filter_tag }}"
-                                                                               class="checkbox-inline no_indent projectLinkFilter">
-                                                                            <input type="checkbox"
-                                                                                   class="filter"
-                                                                                   id="{{ s.filter_tag }}"
-                                                                                   value="{{ s.structure }}">
-                                                                            <span>{{ s.structure }}</span>
-                                                                            <span
-                                                                                    class="counter ml-1 badge badge-pill badge-info"
-                                                                                    id="{{ s.filter_tag }}"></span>
-                                                                        </label><br>
-                                                                    {% endifequal %}
+                                                                {% for s in r.bodystructure_set.all %}
+                                                                    <label id="{{ s.filter_tag }}"
+                                                                           class="checkbox-inline no_indent projectLinkFilter">
+                                                                        <input type="checkbox"
+                                                                               class="filter"
+                                                                               id="{{ s.filter_tag }}"
+                                                                               value="{{ s.structure }}">
+                                                                        <span>{{ s.structure }}</span>
+                                                                        <span
+                                                                                class="counter ml-1 badge badge-pill badge-info"
+                                                                                id="{{ s.filter_tag }}"></span>
+                                                                    </label>
+                                                                    <br>
                                                                 {% endfor %}
                                                             </form>
                                                         </div>
