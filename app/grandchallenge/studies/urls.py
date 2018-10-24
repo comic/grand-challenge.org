@@ -1,8 +1,8 @@
-from django.conf.urls import url
-from grandchallenge.studies import views
+from django.urls import path
+from grandchallenge.patients import views
 
 app_name = "studies"
 urlpatterns = [
-    url(r'^/$', views.StudyTable.as_view()),
-    url(r'^/(?P<pk>[0-9]+)$', views.StudyRecord.as_view())
+    path('studies/&', views.StudyTable.as_view(), name="patients"),
+    path('studies/(?P<pk>[0-9]+)$', views.StudyRecord.as_view(), name="patient")
 ]
