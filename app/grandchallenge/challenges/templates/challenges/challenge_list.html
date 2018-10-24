@@ -49,24 +49,24 @@
                             </form>
 
                             <div class="card">
-                                <div class="card-header"
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseModality"
+                                     aria-expanded="false"
+                                     aria-controls="collapseModality"
                                      id="headingModality">
-                                    <h5>
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseModality"
-                                                aria-expanded="false"
-                                                aria-controls="collapseModality">
-                                            Modality
-                                        </button>
-                                    </h5>
+
+                                    <i class="fas fa-chevron-right"
+                                       id="modality-chevron">
+                                    </i>
+                                    <b>Modality</b>
                                 </div>
 
                                 <div id="collapseModality" class="collapse"
                                      aria-labelledby="headingModality"
                                      data-parent="#accordion">
                                     <div class="card-body">
-                                        <form class="form-inline-modality">
+                                        <form>
                                             {% for modality in modalities %}
                                                 <label id="{{ modality.filter_tag }}"
                                                        class="checkbox-inline no_indent projectLinkFilter">
@@ -85,16 +85,16 @@
                             </div>
 
                             <div class="card">
-                                <div class="card-header" id="headingTask">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseTask"
-                                                aria-expanded="false"
-                                                aria-controls="collapseTask">
-                                            Task type
-                                        </button>
-                                    </h5>
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseTask"
+                                     aria-expanded="false"
+                                     aria-controls="collapseTask"
+                                     id="headingTask">
+                                    <i class="fas fa-chevron-right"
+                                       id="task-chevron">
+                                    </i>
+                                    <b>Task type</b>
                                 </div>
 
                                 <div id="collapseTask" class="collapse"
@@ -122,21 +122,20 @@
 
 
                             <div Class="card">
-                                <div class="card-header"
-                                     id="headingRegion">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseRegion"
-                                                aria-expanded="false"
-                                                aria-controls="collapseRegion">
-                                            Structure
-                                        </button>
-                                    </h5>
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseStructure"
+                                     aria-expanded="false"
+                                     aria-controls="collapseStructure"
+                                     id="headingStructure">
+                                    <i class="fas fa-chevron-right"
+                                       id="structure-chevron">
+                                    </i>
+                                    <b>Structure</b>
                                 </div>
 
-                                <div id="collapseRegion" class="collapse"
-                                     aria-labelledby="headingRegion"
+                                <div id="collapseStructure" class="collapse"
+                                     aria-labelledby="headingStructure"
                                      data-parent="#accordion">
                                     <div class="card-body">
                                         <div id="accordion1">
