@@ -64,6 +64,9 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),
+	url(r'^api/patients', include('grandchallenge.patients.urls'))
+	url(r'^api/studies', include('grandchallenge.studies.urls'))
+	
     # Used for logging in and managing grandchallenge.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
