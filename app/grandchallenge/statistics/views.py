@@ -17,6 +17,7 @@ class StatisticsDetail(TemplateView):
         context = super().get_context_data(**kwargs)
 
         days = 30
+        max_num_results = 10
 
         User = get_user_model()
 
@@ -26,6 +27,7 @@ class StatisticsDetail(TemplateView):
 
         extra = {
             "days": days,
+            "max_num_results": max_num_results,
             "number_of_users": User.objects.count(),
             "new_users_period": User.objects.filter(
                 date_joined__gt=time_period
@@ -52,7 +54,7 @@ class StatisticsDetail(TemplateView):
                 registrationrequest__created__gt=time_period
             )
             .annotate(num_registrations_period=Count("registrationrequest"))
-            .order_by("-num_registrations_period"),
+            .order_by("-num_registrations_period")[:max_num_results],
             "mp_challenge_submissions": public_challenges.annotate(
                 num_submissions=Count("submission")
             )
@@ -62,7 +64,7 @@ class StatisticsDetail(TemplateView):
                 submission__created__gt=time_period
             )
             .annotate(num_submissions_period=Count("submission"))
-            .order_by("-num_submissions_period"),
+            .order_by("-num_submissions_period")[:max_num_results],
             "latest_result": Result.objects.filter(
                 published=True, challenge__hidden=False
             )

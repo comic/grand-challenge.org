@@ -51,7 +51,7 @@
 
     </dl>
 
-    <h3>Registrations to public challenges in the past {{ days }} days</h3>
+    <h3>Registrations to public challenges in the past {{ days }} days (top {{ max_num_results }})</h3>
 
     <canvas id="registrationsChart"></canvas>
 
@@ -85,7 +85,7 @@
 
     </dl>
 
-    <h3>Submissions to public challenges in the past {{ days }} days</h3>
+    <h3>Submissions to public challenges in the past {{ days }} days (top {{ max_num_results }})</h3>
 
     <canvas id="submissionsChart"></canvas>
 
@@ -97,16 +97,17 @@
         var ctx = document.getElementById("registrationsChart");
 
         var colormap = [
-                            '#440154',
-                            '#472d7b',
-                            '#3b528b',
-                            '#2c728e',
-                            '#21918c',
-                            '#28ae80',
-                            '#5ec962',
-                            '#addc30',
-                            '#fde725'
-                        ].reverse()
+            '#440154',
+            '#482979',
+            '#3e4c8a',
+            '#306a8e',
+            '#25858e',
+            '#1fa188',
+            '#3bbb75',
+            '#77d153',
+            '#c2df23',
+            '#fde725'
+        ].reverse();
 
         var registrationsChart = new Chart(ctx, {
             type: 'horizontalBar',
@@ -117,7 +118,7 @@
                     {% endfor %}
                 ],
                 datasets: [{
-                    label: '# of Registrations',
+                    label: '# of Registrations (past {{ days }} days)',
                     data: [
                         {% for challenge in challenge_registrations_period %}
                             {{ challenge.num_registrations_period }},
@@ -125,7 +126,7 @@
                     ],
                     backgroundColor: colormap
                 }]
-            },
+            }
         });
 
         ctx = document.getElementById("submissionsChart");
@@ -138,7 +139,7 @@
                     {% endfor %}
                 ],
                 datasets: [{
-                    label: '# of Submissions',
+                    label: '# of Submissions (past {{ days }} days)',
                     data: [
                         {% for challenge in challenge_submissions_period %}
                             {{ challenge.num_submissions_period }},
@@ -146,7 +147,7 @@
                     ],
                     backgroundColor: colormap
                 }]
-            },
+            }
         });
     </script>
 
