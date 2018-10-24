@@ -20,21 +20,6 @@
 
                     <div id="projectLinksFilters">
 
-                        <div id="filter_info">
-
-                    <span id="filter_counter" class="badge badge-info">
-                        Active filters:
-                        <span class="counter" id="active_filter_count"></span>
-                    </span>
-                            <button id="btn_reset_filters"
-                                    class="btn btn-danger btn-sm"
-                                    value="Reset filters"
-                                    style="display:none;">
-                                Reset filters
-                            </button>
-                        </div>
-
-                        <div id="all_active_filters"></div>
 
                         <div id="accordion">
 
@@ -177,12 +162,10 @@
                             </div>
                         </div>
 
-
                         <span id="info"
-                              class="badge badge-info">Showing <span
+                              class="badge badge-info">Displaying <span
                                 class="counter" id="projectlink"></span>
-                    of <span class="counter" id="total"></span></span>
-
+                    of <span class="counter" id="total"></span> Challenges</span>
 
                     </div>
                 </div>
@@ -215,6 +198,24 @@
             </a>
         </p>
     {% endif %}
+
+    <div id="filter_info">
+        <span id="filter_counter" class="badge badge-info">
+            Active filters:
+            <span class="counter" id="active_filter_count"></span>
+        </span>
+
+        <div id="all_active_filters" style="display: inline-block;"></div>
+
+        <button id="btn_reset_filters"
+                class="btn btn-danger btn-sm"
+                value="Reset filters"
+                style="display:none;">
+            Reset filters
+        </button>
+
+        <p></p>
+    </div>
 
 
     <div id='projectlinks'>
