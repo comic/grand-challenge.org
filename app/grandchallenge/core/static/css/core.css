@@ -167,44 +167,21 @@ div.django-ckeditor-widget {
     border-radius: 6px;
 }
 
-.projectLinkHeading {
-    overflow: hidden;
-    padding: 15px 0;
-    background-color: #f5f5f5;
-}
-
-.projectLinkFooter {
-    border-top: none;
-}
-
-.projectLinkImage {
-    width: 30%;
-    height: 100%;
+.challenge-card-header {
     padding: 0;
-    float: left;
-    margin-left: 15px;
-    display: flex;
-    align-items: center;
 }
 
-.projectLinkImage img {
-    flex-shrink: 0;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 3px;
+.challenge-card-title {
+    margin: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.projectLinkName {
-    height: 100%;
-    padding-right: 15px;
-    display: flex;
-    align-items: center;
-}
-
-.projectLinkName h3 {
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 15px;
+.challenge-card-logo {
+    vertical-align: middle;
+    width: 30%;
+    border-top-left-radius: 3px;
 }
 
 .projectLinkFilter {

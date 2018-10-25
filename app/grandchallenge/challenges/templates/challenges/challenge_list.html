@@ -104,16 +104,18 @@
 
                             <div class="card mb-3">
                                 <a class="collapsed"
-                                     data-toggle="collapse"
-                                     href="#collapseStructure"
-                                     id="headingStructure">
-                                    <div class="card-body"><i class="fas fa-chevron-right"
-                                          id="structure-chevron">
+                                   data-toggle="collapse"
+                                   href="#collapseStructure"
+                                   id="headingStructure">
+                                    <div class="card-body"><i
+                                            class="fas fa-chevron-right"
+                                            id="structure-chevron">
                                     </i>
                                         <b>Structure</b></div>
                                 </a>
 
-                                <div id="collapseStructure" class="collapse" data-parent="#accordion">
+                                <div id="collapseStructure" class="collapse"
+                                     data-parent="#accordion">
                                     <div class="card-body">
                                         {% for r in body_regions %}
 
@@ -226,24 +228,20 @@
                             <div class="card" style="height:400px">
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
-                                   style="display:block">
-                                    <div class="card-header projectLinkHeading"
-                                         style="min-height:110px;">
-                                        <div class="projectLinkImage">
-                                            <img alt=""
+                                   style="display:block;">
+                                    <div class="card-header challenge-card-header">
+                                        <h4 class="challenge-card-title">
+                                            <img class="challenge-card-logo"
+                                                 alt="{{ challenge.short_name }} logo"
                                                  src="{{ challenge.thumb_image_url }}">
-                                        </div>
-                                        <div class="projectLinkName">
-                                            <h3>
-                                                {% firstof challenge.title challenge.short_name %}
-                                            </h3>
-                                        </div>
+                                            {% firstof challenge.title challenge.short_name %}
+                                        </h4>
                                     </div>
                                 </a>
 
                                 <div class="card-body projectLinkBody small"
-                                     style="overflow: hidden; height:250px; line-height:1.5em">
-                                    {{ challenge.description }}
+                                     style="overflow: hidden; text-overflow: ellipsis; height:250px; line-height:1.5em">
+                                    {{ challenge.description|truncatewords:35 }}
                                 </div>
 
                                 <div class="card-footer small projectLinkFooter"
