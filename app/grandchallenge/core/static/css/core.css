@@ -178,10 +178,12 @@ div.django-ckeditor-widget {
     overflow: hidden;
 }
 
-.challenge-card-logo {
+.challenge-logo {
     vertical-align: middle;
-    width: 30%;
     border-top-left-radius: 3px;
+    width:100px;
+    height:100px;
+    object-fit:cover;
 }
 
 .projectLinkFilter {
