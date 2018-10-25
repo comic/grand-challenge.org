@@ -1,12 +1,12 @@
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import ugettext_lazy as _
-from pathology_worklist.users.models import User
+
 
 class Worklist(models.Model):
     title = CharField(_("Title of Work list"), null=False, blank=False, max_length=255)
     parent = models.ForeignKey('Worklist', null=True, blank=True, on_delete=models.CASCADE)
-    owner = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
+    #owner = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
 
 
 class WorklistPatientRelation(models.Model):

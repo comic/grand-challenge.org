@@ -1,5 +1,5 @@
-from pathology_worklist.api.models import Worklist, Patient, Study, Image, WorklistPatientRelation
-from pathology_worklist.api.serializer import WorklistSerializer, PatientSerializer, StudySerializer, ImageSerializer, WorklistPatientRelationSerializer
+from grandchallenge.worklists.models import Worklist, WorklistPatientRelation
+from grandchallenge.worklists.serializer import WorklistSerializer, WorklistPatientRelationSerializer
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -22,6 +22,7 @@ class WorklistPatientRelationTable(generics.ListCreateAPIView):
     serializer_class = WorklistPatientRelationSerializer
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ('id', 'worklist', 'patient')
+
 
 class WorklistPatientRelationRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = WorklistPatientRelation.objects.all()

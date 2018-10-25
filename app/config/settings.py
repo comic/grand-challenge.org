@@ -277,7 +277,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",  # bootstrap forms
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
-	"django-filters",  # for automatic rest model filtering
+    "django_filters",  # for automatic rest model filtering
 ]
 
 LOCAL_APPS = [

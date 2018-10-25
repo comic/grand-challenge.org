@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from pathology_worklist.api.models import Worklist, Patient, Study, Image, WorklistPatientRelation
+from grandchallenge.worklists.models import Worklist, WorklistPatientRelation
 
 
 class WorklistSerializer(serializers.ModelSerializer):
