@@ -298,8 +298,9 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
-	"grandchallenge.patients",
-	"grandchallenge.studies"
+    "grandchallenge.patients",
+    "grandchallenge.studies",
+    "grandchallenge.worklists",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
