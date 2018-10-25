@@ -35,21 +35,18 @@
                             </form>
 
                             <div class="card mb-3">
-                                <div class="card-body collapsed"
-                                     data-toggle="collapse"
-                                     data-target="#collapseModality"
-                                     aria-expanded="false"
-                                     aria-controls="collapseModality"
-                                     id="headingModality">
-
-                                    <i class="fas fa-chevron-right"
-                                       id="modality-chevron">
-                                    </i>
-                                    <b>Modality</b>
-                                </div>
+                                <a class="collapsed"
+                                   data-toggle="collapse"
+                                   href="#collapseModality"
+                                   id="headingModality">
+                                    <div class="card-body">
+                                        <i class="fas fa-chevron-right"
+                                           id="modality-chevron">
+                                        </i>
+                                        <b>Modality</b></div>
+                                </a>
 
                                 <div id="collapseModality" class="collapse"
-                                     aria-labelledby="headingModality"
                                      data-parent="#accordion">
                                     <div class="card-body">
                                         <form>
@@ -71,20 +68,18 @@
                             </div>
 
                             <div class="card mb-3">
-                                <div class="card-body collapsed"
-                                     data-toggle="collapse"
-                                     data-target="#collapseTask"
-                                     aria-expanded="false"
-                                     aria-controls="collapseTask"
-                                     id="headingTask">
-                                    <i class="fas fa-chevron-right"
-                                       id="task-chevron">
-                                    </i>
-                                    <b>Task type</b>
-                                </div>
+                                <a class="collapsed"
+                                   data-toggle="collapse"
+                                   href="#collapseTask"
+                                   id="headingTask">
+                                    <div class="card-body">
+                                        <i class="fas fa-chevron-right"
+                                           id="task-chevron">
+                                        </i>
+                                        <b>Task type</b></div>
+                                </a>
 
                                 <div id="collapseTask" class="collapse"
-                                     aria-labelledby="headingTask"
                                      data-parent="#accordion">
                                     <div class="card-body">
                                         <form class="form-inline-task">
@@ -108,21 +103,17 @@
 
 
                             <div class="card mb-3">
-                                <div class="card-body collapsed"
+                                <a class="collapsed"
                                      data-toggle="collapse"
-                                     data-target="#collapseStructure"
-                                     aria-expanded="false"
-                                     aria-controls="collapseStructure"
+                                     href="#collapseStructure"
                                      id="headingStructure">
-                                    <i class="fas fa-chevron-right"
-                                       id="structure-chevron">
+                                    <div class="card-body"><i class="fas fa-chevron-right"
+                                          id="structure-chevron">
                                     </i>
-                                    <b>Structure</b>
-                                </div>
+                                        <b>Structure</b></div>
+                                </a>
 
-                                <div id="collapseStructure" class="collapse"
-                                     aria-labelledby="headingStructure"
-                                     data-parent="#accordion">
+                                <div id="collapseStructure" class="collapse" data-parent="#accordion">
                                     <div class="card-body">
                                         {% for r in body_regions %}
 
@@ -165,7 +156,8 @@
                         <span id="info"
                               class="badge badge-info">Displaying <span
                                 class="counter" id="projectlink"></span>
-                    of <span class="counter" id="total"></span> Challenges</span>
+                    of <span class="counter"
+                             id="total"></span></span>
 
                     </div>
                 </div>
