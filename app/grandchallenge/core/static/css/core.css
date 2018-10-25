@@ -169,6 +169,8 @@ div.django-ckeditor-widget {
 
 .challenge-card-header {
     padding: 0;
+    display: flex;
+    align-items:center;
 }
 
 .challenge-card-title {
@@ -178,10 +180,11 @@ div.django-ckeditor-widget {
     overflow: hidden;
 }
 
-.challenge-card-logo {
-    vertical-align: middle;
-    width: 30%;
+.challenge-logo {
     border-top-left-radius: 3px;
+    width: 80px;
+    height: 80px;
+    object-fit:cover;
 }
 
 .projectLinkFilter {
