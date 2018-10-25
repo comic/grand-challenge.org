@@ -17,6 +17,7 @@ from django.core.files.storage import DefaultStorage
 from django.db.models import Count
 from django.template import defaulttags
 from django.urls import reverse as reverse_djangocore
+from django_countries import countries
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -1293,14 +1294,16 @@ class ProjectStatisticsNode(template.Node):
 
         country_counts = (
             UserProfile.objects.filter(user__in=users)
+            .exclude(country="")
             .values("country")
             .annotate(dcount=Count("country"))
+            .order_by("-dcount")
         )
-        chart_data = [["Country", "#Participants"]]
-        for country_count in country_counts:
-            chart_data.append(
-                [str(country_count["country"]), country_count["dcount"]]
-            )
+
+        chart_data = [
+            [countries.name(c["country"]), c["dcount"]] for c in country_counts
+        ]
+
         snippet_geochart = """
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type='text/javascript'>
@@ -1314,19 +1317,19 @@ class ProjectStatisticsNode(template.Node):
                 var options = {{
                     colorAxis: {{
                         colors: [
-                            '#440154', 
-                            '#472d7b', 
-                            '#3b528b', 
-                            '#2c728e', 
-                            '#21918c', 
-                            '#28ae80', 
-                            '#5ec962', 
-                            '#addc30', 
-                            '#fde725'
+                            "#440154",
+                            "#482979",
+                            "#3e4c8a",
+                            "#306a8e",
+                            "#25858e",
+                            "#1fa188",
+                            "#3bbb75",
+                            "#77d153",
+                            "#c2df23",
+                            "#fde725"
                         ]
                     }},
-                    backgroundColor: '#c9eeff',
-                    datalessRegionColor: '#440154'
+                    backgroundColor: '#c9eeff'
                 }};
                 var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
                 chart.draw(data, options);
@@ -1334,7 +1337,8 @@ class ProjectStatisticsNode(template.Node):
         </script>
         <div id="chart_div"></div>
         """.format(
-            data=chart_data, maps_api_key=settings.GOOGLE_MAPS_API_KEY
+            data=[["Country", "#Participants"]] + chart_data,
+            maps_api_key=settings.GOOGLE_MAPS_API_KEY,
         )
 
         snippet = ""

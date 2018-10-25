@@ -64,8 +64,8 @@ $(document).ready(function () {
         filterbuttons.each(function (i, d) {
             log("updating according to " + d.id);
             var checkbox = $(d);
-            if(checkbox.attr("class") === "filter" && checkbox.is(':checked')){
-                active_filters.push( checkbox);
+            if (checkbox.attr("class") === "filter" && checkbox.is(':checked')) {
+                active_filters.push(checkbox);
             }
             projectlinks = modifyCollection(checkbox, projectlinks)
         });
@@ -73,13 +73,13 @@ $(document).ready(function () {
         //Update active filters and counter visualization
         $('#active_filter_count').text(active_filters.length);
         $('#all_active_filters').empty();
-        active_filters.forEach(function(checkbox){
+        active_filters.forEach(function (checkbox) {
             var close_icon = $('<i>', {'class': 'fas fa-times'});
-            var text = $('<span>', {'class': 'filter-text'}).text(" "+checkbox.val());
-            var filter_tag = $('<button>', {'class' : 'btn btn-outline-info btn-sm'});
+            var text = $('<span>', {'class': 'filter-text'}).text(" " + checkbox.val());
+            var filter_tag = $('<button>', {'class': 'btn btn-outline-info btn-sm'});
 
             filter_tag.append(close_icon).append(text);
-            filter_tag.click(function(){
+            filter_tag.click(function () {
                 checkbox.prop('checked', false);
                 updateAll();
             });
@@ -147,8 +147,7 @@ $(document).ready(function () {
             if (checkbox.is(':checked')) {
                 log("hiding all non '." + name + "'");
                 hide = hide.add(".projectlink:not(." + name + ")");
-            }
-            else {
+            } else {
                 log("filter on '." + name + "' released. doing nothing.");
             }
 
@@ -159,8 +158,7 @@ $(document).ready(function () {
                 log("showing ''." + name + "'");
                 show = show.add(".projectlink." + name);
 
-            }
-            else {
+            } else {
                 log("hiding '." + name + "'");
                 hide = hide.add(".projectlink." + name);
             }
@@ -208,8 +206,7 @@ $(document).ready(function () {
             if (count === 0) {
                 log("hiding year" + d.id);
                 $(this).hide();
-            }
-            else {
+            } else {
                 //log("showing year"+ d.id + "count was " + count);
                 $(this).show();
             }
@@ -232,9 +229,9 @@ $(document).ready(function () {
         return filtered;
     }
 
-    $('#btn_reset_filters').click(function(){
+    $('#btn_reset_filters').click(function () {
         log("Clicked reset filters!");
-        $("#projectfilterbuttons input.filter").prop("checked",false);
+        $("#projectfilterbuttons input.filter").prop("checked", false);
         updateAll();
     });
 
@@ -245,5 +242,35 @@ $(document).ready(function () {
             console.log("* " + msg)
         }
     }
+
+    $('#collapseModality').on('show.bs.collapse', function () {
+        $('#modality-chevron').removeClass('fa-chevron-right');
+        $('#modality-chevron').addClass('fa-chevron-down');
+    });
+
+    $('#collapseModality').on('hide.bs.collapse', function () {
+        $('#modality-chevron').removeClass('fa-chevron-down');
+        $('#modality-chevron').addClass('fa-chevron-right');
+    });
+
+    $('#collapseTask').on('show.bs.collapse', function () {
+        $('#task-chevron').removeClass('fa-chevron-right');
+        $('#task-chevron').addClass('fa-chevron-down');
+    });
+
+    $('#collapseTask').on('hide.bs.collapse', function () {
+        $('#task-chevron').removeClass('fa-chevron-down');
+        $('#task-chevron').addClass('fa-chevron-right');
+    });
+
+    $('#collapseStructure').on('show.bs.collapse', function () {
+        $('#structure-chevron').removeClass('fa-chevron-right');
+        $('#structure-chevron').addClass('fa-chevron-down');
+    });
+
+    $('#collapseStructure').on('hide.bs.collapse', function () {
+        $('#structure-chevron').removeClass('fa-chevron-down');
+        $('#structure-chevron').addClass('fa-chevron-right');
+    });
 
 });

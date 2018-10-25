@@ -20,53 +20,39 @@
 
                     <div id="projectLinksFilters">
 
-                        <div id="filter_info">
-
-                    <span id="filter_counter" class="badge badge-info">
-                        Active filters:
-                        <span class="counter" id="active_filter_count"></span>
-                    </span>
-                            <button id="btn_reset_filters"
-                                    class="btn btn-danger btn-sm"
-                                    value="Reset filters"
-                                    style="display:none;">
-                                Reset filters
-                            </button>
-                        </div>
-
-                        <div id="all_active_filters"></div>
 
                         <div id="accordion">
 
-                            <form class="form-inline-challenge">
+                            <form class="form-inline-challenge mb-3"
+                                  style="display:none;">
                                 <!--Hidden checkbox to display all projectlinks by default -->
                                 <label class="checkbox-inline no_indent projectLinkFilter">
                                     <input type="checkbox" class="include"
                                            checked disabled
                                            id="projectlink"
-                                           style="display:none;">
+                                    >
                                 </label>
                             </form>
 
-                            <div class="card">
-                                <div class="card-header"
+                            <div class="card mb-3">
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseModality"
+                                     aria-expanded="false"
+                                     aria-controls="collapseModality"
                                      id="headingModality">
-                                    <h5>
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseModality"
-                                                aria-expanded="false"
-                                                aria-controls="collapseModality">
-                                            Modality
-                                        </button>
-                                    </h5>
+
+                                    <i class="fas fa-chevron-right"
+                                       id="modality-chevron">
+                                    </i>
+                                    <b>Modality</b>
                                 </div>
 
                                 <div id="collapseModality" class="collapse"
                                      aria-labelledby="headingModality"
                                      data-parent="#accordion">
                                     <div class="card-body">
-                                        <form class="form-inline-modality">
+                                        <form>
                                             {% for modality in modalities %}
                                                 <label id="{{ modality.filter_tag }}"
                                                        class="checkbox-inline no_indent projectLinkFilter">
@@ -84,17 +70,17 @@
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="card-header" id="headingTask">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseTask"
-                                                aria-expanded="false"
-                                                aria-controls="collapseTask">
-                                            Task type
-                                        </button>
-                                    </h5>
+                            <div class="card mb-3">
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseTask"
+                                     aria-expanded="false"
+                                     aria-controls="collapseTask"
+                                     id="headingTask">
+                                    <i class="fas fa-chevron-right"
+                                       id="task-chevron">
+                                    </i>
+                                    <b>Task type</b>
                                 </div>
 
                                 <div id="collapseTask" class="collapse"
@@ -121,85 +107,65 @@
                             </div>
 
 
-                            <div Class="card">
-                                <div class="card-header"
-                                     id="headingRegion">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link collapsed"
-                                                data-toggle="collapse"
-                                                data-target="#collapseRegion"
-                                                aria-expanded="false"
-                                                aria-controls="collapseRegion">
-                                            Structure
-                                        </button>
-                                    </h5>
+                            <div class="card mb-3">
+                                <div class="card-body collapsed"
+                                     data-toggle="collapse"
+                                     data-target="#collapseStructure"
+                                     aria-expanded="false"
+                                     aria-controls="collapseStructure"
+                                     id="headingStructure">
+                                    <i class="fas fa-chevron-right"
+                                       id="structure-chevron">
+                                    </i>
+                                    <b>Structure</b>
                                 </div>
 
-                                <div id="collapseRegion" class="collapse"
-                                     aria-labelledby="headingRegion"
+                                <div id="collapseStructure" class="collapse"
+                                     aria-labelledby="headingStructure"
                                      data-parent="#accordion">
                                     <div class="card-body">
-                                        <div id="accordion1">
-                                            {% for r in body_regions %}
-                                                <div class="card">
-                                                    <div class="card-header"
-                                                         id="filterbyregion-{{ r.filter_tag }}">
-                                                        <button class="btn btn-link"
-                                                                data-toggle="collapse"
-                                                                data-target="#collapseRegion-{{ r.filter_tag }}"
-                                                                aria-expanded="true"
-                                                                aria-controls="collapseRegion-{{ r.filter_tag }}">
-                                                            <label id="{{ r.filter_tag }}"
-                                                                   class="checkbox-inline no_indent projectLinkFilter">
-                                                                <input type="checkbox"
-                                                                       class="filter"
-                                                                       id="{{ r.filter_tag }}"
-                                                                       value="{{ r.region }}">
-                                                                <span>{{ r.region }}</span>
-                                                                <span
-                                                                        class="counter ml-1 badge badge-pill badge-info"
-                                                                        id="{{ r.filter_tag }}"></span>
-                                                            </label>
-                                                        </button>
-                                                    </div>
-                                                    <div id="collapseRegion{{ r.filter_tag }}"
-                                                         class="collapse show"
-                                                         aria-labelledby="filterbyregion-{{ r.filter_tag }}"
-                                                         data-parent="#accordion1">
-                                                        <div class="card-body">
-                                                            <form class="form-inline-region-{{ r.filter_tag }}">
-                                                                {% for s in body_structures %}
-                                                                    {% ifequal s.region.filter_tag r.filter_tag %}
-                                                                        <label id="{{ s.filter_tag }}"
-                                                                               class="checkbox-inline no_indent projectLinkFilter">
-                                                                            <input type="checkbox"
-                                                                                   class="filter"
-                                                                                   id="{{ s.filter_tag }}"
-                                                                                   value="{{ s.structure }}">
-                                                                            <span>{{ s.structure }}</span>
-                                                                            <span
-                                                                                    class="counter ml-1 badge badge-pill badge-info"
-                                                                                    id="{{ s.filter_tag }}"></span>
-                                                                        </label><br>
-                                                                    {% endifequal %}
-                                                                {% endfor %}
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
+                                        {% for r in body_regions %}
+
+                                            <label id="{{ r.filter_tag }}"
+                                                   class="checkbox-inline no_indent projectLinkFilter">
+                                                <input type="checkbox"
+                                                       class="filter"
+                                                       id="{{ r.filter_tag }}"
+                                                       value="{{ r.region }}">
+                                                <span>{{ r.region }}</span>
+                                                <span
+                                                        class="counter ml-1 badge badge-pill badge-info"
+                                                        id="{{ r.filter_tag }}"></span>
+                                            </label>
+                                            <div class="ml-3">
+                                                <form class="form-inline-region-{{ r.filter_tag }}">
+                                                    {% for s in r.bodystructure_set.all %}
+                                                        <label id="{{ s.filter_tag }}"
+                                                               class="checkbox-inline no_indent projectLinkFilter">
+                                                            <input type="checkbox"
+                                                                   class="filter"
+                                                                   id="{{ s.filter_tag }}"
+                                                                   value="{{ s.structure }}">
+                                                            <span>{{ s.structure }}</span>
+                                                            <span
+                                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                                    id="{{ s.filter_tag }}"></span>
+                                                        </label>
+                                                        <br>
+                                                    {% endfor %}
+                                                </form>
+                                            </div>
+                                        {% endfor %}
+
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-
                         <span id="info"
-                              class="badge badge-info">Showing <span
+                              class="badge badge-info">Displaying <span
                                 class="counter" id="projectlink"></span>
-                    of <span class="counter" id="total"></span></span>
-
+                    of <span class="counter" id="total"></span> Challenges</span>
 
                     </div>
                 </div>
@@ -232,6 +198,24 @@
             </a>
         </p>
     {% endif %}
+
+    <div id="filter_info">
+        <span id="filter_counter" class="badge badge-info">
+            Active filters:
+            <span class="counter" id="active_filter_count"></span>
+        </span>
+
+        <div id="all_active_filters" style="display: inline-block;"></div>
+
+        <button id="btn_reset_filters"
+                class="btn btn-danger btn-sm"
+                value="Reset filters"
+                style="display:none;">
+            Reset filters
+        </button>
+
+        <p></p>
+    </div>
 
 
     <div id='projectlinks'>
