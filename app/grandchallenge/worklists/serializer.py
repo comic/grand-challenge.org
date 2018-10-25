@@ -5,10 +5,10 @@ from grandchallenge.worklists.models import Worklist, WorklistPatientRelation
 class WorklistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worklist
-        fields = ('id', 'title', 'parent', 'owner')
+        fields = ('id', 'title', 'trunk', 'parent')
 
 
-class WorklistPatientRelationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorklistPatientRelation
-        fields = ('id', 'worklist', 'patient')
+#class WorklistPatientRelationSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = WorklistPatientRelation
+#        fields = ('id', 'worklist', 'patient')

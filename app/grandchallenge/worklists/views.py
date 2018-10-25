@@ -9,7 +9,7 @@ class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'title', 'parent', 'owner')
+    filter_fields = ('id', 'title', 'trunk', 'parent')
 
 
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
@@ -17,13 +17,13 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSerializer
 
 
-class WorklistPatientRelationTable(generics.ListCreateAPIView):
-    queryset = WorklistPatientRelation.objects.all()
-    serializer_class = WorklistPatientRelationSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'worklist', 'patient')
+#class WorklistPatientRelationTable(generics.ListCreateAPIView):
+#    queryset = WorklistPatientRelation.objects.all()
+#    serializer_class = WorklistPatientRelationSerializer
+#    filter_backends = (DjangoFilterBackend,)
+#    filter_fields = ('id', 'worklist', 'patient')
 
 
-class WorklistPatientRelationRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = WorklistPatientRelation.objects.all()
-    serializer_class = WorklistPatientRelationSerializer
+#class WorklistPatientRelationRecord(generics.RetrieveUpdateDestroyAPIView):
+#    queryset = WorklistPatientRelation.objects.all()
+#    serializer_class = WorklistPatientRelationSerializer
