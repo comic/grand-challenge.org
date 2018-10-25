@@ -1300,9 +1300,7 @@ class ProjectStatisticsNode(template.Node):
             .order_by("-dcount")
         )
 
-        chart_data = [
-            [countries.name(c["country"]), c["dcount"]] for c in country_counts
-        ]
+        chart_data = [[str(c["country"]), c["dcount"]] for c in country_counts]
 
         snippet_geochart = """
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -1317,16 +1315,22 @@ class ProjectStatisticsNode(template.Node):
                 var options = {{
                     colorAxis: {{
                         colors: [
-                            "#440154",
-                            "#482979",
-                            "#3e4c8a",
-                            "#306a8e",
-                            "#25858e",
-                            "#1fa188",
-                            "#3bbb75",
-                            "#77d153",
-                            "#c2df23",
-                            "#fde725"
+                            '#440154', 
+                            '#32658e', 
+                            '#20a486', 
+                            '#63cb5f', 
+                            '#a8db34', 
+                            '#d0e11c', 
+                            '#e7e419', 
+                            '#f1e51d', 
+                            '#f8e621', 
+                            '#fbe723', 
+                            '#fbe723', 
+                            '#fde725', 
+                            '#fde725', 
+                            '#fde725', 
+                            '#fde725', 
+                            '#fde725'
                         ]
                     }},
                     backgroundColor: '#c9eeff'
