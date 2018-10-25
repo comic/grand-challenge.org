@@ -229,18 +229,18 @@
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
-                                    <div class="card-header challenge-card-header">
-                                        <h4 class="challenge-card-title">
-                                            <img class="challenge-logo"
+                                    <div class="card-header small challenge-card-header">
+                                        <img class="challenge-logo"
                                                  alt="{{ challenge.short_name }} logo"
                                                  src="{{ challenge.thumb_image_url }}">
+                                        <h3 class="challenge-card-title p-3">
                                             {% firstof challenge.title challenge.short_name %}
-                                        </h4>
+                                        </h3>
                                     </div>
                                 </a>
 
                                 <div class="card-body projectLinkBody small"
-                                     style="overflow: hidden; text-overflow: ellipsis; height:250px; line-height:1.5em">
+                                     style="overflow: hidden; height:250px; line-height:1.5em">
                                     {{ challenge.description|truncatewords:35 }}
                                 </div>
 
