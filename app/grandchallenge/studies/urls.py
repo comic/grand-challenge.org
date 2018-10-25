@@ -1,5 +1,5 @@
 from django.urls import path, re_path
-from grandchallenge.patients import views
+from grandchallenge.studies import views
 
 app_name = "studies"
 urlpatterns = [
