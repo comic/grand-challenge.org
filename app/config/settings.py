@@ -15,7 +15,7 @@ def strtobool(val) -> bool:
 
 
 # Default COMIC settings, to be included by settings.py
-DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+DEBUG = True#strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -33,7 +33,7 @@ IGNORABLE_404_URLS = [
 
 # Django will throw an exeception if the URL you type to load the framework is
 # not in the list below. This is a security measure.
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web", "172.30.180.232"]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the "Comic" app dir. We need to  go one dir higher so path.join("..")
@@ -277,6 +277,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",  # bootstrap forms
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
+	"django-filters",  # for automatic rest model filtering
 ]
 
 LOCAL_APPS = [
