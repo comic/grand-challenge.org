@@ -26,6 +26,7 @@ result_list_options = (
     "score_decimal_places",
     "extra_results_columns",
     "auto_publish_new_results",
+    "result_display_choice",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",

@@ -257,7 +257,9 @@ class ResultList(ListView):
             "job__submission__creator__user_profile"
         )
         return queryset.filter(
-            Q(challenge=self.request.challenge), Q(published=True)
+            Q(challenge=self.request.challenge),
+            Q(published=True),
+            ~Q(rank=0),  # Exclude results without a rank
         )
 
 

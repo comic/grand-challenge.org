@@ -18,6 +18,7 @@ def generate_rank_dict(
     """
     rank = defaultdict(dict)
     pk_val = namedtuple("pk_val", ["pk", "val"])
+
     if len(queryset) == 0:
         # No results to calculate
         return rank
@@ -30,6 +31,7 @@ def generate_rank_dict(
             for res in queryset
         ]
         pk_vals.sort(key=lambda x: x.val, reverse=reverse)
+
         # Assign the ranks
         current_val = pk_vals[0].val
         current_rank = 1
@@ -40,4 +42,5 @@ def generate_rank_dict(
                 current_val = result_pk_val.val
                 current_rank = idx + 1
             rank[result_pk_val.pk][metric_path] = current_rank
+
     return rank
