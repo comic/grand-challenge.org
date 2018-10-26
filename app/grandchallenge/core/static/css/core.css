@@ -182,7 +182,7 @@ div.django-ckeditor-widget {
 
 .challenge-logo {
     border-top-left-radius: 3px;
-    width: 80px;
+    width: 80px !important; /* rendering bug with long titles */
     height: 80px;
     object-fit:cover;
 }
