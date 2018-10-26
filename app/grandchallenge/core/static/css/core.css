@@ -108,6 +108,11 @@ div.sidebar li.nav-item, nav.navbar-top li.nav-item {
     top: 2px;
 }
 
+a.dropdown-item {
+    /* No caps in dropdown */
+    text-transform: none;
+}
+
 div.sidebar li.nav-item:hover {
     background-color: #eee;
 }
@@ -159,7 +164,6 @@ div.django-ckeditor-widget {
     width: 100%;
     height: 60px; /* Set the fixed height of the footer here */
     line-height: 60px; /* Vertically center the text there */
-    background-color: #f5f5f5;
 }
 
 .headerImage {
@@ -167,44 +171,24 @@ div.django-ckeditor-widget {
     border-radius: 6px;
 }
 
-.projectLinkHeading {
-    overflow: hidden;
-    padding: 15px 0;
-    background-color: #f5f5f5;
-}
-
-.projectLinkFooter {
-    border-top: none;
-}
-
-.projectLinkImage {
-    width: 30%;
-    height: 100%;
+.challenge-card-header {
     padding: 0;
-    float: left;
-    margin-left: 15px;
     display: flex;
-    align-items: center;
+    align-items:center;
 }
 
-.projectLinkImage img {
-    flex-shrink: 0;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 3px;
+.challenge-card-title {
+    margin: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.projectLinkName {
-    height: 100%;
-    padding-right: 15px;
-    display: flex;
-    align-items: center;
-}
-
-.projectLinkName h3 {
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 15px;
+.challenge-logo {
+    border-top-left-radius: 3px;
+    width: 80px !important; /* rendering bug with long titles */
+    height: 80px;
+    object-fit:cover;
 }
 
 .projectLinkFilter {
