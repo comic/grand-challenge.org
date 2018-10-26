@@ -3,7 +3,7 @@ from django.db.models import CharField
 from django.utils.translation import ugettext_lazy as _
 
 
-class Group(models.model):
+class Group(models.Model):
     title = CharField(_("Title of group"), null=False, blank=False, max_length=255)
 
 

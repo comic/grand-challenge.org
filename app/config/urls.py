@@ -64,7 +64,7 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),
-	path("api/", include("grandchallenge.patients.urls", namespace="patients")),
+    path("api/", include("grandchallenge.patients.urls", namespace="patients")),
     path("api/", include("grandchallenge.studies.urls", namespace="studies")),
     path("api/", include("grandchallenge.worklists.urls", namespace="worklists")),
 
