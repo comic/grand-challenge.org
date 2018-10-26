@@ -219,7 +219,8 @@
         {% endblock messages %}
     </div>
 
-    <div id="page" class="{% block containerType %}container{% endblock %} mt-3">
+    <div id="page"
+         class="{% block containerType %}container{% endblock %} mt-3">
 
         {% block jumbotron %}{% endblock %}
 
@@ -265,10 +266,21 @@
 
 <!-- page -->
 {% block footer %}
-    <footer class="footer bg-light">
-        <div id="metafooter" class="container text-center text-muted">
-            Consortium for Open Medical Image Computing &copy;
-            2012-{% now "Y" %}
+    <footer class="footer bg-secondary">
+        <div class="container">
+            <div class="row">
+                <div class="col-5"></div>
+                <div class="col-2 text-center">
+                    <a class="text-light"
+                       href="https://github.com/comic/grand-challenge.org"
+                       title="Join us on Github">
+                        <i class="fab fa-github"></i></a>
+                </div>
+                <div class="col-5 text-light text-right text-capitalize">
+                    &copy; 2012-{% now "Y" %} {{ main_challenge_name }}
+                </div>
+
+            </div>
         </div>
     </footer>
 {% endblock %}
