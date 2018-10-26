@@ -51,7 +51,12 @@ def test_results_display():
         queryset = (
             ResultFactory(
                 challenge=challenge,
-                metrics={"a": 0.1},
+                metrics={"a": 0.6},
+                job__submission__creator=user1,
+            ),
+            ResultFactory(
+                challenge=challenge,
+                metrics={"a": 0.4},
                 job__submission__creator=user1,
             ),
             ResultFactory(
@@ -61,12 +66,7 @@ def test_results_display():
             ),
             ResultFactory(
                 challenge=challenge,
-                metrics={"a": 0.3},
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                challenge=challenge,
-                metrics={"a": 0.4},
+                metrics={"a": 0.1},
                 job__submission__creator=user2,
             ),
             ResultFactory(
@@ -76,12 +76,12 @@ def test_results_display():
             ),
             ResultFactory(
                 challenge=challenge,
-                metrics={"a": 0.6},
+                metrics={"a": 0.3},
                 job__submission__creator=user2,
             ),
         )
 
-    expected_ranks = [6, 5, 4, 3, 2, 1]
+    expected_ranks = [1, 3, 5, 6, 2, 4]
     assert_ranks(challenge, expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
@@ -90,10 +90,22 @@ def test_results_display():
     expected_ranks = [0, 0, 2, 0, 0, 1]
     assert_ranks(challenge, expected_ranks, queryset)
 
-    # Check with ascending order
+    challenge.evaluation_config.result_display_choice = Config.BEST
+    challenge.evaluation_config.save()
+
+    expected_ranks = [1, 0, 0, 0, 2, 0]
+    assert_ranks(challenge, expected_ranks, queryset)
+
+    # now test reverse order
     challenge.evaluation_config.score_default_sort = (
         challenge.evaluation_config.ASCENDING
     )
+    challenge.evaluation_config.save()
+
+    expected_ranks = [0, 0, 2, 1, 0, 0]
+    assert_ranks(challenge, expected_ranks, queryset)
+
+    challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 1, 0, 0, 2]

@@ -44,9 +44,11 @@ class Config(UUIDModel):
 
     ALL = "all"
     MOST_RECENT = "rec"
+    BEST = "bst"
     RESULT_DISPLAY_CHOICES = (
         (ALL, "Display all results"),
-        (MOST_RECENT, "Display only the most recent result for each user"),
+        (MOST_RECENT, "Only display each users most recent result"),
+        (BEST, "Only display each users best result"),
     )
 
     challenge = models.OneToOneField(

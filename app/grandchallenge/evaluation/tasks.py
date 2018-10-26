@@ -31,6 +31,34 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
                 users_seen.add(creator)
                 queryset.append(r)
 
+    elif challenge.evaluation_config.result_display_choice == Config.BEST:
+
+        all_ranks = generate_rank_dict(
+            queryset=valid_results,
+            metric_paths=(challenge.evaluation_config.score_jsonpath,),
+            metric_reverse=(
+                challenge.evaluation_config.score_default_sort
+                == challenge.evaluation_config.DESCENDING,
+            ),
+        )
+
+        best_result_per_user = {}
+
+        for r in valid_results:
+            creator = r.job.submission.creator
+
+            if creator not in best_result_per_user or (
+                all_ranks[str(r.pk)][
+                    challenge.evaluation_config.score_jsonpath
+                ]
+                < all_ranks[str(best_result_per_user[creator].pk)][
+                    challenge.evaluation_config.score_jsonpath
+                ]
+            ):
+                best_result_per_user[creator] = r
+
+        queryset = [r for r in best_result_per_user.values()]
+
     else:
         queryset = valid_results
 

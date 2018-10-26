@@ -35,12 +35,15 @@ def generate_rank_dict(
         # Assign the ranks
         current_val = pk_vals[0].val
         current_rank = 1
+
         for idx, result_pk_val in enumerate(pk_vals):
+
             # If the values of the metrics are the same, keep the rank
             # position the same
             if result_pk_val.val != current_val:
                 current_val = result_pk_val.val
                 current_rank = idx + 1
+
             rank[result_pk_val.pk][metric_path] = current_rank
 
     return rank
