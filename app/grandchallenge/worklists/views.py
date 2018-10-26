@@ -1,10 +1,21 @@
-from grandchallenge.worklists.models import Worklist, WorklistPatientRelation
-from grandchallenge.worklists.serializer import WorklistSerializer, WorklistPatientRelationSerializer
+from grandchallenge.worklists.models import Group, Worklist
+from grandchallenge.worklists.serializer import GroupSerializer, WorklistSerializer
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-# List of views that can be queried
+class GroupTable(generics.ListCreateAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('id', 'title')
+
+
+class GroupRecord(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
