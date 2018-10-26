@@ -29,6 +29,7 @@ def generate_rank_dict(
         pk_vals = [
             pk_val(str(res.pk), get_jsonpath(res.metrics, metric_path))
             for res in queryset
+            if get_jsonpath(res.metrics, metric_path) != ""
         ]
         pk_vals.sort(key=lambda x: x.val, reverse=reverse)
 

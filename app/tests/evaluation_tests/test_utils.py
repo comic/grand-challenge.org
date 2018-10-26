@@ -21,11 +21,14 @@ def test_calculate_ranks():
             ResultFactory(challenge=challenge, metrics={"a": 0.7}),
             ResultFactory(challenge=challenge, metrics={"a": 0.5}),
             ResultFactory(challenge=challenge, metrics={"a": 1.0}),
+            ResultFactory(
+                challenge=challenge, metrics={"b": 0.3}  # Invalid result
+            ),
         )
 
     # An alternative implementation could be [4, 3, 1, 2, 3, 1] as there are
     # only 4 unique values, the current implementation is harsh on poor results
-    expected_ranks = [6, 4, 1, 3, 4, 1]
+    expected_ranks = [6, 4, 1, 3, 4, 1, 0]
     assert_ranks(challenge, expected_ranks, queryset)
 
     # now test reverse order
@@ -34,7 +37,7 @@ def test_calculate_ranks():
     )
     challenge.evaluation_config.save()
 
-    expected_ranks = [1, 2, 5, 4, 2, 5]
+    expected_ranks = [1, 2, 5, 4, 2, 5, 0]
     assert_ranks(challenge, expected_ranks, queryset)
 
 
@@ -49,6 +52,11 @@ def test_results_display():
         user1 = UserFactory()
         user2 = UserFactory()
         queryset = (
+            ResultFactory(
+                challenge=challenge,
+                metrics={"b": 0.3},  # Invalid result
+                job__submission__creator=user1,
+            ),
             ResultFactory(
                 challenge=challenge,
                 metrics={"a": 0.6},
@@ -81,19 +89,19 @@ def test_results_display():
             ),
         )
 
-    expected_ranks = [1, 3, 5, 6, 2, 4]
+    expected_ranks = [0, 1, 3, 5, 6, 2, 4]
     assert_ranks(challenge, expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
-    expected_ranks = [0, 0, 2, 0, 0, 1]
+    expected_ranks = [0, 0, 0, 2, 0, 0, 1]
     assert_ranks(challenge, expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.BEST
     challenge.evaluation_config.save()
 
-    expected_ranks = [1, 0, 0, 0, 2, 0]
+    expected_ranks = [0, 1, 0, 0, 0, 2, 0]
     assert_ranks(challenge, expected_ranks, queryset)
 
     # now test reverse order
@@ -102,13 +110,13 @@ def test_results_display():
     )
     challenge.evaluation_config.save()
 
-    expected_ranks = [0, 0, 2, 1, 0, 0]
+    expected_ranks = [0, 0, 0, 2, 1, 0, 0]
     assert_ranks(challenge, expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
-    expected_ranks = [0, 0, 1, 0, 0, 2]
+    expected_ranks = [0, 0, 0, 1, 0, 0, 2]
     assert_ranks(challenge, expected_ranks, queryset)
 
 

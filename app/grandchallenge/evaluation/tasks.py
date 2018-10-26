@@ -47,8 +47,14 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         for r in valid_results:
             creator = r.job.submission.creator
 
+            try:
+                this_rank = all_ranks[str(r.pk)][score_path]
+            except KeyError:
+                # This result was not ranked
+                continue
+
             if creator not in best_result_per_user or (
-                all_ranks[str(r.pk)][score_path]
+                this_rank
                 < all_ranks[str(best_result_per_user[creator].pk)][score_path]
             ):
                 best_result_per_user[creator] = r
