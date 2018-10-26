@@ -11,6 +11,9 @@ from grandchallenge.evaluation.utils import generate_rank_dict
 @shared_task
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = Challenge.objects.get(pk=challenge_pk)
+    score_path = challenge.evaluation_config.score_jsonpath
+    default_sort = challenge.evaluation_config.score_default_sort
+    display_choice = challenge.evaluation_config.result_display_choice
 
     valid_results = (
         Result.objects.filter(Q(challenge=challenge), Q(published=True))
@@ -18,7 +21,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         .select_related("job__submission")
     )
 
-    if challenge.evaluation_config.result_display_choice == Config.MOST_RECENT:
+    if display_choice == Config.MOST_RECENT:
         # Go through the results and only pass through the most recent
         # submission for each user
         users_seen = set()
@@ -31,15 +34,12 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
                 users_seen.add(creator)
                 queryset.append(r)
 
-    elif challenge.evaluation_config.result_display_choice == Config.BEST:
+    elif display_choice == Config.BEST:
 
         all_ranks = generate_rank_dict(
             queryset=valid_results,
-            metric_paths=(challenge.evaluation_config.score_jsonpath,),
-            metric_reverse=(
-                challenge.evaluation_config.score_default_sort
-                == challenge.evaluation_config.DESCENDING,
-            ),
+            metric_paths=(score_path,),
+            metric_reverse=(default_sort == Config.DESCENDING,),
         )
 
         best_result_per_user = {}
@@ -48,12 +48,8 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
             creator = r.job.submission.creator
 
             if creator not in best_result_per_user or (
-                all_ranks[str(r.pk)][
-                    challenge.evaluation_config.score_jsonpath
-                ]
-                < all_ranks[str(best_result_per_user[creator].pk)][
-                    challenge.evaluation_config.score_jsonpath
-                ]
+                all_ranks[str(r.pk)][score_path]
+                < all_ranks[str(best_result_per_user[creator].pk)][score_path]
             ):
                 best_result_per_user[creator] = r
 
@@ -64,18 +60,13 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
 
     ranks = generate_rank_dict(
         queryset=queryset,
-        metric_paths=(challenge.evaluation_config.score_jsonpath,),
-        metric_reverse=(
-            challenge.evaluation_config.score_default_sort
-            == challenge.evaluation_config.DESCENDING,
-        ),
+        metric_paths=(score_path,),
+        metric_reverse=(default_sort == Config.DESCENDING,),
     )
 
     for res in Result.objects.filter(Q(challenge=challenge)):
         try:
-            rank = ranks[str(res.pk)][
-                challenge.evaluation_config.score_jsonpath
-            ]
+            rank = ranks[str(res.pk)][score_path]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
