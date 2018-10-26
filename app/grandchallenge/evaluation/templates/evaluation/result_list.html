@@ -101,6 +101,14 @@
         </table>
     </div>
 
+    {% if site.evaluation_config.result_display_choice == site.evaluation_config.BEST %}
+        <p class="small ml-3">Only the best published result for each participant is
+            listed.</p>
+    {% elif site.evaluation_config.result_display_choice == site.evaluation_config.MOST_RECENT %}
+        <p class="small ml-3"> Only the most recent published result for each participant is
+            listed.</p>
+    {% endif %}
+
     <script type="text/javascript">
         $(document).ready(function () {
             $('#resultsTable').DataTable({
