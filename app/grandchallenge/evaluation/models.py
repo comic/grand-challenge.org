@@ -42,6 +42,15 @@ class Config(UUIDModel):
         (REQUIRED, "Required"),
     )
 
+    ALL = "all"
+    MOST_RECENT = "rec"
+    BEST = "bst"
+    RESULT_DISPLAY_CHOICES = (
+        (ALL, "Display all results"),
+        (MOST_RECENT, "Only display each users most recent result"),
+        (BEST, "Only display each users best result"),
+    )
+
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
@@ -100,6 +109,12 @@ class Config(UUIDModel):
             '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
         ),
     )
+    result_display_choice = models.CharField(
+        max_length=3,
+        choices=RESULT_DISPLAY_CHOICES,
+        default=ALL,
+        help_text=("Which results should be displayed on the leaderboard?"),
+    )
     allow_submission_comments = models.BooleanField(
         default=False,
         help_text=(
@@ -112,7 +127,6 @@ class Config(UUIDModel):
             "If true, submission comments are shown on the results page."
         ),
     )
-
     supplementary_file_choice = models.CharField(
         max_length=3,
         choices=SUPPLEMENTARY_FILE_CHOICES,
@@ -151,7 +165,6 @@ class Config(UUIDModel):
             "page."
         ),
     )
-
     publication_url_choice = models.CharField(
         max_length=3,
         choices=PUBLICATION_LINK_CHOICES,

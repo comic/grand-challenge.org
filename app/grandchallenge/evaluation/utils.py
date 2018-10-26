@@ -18,6 +18,7 @@ def generate_rank_dict(
     """
     rank = defaultdict(dict)
     pk_val = namedtuple("pk_val", ["pk", "val"])
+
     if len(queryset) == 0:
         # No results to calculate
         return rank
@@ -28,16 +29,22 @@ def generate_rank_dict(
         pk_vals = [
             pk_val(str(res.pk), get_jsonpath(res.metrics, metric_path))
             for res in queryset
+            if get_jsonpath(res.metrics, metric_path) != ""
         ]
         pk_vals.sort(key=lambda x: x.val, reverse=reverse)
+
         # Assign the ranks
         current_val = pk_vals[0].val
         current_rank = 1
+
         for idx, result_pk_val in enumerate(pk_vals):
+
             # If the values of the metrics are the same, keep the rank
             # position the same
             if result_pk_val.val != current_val:
                 current_val = result_pk_val.val
                 current_rank = idx + 1
+
             rank[result_pk_val.pk][metric_path] = current_rank
+
     return rank
