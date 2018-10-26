@@ -1,5 +1,7 @@
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -30,3 +32,18 @@ class PatientTable(generics.ListCreateAPIView):
 class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
+
+
+class PatientCreate(CreateView):
+    model = Patient
+    fields = '__all__'
+
+
+class PatientUpdate(UpdateView):
+    model = Patient
+    fields = ['name', 'sex', 'height']
+
+
+class PatientDelete(DeleteView):
+    model = Patient
+    success_url = reverse_lazy('patients')
