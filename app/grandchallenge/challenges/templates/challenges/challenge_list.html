@@ -229,11 +229,11 @@
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
-                                    <div class="card-header small challenge-card-header">
-                                        <img class="challenge-logo"
-                                                 alt="{{ challenge.short_name }} logo"
-                                                 src="{{ challenge.thumb_image_url }}">
-                                        <h3 class="challenge-card-title p-3">
+                                    <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
+                                        <img class="thumbnail rounded-top-left flex-shrink-0"
+                                             alt="{{ challenge.short_name }} logo"
+                                             src="{{ challenge.thumb_image_url }}">
+                                        <h3 class="m-0 px-3 text-nowrap text-truncate flex-shrink-1">
                                             {% firstof challenge.title challenge.short_name %}
                                         </h3>
                                     </div>
