@@ -41,7 +41,7 @@ class PatientCreate(CreateView):
 
 class PatientUpdate(UpdateView):
     model = Patient
-    fields = ['name', 'sex', 'height']
+    fields = '__all__'
 
 
 class PatientDelete(DeleteView):
