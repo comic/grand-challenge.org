@@ -181,10 +181,6 @@ div.django-ckeditor-widget {
     object-fit:cover;
 }
 
-.projectLinkFilter {
-    font-weight: bold;
-}
-
 .navbar-toggle {
     margin-left: 15px;
     float: left;
