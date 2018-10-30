@@ -1,28 +1,28 @@
-from grandchallenge.worklists.models import Group, Worklist
-from grandchallenge.worklists.serializer import GroupSerializer, WorklistSerializer
+from grandchallenge.worklists.models import WorklistGroup, Worklist
+from grandchallenge.worklists.serializer import WorklistGroupSerializer, WorklistSerializer
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-class GroupTable(generics.ListCreateAPIView):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+class WorklistGroupTable(generics.ListCreateAPIView):
+    queryset = WorklistGroup.objects.all()
+    serializer_class = WorklistGroupSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'title')
+    filter_fields = '__all__'
 
 
-class GroupRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+class WorklistGroupRecord(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WorklistGroup.objects.all()
+    serializer_class = WorklistGroupSerializer
 
 
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'title', 'trunk', 'parent')
+    filter_fields = '__all__'
 
 
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
@@ -30,18 +30,18 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSerializer
 
 
-class GroupCreate(CreateView):
-    model = Group
+class WorklistGroupCreate(CreateView):
+    model = WorklistGroup
     fields = '__all__'
 
 
-class GroupUpdate(UpdateView):
-    model = Group
+class WorklistGroupUpdate(UpdateView):
+    model = WorklistGroup
     fields = '__all__'
 
 
-class GroupDelete(DeleteView):
-    model = Group
+class WorklistGroupDelete(DeleteView):
+    model = WorklistGroup
     success_url = reverse_lazy('groups')
 
 
