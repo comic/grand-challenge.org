@@ -73,8 +73,12 @@ urlpatterns = [
         "challenges/",
         include("grandchallenge.challenges.urls", namespace="challenges"),
     ),
-    re_path(
-        r"^(?i)all_challenges/$",
+    path(
+        "all_challenges/",
+        RedirectView.as_view(pattern_name="challenges:list", permanent=False),
+    ),
+    path(
+        "All_Challenges/",
         RedirectView.as_view(pattern_name="challenges:list", permanent=False),
     ),
     path("cases/", include("grandchallenge.cases.urls", namespace="cases")),
