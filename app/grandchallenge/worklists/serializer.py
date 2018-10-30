@@ -1,17 +1,17 @@
 from rest_framework import serializers
-from grandchallenge.worklists.models import Group, Worklist
+from grandchallenge.worklists.models import Worklist, WorklistGroup
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class WorklistGroupSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Group
-        fields = ('id', 'title')
+        model = WorklistGroup
+        fields = '__all__'
 
 
 class WorklistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worklist
-        fields = ('id', 'title', 'group', 'parent')
+        fields = '__all__'
 
 
 #class WorklistPatientRelationSerializer(serializers.ModelSerializer):

@@ -1,17 +1,15 @@
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-@csrf_exempt
 class PatientTable(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'name', 'sex')
+    filter_fields = '__all__'
 
     def get_queryset(self):
         # Get URL parameter as a string, if exists
@@ -31,7 +29,6 @@ class PatientTable(generics.ListCreateAPIView):
         return queryset
 
 
-@csrf_exempt
 class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer

@@ -1,13 +1,11 @@
 from grandchallenge.worklists.models import Group, Worklist
 from grandchallenge.worklists.serializer import GroupSerializer, WorklistSerializer
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-@csrf_exempt
 class GroupTable(generics.ListCreateAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
@@ -15,13 +13,11 @@ class GroupTable(generics.ListCreateAPIView):
     filter_fields = ('id', 'title')
 
 
-@csrf_exempt
 class GroupRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
 
 
-@csrf_exempt
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
@@ -29,7 +25,6 @@ class WorklistTable(generics.ListCreateAPIView):
     filter_fields = ('id', 'title', 'trunk', 'parent')
 
 
-@csrf_exempt
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
