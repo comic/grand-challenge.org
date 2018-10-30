@@ -63,6 +63,7 @@ urlpatterns = [
     ),
     # Do not change the api namespace without updating the view names in
     # all of the serializers
+    path("api/auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("api/", include("grandchallenge.api.urls", namespace="api")),
     path("api/", include("grandchallenge.patients.urls", namespace="patients")),
     path("api/", include("grandchallenge.studies.urls", namespace="studies")),

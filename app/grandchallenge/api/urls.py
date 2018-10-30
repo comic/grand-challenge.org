@@ -14,5 +14,4 @@ urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers
     path("v1/", include(router.urls)),
-    path("auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
