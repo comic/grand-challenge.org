@@ -16,7 +16,8 @@ pyupgrade = "*"
 
 [packages]
 "beautifulsoup4" = "*"
-celery = {extras = ["redis"]}
+celery = "*"
+redis = "*"
 django = "<2.1"
 django-countries = "*"
 django-crispy-forms = "*"

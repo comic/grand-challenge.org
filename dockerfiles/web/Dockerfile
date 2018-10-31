@@ -20,6 +20,7 @@ WORKDIR /app
 ARG PIPENV_DEV
 ADD Pipfile /app/
 ADD Pipfile.lock /app/
+RUN python -m pip install -U pip
 RUN python -m pip install -U pipenv
 RUN pipenv install --system
 
