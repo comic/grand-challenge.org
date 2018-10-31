@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.urls import path
 from rest_framework import routers
-from rest_framework import drf_auth_views
+from rest_framework.authtoken import views as drf_auth_views
 
 from grandchallenge.api.views import SubmissionViewSet
 from grandchallenge.cases.views import ImageViewSet
