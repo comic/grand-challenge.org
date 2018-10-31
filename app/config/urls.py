@@ -8,6 +8,8 @@ from django.views.generic import TemplateView, RedirectView
 from grandchallenge.core.views import comicmain
 from grandchallenge.pages.views import FaviconView
 
+from rest_framework.authtoken import views as drf_auth_views
+
 admin.autodiscover()
 
 
@@ -64,6 +66,7 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path(r'^api/auth/token/', drf_auth_views.obtain_auth_token),
     path("api/", include("grandchallenge.api.urls", namespace="api")),
     path("api/", include("grandchallenge.patients.urls", namespace="patients")),
     path("api/", include("grandchallenge.studies.urls", namespace="studies")),
