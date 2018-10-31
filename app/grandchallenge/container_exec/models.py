@@ -21,15 +21,12 @@ class ContainerExecJobModel(models.Model):
     CANCELLED = 5
 
     STATUS_CHOICES = (
-        (PENDING, "The task is waiting for execution"),
-        (STARTED, "The task has been started"),
-        (RETRY, "The task is to be retried, possibly because of failure"),
-        (
-            FAILURE,
-            "The task raised an exception, or has exceeded the retry limit",
-        ),
-        (SUCCESS, "The task executed successfully"),
-        (CANCELLED, "The task was cancelled"),
+        (PENDING, "Queued"),
+        (STARTED, "Started"),
+        (RETRY, "Re-Queued"),
+        (FAILURE, "Failed"),
+        (SUCCESS, "Succeeded"),
+        (CANCELLED, "Cancelled"),
     )
 
     status = models.PositiveSmallIntegerField(
