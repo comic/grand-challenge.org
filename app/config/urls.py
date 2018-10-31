@@ -66,7 +66,7 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path(r'^api/auth/token/', drf_auth_views.obtain_auth_token),
+    path("api/auth/token/", drf_auth_views.obtain_auth_token),
     path("api/", include("grandchallenge.api.urls", namespace="api")),
     path("api/", include("grandchallenge.patients.urls", namespace="patients")),
     path("api/", include("grandchallenge.studies.urls", namespace="studies")),
