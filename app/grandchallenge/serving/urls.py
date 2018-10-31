@@ -12,6 +12,11 @@ urlpatterns = [
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
     path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
     path(
+        "django-summernote/<path:path>",
+        serve_folder,
+        {"folder": "django-summernote"},
+    ),
+    path(
         "evaluation-supplementary/<path:path>",
         serve_folder,
         {"folder": "evaluation-supplementary"},
