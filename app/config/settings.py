@@ -477,6 +477,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation",
     "evaluation-supplementary",
     "favicon",
+    "django-summernote",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
 
