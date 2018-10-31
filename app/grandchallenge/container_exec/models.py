@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
 from typing import Tuple, Type
 
 from django.conf import settings
@@ -103,6 +104,7 @@ class ContainerImageModel(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+
     image = models.FileField(
         upload_to=docker_image_path,
         validators=[ExtensionValidator(allowed_extensions=(".tar",))],
@@ -112,13 +114,22 @@ class ContainerImageModel(models.Model):
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
+
     image_sha256 = models.CharField(editable=False, max_length=71)
+
     ready = models.BooleanField(
         default=False,
         editable=False,
         help_text="Is this image ready to be used?",
     )
     status = models.TextField(editable=False)
+
+    requires_gpu = models.BooleanField(default=False)
+    requires_memory_gb = models.PositiveIntegerField(default=4)
+    # Support up to 99.99 cpu cores
+    requires_cpu_cores = models.DecimalField(
+        default=Decimal("1.0"), max_digits=4, decimal_places=2
+    )
 
     class Meta:
         abstract = True
