@@ -40,8 +40,6 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 
-MANAGERS = ADMINS
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
