@@ -4,7 +4,7 @@
 {% block content %}
 <h2>Patient</h2>
 
-<form method="post">
+<form action="{% url 'patients' %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit">

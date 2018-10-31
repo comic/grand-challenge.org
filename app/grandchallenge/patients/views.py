@@ -1,4 +1,5 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
@@ -36,12 +37,15 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-class PatientCreate(CreateView):
-    model = Patient
-    fields = '__all__'
-    form_class = PatientCreationForm
-    success_url = reverse_lazy('patients')
-    template_name = 'patient_form.html'
+def PatientCreate(request):
+    form = PatientCreationForm()
+    return render(request, 'patient_form.html', {'form': form})
+
+#class PatientCreate(CreateView):
+ #   model = Patient
+  #  form_class = PatientCreationForm
+#    success_url = reverse_lazy('patients')
+   # template_name = 'patient_form.html'
 
 
 class PatientUpdate(UpdateView):
