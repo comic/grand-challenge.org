@@ -1,9 +1,11 @@
-from grandchallenge.patients.models import Patient
-from grandchallenge.patients.serializer import PatientSerializer
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
+
+from grandchallenge.patients.models import Patient
+from grandchallenge.patients.serializer import PatientSerializer
+from grandchallenge.patients.forms import PatientCreationForm
 
 
 class PatientTable(generics.ListCreateAPIView):
@@ -37,6 +39,9 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
 class PatientCreate(CreateView):
     model = Patient
     fields = '__all__'
+    form_class = PatientCreationForm
+    success_url = reverse_lazy('patients')
+    template_name = 'patient_form.html'
 
 
 class PatientUpdate(UpdateView):
