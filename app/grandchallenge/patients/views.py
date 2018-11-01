@@ -1,5 +1,5 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.shortcuts import render
+from django.views.generic.list import ListView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
@@ -36,6 +36,7 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
+
 class PatientCreate(CreateView):
     model = Patient
     form_class = PatientDetailForm
@@ -53,3 +54,9 @@ class PatientDelete(DeleteView):
     model = Patient
     template_name = 'patients/patient_deletion_form.html'
     success_url = reverse_lazy('patients:patients')
+
+
+class PatientList(ListView):
+    model = Patient
+    paginate_by = 100
+    template_name = 'patients/patient_list_form.html'

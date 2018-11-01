@@ -1,0 +1,23 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Patients</h2>
+{% csrf_token %}
+
+<table>
+    {% for field in patient.meta.get_fields() %}
+        <tr>
+            <td>{{ field.name }}</td>
+        </tr>
+    {% endfor %}
+
+    {% for patient in object_list %}
+        <tr>
+            {% for field in patient.meta.get_fields %}
+                <td> {{ field.value }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+{% endblock %}
