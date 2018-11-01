@@ -351,12 +351,55 @@ SUMMERNOTE_CONFIG = {
             ["style", ["style"]],
             ["font", ["bold", "italic", "underline", "strikethrough"]],
             ["para", ["ul", "ol", "paragraph"]],
-            ["insert", ["link", "picture", "video", "hr"]],
+            ["insert", ["link", "picture", "hr"]],
             ["view", ["fullscreen", "codeview"]],
             ["help", ["help"]],
         ],
     },
 }
+
+# Settings for allowed HTML
+BLEACH_ALLOWED_TAGS = [
+    "a",
+    "abbr",
+    "acronym",
+    "b",
+    "blockquote",
+    "br",
+    "code",
+    "div",
+    "em",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "i",
+    "img",
+    "li",
+    "ol",
+    "p",
+    "strike",
+    "strong",
+    "table",
+    "tbody",
+    "td",
+    "th",
+    "tr",
+    "u",
+    "ul",
+]
+BLEACH_ALLOWED_ATTRIBUTES = {
+    "*": ["class", "style"],
+    "a": ["href", "title"],
+    "abbr": ["title"],
+    "acronym": ["title"],
+    "img": ["src"],
+}
+BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
+BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 
 
 AUTH_PASSWORD_VALIDATORS = [

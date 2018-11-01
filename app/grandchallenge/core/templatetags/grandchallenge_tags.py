@@ -17,7 +17,6 @@ from django.core.files.storage import DefaultStorage
 from django.db.models import Count
 from django.template import defaulttags
 from django.urls import reverse as reverse_djangocore
-from django_countries import countries
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
