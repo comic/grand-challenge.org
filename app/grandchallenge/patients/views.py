@@ -44,17 +44,19 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
    # return render(request, 'patients/patient_form.html', {'form': form})
 
 class PatientCreate(CreateView):
+    model = Patient
     form_class = PatientDetailForm
     template_name = 'patients/patient_details_form.html'
-    success_url = 'patients'
+    #success_url = reverse_lazy(' grandchallenge.patients.patients')
 
 
 class PatientUpdate(UpdateView):
+    model = Patient
     form_class = PatientDetailForm
     template_name = 'patients/patient_details_form.html'
-
+    #success_url = reverse_lazy('patients')
 
 class PatientDelete(DeleteView):
     model = Patient
     template_name = 'patients/patient_deletion_form.html'
-    success_url = reverse_lazy('patients')
+    #success_url = reverse_lazy(' grandchallenge.patients.patients')
