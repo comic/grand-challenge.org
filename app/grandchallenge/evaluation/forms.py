@@ -2,7 +2,7 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
-from django_summernote.widgets import SummernoteWidget
+from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.evaluation.models import Method, Submission, Config
@@ -56,7 +56,7 @@ class ConfigForm(forms.ModelForm):
             *result_list_options,
             *result_detail_options,
         )
-        widgets = {"submission_page_html": SummernoteWidget()}
+        widgets = {"submission_page_html": SummernoteInplaceWidget()}
 
 
 method_upload_widget = uploader.AjaxUploadWidget(

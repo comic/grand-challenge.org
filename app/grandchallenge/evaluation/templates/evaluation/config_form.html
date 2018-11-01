@@ -1,6 +1,9 @@
 {% extends "site.html" %}
 {% load crispy from crispy_forms_tags %}
 
+{# Do not show the footer as this is broken with SummernoteInplaceWidget #}
+{% block footer %}{% endblock %}
+
 {% block pagecontent %}
 
     <h2>{{ object.challenge.short_name }} Evaluation Configuration</h2>

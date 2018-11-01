@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
-from django_summernote.widgets import SummernoteWidget
+from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.pages.models import Page
 
@@ -39,7 +39,7 @@ class PageCreateForm(forms.ModelForm):
     class Meta:
         model = Page
         fields = ("title", "permission_lvl", "display_title", "hidden", "html")
-        widgets = {"html": SummernoteWidget()}
+        widgets = {"html": SummernoteInplaceWidget()}
 
 
 class PageUpdateForm(PageCreateForm):
