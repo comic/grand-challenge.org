@@ -341,15 +341,9 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 # WYSIWYG editing with Summernote
-def summernote_upload_filepath(instance, filename):
-    ext = filename.split(".")[-1]
-    filename = "{}.{}".format(str(uuid.uuid4())[:8], ext)
-    return os.path.join("i", filename)
-
-
 SUMMERNOTE_THEME = "bs4"
 SUMMERNOTE_CONFIG = {
-    "attachment_upload_to": summernote_upload_filepath,
+    "attachment_model": "uploads.SummernoteAttachment",
     "attachment_require_authentication": True,
     "summernote": {
         "width": "100%",
