@@ -77,25 +77,3 @@ def test_insert_graph(rf: RequestFactory, view_type):
         assert "Created with matplotlib" in rendered
     else:
         assert "comictablecontainer" in rendered
-
-
-@pytest.mark.django_db
-@override_settings(MEDIA_ROOT="/app/tests/core_tests/resources/")
-def test_image_browser(rf: RequestFactory):
-    c = ChallengeFactory(short_name="testproj-image-browser")
-    p = PageFactory(challenge=c)
-    template = Template(
-        "{% load image_browser from grandchallenge_tags %}"
-        "{% image_browser path:public_html "
-        "config:public_html/promise12_viewer_config_new.js %}"
-    )
-    context = RequestContext(
-        rf.get("/results/?id=CBA&folder=20120627202920_304_CBA_Results"),
-        {"currentpage": p},
-    )
-    context.update({"site": c})
-    rendered = template.render(context)
-    assert "pageError" not in rendered
-    assert "Error rendering Visualization" not in rendered
-    assert "20120627202920_304_CBA_Results" in rendered
-    assert "Results viewer" in rendered
