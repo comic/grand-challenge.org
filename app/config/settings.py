@@ -378,10 +378,12 @@ BLEACH_ALLOWED_TAGS = [
     "h6",
     "hr",
     "i",
+    "iframe",  # Allowed for now for continiousregistration
     "img",
     "li",
     "ol",
     "p",
+    "pre",
     "strike",
     "strong",
     "table",
@@ -393,7 +395,7 @@ BLEACH_ALLOWED_TAGS = [
     "ul",
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
-    "*": ["class", "style"],
+    "*": ["class", "data-toggle", "id", "style", "role"],
     "a": ["href", "title"],
     "abbr": ["title"],
     "acronym": ["title"],
