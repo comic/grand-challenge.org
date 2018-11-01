@@ -6,7 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
-from grandchallenge.patients.forms import PatientCreationForm
+from grandchallenge.patients.forms import PatientDetailForm
 
 
 class PatientTable(generics.ListCreateAPIView):
@@ -37,22 +37,24 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-def PatientCreate(request):
-    form = PatientCreationForm()
-    return render(request, 'patient_form.html', {'form': form})
+#def PatientCreate(request):
 
-#class PatientCreate(CreateView):
- #   model = Patient
-  #  form_class = PatientCreationForm
-#    success_url = reverse_lazy('patients')
-   # template_name = 'patient_form.html'
+
+  #  form = PatientCreationForm()
+   # return render(request, 'patients/patient_form.html', {'form': form})
+
+class PatientCreate(CreateView):
+    form_class = PatientDetailForm
+    template_name = 'patients/patient_details_form.html'
+    success_url = 'patients'
 
 
 class PatientUpdate(UpdateView):
-    model = Patient
-    fields = '__all__'
+    form_class = PatientDetailForm
+    template_name = 'patients/patient_details_form.html'
 
 
 class PatientDelete(DeleteView):
     model = Patient
+    template_name = 'patients/patient_deletion_form.html'
     success_url = reverse_lazy('patients')
