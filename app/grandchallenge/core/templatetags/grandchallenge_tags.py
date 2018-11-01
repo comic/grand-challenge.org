@@ -1,3 +1,4 @@
+import json
 import logging
 import ntpath
 import os
@@ -1132,47 +1133,8 @@ class ProjectStatisticsNode(template.Node):
 
         chart_data = [[str(c["country"]), c["dcount"]] for c in country_counts]
 
-        snippet_geochart = """
-        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type='text/javascript'>
-            google.charts.load('current', {{'packages': ['geochart']}});
-            google.charts.setOnLoadCallback(drawRegionsMap);
-            function drawRegionsMap() {{
-                google.visualization.mapsApiKey = '{maps_api_key}'
-                var data = google.visualization.arrayToDataTable(
-                {data}
-                );
-                var options = {{
-                    colorAxis: {{
-                        colors: [
-                            '#440154', 
-                            '#32658e', 
-                            '#20a486', 
-                            '#63cb5f', 
-                            '#a8db34', 
-                            '#d0e11c', 
-                            '#e7e419', 
-                            '#f1e51d', 
-                            '#f8e621', 
-                            '#fbe723', 
-                            '#fbe723', 
-                            '#fde725', 
-                            '#fde725', 
-                            '#fde725', 
-                            '#fde725', 
-                            '#fde725'
-                        ]
-                    }},
-                    backgroundColor: '#c9eeff'
-                }};
-                var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
-            }};
-        </script>
-        <div id="chart_div"></div>
-        """.format(
-            data=[["Country", "#Participants"]] + chart_data,
-            maps_api_key=settings.GOOGLE_MAPS_API_KEY,
+        snippet_geochart = "<div data-geochart='{data}'></div>".format(
+            data=json.dumps([["Country", "#Participants"]] + chart_data)
         )
 
         snippet = ""

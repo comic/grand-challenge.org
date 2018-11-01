@@ -230,7 +230,8 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    "django.middleware.common.BrokenLinkEmailsMiddleware",  # Keep BrokenLinkEmailsMiddleware near the top
+    "django.middleware.common.BrokenLinkEmailsMiddleware",
+    # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -396,11 +397,11 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "a": ["href", "title"],
     "abbr": ["title"],
     "acronym": ["title"],
-    "img": ["src"],
+    "div": ["data-geochart"],  # Required for geocharts
+    "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
