@@ -21,7 +21,6 @@ from django.urls import reverse as reverse_djangocore
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
-from grandchallenge.core.api import get_public_results_by_challenge_name
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.urlresolvers import reverse
@@ -435,31 +434,6 @@ def in_list(needles, haystack):
             return True
 
     return False
-
-
-@register.tag(
-    name="get_project_prefix",
-    usagestr="""Tag usage: {% get_api_prefix %}
-                  Get the base url for this project as string, with trailing slash
-                  """,
-)
-def get_project_prefix(parser, token):
-    """Get the base url for this project as string, with trailing slash.
-    Created this originally to be able to use for project-specific api calls in
-    javascript"""
-    return RenderGetProjectPrefixNode()
-
-
-class RenderGetProjectPrefixNode(template.Node):
-    usagestr = get_usagestr("get_project_prefix")
-
-    def render(self, context):
-        try:
-            projectname = context["site"].short_name
-        except (AttributeError, KeyError):
-            projectname = settings.MAIN_PROJECT_NAME
-        url = reverse("challenge-homepage", args=[projectname])
-        return url
 
 
 @register.tag(name="insert_file")

@@ -14,7 +14,6 @@ def test_taglist():
     )
     rendered = template.render(Context({}))
     assert "<td>listdir</td>" in rendered
-    assert "<td>get_project_prefix</td>" in rendered
 
 
 @pytest.mark.django_db
