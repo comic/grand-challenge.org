@@ -36,27 +36,20 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
-
-#def PatientCreate(request):
-
-
-  #  form = PatientCreationForm()
-   # return render(request, 'patients/patient_form.html', {'form': form})
-
 class PatientCreate(CreateView):
     model = Patient
     form_class = PatientDetailForm
     template_name = 'patients/patient_details_form.html'
-    #success_url = reverse_lazy(' grandchallenge.patients.patients')
+    success_url = reverse_lazy('patients:patients')
 
 
 class PatientUpdate(UpdateView):
     model = Patient
     form_class = PatientDetailForm
     template_name = 'patients/patient_details_form.html'
-    #success_url = reverse_lazy('patients')
+    success_url = reverse_lazy('patients:patients')
 
 class PatientDelete(DeleteView):
     model = Patient
     template_name = 'patients/patient_deletion_form.html'
-    #success_url = reverse_lazy(' grandchallenge.patients.patients')
+    success_url = reverse_lazy('patients:patients')
