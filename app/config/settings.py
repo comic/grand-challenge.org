@@ -2,6 +2,7 @@
 import glob
 import os
 import re
+import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -339,12 +340,19 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
-# WYSIWYG editing
+# WYSIWYG editing with Summernote
+def summernote_upload_filepath(instance, filename):
+    ext = filename.split(".")[-1]
+    filename = "{}.{}".format(str(uuid.uuid4())[:8], ext)
+    return os.path.join("i", filename)
+
+
 SUMMERNOTE_THEME = "bs4"
 SUMMERNOTE_CONFIG = {
+    "attachment_upload_to": summernote_upload_filepath,
+    "attachment_require_authentication": True,
     "summernote": {
         "width": "100%",
-        "dialogsInBody": True,
         "toolbar": [
             ["style", ["style"]],
             ["font", ["bold", "italic", "underline", "strikethrough"]],
@@ -353,7 +361,7 @@ SUMMERNOTE_CONFIG = {
             ["view", ["fullscreen", "codeview"]],
             ["help", ["help"]],
         ],
-    }
+    },
 }
 
 
@@ -490,7 +498,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation",
     "evaluation-supplementary",
     "favicon",
-    "django-summernote",
+    "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
 
