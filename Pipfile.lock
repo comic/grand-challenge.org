@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "9fac600d16f69ce1ce3cb1266a65f26110e6824ee1760c8670b6d21c5a0ac78a"
+            "sha256": "3cdf039899fa76af102339b411dbc92701a11a20a04ff89e6069c1d8755ff661"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -126,13 +126,6 @@
             "index": "pypi",
             "version": "==1.0.1"
         },
-        "django-ckeditor": {
-            "hashes": [
-                "sha256:266353b93991babb399a62a25bc0cbb945f95901693a4f07c9506edabd6a0cd0"
-            ],
-            "index": "pypi",
-            "version": "==5.6.1"
-        },
         "django-compat": {
             "hashes": [
                 "sha256:3ac9a3bedc56b9365d9eb241bc5157d0c193769bf995f9a78dc1bc24e7c2331b"
@@ -168,13 +161,6 @@
                 "sha256:c3c0ab257c9d94ce154b9ee32994e3cff8b350c384040705514e14a9fb7c8191"
             ],
             "version": "==1.4.9"
-        },
-        "django-js-asset": {
-            "hashes": [
-                "sha256:30149158206f693a5d027fe590096fc84495486bd11cd77d395b4f2ec27fc1d0",
-                "sha256:a395d8d19eb201ea8d2bd4f145b38f1717cd74c0f609f040141d8724c5a27f36"
-            ],
-            "version": "==1.1.0"
         },
         "django-select2": {
             "hashes": [
@@ -687,10 +673,10 @@
         },
         "websocket-client": {
             "hashes": [
-                "sha256:c42b71b68f9ef151433d6dcc6a7cb98ac72d2ad1e3a74981ca22bc5d9134f166",
-                "sha256:f5889b1d0a994258cfcbc8f2dc3e457f6fc7b32a8d74873033d12e4eab4bdf63"
+                "sha256:8c8bf2d4f800c3ed952df206b18c28f7070d9e3dcbd6ca6291127574f57ee786",
+                "sha256:e51562c91ddb8148e791f0155fdb01325d99bb52c4cdbb291aee7a3563fd0849"
             ],
-            "version": "==0.53.0"
+            "version": "==0.54.0"
         }
     },
     "develop": {
@@ -979,11 +965,11 @@
         },
         "pyupgrade": {
             "hashes": [
-                "sha256:0f6411e06989c1e3acf87b324b1852494d4d971613a6d40d00f9ea8c7f9d4899",
-                "sha256:a3714bc4f2c3c00ecfad777aab81e5d1d3847749ff14c69eb3358474bdf497a4"
+                "sha256:925e093637b41649d048ed2d592acda13d10c5c8a4ef3c8ab873baeb3583b7a2",
+                "sha256:ce0d05b9c921ee173cad1587558a4e2c08aaed62ccc5cd0d5b158a357bfc7dc0"
             ],
             "index": "pypi",
-            "version": "==1.10.0"
+            "version": "==1.10.1"
         },
         "pyyaml": {
             "hashes": [
