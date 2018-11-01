@@ -2,6 +2,7 @@
 import glob
 import os
 import re
+import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -268,13 +269,12 @@ THIRD_PARTY_APPS = [
     "guardian",  # userena dependency, per object permissions
     "easy_thumbnails",  # userena dependency
     "social_django",  # social authentication with oauth2
-    "ckeditor",  # WYSIWYG editor, used in granchallenge.pages
-    "ckeditor_uploader",  # image uploads
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
+    "django_summernote",  # for WYSIWYG page editing
 ]
 
 LOCAL_APPS = [
@@ -340,41 +340,24 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
-# buttons for WYSIWYG editor in page admin
-CKEDITOR_CONFIGS = {
-    "default": {
+# WYSIWYG editing with Summernote
+SUMMERNOTE_THEME = "bs4"
+SUMMERNOTE_CONFIG = {
+    "attachment_model": "uploads.SummernoteAttachment",
+    "attachment_require_authentication": True,
+    "summernote": {
+        "width": "100%",
         "toolbar": [
-            [
-                "Source",
-                "-",
-                "Undo",
-                "Redo",
-                "-",
-                "Bold",
-                "Italic",
-                "Underline",
-                "Format",
-                "-",
-                "Link",
-                "Unlink",
-                "Anchor",
-                "-",
-                "Table",
-                "BulletedList",
-                "NumberedList",
-                "Image",
-                "SpecialChar",
-                "-",
-                "Maximize",
-            ]
+            ["style", ["style"]],
+            ["font", ["bold", "italic", "underline", "strikethrough"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link", "picture", "video", "hr"]],
+            ["view", ["fullscreen", "codeview"]],
+            ["help", ["help"]],
         ],
-        "width": 840,
-        "height": 300,
-        "toolbarCanCollapse": False,
-        "entities": False,
-        "extraAllowedContent": "*(*)",  # Allows any class in ckeditor html
-    }
+    },
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -509,10 +492,9 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation",
     "evaluation-supplementary",
     "favicon",
+    "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
-
-CKEDITOR_UPLOAD_PATH = "uploads/"
 
 if MEDIA_ROOT[-1] != "/":
     msg = (

@@ -1,4 +1,3 @@
-from ckeditor.fields import RichTextField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
@@ -35,7 +34,7 @@ class Page(ComicSiteModel):
     hidden = models.BooleanField(
         default=False, help_text="Do not display this page in site menu"
     )
-    html = RichTextField()
+    html = models.TextField(blank=True, default="")
 
     def save(self, *args, **kwargs):
         # when saving for the first time only, put this page last in order

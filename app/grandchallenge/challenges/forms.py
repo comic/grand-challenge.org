@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
 from django_select2.forms import Select2MultipleWidget
+from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 
@@ -82,6 +83,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "registration_page_text": SummernoteInplaceWidget(),
         }
 
 

@@ -38,6 +38,10 @@
         {% block jquery_js %}
             <script type="text/javascript"
                     src="{% static "jquery-3.2.1/js/jquery-3.2.1.min.js" %}"></script>
+            {# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+                    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+                    crossorigin="anonymous"></script>
         {% endblock %}
 
         {% block bootstrap %}
@@ -85,9 +89,7 @@
         {% endblock %}
 
         {% block fileupload %}
-            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-                    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-                    crossorigin="anonymous"></script>
+
             <script type="text/javascript"
                     src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
         {% endblock %}

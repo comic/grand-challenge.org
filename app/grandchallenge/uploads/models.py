@@ -1,8 +1,10 @@
 import os
+import uuid
 
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
 from django.db import models
+from django_summernote.models import AbstractAttachment
 
 from grandchallenge.challenges.models import ComicSiteModel
 
@@ -64,3 +66,15 @@ class UploadModel(ComicSiteModel):
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
         verbose_name_plural = "uploaded files"
+
+
+def summernote_upload_filepath(instance, filename):
+    ext = filename.split(".")[-1]
+    filename = "{}.{}".format(str(uuid.uuid4())[:8], ext)
+    return os.path.join("i", filename)
+
+
+class SummernoteAttachment(AbstractAttachment):
+    """ Workaround for custom upload locations from summernote """
+
+    file = models.FileField(upload_to=summernote_upload_filepath)

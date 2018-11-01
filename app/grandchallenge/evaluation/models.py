@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
@@ -189,7 +188,7 @@ class Config(UUIDModel):
             "submission in a 24 hour period."
         ),
     )
-    submission_page_html = RichTextField(
+    submission_page_html = models.TextField(
         help_text=(
             "HTML to include on the submission page for this challenge."
         ),

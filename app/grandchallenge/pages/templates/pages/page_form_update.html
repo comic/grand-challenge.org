@@ -1,5 +1,8 @@
 {% extends 'pages/page_form.html' %}
 
+{# Do not show the footer as this is broken with SummernoteInplaceWidget #}
+{% block footer %}{% endblock %}
+
 {% block pageHeading %}
     Update Page
 {% endblock %}

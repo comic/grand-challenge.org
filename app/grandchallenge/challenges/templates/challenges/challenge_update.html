@@ -2,6 +2,9 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{# Do not show the footer as this is broken with SummernoteInplaceWidget #}
+{% block footer %}{% endblock %}
+
 {% block pageName %}Update {{ site.short_name }}{% endblock %}
 
 {% block contentTitle %}
