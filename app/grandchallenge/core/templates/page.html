@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load guardian_tags %}
 {% load grandchallenge_tags %}
+{% load clean from bleach %}
 
 {% block pageName %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
@@ -8,11 +9,11 @@
 {% block pagecontent %}
     {% if site.disclaimer %}
         <div class="disclaimer alert alert-warning" role="alert">
-            {{ site.disclaimer|safe }}
+            {{ site.disclaimer|clean }}
         </div>
     {% endif %}
 
-    <div id=pageContainer>{{ currentpage.raw_html }}</div>
+    <div id=pageContainer>{{ currentpage.html|clean }}</div>
 
     {% if not currentpage.is_error_page %}
         {% block editlink %}
