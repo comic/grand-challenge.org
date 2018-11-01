@@ -26,7 +26,8 @@ def test_allusers_statistics():
     )
     context = Context({"currentpage": p})
     rendered = template.render(context)
-    assert "['Country', '#Participants']" in rendered
+    assert '["Country", "#Participants"]' in rendered
+    assert "data-geochart" in rendered
 
 
 @pytest.mark.django_db
@@ -40,7 +41,8 @@ def test_project_statistics():
     context = Context({"currentpage": p})
     rendered = template.render(context)
     assert "Number of users: 0" in rendered
-    assert "['Country', '#Participants']" in rendered
+    assert '["Country", "#Participants"]' in rendered
+    assert "data-geochart" in rendered
 
 
 @pytest.mark.django_db
