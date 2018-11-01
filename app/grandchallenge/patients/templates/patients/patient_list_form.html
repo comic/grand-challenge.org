@@ -6,17 +6,19 @@
 {% csrf_token %}
 
 <table>
-    {% for field in patient.meta.get_fields() %}
-        <tr>
-            <td>{{ field.name }}</td>
-        </tr>
+    <tr>
+    {% for field, value in object_list.0.get_fields %}
+        <td>{{ field.name }}</td>
     {% endfor %}
+    </tr>
 
     {% for patient in object_list %}
         <tr>
-            {% for field in patient.meta.get_fields %}
-                <td> {{ field.value }}</td>
+            {% for field, value in patient.get_fields %}
+                <td> {{ value }}</td>
             {% endfor %}
+            <td><a href="{% url 'patients:patient_update' patient.id %}">Update</a></td>
+            <td><a href="{% url 'patients:patient_delete' patient.id %}">Delete</a></td>
         </tr>
     {% endfor %}
 </table>

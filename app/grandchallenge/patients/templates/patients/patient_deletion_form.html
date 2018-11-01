@@ -8,5 +8,6 @@
     {% csrf_token %}
     <p>Are you sure you want to delete Patient {{ patient.id}}:"{{ patient.name }}"?</p>
     <input type="submit" value="Submit">
+    <a href="{% url 'patients:patient_list' %}">Cancel</a>
 </form>
 {% endblock %}
