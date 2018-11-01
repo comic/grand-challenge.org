@@ -341,7 +341,20 @@ TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 # WYSIWYG editing
 SUMMERNOTE_THEME = "bs4"
-SUMMERNOTE_CONFIG = {"summernote": {"width": "100%"}}
+SUMMERNOTE_CONFIG = {
+    "summernote": {
+        "width": "100%",
+        "dialogsInBody": True,
+        "toolbar": [
+            ["style", ["style"]],
+            ["font", ["bold", "italic", "underline", "strikethrough"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link", "picture", "video", "hr"]],
+            ["view", ["fullscreen", "codeview"]],
+            ["help", ["help"]],
+        ],
+    }
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [
