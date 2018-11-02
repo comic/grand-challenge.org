@@ -10,10 +10,26 @@ from grandchallenge.studies.forms import StudyDetailForm
 
 
 class StudyTable(generics.ListCreateAPIView):
-    queryset = Study.objects.all()
     serializer_class = StudySerializer
     filter_backends = (DjangoFilterBackend,)
     filter_fields = '__all__'
+
+    def get_queryset(self):
+        # Get URL parameter as a string, if exists
+        ids = self.request.query_params.get('ids', None)
+
+        # Get snippets for ids if they exist
+        if ids is not None:
+            # Convert parameter string to list of integers
+            ids = [int(x) for x in ids.split(',')]
+            # Get objects for all parameter ids
+            queryset = Study.objects.filter(pk__in=ids)
+
+        else:
+            # Else no parameters, return all objects
+            queryset = Study.objects.all()
+
+        return queryset
 
 
 class StudyRecord(generics.RetrieveUpdateDestroyAPIView):
