@@ -13,7 +13,7 @@ class StudyTable(generics.ListCreateAPIView):
     queryset = Study.objects.all()
     serializer_class = StudySerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'region_of_interest')
+    filter_fields = '__all__'
 
 
 class StudyRecord(generics.RetrieveUpdateDestroyAPIView):

@@ -5,4 +5,4 @@ from grandchallenge.studies.models import Study
 class StudySerializer(serializers.ModelSerializer):
     class Meta:
         model = Study
-        fields = ('id', 'region_of_interest')
+        fields = '__all__'
