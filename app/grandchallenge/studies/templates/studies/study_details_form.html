@@ -4,9 +4,10 @@
 {% block content %}
 <h2>Study</h2>
 
-<form action="Study" method="post">
+<form method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit">
+    <a href="{% url 'studies:study_list' %}">Cancel</a>
 </form>
 {% endblock %}

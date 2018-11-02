@@ -1,0 +1,23 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Study</h2>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <p>Are you sure you want to delete this Study?"?</p>
+    <table class="table">
+        <tbody>
+            <tr>
+                {% for field, value in study.get_fields %}
+                    <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    <input type="submit" value="Submit">
+    <a href="{% url 'studies:study_list' %}">Cancel</a>
+</form>
+{% endblock %}
+
