@@ -6,7 +6,16 @@
 
 <form action="" method="post">
     {% csrf_token %}
-    <p>Are you sure you want to delete Patient {{ patient.id}}:"{{ patient.name }}"?</p>
+    <p>Are you sure you want to delete this Patient?"?</p>
+    <table class="table">
+        <tbody>
+            <tr>
+                {% for field, value in patient.get_fields %}
+                    <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
     <input type="submit" value="Submit">
     <a href="{% url 'patients:patient_list' %}">Cancel</a>
 </form>

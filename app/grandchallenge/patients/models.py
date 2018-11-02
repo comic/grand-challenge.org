@@ -12,4 +12,4 @@ class Patient(models.Model):
     height = models.IntegerField(null=False, blank=False)
 
     def get_fields(self):
-        return [(field, field.value_to_string(self)) for field in Patient._meta.fields]
+        return [(field, field.value_to_string(self)) for field in Patient.meta.fields]
