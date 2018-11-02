@@ -350,7 +350,10 @@ SUMMERNOTE_CONFIG = {
         "width": "100%",
         "toolbar": [
             ["style", ["style"]],
-            ["font", ["bold", "italic", "underline", "strikethrough"]],
+            [
+                "font",
+                ["bold", "italic", "underline", "strikethrough", "clear"],
+            ],
             ["para", ["ul", "ol", "paragraph"]],
             ["insert", ["link", "picture", "hr"]],
             ["view", ["fullscreen", "codeview"]],
