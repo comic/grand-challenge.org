@@ -1,13 +1,7 @@
 import bleach
 from django import template
+from django.conf import settings
 from django.utils.safestring import mark_safe
-
-from config.settings import (
-    BLEACH_ALLOWED_TAGS,
-    BLEACH_ALLOWED_ATTRIBUTES,
-    BLEACH_ALLOWED_STYLES,
-    BLEACH_ALLOWED_PROTOCOLS,
-)
 
 register = template.Library()
 
@@ -18,10 +12,11 @@ def clean(html: str):
 
     cleaned_html = bleach.clean(
         html,
-        tags=BLEACH_ALLOWED_TAGS,
-        attributes=BLEACH_ALLOWED_ATTRIBUTES,
-        styles=BLEACH_ALLOWED_STYLES,
-        protocols=BLEACH_ALLOWED_PROTOCOLS,
+        tags=settings.BLEACH_ALLOWED_TAGS,
+        attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
+        styles=settings.BLEACH_ALLOWED_STYLES,
+        protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
+        strip=settings.BLEACH_STRIP,
     )
 
     return mark_safe(cleaned_html)

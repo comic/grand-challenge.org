@@ -371,6 +371,7 @@ BLEACH_ALLOWED_TAGS = [
     "blockquote",
     "br",
     "code",
+    "col",
     "div",
     "em",
     "h1",
@@ -405,11 +406,12 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "abbr": ["title"],
     "acronym": ["title"],
     "div": ["data-geochart"],  # Required for geocharts
-    "iframe": ["src"],  # For continuous registration challenge
+    "iframe": ["src", "sandbox"],  # For continuous registration challenge
     "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 AUTH_PASSWORD_VALIDATORS = [
     {
