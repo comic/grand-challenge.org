@@ -28,7 +28,7 @@ if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
 IGNORABLE_404_URLS = [
-    re.compile(r"\.(php|cgi)$"),
+    re.compile(r"\.(php|cgi|asp)/"),
     re.compile(r"^/phpmyadmin/"),
 ]
 
@@ -378,7 +378,7 @@ BLEACH_ALLOWED_TAGS = [
     "h6",
     "hr",
     "i",
-    "iframe",  # Allowed for now for continiousregistration
+    "iframe",  # Allowed for now for continuous registration challenge
     "img",
     "li",
     "ol",
@@ -402,6 +402,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "abbr": ["title"],
     "acronym": ["title"],
     "div": ["data-geochart"],  # Required for geocharts
+    "iframe": ["src"],  # For continuous registration challenge
     "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
