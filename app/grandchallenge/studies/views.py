@@ -34,6 +34,7 @@ class StudyUpdate(UpdateView):
     template_name = 'studies/study_details_form.html'
     success_url = reverse_lazy('studies:study_list')
 
+
 class StudyDelete(DeleteView):
     model = Study
     template_name = 'studies/study_deletion_form.html'
@@ -43,4 +44,4 @@ class StudyDelete(DeleteView):
 class StudyList(ListView):
     model = Study
     paginate_by = 100
-    template_name = 'studies/patient_list_form.html'
+    template_name = 'studies/study_list_form.html'
