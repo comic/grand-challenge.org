@@ -40,6 +40,18 @@ class PageCreateForm(forms.ModelForm):
         model = Page
         fields = ("title", "permission_lvl", "display_title", "hidden", "html")
         widgets = {"html": SummernoteInplaceWidget()}
+        help_texts = {
+            "html": (
+                "The content of your page. <b>Please note</b>: your html will "
+                "be filtered after it has been saved to remove any non-HTML5 "
+                "compliant markup and scripts. The filtering is not reflected "
+                "in the live view so please <b>check the rendering of your "
+                "page after you click save</b>. If you're going to paste from "
+                "another source such as MS Word, please <b>paste without "
+                "formatting</b> using <b>CTRL+SHIFT+V</b> on Windows or "
+                "<b>⇧+⌥+⌘+V</b> on OS X."
+            )
+        }
 
 
 class PageUpdateForm(PageCreateForm):
