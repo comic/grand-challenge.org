@@ -10,4 +10,4 @@ class Study(models.Model):
                                           max_length=255)
 
     def get_fields(self):
-        return [(field, field.value_to_string(self)) for field in Study.meta.fields]
+        return [(field, field.value_to_string(self)) for field in Study._meta.fields]
