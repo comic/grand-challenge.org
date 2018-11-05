@@ -171,7 +171,7 @@ function upload_fold_unfold(element) {
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
-            progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-danger");
+            progress_bar.removeClass("bg-info progress-bar-striped active").addClass("bg-danger");
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
@@ -198,7 +198,7 @@ function upload_fold_unfold(element) {
             );
 
             if (progress >= 100) {
-                progress_bar.removeClass("progress-bar-info progress-bar-striped active").addClass("progress-bar-success");
+                progress_bar.removeClass("bg-info progress-bar-striped active").addClass("bg-success");
             }
 
         });
