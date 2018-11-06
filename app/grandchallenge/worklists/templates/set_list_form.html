@@ -1,0 +1,33 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Worklist Sets</h2>
+{% csrf_token %}
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+        {% for field, value in object_list.0.get_fields %}
+            <td><b>{{ field.name }}</b></td>
+        {% endfor %}
+            <td><b>Worklists</b></td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for set in object_list %}
+            <tr>
+                {% for field, value in set.get_fields %}
+                    <td> {{ value }}</td>
+                {% endfor %}
+                <td>{{ set.get_children.size }}</td>
+                <td><a href="{% url 'worklists:set_update' set.id %}">Update</a></td>
+                <td><a href="{% url 'worklists:set_delete' set.id %}">Delete</a></td>
+            </tr>
+        {% empty %}
+        <td>No sets have been created.</td>
+        {% endfor %}
+   </tbody>
+</table>
+<a href="{% url 'worklists:set_create' %}">Add Set</a>
+{% endblock %}

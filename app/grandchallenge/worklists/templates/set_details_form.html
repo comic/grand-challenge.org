@@ -2,11 +2,12 @@
 {% load grandchallenge_tags %}
 
 {% block content %}
-<h2>Worklist</h2>
+<h2>Worklist Set</h2>
 
-<form action="Patient" method="post">
+<form method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit">
+    <a href="{% url 'worklists:set_list' %}">Cancel</a>
 </form>
 {% endblock %}
