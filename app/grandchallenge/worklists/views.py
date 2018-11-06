@@ -4,8 +4,8 @@ from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
-from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistTree
-from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistTreeSerializer
+from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistSetNode
+from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistSetNodeSerializer
 from grandchallenge.worklists.forms import WorklistSetDetailForm
 
 
@@ -59,16 +59,3 @@ class WorklistSetList(ListView):
     model = WorklistSet
     paginate_by = 100
     template_name = 'worklists/set_list_form.html'
-
-
-### Worklist Tree ####
-class WorklistTreeTable(generics.ListCreateAPIView):
-    queryset = WorklistTree.objects.all()
-    serializer_class = WorklistTreeSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = '__all__'
-
-
-class WorklistTreeRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = WorklistTree.objects.all()
-    serializer_class = WorklistTreeSerializer

@@ -278,7 +278,7 @@ THIRD_PARTY_APPS = [
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_filters",  # for automatic rest model filtering
-    'mptt', # for the worklist tree structure
+    'mptt',  # for the worklist tree structure
 ]
 
 LOCAL_APPS = [
