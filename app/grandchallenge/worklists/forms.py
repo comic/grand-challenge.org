@@ -1,13 +1,7 @@
 from django.forms import ModelForm
-from grandchallenge.worklists.models import Group, Worklist
+from grandchallenge.worklists.models import WorklistSet
 
-class GroupCreationForm(ModelForm):
+class WorklistSetDetailForm(ModelForm):
     class Meta:
-        model = Group
-        fields = '__all__'
-
-
-class WorklistCreationForm(ModelForm):
-    class Meta:
-        model = Worklist
+        model = WorklistSet
         fields = '__all__'

@@ -1,23 +1,15 @@
-from grandchallenge.worklists.models import WorklistGroup, Worklist
-from grandchallenge.worklists.serializer import WorklistGroupSerializer, WorklistSerializer
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.list import ListView
 from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
-
-class WorklistGroupTable(generics.ListCreateAPIView):
-    queryset = WorklistGroup.objects.all()
-    serializer_class = WorklistGroupSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = '__all__'
+from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistTree
+from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistTreeSerializer
+from grandchallenge.worklists.forms import WorklistSetDetailForm
 
 
-class WorklistGroupRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = WorklistGroup.objects.all()
-    serializer_class = WorklistGroupSerializer
-
-
+## Worklist ###
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
@@ -30,43 +22,53 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSerializer
 
 
-class WorklistGroupCreate(CreateView):
-    model = WorklistGroup
-    fields = '__all__'
+### Worklist Set ###
+class WorklistSetTable(generics.ListCreateAPIView):
+    queryset = WorklistSet.objects.all()
+    serializer_class = WorklistSetSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = '__all__'
 
 
-class WorklistGroupUpdate(UpdateView):
-    model = WorklistGroup
-    fields = '__all__'
+class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WorklistSet.objects.all()
+    serializer_class = WorklistSetSerializer
 
 
-class WorklistGroupDelete(DeleteView):
-    model = WorklistGroup
-    success_url = reverse_lazy('groups')
+class WorklistSetCreate(CreateView):
+    model = WorklistSet
+    form_class = WorklistSetDetailForm
+    template_name = 'worklists/set_details_form.html'
+    success_url = reverse_lazy('worklists:set_list')
 
 
-class WorklistCreate(CreateView):
-    model = Worklist
-    fields = '__all__'
+class WorklistSetUpdate(UpdateView):
+    model = WorklistSet
+    form_class = WorklistSetDetailForm
+    template_name = 'worklists/set_details_form.html'
+    success_url = reverse_lazy('worklists:set_list')
 
 
-class WorklistUpdate(UpdateView):
-    model = Worklist
-    fields = '__all__'
+class WorklistSetDelete(DeleteView):
+    model = WorklistSet
+    template_name = 'worklists/set_deletion_form.html'
+    success_url = reverse_lazy('worklists:set_list')
 
 
-class WorklistDelete(DeleteView):
-    model = Worklist
-    success_url = reverse_lazy('worklists')
+class WorklistSetList(ListView):
+    model = WorklistSet
+    paginate_by = 100
+    template_name = 'worklists/set_list_form.html'
 
 
-#class WorklistPatientRelationTable(generics.ListCreateAPIView):
-#    queryset = WorklistPatientRelation.objects.all()
-#    serializer_class = WorklistPatientRelationSerializer
-#    filter_backends = (DjangoFilterBackend,)
-#    filter_fields = ('id', 'worklist', 'patient')
+### Worklist Tree ####
+class WorklistTreeTable(generics.ListCreateAPIView):
+    queryset = WorklistTree.objects.all()
+    serializer_class = WorklistTreeSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = '__all__'
 
 
-#class WorklistPatientRelationRecord(generics.RetrieveUpdateDestroyAPIView):
-#    queryset = WorklistPatientRelation.objects.all()
-#    serializer_class = WorklistPatientRelationSerializer
+class WorklistTreeRecord(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WorklistTree.objects.all()
+    serializer_class = WorklistTreeSerializer

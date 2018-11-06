@@ -3,8 +3,10 @@ from grandchallenge.worklists import views
 
 app_name = "worklists"
 urlpatterns = [
-    path('worklist_groups/', views.WorklistGroupTable.as_view(), name="worklist_groups"),
-    re_path(r'^worklist_groups/(?P<pk>[0-9]+)$', views.WorklistGroupRecord.as_view(), name="worklist_group"),
-    path('worklists/', views.WorklistTable.as_view(), name="worklists"),
-    re_path(r'^worklists/(?P<pk>[0-9]+)$', views.WorklistRecord.as_view(), name="worklist")
+    path('worklists/sets/', views.WorklistSetTable.as_view(), name="sets"),
+    path('worklists/sets/<int:pk>/', views.WorklistSetRecord.as_view(), name="set"),
+    path('worklists/sets/list/', views.WorklistSetList.as_view(), name="set_list"),
+    path('worklists/sets/create/', views.WorklistSetCreate.as_view(), name="set_create"),
+    path('worklists/sets/update/<int:pk>/', views.WorklistSetUpdate.as_view(), name="set_update"),
+    path('worklists/sets/delete/<int:pk>/', views.WorklistSetDelete.as_view(), name="set_delete"),
 ]
