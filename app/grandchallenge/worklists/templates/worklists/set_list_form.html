@@ -20,7 +20,8 @@
                 {% for field, value in set.get_fields %}
                     <td> {{ value }}</td>
                 {% endfor %}
-                <td>{{ set.get_children.size }}</td>
+                <td>{{ set.get_children|length }}</td>
+                <td><a href="">Add Worklist</a></td>
                 <td><a href="{% url 'worklists:set_update' set.id %}">Update</a></td>
                 <td><a href="{% url 'worklists:set_delete' set.id %}">Delete</a></td>
             </tr>
