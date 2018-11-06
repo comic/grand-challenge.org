@@ -22,5 +22,14 @@ class Worklist(models.Model):
     tree = models.ForeignKey('WorklistTree', null=False, blank=False, on_delete=models.CASCADE)
     parent = models.ForeignKey('Worklist', null=True, blank=True, on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        potential_parent = getattr(self, 'parent')
+
+        if potential_parent.exists():
+            self.tree = potential_parent.tree
+        else:
+            WorklistTree.objects.create(set=potential_parent.)
+
+
     def get_fields(self):
         return [(field, field.value_to_string(self)) for field in Worklist._meta.fields]
