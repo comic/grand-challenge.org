@@ -100,7 +100,7 @@ You can do this with
 
 .. code-block:: console
 
-    $ docker-compose run web --rm --user `id -u` python manage.py makemigrations
+    $ docker-compose run --rm --user `id -u` web python manage.py makemigrations
 
 
 add these to git and commit.
