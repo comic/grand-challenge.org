@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from grandchallenge.core.models import UUIDModel
 
-class Patient(models.Model):
+
+class Patient(UUIDModel):
     SexChoices = (('M', 'Male'),
                  ('F', 'Female'),
                  ('O', 'Other'))
