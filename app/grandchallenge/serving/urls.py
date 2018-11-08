@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.urls import path
 
 from grandchallenge.serving.views import serve_folder, serve_images
