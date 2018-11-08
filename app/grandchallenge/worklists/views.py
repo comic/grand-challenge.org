@@ -1,12 +1,12 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
-from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistSetNode
 from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistSetNodeSerializer
 from grandchallenge.worklists.forms import WorklistSetDetailForm
+from grandchallenge.core.urlresolvers import reverse
 
 
 ## Worklist ###
@@ -39,20 +39,26 @@ class WorklistSetCreate(CreateView):
     model = WorklistSet
     form_class = WorklistSetDetailForm
     template_name = 'worklists/set_details_form.html'
-    success_url = reverse_lazy('worklists:set_list')
+
+    def get_success_url(self):
+        return reverse("worklists:set_list")
 
 
 class WorklistSetUpdate(UpdateView):
     model = WorklistSet
     form_class = WorklistSetDetailForm
     template_name = 'worklists/set_details_form.html'
-    success_url = reverse_lazy('worklists:set_list')
+
+    def get_success_url(self):
+        return reverse("worklists:set_list")
 
 
 class WorklistSetDelete(DeleteView):
     model = WorklistSet
     template_name = 'worklists/set_deletion_form.html'
-    success_url = reverse_lazy('worklists:set_list')
+
+    def get_success_url(self):
+        return reverse("worklists:set_list")
 
 
 class WorklistSetList(ListView):

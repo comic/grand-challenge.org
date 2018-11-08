@@ -1,12 +1,12 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
-from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializer import StudySerializer
 from grandchallenge.studies.forms import StudyDetailForm
+from grandchallenge.core.urlresolvers import reverse
 
 
 class StudyTable(generics.ListCreateAPIView):
@@ -41,20 +41,26 @@ class StudyCreate(CreateView):
     model = Study
     form_class = StudyDetailForm
     template_name = "studies/study_details_form.html"
-    success_url = reverse_lazy('studies:study_list')
+
+    def get_success_url(self):
+        return reverse("studies:study_list")
 
 
 class StudyUpdate(UpdateView):
     model = Study
     form_class = StudyDetailForm
     template_name = "studies/study_details_form.html"
-    success_url = reverse_lazy('studies:study_list')
+
+    def get_success_url(self):
+        return reverse("studies:study_list")
 
 
 class StudyDelete(DeleteView):
     model = Study
     template_name = "studies/study_deletion_form.html"
-    success_url = reverse_lazy('studies:study_list')
+
+    def get_success_url(self):
+        return reverse("studies:study_list")
 
 
 class StudyList(ListView):

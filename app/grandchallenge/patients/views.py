@@ -1,12 +1,12 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
-from django.urls import reverse_lazy
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
 from grandchallenge.patients.forms import PatientDetailForm
+from grandchallenge.core.urlresolvers import reverse
 
 
 class PatientTable(generics.ListCreateAPIView):
@@ -41,20 +41,26 @@ class PatientCreate(CreateView):
     model = Patient
     form_class = PatientDetailForm
     template_name = "patients/patient_details_form.html"
-    success_url = reverse_lazy('patients:patient_list')
+
+    def get_success_url(self):
+        return reverse("patients:patient_list")
 
 
 class PatientUpdate(UpdateView):
     model = Patient
     form_class = PatientDetailForm
     template_name = "patients/patient_details_form.html"
-    success_url = reverse_lazy('patients:patient_list')
+
+    def get_success_url(self):
+        return reverse("patients:patient_list")
 
 
 class PatientDelete(DeleteView):
     model = Patient
     template_name = "patients/patient_deletion_form.html"
-    success_url = reverse_lazy('patients:patient_list')
+
+    def get_success_url(self):
+        return reverse("patients:patient_list")
 
 
 class PatientList(ListView):
