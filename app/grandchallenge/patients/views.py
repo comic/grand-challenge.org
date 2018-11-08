@@ -40,24 +40,24 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
 class PatientCreate(CreateView):
     model = Patient
     form_class = PatientDetailForm
-    template_name = 'patients/patient_details_form.html'
+    template_name = "patients/patient_details_form.html"
     success_url = reverse_lazy('patients:patient_list')
 
 
 class PatientUpdate(UpdateView):
     model = Patient
     form_class = PatientDetailForm
-    template_name = 'patients/patient_details_form.html'
+    template_name = "patients/patient_details_form.html"
     success_url = reverse_lazy('patients:patient_list')
 
 
 class PatientDelete(DeleteView):
     model = Patient
-    template_name = 'patients/patient_deletion_form.html'
+    template_name = "patients/patient_deletion_form.html"
     success_url = reverse_lazy('patients:patient_list')
 
 
 class PatientList(ListView):
     model = Patient
     paginate_by = 100
-    template_name = 'patients/patient_list_form.html'
+    template_name = "patients/patient_list_form.html"

@@ -3,6 +3,10 @@ from django.db.models import CharField
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+
+
+
+
 class WorklistSet(models.Model):
     title = CharField(null=False, blank=False, max_length=255)
 
@@ -13,9 +17,9 @@ class WorklistSet(models.Model):
         return WorklistSetNodes.objects.filter(set=self.pk)
 
 
-class Worklist(MPTTModel):
+class Worklist(models.Model):
     title = CharField(null=False, blank=False, max_length=255)
-    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    parent = models.ForeignKey("Worklist", null=True, blank=True)
 
     def get_fields(self):
         return [(field, field.value_to_string(self)) for field in Worklist._meta.fields]

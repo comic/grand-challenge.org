@@ -5,16 +5,16 @@ from grandchallenge.pathology.models import WorklistItem, PatientItem, StudyItem
 class WorklistItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorklistItem
-        fields = '__all__'
+        fields = ("id", "worklist", "study")
 
 
 class PatientItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientItem
-        fields = '__all__'
+        fields = ("id", "patient", "study")
 
 
 class StudyItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudyItem
-        fields = '__all__'
+        fields = ("id", "study")

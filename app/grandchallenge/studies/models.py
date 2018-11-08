@@ -5,8 +5,8 @@ from grandchallenge.core.models import UUIDModel
 
 
 class Study(UUIDModel):
-    code = models.CharField(_("The identifier code for this study."), null=False, blank=False, max_length=100)
-    region_of_interest = models.CharField(_("Region or location where the study was performed."),
+    code = models.CharField(_("Identifier code"), null=False, blank=False, max_length=100)
+    region_of_interest = models.CharField(_("Region of study"),
                                           null=False,
                                           blank=False,
                                           max_length=255)

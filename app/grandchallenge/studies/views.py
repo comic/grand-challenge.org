@@ -40,20 +40,20 @@ class StudyRecord(generics.RetrieveUpdateDestroyAPIView):
 class StudyCreate(CreateView):
     model = Study
     form_class = StudyDetailForm
-    template_name = 'studies/study_details_form.html'
+    template_name = "studies/study_details_form.html"
     success_url = reverse_lazy('studies:study_list')
 
 
 class StudyUpdate(UpdateView):
     model = Study
     form_class = StudyDetailForm
-    template_name = 'studies/study_details_form.html'
+    template_name = "studies/study_details_form.html"
     success_url = reverse_lazy('studies:study_list')
 
 
 class StudyDelete(DeleteView):
     model = Study
-    template_name = 'studies/study_deletion_form.html'
+    template_name = "studies/study_deletion_form.html"
     success_url = reverse_lazy('studies:study_list')
 
 
