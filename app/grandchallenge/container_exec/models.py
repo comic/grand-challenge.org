@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Tuple, Type
 
 from django.conf import settings

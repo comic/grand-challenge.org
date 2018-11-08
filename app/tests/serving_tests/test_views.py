@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from rest_framework.authtoken.models import Token
 
