@@ -4,4 +4,5 @@ from grandchallenge.studies.models import Study
 class StudyDetailForm(ModelForm):
     class Meta:
         model = Study
-        fields = '__all__'
+        fields = ('id', 'code', 'region_of_interest')
+
