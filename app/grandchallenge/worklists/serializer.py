@@ -1,20 +1,14 @@
 from rest_framework import serializers
-from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistSetNode
+from grandchallenge.worklists.models import Worklist, WorklistSet
 
 
 class WorklistSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorklistSet
-        fields = '__all__'
+        fields = ("id", "title")
 
 
 class WorklistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worklist
-        fields = '__all__'
-
-
-class WorklistSetNodeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorklistSetNode
-        fields = '__all__'
+        fields = ("id", "title", "parent", "set")
