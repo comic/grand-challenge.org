@@ -25,6 +25,7 @@ from grandchallenge.evaluation.models import (
     Method,
     Config,
 )
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
@@ -43,9 +44,10 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = self.request.challenge
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-        with uploaded_file.open() as f:
-            form.instance.image.save(uploaded_file.name, File(f))
+
+        uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
+        form.instance.staged_image_uuid = uploaded_file.uuid
+
         return super().form_valid(form)
 
 

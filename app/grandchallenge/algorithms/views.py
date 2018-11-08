@@ -45,8 +45,7 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
             logger.warning("Could not convert notebook to html.")
 
         uploaded_file = form.cleaned_data["chunked_upload"][0]
-        with uploaded_file.open() as f:
-            form.instance.image.save(uploaded_file.name, File(f))
+        form.instance.staged_image_uuid = uploaded_file.uuid
 
         return super().form_valid(form)
 
