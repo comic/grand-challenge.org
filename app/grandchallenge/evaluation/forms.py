@@ -5,6 +5,7 @@ from django import forms
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import Method, Submission, Config
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
@@ -56,7 +57,10 @@ class ConfigForm(forms.ModelForm):
             *result_list_options,
             *result_detail_options,
         )
-        widgets = {"submission_page_html": SummernoteInplaceWidget()}
+        widgets = {
+            "submission_page_html": SummernoteInplaceWidget(),
+            "extra_results_columns": JSONEditorWidget(),
+        }
 
 
 method_upload_widget = uploader.AjaxUploadWidget(
