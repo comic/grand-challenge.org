@@ -13,7 +13,7 @@
         <meta name="description"
               content="{{ site.description }}"/>
         <meta name="keywords"
-              content="COMIC, open, science, medical, image, computing, validated"/>
+              content="open, science, medical, image, computing, validated"/>
 
         {% comment %}
         <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js" crossorigin="anonymous"></script>
@@ -38,6 +38,10 @@
         {% block jquery_js %}
             <script type="text/javascript"
                     src="{% static "jquery-3.2.1/js/jquery-3.2.1.min.js" %}"></script>
+            {# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+                    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+                    crossorigin="anonymous"></script>
         {% endblock %}
 
         {% block bootstrap %}
@@ -85,9 +89,6 @@
         {% endblock %}
 
         {% block fileupload %}
-            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-                    integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-                    crossorigin="anonymous"></script>
             <script type="text/javascript"
                     src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.19.1/js/jquery.fileupload.min.js"></script>
         {% endblock %}
@@ -96,6 +97,11 @@
             <script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
                     integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
                     crossorigin="anonymous"></script>
+        {% endblock %}
+
+        {% block geochart %}
+            <script type="text/javascript"
+                    src="https://www.gstatic.com/charts/loader.js"></script>
         {% endblock %}
 
         {#  Custom CSS, must be included AFTER bootstrap  #}
@@ -108,29 +114,12 @@
         <link href="{% block stylesheet %} {% endblock %}" type="text/css"
               rel="stylesheet">
 
-        <script>
-            //url prefix for API functions
-            API_PREFIX = "{% get_project_prefix %}api";
-
-            $(document).ready(function () {
-
-                $('table.sortable').dataTable({
-                    "bJQueryUI": false,
-                    "sPaginationType": "full_numbers",
-                    "bPaginate": false,
-                    "bLengthChange": false,
-                    "bFilter": false,
-                    "bInfo": false,
-                    "bAutoWidth": false
-                });
-            });
-        </script>
-
         <style>
             {% block additionalCSS %}{% endblock %}
         </style>
 
-        <title> {% block pageName %} COMIC main portal {% endblock %} </title>
+        <title>{% block pageName %}
+            {{ main_challenge_name }}{% endblock %} </title>
     {% endblock %}
 </head>
 <body class='bg-light'>
@@ -283,6 +272,68 @@
             </div>
         </div>
     </footer>
+{% endblock %}
+
+{% block postjs %}
+    <script type='text/javascript'>
+        $(document).ready(function () {
+            $('table.sortable').dataTable({
+                "bJQueryUI": false,
+                "sPaginationType": "full_numbers",
+                "bPaginate": false,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bInfo": false,
+                "bAutoWidth": false
+            });
+        });
+
+        google.charts.load('current', {'packages': ['geochart']});
+        google.charts.setOnLoadCallback(drawGeoCharts);
+
+        function drawGeoCharts() {
+            google.visualization.mapsApiKey = '{{ geochart_api_key }}';
+            var charts = document.querySelectorAll('[data-geochart]');
+
+            for (i = 0; i < charts.length; i++) {
+                try {
+                    drawGeoChart(charts[i]);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
+
+        function drawGeoChart(element) {
+            var array = JSON.parse(element.dataset['geochart']);
+            var data = google.visualization.arrayToDataTable(array);
+            var options = {
+                colorAxis: {
+                    colors: [
+                        '#440154',
+                        '#32658e',
+                        '#20a486',
+                        '#63cb5f',
+                        '#a8db34',
+                        '#d0e11c',
+                        '#e7e419',
+                        '#f1e51d',
+                        '#f8e621',
+                        '#fbe723',
+                        '#fbe723',
+                        '#fde725',
+                        '#fde725',
+                        '#fde725',
+                        '#fde725',
+                        '#fde725'
+                    ]
+                },
+                backgroundColor: '#c9eeff'
+            };
+            var chart = new google.visualization.GeoChart(element);
+            chart.draw(data, options);
+        }
+    </script>
 {% endblock %}
 
 </body>

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.urls import path
 
 from grandchallenge.algorithms.forms import algorithm_upload_widget

@@ -85,7 +85,7 @@ class Command(BaseCommand):
                 challenge=demo, title="adm", permission_lvl="ADM"
             )
 
-            method = Method(challenge=demo)
+            method = Method(challenge=demo, creator=demoadmin)
             container = ContentFile(base64.b64decode(b""))
             method.image.save("test.tar", container)
             method.save()

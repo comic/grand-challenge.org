@@ -65,14 +65,14 @@ h4, .h4 {
     font-size: 1em;
     line-height: 1.625em;
     margin-top: 1.625em;
-    margin-bottom: 0em;
+    margin-bottom: 0;
 }
 
 h5, .h5 {
     font-size: 1em;
     line-height: 1.625em;
     margin-top: 1.625em;
-    margin-bottom: 0em;
+    margin-bottom: 0;
 }
 
 /* Increase shadow */
@@ -145,16 +145,6 @@ input[type=checkbox] {
     border-width: 3px;
 }
 
-/* Editor width */
-
-div#cke_id_html {
-    width: 100% !important;
-}
-
-div.django-ckeditor-widget {
-    display: inherit !important;
-}
-
 /* Sticky footer styles
 -------------------------------------------------- */
 
@@ -162,8 +152,8 @@ div.django-ckeditor-widget {
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 60px; /* Set the fixed height of the footer here */
-    line-height: 60px; /* Vertically center the text there */
+    height: 4rem; /* Set the fixed height of the footer here */
+    line-height: 4rem; /* Vertically center the text there */
 }
 
 .headerImage {
@@ -171,28 +161,14 @@ div.django-ckeditor-widget {
     border-radius: 6px;
 }
 
-.challenge-card-header {
-    padding: 0;
-    display: flex;
-    align-items:center;
-}
-
-.challenge-card-title {
-    margin: 0;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.challenge-logo {
+.rounded-top-left {
     border-top-left-radius: 3px;
-    width: 80px !important; /* rendering bug with long titles */
-    height: 80px;
-    object-fit:cover;
 }
 
-.projectLinkFilter {
-    font-weight: bold;
+.thumbnail {
+    width: 5rem; /* rendering bug with long titles */
+    height: 5rem;
+    object-fit:cover;
 }
 
 .navbar-toggle {

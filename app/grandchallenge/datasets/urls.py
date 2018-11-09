@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.urls import path
 
 from grandchallenge.cases.forms import upload_raw_files_widget

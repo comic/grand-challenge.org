@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import tarfile
 import uuid
@@ -6,7 +5,10 @@ import uuid
 from celery import shared_task
 from django.apps import apps
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import OperationalError
+
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 @shared_task()
@@ -16,10 +18,17 @@ def validate_docker_image_async(
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     instance = model.objects.get(pk=pk)
-    instance.image.open(mode="rb")
+
+    if not instance.image:
+        # Create the image from the staged file
+        uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
+        with uploaded_image.open() as f:
+            instance.image.save(uploaded_image.name, File(f))
 
     try:
-        with tarfile.open(fileobj=instance.image, mode="r") as t:
+        with instance.image.open(mode="rb") as im, tarfile.open(
+            fileobj=im, mode="r"
+        ) as t:
             member = dict(zip(t.getnames(), t.getmembers()))["manifest.json"]
             manifest = t.extractfile(member).read()
     except (KeyError, tarfile.ReadError):

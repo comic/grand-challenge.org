@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from django.conf import settings
 from django.test import Client
@@ -185,7 +184,9 @@ def test_team_member_addition(client, TwoChallengeSets):
         owner=TwoChallengeSets.ChallengeSet1.participant,
     )
     assert TwoChallengeSets.ChallengeSet1.participant in team.get_members()
-    assert TwoChallengeSets.ChallengeSet1.participant1 not in team.get_members()
+    assert (
+        TwoChallengeSets.ChallengeSet1.participant1 not in team.get_members()
+    )
     # Participant1 requests to join team
     response = get_view_for_user(
         viewname="teams:member-create",

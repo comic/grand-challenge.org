@@ -31,15 +31,15 @@
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
                     <td>
-                    <span class="label
+                    <span class="badge
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        label-danger
+                        badge-danger
                     {% elif job.status == job.RETRY %}
-                        label-warning
+                        badge-warning
                     {% elif job.status == job.SUCCESS %}
-                        label-success
+                        badge-success
                     {% else %}
-                        label-info
+                        badge-info
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>

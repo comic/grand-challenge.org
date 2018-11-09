@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Tuple, Type
 
 from django.conf import settings
@@ -8,6 +7,7 @@ from django.db import models
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.jqfileupload.models import StagedFile
 
 
 class ContainerExecJobModel(models.Model):
@@ -21,15 +21,12 @@ class ContainerExecJobModel(models.Model):
     CANCELLED = 5
 
     STATUS_CHOICES = (
-        (PENDING, "The task is waiting for execution"),
-        (STARTED, "The task has been started"),
-        (RETRY, "The task is to be retried, possibly because of failure"),
-        (
-            FAILURE,
-            "The task raised an exception, or has exceeded the retry limit",
-        ),
-        (SUCCESS, "The task executed successfully"),
-        (CANCELLED, "The task was cancelled"),
+        (PENDING, "Queued"),
+        (STARTED, "Started"),
+        (RETRY, "Re-Queued"),
+        (FAILURE, "Failed"),
+        (SUCCESS, "Succeeded"),
+        (CANCELLED, "Cancelled"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -106,7 +103,9 @@ class ContainerImageModel(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
     image = models.FileField(
+        blank=True,
         upload_to=docker_image_path,
         validators=[ExtensionValidator(allowed_extensions=(".tar",))],
         help_text=(

@@ -17,151 +17,142 @@
 
                 <div id="projectfilterbuttons">
 
+                    <div id="accordion">
 
-                    <div id="projectLinksFilters">
+                        <form class="d-none">
+                            <!--Hidden checkbox to display all projectlinks by default -->
+                            <label class="checkbox-inline font-weight-bold">
+                                <input type="checkbox" class="include"
+                                       checked disabled
+                                       id="projectlink">
+                            </label>
+                        </form>
 
-
-                        <div id="accordion">
-
-                            <form class="form-inline-challenge mb-3"
-                                  style="display:none;">
-                                <!--Hidden checkbox to display all projectlinks by default -->
-                                <label class="checkbox-inline no_indent projectLinkFilter">
-                                    <input type="checkbox" class="include"
-                                           checked disabled
-                                           id="projectlink"
-                                    >
-                                </label>
-                            </form>
-
-                            <div class="card mb-3">
-                                <a class="collapsed"
-                                   data-toggle="collapse"
-                                   href="#collapseModality"
-                                   id="headingModality">
-                                    <div class="card-body">
-                                        <i class="fas fa-chevron-right"
-                                           id="modality-chevron">
-                                        </i>
-                                        <b>Modality</b></div>
-                                </a>
-
-                                <div id="collapseModality" class="collapse"
-                                     data-parent="#accordion">
-                                    <div class="card-body">
-                                        <form>
-                                            {% for modality in modalities %}
-                                                <label id="{{ modality.filter_tag }}"
-                                                       class="checkbox-inline no_indent projectLinkFilter">
-                                                    <input type="checkbox"
-                                                           class="filter"
-                                                           value="{{ modality.modality }}"
-                                                           id="{{ modality.filter_tag }}">
-                                                    <span>{{ modality.modality }}</span><span
-                                                        class="counter ml-1 badge badge-pill badge-info"
-                                                        id="{{ modality.filter_tag }}"></span>
-                                                </label><br>
-                                            {% endfor %}
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card mb-3">
-                                <a class="collapsed"
-                                   data-toggle="collapse"
-                                   href="#collapseTask"
-                                   id="headingTask">
-                                    <div class="card-body">
-                                        <i class="fas fa-chevron-right"
-                                           id="task-chevron">
-                                        </i>
-                                        <b>Task type</b></div>
-                                </a>
-
-                                <div id="collapseTask" class="collapse"
-                                     data-parent="#accordion">
-                                    <div class="card-body">
-                                        <form class="form-inline-task">
-                                            {% for task in task_types %}
-                                                <label id="{{ task.filter_tag }}"
-                                                       class="checkbox-inline no_indent projectLinkFilter">
-                                                    <input type="checkbox"
-                                                           class="filter"
-                                                           id="{{ task.filter_tag }}"
-                                                           value="{{ task.type }}">
-                                                    <span>{{ task.type }}</span>
-                                                    <span
-                                                            class="counter ml-1 badge badge-pill badge-info"
-                                                            id="{{ task.filter_tag }}"></span>
-                                                </label><br>
-                                            {% endfor %}
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div class="card mb-3">
-                                <a class="collapsed"
-                                   data-toggle="collapse"
-                                   href="#collapseStructure"
-                                   id="headingStructure">
-                                    <div class="card-body"><i
-                                            class="fas fa-chevron-right"
-                                            id="structure-chevron">
+                        <div class="card mb-3">
+                            <a class="collapsed"
+                               data-toggle="collapse"
+                               href="#collapseModality">
+                                <div class="card-body">
+                                    <i class="fas fa-chevron-circle-right"
+                                       id="modality-chevron">
                                     </i>
-                                        <b>Structure</b></div>
-                                </a>
+                                    <b>Modality</b></div>
+                            </a>
 
-                                <div id="collapseStructure" class="collapse"
-                                     data-parent="#accordion">
-                                    <div class="card-body">
-                                        {% for r in body_regions %}
-
-                                            <label id="{{ r.filter_tag }}"
-                                                   class="checkbox-inline no_indent projectLinkFilter">
+                            <div id="collapseModality" class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <form>
+                                        {% for modality in modalities %}
+                                            <label id="{{ modality.filter_tag }}"
+                                                   class="checkbox-inline font-weight-bold">
                                                 <input type="checkbox"
                                                        class="filter"
-                                                       id="{{ r.filter_tag }}"
-                                                       value="{{ r.region }}">
-                                                <span>{{ r.region }}</span>
-                                                <span
-                                                        class="counter ml-1 badge badge-pill badge-info"
-                                                        id="{{ r.filter_tag }}"></span>
-                                            </label>
-                                            <div class="ml-3">
-                                                <form class="form-inline-region-{{ r.filter_tag }}">
-                                                    {% for s in r.bodystructure_set.all %}
-                                                        <label id="{{ s.filter_tag }}"
-                                                               class="checkbox-inline no_indent projectLinkFilter">
-                                                            <input type="checkbox"
-                                                                   class="filter"
-                                                                   id="{{ s.filter_tag }}"
-                                                                   value="{{ s.structure }}">
-                                                            <span>{{ s.structure }}</span>
-                                                            <span
-                                                                    class="counter ml-1 badge badge-pill badge-info"
-                                                                    id="{{ s.filter_tag }}"></span>
-                                                        </label>
-                                                        <br>
-                                                    {% endfor %}
-                                                </form>
-                                            </div>
+                                                       value="{{ modality.modality }}"
+                                                       id="{{ modality.filter_tag }}">
+                                                <span>{{ modality.modality }}</span><span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ modality.filter_tag }}"></span>
+                                            </label><br>
                                         {% endfor %}
-
-                                    </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
 
-                        <span id="info"
-                              class="badge badge-info">Displaying <span
-                                class="counter" id="projectlink"></span>
-                    of <span class="counter"
-                             id="total"></span></span>
+                        <div class="card mb-3">
+                            <a class="collapsed"
+                               data-toggle="collapse"
+                               href="#collapseTask">
+                                <div class="card-body">
+                                    <i class="fas fa-chevron-circle-right"
+                                       id="task-chevron">
+                                    </i>
+                                    <b>Task type</b></div>
+                            </a>
 
+                            <div id="collapseTask" class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <form>
+                                        {% for task in task_types %}
+                                            <label id="{{ task.filter_tag }}"
+                                                   class="checkbox-inline font-weight-bold">
+                                                <input type="checkbox"
+                                                       class="filter"
+                                                       id="{{ task.filter_tag }}"
+                                                       value="{{ task.type }}">
+                                                <span>{{ task.type }}</span>
+                                                <span
+                                                        class="counter ml-1 badge badge-pill badge-info"
+                                                        id="{{ task.filter_tag }}"></span>
+                                            </label><br>
+                                        {% endfor %}
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="card mb-3">
+                            <a class="collapsed"
+                               data-toggle="collapse"
+                               href="#collapseStructure"
+                               id="headingStructure">
+                                <div class="card-body"><i
+                                        class="fas fa-chevron-circle-right"
+                                        id="structure-chevron">
+                                </i>
+                                    <b>Structure</b></div>
+                            </a>
+
+                            <div id="collapseStructure" class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    {% for r in body_regions %}
+
+                                        <label id="{{ r.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   id="{{ r.filter_tag }}"
+                                                   value="{{ r.region }}">
+                                            <span>{{ r.region }}</span>
+                                            <span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ r.filter_tag }}"></span>
+                                        </label>
+                                        <div class="ml-3">
+                                            <form>
+                                                {% for s in r.bodystructure_set.all %}
+                                                    <label id="{{ s.filter_tag }}"
+                                                           class="checkbox-inline font-weight-bold">
+                                                        <input type="checkbox"
+                                                               class="filter"
+                                                               id="{{ s.filter_tag }}"
+                                                               value="{{ s.structure }}">
+                                                        <span>{{ s.structure }}</span>
+                                                        <span
+                                                                class="counter ml-1 badge badge-pill badge-info"
+                                                                id="{{ s.filter_tag }}"></span>
+                                                    </label>
+                                                    <br>
+                                                {% endfor %}
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <span id="info"
+                          class="badge badge-info">Displaying <span
+                            class="counter" id="projectlink"></span>
+                    of <span id="counter-total"></span></span>
+
+
                 </div>
             </div>
 
@@ -193,8 +184,8 @@
         </p>
     {% endif %}
 
-    <div id="filter_info">
-        <span id="filter_counter" class="badge badge-info">
+    <div>
+        <span class="badge badge-info">
             Active filters:
             <span class="counter" id="active_filter_count"></span>
         </span>
@@ -212,11 +203,11 @@
     </div>
 
 
-    <div id='projectlinks'>
+    <div>
 
         {% for year, challenges in challenges_by_year.items %}
 
-            <div class='projectlinksyearcontainer'>
+            <div>
 
                 <div class='yearHeader' id='{{ year }}'>
                     <h2>{{ year }}</h2>
@@ -229,25 +220,25 @@
                                 <a id="{{ challenge.short_name }}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
-                                    <div class="card-header small challenge-card-header">
-                                        <img class="challenge-logo"
-                                                 alt="{{ challenge.short_name }} logo"
-                                                 src="{{ challenge.thumb_image_url }}">
-                                        <h3 class="challenge-card-title p-3">
+                                    <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
+                                        <img class="thumbnail rounded-top-left flex-shrink-0"
+                                             alt="{{ challenge.short_name }} logo"
+                                             src="{{ challenge.thumb_image_url }}">
+                                        <h3 class="m-0 px-3 text-nowrap text-truncate flex-shrink-1">
                                             {% firstof challenge.title challenge.short_name %}
                                         </h3>
                                     </div>
                                 </a>
 
-                                <div class="card-body projectLinkBody small"
+                                <div class="card-body small"
                                      style="overflow: hidden; height:250px; line-height:1.5em">
                                     {{ challenge.description|truncatewords:35 }}
                                 </div>
 
-                                <div class="card-footer small projectLinkFooter"
+                                <div class="card-footer small"
                                      style="line-height:1.5em">
 
-                                    <dl class="inline">
+                                    <dl class="inline mb-0">
 
                                         {% if challenge.cached_num_participants %}
                                             <dt>Patricipants</dt>
@@ -300,7 +291,7 @@
 
                                     {% if not challenge.hosted_on_comic %}
                                         {% if request.user.is_staff %}
-                                            <div class="projectLinkEdit">
+                                            <div>
                                                 <a class="btn btn-primary btn-sm"
                                                    href="{% url 'challenges:external-update' challenge.short_name %}">
                                                     <i class="fas fa-edit"></i>

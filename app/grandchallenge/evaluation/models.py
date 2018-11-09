@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
@@ -40,6 +39,15 @@ class Config(UUIDModel):
         (OFF, "Off"),
         (OPTIONAL, "Optional"),
         (REQUIRED, "Required"),
+    )
+
+    ALL = "all"
+    MOST_RECENT = "rec"
+    BEST = "bst"
+    RESULT_DISPLAY_CHOICES = (
+        (ALL, "Display all results"),
+        (MOST_RECENT, "Only display each users most recent result"),
+        (BEST, "Only display each users best result"),
     )
 
     challenge = models.OneToOneField(
@@ -100,6 +108,12 @@ class Config(UUIDModel):
             '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
         ),
     )
+    result_display_choice = models.CharField(
+        max_length=3,
+        choices=RESULT_DISPLAY_CHOICES,
+        default=ALL,
+        help_text=("Which results should be displayed on the leaderboard?"),
+    )
     allow_submission_comments = models.BooleanField(
         default=False,
         help_text=(
@@ -112,7 +126,6 @@ class Config(UUIDModel):
             "If true, submission comments are shown on the results page."
         ),
     )
-
     supplementary_file_choice = models.CharField(
         max_length=3,
         choices=SUPPLEMENTARY_FILE_CHOICES,
@@ -151,7 +164,6 @@ class Config(UUIDModel):
             "page."
         ),
     )
-
     publication_url_choice = models.CharField(
         max_length=3,
         choices=PUBLICATION_LINK_CHOICES,
@@ -176,7 +188,7 @@ class Config(UUIDModel):
             "submission in a 24 hour period."
         ),
     )
-    submission_page_html = RichTextField(
+    submission_page_html = models.TextField(
         help_text=(
             "HTML to include on the submission page for this challenge."
         ),

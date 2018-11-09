@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.urls import path
 
 from grandchallenge.serving.views import serve_folder, serve_images
@@ -11,6 +10,7 @@ urlpatterns = [
     path("banners/<path:path>", serve_folder, {"folder": "banners"}),
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
     path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
+    path("i/<path:path>", serve_folder, {"folder": "i"}),
     path(
         "evaluation-supplementary/<path:path>",
         serve_folder,

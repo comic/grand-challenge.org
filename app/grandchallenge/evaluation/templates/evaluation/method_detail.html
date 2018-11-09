@@ -4,20 +4,34 @@
 
     <h2>Method {{ object.pk }}</h2>
 
-    <p><strong>Challenge:</strong> <a
-            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
-    </p>
-    <p><strong>Creator:</strong> <a
-            href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
-    </p>
-    <p><strong>Created at:</strong> {{ object.created }}</p>
+    <dl class="inline">
 
-    <p><strong>Image:</strong> <a
-            href="{{ object.image.url }}">{{ object.image.name }}</a></p>
-    <p><strong>Image SHA256:</strong> {{ object.image_sha256 }}</p>
+        <dt>Challenge</dt>
+        <dd><a href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a></dd>
 
-    <p><strong>Ready:</strong> {{ object.ready }}</p>
-    <p><strong>Status:</strong> {{ object.status }}</p>
+        <dt>Creator</dt>
+        <dd><a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a></dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        <dt>Image</dt>
+        <dd>
+            {% if object.image %}
+                <a href="{{ object.image.url }}">{{ object.image.name }}</a>
+            {% endif %}
+        </dd>
+
+        <dt>Image SHA256</dt>
+        <dd>{{ object.image_sha256 }}</dd>
+
+        <dt>Ready</dt>
+        <dd>{{ object.ready }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.status }}</dd>
+
+    </dl>
 
     <h2>Evaluations for this method</h2>
     <div class="table-responsive">
@@ -43,15 +57,15 @@
                         <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
                     </td>
                     <td>
-                    <span class="label
+                    <span class="badge
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        label-danger
+                        badge-danger
                     {% elif job.status == job.RETRY %}
-                        label-warning
+                        badge-warning
                     {% elif job.status == job.SUCCESS %}
-                        label-success
+                        badge-success
                     {% else %}
-                        label-info
+                        badge-info
                     {% endif %}">
                         {{ job.get_status_display }}
                     </span>

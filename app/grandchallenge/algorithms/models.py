@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 import logging
 import uuid
 from datetime import timedelta
 from pathlib import Path
 
-from ckeditor.fields import RichTextField
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
@@ -34,7 +32,7 @@ class Algorithm(UUIDModel, ContainerImageModel):
     slug = models.SlugField(
         max_length=32, editable=False, unique=True, null=True
     )
-    description_html = RichTextField(blank=True)
+    description_html = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)

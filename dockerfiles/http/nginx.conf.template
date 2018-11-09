@@ -114,7 +114,7 @@ http {
       rewrite ^(.*[^/])$ $1/ permanent;
     }
 
-    location ~ ^/(static|site|accounts|socialauth|dbox|media|challenges|cases|algorithms)/ {
+    location ~ ^/(static|site|accounts|socialauth|dbox|media|challenges|cases|algorithms|summernote)/ {
       proxy_pass $scheme://127.0.0.1$request_uri;
       proxy_set_header Host ${SERVER_NAME};
     }

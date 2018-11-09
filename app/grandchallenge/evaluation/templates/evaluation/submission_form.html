@@ -2,12 +2,14 @@
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 {% load guardian_tags %}
+{% load clean from bleach %}
+
 
 {% block pagecontent %}
 
     <h2>Submission</h2>
 
-    {{ site.evaluation_config.submission_page_html|safe }}
+    {{ site.evaluation_config.submission_page_html|clean }}
 
     <h3>Create a new submission</h3>
 

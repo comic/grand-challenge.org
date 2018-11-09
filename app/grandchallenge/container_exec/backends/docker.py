@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import io
 import json
 import os
@@ -56,15 +55,13 @@ class Executor(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        filter = {"label": f"job_id={self._job_id}"}
+        flt = {"label": f"job_id={self._job_id}"}
 
-        for container in self._client.containers.list(filters=filter):
+        for container in self._client.containers.list(filters=flt):
             container.stop()
 
-        self.__retry_docker_obj_prune(
-            obj=self._client.containers, filters=filter
-        )
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=filter)
+        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -86,6 +83,7 @@ class Executor(object):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
+        self._chmod_output()
         self._execute_container()
         return self._get_result()
 
@@ -129,6 +127,21 @@ class Executor(object):
                 dest=f"/input/{Path(file.name).name}",
             )
 
+    def _chmod_output(self):
+        """ Ensure that the output is writable """
+        try:
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._output_volume: {"bind": "/output/", "mode": "rw"}
+                },
+                command="chmod 777 /output/",
+                remove=True,
+                **self._run_kwargs,
+            )
+        except Exception as exc:
+            raise RuntimeError(str(exc))
+
     def _execute_container(self):
         try:
             self._client.containers.run(
@@ -137,6 +150,7 @@ class Executor(object):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
+                remove=True,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
@@ -150,6 +164,7 @@ class Executor(object):
                     self._output_volume: {"bind": "/output/", "mode": "ro"}
                 },
                 command=f"cat {self._results_file}",
+                remove=True,
                 **self._run_kwargs,
             )
         except ContainerError as exc:

@@ -1,12 +1,13 @@
 {% extends "site.html" %}
 {% load crispy_forms_tags %}
+{% load clean from bleach %}
 
 {% block pagecontent %}
 
     <h2>Join {{ site.short_name }}</h2>
 
     <p>
-        {{ site.registration_page_text|safe }}
+        {{ site.registration_page_text|clean }}
     </p>
 
     {% if existing_status %}

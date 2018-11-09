@@ -692,13 +692,13 @@ class LinkReplacerTest(ComicframeworkTestCase):
         # this fake file is included on test pa
         default_storage.add_fake_file(
             "fakeincludeurls.html",
-            "<relativelink><a href = 'relative.html'>link</a><endrelativelink>"
-            "<pathrelativeink><a href = 'folder1/relative.html'>link</a><endpathrelativelink>"
-            "<moveuplink><a href = '../moveup.html'>link</a><endmoveuplink>"
-            "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>"
-            "<absolute><a href = 'http://www.hostname.com/somelink.html'>link</a><endabsolute>"
-            "<notafile><a href = '/faq'>link</a><endnotafile>"
-            "<notafile_slash><a href = '/faq/'>link</a><endnotafile_slash>",
+            "~relativelink~<a href = 'relative.html'>link</a>~endrelativelink~"
+            "~pathrelativeink~<a href = 'folder1/relative.html'>link</a>~endpathrelativelink~"
+            "~moveuplink~<a href = '../moveup.html'>link</a>~endmoveuplink~"
+            "~absolute~<a href = 'http://www.hostname.com/somelink.html'>link</a>~endabsolute~"
+            "~absolute~<a href = 'http://www.hostname.com/somelink.html'>link</a>~endabsolute~"
+            "~notafile~<a href = '/faq'>link</a>~endnotafile~"
+            "~notafile_slash~<a href = '/faq/'>link</a>~endnotafile_slash~",
         )
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"
         insertfiletagpage = create_page(
@@ -710,22 +710,22 @@ class LinkReplacerTest(ComicframeworkTestCase):
         # Extract rendered content from included file, see if it has been rendered
         # In the correct way
         relative = find_text_between(
-            "<relativelink>", "<endrelativelink>", response.content
+            "~relativelink~", "~endrelativelink~", response.content
         )
         pathrelativelink = find_text_between(
-            "<pathrelativeink>", "<endpathrelativelink>", response.content
+            "~pathrelativeink~", "~endpathrelativelink~", response.content
         )
         moveuplink = find_text_between(
-            "<moveuplink>", "<endmoveuplink>", response.content
+            "~moveuplink~", "~endmoveuplink~", response.content
         )
         absolute = find_text_between(
-            "<absolute>", "<endabsolute>", response.content
+            "~absolute~", "~endabsolute~", response.content
         )
         notafile = find_text_between(
-            "<notafile>", "<endnotafile>", response.content
+            "~notafile~", "~endnotafile~", response.content
         )
         notafile_slash = find_text_between(
-            "<notafile_slash>", "<endnotafile_slash>", response.content
+            "~notafile_slash~", "~endnotafile_slash~", response.content
         )
         relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
         pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
@@ -873,11 +873,11 @@ class TemplateTagsTest(ComicframeworkTestCase):
             "fakeinclude.html",
             "This is some fake include content:"
             "here is the content of fakecss"
-            "<somecss>{% insert_file "
+            "~somecss~{% insert_file "
             + default_storage.FAKE_DIRS[1]
-            + "/fakecss.css %} </somecss>and a "
-            "non-existant include: <nonexistant>{% insert_file nothing/nonexistant.txt %}</nonexistant> Also"
-            " try to include scary file path <scary>{% insert_file ../../../allyoursecrets.log %}</scary>",
+            + "/fakecss.css %} ~/somecss~and a "
+            "non-existant include: ~nonexistant~{% insert_file nothing/nonexistant.txt %}~/nonexistant~ Also"
+            " try to include scary file path ~scary~{% insert_file ../../../allyoursecrets.log %}~/scary~",
         )
 
     def _extract_download_link(self, response1):
@@ -1016,12 +1016,12 @@ class TemplateTagsTest(ComicframeworkTestCase):
         # Extract rendered content from included file, see if it has been rendered
         # In the correct way
         somecss = find_text_between(
-            "<somecss>", "</somecss>", response.content
+            "~somecss~", "~/somecss~", response.content
         )
         nonexistant = find_text_between(
-            "<nonexistant>", "</nonexistant>", response.content
+            "~nonexistant~", "~/nonexistant~", response.content
         )
-        scary = find_text_between("<scary>", "</scary>", response.content)
+        scary = find_text_between("~scary~", "~/scary~", response.content)
         self.assertTrue(
             somecss != "",
             "Nothing was rendered when including an existing file. Some css should be here",

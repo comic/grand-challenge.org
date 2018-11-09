@@ -31,7 +31,7 @@ $(document).ready(function () {
         //a span with class 'counter' and id 'total'
 
         var count = $("div." + BASE_SELECTOR).length;
-        $("span.counter#total").html(count)
+        $("#counter-total").html(count)
 
     }
 
@@ -244,33 +244,33 @@ $(document).ready(function () {
     }
 
     $('#collapseModality').on('show.bs.collapse', function () {
-        $('#modality-chevron').removeClass('fa-chevron-right');
-        $('#modality-chevron').addClass('fa-chevron-down');
+        $('#modality-chevron').removeClass('fa-chevron-circle-right');
+        $('#modality-chevron').addClass('fa-chevron-circle-down');
     });
 
     $('#collapseModality').on('hide.bs.collapse', function () {
-        $('#modality-chevron').removeClass('fa-chevron-down');
-        $('#modality-chevron').addClass('fa-chevron-right');
+        $('#modality-chevron').removeClass('fa-chevron-circle-down');
+        $('#modality-chevron').addClass('fa-chevron-circle-right');
     });
 
     $('#collapseTask').on('show.bs.collapse', function () {
-        $('#task-chevron').removeClass('fa-chevron-right');
-        $('#task-chevron').addClass('fa-chevron-down');
+        $('#task-chevron').removeClass('fa-chevron-circle-right');
+        $('#task-chevron').addClass('fa-chevron-circle-down');
     });
 
     $('#collapseTask').on('hide.bs.collapse', function () {
-        $('#task-chevron').removeClass('fa-chevron-down');
-        $('#task-chevron').addClass('fa-chevron-right');
+        $('#task-chevron').removeClass('fa-chevron-circle-down');
+        $('#task-chevron').addClass('fa-chevron-circle-right');
     });
 
     $('#collapseStructure').on('show.bs.collapse', function () {
-        $('#structure-chevron').removeClass('fa-chevron-right');
-        $('#structure-chevron').addClass('fa-chevron-down');
+        $('#structure-chevron').removeClass('fa-chevron-circle-right');
+        $('#structure-chevron').addClass('fa-chevron-circle-down');
     });
 
     $('#collapseStructure').on('hide.bs.collapse', function () {
-        $('#structure-chevron').removeClass('fa-chevron-down');
-        $('#structure-chevron').addClass('fa-chevron-right');
+        $('#structure-chevron').removeClass('fa-chevron-circle-down');
+        $('#structure-chevron').addClass('fa-chevron-circle-right');
     });
 
 });

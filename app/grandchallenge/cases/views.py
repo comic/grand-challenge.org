@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.views.generic import CreateView, DetailView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 

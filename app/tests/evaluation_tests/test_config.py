@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from tests.utils import get_view_for_user

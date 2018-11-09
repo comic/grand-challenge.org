@@ -2,6 +2,12 @@
 {% load crispy from crispy_forms_tags %}
 {% load static %}
 
+{# Do not show the footer as this is broken with SummernoteInplaceWidget #}
+{% block footer %}{% endblock %}
+
+{# Do not run js actions on the page as this breaks with SummernoteInplaceWidget #}
+{% block postjs %}{% endblock %}
+
 {% block pagecontent %}
 
     <h2>
