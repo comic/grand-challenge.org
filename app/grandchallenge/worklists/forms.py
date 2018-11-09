@@ -4,4 +4,4 @@ from grandchallenge.worklists.models import WorklistSet
 class WorklistSetDetailForm(ModelForm):
     class Meta:
         model = WorklistSet
-        fields = '__all__'
+        fields = ("title")

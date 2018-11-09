@@ -5,4 +5,4 @@ from grandchallenge.studies.models import Study
 class StudyDetailForm(ModelForm):
     class Meta:
         model = Study
-        fields = ("id", "code", "region_of_interest")
+        fields = ("code", "region_of_interest")

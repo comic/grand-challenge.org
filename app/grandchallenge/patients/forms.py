@@ -5,4 +5,4 @@ from grandchallenge.patients.models import Patient
 class PatientDetailForm(ModelForm):
     class Meta:
         model = Patient
-        fields = ("id", "name", "sex", "height")
+        fields = ("name", "sex", "height")
