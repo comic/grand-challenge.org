@@ -2,8 +2,8 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
 
-from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistSetNode
-from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistSetNodeSerializer
+from grandchallenge.worklists.models import Worklist, WorklistSet
+from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer
 from grandchallenge.worklists.forms import WorklistSetDetailForm
 from grandchallenge.core.urlresolvers import reverse
 
