@@ -14,8 +14,8 @@ class WorklistSet(models.Model):
 
 class Worklist(models.Model):
     title = CharField(null=False, blank=False, max_length=255)
-    parent = models.ForeignKey("Worklist", null=True, blank=True)
-    set = models.ForeignKey("WorklistSet", null=False, blank=False)
+    parent = models.ForeignKey("Worklist", null=True, blank=True, on_delete=models.CASCADE)
+    set = models.ForeignKey("WorklistSet", null=False, blank=False, on_delete=models.CASCADE)
 
     def get_fields(self):
         return [(field, field.value_to_string(self)) for field in Worklist._meta.fields]

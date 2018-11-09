@@ -1,7 +1,6 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
-from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializer import StudySerializer
@@ -11,8 +10,6 @@ from grandchallenge.core.urlresolvers import reverse
 
 class StudyTable(generics.ListCreateAPIView):
     serializer_class = StudySerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = '__all__'
 
     def get_queryset(self):
         # Get URL parameter as a string, if exists

@@ -1,7 +1,6 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
-from django_filters.rest_framework import DjangoFilterBackend
 
 from grandchallenge.worklists.models import Worklist, WorklistSet, WorklistSetNode
 from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer, WorklistSetNodeSerializer
@@ -13,8 +12,6 @@ from grandchallenge.core.urlresolvers import reverse
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = '__all__'
 
 
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
@@ -26,8 +23,6 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
 class WorklistSetTable(generics.ListCreateAPIView):
     queryset = WorklistSet.objects.all()
     serializer_class = WorklistSetSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_fields = '__all__'
 
 
 class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
