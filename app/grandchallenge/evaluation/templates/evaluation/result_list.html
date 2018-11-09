@@ -22,7 +22,7 @@
                 <th>{{ site.evaluation_config.score_title }}</th>
 
                 {% for col in site.evaluation_config.extra_results_columns %}
-                    <th>{{ col }}</th>
+                    <th>{{ col.title }}</th>
                 {% endfor %}
 
                 {% if site.evaluation_config.display_submission_comments %}
@@ -67,8 +67,8 @@
                         <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
                     </td>
 
-                    {% for _, jsonpath in site.evaluation_config.extra_results_columns.items %}
-                        <td>{{ result.metrics|get_jsonpath:jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</td>
+                    {% for col in site.evaluation_config.extra_results_columns %}
+                        <td>{{ result.metrics|get_jsonpath:col.path|floatformat:site.evaluation_config.score_decimal_places }}</td>
                     {% endfor %}
 
                     {% if site.evaluation_config.display_submission_comments %}

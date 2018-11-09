@@ -22,6 +22,40 @@ from grandchallenge.core.validators import (
 from grandchallenge.evaluation.emails import send_failed_job_email
 
 
+def get_extra_results_columns_schema():
+    return {
+        "definitions": {},
+        "type": "array",
+        "title": "The Root Schema",
+        "items": {
+            "$id": "#/items",
+            "type": "object",
+            "title": "The Items Schema",
+            "required": ["title", "path"],
+            "properties": {
+                "title": {
+                    "$id": "#/items/properties/title",
+                    "type": "string",
+                    "title": "The Title Schema",
+                    "description": "The column title for this metric",
+                    "default": "",
+                    "examples": ["Dice"],
+                    "pattern": "^(.*)$",
+                },
+                "path": {
+                    "$id": "#/items/properties/path",
+                    "type": "string",
+                    "title": "The Path Schema",
+                    "description": "The jsonpath to this metric in metrics.json",
+                    "default": "",
+                    "examples": ["aggregates.dice"],
+                    "pattern": "^(.*)$",
+                },
+            },
+        },
+    }
+
+
 class Config(UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
@@ -96,16 +130,11 @@ class Config(UUIDModel):
         help_text=("The number of decimal places to display for the score"),
     )
     extra_results_columns = JSONField(
-        default=dict,
+        default=list,
         blank=True,
         help_text=(
             "A JSON object that contains the extra columns from metrics.json "
             "that will be displayed on the results page. "
-            "Where the KEYS contain the titles of the columns, "
-            "and the VALUES contain the JsonPath to the corresponding metric "
-            "in metrics.json. "
-            "For example:\n\n"
-            '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
         ),
     )
     result_display_choice = models.CharField(
