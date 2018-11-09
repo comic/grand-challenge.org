@@ -4,6 +4,15 @@ from django import forms
 class JSONEditorWidget(forms.Textarea):
     template_name = "jsoneditor/jsoneditor_widget.html"
 
+    def __init__(self, schema=None, attrs=None):
+        super().__init__(attrs)
+        self.schema = schema
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context.update({"schema": self.schema})
+        return context
+
     class Media:
         css = {
             "all": (

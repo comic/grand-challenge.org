@@ -3,7 +3,7 @@
 
 {# taken from https://github.com/django/django/blob/master/django/forms/widgets.py #}
 <textarea style="display: none"
-        name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+          name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 {% if widget.value %}{{ widget.value }}{% endif %}</textarea>
 
 <script>
@@ -18,4 +18,9 @@
 
     editor.set({{ widget.value|safe }});
     editor.expandAll();
+
+    {% if schema %}
+        editor.setSchema({{ schema|safe }});
+    {% endif %}
+
 </script>
