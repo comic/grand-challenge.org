@@ -96,16 +96,11 @@ class Config(UUIDModel):
         help_text=("The number of decimal places to display for the score"),
     )
     extra_results_columns = JSONField(
-        default=dict,
+        default=list,
         blank=True,
         help_text=(
             "A JSON object that contains the extra columns from metrics.json "
             "that will be displayed on the results page. "
-            "Where the KEYS contain the titles of the columns, "
-            "and the VALUES contain the JsonPath to the corresponding metric "
-            "in metrics.json. "
-            "For example:\n\n"
-            '{"Accuracy": "aggregates.acc","Dice": "dice.mean"}'
         ),
     )
     result_display_choice = models.CharField(
