@@ -22,38 +22,38 @@ from grandchallenge.core.validators import (
 from grandchallenge.evaluation.emails import send_failed_job_email
 
 
-def get_extra_results_columns_schema():
-    return {
-        "definitions": {},
-        "type": "array",
-        "title": "The Root Schema",
-        "items": {
-            "$id": "#/items",
-            "type": "object",
-            "title": "The Items Schema",
-            "required": ["title", "path"],
-            "properties": {
-                "title": {
-                    "$id": "#/items/properties/title",
-                    "type": "string",
-                    "title": "The Title Schema",
-                    "description": "The column title for this metric",
-                    "default": "",
-                    "examples": ["Dice"],
-                    "pattern": "^(.*)$",
-                },
-                "path": {
-                    "$id": "#/items/properties/path",
-                    "type": "string",
-                    "title": "The Path Schema",
-                    "description": "The jsonpath to this metric in metrics.json",
-                    "default": "",
-                    "examples": ["aggregates.dice"],
-                    "pattern": "^(.*)$",
-                },
+EXTRA_RESULT_COLUMNS_SCHEMA = {
+    "definitions": {},
+    "type": "array",
+    "$id": "http://json-schema.org/draft-07/schema#",
+    "title": "The Extra Results Columns Schema",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": ["title", "path"],
+        "properties": {
+            "title": {
+                "$id": "#/items/properties/title",
+                "type": "string",
+                "title": "The Title Schema",
+                "description": "The column title for this metric",
+                "default": "",
+                "examples": ["Dice"],
+                "pattern": "^(.*)$",
+            },
+            "path": {
+                "$id": "#/items/properties/path",
+                "type": "string",
+                "title": "The Path Schema",
+                "description": "The jsonpath to this metric in metrics.json",
+                "default": "",
+                "examples": ["aggregates.dice"],
+                "pattern": "^(.*)$",
             },
         },
-    }
+    },
+}
 
 
 class Config(UUIDModel):

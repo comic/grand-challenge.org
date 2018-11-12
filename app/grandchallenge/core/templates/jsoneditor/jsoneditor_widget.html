@@ -9,6 +9,8 @@
 <script>
     var container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
     var options = {
+        mode: 'tree',
+        modes: ['code', 'tree'],
         onChange: function () {
             var json = editor.get();
             document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
