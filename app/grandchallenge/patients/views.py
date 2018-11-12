@@ -40,7 +40,7 @@ class PatientCreate(CreateView):
     template_name = "patients/patient_details_form.html"
 
     def get_success_url(self):
-        return reverse("patients:patient_list")
+        return reverse("patients:patient-list")
 
 
 class PatientUpdate(UpdateView):
@@ -49,7 +49,7 @@ class PatientUpdate(UpdateView):
     template_name = "patients/patient_details_form.html"
 
     def get_success_url(self):
-        return reverse("patients:patient_list")
+        return reverse("patients:patient-list")
 
 
 class PatientDelete(DeleteView):
@@ -57,7 +57,7 @@ class PatientDelete(DeleteView):
     template_name = "patients/patient_deletion_form.html"
 
     def get_success_url(self):
-        return reverse("patients:patient_list")
+        return reverse("patients:patient-list")
 
 
 class PatientList(ListView):
