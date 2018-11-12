@@ -81,9 +81,9 @@
                         {% with result.metrics|get_jsonpath:col.path as metric %}
                             <td data-order="{{ metric }}">
                                 {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
-                                {% if col.error %}
+                                {% if col.error_path %}
                                     ±
-                                    {{ result.metrics|get_jsonpath:col.error.path|floatformat:site.evaluation_config.score_decimal_places }}
+                                    {{ result.metrics|get_jsonpath:col.error_path|floatformat:site.evaluation_config.score_decimal_places }}
                                 {% endif %}
                             </td>
                         {% endwith %}

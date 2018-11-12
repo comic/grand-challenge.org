@@ -26,12 +26,9 @@ from grandchallenge.evaluation.emails import send_failed_job_email
 """
 [
   {
-    "title": "Mean Dice",
+    "title": "Mean dice ± std",
     "path": "aggregates.dice.mean",
-    "error": {
-      "title": "std",
-      "path": "aggregates.dice.std"
-    }
+    "error_path": "aggregates.dice.std"
   },
   {
     "title": "Mean Hausdorff",
@@ -67,22 +64,13 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                 "examples": ["aggregates.dice.mean"],
                 "pattern": "^(.*)$",
             },
-            "error": {
-                "$id": "#/items/properties/error",
-                "type": "object",
-                "title": "The Error Schema",
-                "default": None,
-                "required": ["path"],
-                "properties": {
-                    "path": {
-                        "$id": "#/items/properties/error/properties/path",
-                        "type": "string",
-                        "title": "The Error Path Schema",
-                        "default": "",
-                        "examples": ["aggregates.dice.std"],
-                        "pattern": "^(.*)$",
-                    }
-                },
+            "error_path": {
+                "$id": "#/items/properties/error_path",
+                "type": "string",
+                "title": "The Error Path Schema",
+                "default": "",
+                "examples": ["aggregates.dice.std"],
+                "pattern": "^(.*)$",
             },
         },
     },

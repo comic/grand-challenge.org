@@ -113,7 +113,7 @@ class Command(BaseCommand):
                 {
                     "title": "Dice ± std",
                     "path": "dice.mean",
-                    "error": {"path": "dice.std"},
+                    "error_path": "dice.std",
                 }
             ]
 
