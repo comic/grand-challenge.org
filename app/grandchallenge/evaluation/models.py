@@ -18,6 +18,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
     get_file_mimetype,
+    JSONSchemaValidator,
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
 
@@ -136,6 +137,7 @@ class Config(UUIDModel):
             "A JSON object that contains the extra columns from metrics.json "
             "that will be displayed on the results page. "
         ),
+        validators=[JSONSchemaValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
     )
     result_display_choice = models.CharField(
         max_length=3,

@@ -4,6 +4,8 @@ from typing import Tuple
 import magic
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
+from jsonschema import validate
+from jsonschema import ValidationError as JSONValidationError
 
 
 @deconstructible
@@ -89,3 +91,29 @@ def get_file_mimetype(f):
     mimetype = magic.from_buffer(f.read(1024), mime=True)
     f.seek(0)
     return mimetype
+
+
+@deconstructible
+class JSONSchemaValidator(object):
+    """ Uses jsonschema to validate json fields """
+
+    schema = None
+
+    def __init__(self, *, schema: dict):
+        self.schema = schema
+        super().__init__()
+
+    def __call__(self, value):
+        try:
+            validate(value, self.schema)
+        except JSONValidationError as e:
+            raise ValidationError(str(e))
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, JSONSchemaValidator)
+            and self.schema == other.schema
+        )
+
+    def __ne__(self, other):
+        return not (self == other)
