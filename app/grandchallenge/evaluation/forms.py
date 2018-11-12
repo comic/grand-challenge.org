@@ -10,7 +10,7 @@ from grandchallenge.evaluation.models import (
     Method,
     Submission,
     Config,
-    get_extra_results_columns_schema,
+    EXTRA_RESULT_COLUMNS_SCHEMA,
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
@@ -29,6 +29,7 @@ result_list_options = (
     "use_teams",
     "score_title",
     "score_jsonpath",
+    "score_error_jsonpath",
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
@@ -65,7 +66,7 @@ class ConfigForm(forms.ModelForm):
         widgets = {
             "submission_page_html": SummernoteInplaceWidget(),
             "extra_results_columns": JSONEditorWidget(
-                schema=get_extra_results_columns_schema()
+                schema=EXTRA_RESULT_COLUMNS_SCHEMA
             ),
         }
 

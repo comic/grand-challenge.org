@@ -22,7 +22,9 @@
                 <th>{{ site.evaluation_config.score_title }}</th>
 
                 {% for col in site.evaluation_config.extra_results_columns %}
-                    <th>{{ col.title }}</th>
+                    <th>
+                        {{ col.title }}
+                    </th>
                 {% endfor %}
 
                 {% if site.evaluation_config.display_submission_comments %}
@@ -63,12 +65,28 @@
                         {{ result.created|date:"j N Y" }}
                     </td>
 
-                    <td>
-                        <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
-                    </td>
+                    {% with result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath as metric %}
+                        <td data-order="{{ metric }}">
+                            <a href="{{ result.absolute_url }}">
+                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% if site.evaluation_config.score_error_jsonpath %}
+                                    ±
+                                    {{ result.metrics|get_jsonpath:site.evaluation_config.score_error_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% endif %}
+                            </a>
+                        </td>
+                    {% endwith %}
 
                     {% for col in site.evaluation_config.extra_results_columns %}
-                        <td>{{ result.metrics|get_jsonpath:col.path|floatformat:site.evaluation_config.score_decimal_places }}</td>
+                        {% with result.metrics|get_jsonpath:col.path as metric %}
+                            <td data-order="{{ metric }}">
+                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% if col.error_path %}
+                                    ±
+                                    {{ result.metrics|get_jsonpath:col.error_path|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% endif %}
+                            </td>
+                        {% endwith %}
                     {% endfor %}
 
                     {% if site.evaluation_config.display_submission_comments %}
@@ -102,10 +120,12 @@
     </div>
 
     {% if site.evaluation_config.result_display_choice == site.evaluation_config.BEST %}
-        <p class="small ml-3">Only the best published result for each participant is
+        <p class="small ml-3">Only the best published result for each
+            participant is
             listed.</p>
     {% elif site.evaluation_config.result_display_choice == site.evaluation_config.MOST_RECENT %}
-        <p class="small ml-3"> Only the most recent published result for each participant is
+        <p class="small ml-3"> Only the most recent published result for each
+            participant is
             listed.</p>
     {% endif %}
 

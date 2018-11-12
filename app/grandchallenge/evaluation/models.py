@@ -18,42 +18,63 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
     get_file_mimetype,
+    JSONSchemaValidator,
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
 
-
-def get_extra_results_columns_schema():
-    return {
-        "definitions": {},
-        "type": "array",
-        "title": "The Root Schema",
-        "items": {
-            "$id": "#/items",
-            "type": "object",
-            "title": "The Items Schema",
-            "required": ["title", "path"],
-            "properties": {
-                "title": {
-                    "$id": "#/items/properties/title",
-                    "type": "string",
-                    "title": "The Title Schema",
-                    "description": "The column title for this metric",
-                    "default": "",
-                    "examples": ["Dice"],
-                    "pattern": "^(.*)$",
-                },
-                "path": {
-                    "$id": "#/items/properties/path",
-                    "type": "string",
-                    "title": "The Path Schema",
-                    "description": "The jsonpath to this metric in metrics.json",
-                    "default": "",
-                    "examples": ["aggregates.dice"],
-                    "pattern": "^(.*)$",
-                },
+# Example Schema
+"""
+[
+  {
+    "title": "Mean dice ± std",
+    "path": "aggregates.dice.mean",
+    "error_path": "aggregates.dice.std"
+  },
+  {
+    "title": "Mean Hausdorff",
+    "path": "aggregates.hausdorff.mean"
+  }
+]
+"""
+EXTRA_RESULT_COLUMNS_SCHEMA = {
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
+    "title": "The Extra Results Columns Schema",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": ["title", "path"],
+        "properties": {
+            "title": {
+                "$id": "#/items/properties/title",
+                "type": "string",
+                "title": "The Title Schema",
+                "default": "",
+                "examples": ["Mean Dice"],
+                "pattern": "^(.*)$",
+            },
+            "path": {
+                "$id": "#/items/properties/path",
+                "type": "string",
+                "title": "The Path Schema",
+                "default": "",
+                "examples": ["aggregates.dice.mean"],
+                "pattern": "^(.*)$",
+            },
+            "error_path": {
+                "$id": "#/items/properties/error_path",
+                "type": "string",
+                "title": "The Error Path Schema",
+                "default": "",
+                "examples": ["aggregates.dice.std"],
+                "pattern": "^(.*)$",
             },
         },
-    }
+    },
+}
 
 
 class Config(UUIDModel):
@@ -97,23 +118,31 @@ class Config(UUIDModel):
             "challenges."
         ),
     )
-    score_jsonpath = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text=(
-            "The jsonpath of the field in metrics.json that will be used "
-            "for the overall scores on the results page. See "
-            "http://goessner.net/articles/JsonPath/ for syntax. For example:"
-            "\n\ndice.mean"
-        ),
-    )
     score_title = models.CharField(
         max_length=32,
         blank=False,
         default="Score",
         help_text=(
             "The name that will be displayed for the scores column, for "
-            "instance:\n\nScore (log-loss)"
+            "instance: Score (log-loss)"
+        ),
+    )
+    score_jsonpath = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=(
+            "The jsonpath of the field in metrics.json that will be used "
+            "for the overall scores on the results page. See "
+            "http://goessner.net/articles/JsonPath/ for syntax. For example: "
+            "dice.mean"
+        ),
+    )
+    score_error_jsonpath = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=(
+            "The jsonpath for the field in metrics.json that contains the "
+            "error of the score, eg: dice.std"
         ),
     )
     score_default_sort = models.CharField(
@@ -121,7 +150,7 @@ class Config(UUIDModel):
         choices=EVALUATION_SCORE_SORT_CHOICES,
         default=DESCENDING,
         help_text=(
-            "The default sorting to use for the scores on the results " "page."
+            "The default sorting to use for the scores on the results page."
         ),
     )
     score_decimal_places = models.PositiveSmallIntegerField(
@@ -136,6 +165,7 @@ class Config(UUIDModel):
             "A JSON object that contains the extra columns from metrics.json "
             "that will be displayed on the results page. "
         ),
+        validators=[JSONSchemaValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
     )
     result_display_choice = models.CharField(
         max_length=3,
