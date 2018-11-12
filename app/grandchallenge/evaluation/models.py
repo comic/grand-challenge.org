@@ -38,8 +38,8 @@ from grandchallenge.evaluation.emails import send_failed_job_email
 """
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://json-schema.org/draft-07/schema#",
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$id": "http://json-schema.org/draft-06/schema#",
     "type": "array",
     "title": "The Extra Results Columns Schema",
     "items": {

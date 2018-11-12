@@ -29,8 +29,8 @@ class Migration(migrations.Migration):
                 validators=[
                     grandchallenge.core.validators.JSONSchemaValidator(
                         schema={
-                            "$id": "http://json-schema.org/draft-07/schema#",
-                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "$id": "http://json-schema.org/draft-06/schema#",
+                            "$schema": "http://json-schema.org/draft-06/schema#",
                             "definitions": {},
                             "items": {
                                 "$id": "#/items",
