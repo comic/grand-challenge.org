@@ -98,10 +98,23 @@ class Command(BaseCommand):
             job = Job.objects.create(submission=submission, method=method)
 
             Result.objects.create(
-                challenge=demo, metrics={"acc": 0.5}, job=job
+                challenge=demo,
+                metrics={
+                    "acc": {"mean": 0.5, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                },
+                job=job,
             )
 
-            demo.evaluation_config.score_jsonpath = "acc"
+            demo.evaluation_config.score_jsonpath = "acc.mean"
+            demo.evaluation_config.extra_results_columns = [
+                {
+                    "title": "Dice",
+                    "path": "dice.mean",
+                    "error": {"title": "std", "path": "dice.std"},
+                }
+            ]
+
             demo.evaluation_config.save()
 
             ex_challenge = ExternalChallenge.objects.create(

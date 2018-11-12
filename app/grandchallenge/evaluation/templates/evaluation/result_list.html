@@ -22,7 +22,12 @@
                 <th>{{ site.evaluation_config.score_title }}</th>
 
                 {% for col in site.evaluation_config.extra_results_columns %}
-                    <th>{{ col.title }}</th>
+                    <th>
+                        {{ col.title }}
+                        {% if col.error %}
+                            ± {{ col.error.title }}
+                        {% endif %}
+                    </th>
                 {% endfor %}
 
                 {% if site.evaluation_config.display_submission_comments %}
@@ -68,7 +73,15 @@
                     </td>
 
                     {% for col in site.evaluation_config.extra_results_columns %}
-                        <td>{{ result.metrics|get_jsonpath:col.path|floatformat:site.evaluation_config.score_decimal_places }}</td>
+                        {% with result.metrics|get_jsonpath:col.path as metric %}
+                            <td data-order="{{ metric }}">
+                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% if col.error %}
+                                    ±
+                                    {{ result.metrics|get_jsonpath:col.error.path|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% endif %}
+                            </td>
+                        {% endwith %}
                     {% endfor %}
 
                     {% if site.evaluation_config.display_submission_comments %}
@@ -102,10 +115,12 @@
     </div>
 
     {% if site.evaluation_config.result_display_choice == site.evaluation_config.BEST %}
-        <p class="small ml-3">Only the best published result for each participant is
+        <p class="small ml-3">Only the best published result for each
+            participant is
             listed.</p>
     {% elif site.evaluation_config.result_display_choice == site.evaluation_config.MOST_RECENT %}
-        <p class="small ml-3"> Only the most recent published result for each participant is
+        <p class="small ml-3"> Only the most recent published result for each
+            participant is
             listed.</p>
     {% endif %}
 

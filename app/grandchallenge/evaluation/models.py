@@ -22,11 +22,28 @@ from grandchallenge.core.validators import (
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
 
-
+# Example Schema
+"""
+[
+  {
+    "title": "Mean Dice",
+    "path": "aggregates.dice.mean",
+    "error": {
+      "title": "std",
+      "path": "aggregates.dice.std"
+    }
+  },
+  {
+    "title": "Mean Hausdorff",
+    "path": "aggregates.hausdorff.mean"
+  }
+]
+"""
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
-    "type": "array",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://json-schema.org/draft-07/schema#",
+    "type": "array",
     "title": "The Extra Results Columns Schema",
     "items": {
         "$id": "#/items",
@@ -38,19 +55,42 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                 "$id": "#/items/properties/title",
                 "type": "string",
                 "title": "The Title Schema",
-                "description": "The column title for this metric",
                 "default": "",
-                "examples": ["Dice"],
+                "examples": ["Mean Dice"],
                 "pattern": "^(.*)$",
             },
             "path": {
                 "$id": "#/items/properties/path",
                 "type": "string",
                 "title": "The Path Schema",
-                "description": "The jsonpath to this metric in metrics.json",
                 "default": "",
-                "examples": ["aggregates.dice"],
+                "examples": ["aggregates.dice.mean"],
                 "pattern": "^(.*)$",
+            },
+            "error": {
+                "$id": "#/items/properties/error",
+                "type": "object",
+                "title": "The Error Schema",
+                "default": None,
+                "required": ["title", "path"],
+                "properties": {
+                    "title": {
+                        "$id": "#/items/properties/error/properties/title",
+                        "type": "string",
+                        "title": "The Error Title Schema",
+                        "default": "",
+                        "examples": ["std"],
+                        "pattern": "^(.*)$",
+                    },
+                    "path": {
+                        "$id": "#/items/properties/error/properties/path",
+                        "type": "string",
+                        "title": "The Error Path Schema",
+                        "default": "",
+                        "examples": ["aggregates.dice.std"],
+                        "pattern": "^(.*)$",
+                    },
+                },
             },
         },
     },
