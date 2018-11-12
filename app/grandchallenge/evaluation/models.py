@@ -72,16 +72,8 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                 "type": "object",
                 "title": "The Error Schema",
                 "default": None,
-                "required": ["title", "path"],
+                "required": ["path"],
                 "properties": {
-                    "title": {
-                        "$id": "#/items/properties/error/properties/title",
-                        "type": "string",
-                        "title": "The Error Title Schema",
-                        "default": "",
-                        "examples": ["std"],
-                        "pattern": "^(.*)$",
-                    },
                     "path": {
                         "$id": "#/items/properties/error/properties/path",
                         "type": "string",
@@ -89,7 +81,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                         "default": "",
                         "examples": ["aggregates.dice.std"],
                         "pattern": "^(.*)$",
-                    },
+                    }
                 },
             },
         },
@@ -138,23 +130,31 @@ class Config(UUIDModel):
             "challenges."
         ),
     )
-    score_jsonpath = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text=(
-            "The jsonpath of the field in metrics.json that will be used "
-            "for the overall scores on the results page. See "
-            "http://goessner.net/articles/JsonPath/ for syntax. For example:"
-            "\n\ndice.mean"
-        ),
-    )
     score_title = models.CharField(
         max_length=32,
         blank=False,
         default="Score",
         help_text=(
             "The name that will be displayed for the scores column, for "
-            "instance:\n\nScore (log-loss)"
+            "instance: Score (log-loss)"
+        ),
+    )
+    score_jsonpath = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=(
+            "The jsonpath of the field in metrics.json that will be used "
+            "for the overall scores on the results page. See "
+            "http://goessner.net/articles/JsonPath/ for syntax. For example: "
+            "dice.mean"
+        ),
+    )
+    score_error_jsonpath = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=(
+            "The jsonpath for the field in metrics.json that contains the "
+            "error of the score, eg: dice.std"
         ),
     )
     score_default_sort = models.CharField(
@@ -162,7 +162,7 @@ class Config(UUIDModel):
         choices=EVALUATION_SCORE_SORT_CHOICES,
         default=DESCENDING,
         help_text=(
-            "The default sorting to use for the scores on the results " "page."
+            "The default sorting to use for the scores on the results page."
         ),
     )
     score_decimal_places = models.PositiveSmallIntegerField(

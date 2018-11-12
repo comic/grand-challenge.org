@@ -106,12 +106,14 @@ class Command(BaseCommand):
                 job=job,
             )
 
+            demo.evaluation_config.score_title = "Accuracy ± std"
             demo.evaluation_config.score_jsonpath = "acc.mean"
+            demo.evaluation_config.score_error_jsonpath = "acc.std"
             demo.evaluation_config.extra_results_columns = [
                 {
-                    "title": "Dice",
+                    "title": "Dice ± std",
                     "path": "dice.mean",
-                    "error": {"title": "std", "path": "dice.std"},
+                    "error": {"path": "dice.std"},
                 }
             ]
 

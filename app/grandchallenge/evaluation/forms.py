@@ -29,6 +29,7 @@ result_list_options = (
     "use_teams",
     "score_title",
     "score_jsonpath",
+    "score_error_jsonpath",
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",

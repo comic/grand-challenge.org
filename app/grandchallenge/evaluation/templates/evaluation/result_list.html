@@ -24,9 +24,6 @@
                 {% for col in site.evaluation_config.extra_results_columns %}
                     <th>
                         {{ col.title }}
-                        {% if col.error %}
-                            ± {{ col.error.title }}
-                        {% endif %}
                     </th>
                 {% endfor %}
 
@@ -68,9 +65,17 @@
                         {{ result.created|date:"j N Y" }}
                     </td>
 
-                    <td>
-                        <a href="{{ result.absolute_url }}">{{ result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}</a>
-                    </td>
+                    {% with result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath as metric %}
+                        <td data-order="{{ metric }}">
+                            <a href="{{ result.absolute_url }}">
+                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% if site.evaluation_config.score_error_jsonpath %}
+                                    ±
+                                    {{ result.metrics|get_jsonpath:site.evaluation_config.score_error_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}
+                                {% endif %}
+                            </a>
+                        </td>
+                    {% endwith %}
 
                     {% for col in site.evaluation_config.extra_results_columns %}
                         {% with result.metrics|get_jsonpath:col.path as metric %}
