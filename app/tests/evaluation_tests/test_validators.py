@@ -68,4 +68,7 @@ def test_json_validator():
         json_validator({"name": "Eggs", "price": "invalid"})
 
     assert json_validator == JSONSchemaValidator(schema=schema)
+    assert json_validator != JSONSchemaValidator(
+        schema={"type": "object", "properties": {"name": {"type": "string"}}}
+    )
     assert json_validator is not JSONSchemaValidator(schema=schema)
