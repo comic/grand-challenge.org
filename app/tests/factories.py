@@ -11,6 +11,8 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.patients.models import Patient
+from grandchallenge.studies.models import Study
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -160,3 +162,20 @@ class AnnotationSetFactory(factory.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     base = factory.SubFactory(ImageSetFactory)
+
+
+class PatientFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Patient
+
+    name = factory.Sequence(lambda n: f"patient_{n}")
+    sex = 'O'
+    height = 100
+
+
+class StudyFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Study
+
+    code = factory.Sequence(lambda n: f"identifier_{n}")
+    region_of_interest = "heart"
