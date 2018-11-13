@@ -1,8 +1,10 @@
 from django.db import models
 from django.db.models import CharField
 
+from grandchallenge.core.models import UUIDModel
 
-class WorklistSet(models.Model):
+
+class WorklistSet(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
 
     def get_fields(self):
@@ -12,9 +14,8 @@ class WorklistSet(models.Model):
         return Worklist.objects.filter(set=self.pk, parent=None)
 
 
-class Worklist(models.Model):
+class Worklist(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
-    parent = models.ForeignKey("Worklist", null=True, blank=True, on_delete=models.CASCADE)
     set = models.ForeignKey("WorklistSet", null=False, blank=False, on_delete=models.CASCADE)
 
     def get_fields(self):

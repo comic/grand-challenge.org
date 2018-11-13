@@ -11,4 +11,4 @@ class WorklistSetSerializer(serializers.ModelSerializer):
 class WorklistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worklist
-        fields = ("id", "title", "parent", "set")
+        fields = ("id", "title", "set")
