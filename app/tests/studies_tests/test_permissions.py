@@ -14,7 +14,7 @@ from tests.utils import validate_logged_in_view
         "studies:study-delete",
     ],
 )
-def test_external_challenges_staff_views(client, view):
+def test_study_form_views(client, view):
     if view in ["studies:study-update", "studies:study-delete"]:
         reverse_kwargs = {"short_name": StudyFactory().short_name}
     else:

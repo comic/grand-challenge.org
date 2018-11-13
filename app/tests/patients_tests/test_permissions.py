@@ -14,7 +14,7 @@ from tests.utils import validate_logged_in_view
         "patients:patient-delete",
     ],
 )
-def test_external_challenges_staff_views(client, view):
+def test_patient_form_views(client, view):
     if view in ["patients:patient-update", "patients:patient-delete"]:
         reverse_kwargs = {"short_name": PatientFactory().short_name}
     else:
