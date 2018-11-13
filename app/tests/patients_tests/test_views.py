@@ -11,5 +11,5 @@ def test_patient_list(client):
 
     response = get_view_for_user(client=client, viewname="patients:patient-list")
 
-    assert visible.short_name in response.rendered_content
-    assert invisible.short_name not in response.rendered_content
+    assert visible.id in response.rendered_content
+    assert invisible.id not in response.rendered_content
