@@ -19,8 +19,8 @@
                 {% for field, value in study.get_fields %}
                     <td> {{ value }}</td>
                 {% endfor %}
-                <td><a href="{% url 'studies:study_update' study.id %}">Update</a></td>
-                <td><a href="{% url 'studies:study_delete' study.id %}">Delete</a></td>
+                <td><a href="{% url 'studies:study-update' study.id %}">Update</a></td>
+                <td><a href="{% url 'studies:study-delete' study.id %}">Delete</a></td>
             </tr>
         {% empty %}
         <td>No studies have been inserted.</td>
