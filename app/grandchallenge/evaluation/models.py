@@ -46,7 +46,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         "$id": "#/items",
         "type": "object",
         "title": "The Items Schema",
-        "required": ["title", "path"],
+        "required": ["title", "path", "order"],
         "additionalProperties": False,
         "properties": {
             "title": {

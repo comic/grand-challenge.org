@@ -1,4 +1,5 @@
 import uuid
+from statistics import mean, median
 
 from celery import shared_task
 from django.db.models import Q
@@ -25,7 +26,6 @@ def filter_results_by_most_recent(*, results):
 
 
 def filter_results_by_users_best(*, results, ranks):
-
     best_result_per_user = {}
 
     for r in results:
@@ -49,11 +49,31 @@ def filter_results_by_users_best(*, results, ranks):
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = Challenge.objects.get(pk=challenge_pk)
     display_choice = challenge.evaluation_config.result_display_choice
+    score_method_choice = challenge.evaluation_config.scoring_method_choice
 
     metric_paths = (challenge.evaluation_config.score_jsonpath,)
     metric_reverse = (
         challenge.evaluation_config.score_default_sort == Config.DESCENDING,
     )
+
+    if score_method_choice != Config.ABSOLUTE:
+        metric_paths += tuple(
+            col["path"]
+            for col in challenge.evaluation_config.extra_results_columns
+        )
+        metric_reverse += tuple(
+            col["order"] == Config.DESCENDING
+            for col in challenge.evaluation_config.extra_results_columns
+        )
+
+    if score_method_choice == Config.ABSOLUTE and len(metric_paths) == 1:
+        score_method = lambda x: list(x)[0]
+    elif score_method_choice == Config.MEAN:
+        score_method = mean
+    elif score_method_choice == Config.MEDIAN:
+        score_method = median
+    else:
+        raise NotImplementedError
 
     valid_results = (
         Result.objects.filter(Q(challenge=challenge), Q(published=True))
@@ -70,6 +90,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
                 queryset=valid_results,
                 metric_paths=metric_paths,
                 metric_reverse=metric_reverse,
+                score_method=score_method,
             ),
         )
     else:
@@ -79,6 +100,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         queryset=queryset,
         metric_paths=metric_paths,
         metric_reverse=metric_reverse,
+        score_method=score_method,
     )
 
     for res in Result.objects.filter(Q(challenge=challenge)):

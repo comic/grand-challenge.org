@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                                         "type": "string",
                                     },
                                 },
-                                "required": ["title", "path"],
+                                "required": ["title", "path", "order"],
                                 "title": "The Items Schema",
                                 "type": "object",
                             },

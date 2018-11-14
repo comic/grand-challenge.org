@@ -8,9 +8,16 @@ from tests.factories import ResultFactory, ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
-def test_calculate_ranks():
+@pytest.mark.parametrize(
+    "score_method", (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN)
+)
+def test_calculate_ranks(score_method):
     challenge = ChallengeFactory()
     challenge.evaluation_config.score_jsonpath = "a"
+    challenge.evaluation_config.scoring_method_choice = score_method
+    challenge.evaluation_config.extra_results_columns = [
+        {"path": "b", "title": "b", "order": "desc"}
+    ]
     challenge.evaluation_config.save()
 
     with mute_signals(post_save):
