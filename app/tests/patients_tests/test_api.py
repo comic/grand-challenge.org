@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from grandchallenge.patients import Patient
 from tests.factories import UserFactory
 
 
