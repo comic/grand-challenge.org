@@ -32,6 +32,7 @@ scoring_options = (
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
+    "scoring_method_choice",
     "auto_publish_new_results",
     "result_display_choice",
 )

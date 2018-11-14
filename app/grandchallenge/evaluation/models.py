@@ -47,6 +47,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         "type": "object",
         "title": "The Items Schema",
         "required": ["title", "path"],
+        "additionalProperties": False,
         "properties": {
             "title": {
                 "$id": "#/items/properties/title",
@@ -71,6 +72,15 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
                 "default": "",
                 "examples": ["aggregates.dice.std"],
                 "pattern": "^(.*)$",
+            },
+            "order": {
+                "$id": "#/items/properties/order",
+                "type": "string",
+                "enum": ["asc", "desc"],
+                "title": "The Order Schema",
+                "default": "",
+                "examples": ["asc"],
+                "pattern": "^(asc|desc)$",
             },
         },
     },
@@ -103,6 +113,21 @@ class Config(UUIDModel):
         (ALL, "Display all results"),
         (MOST_RECENT, "Only display each users most recent result"),
         (BEST, "Only display each users best result"),
+    )
+
+    ABSOLUTE = "abs"
+    MEAN = "avg"
+    MEDIAN = "med"
+    SCORING_CHOICES = (
+        (ABSOLUTE, "Use the absolute value of the score column"),
+        (
+            MEAN,
+            "Use the mean of the relative ranks of the score and extra result columns",
+        ),
+        (
+            MEDIAN,
+            "Use the median of the relative ranks of the score and extra result columns",
+        ),
     )
 
     challenge = models.OneToOneField(
@@ -166,6 +191,12 @@ class Config(UUIDModel):
             "that will be displayed on the results page. "
         ),
         validators=[JSONSchemaValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
+    )
+    scoring_method_choice = models.CharField(
+        max_length=3,
+        choices=SCORING_CHOICES,
+        default=ABSOLUTE,
+        help_text=("How should the rank of each result be calculated?"),
     )
     result_display_choice = models.CharField(
         max_length=3,
@@ -440,8 +471,6 @@ class Result(UUIDModel):
             "zero, then the result is unranked."
         ),
     )
-    # Cache the url as this is slow on the results list page
-    absolute_url = models.TextField(blank=True, editable=False)
 
     def save(self, *args, **kwargs):
         # Note: cannot use `self.pk is None` with a custom pk

@@ -67,7 +67,7 @@
 
                     {% with result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath as metric %}
                         <td data-order="{{ metric }}">
-                            <a href="{{ result.absolute_url }}">
+                            <a href="{{ result.get_absolute_url }}">
                                 {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
                                 {% if site.evaluation_config.score_error_jsonpath %}
                                     ±
