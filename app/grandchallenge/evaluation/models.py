@@ -471,6 +471,8 @@ class Result(UUIDModel):
             "zero, then the result is unranked."
         ),
     )
+    rank_score = models.FloatField(default=0.0)
+    rank_per_metric = JSONField(default=dict)
 
     def save(self, *args, **kwargs):
         # Note: cannot use `self.pk is None` with a custom pk

@@ -27,11 +27,19 @@
                     <th>Median #</th>
                 {% endif %}
 
-                <th>{{ evaluation_config.score_title }}</th>
+                <th>
+                    {{ evaluation_config.score_title }}
+                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                        (#)
+                    {% endif %}
+                </th>
 
                 {% for col in evaluation_config.extra_results_columns %}
                     <th>
                         {{ col.title }}
+                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                            (#)
+                        {% endif %}
                     </th>
                 {% endfor %}
 
@@ -75,10 +83,8 @@
                             {{ result.created|date:"j N Y" }}
                         </td>
 
-                        {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
-                            <td>Mean #</td>
-                        {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
-                            <td>Median #</td>
+                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                            <td>{{ result.rank_score }}</td>
                         {% endif %}
 
                         {% with result.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
@@ -89,6 +95,11 @@
                                         {% if evaluation_config.score_error_jsonpath %}
                                             &nbsp;±&nbsp;
                                             {{ result.metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                                        {% endif %}
+                                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                                            &nbsp;(
+                                            {{ result.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
+                                            )
                                         {% endif %}
                                     {% endfilter %}
                                 </a>
@@ -104,6 +115,11 @@
                                             {% if col.error_path %}
                                                 &nbsp;±&nbsp;
                                                 {{ result.metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                                            {% endif %}
+                                            {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                                                &nbsp;(
+                                                {{ result.rank_per_metric|get_key:col.path }}
+                                                )
                                             {% endif %}
                                         {% endfilter %}
                                     </a>

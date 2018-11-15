@@ -84,19 +84,19 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     if display_choice == Config.MOST_RECENT:
         queryset = filter_results_by_most_recent(results=valid_results)
     elif display_choice == Config.BEST:
+        all_positions = rank_results(
+            queryset=valid_results,
+            metric_paths=metric_paths,
+            metric_reverse=metric_reverse,
+            score_method=score_method,
+        )
         queryset = filter_results_by_users_best(
-            results=valid_results,
-            ranks=rank_results(
-                queryset=valid_results,
-                metric_paths=metric_paths,
-                metric_reverse=metric_reverse,
-                score_method=score_method,
-            ),
+            results=valid_results, ranks=all_positions.overall_ranks
         )
     else:
         queryset = valid_results
 
-    ranks = rank_results(
+    final_positions = rank_results(
         queryset=queryset,
         metric_paths=metric_paths,
         metric_reverse=metric_reverse,
@@ -105,11 +105,17 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
 
     for res in Result.objects.filter(Q(challenge=challenge)):
         try:
-            rank = ranks[str(res.pk)]
+            rank = final_positions.overall_ranks[str(res.pk)]
+            rank_score = final_positions.overall_scores[str(res.pk)]
+            rank_per_metric = final_positions.rank_per_metric[str(res.pk)]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
+            rank_score = 0.0
+            rank_per_metric = {}
 
-        Result.objects.filter(pk=res.pk).update(rank=rank)
+        Result.objects.filter(pk=res.pk).update(
+            rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
+        )
 
-    return ranks
+    return final_positions

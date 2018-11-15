@@ -1,4 +1,4 @@
-from typing import Tuple, NamedTuple, List, Callable, Iterable
+from typing import Tuple, NamedTuple, List, Callable, Iterable, Dict
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -9,6 +9,12 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import (
 class Score(NamedTuple):
     pk: str
     value: float
+
+
+class Positions(NamedTuple):
+    overall_ranks: Dict
+    overall_scores: Dict
+    rank_per_metric: Dict
 
 
 def _filter_valid_results(
@@ -54,7 +60,7 @@ def rank_results(
     metric_paths: Tuple[str, ...],
     metric_reverse: Tuple[bool, ...],
     score_method: Callable,
-) -> dict:
+) -> Positions:
     """
     Generates a dictionary that contains the ranking of results based on a
     given metric path.
@@ -75,16 +81,21 @@ def rank_results(
             scores=metric_results, reverse=reverse
         )
 
-    scores = [
-        Score(
-            pk=str(res.pk),
-            # take the mean or median of all of the ranks for each
-            # metric for this result
-            value=score_method(
-                [ranks[str(res.pk)] for ranks in metric_rank.values()]
-            ),
-        )
+    rank_per_metric = {
+        str(res.pk): {
+            metric_path: ranks[str(res.pk)]
+            for metric_path, ranks in metric_rank.items()
+        }
         for res in queryset
+    }
+
+    scores = [
+        Score(pk=pk, value=score_method([m for m in metrics.values()]))
+        for pk, metrics in rank_per_metric.items()
     ]
 
-    return _scores_to_rank(scores=scores, reverse=False)
+    return Positions(
+        overall_ranks=_scores_to_rank(scores=scores, reverse=False),
+        overall_scores={s.pk: s.value for s in scores},
+        rank_per_metric=rank_per_metric,
+    )
