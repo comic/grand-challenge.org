@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 
 
@@ -10,7 +12,7 @@ class JSONEditorWidget(forms.Textarea):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context.update({"schema": self.schema})
+        context.update({"schema": json.dumps(self.schema)})
         return context
 
     class Media:
