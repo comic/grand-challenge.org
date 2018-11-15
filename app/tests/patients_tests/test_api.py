@@ -18,24 +18,45 @@ def get_staff_user_with_token():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "test_input, expected",
-    [("patients", "Patient Table")],  # ("patient", "Patient Record")
+    "table_reverse, record_reverse, expected_table, object_factory, object_serializer",
+    [("patients:patients", "patients:patient", "Patient Table", PatientFactory, PatientSerializer)],
 )
-def test_api_pages(client, test_input, expected):
+def test_api_pages(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer):
+    assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer)
+
+
+def assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer):
     _, token = get_staff_user_with_token()
-    url = reverse(f"patients:{test_input}")
-    patient = PatientFactory()
+    table_url = reverse(table_reverse)
+    record_url = reverse(record_reverse)
 
     # Checks the HTML View
-    test_table_access(client, url, token, expected)
-    # Checks insertions and acquires id
-    record_id = test_table_insert(client, url, token, patient)
-    test_record_display(client, url, token, record_id)
-    test_record_update(client, url, token, patient, id)
-    test_record_delete(client, url, token, id)
+    assert_table_access(client, table_url, token, expected_table)
+
+    # Creates an object and then serializes it into JSON before deleting it from the DB
+    record = object_factory()
+    json_record = remove_id_from_json(json.loads(object_serializer.serialize("json", record)))
+    assert_record_deletion(client, record_url, token, record.id)
+
+    # Removes the ID tag from the JSON object and then reinserts the object into the DB
+    for element in json_record:
+        element.pop("id", None)
+
+    new_record_id = assert_table_insert(client, table_url, token, json_record)
+
+    # Attempts to display the object
+    assert_record_display(client, record_url, token, new_record_id)
+
+    # Acquires another object, and attempts to update the current record with the new information
+    # TODO: Move JSON extraction and scrubbing into a method
+    record = object_factory()
+    json_record = remove_id_from_json(json.loads(object_serializer.serialize("json", record)))
+
+    assert_record_deletion(client, record_url, token, record.id)
+    assert_record_update(client, record_url, json_record, record.id)
 
 
-def test_table_access(client, url, token, expected):
+def assert_table_access(client, url, token, expected):
     response = client.get(
         url, HTTP_ACCEPT="text/html", HTTP_AUTHORIZATION="Token " + token
     )
@@ -52,10 +73,10 @@ def test_table_access(client, url, token, expected):
     assert not json.loads(response.content)
 
 
-def test_table_insert(client, url, token, patient):
+def assert_table_insert(client, url, token, json_record):
     response = client.post(
         url,
-        PatientSerializer.serialize("json", patient),
+        json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
@@ -64,29 +85,39 @@ def test_table_insert(client, url, token, patient):
     return json_response["id"]
 
 
-def test_record_display(client, url, token, id):
-    response = client.get(url + "/" + str(id), HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token)
+def assert_record_display(client, url, token, record_id):
+    response = client.get(
+        url + "/" + str(record_id),
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
 
     assert response.status_code == 200
     assert json_response["id"] == id
 
 
-def test_record_update(client, url, token, patient, id):
-    patient.height = patient.height + 10
-
+def assert_record_update(client, url, token, json_record, record_id):
     response = client.post(
-        url + "/" + id,
-        PatientSerializer.serialize("json", patient),
+        url + "/" + str(record_id),
+        json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
-    json_response = json.loads(response.content)
+    json_response = remove_id_from_json(json.loads(response.content))
 
     assert response.status_code == 200
-    assert json_response["height"] == patient.height
+    assert sorted(json_record.items()) == sorted(json_response.items())
 
 
-def test_record_delete(client, url, token, id):
-    response = client.delete(url + "/" + id, HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token)
+def assert_record_deletion(client, url, token, record_id):
+    response = client.delete(
+        url + "/" + str(record_id),
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token)
 
     assert response.status_code == 200
+
+
+def remove_id_from_json(json_object):
+    for element in json_object:
+        element.pop("id", None)
+    return json_object
