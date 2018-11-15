@@ -114,6 +114,7 @@ class Command(BaseCommand):
                     "title": "Dice ± std",
                     "path": "dice.mean",
                     "error_path": "dice.std",
+                    "order": "desc",
                 }
             ]
 

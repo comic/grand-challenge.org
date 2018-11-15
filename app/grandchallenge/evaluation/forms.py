@@ -25,16 +25,20 @@ submission_options = (
     "publication_url_choice",
 )
 
-result_list_options = (
-    "use_teams",
+scoring_options = (
     "score_title",
     "score_jsonpath",
     "score_error_jsonpath",
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
+    "scoring_method_choice",
     "auto_publish_new_results",
     "result_display_choice",
+)
+
+leaderboard_options = (
+    "use_teams",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
@@ -50,7 +54,8 @@ class ConfigForm(forms.ModelForm):
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Submission", *submission_options),
-                Tab("Result List", *result_list_options),
+                Tab("Scoring", *scoring_options),
+                Tab("Leaderboard", *leaderboard_options),
                 Tab("Result Detail", *result_detail_options),
             ),
             ButtonHolder(Submit("save", "Save")),
@@ -60,7 +65,8 @@ class ConfigForm(forms.ModelForm):
         model = Config
         fields = (
             *submission_options,
-            *result_list_options,
+            *scoring_options,
+            *leaderboard_options,
             *result_detail_options,
         )
         widgets = {
