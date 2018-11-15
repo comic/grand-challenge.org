@@ -32,13 +32,13 @@ def filter_by_creators_best(*, results, ranks):
         creator = r.job.submission.creator
 
         try:
-            this_rank = ranks[str(r.pk)]
+            this_rank = ranks[r.pk]
         except KeyError:
             # This result was not ranked
             continue
 
         if creator not in best_result_per_user or (
-            this_rank < ranks[str(best_result_per_user[creator].pk)]
+            this_rank < ranks[best_result_per_user[creator].pk]
         ):
             best_result_per_user[creator] = r
 
@@ -98,9 +98,9 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
 
     for res in Result.objects.filter(Q(challenge=challenge)):
         try:
-            rank = final_positions.ranks[str(res.pk)]
-            rank_score = final_positions.rank_scores[str(res.pk)]
-            rank_per_metric = final_positions.rank_per_metric[str(res.pk)]
+            rank = final_positions.ranks[res.pk]
+            rank_score = final_positions.rank_scores[res.pk]
+            rank_per_metric = final_positions.rank_per_metric[res.pk]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
