@@ -6,7 +6,7 @@ from django.db.models import Q
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Result, Config
-from grandchallenge.evaluation.utils import generate_ranks
+from grandchallenge.evaluation.utils import rank_results
 
 
 def filter_results_by_most_recent(*, results):
@@ -86,7 +86,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     elif display_choice == Config.BEST:
         queryset = filter_results_by_users_best(
             results=valid_results,
-            ranks=generate_ranks(
+            ranks=rank_results(
                 queryset=valid_results,
                 metric_paths=metric_paths,
                 metric_reverse=metric_reverse,
@@ -96,7 +96,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     else:
         queryset = valid_results
 
-    ranks = generate_ranks(
+    ranks = rank_results(
         queryset=queryset,
         metric_paths=metric_paths,
         metric_reverse=metric_reverse,

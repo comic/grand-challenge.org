@@ -2,6 +2,7 @@
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load humanize %}
+{% load remove_whitespace %}
 
 {% block pagecontent %}
 
@@ -14,29 +15,36 @@
                 <th>#</th>
                 <th>
                     User
-                    {% if site.evaluation_config.use_teams %}
+                    {% if evaluation_config.use_teams %}
                         (Team)
                     {% endif %}
                 </th>
                 <th>Created</th>
-                <th>{{ site.evaluation_config.score_title }}</th>
 
-                {% for col in site.evaluation_config.extra_results_columns %}
+                {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
+                    <th>Mean #</th>
+                {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
+                    <th>Median #</th>
+                {% endif %}
+
+                <th>{{ evaluation_config.score_title }}</th>
+
+                {% for col in evaluation_config.extra_results_columns %}
                     <th>
                         {{ col.title }}
                     </th>
                 {% endfor %}
 
-                {% if site.evaluation_config.display_submission_comments %}
+                {% if evaluation_config.display_submission_comments %}
                     <th>Comment</th>
                 {% endif %}
 
-                {% if site.evaluation_config.show_publication_url %}
+                {% if evaluation_config.show_publication_url %}
                     <th>Publication</th>
                 {% endif %}
 
-                {% if site.evaluation_config.show_supplementary_file_link %}
-                    <th>{{ site.evaluation_config.supplementary_file_label }}</th>
+                {% if evaluation_config.show_supplementary_file_link %}
+                    <th>{{ evaluation_config.supplementary_file_label }}</th>
                 {% endif %}
             </tr>
             </thead>
@@ -50,7 +58,7 @@
 
                         {{ result.job.submission.creator|user_profile_link }}
 
-                        {% if site.evaluation_config.use_teams %}
+                        {% if evaluation_config.use_teams %}
                             {% with result|get_team_html as team_html %}
                                 {% if team_html %}
                                     ({{ team_html }})
@@ -60,40 +68,56 @@
 
                     </td>
 
-                    <td data-order="{{ result.created|date:"U" }}"
-                        style="white-space: nowrap;">
-                        {{ result.created|date:"j N Y" }}
-                    </td>
+                    {% with result.get_absolute_url as result_url %}
 
-                    {% with result.metrics|get_jsonpath:site.evaluation_config.score_jsonpath as metric %}
-                        <td data-order="{{ metric }}">
-                            <a href="{{ result.get_absolute_url }}">
-                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
-                                {% if site.evaluation_config.score_error_jsonpath %}
-                                    ±
-                                    {{ result.metrics|get_jsonpath:site.evaluation_config.score_error_jsonpath|floatformat:site.evaluation_config.score_decimal_places }}
-                                {% endif %}
-                            </a>
+                        <td data-order="{{ result.created|date:"U" }}"
+                            style="white-space: nowrap;">
+                            {{ result.created|date:"j N Y" }}
                         </td>
-                    {% endwith %}
 
-                    {% for col in site.evaluation_config.extra_results_columns %}
-                        {% with result.metrics|get_jsonpath:col.path as metric %}
+                        {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
+                            <td>Mean #</td>
+                        {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
+                            <td>Median #</td>
+                        {% endif %}
+
+                        {% with result.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
                             <td data-order="{{ metric }}">
-                                {{ metric|floatformat:site.evaluation_config.score_decimal_places }}
-                                {% if col.error_path %}
-                                    ±
-                                    {{ result.metrics|get_jsonpath:col.error_path|floatformat:site.evaluation_config.score_decimal_places }}
-                                {% endif %}
+                                <a href="{{ result_url }}">
+                                    {% filter remove_whitespace %}
+                                        {{ metric|floatformat:evaluation_config.score_decimal_places }}
+                                        {% if evaluation_config.score_error_jsonpath %}
+                                            &nbsp;±&nbsp;
+                                            {{ result.metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                                        {% endif %}
+                                    {% endfilter %}
+                                </a>
                             </td>
                         {% endwith %}
-                    {% endfor %}
 
-                    {% if site.evaluation_config.display_submission_comments %}
+                        {% for col in evaluation_config.extra_results_columns %}
+                            {% with result.metrics|get_jsonpath:col.path as metric %}
+                                <td data-order="{{ metric }}">
+                                    <a href="{{ result_url }}">
+                                        {% filter remove_whitespace %}
+                                            {{ metric|floatformat:evaluation_config.score_decimal_places }}
+                                            {% if col.error_path %}
+                                                &nbsp;±&nbsp;
+                                                {{ result.metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                                            {% endif %}
+                                        {% endfilter %}
+                                    </a>
+                                </td>
+                            {% endwith %}
+                        {% endfor %}
+
+                    {% endwith %}
+
+                    {% if evaluation_config.display_submission_comments %}
                         <td>{{ result.job.submission.comment }}</td>
                     {% endif %}
 
-                    {% if site.evaluation_config.show_publication_url %}
+                    {% if evaluation_config.show_publication_url %}
                         <td>
                             {% if result.job.submission.publication_url %}
                                 <a href="{{ result.job.submission.publication_url }}">
@@ -103,7 +127,7 @@
                         </td>
                     {% endif %}
 
-                    {% if site.evaluation_config.show_supplementary_file_link %}
+                    {% if evaluation_config.show_supplementary_file_link %}
                         <th>
                             {% if result.job.submission.supplementary_file %}
                                 <a href="{{ result.job.submission.supplementary_file.url }}">
@@ -119,11 +143,11 @@
         </table>
     </div>
 
-    {% if site.evaluation_config.result_display_choice == site.evaluation_config.BEST %}
+    {% if evaluation_config.result_display_choice == evaluation_config.BEST %}
         <p class="small ml-3">Only the best published result for each
             participant is
             listed.</p>
-    {% elif site.evaluation_config.result_display_choice == site.evaluation_config.MOST_RECENT %}
+    {% elif evaluation_config.result_display_choice == evaluation_config.MOST_RECENT %}
         <p class="small ml-3"> Only the most recent published result for each
             participant is
             listed.</p>
@@ -139,7 +163,7 @@
                 order: [[0, "asc"]],
                 "pageLength": 10,
                 "columnDefs": [{
-                    {%  if site.evaluation_config.show_supplementary_file_link %}
+                    {%  if evaluation_config.show_supplementary_file_link %}
                         "targets": [-1],
                     {% endif %}
                     "searchable": false,

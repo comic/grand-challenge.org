@@ -1,4 +1,4 @@
-from typing import Tuple, NamedTuple, List, Callable
+from typing import Tuple, NamedTuple, List, Callable, Iterable
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -12,14 +12,14 @@ class Score(NamedTuple):
 
 
 def _filter_valid_results(
-    *, queryset: Tuple[Result], metric_paths: Tuple[str, ...]
-) -> Tuple:
+    *, queryset: Iterable[Result], metric_paths: Tuple[str, ...]
+) -> List:
     """ Ensure that all of the metrics are in every result """
-    return tuple(
+    return [
         res
         for res in queryset
         if all(get_jsonpath(res.metrics, p) for p in metric_paths)
-    )
+    ]
 
 
 def _scores_to_rank(*, scores: List[Score], reverse: bool = False) -> dict:
@@ -48,7 +48,7 @@ def _scores_to_rank(*, scores: List[Score], reverse: bool = False) -> dict:
     return ranks
 
 
-def generate_ranks(
+def rank_results(
     *,
     queryset: Tuple[Result, ...],
     metric_paths: Tuple[str, ...],
@@ -78,6 +78,8 @@ def generate_ranks(
     scores = [
         Score(
             pk=str(res.pk),
+            # take the mean or median of all of the ranks for each
+            # metric for this result
             value=score_method(
                 [ranks[str(res.pk)] for ranks in metric_rank.values()]
             ),
