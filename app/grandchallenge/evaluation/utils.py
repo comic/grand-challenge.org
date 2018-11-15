@@ -6,29 +6,34 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import (
 )
 
 
+class Metric(NamedTuple):
+    path: str
+    reverse: bool
+
+
 class Score(NamedTuple):
     pk: str
     value: float
 
 
 class Positions(NamedTuple):
-    overall_ranks: Dict
-    overall_scores: Dict
+    ranks: Dict
+    rank_scores: Dict
     rank_per_metric: Dict
 
 
 def _filter_valid_results(
-    *, queryset: Iterable[Result], metric_paths: Tuple[str, ...]
+    *, results: Iterable[Result], metrics: Tuple[Metric, ...]
 ) -> List:
     """ Ensure that all of the metrics are in every result """
     return [
         res
-        for res in queryset
-        if all(get_jsonpath(res.metrics, p) for p in metric_paths)
+        for res in results
+        if all(get_jsonpath(res.metrics, m.path) for m in metrics)
     ]
 
 
-def _scores_to_rank(*, scores: List[Score], reverse: bool = False) -> dict:
+def _scores_to_ranks(*, scores: List[Score], reverse: bool = False) -> dict:
     """
     Go from a score (a scalar) to a rank (integer). If two scalars are the
     same then they will have the same rank.
@@ -56,29 +61,27 @@ def _scores_to_rank(*, scores: List[Score], reverse: bool = False) -> dict:
 
 def rank_results(
     *,
-    queryset: Tuple[Result, ...],
-    metric_paths: Tuple[str, ...],
-    metric_reverse: Tuple[bool, ...],
+    results: Tuple[Result, ...],
+    metrics: Tuple[Metric, ...],
     score_method: Callable,
 ) -> Positions:
     """
-    Generates a dictionary that contains the ranking of results based on a
-    given metric path.
+    Calculates the overall rank for each result, along with the rank_score
+    and the rank per metric.
     """
-    queryset = _filter_valid_results(
-        queryset=queryset, metric_paths=metric_paths
-    )
+
+    results = _filter_valid_results(results=results, metrics=metrics)
 
     metric_rank = {}
-    for (metric_path, reverse) in zip(metric_paths, metric_reverse):
+    for metric in metrics:
         # Extract the value of the metric for this primary key and sort on the
         # value of the metric
-        metric_results = [
-            Score(pk=str(res.pk), value=get_jsonpath(res.metrics, metric_path))
-            for res in queryset
+        metric_scores = [
+            Score(pk=str(res.pk), value=get_jsonpath(res.metrics, metric.path))
+            for res in results
         ]
-        metric_rank[metric_path] = _scores_to_rank(
-            scores=metric_results, reverse=reverse
+        metric_rank[metric.path] = _scores_to_ranks(
+            scores=metric_scores, reverse=metric.reverse
         )
 
     rank_per_metric = {
@@ -86,7 +89,7 @@ def rank_results(
             metric_path: ranks[str(res.pk)]
             for metric_path, ranks in metric_rank.items()
         }
-        for res in queryset
+        for res in results
     }
 
     scores = [
@@ -95,7 +98,7 @@ def rank_results(
     ]
 
     return Positions(
-        overall_ranks=_scores_to_rank(scores=scores, reverse=False),
-        overall_scores={s.pk: s.value for s in scores},
+        ranks=_scores_to_ranks(scores=scores, reverse=False),
+        rank_scores={s.pk: s.value for s in scores},
         rank_per_metric=rank_per_metric,
     )

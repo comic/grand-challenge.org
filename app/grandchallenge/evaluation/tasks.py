@@ -6,10 +6,10 @@ from django.db.models import Q
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Result, Config
-from grandchallenge.evaluation.utils import rank_results
+from grandchallenge.evaluation.utils import rank_results, Metric
 
 
-def filter_results_by_most_recent(*, results):
+def filter_by_creators_most_recent(*, results):
     # Go through the results and only pass through the most recent
     # submission for each user
     users_seen = set()
@@ -25,7 +25,7 @@ def filter_results_by_most_recent(*, results):
     return filtered_qs
 
 
-def filter_results_by_users_best(*, results, ranks):
+def filter_by_creators_best(*, results, ranks):
     best_result_per_user = {}
 
     for r in results:
@@ -51,22 +51,23 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     display_choice = challenge.evaluation_config.result_display_choice
     score_method_choice = challenge.evaluation_config.scoring_method_choice
 
-    metric_paths = (challenge.evaluation_config.score_jsonpath,)
-    metric_reverse = (
-        challenge.evaluation_config.score_default_sort == Config.DESCENDING,
+    metrics = (
+        Metric(
+            path=challenge.evaluation_config.score_jsonpath,
+            reverse=(
+                challenge.evaluation_config.score_default_sort
+                == Config.DESCENDING
+            ),
+        ),
     )
 
     if score_method_choice != Config.ABSOLUTE:
-        metric_paths += tuple(
-            col["path"]
-            for col in challenge.evaluation_config.extra_results_columns
-        )
-        metric_reverse += tuple(
-            col["order"] == Config.DESCENDING
+        metrics += tuple(
+            Metric(path=col["path"], reverse=col["order"] == Config.DESCENDING)
             for col in challenge.evaluation_config.extra_results_columns
         )
 
-    if score_method_choice == Config.ABSOLUTE and len(metric_paths) == 1:
+    if score_method_choice == Config.ABSOLUTE and len(metrics) == 1:
         score_method = lambda x: list(x)[0]
     elif score_method_choice == Config.MEAN:
         score_method = mean
@@ -82,31 +83,23 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
     )
 
     if display_choice == Config.MOST_RECENT:
-        queryset = filter_results_by_most_recent(results=valid_results)
+        valid_results = filter_by_creators_most_recent(results=valid_results)
     elif display_choice == Config.BEST:
         all_positions = rank_results(
-            queryset=valid_results,
-            metric_paths=metric_paths,
-            metric_reverse=metric_reverse,
-            score_method=score_method,
+            results=valid_results, metrics=metrics, score_method=score_method
         )
-        queryset = filter_results_by_users_best(
-            results=valid_results, ranks=all_positions.overall_ranks
+        valid_results = filter_by_creators_best(
+            results=valid_results, ranks=all_positions.ranks
         )
-    else:
-        queryset = valid_results
 
     final_positions = rank_results(
-        queryset=queryset,
-        metric_paths=metric_paths,
-        metric_reverse=metric_reverse,
-        score_method=score_method,
+        results=valid_results, metrics=metrics, score_method=score_method
     )
 
     for res in Result.objects.filter(Q(challenge=challenge)):
         try:
-            rank = final_positions.overall_ranks[str(res.pk)]
-            rank_score = final_positions.overall_scores[str(res.pk)]
+            rank = final_positions.ranks[str(res.pk)]
+            rank_score = final_positions.rank_scores[str(res.pk)]
             rank_per_metric = final_positions.rank_per_metric[str(res.pk)]
         except KeyError:
             # This result will be excluded from the display
