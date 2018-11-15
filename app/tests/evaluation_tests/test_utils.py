@@ -2,7 +2,7 @@ import pytest
 from django.db.models.signals import post_save
 from factory.django import mute_signals
 
-from grandchallenge.evaluation.models import Result, Config
+from grandchallenge.evaluation.models import Config
 from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.factories import ResultFactory, ChallengeFactory, UserFactory
 
@@ -11,41 +11,64 @@ from tests.factories import ResultFactory, ChallengeFactory, UserFactory
 @pytest.mark.parametrize(
     "score_method", (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN)
 )
-@pytest.mark.parametrize("order", (Config.DESCENDING, Config.ASCENDING))
-def test_calculate_ranks(score_method, order):
+@pytest.mark.parametrize("a_order", (Config.DESCENDING, Config.ASCENDING))
+@pytest.mark.parametrize("b_order", (Config.DESCENDING, Config.ASCENDING))
+def test_calculate_ranks(score_method, a_order, b_order):
     challenge = ChallengeFactory()
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.scoring_method_choice = score_method
-    challenge.evaluation_config.score_default_sort = order
+    challenge.evaluation_config.score_default_sort = a_order
     challenge.evaluation_config.extra_results_columns = [
-        {"path": "b", "title": "b", "order": "desc"}
+        {"path": "b", "title": "b", "order": b_order}
     ]
     challenge.evaluation_config.save()
 
     with mute_signals(post_save):
         queryset = (
-            ResultFactory(challenge=challenge, metrics={"a": 0.1}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.5}),
+            ResultFactory(challenge=challenge, metrics={"a": 0.1, "b": 0.1}),
+            ResultFactory(challenge=challenge, metrics={"a": 0.5, "b": 0.2}),
+            ResultFactory(challenge=challenge, metrics={"a": 1.0, "b": 0.3}),
+            ResultFactory(challenge=challenge, metrics={"a": 0.7, "b": 0.4}),
+            ResultFactory(challenge=challenge, metrics={"a": 0.5, "b": 0.5}),
+            # Following two are invalid if relative ranking is used
             ResultFactory(challenge=challenge, metrics={"a": 1.0}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.7}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.5}),
-            ResultFactory(challenge=challenge, metrics={"a": 1.0}),
-            ResultFactory(
-                challenge=challenge, metrics={"b": 0.3}  # Invalid result
-            ),
+            ResultFactory(challenge=challenge, metrics={"b": 0.3}),
         )
 
-    if order == Config.DESCENDING:
-        # An alternative implementation could be [4, 3, 1, 2, 3, 1, 0] as there
-        # are only 4 unique values, the current implementation is harsh on poor
-        # results
-        expected_ranks = [6, 4, 1, 3, 4, 1, 0]
-    elif order == Config.ASCENDING:
-        expected_ranks = [1, 2, 5, 4, 2, 5, 0]
-    else:
-        raise NotImplementedError
+    expected_ranks = {
+        Config.DESCENDING: {
+            Config.ABSOLUTE: {
+                Config.DESCENDING: [6, 4, 1, 3, 4, 1, 0],
+                Config.ASCENDING: [6, 4, 1, 3, 4, 1, 0],
+            },
+            Config.MEDIAN: {
+                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0],
+                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0],
+            },
+            Config.MEAN: {
+                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0],
+                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0],
+            },
+        },
+        Config.ASCENDING: {
+            Config.ABSOLUTE: {
+                Config.DESCENDING: [1, 2, 5, 4, 2, 5, 0],
+                Config.ASCENDING: [1, 2, 5, 4, 2, 5, 0],
+            },
+            Config.MEDIAN: {
+                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0],
+                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0],
+            },
+            Config.MEAN: {
+                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0],
+                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0],
+            },
+        },
+    }
 
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(
+        challenge, expected_ranks[a_order][score_method][b_order], queryset
+    )
 
 
 @pytest.mark.django_db
@@ -131,6 +154,7 @@ def assert_ranks(challenge, expected_ranks, queryset):
     # Execute calculate_ranks manually
     calculate_ranks(challenge_pk=challenge.pk)
 
-    for q, exp in zip(queryset, expected_ranks):
-        r = Result.objects.get(pk=q.pk)
-        assert r.rank == exp
+    for r in queryset:
+        r.refresh_from_db()
+
+    assert [r.rank for r in queryset] == expected_ranks
