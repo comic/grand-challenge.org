@@ -22,12 +22,16 @@
                 <th>Created</th>
 
                 {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
-                    <th>Mean #</th>
+                    <th class="table-active">Mean #</th>
                 {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
-                    <th>Median #</th>
+                    <th class="table-active">Median #</th>
                 {% endif %}
 
-                <th>
+                <th
+                        {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                            class="table-active"
+                        {% endif %}
+                >
                     {{ evaluation_config.score_title }}
                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                         (#)
@@ -84,12 +88,22 @@
                         </td>
 
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            <td>{{ result.rank_score }}</td>
+                            <td class="table-active">
+                                <a href="{{ result_url }}">
+                                    <b>{{ result.rank_score|floatformat }}</b>
+                                </a>
+                            </td>
                         {% endif %}
 
                         {% with result.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
-                            <td data-order="{{ metric }}">
+                            <td data-order="{{ metric }}"
+                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                                class="table-active"
+                                    {% endif %}
+                            >
                                 <a href="{{ result_url }}">
+                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                                        <b>{% endif %}
                                     {% filter remove_whitespace %}
                                         {{ metric|floatformat:evaluation_config.score_decimal_places }}
                                         {% if evaluation_config.score_error_jsonpath %}
@@ -102,6 +116,8 @@
                                             )
                                         {% endif %}
                                     {% endfilter %}
+                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                                        </b>{% endif %}
                                 </a>
                             </td>
                         {% endwith %}
