@@ -13,9 +13,9 @@ class Metric(NamedTuple):
 
 
 class Positions(NamedTuple):
-    ranks: Dict
-    rank_scores: Dict
-    rank_per_metric: Dict
+    ranks: Dict[str, float]
+    rank_scores: Dict[str, float]
+    rank_per_metric: Dict[str, Dict[str, float]]
 
 
 def rank_results(
@@ -58,7 +58,7 @@ def _filter_valid_results(
 
 def _get_rank_per_metric(
     *, results: Iterable[Result], metrics: Tuple[Metric, ...]
-) -> dict:
+) -> Dict[str, Dict[str, float]]:
     """
     Takes results and calculates the rank for each of the individual metrics
 
@@ -86,7 +86,9 @@ def _get_rank_per_metric(
     }
 
 
-def _scores_to_ranks(*, scores: Dict, reverse: bool = False) -> dict:
+def _scores_to_ranks(
+    *, scores: Dict, reverse: bool = False
+) -> Dict[str, float]:
     """
     Go from a score (a scalar) to a rank (integer). If two scalars are the
     same then they will have the same rank.
