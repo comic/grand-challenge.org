@@ -4,9 +4,8 @@ import pytest
 from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
-from rest_framework.renderers import JSONRenderer
 
-from grandchallenge.patients.serializer import PatientSerializer
+from django.core import serializers
 from tests.factories import UserFactory, PatientFactory
 
 
@@ -20,13 +19,13 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "table_reverse, record_reverse, expected_table, object_factory, object_serializer",
-    [("patients:patients", "patients:patients", "Patient Table", PatientFactory, PatientSerializer)],
+    [("patients:patients", "patients:patients", "Patient Table", PatientFactory)],
 )
-def test_api_pages(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer):
-    assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer)
+def test_api_pages(client, table_reverse, record_reverse, expected_table, object_factory):
+    assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory)
 
 
-def assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer):
+def assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
     record_url = reverse(record_reverse)
@@ -36,8 +35,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
 
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    object_serializer(record)
-    json_record = remove_id_from_json(json.loads(JSONRenderer().render(object_serializer.data)))
+    json_record = remove_id_from_json(json.loads(serializers.serialize("json", record)[1:-1]))
     assert_record_deletion(client, record_url, token, record.id)
 
     # Removes the ID tag from the JSON object and then reinserts the object into the DB
@@ -52,8 +50,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     # TODO: Move JSON extraction and scrubbing into a method
     record = object_factory()
-    object_serializer(record)
-    json_record = remove_id_from_json(json.loads(JSONRenderer().render(object_serializer.data)))
+    json_record = remove_id_from_json(json.loads(serializers.serialize("json", record)[1:-1]))
 
     assert_record_deletion(client, record_url, token, record.id)
     assert_record_update(client, record_url, json_record, record.id)
