@@ -36,33 +36,69 @@ def test_calculate_ranks(settings):
         queryset[-1].published = False
         queryset[-1].save()
 
-    expected_ranks = {
+    expected = {
         Config.DESCENDING: {
             Config.ABSOLUTE: {
-                Config.DESCENDING: [6, 4, 1, 3, 4, 1, 0, 0],
-                Config.ASCENDING: [6, 4, 1, 3, 4, 1, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [6, 4, 1, 3, 4, 1, 0, 0],
+                    "rank_scores": [6, 4, 1, 3, 4, 1, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [6, 4, 1, 3, 4, 1, 0, 0],
+                    "rank_scores": [6, 4, 1, 3, 4, 1, 0, 0],
+                },
             },
             Config.MEDIAN: {
-                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0, 0],
-                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
+                    "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
+                    "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
+                },
             },
             Config.MEAN: {
-                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0, 0],
-                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
+                    "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
+                    "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
+                },
             },
         },
         Config.ASCENDING: {
             Config.ABSOLUTE: {
-                Config.DESCENDING: [1, 2, 5, 4, 2, 5, 0, 0],
-                Config.ASCENDING: [1, 2, 5, 4, 2, 5, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [1, 2, 5, 4, 2, 5, 0, 0],
+                    "rank_scores": [1, 2, 5, 4, 2, 5, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [1, 2, 5, 4, 2, 5, 0, 0],
+                    "rank_scores": [1, 2, 5, 4, 2, 5, 0, 0],
+                },
             },
             Config.MEDIAN: {
-                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0, 0],
-                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
+                    "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
+                    "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
+                },
             },
             Config.MEAN: {
-                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0, 0],
-                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0, 0],
+                Config.DESCENDING: {
+                    "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
+                    "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
+                },
+                Config.ASCENDING: {
+                    "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
+                    "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
+                },
             },
         },
     }
@@ -81,7 +117,9 @@ def test_calculate_ranks(settings):
                 challenge.evaluation_config.save()
 
                 assert_ranks(
-                    expected_ranks[a_order][score_method][b_order], queryset
+                    queryset,
+                    expected[a_order][score_method][b_order]["ranks"],
+                    expected[a_order][score_method][b_order]["rank_scores"],
                 )
 
 
@@ -141,19 +179,19 @@ def test_results_display(settings):
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 1, 3, 5, 6, 2, 4]
-    assert_ranks(expected_ranks, queryset)
+    assert_ranks(queryset, expected_ranks)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 2, 0, 0, 1]
-    assert_ranks(expected_ranks, queryset)
+    assert_ranks(queryset, expected_ranks)
 
     challenge.evaluation_config.result_display_choice = Config.BEST
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 1, 0, 0, 0, 2, 0]
-    assert_ranks(expected_ranks, queryset)
+    assert_ranks(queryset, expected_ranks)
 
     # now test reverse order
     challenge.evaluation_config.score_default_sort = (
@@ -162,17 +200,20 @@ def test_results_display(settings):
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 2, 1, 0, 0]
-    assert_ranks(expected_ranks, queryset)
+    assert_ranks(queryset, expected_ranks)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 1, 0, 0, 2]
-    assert_ranks(expected_ranks, queryset)
+    assert_ranks(queryset, expected_ranks)
 
 
-def assert_ranks(expected_ranks, queryset):
+def assert_ranks(queryset, expected_ranks, expected_rank_scores=None):
     for r in queryset:
         r.refresh_from_db()
 
     assert [r.rank for r in queryset] == expected_ranks
+
+    if expected_rank_scores:
+        assert [r.rank_score for r in queryset] == expected_rank_scores
