@@ -21,7 +21,7 @@ def get_staff_user_with_token():
     "test_input, expected",
     [("patients", "Patient Table")],  # ("patient", "Patient Record")
 )
-def test_table_pages(client, test_input, expected):
+def test_api_pages(client, test_input, expected):
     _, token = get_staff_user_with_token()
     url = reverse(f"patients:{test_input}")
     patient = PatientFactory()
@@ -29,7 +29,10 @@ def test_table_pages(client, test_input, expected):
     # Checks the HTML View
     test_table_access(client, url, token, expected)
     # Checks insertions and acquires id
-    id = test_table_insert(client, url, token, patient)
+    record_id = test_table_insert(client, url, token, patient)
+    test_record_display(client, url, token, record_id)
+    test_record_update(client, url, token, patient, id)
+    test_record_delete(client, url, token, id)
 
 
 def test_table_access(client, url, token, expected):
@@ -50,18 +53,40 @@ def test_table_access(client, url, token, expected):
 
 
 def test_table_insert(client, url, token, patient):
-    response = client.post(url, PatientSerializer.serialize("json", patient), HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token)
-    json_response = json.loads(response.loads)
+    response = client.post(
+        url,
+        PatientSerializer.serialize("json", patient),
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token)
+    json_response = json.loads(response.content)
 
     assert response.status_code == 200
     return json_response["id"]
 
 
-
 def test_record_display(client, url, token, id):
+    response = client.get(url + "/" + str(id), HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token)
+    json_response = json.loads(response.content)
+
+    assert response.status_code == 200
+    assert json_response["id"] == id
 
 
-def test_record_update():
+def test_record_update(client, url, token, patient, id):
+    patient.height = patient.height + 10
+
+    response = client.post(
+        url + "/" + id,
+        PatientSerializer.serialize("json", patient),
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token)
+    json_response = json.loads(response.content)
+
+    assert response.status_code == 200
+    assert json_response["height"] == patient.height
 
 
-def test_record_delete():
+def test_record_delete(client, url, token, id):
+    response = client.delete(url + "/" + id, HTTP_ACCEPT="application/json", HTTP_AUTHORIZATION="Token " + token)
+
+    assert response.status_code == 200
