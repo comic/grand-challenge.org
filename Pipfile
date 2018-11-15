@@ -17,7 +17,7 @@ pyupgrade = "*"
 [packages]
 "beautifulsoup4" = "*"
 celery = "*"
-redis = "*"
+redis = "<3.0"
 django = "<2.2"
 django-countries = "*"
 django-crispy-forms = "*"
