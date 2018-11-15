@@ -33,35 +33,41 @@ def test_calculate_ranks(score_method, a_order, b_order):
             # Following two are invalid if relative ranking is used
             ResultFactory(challenge=challenge, metrics={"a": 1.0}),
             ResultFactory(challenge=challenge, metrics={"b": 0.3}),
+            # Add a valid, but unpublished result
+            ResultFactory(challenge=challenge, metrics={"a": 0.1, "b": 0.1}),
         )
+
+        # Unpublish the result
+        queryset[-1].published = False
+        queryset[-1].save()
 
     expected_ranks = {
         Config.DESCENDING: {
             Config.ABSOLUTE: {
-                Config.DESCENDING: [6, 4, 1, 3, 4, 1, 0],
-                Config.ASCENDING: [6, 4, 1, 3, 4, 1, 0],
+                Config.DESCENDING: [6, 4, 1, 3, 4, 1, 0, 0],
+                Config.ASCENDING: [6, 4, 1, 3, 4, 1, 0, 0],
             },
             Config.MEDIAN: {
-                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0],
-                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0],
+                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0, 0],
+                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0, 0],
             },
             Config.MEAN: {
-                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0],
-                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0],
+                Config.DESCENDING: [5, 4, 1, 1, 1, 0, 0, 0],
+                Config.ASCENDING: [3, 2, 1, 3, 5, 0, 0, 0],
             },
         },
         Config.ASCENDING: {
             Config.ABSOLUTE: {
-                Config.DESCENDING: [1, 2, 5, 4, 2, 5, 0],
-                Config.ASCENDING: [1, 2, 5, 4, 2, 5, 0],
+                Config.DESCENDING: [1, 2, 5, 4, 2, 5, 0, 0],
+                Config.ASCENDING: [1, 2, 5, 4, 2, 5, 0, 0],
             },
             Config.MEDIAN: {
-                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0],
-                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0],
+                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0, 0],
+                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0, 0],
             },
             Config.MEAN: {
-                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0],
-                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0],
+                Config.DESCENDING: [2, 2, 5, 2, 1, 0, 0, 0],
+                Config.ASCENDING: [1, 2, 4, 4, 3, 0, 0, 0],
             },
         },
     }
