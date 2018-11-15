@@ -20,7 +20,7 @@ def test_calculate_ranks(settings):
         queryset = (
             # Warning: Do not change this values without updating the
             # expected_ranks below.
-            ResultFactory(challenge=challenge, metrics={"a": 0.1, "b": 0.1}),
+            ResultFactory(challenge=challenge, metrics={"a": 0.0, "b": 0.0}),
             ResultFactory(challenge=challenge, metrics={"a": 0.5, "b": 0.2}),
             ResultFactory(challenge=challenge, metrics={"a": 1.0, "b": 0.3}),
             ResultFactory(challenge=challenge, metrics={"a": 0.7, "b": 0.4}),

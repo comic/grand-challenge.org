@@ -52,7 +52,7 @@ def _filter_valid_results(
     return [
         res
         for res in results
-        if all(get_jsonpath(res.metrics, m.path) for m in metrics)
+        if all(get_jsonpath(res.metrics, m.path) != "" for m in metrics)
     ]
 
 
