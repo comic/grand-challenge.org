@@ -3,25 +3,18 @@ from django.db.models.signals import post_save
 from factory.django import mute_signals
 
 from grandchallenge.evaluation.models import Config
-from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.factories import ResultFactory, ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "score_method", (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN)
-)
-@pytest.mark.parametrize("a_order", (Config.DESCENDING, Config.ASCENDING))
-@pytest.mark.parametrize("b_order", (Config.DESCENDING, Config.ASCENDING))
-def test_calculate_ranks(score_method, a_order, b_order):
+def test_calculate_ranks(settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
+
     challenge = ChallengeFactory()
-    challenge.evaluation_config.score_jsonpath = "a"
-    challenge.evaluation_config.scoring_method_choice = score_method
-    challenge.evaluation_config.score_default_sort = a_order
-    challenge.evaluation_config.extra_results_columns = [
-        {"path": "b", "title": "b", "order": b_order}
-    ]
-    challenge.evaluation_config.save()
 
     with mute_signals(post_save):
         queryset = (
@@ -72,17 +65,33 @@ def test_calculate_ranks(score_method, a_order, b_order):
         },
     }
 
-    assert_ranks(
-        challenge, expected_ranks[a_order][score_method][b_order], queryset
-    )
+    for score_method in (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN):
+        for a_order in (Config.DESCENDING, Config.ASCENDING):
+            for b_order in (Config.DESCENDING, Config.ASCENDING):
+                challenge.evaluation_config.score_jsonpath = "a"
+                challenge.evaluation_config.scoring_method_choice = (
+                    score_method
+                )
+                challenge.evaluation_config.score_default_sort = a_order
+                challenge.evaluation_config.extra_results_columns = [
+                    {"path": "b", "title": "b", "order": b_order}
+                ]
+                challenge.evaluation_config.save()
+
+                assert_ranks(
+                    expected_ranks[a_order][score_method][b_order], queryset
+                )
 
 
 @pytest.mark.django_db
-def test_results_display():
+def test_results_display(settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
+
     challenge = ChallengeFactory()
-    challenge.evaluation_config.score_jsonpath = "a"
-    challenge.evaluation_config.result_display_choice = Config.ALL
-    challenge.evaluation_config.save()
 
     with mute_signals(post_save):
         user1 = UserFactory()
@@ -125,20 +134,24 @@ def test_results_display():
             ),
         )
 
+    challenge.evaluation_config.score_jsonpath = "a"
+    challenge.evaluation_config.result_display_choice = Config.ALL
+    challenge.evaluation_config.save()
+
     expected_ranks = [0, 1, 3, 5, 6, 2, 4]
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 2, 0, 0, 1]
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.BEST
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 1, 0, 0, 0, 2, 0]
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(expected_ranks, queryset)
 
     # now test reverse order
     challenge.evaluation_config.score_default_sort = (
@@ -147,19 +160,16 @@ def test_results_display():
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 2, 1, 0, 0]
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(expected_ranks, queryset)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
     expected_ranks = [0, 0, 0, 1, 0, 0, 2]
-    assert_ranks(challenge, expected_ranks, queryset)
+    assert_ranks(expected_ranks, queryset)
 
 
-def assert_ranks(challenge, expected_ranks, queryset):
-    # Execute calculate_ranks manually
-    calculate_ranks(challenge_pk=challenge.pk)
-
+def assert_ranks(expected_ranks, queryset):
     for r in queryset:
         r.refresh_from_db()
 
