@@ -110,5 +110,3 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         Result.objects.filter(pk=res.pk).update(
             rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
         )
-
-    return final_positions
