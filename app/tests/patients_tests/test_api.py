@@ -19,7 +19,7 @@ def get_staff_user_with_token():
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "table_reverse, record_reverse, expected_table, object_factory, object_serializer",
-    [("patients:patients", "patients:patient", "Patient Table", PatientFactory, PatientSerializer)],
+    [("patients:patients", "patients:patients", "Patient Table", PatientFactory, PatientSerializer)],
 )
 def test_api_pages(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer):
     assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory, object_serializer)
