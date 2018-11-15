@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
+from rest_framework.renderers import JSONRenderer
 
 from grandchallenge.patients.serializer import PatientSerializer
 from tests.factories import UserFactory, PatientFactory
@@ -35,7 +36,8 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
 
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(object_serializer.serialize("json", record)))
+    object_serializer(record)
+    json_record = remove_id_from_json(json.loads(JSONRenderer().render(object_serializer.data)))
     assert_record_deletion(client, record_url, token, record.id)
 
     # Removes the ID tag from the JSON object and then reinserts the object into the DB
@@ -50,7 +52,8 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     # TODO: Move JSON extraction and scrubbing into a method
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(object_serializer.serialize("json", record)))
+    object_serializer(record)
+    json_record = remove_id_from_json(json.loads(JSONRenderer().render(object_serializer.data)))
 
     assert_record_deletion(client, record_url, token, record.id)
     assert_record_update(client, record_url, json_record, record.id)
