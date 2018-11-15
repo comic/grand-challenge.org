@@ -11,10 +11,12 @@ from tests.factories import ResultFactory, ChallengeFactory, UserFactory
 @pytest.mark.parametrize(
     "score_method", (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN)
 )
-def test_calculate_ranks(score_method):
+@pytest.mark.parametrize("order", (Config.DESCENDING, Config.ASCENDING))
+def test_calculate_ranks(score_method, order):
     challenge = ChallengeFactory()
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.scoring_method_choice = score_method
+    challenge.evaluation_config.score_default_sort = order
     challenge.evaluation_config.extra_results_columns = [
         {"path": "b", "title": "b", "order": "desc"}
     ]
@@ -33,18 +35,16 @@ def test_calculate_ranks(score_method):
             ),
         )
 
-    # An alternative implementation could be [4, 3, 1, 2, 3, 1] as there are
-    # only 4 unique values, the current implementation is harsh on poor results
-    expected_ranks = [6, 4, 1, 3, 4, 1, 0]
-    assert_ranks(challenge, expected_ranks, queryset)
+    if order == Config.DESCENDING:
+        # An alternative implementation could be [4, 3, 1, 2, 3, 1, 0] as there
+        # are only 4 unique values, the current implementation is harsh on poor
+        # results
+        expected_ranks = [6, 4, 1, 3, 4, 1, 0]
+    elif order == Config.ASCENDING:
+        expected_ranks = [1, 2, 5, 4, 2, 5, 0]
+    else:
+        raise NotImplementedError
 
-    # now test reverse order
-    challenge.evaluation_config.score_default_sort = (
-        challenge.evaluation_config.ASCENDING
-    )
-    challenge.evaluation_config.save()
-
-    expected_ranks = [1, 2, 5, 4, 2, 5, 0]
     assert_ranks(challenge, expected_ranks, queryset)
 
 
