@@ -51,7 +51,8 @@
 
     </dl>
 
-    <h3>Registrations to public challenges in the past {{ days }} days (top {{ max_num_results }})</h3>
+    <h3>Registrations to public challenges in the past {{ days }} days
+        (top {{ max_num_results }})</h3>
 
     <canvas id="registrationsChart"></canvas>
 
@@ -85,7 +86,8 @@
 
     </dl>
 
-    <h3>Submissions to public challenges in the past {{ days }} days (top {{ max_num_results }})</h3>
+    <h3>Submissions to public challenges in the past {{ days }} days
+        (top {{ max_num_results }})</h3>
 
     <canvas id="submissionsChart"></canvas>
 
@@ -109,6 +111,16 @@
             '#fde725'
         ].reverse();
 
+        var options = {
+            scales: {
+                xAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        };
+
         var registrationsChart = new Chart(ctx, {
             type: 'horizontalBar',
             data: {
@@ -126,7 +138,8 @@
                     ],
                     backgroundColor: colormap
                 }]
-            }
+            },
+            options: options
         });
 
         ctx = document.getElementById("submissionsChart");
@@ -147,7 +160,8 @@
                     ],
                     backgroundColor: colormap
                 }]
-            }
+            },
+            options: options
         });
     </script>
 
