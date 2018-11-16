@@ -120,7 +120,7 @@ def assert_record_deletion(client, url, token, record_id):
         HTTP_AUTHORIZATION="Token " + token)
 
     assert response.status_code == 200
-    assert response.status code == 404
+    assert response.status_code == 404
 
 
 def remove_id_from_json(json_object):
