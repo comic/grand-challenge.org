@@ -35,7 +35,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
 
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(serializers.serialize("json", record)[1:-1]))
+    json_record = remove_id_from_json(json.loads(serializers.serialize("json", [record, ])[1:-1]))
     assert_record_deletion(client, record_url, token, record.id)
 
     # Removes the ID tag from the JSON object and then reinserts the object into the DB
@@ -50,7 +50,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     # TODO: Move JSON extraction and scrubbing into a method
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(serializers.serialize("json", record)[1:-1]))
+    json_record = remove_id_from_json(json.loads(serializers.serialize("json", [record, ])[1:-1]))
 
     assert_record_deletion(client, record_url, token, record.id)
     assert_record_update(client, record_url, json_record, record.id)
