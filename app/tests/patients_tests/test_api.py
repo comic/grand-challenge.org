@@ -111,8 +111,10 @@ def assert_record_update(client, url, token, json_record, record_id):
 
 
 def assert_record_deletion(client, url, token, record_id):
+    record_id_str = str(record_id)
+
     response = client.delete(
-        url + "/" + str(record_id),
+        url + "/" + record_id_str,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
 
