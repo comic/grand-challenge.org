@@ -119,5 +119,7 @@ def assert_record_deletion(client, url, token, record_id):
 
 def remove_id_from_json(json_object):
     for element in json_object:
-        element.pop("id", None)
+        if "id" in element:
+            del element["id"]
+
     return json_object
