@@ -114,7 +114,13 @@ def assert_record_deletion(client, url, token, record_id):
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
 
+    response = client.delete(
+        url + str(record_id),
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token)
+
     assert response.status_code == 200
+    assert response.status code == 404
 
 
 def remove_id_from_json(json_object):
