@@ -87,7 +87,7 @@ def assert_table_insert(client, url, token, json_record):
 
 def assert_record_display(client, url, token, record_id):
     response = client.get(
-        url + "/" + str(record_id),
+        url + str(record_id),
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
@@ -98,7 +98,7 @@ def assert_record_display(client, url, token, record_id):
 
 def assert_record_update(client, url, token, json_record, record_id):
     response = client.post(
-        url + "/" + str(record_id),
+        url + str(record_id),
         json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
@@ -109,10 +109,8 @@ def assert_record_update(client, url, token, json_record, record_id):
 
 
 def assert_record_deletion(client, url, token, record_id):
-    full_url = url + "/" + str(record_id)
-
     response = client.delete(
-        full_url,
+        url + str(record_id),
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
 
