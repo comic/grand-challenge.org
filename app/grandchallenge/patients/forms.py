@@ -35,7 +35,6 @@ class PatientUpdateForm(ModelForm):
     class Meta:
         model = Patient
         fields = [
-            "id",
             "name",
             "sex",
             "height",
