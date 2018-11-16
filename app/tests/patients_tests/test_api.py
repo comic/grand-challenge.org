@@ -38,10 +38,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     json_record = remove_id_from_json(json.loads(serializers.serialize("json", [record, ])[1:-1]))
     assert_record_deletion(client, record_url, token, record.id)
 
-    # Removes the ID tag from the JSON object and then reinserts the object into the DB
-    for element in json_record:
-        element.pop("id", None)
-
+    # Attempts to create a new record through the API
     new_record_id = assert_table_insert(client, table_url, token, json_record)
 
     # Attempts to display the object
