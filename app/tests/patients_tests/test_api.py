@@ -49,9 +49,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
     json_record = remove_non_insert_fields(json.loads(serializers.serialize("json", [record, ])[1:-1]), record_fields)
-
-    assert_record_deletion(client, record_url, token, record.id)
-    assert_record_update(client, record_url, json_record, record.id)
+    assert_record_update(client, record_url, json_record, record.id, record_fields)
 
 
 def assert_table_access(client, url, token, expected):
@@ -94,13 +92,13 @@ def assert_record_display(client, url, token, record_id):
     assert json_response["id"] == id
 
 
-def assert_record_update(client, url, token, json_record, record_id):
+def assert_record_update(client, url, token, json_record, record_id, fields):
     response = client.post(
         url + str(record_id) + "/",
         json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
-    json_response = remove_id_from_json(json.loads(response.content))
+    json_response = remove_non_insert_fields(json.loads(response.content), fields)
 
     assert response.status_code == 200
     assert sorted(json_record.items()) == sorted(json_response.items())
@@ -119,7 +117,7 @@ def remove_non_insert_fields(json_object, fields):
     fields["id"] = 0
 
     for field in fields:
-        if field in json_object:
+        if field not in json_object:
             del json_object[field]
 
     return json_object
