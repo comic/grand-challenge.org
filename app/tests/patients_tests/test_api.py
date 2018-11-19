@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
@@ -35,7 +36,8 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
 
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(serializers.serialize("json", [record, ])[1:-1]))
+    record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
+    json_record = remove_non_insert_fields(json.loads(serializers.serialize("json", [record, ])[1:-1]), record_fields)
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
@@ -45,9 +47,8 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     assert_record_display(client, record_url, token, new_record_id)
 
     # Acquires another object, and attempts to update the current record with the new information
-    # TODO: Move JSON extraction and scrubbing into a method
     record = object_factory()
-    json_record = remove_id_from_json(json.loads(serializers.serialize("json", [record, ])[1:-1]))
+    json_record = remove_non_insert_fields(json.loads(serializers.serialize("json", [record, ])[1:-1]), record_fields)
 
     assert_record_deletion(client, record_url, token, record.id)
     assert_record_update(client, record_url, json_record, record.id)
@@ -114,9 +115,11 @@ def assert_record_deletion(client, url, token, record_id):
     assert response.status_code == 204
 
 
-def remove_id_from_json(json_object):
-    for element in json_object:
-        if "id" in element:
-            del element["id"]
+def remove_non_insert_fields(json_object, fields):
+    fields["id"] = 0
+
+    for field in fields:
+        if field in json_object:
+            del json_object[field]
 
     return json_object
