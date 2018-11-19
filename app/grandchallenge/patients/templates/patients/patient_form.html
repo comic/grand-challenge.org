@@ -1,0 +1,14 @@
+{% extends "nobanner.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}Patient{% endblock %}
+
+{% block contentTitle %}
+    <h2>Patient</h2>
+{% endblock %}
+
+{% block pagecontent %}
+    {% crispy form %}
+   <a href="{% url 'patients:patient-list' %}">Cancel</a>
+{% endblock %}

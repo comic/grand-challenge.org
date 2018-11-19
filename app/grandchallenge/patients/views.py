@@ -1,11 +1,13 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
 
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
-from grandchallenge.patients.forms import PatientDetailForm
+from grandchallenge.patients.forms import PatientDetailForm, PatientCreateForm, PatientUpdateForm
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
 class PatientTable(generics.ListCreateAPIView):
@@ -34,25 +36,23 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-class PatientCreate(CreateView):
+class PatientCreate(CreateView, LoginRequiredMixin):
     model = Patient
-    form_class = PatientDetailForm
-    template_name = "patients/patient_details_form.html"
+    form_class = PatientCreateForm
 
     def get_success_url(self):
         return reverse("patients:patient-list")
 
 
-class PatientUpdate(UpdateView):
+class PatientUpdate(UpdateView, UserIsStaffMixin):
     model = Patient
-    form_class = PatientDetailForm
-    template_name = "patients/patient_details_form.html"
+    form_class = PatientUpdateForm
 
     def get_success_url(self):
         return reverse("patients:patient-list")
 
 
-class PatientDelete(DeleteView):
+class PatientDelete(DeleteView, UserIsStaffMixin):
     model = Patient
     template_name = "patients/patient_deletion_form.html"
 
@@ -60,7 +60,7 @@ class PatientDelete(DeleteView):
         return reverse("patients:patient-list")
 
 
-class PatientList(ListView):
+class PatientList(ListView, UserIsStaffMixin):
     model = Patient
     paginate_by = 100
     template_name = "patients/patient_list_form.html"
