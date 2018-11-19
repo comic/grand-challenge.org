@@ -116,8 +116,12 @@ def assert_record_deletion(client, url, token, record_id):
 def remove_non_insert_fields(json_object, fields):
     fields["id"] = 0
 
+    to_remove = list()
     for key, _ in json_object.items():
         if key not in fields:
-            del json_object[key]
+            to_remove.append(key)
+
+    for key in to_remove:
+        del json_object[key]
 
     return json_object
