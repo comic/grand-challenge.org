@@ -39,7 +39,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(client, table_url, token, dict_to_cleaned_json(record_fields))
+    new_record_id = assert_table_insert(client, table_url, token, json.loads(record_fields))
 
     # Attempts to display the object
     assert_record_display(client, record_url, token, new_record_id)
@@ -47,7 +47,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    assert_record_update(client, record_url, dict_to_cleaned_json(record_fields), record.id)
+    assert_record_update(client, record_url, json.loads(record_fields), record.id)
 
 
 def assert_table_access(client, url, token, expected):
