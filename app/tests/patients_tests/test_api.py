@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from django.core import serializers
 from tests.factories import UserFactory, PatientFactory
 
 
@@ -37,20 +36,18 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    json_record = json.loads(serializers.serialize("json", [record, ])[1:-1])
-    #json_record = remove_non_insert_fields(json_data, record_fields)
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(client, table_url, token, json_record, record_fields)
+    new_record_id = assert_table_insert(client, table_url, token, dict_to_cleaned_json(record_fields))
 
     # Attempts to display the object
     assert_record_display(client, record_url, token, new_record_id)
 
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
-    json_record = remove_non_insert_fields(json.loads(serializers.serialize("json", [record, ])[1:-1]), record_fields)
-    assert_record_update(client, record_url, json_record, record.id, record_fields)
+    record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
+    assert_record_update(client, record_url, dict_to_cleaned_json(record_fields), record.id)
 
 
 def assert_table_access(client, url, token, expected):
@@ -70,12 +67,10 @@ def assert_table_access(client, url, token, expected):
     assert not json.loads(response.content)
 
 
-def assert_table_insert(client, url, token, json_record, record_fields):
-    json_cleaned = remove_non_insert_fields(json_record, record_fields)
-
+def assert_table_insert(client, url, token, json_record):
     response = client.post(
         url,
-        json_cleaned,
+        json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
@@ -101,7 +96,8 @@ def assert_record_update(client, url, token, json_record, record_id, fields):
         json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
-    json_response = remove_non_insert_fields(json.loads(response.content), fields)
+    json_response = json.loads(response.content)
+    del json_response["id"]
 
     assert response.status_code == 200
     assert sorted(json_record.items()) == sorted(json_response.items())
@@ -116,15 +112,6 @@ def assert_record_deletion(client, url, token, record_id):
     assert response.status_code == 204
 
 
-def remove_non_insert_fields(json_object, fields):
-    fields["id"] = 0
-
-    to_remove = list()
-    for key, _ in json_object.items():
-        if key not in fields:
-            to_remove.append(key)
-
-    for key in to_remove:
-        del json_object[key]
-
-    return json_object
+def dict_to_cleaned_json(fields):
+    del fields["id"]
+    return json.loads(fields)
