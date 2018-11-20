@@ -114,7 +114,7 @@ def assert_record_deletion(client, url, token, record_id):
 
 def dict_to_json(dict_object):
     dict_string = "{ "
-    for key, val in dict_object:
+    for key, val in dict_object.items():
         dict_string += '"%s": "%s", ' % (key, val)
     dict_string += "}"
 
