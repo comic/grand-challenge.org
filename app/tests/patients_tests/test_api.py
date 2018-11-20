@@ -37,7 +37,8 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    json_record = remove_non_insert_fields(json.loads(serializers.serialize("json", [record, ])[1:-1]), record_fields)
+    json_data = json.loads(serializers.serialize("json", [record, ])[1:-1])
+    json_record = remove_non_insert_fields(json_data, record_fields)
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
