@@ -1,11 +1,10 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
 
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
-from grandchallenge.patients.forms import PatientDetailForm, PatientCreateForm, PatientUpdateForm
+from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
@@ -36,7 +35,7 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-class PatientCreate(CreateView, LoginRequiredMixin):
+class PatientCreate(CreateView, UserIsStaffMixin):
     model = Patient
     form_class = PatientCreateForm
 

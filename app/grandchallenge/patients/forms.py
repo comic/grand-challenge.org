@@ -5,12 +5,6 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
 
-class PatientDetailForm(ModelForm):
-    class Meta:
-        model = Patient
-        fields = ("name", "sex", "height")
-
-
 class PatientCreateForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

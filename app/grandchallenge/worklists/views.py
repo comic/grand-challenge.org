@@ -6,6 +6,7 @@ from grandchallenge.worklists.models import Worklist, WorklistSet
 from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer
 from grandchallenge.worklists.forms import WorklistSetDetailForm
 from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
 ## Worklist ###
@@ -30,7 +31,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSetSerializer
 
 
-class WorklistSetCreate(CreateView):
+class WorklistSetCreate(CreateView, UserIsStaffMixin):
     model = WorklistSet
     form_class = WorklistSetDetailForm
     template_name = 'worklists/set_details_form.html'
@@ -39,7 +40,7 @@ class WorklistSetCreate(CreateView):
         return reverse("worklists:set_list")
 
 
-class WorklistSetUpdate(UpdateView):
+class WorklistSetUpdate(UpdateView, UserIsStaffMixin):
     model = WorklistSet
     form_class = WorklistSetDetailForm
     template_name = 'worklists/set_details_form.html'
@@ -48,7 +49,7 @@ class WorklistSetUpdate(UpdateView):
         return reverse("worklists:set_list")
 
 
-class WorklistSetDelete(DeleteView):
+class WorklistSetDelete(DeleteView, UserIsStaffMixin):
     model = WorklistSet
     template_name = 'worklists/set_deletion_form.html'
 
@@ -56,7 +57,7 @@ class WorklistSetDelete(DeleteView):
         return reverse("worklists:set_list")
 
 
-class WorklistSetList(ListView):
+class WorklistSetList(ListView, UserIsStaffMixin):
     model = WorklistSet
     paginate_by = 100
     template_name = 'worklists/set_list_form.html'
