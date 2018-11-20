@@ -30,7 +30,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    assert_record_update(client, record_url, dict_to_json(record_fields), record.id)
+    assert_record_update(client, record_url, token, dict_to_json(record_fields), record.id)
 
 
 def assert_table_access(client, url, token, expected):
