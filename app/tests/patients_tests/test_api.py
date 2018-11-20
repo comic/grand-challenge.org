@@ -37,12 +37,12 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    json_data = json.loads(serializers.serialize("json", [record, ])[1:-1])
-    json_record = remove_non_insert_fields(json_data, record_fields)
+    json_record = json.loads(serializers.serialize("json", [record, ])[1:-1])
+    #json_record = remove_non_insert_fields(json_data, record_fields)
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(client, table_url, token, json_record)
+    new_record_id = assert_table_insert(client, table_url, token, json_record, record_fields)
 
     # Attempts to display the object
     assert_record_display(client, record_url, token, new_record_id)
@@ -70,10 +70,12 @@ def assert_table_access(client, url, token, expected):
     assert not json.loads(response.content)
 
 
-def assert_table_insert(client, url, token, json_record):
+def assert_table_insert(client, url, token, json_record, record_fields):
+    json_cleaned = remove_non_insert_fields(json_record, record_fields)
+
     response = client.post(
         url,
-        json_record,
+        json_cleaned,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
