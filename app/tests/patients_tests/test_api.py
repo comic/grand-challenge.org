@@ -75,7 +75,7 @@ def assert_table_insert(client, url, token, json_record):
         HTTP_AUTHORIZATION="Token " + token)
     json_response = json.loads(response.content)
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     return json_response["id"]
 
 
@@ -96,11 +96,8 @@ def assert_record_update(client, url, token, json_record, record_id):
         json_record,
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
-    json_response = json.loads(response.content)
-    del json_response["id"]
 
     assert response.status_code == 200
-    assert sorted(json_record.items()) == sorted(json_response.items())
 
 
 def assert_record_deletion(client, url, token, record_id):
