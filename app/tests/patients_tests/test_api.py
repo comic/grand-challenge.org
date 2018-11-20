@@ -39,7 +39,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(client, table_url, token, json.loads(record_fields))
+    new_record_id = assert_table_insert(client, table_url, token, dict_to_json(record_fields))
 
     # Attempts to display the object
     assert_record_display(client, record_url, token, new_record_id)
@@ -47,7 +47,7 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
     record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    assert_record_update(client, record_url, json.loads(record_fields), record.id)
+    assert_record_update(client, record_url, dict_to_json(record_fields), record.id)
 
 
 def assert_table_access(client, url, token, expected):
@@ -90,7 +90,7 @@ def assert_record_display(client, url, token, record_id):
     assert json_response["id"] == id
 
 
-def assert_record_update(client, url, token, json_record, record_id, fields):
+def assert_record_update(client, url, token, json_record, record_id):
     response = client.post(
         url + str(record_id) + "/",
         json_record,
@@ -112,6 +112,10 @@ def assert_record_deletion(client, url, token, record_id):
     assert response.status_code == 204
 
 
-def dict_to_cleaned_json(fields):
-    del fields["id"]
-    return json.loads(fields)
+def dict_to_json(dict_object):
+    dict_string = "{ "
+    for key, val in dict_object:
+        dict_string += '"%s": "%s", ' % (key, val)
+    dict_string += "}"
+
+    return json.loads(dict_string)
