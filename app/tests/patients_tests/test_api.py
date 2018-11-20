@@ -117,6 +117,6 @@ def dict_to_json(dict_object):
     for key, val in dict_object.items():
         dict_string += '"%s": "%s", ' % (key, val)
 
-    dict_string = dict_string[:-1]
-    dict_string += "}"
+    dict_string = dict_string[:-2]
+    dict_string += " }"
     return json.loads(dict_string)
