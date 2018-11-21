@@ -77,6 +77,7 @@ def assert_record_update(client, url, token, json_record, record_id):
     response = client.put(
         url + str(record_id) + "/",
         json_record,
+        content_type="application/json",
         HTTP_ACCEPT="application/json",
         HTTP_AUTHORIZATION="Token " + token)
 
