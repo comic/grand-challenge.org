@@ -13,6 +13,7 @@ from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
+from grandchallenge.worklists.models import Worklist, WorklistSet
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -179,3 +180,18 @@ class StudyFactory(factory.DjangoModelFactory):
 
     code = factory.Sequence(lambda n: f"identifier_{n}")
     region_of_interest = "heart"
+
+
+class WorklistSetFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorklistSet
+
+    title = factory.Sequence(lambda n: f"worklist_set_{n}")
+
+
+class WorklistFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Worklist
+
+    title = factory.Sequence(lambda n: f"worklist_{n}")
+    set = factory.SubFactory(WorklistSetFactory)
