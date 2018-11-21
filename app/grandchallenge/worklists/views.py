@@ -4,9 +4,12 @@ from rest_framework import generics
 
 from grandchallenge.worklists.models import Worklist, WorklistSet
 from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer
-from grandchallenge.worklists.forms import WorklistSetDetailForm
 from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.worklists.forms import (WorklistCreateForm,
+                                            WorklistUpdateForm,
+                                            WorklistSetCreateForm,
+                                            WorklistSetUpdateForm)
 
 
 ## Worklist ###
@@ -33,7 +36,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
 
 class WorklistSetCreate(CreateView, UserIsStaffMixin):
     model = WorklistSet
-    form_class = WorklistSetDetailForm
+    form_class = WorklistSetCreateForm
     template_name = 'worklists/set_details_form.html'
 
     def get_success_url(self):
@@ -42,7 +45,7 @@ class WorklistSetCreate(CreateView, UserIsStaffMixin):
 
 class WorklistSetUpdate(UpdateView, UserIsStaffMixin):
     model = WorklistSet
-    form_class = WorklistSetDetailForm
+    form_class = WorklistSetUpdateForm
     template_name = 'worklists/set_details_form.html'
 
     def get_success_url(self):
