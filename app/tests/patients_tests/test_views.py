@@ -9,5 +9,5 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_patient_list(client):
     visible = PatientFactory()
-    response = get_view_for_user(client=client, viewname="patients:patient-list")
+    response = get_view_for_user(client=client, viewname="patients:patient-list", user=staff_user)
     assert str(visible.id) in response.rendered_content
