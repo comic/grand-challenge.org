@@ -28,7 +28,7 @@ class WorklistCreate(UserIsStaffMixin, CreateView):
     form_class = WorklistCreateForm
 
     def get_success_url(self):
-        return reverse("worklists:set_list")
+        return reverse("worklists:set-list")
 
 
 class WorklistUpdate(UserIsStaffMixin, UpdateView):
@@ -36,7 +36,7 @@ class WorklistUpdate(UserIsStaffMixin, UpdateView):
     form_class = WorklistUpdateForm
 
     def get_success_url(self):
-        return reverse("worklists:set_list")
+        return reverse("worklists:set-list")
 
 
 class WorklistDelete(UserIsStaffMixin, DeleteView):

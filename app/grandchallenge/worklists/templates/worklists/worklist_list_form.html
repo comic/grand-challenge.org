@@ -14,9 +14,9 @@
         </tr>
     </thead>
     <tbody>
-        {% for set in object_list %}
+        {% for worklist in object_list %}
             <tr>
-                {% for field, value in set.get_fields %}
+                {% for field, value in worklist.get_fields %}
                     <td> {{ value }}</td>
                 {% endfor %}
                 <td><a href="">Add Worklist</a></td>
