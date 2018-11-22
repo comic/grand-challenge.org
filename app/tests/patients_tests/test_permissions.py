@@ -18,7 +18,7 @@ from tests.utils import validate_staff_only_view
 )
 def test_patient_form_access(view, client):
     reverse_kwargs = {}
-    if view in ("patients:patient-update",):
+    if view in ("patients:patient-update", "patients:patient-delete"):
         patient = PatientFactory()
         reverse_kwargs.update({"pk": patient.pk})
 

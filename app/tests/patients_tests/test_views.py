@@ -11,4 +11,3 @@ def test_patient_list(client):
     visible = PatientFactory()
     response = get_view_for_user(client=client, viewname="patients:patient-list")
     assert str(visible.id) in response.rendered_content
-

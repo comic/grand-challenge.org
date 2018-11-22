@@ -18,7 +18,7 @@ from tests.utils import validate_staff_only_view
 )
 def test_study_form_access(view, client):
     reverse_kwargs = {}
-    if view in ("studies:study-update",):
+    if view in ("studies:study-update", "studies:study-delete"):
         study = StudyFactory()
         reverse_kwargs.update({"pk": study.pk})
 
