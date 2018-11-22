@@ -1,0 +1,14 @@
+{% extends "nobanner.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block pageName %}Study{% endblock %}
+
+{% block contentTitle %}
+    <h2>Study</h2>
+{% endblock %}
+
+{% block pagecontent %}
+    {% crispy form %}
+   <a href="{% url 'studies:study-list' %}">Cancel</a>
+{% endblock %}

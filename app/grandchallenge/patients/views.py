@@ -35,7 +35,7 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-class PatientCreate(CreateView, UserIsStaffMixin):
+class PatientCreate(UserIsStaffMixin, CreateView):
     model = Patient
     form_class = PatientCreateForm
 
@@ -43,7 +43,7 @@ class PatientCreate(CreateView, UserIsStaffMixin):
         return reverse("patients:patient-list")
 
 
-class PatientUpdate(UpdateView, UserIsStaffMixin):
+class PatientUpdate(UserIsStaffMixin, UpdateView):
     model = Patient
     form_class = PatientUpdateForm
 
@@ -51,7 +51,7 @@ class PatientUpdate(UpdateView, UserIsStaffMixin):
         return reverse("patients:patient-list")
 
 
-class PatientDelete(DeleteView, UserIsStaffMixin):
+class PatientDelete(UserIsStaffMixin, DeleteView):
     model = Patient
     template_name = "patients/patient_deletion_form.html"
 
@@ -59,7 +59,7 @@ class PatientDelete(DeleteView, UserIsStaffMixin):
         return reverse("patients:patient-list")
 
 
-class PatientList(ListView, UserIsStaffMixin):
+class PatientList(UserIsStaffMixin, ListView):
     model = Patient
     paginate_by = 100
     template_name = "patients/patient_list_form.html"

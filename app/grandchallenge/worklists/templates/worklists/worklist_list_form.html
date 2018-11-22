@@ -2,7 +2,7 @@
 {% load grandchallenge_tags %}
 
 {% block content %}
-<h2>Worklist Sets</h2>
+<h2>Worklists</h2>
 {% csrf_token %}
 
 <table class="table table-sm">
@@ -11,7 +11,6 @@
         {% for field, value in object_list.0.get_fields %}
             <td><b>{{ field.name }}</b></td>
         {% endfor %}
-            <td><b>Worklists</b></td>
         </tr>
     </thead>
     <tbody>
@@ -20,10 +19,9 @@
                 {% for field, value in set.get_fields %}
                     <td> {{ value }}</td>
                 {% endfor %}
-                <td>{{ set.get_children|length }}</td>
                 <td><a href="">Add Worklist</a></td>
-                <td><a href="{% url 'worklists:set-update' set.id %}">Update</a></td>
-                <td><a href="{% url 'worklists:set-delete' set.id %}">Delete</a></td>
+                <td><a href="{% url 'worklists:worklist-update' worklist.id %}">Update</a></td>
+                <td><a href="{% url 'worklists:worklist-delete' worklist.id %}">Delete</a></td>
             </tr>
         {% empty %}
         <td>No sets have been created.</td>

@@ -35,31 +35,31 @@ class StudyRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = StudySerializer
 
 
-class StudyCreate(CreateView, UserIsStaffMixin):
+class StudyCreate(UserIsStaffMixin, CreateView):
     model = Study
     form_class = StudyCreateForm
 
     def get_success_url(self):
-        return reverse("studies:study_list")
+        return reverse("studies:study-list")
 
 
-class StudyUpdate(UpdateView, UserIsStaffMixin):
+class StudyUpdate(UserIsStaffMixin, UpdateView):
     model = Study
     form_class = StudyUpdateForm
 
     def get_success_url(self):
-        return reverse("studies:study_list")
+        return reverse("studies:study-list")
 
 
-class StudyDelete(DeleteView, UserIsStaffMixin):
+class StudyDelete(UserIsStaffMixin, DeleteView):
     model = Study
     template_name = "studies/study_deletion_form.html"
 
     def get_success_url(self):
-        return reverse("studies:study_list")
+        return reverse("studies:study-list")
 
 
-class StudyList(ListView, UserIsStaffMixin):
+class StudyList(UserIsStaffMixin, ListView):
     model = Study
     paginate_by = 100
     template_name = 'studies/study_list_form.html'
