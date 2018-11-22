@@ -13,6 +13,9 @@ class WorklistSet(UUIDModel):
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
 
+    def __str__(self):
+        return "%s (%s)" % (self.title, str(self.id))
+
 
 class Worklist(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
@@ -20,3 +23,6 @@ class Worklist(UUIDModel):
 
     def get_fields(self):
         return [(field, field.value_to_string(self)) for field in Worklist._meta.fields]
+
+    def __str__(self):
+        return "%s (%s)" % (self.title, str(self.id))

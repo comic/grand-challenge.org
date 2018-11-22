@@ -13,3 +13,6 @@ class Study(UUIDModel):
 
     def get_fields(self):
         return [(field, field.value_to_string(self)) for field in Study._meta.fields]
+
+    def __str__(self):
+        return "%s (%s)" % (self.code, str(self.id))
