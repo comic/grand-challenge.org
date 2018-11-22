@@ -11,7 +11,7 @@ class WorklistSet(UUIDModel):
         return [(field, field.value_to_string(self)) for field in WorklistSet._meta.fields]
 
     def get_children(self):
-        return Worklist.objects.filter(set=self.pk, parent=None)
+        return Worklist.objects.filter(set=self.pk)
 
 
 class Worklist(UUIDModel):

@@ -82,7 +82,7 @@ class WorklistSetUpdate(UserIsStaffMixin, UpdateView):
 
 class WorklistSetDelete(UserIsStaffMixin, DeleteView):
     model = WorklistSet
-    template_name = 'worklists/set_deletion_form.html'
+    template_name = 'worklists/worklistset_deletion_form.html'
 
     def get_success_url(self):
         return reverse("worklists:set-list")
@@ -91,4 +91,4 @@ class WorklistSetDelete(UserIsStaffMixin, DeleteView):
 class WorklistSetList(UserIsStaffMixin, ListView):
     model = WorklistSet
     paginate_by = 100
-    template_name = 'worklists/set_list_form.html'
+    template_name = 'worklists/worklistset_list_form.html'

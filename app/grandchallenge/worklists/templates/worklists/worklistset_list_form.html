@@ -21,7 +21,7 @@
                     <td> {{ value }}</td>
                 {% endfor %}
                 <td>{{ set.get_children|length }}</td>
-                <td><a href="">Add Worklist</a></td>
+                <td><a href="{% url 'worklists:worklist-create' %}">Add Worklist</a></td>
                 <td><a href="{% url 'worklists:set-update' set.id %}">Update</a></td>
                 <td><a href="{% url 'worklists:set-delete' set.id %}">Delete</a></td>
             </tr>
