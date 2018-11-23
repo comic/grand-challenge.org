@@ -2,6 +2,7 @@
 import glob
 import os
 import re
+import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -27,7 +28,7 @@ if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
 IGNORABLE_404_URLS = [
-    re.compile(r"\.(php|cgi)$"),
+    re.compile(r"\.(php|cgi|asp)/"),
     re.compile(r"^/phpmyadmin/"),
 ]
 
@@ -229,7 +230,8 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    "django.middleware.common.BrokenLinkEmailsMiddleware",  # Keep BrokenLinkEmailsMiddleware near the top
+    "django.middleware.common.BrokenLinkEmailsMiddleware",
+    # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -268,13 +270,12 @@ THIRD_PARTY_APPS = [
     "guardian",  # userena dependency, per object permissions
     "easy_thumbnails",  # userena dependency
     "social_django",  # social authentication with oauth2
-    "ckeditor",  # WYSIWYG editor, used in granchallenge.pages
-    "ckeditor_uploader",  # image uploads
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
+    "django_summernote",  # for WYSIWYG page editing
 ]
 
 LOCAL_APPS = [
@@ -340,41 +341,77 @@ SOCIAL_AUTH_SANITIZE_REDIRECTS = False
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
-# buttons for WYSIWYG editor in page admin
-CKEDITOR_CONFIGS = {
-    "default": {
+# WYSIWYG editing with Summernote
+SUMMERNOTE_THEME = "bs4"
+SUMMERNOTE_CONFIG = {
+    "attachment_model": "uploads.SummernoteAttachment",
+    "attachment_require_authentication": True,
+    "summernote": {
+        "width": "100%",
         "toolbar": [
+            ["style", ["style"]],
             [
-                "Source",
-                "-",
-                "Undo",
-                "Redo",
-                "-",
-                "Bold",
-                "Italic",
-                "Underline",
-                "Format",
-                "-",
-                "Link",
-                "Unlink",
-                "Anchor",
-                "-",
-                "Table",
-                "BulletedList",
-                "NumberedList",
-                "Image",
-                "SpecialChar",
-                "-",
-                "Maximize",
-            ]
+                "font",
+                ["bold", "italic", "underline", "strikethrough", "clear"],
+            ],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link", "picture", "hr"]],
+            ["view", ["fullscreen", "codeview"]],
+            ["help", ["help"]],
         ],
-        "width": 840,
-        "height": 300,
-        "toolbarCanCollapse": False,
-        "entities": False,
-        "extraAllowedContent": "*(*)",  # Allows any class in ckeditor html
-    }
+    },
 }
+
+# Settings for allowed HTML
+BLEACH_ALLOWED_TAGS = [
+    "a",
+    "abbr",
+    "acronym",
+    "b",
+    "blockquote",
+    "br",
+    "code",
+    "col",
+    "div",
+    "em",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "i",
+    "iframe",  # Allowed for now for continuous registration challenge
+    "img",
+    "li",
+    "ol",
+    "p",
+    "pre",
+    "span",
+    "strike",
+    "strong",
+    "table",
+    "tbody",
+    "thead",
+    "td",
+    "th",
+    "tr",
+    "u",
+    "ul",
+]
+BLEACH_ALLOWED_ATTRIBUTES = {
+    "*": ["class", "data-toggle", "id", "style", "role"],
+    "a": ["href", "title"],
+    "abbr": ["title"],
+    "acronym": ["title"],
+    "div": ["data-geochart"],  # Required for geocharts
+    "iframe": ["src", "sandbox"],  # For continuous registration challenge
+    "img": ["height", "src", "width"],
+}
+BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
+BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -509,10 +546,9 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation",
     "evaluation-supplementary",
     "favicon",
+    "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
 ]
-
-CKEDITOR_UPLOAD_PATH = "uploads/"
 
 if MEDIA_ROOT[-1] != "/":
     msg = (

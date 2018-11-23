@@ -1,8 +1,6 @@
-from ckeditor.fields import RichTextField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
-from django.utils.safestring import mark_safe
 
 from grandchallenge.challenges.models import ComicSiteModel
 from grandchallenge.core.urlresolvers import reverse
@@ -35,7 +33,7 @@ class Page(ComicSiteModel):
     hidden = models.BooleanField(
         default=False, help_text="Do not display this page in site menu"
     )
-    html = RichTextField()
+    html = models.TextField(blank=True, default="")
 
     def save(self, *args, **kwargs):
         # when saving for the first time only, put this page last in order
@@ -52,14 +50,6 @@ class Page(ComicSiteModel):
             except TypeError:
                 self.order = 1
         super().save(*args, **kwargs)
-
-    def raw_html(self):
-        """
-        Display html of this page as html. This uses the mark_safe django
-        method to allow direct html rendering
-        """
-        # TODO : do checking for scripts and hacks here?
-        return mark_safe(self.html)
 
     def move(self, move):
         if move == self.UP:

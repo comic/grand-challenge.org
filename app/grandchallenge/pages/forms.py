@@ -1,48 +1,18 @@
-from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext
+from django_summernote.widgets import SummernoteInplaceWidget
 
-from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.pages.models import Page
 
 
 class PageCreateForm(forms.ModelForm):
-    html = forms.CharField(widget=CKEditorUploadingWidget())
-
-    def __init__(self, *args, **kwargs):
-        self.challenge = kwargs.pop("challenge", None)
+    def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.challenge is not None and "html" in self.fields:
-            self.fields["html"].widget.config.update(
-                {
-                    "filebrowserUploadUrl": reverse(
-                        "uploads:ck-create",
-                        kwargs={
-                            "challenge_short_name": self.challenge.short_name
-                        },
-                    ),
-                    "filebrowserBrowseUrl": reverse(
-                        "uploads:ck-browse",
-                        kwargs={
-                            "challenge_short_name": self.challenge.short_name
-                        },
-                    ),
-                }
-            )
-
-            if self.challenge.allow_unfiltered_page_html:
-                # See https://github.com/django-ckeditor/django-ckeditor#if-you-want-to-use-allowedcontent
-                self.fields["html"].widget.config.update(
-                    {
-                        "allowedContent": True,
-                        "removePlugins": "stylesheetparser",
-                    }
-                )
-
+        self.challenge = challenge
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
 
@@ -69,6 +39,19 @@ class PageCreateForm(forms.ModelForm):
     class Meta:
         model = Page
         fields = ("title", "permission_lvl", "display_title", "hidden", "html")
+        widgets = {"html": SummernoteInplaceWidget()}
+        help_texts = {
+            "html": (
+                "The content of your page. <b>Please note</b>: your html will "
+                "be filtered after it has been saved to remove any non-HTML5 "
+                "compliant markup and scripts. The filtering is not reflected "
+                "in the live view so please <b>check the rendering of your "
+                "page after you click save</b>. If you're going to paste from "
+                "another source such as MS Word, please <b>paste without "
+                "formatting</b> using <b>CTRL+SHIFT+V</b> on Windows or "
+                "<b>⇧+⌥+⌘+V</b> on OS X."
+            )
+        }
 
 
 class PageUpdateForm(PageCreateForm):

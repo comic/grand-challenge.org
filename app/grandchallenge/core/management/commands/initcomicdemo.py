@@ -85,7 +85,7 @@ class Command(BaseCommand):
                 challenge=demo, title="adm", permission_lvl="ADM"
             )
 
-            method = Method(challenge=demo)
+            method = Method(challenge=demo, creator=demoadmin)
             container = ContentFile(base64.b64decode(b""))
             method.image.save("test.tar", container)
             method.save()
@@ -98,10 +98,26 @@ class Command(BaseCommand):
             job = Job.objects.create(submission=submission, method=method)
 
             Result.objects.create(
-                challenge=demo, metrics={"acc": 0.5}, job=job
+                challenge=demo,
+                metrics={
+                    "acc": {"mean": 0.5, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                },
+                job=job,
             )
 
-            demo.evaluation_config.score_jsonpath = "acc"
+            demo.evaluation_config.score_title = "Accuracy ± std"
+            demo.evaluation_config.score_jsonpath = "acc.mean"
+            demo.evaluation_config.score_error_jsonpath = "acc.std"
+            demo.evaluation_config.extra_results_columns = [
+                {
+                    "title": "Dice ± std",
+                    "path": "dice.mean",
+                    "error_path": "dice.std",
+                    "order": "desc",
+                }
+            ]
+
             demo.evaluation_config.save()
 
             ex_challenge = ExternalChallenge.objects.create(

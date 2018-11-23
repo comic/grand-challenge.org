@@ -4,13 +4,10 @@ from tests.utils import validate_admin_only_view
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view", ["uploads:list", "uploads:ck-create", "uploads:ck-browse"]
-)
-def test_upload_list(view, client, TwoChallengeSets):
+def test_upload_list(client, TwoChallengeSets):
     reverse_kwargs = {}
     validate_admin_only_view(
-        viewname=view,
+        viewname="uploads:list",
         two_challenge_set=TwoChallengeSets,
         client=client,
         reverse_kwargs=reverse_kwargs,

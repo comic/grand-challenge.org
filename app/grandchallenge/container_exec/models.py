@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from decimal import Decimal
 from typing import Tuple, Type
 
@@ -9,6 +8,7 @@ from django.db import models
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.jqfileupload.models import StagedFile
 
 
 class ContainerExecJobModel(models.Model):
@@ -104,8 +104,9 @@ class ContainerImageModel(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-
+    staged_image_uuid = models.UUIDField(blank=True, null=True, editable=False)
     image = models.FileField(
+        blank=True,
         upload_to=docker_image_path,
         validators=[ExtensionValidator(allowed_extensions=(".tar",))],
         help_text=(

@@ -43,6 +43,7 @@ def comic_site(request):
         "user_is_participant": challenge.is_participant(request.user),
         "pages": pages,
         "main_challenge_name": settings.MAIN_PROJECT_NAME,
+        "geochart_api_key": settings.GOOGLE_MAPS_API_KEY,
     }
 
 

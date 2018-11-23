@@ -2,9 +2,16 @@ from crispy_forms.bootstrap import TabHolder, Tab
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, ButtonHolder
 from django import forms
+from django_summernote.widgets import SummernoteInplaceWidget
 
-from grandchallenge.evaluation.models import Method, Submission, Config
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.evaluation.models import (
+    Method,
+    Submission,
+    Config,
+    EXTRA_RESULT_COLUMNS_SCHEMA,
+)
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
@@ -18,15 +25,20 @@ submission_options = (
     "publication_url_choice",
 )
 
-result_list_options = (
-    "use_teams",
+scoring_options = (
     "score_title",
     "score_jsonpath",
+    "score_error_jsonpath",
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
+    "scoring_method_choice",
     "auto_publish_new_results",
     "result_display_choice",
+)
+
+leaderboard_options = (
+    "use_teams",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
@@ -42,7 +54,8 @@ class ConfigForm(forms.ModelForm):
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Submission", *submission_options),
-                Tab("Result List", *result_list_options),
+                Tab("Scoring", *scoring_options),
+                Tab("Leaderboard", *leaderboard_options),
                 Tab("Result Detail", *result_detail_options),
             ),
             ButtonHolder(Submit("save", "Save")),
@@ -52,9 +65,16 @@ class ConfigForm(forms.ModelForm):
         model = Config
         fields = (
             *submission_options,
-            *result_list_options,
+            *scoring_options,
+            *leaderboard_options,
             *result_detail_options,
         )
+        widgets = {
+            "submission_page_html": SummernoteInplaceWidget(),
+            "extra_results_columns": JSONEditorWidget(
+                schema=EXTRA_RESULT_COLUMNS_SCHEMA
+            ),
+        }
 
 
 method_upload_widget = uploader.AjaxUploadWidget(

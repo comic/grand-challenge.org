@@ -145,16 +145,6 @@ input[type=checkbox] {
     border-width: 3px;
 }
 
-/* Editor width */
-
-div#cke_id_html {
-    width: 100% !important;
-}
-
-div.django-ckeditor-widget {
-    display: inherit !important;
-}
-
 /* Sticky footer styles
 -------------------------------------------------- */
 

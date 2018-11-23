@@ -1,8 +1,10 @@
-<!--Template intended to show information wihout site or page context for
-	 example to show errors when site or page were not found -->
+{# Template intended to show information wihout site or page context for #}
+{# example to show errors when site or page were not found #}
+
 {% extends "site.html" %}
 {% load guardian_tags %}
 {% load admin_urls %}
+{% load clean from bleach %}
 
 {% block pageName %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
@@ -16,15 +18,8 @@
 
     {% block pagecontent %}
 
-        <div>{{ currentpage.raw_html }}</div>
-
-        <br/>
-
+        <div>{{ currentpage.html|clean }}</div>
 
     {% endblock %}
 
 {% endblock %}
-
-
-
-

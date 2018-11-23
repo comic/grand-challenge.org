@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from grandchallenge.datasets.utils import infer_type, type_values
 
 

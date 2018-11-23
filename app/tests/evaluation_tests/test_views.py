@@ -29,7 +29,6 @@ def submission_and_job(*, challenge, creator):
     return s, j
 
 
-@pytest.fixture()
 def submissions_and_jobs(two_challenge_sets):
     """ Creates jobs (j) and submissions (s) for each participant (p) and
     challenge (c).  """

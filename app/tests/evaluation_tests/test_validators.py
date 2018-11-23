@@ -1,7 +1,11 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.core.validators import ExtensionValidator, MimeTypeValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+    JSONSchemaValidator,
+)
 
 
 class FakeFile(object):
@@ -46,3 +50,25 @@ def test_mimetype_validator():
     assert json_validator != text_validator
     assert hash(json_validator) == hash(json_validator1)
     assert hash(json_validator) != hash(text_validator)
+
+
+def test_json_validator():
+    schema = {
+        "type": "object",
+        "properties": {
+            "price": {"type": "number"},
+            "name": {"type": "string"},
+        },
+    }
+
+    json_validator = JSONSchemaValidator(schema=schema)
+
+    assert json_validator({"name": "Eggs", "price": 34.99}) is None
+    with pytest.raises(ValidationError):
+        json_validator({"name": "Eggs", "price": "invalid"})
+
+    assert json_validator == JSONSchemaValidator(schema=schema)
+    assert json_validator != JSONSchemaValidator(
+        schema={"type": "object", "properties": {"name": {"type": "string"}}}
+    )
+    assert json_validator is not JSONSchemaValidator(schema=schema)
