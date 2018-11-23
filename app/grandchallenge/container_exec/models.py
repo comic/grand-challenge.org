@@ -126,6 +126,7 @@ class ContainerImageModel(models.Model):
     status = models.TextField(editable=False)
 
     requires_gpu = models.BooleanField(default=False)
+    requires_gpu_memory_gb = models.PositiveIntegerField(default=4)
     requires_memory_gb = models.PositiveIntegerField(default=4)
     # Support up to 99.99 cpu cores
     requires_cpu_cores = models.DecimalField(
