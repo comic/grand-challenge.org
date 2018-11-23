@@ -76,8 +76,14 @@ class ContainerExecJobModel(models.Model):
         raise NotImplementedError
 
     def schedule_job(self):
+
+        kwargs = {"task_id": str(self.pk)}
+
+        if self.container.requires_gpu:
+            kwargs.update({"queue": "gpu"})
+
         execute_job.apply_async(
-            task_id=str(self.pk),
+            **kwargs,
             kwargs={
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
