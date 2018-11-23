@@ -40,4 +40,9 @@ class AlgorithmForm(forms.ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ("title", "ipython_notebook", "chunked_upload")
+        fields = (
+            "title",
+            "requires_gpu",
+            "ipython_notebook",
+            "chunked_upload",
+        )

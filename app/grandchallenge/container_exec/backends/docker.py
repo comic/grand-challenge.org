@@ -15,6 +15,7 @@ from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
 from docker.errors import ContainerError, APIError
+from docker.tls import TLSConfig
 from requests import HTTPError
 
 
@@ -36,9 +37,20 @@ class Executor(object):
         self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
         self._results_file = results_file
 
-        self._client = docker.DockerClient(
-            base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-        )
+        client_kwargs = {"base_url": settings.CONTAINER_EXEC_DOCKER_BASE_URL}
+
+        if settings.CONTAINER_EXEC_DOCKER_TLSVERIFY:
+            tlsconfig = TLSConfig(
+                verify=True,
+                client_cert=(
+                    settings.CONTAINER_EXEC_DOCKER_TLSCERT,
+                    settings.CONTAINER_EXEC_DOCKER_TLSKEY,
+                ),
+                ca_cert=settings.CONTAINER_EXEC_DOCKER_TLSCACERT,
+            )
+            client_kwargs.update({"tls": tlsconfig})
+
+        self._client = docker.DockerClient(**client_kwargs)
 
         self._input_volume = f"{self._job_id}-input"
         self._output_volume = f"{self._job_id}-output"
