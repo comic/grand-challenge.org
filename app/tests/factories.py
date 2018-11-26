@@ -11,9 +11,11 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.pathology.models import PatientItem, StudyItem, WorklistItem
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.worklists.models import Worklist, WorklistSet
+
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -195,3 +197,27 @@ class WorklistFactory(factory.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"worklist_{n}")
     set = factory.SubFactory(WorklistSetFactory)
+
+
+class PatientItemFactory(factory.DJangoModelFactory):
+    class Meta:
+        model = PatientItem
+
+    patient = factory.SubFactory(PatientFactory)
+    study = factory.SubFactory(StudyFactory)
+
+
+class StudyItemFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = StudyItem
+
+    study = factory.SubFactory(StudyFactory)
+    image = factory.SubFactory(ImageFactory)
+
+
+class WorklistItemFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorklistItem
+
+    worklist = factory.SubFactory(WorklistFactory)
+    image = factory.SubFactory(ImageFactory)
