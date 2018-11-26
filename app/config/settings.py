@@ -47,7 +47,7 @@ DATABASES = {
         "NAME": os.environ["POSTGRES_DB"],
         "USER": os.environ["POSTGRES_USER"],
         "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-        "HOST": "postgres",
+        "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": "",
     }
 }
@@ -488,6 +488,7 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
+CELERY_TASK_ALWAYS_EAGER = strtobool(os.environ.get("CELERY_TASK_ALWAYS_EAGER", "False"))
 
 CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
     "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"

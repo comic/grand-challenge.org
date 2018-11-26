@@ -63,8 +63,13 @@ You will need to install pre-commit so that the code is correctly formatted
 
     $ python3 -m pip install pre-commit
 
+Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.
+
 We recommend using Pycharm for development.
-You will need the Professional edition to use the docker-compose integration. 
+
+Running through docker-compose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You will need the Professional edition to use the docker-compose integration.
 To set up the environment in Pycharm Professional 2018.1:
 
 1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Cog wheel (top right) -> Add -> Docker Compose
@@ -77,7 +82,43 @@ If you edit any template files these will be updated on the fly.
 If you edit any ``.py``, ``.css``, ``.js`` (etc) you will need to restart the processes using ``CTRL+D`` with ``cycle_docker_compose.sh``.
 You can then add ``py.test`` test configurations to run the tests from within Pycharm.
 
-Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.
+Running locally
+~~~~~~~~~~~~~~~
+Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
+not require e.g. the professional edition of PyCharm.
+
+1. Make sure you have `pipenv` installed.
+2. Create a new virtual python environment using `pipenv install --dev` in this repositories root folder.
+3. Make sure you have a PostgreSQL Database running, available through localhost:5432. The easiest is to use the provided
+   docker-compose file (`docker-compose -f docker-compose_dev.yml up`).
+4. Activate the virtual env: `pipenv shell`.
+5. Load the environmental variables
+
+.. code-block:: console
+
+    $ export $(cat .env.dev | egrep -v "^#" | xargs)
+
+6. Run migrations and check_permissions (optionally load demo data).
+
+.. code-block:: console
+
+    $ cd app
+    $ python manage.py migrate
+    $ python manage.py check_permissions
+    $ python manage.py initcomicdemo
+
+7. You can now start the server using `python manage.py runserver`.
+
+8. To setup PyCharm:
+    1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Select your created pipenv environment
+    2. For each run/debug configuration, make sure the environmental variables are loaded,
+       the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
+       the folder icon in the `Environmental variables` field.
+    3. Useful to setup: the built-in python/django console in Pycharm:
+       Settings -> Build, execution, deployment -> Console -> Python/Django console.
+       Choose the same python interpreter here, and make sure to load the environmental variables
+       (the .env plugin cannot be used here, the variables can only be pasted).
+
 
 Creating Migrations
 -------------------

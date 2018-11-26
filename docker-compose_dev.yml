@@ -1,0 +1,23 @@
+version: '2.3'
+
+services:
+  postgres:
+    image: postgres:10.4
+    environment:
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_USER: comic
+      POSTGRES_DB: comic
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "comic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    network_mode: "host"
+    volumes:
+      - "./postgres_data:/var/lib/postgresql/data/"
+
+
+volumes:
+  static:
+  media:
