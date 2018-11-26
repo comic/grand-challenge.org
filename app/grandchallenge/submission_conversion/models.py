@@ -157,6 +157,7 @@ class SubmissionToAnnotationSetJob(UUIDModel, ContainerExecJobModel):
             ready = True
             image = settings.CONTAINER_EXEC_IO_IMAGE
             image_sha256 = settings.CONTAINER_EXEC_IO_SHA256
+            requires_gpu = False
 
         return FakeContainer()
 
