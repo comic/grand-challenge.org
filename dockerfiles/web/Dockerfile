@@ -17,7 +17,7 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir -p /app /static /dbox/Dropbox/media
 WORKDIR /app
 
-ARG PIPENV_DEV
+ARG PIPENV_DEV_FLAG
 ADD Pipfile /app/
 ADD Pipfile.lock /app/
 RUN python -m pip install -U pip
@@ -35,8 +35,8 @@ ADD --chown=2001:2001 ./app/manage.py /app/
 
 FROM base as test
 USER root
-ARG PIPENV_DEV
-RUN pipenv install --system $PIPENV_DEV
+ARG PIPENV_DEV_FLAG
+RUN pipenv install --system $PIPENV_DEV_FLAG
 USER 2001:2001
 ADD --chown=2001:2001 ./app/tests /app/tests
 ADD --chown=2001:2001 ./app/pytest.ini /app/
