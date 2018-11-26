@@ -3,19 +3,20 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.worklists.models import Worklist
 
+from grandchallenge.cases.models import Image
 from grandchallenge.core.models import UUIDModel
 
 
-class WorklistItems(UUIDModel):
+class WorklistItem(UUIDModel):
     worklist = models.ForeignKey("Worklist", null=False, blank=False, on_delete=models.CASCADE)
-    study = models.ForeignKey("Study", null=False, blank=False, on_delete=models.CASCADE)
+    image = models.ForeignKey('Image', null=False, blank=False, on_delete=models.CASCADE)
 
 
-class PatientItems(UUIDModel):
+class PatientItem(UUIDModel):
     patient = models.ForeignKey("Patient", null=False, blank=False, on_delete=models.CASCADE)
     study = models.foreignKey("Study", null=False, blank=False, on_delete=models.CASCADE)
 
 
-class StudyItems(UUIDModel):
+class StudyItem(UUIDModel):
     study = models.ForeignKey("Study", null=False, blank=False, on_delete=models.CASCADE)
-    #TODO: Add dataset without annotations here
+    image = models.ForeignKey('Image', null=False, blank=False, on_delete=models.CASCADE)
