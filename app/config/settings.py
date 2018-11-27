@@ -276,6 +276,7 @@ THIRD_PARTY_APPS = [
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
+    "rest_framework_swagger",  # REST API Swagger spec
 ]
 
 LOCAL_APPS = [

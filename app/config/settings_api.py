@@ -233,18 +233,19 @@ MIDDLEWARE = (
     # "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
-    #"django.middleware.security.SecurityMiddleware",
+    # "django.middleware.security.SecurityMiddleware",
     # "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # "django.middleware.csrf.CsrfViewMiddleware",
-    # "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
     # "django.contrib.messages.middleware.MessageMiddleware",
     # "grandchallenge.core.middleware.subdomain.SubdomainMiddleware",
     # "grandchallenge.core.middleware.project.ProjectMiddleware",
     # "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
+MIDDLEWARE_CLASSES = MIDDLEWARE
 
-ROOT_URLCONF = "config.urls_api"
+ROOT_URLCONF = "config.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
@@ -252,7 +253,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DJANGO_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    # "django.contrib.sessions",
+    "django.contrib.sessions",
     "django.contrib.sites",
     # "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -269,12 +270,10 @@ THIRD_PARTY_APPS = [
     "userena",  # user profiles
     "guardian",  # userena dependency, per object permissions
     "easy_thumbnails",  # userena dependency
-    # "social_django",  # social authentication with oauth2
-    'oauth2_provider',
-    'social_django',
-    'rest_framework_social_oauth2',
+    "social_django",  # social authentication with oauth2
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
+    "rest_framework_swagger", # REST API Swagger spec
     # "crispy_forms",  # bootstrap forms
     # "favicon",  # favicon management
     # "django_select2",  # for multiple choice widgets
@@ -306,24 +305,12 @@ INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
 AUTHENTICATION_BACKENDS = (
-    # "social_core.backends.google.GoogleOAuth2",
-    "userena.backends.UserenaAuthenticationBackend",
+    "social_core.backends.google.GoogleOAuth2",
+    # "userena.backends.UserenaAuthenticationBackend",
     "guardian.backends.ObjectPermissionBackend",
     "rest_framework.authentication.TokenAuthentication",
-    'social_core.backends.facebook.FacebookAppOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
-    "rest_framework_social_oauth2.backends.DjangoOAuth2",
     "django.contrib.auth.backends.ModelBackend",
 )
-# Facebook configuration
-SOCIAL_AUTH_FACEBOOK_KEY = '<your app id goes here>'
-SOCIAL_AUTH_FACEBOOK_SECRET = '<your app secret goes here>'
-
-# Define SOCIAL_AUTH_FACEBOOK_SCOPE to get extra permissions from facebook. Email is not sent by default, to get it, you must request the email permission:
-SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
-SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
-    'fields': 'id, name, email'
-}
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
@@ -349,7 +336,7 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
 )
-
+SOCIAL_AUTH_URL_NAMESPACE = "api:social"
 # Do not sanitize redirects for social auth so we can redirect back to
 # other subdomains
 SOCIAL_AUTH_SANITIZE_REDIRECTS = False
@@ -495,7 +482,7 @@ RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",  # django-oauth-toolkit >= 1.0.0
+        #"oauth2_provider.contrib.rest_framework.OAuth2Authentication",  # django-oauth-toolkit >= 1.0.0
         "rest_framework_social_oauth2.authentication.SocialAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),

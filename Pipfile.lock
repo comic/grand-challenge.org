@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "441fb12747cd138e25ca6d83d86bd4508bceb24483d2ad67f852dc585a9eaee5"
+            "sha256": "005fbf0abb2cfe24363556080737f2173a4d7c593f4cb9a82ea20b2bf176ee10"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -103,13 +103,6 @@
             ],
             "version": "==1.0.2"
         },
-        "django-braces": {
-            "hashes": [
-                "sha256:a457d74ea29478123c0c4652272681b3cea0bf1232187fd9f9b6f1d97d32a890",
-                "sha256:ba68e98b817c6f01d71d10849f359979617b3fe4cefb7f289adefddced092ddc"
-            ],
-            "version": "==1.13.0"
-        },
         "django-celery-beat": {
             "hashes": [
                 "sha256:800b67d396b12c59ca40b50a10c3ace58ca5907879237cad4e0cd404e779aa39",
@@ -169,19 +162,6 @@
                 "sha256:c3c0ab257c9d94ce154b9ee32994e3cff8b350c384040705514e14a9fb7c8191"
             ],
             "version": "==1.4.9"
-        },
-        "django-oauth-toolkit": {
-            "hashes": [
-                "sha256:ad1b76275950ebbff708222cec57bbdb879f89bac7df6b9dee0f4b9db485c264"
-            ],
-            "version": "==1.2.0"
-        },
-        "django-rest-framework-social-oauth2": {
-            "hashes": [
-                "sha256:c9a297b636ffd37957c6146280e99ead41e6aca37bcb995e3d52d65eefbca0b7"
-            ],
-            "index": "pypi",
-            "version": "==1.1.0"
         },
         "django-select2": {
             "hashes": [
