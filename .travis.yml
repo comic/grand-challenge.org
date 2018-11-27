@@ -19,6 +19,7 @@ before_install:
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage
+  - sudo service postgresql stop
 
 install:
   - make build
