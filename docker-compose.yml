@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
       POSTGRES_DB: comic
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
