@@ -35,31 +35,31 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PatientSerializer
 
 
-class PatientCreate(UserIsStaffMixin, CreateView):
+class PatientCreateView(UserIsStaffMixin, CreateView):
     model = Patient
     form_class = PatientCreateForm
 
     def get_success_url(self):
-        return reverse("patients:patient-list")
+        return reverse("patients:patient-display")
 
 
-class PatientUpdate(UserIsStaffMixin, UpdateView):
+class PatientRemoveView(UserIsStaffMixin, DeleteView):
+    model = Patient
+    template_name = "patients/patient_remove_form.html"
+
+    def get_success_url(self):
+        return reverse("patients:patient-display")
+
+
+class PatientUpdateView(UserIsStaffMixin, UpdateView):
     model = Patient
     form_class = PatientUpdateForm
 
     def get_success_url(self):
-        return reverse("patients:patient-list")
+        return reverse("patients:patient-display")
 
 
-class PatientDelete(UserIsStaffMixin, DeleteView):
-    model = Patient
-    template_name = "patients/patient_deletion_form.html"
-
-    def get_success_url(self):
-        return reverse("patients:patient-list")
-
-
-class PatientList(UserIsStaffMixin, ListView):
+class PatientDisplayView(UserIsStaffMixin, ListView):
     model = Patient
     paginate_by = 100
-    template_name = "patients/patient_list_form.html"
+    template_name = "patients/patient_display_form.html"

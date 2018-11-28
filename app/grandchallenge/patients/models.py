@@ -13,8 +13,5 @@ class Patient(UUIDModel):
     sex = models.CharField(max_length=1, choices=SexChoices, default='O')
     height = models.IntegerField(null=False, blank=False)
 
-    def get_fields(self):
-        return [(field, field.value_to_string(self)) for field in Patient._meta.fields]
-
     def __str__(self):
         return "%s (%s)" % (self.name, str(self.id))
