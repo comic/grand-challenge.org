@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
 from django.template.response import TemplateResponse
-from django.urls import re_path, path
+from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.views import comicmain
