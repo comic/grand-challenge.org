@@ -10,14 +10,14 @@
     <table class="table">
         <tbody>
             <tr>
-                {% for field, value in study.get_fields %}
-                    <td>{{ value }}</td>
-                {% endfor %}
+                <td>{{ study.id }}</td>
+                <td>{{ study.code }}</td>
+                <td>{{ study.region_of_interest }}</td>
             </tr>
         </tbody>
     </table>
-    <input type="submit" value="Submit">
-    <a href="{% url 'studies:study-list' %}">Cancel</a>
+    <input type="submit" value="Delete">
+    <a href="{% url 'studies:study-display' %}">Cancel</a>
 </form>
 {% endblock %}
 

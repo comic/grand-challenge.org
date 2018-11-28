@@ -11,8 +11,5 @@ class Study(UUIDModel):
                                           blank=False,
                                           max_length=255)
 
-    def get_fields(self):
-        return [(field, field.value_to_string(self)) for field in Study._meta.fields]
-
     def __str__(self):
         return "%s (%s)" % (self.code, str(self.id))
