@@ -32,10 +32,6 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/phpmyadmin/"),
 ]
 
-# Django will throw an exeception if the URL you type to load the framework is
-# not in the list below. This is a security measure.
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
-
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the "Comic" app dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -160,15 +156,18 @@ MAIN_HOST_NAME = os.environ.get("MAIN_HOST_NAME", "https://localhost")
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
-SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", None)
+DEFAULT_DOMAIN = "localhost"
+if SUBDOMAIN_IS_PROJECTNAME:
+    DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
+
+SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-if SESSION_COOKIE_DOMAIN:
-    ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
