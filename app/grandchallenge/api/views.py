@@ -37,6 +37,11 @@ class SubmissionViewSet(ModelViewSet):
         )
 
 
+# The social_django app works with only one URL namespace, and only one LOGIN_REDIRECT_URL.
+# As the REST API needs its own namespace and redirect, the social_django.views.complete and social_django.views.auth
+# views are reimplemented here specifically for authentication through the REST API.
+
+# The namespace used for the REST API social authentication
 NAMESPACE = 'api:social'
 
 # Used to forward the user after he is forwarded from OAUTH2 provider
@@ -63,6 +68,7 @@ def rest_api_complete(request, backend, *args, **kwargs):
     return HttpResponseRedirect(redirect_url + "?token={}".format(token))
 
 
+# This function is not different from social_django.views.auth, but is repeated here so it includes the proper namespace.
 @never_cache
 @psa('{0}:complete'.format(NAMESPACE))
 def rest_api_auth(request, backend):
