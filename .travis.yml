@@ -20,6 +20,7 @@ before_install:
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage
   - sudo service postgresql stop
+  - sudo service redis-server stop
 
 install:
   - make build
