@@ -5,7 +5,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
 # from social_django.views import auth
 
-from grandchallenge.api.views import SubmissionViewSet, complete, auth
+from grandchallenge.api.views import SubmissionViewSet, rest_api_complete, rest_api_auth
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
 
@@ -17,8 +17,8 @@ router.register(r"cases/images", ImageViewSet)
 router.register(r"challenges", ChallengeViewSet)
 
 urlpatterns_social = [
-    path("login/<backend>/", auth, name='begin'),
-    path("complete/<backend>/", complete, name='complete'),
+    path("login/<backend>/", rest_api_auth, name='begin'),
+    path("complete/<backend>/", rest_api_complete, name='complete'),
 ]
 
 urlpatterns = [
@@ -28,5 +28,5 @@ urlpatterns = [
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("spec/", get_swagger_view(title='Comic API')),
     path("social/", include((urlpatterns_social, 'social'))),
-    path("obtain_token/", obtain_auth_token),
+    path("login/", obtain_auth_token),
 ]

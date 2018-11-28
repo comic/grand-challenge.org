@@ -6,7 +6,7 @@ from grandchallenge.api.serializers import SubmissionSerializer
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission
 
-from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth import REDIRECT_FIELD_NAME, logout
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
@@ -43,17 +43,27 @@ NAMESPACE = 'api:social'
 @never_cache
 @csrf_exempt
 @psa('{0}:complete'.format(NAMESPACE))
-def complete(request, backend, *args, **kwargs):
+def rest_api_complete(request, backend, *args, **kwargs):
     """Authentication complete view"""
+    # The social_django do_complete function returns settings.LOGIN_REDIRECT_URL if no next
+    # parameter is given. For the API, a different default redirect_url is needed, but
+    # social_django only allows a single default. Also, the token should be added to the
+    # redirect url.
+    redirect_url = request.session.get("next", "/")
+
     result = do_complete(request.backend, _do_login, request.user,
                        redirect_name=REDIRECT_FIELD_NAME, request=request,
                        *args, **kwargs)
 
     token, created = Token.objects.get_or_create(user=request.user)
-    return HttpResponseRedirect('http://test/%s' % token)
+
+    # For the API, the session is not needed: the token is all that is needed.
+    logout(request)
+
+    return HttpResponseRedirect(redirect_url + "?token={}".format(token))
 
 
 @never_cache
 @psa('{0}:complete'.format(NAMESPACE))
-def auth(request, backend):
+def rest_api_auth(request, backend):
     return do_auth(request.backend, redirect_name=REDIRECT_FIELD_NAME)

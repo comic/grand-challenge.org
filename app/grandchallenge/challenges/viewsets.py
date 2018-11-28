@@ -8,4 +8,4 @@ from grandchallenge.challenges.serializers import ChallengeSerializer
 class ChallengeViewSet(ReadOnlyModelViewSet):
     queryset = Challenge.objects.all()
     serializer_class = ChallengeSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
