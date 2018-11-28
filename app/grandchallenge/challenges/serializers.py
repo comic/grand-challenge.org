@@ -11,5 +11,6 @@ class ChallengeSerializer(serializers.ModelSerializer):
             "short_name",
             "description",
             "require_participant_review",
-            "use_evaluation"
+            "use_evaluation",
+            "creator",
         )

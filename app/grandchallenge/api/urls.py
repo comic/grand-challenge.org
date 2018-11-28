@@ -3,7 +3,6 @@ from django.urls import path
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
-# from social_django.views import auth
 
 from grandchallenge.api.views import SubmissionViewSet, rest_api_complete, rest_api_auth
 from grandchallenge.cases.views import ImageViewSet
