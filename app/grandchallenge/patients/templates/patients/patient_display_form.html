@@ -8,19 +8,19 @@
 <table class="table table-sm">
     <thead>
         <tr>
-        {% for field, value in object_list.0.get_fields %}
-            <td><b>{{ field.name }}</b></td>
-        {% endfor %}
+            <td>Name</td>
+            <td>Sex</td>
+            <td>Height</td>
         </tr>
     </thead>
     <tbody>
         {% for patient in object_list %}
             <tr>
-                {% for field, value in patient.get_fields %}
-                    <td> {{ value }}</td>
-                {% endfor %}
+                <td>{{ patient.name }}</td>
+                <td>{{ patient.sex }}</td>
+                <td>{{ patient.height }}</td>
                 <td><a href="{% url 'patients:patient-update' patient.id %}">Update</a></td>
-                <td><a href="{% url 'patients:patient-delete' patient.id %}">Delete</a></td>
+                <td><a href="{% url 'patients:patient-remove' patient.id %}">Delete</a></td>
             </tr>
         {% empty %}
         <td>No patients have been inserted.</td>

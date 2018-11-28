@@ -10,13 +10,14 @@
     <table class="table">
         <tbody>
             <tr>
-                {% for field, value in patient.get_fields %}
-                    <td>{{ value }}</td>
-                {% endfor %}
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.name }}</td>
+                <td>{{ patient.sex }}</td>
+                <td>{{ patient.height }}</td>
             </tr>
         </tbody>
     </table>
-    <input type="submit" value="Submit">
-    <a href="{% url 'patients:patient-list' %}">Cancel</a>
+    <input type="submit" value="Delete">
+    <a href="{% url 'patients:patient-display' %}">Cancel</a>
 </form>
 {% endblock %}
