@@ -8,22 +8,19 @@
 <table class="table table-sm">
     <thead>
         <tr>
-        {% for field, value in object_list.0.get_fields %}
-            <td><b>{{ field.name }}</b></td>
-        {% endfor %}
+            <td>Title</td>
+            <td>Children</td>
             <td><b>Worklists</b></td>
         </tr>
     </thead>
     <tbody>
         {% for set in object_list %}
             <tr>
-                {% for field, value in set.get_fields %}
-                    <td> {{ value }}</td>
-                {% endfor %}
+                <td>{{ set.title }}</td>
                 <td>{{ set.get_children|length }}</td>
                 <td><a href="{% url 'worklists:worklist-create' %}">Add Worklist</a></td>
                 <td><a href="{% url 'worklists:set-update' set.id %}">Update</a></td>
-                <td><a href="{% url 'worklists:set-delete' set.id %}">Delete</a></td>
+                <td><a href="{% url 'worklists:set-remove' set.id %}">Delete</a></td>
             </tr>
         {% empty %}
         <td>No sets have been created.</td>

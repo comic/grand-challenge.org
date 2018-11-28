@@ -11,8 +11,9 @@ from grandchallenge.worklists.forms import (WorklistCreateForm,
                                             WorklistSetCreateForm,
                                             WorklistSetUpdateForm)
 
+""" Worklist """
 
-## Worklist ###
+
 class WorklistTable(generics.ListCreateAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
@@ -23,37 +24,39 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSerializer
 
 
-class WorklistCreate(UserIsStaffMixin, CreateView):
+class WorklistCreateView(UserIsStaffMixin, CreateView):
     model = Worklist
     form_class = WorklistCreateForm
 
     def get_success_url(self):
-        return reverse("worklists:set-list")
+        return reverse("worklists:worklist-display")
 
 
-class WorklistUpdate(UserIsStaffMixin, UpdateView):
-    model = Worklist
-    form_class = WorklistUpdateForm
-
-    def get_success_url(self):
-        return reverse("worklists:set-list")
-
-
-class WorklistDelete(UserIsStaffMixin, DeleteView):
+class WorklistRemoveView(UserIsStaffMixin, DeleteView):
     model = Worklist
     template_name = 'worklists/worklist_deletion_form.html'
 
     def get_success_url(self):
-        return reverse("worklists:set-list")
+        return reverse("worklists:worklist-display")
 
 
-class WorklistList(UserIsStaffMixin, ListView):
+class WorklistUpdateView(UserIsStaffMixin, UpdateView):
+    model = Worklist
+    form_class = WorklistUpdateForm
+
+    def get_success_url(self):
+        return reverse("worklists:worklist-display")
+
+
+class WorklistDisplayView(UserIsStaffMixin, ListView):
     model = Worklist
     paginate_by = 100
-    template_name = 'worklists/worklist_list_form.html'
+    template_name = 'worklists/worklist_display_form.html'
 
 
-### Worklist Set ###
+""" Worklist Set """
+
+
 class WorklistSetTable(generics.ListCreateAPIView):
     queryset = WorklistSet.objects.all()
     serializer_class = WorklistSetSerializer
@@ -64,31 +67,31 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSetSerializer
 
 
-class WorklistSetCreate(UserIsStaffMixin, CreateView):
+class WorklistSetCreateView(UserIsStaffMixin, CreateView):
     model = WorklistSet
     form_class = WorklistSetCreateForm
 
     def get_success_url(self):
-        return reverse("worklists:set-list")
+        return reverse("worklists:set-display")
 
 
-class WorklistSetUpdate(UserIsStaffMixin, UpdateView):
+class WorklistSetRemoveView(UserIsStaffMixin, DeleteView):
+    model = WorklistSet
+    template_name = 'worklists/worklistset_remove_form.html'
+
+    def get_success_url(self):
+        return reverse("worklists:set-display")
+
+
+class WorklistSetUpdateView(UserIsStaffMixin, UpdateView):
     model = WorklistSet
     form_class = WorklistSetUpdateForm
 
     def get_success_url(self):
-        return reverse("worklists:set-list")
+        return reverse("worklists:set-display")
 
 
-class WorklistSetDelete(UserIsStaffMixin, DeleteView):
-    model = WorklistSet
-    template_name = 'worklists/worklistset_deletion_form.html'
-
-    def get_success_url(self):
-        return reverse("worklists:set-list")
-
-
-class WorklistSetList(UserIsStaffMixin, ListView):
+class WorklistSetDisplayView(UserIsStaffMixin, ListView):
     model = WorklistSet
     paginate_by = 100
-    template_name = 'worklists/worklistset_list_form.html'
+    template_name = 'worklists/worklistset_display_form.html'

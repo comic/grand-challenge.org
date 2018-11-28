@@ -10,13 +10,12 @@
     <table class="table">
         <tbody>
             <tr>
-                {% for field, value in worklist.get_fields %}
-                    <td>{{ value }}</td>
-                {% endfor %}
+                <td>{{ worklist.title }}</td>
+                <td>{{ worklist.set }}</td>
             </tr>
         </tbody>
     </table>
-    <input type="submit" value="Submit">
-    <a href="{% url 'worklists:worklist-list' %}">Cancel</a>
+    <input type="submit" value="Remove">
+    <a href="{% url 'worklists:worklist-display' %}">Cancel</a>
 </form>
 {% endblock %}
