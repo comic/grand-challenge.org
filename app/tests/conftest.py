@@ -15,6 +15,13 @@ from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 """ Defines fixtures than can be used across all of the tests """
 
 
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """ Ensure that the main challenge has been created """
+    with django_db_blocker.unblock():
+        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
+
+
 class ChallengeSet(NamedTuple):
     challenge: ChallengeFactory
     creator: UserFactory
