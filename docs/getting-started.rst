@@ -85,18 +85,25 @@ You can then add ``py.test`` test configurations to run the tests from within Py
 Running locally
 ~~~~~~~~~~~~~~~
 Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
-not require e.g. the professional edition of PyCharm.
+not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
+``docker-compose`` stack, except for the web service. Though this service is running, a separate Django dev server is
+started in PyCharm (or from the terminal). As the dev server is running on port 8000 by default, there is no port conflict
+with the service running in the docker container.
 
-1. Make sure you have `pipenv` installed.
-2. Create a new virtual python environment using `pipenv install --dev` in this repositories root folder.
-3. Make sure you have a PostgreSQL Database running, available through localhost:5432. The easiest is to use the provided
-   docker-compose file (`docker-compose -f docker-compose_dev.yml up`).
-4. Activate the virtual env: `pipenv shell`.
-5. Load the environmental variables
+1. Run the ``docker-compose`` stack for the database and celery task handling
 
 .. code-block:: console
 
-    $ export $(cat .env.dev | egrep -v "^#" | xargs)
+    $ ./cycle_docker_compose.sh
+
+2. Make sure you have ``pipenv`` installed.
+3. In a new terminal, create a new virtual python environment using ``pipenv install --dev`` in this repository's root folder.
+4. Activate the virtual env: ``pipenv shell``.
+5. Load the environmental variables contained in ``.env.local``
+
+.. code-block:: console
+
+    $ export $(cat .env.local | egrep -v "^#" | xargs)
 
 6. Run migrations and check_permissions (optionally load demo data).
 
@@ -107,17 +114,18 @@ not require e.g. the professional edition of PyCharm.
     $ python manage.py check_permissions
     $ python manage.py initcomicdemo
 
-7. You can now start the server using `python manage.py runserver`.
+7. You can now start the server using ``python manage.py runserver``.
 
 8. To setup PyCharm:
-    1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Select your created pipenv environment
-    2. For each run/debug configuration, make sure the environmental variables are loaded,
-       the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
-       the folder icon in the `Environmental variables` field.
-    3. Useful to setup: the built-in python/django console in Pycharm:
-       Settings -> Build, execution, deployment -> Console -> Python/Django console.
-       Choose the same python interpreter here, and make sure to load the environmental variables
-       (the .env plugin cannot be used here, the variables can only be pasted).
+
+   1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Select your created pipenv environment
+   2. For each run/debug configuration, make sure the environmental variables are loaded,
+      the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
+      the folder icon in the `Environmental variables` field.
+   3. Useful to setup: the built-in python/django console in Pycharm:
+      Settings -> Build, execution, deployment -> Console -> Python/Django console.
+      Choose the same python interpreter here, and make sure to load the environmental variables
+      (the .env plugin cannot be used here, the variables can only be pasted).
 
 
 Creating Migrations

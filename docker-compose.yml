@@ -79,6 +79,8 @@ services:
     image: redis:4.0
     command: redis-server --appendonly yes
     restart: always
+    ports:
+    - "6379:6379"
 
   celery_worker:
     image: grandchallenge/web-test:latest
