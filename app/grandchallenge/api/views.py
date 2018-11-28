@@ -12,9 +12,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 from rest_framework.authtoken.models import Token
 
-from social_core.actions import do_complete
+from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
-from social_django.views import _do_login, NAMESPACE
+from social_django.views import _do_login
 
 
 class SubmissionViewSet(ModelViewSet):
@@ -37,6 +37,8 @@ class SubmissionViewSet(ModelViewSet):
         )
 
 
+NAMESPACE = 'api:social'
+
 # Used to forward the user after he is forwarded from OAUTH2 provider
 @never_cache
 @csrf_exempt
@@ -49,3 +51,9 @@ def complete(request, backend, *args, **kwargs):
 
     token, created = Token.objects.get_or_create(user=request.user)
     return HttpResponseRedirect('http://test/%s' % token)
+
+
+@never_cache
+@psa('{0}:complete'.format(NAMESPACE))
+def auth(request, backend):
+    return do_auth(request.backend, redirect_name=REDIRECT_FIELD_NAME)

@@ -3,9 +3,9 @@ from django.urls import path
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
-from social_django.views import auth
+# from social_django.views import auth
 
-from grandchallenge.api.views import SubmissionViewSet, complete
+from grandchallenge.api.views import SubmissionViewSet, complete, auth
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
 
