@@ -239,8 +239,7 @@ MIDDLEWARE = (
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "grandchallenge.core.middleware.subdomain.SubdomainMiddleware",
-    "grandchallenge.core.middleware.project.ProjectMiddleware",
+    "grandchallenge.core.middleware.ProjectMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
 
