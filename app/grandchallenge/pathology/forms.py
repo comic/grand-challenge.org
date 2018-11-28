@@ -2,7 +2,7 @@ from django.forms import ModelForm
 from grandchallenge.pathology.models import PatientItem, StudyItem, WorklistItem
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
-from grandchallenge.studies.models import Worklist
+from grandchallenge.worklists.models import Worklist
 
 from django_select2.forms import Select2MultipleWidget
 from crispy_forms.helper import FormHelper

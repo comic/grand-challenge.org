@@ -52,7 +52,7 @@ class PatientItemUpdateView(UserIsStaffMixin, CreateView):
         return reverse("pathology:patient-item-display")
 
 
-class PatientDisplayView(UserIsStaffMixin, ListView):
+class PatientItemDisplayView(UserIsStaffMixin, ListView):
     model = PatientItem
     paginate_by = 100
     template_name = "pathology/patientitem_display_form.html"
@@ -95,7 +95,7 @@ class StudyItemUpdateView(UserIsStaffMixin, CreateView):
         return reverse("pathology:study-item-display")
 
 
-class StudyDisplayView(UserIsStaffMixin, ListView):
+class StudyItemDisplayView(UserIsStaffMixin, ListView):
     model = StudyItem
     paginate_by = 100
     template_name = "pathology/studyitem_display_form.html"
@@ -138,7 +138,7 @@ class WorklistItemUpdateView(UserIsStaffMixin, CreateView):
         return reverse("pathology:worklist-item-create")
 
 
-class WorklistDisplayView(UserIsStaffMixin, ListView):
+class WorklistItemDisplayView(UserIsStaffMixin, ListView):
     model = StudyItem
     paginate_by = 100
     template_name = "pathology/worklistitem_display_form.html"
