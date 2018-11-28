@@ -7,11 +7,6 @@ from grandchallenge.cases.models import Image
 from grandchallenge.core.models import UUIDModel
 
 
-class WorklistItem(UUIDModel):
-    worklist = models.ForeignKey("worklists.Worklist", null=False, blank=False, on_delete=models.CASCADE)
-    image = models.ForeignKey("cases.Image", null=False, blank=False, on_delete=models.CASCADE)
-
-
 class PatientItem(UUIDModel):
     patient = models.ForeignKey("patients.Patient", null=False, blank=False, on_delete=models.CASCADE)
     study = models.ForeignKey("StudyItem", null=False, blank=False, on_delete=models.CASCADE)
@@ -19,4 +14,9 @@ class PatientItem(UUIDModel):
 
 class StudyItem(UUIDModel):
     study = models.ForeignKey("studies.Study", null=False, blank=False, on_delete=models.CASCADE)
+    image = models.ForeignKey("cases.Image", null=False, blank=False, on_delete=models.CASCADE)
+
+
+class WorklistItem(UUIDModel):
+    worklist = models.ForeignKey("worklists.Worklist", null=False, blank=False, on_delete=models.CASCADE)
     image = models.ForeignKey("cases.Image", null=False, blank=False, on_delete=models.CASCADE)
