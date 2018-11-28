@@ -1,0 +1,71 @@
+import pytest
+from uuid import UUID
+from PIL import Image as PILImage
+import numpy as np
+from pathlib import Path
+from tests.datastructures_tests.factories import (
+    RetinaImageFactory,
+    StudyFactory,
+    PatientFactory,
+    ArchiveFactory,
+    create_oct_series,
+)
+from grandchallenge.retina_images.models import RetinaImage
+from tests.model_helpers import batch_test_factories
+
+
+@pytest.mark.django_db
+class TestDatastructuresModels:
+    # test functions are added dynamically to this class
+    def test_default_datastructure_str(self):
+        archive = ArchiveFactory()
+        assert str(archive) == "<{} {}>".format(
+            archive.__class__.__name__, archive.name
+        )
+
+
+factories = {
+    "archive": ArchiveFactory,
+    "patient": PatientFactory,
+    "study": StudyFactory,
+    "image": RetinaImageFactory,
+}
+batch_test_factories(factories, TestDatastructuresModels)
+
+
+@pytest.mark.django_db
+class TestImage:
+    def test_create_image_file_name(self):
+        # create test image
+        test_image_path = Path("test.png")
+        image = open(test_image_path, "w")
+        filename = RetinaImage.create_image_file_name(image)
+        name, ext = filename.split(".")
+
+        try:
+            UUID(name, version=4)
+        except ValueError:
+            pytest.fail("Filename does not contain valid uuidv4")
+
+        assert ext == "png"
+
+        # remove test image
+        Path.unlink(test_image_path)
+        assert not Path.is_file(test_image_path)
+
+    def test_get_all_oct_images(self):
+        series_oct, images_oct = create_oct_series()
+        all_images = images_oct[0].get_all_oct_images()
+        assert images_oct == [x for x in all_images]
+
+    def test_get_all_oct_images_wrong_modality(self):
+        all_images = RetinaImageFactory(modality=RetinaImage.MODALITY_CF).get_all_oct_images()
+        assert all_images == []
+
+    def test_get_all_oct_images_as_npy(self):
+        series_oct, images_oct = create_oct_series()
+        npy = images_oct[0].get_all_oct_images_as_npy()
+        for index, npy_image in enumerate(npy):
+            assert np.array_equal(
+                npy_image, np.array(PILImage.open(images_oct[index].image.path))
+            )

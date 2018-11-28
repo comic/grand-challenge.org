@@ -296,6 +296,14 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
+    'grandchallenge.archives',
+    'grandchallenge.patients',
+    'grandchallenge.studies',
+    'grandchallenge.retina_images',
+    'grandchallenge.registrations',
+    'grandchallenge.annotations',
+    'grandchallenge.retina_importers',
+    'grandchallenge.retina_api',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
