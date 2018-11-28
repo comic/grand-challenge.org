@@ -198,7 +198,7 @@ def comicmain(request, page_title=""):
 
         if len(pages) != 1:
             raise ValueError(
-                f"More than 1 page with title {page_title} was found for {site}"
+                f"{len(pages)} pages with title {page_title} was found for {site}"
             )
 
     page = pages[0]
