@@ -9,7 +9,7 @@ from grandchallenge.core.models import UUIDModel
 
 class PatientItem(UUIDModel):
     patient = models.ForeignKey("patients.Patient", null=False, blank=False, on_delete=models.CASCADE)
-    study = models.ForeignKey("StudyItem", null=False, blank=False, on_delete=models.CASCADE)
+    study = models.ForeignKey("studies.Study", null=False, blank=False, on_delete=models.CASCADE)
 
 
 class StudyItem(UUIDModel):
