@@ -74,6 +74,11 @@ def get_view_for_user(
     if method is None:
         method = client.get
 
+    urlparts = urlparse(url)
+    if urlparts[1]:
+        kwargs.update({"HTTP_HOST": urlparts[1]})
+        url = urlparts[2]
+
     try:
         response = method(url, **kwargs)
     finally:

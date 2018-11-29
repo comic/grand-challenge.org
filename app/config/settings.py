@@ -242,6 +242,7 @@ MIDDLEWARE = (
     "grandchallenge.core.middleware.ProjectMiddleware",
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    # "grandchallenge.subdomains.middleware.challenge_urlconf_middleware",
 )
 
 ROOT_URLCONF = "config.urls"

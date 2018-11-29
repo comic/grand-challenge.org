@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.urls import reverse as reverse_org
 
 
@@ -9,30 +10,17 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     This means 'site1' will not get url 'hostname/site/site1' but rather
     'challenge.hostname'
     """
-    args = args or []
     kwargs = kwargs or {}
 
-    if settings.SUBDOMAIN_IS_PROJECTNAME:
+    if settings.SUBDOMAIN_IS_PROJECTNAME and "challenge_short_name" in kwargs:
 
-        if args:
-            challenge_short_name = args[0]
-        else:
-            challenge_short_name = kwargs.get(
-                "challenge_short_name", settings.MAIN_PROJECT_NAME
-            )
+        challenge_short_name = kwargs.pop("challenge_short_name")
 
-        protocol, domainname = settings.MAIN_HOST_NAME.split("//")
+        domain = Site.objects.get_current().domain.lower()
 
-        if challenge_short_name.lower() == settings.MAIN_PROJECT_NAME.lower():
-            base_url = f"{protocol}//{domainname}"
-        else:
-            base_url = f"{protocol}//{challenge_short_name}.{domainname}"
+        urlconf = "grandchallenge.core.urls"
 
-        site_url = reverse_org(
-            "challenge-homepage", args=[challenge_short_name]
-        )
-
-        target_url = reverse_org(
+        path = reverse_org(
             viewname,
             urlconf=urlconf,
             args=args,
@@ -40,10 +28,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
             current_app=current_app,
         )
 
-        if target_url.startswith(site_url):
-            target_url = target_url.replace(site_url, "/")
-
-        return urljoin(base_url.lower(), target_url)
+        return urljoin(f"http://{challenge_short_name}.{domain}", path)
 
     else:
 

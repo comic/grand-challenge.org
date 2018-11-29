@@ -10,11 +10,15 @@ from grandchallenge.subdomains.urls import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 
-def site(request, challenge_short_name):
-    try:
-        site = getSite(challenge_short_name)
-    except Challenge.DoesNotExist:
-        raise Http404("Project %s does not exist" % challenge_short_name)
+def site(request, challenge_short_name=None):
+
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        try:
+            site = getSite(challenge_short_name)
+        except Challenge.DoesNotExist:
+            raise Http404("Project %s does not exist" % challenge_short_name)
 
     pages = site.page_set.all()
 

@@ -20,13 +20,13 @@ from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 def django_db_setup(django_db_setup, django_db_blocker):
     """ Ensure that the main challenge has been created """
     with django_db_blocker.unblock():
-        # The main project should always exist
-        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
-
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
         site.domain = "testserver"
         site.save()
+
+        # The main project should always exist
+        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
 
 
 class ChallengeSet(NamedTuple):
