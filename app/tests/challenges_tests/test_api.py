@@ -45,7 +45,7 @@ def test_api_challenge_get(client):
     j = json.loads(response.content)
     assert len(j) == n_challenges
     for i, c in enumerate(challenges):
-        assert j[i]['short_name'] == f'test_challenge_{i}'
+        assert j[i]['short_name'] == challenges[i].short_name
         assert j[i]['creator'] == challenges[i].creator.pk
 
     url = reverse("api:challenge-detail", kwargs={"pk": challenges[0].pk})
