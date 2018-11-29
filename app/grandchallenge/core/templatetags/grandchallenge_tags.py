@@ -23,7 +23,7 @@ from matplotlib.figure import Figure
 
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
 

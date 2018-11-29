@@ -10,7 +10,7 @@ from django.forms.utils import ErrorList
 from django.views.generic import ListView, CreateView, UpdateView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.participants.emails import (
     send_participation_request_notification_email,
     send_participation_request_accepted_email,
@@ -96,7 +96,11 @@ class RegistrationRequestUpdate(
         redirect = super().form_valid(form)
         # TODO: check if the status has actually changed
         if self.object.status == RegistrationRequest.ACCEPTED:
-            send_participation_request_accepted_email(self.request, self.object)
+            send_participation_request_accepted_email(
+                self.request, self.object
+            )
         if self.object.status == RegistrationRequest.REJECTED:
-            send_participation_request_rejected_email(self.request, self.object)
+            send_participation_request_rejected_email(
+                self.request, self.object
+            )
         return redirect

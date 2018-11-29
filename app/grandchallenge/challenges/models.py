@@ -14,7 +14,7 @@ from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 
 logger = logging.getLogger("django")
 

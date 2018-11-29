@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 
 
 @pytest.mark.django_db

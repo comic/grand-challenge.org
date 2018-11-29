@@ -29,7 +29,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
 )
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):

@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 from tests.factories import ExternalChallengeFactory
 from tests.utils import (
     validate_logged_in_view,
@@ -10,7 +10,9 @@ from tests.utils import (
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view", ["challenges:create", "challenges:users-list"])
+@pytest.mark.parametrize(
+    "view", ["challenges:create", "challenges:users-list"]
+)
 def test_challenge_logged_in_permissions(view, client, ChallengeSet):
     validate_logged_in_view(
         url=reverse(view), challenge_set=ChallengeSet, client=client
