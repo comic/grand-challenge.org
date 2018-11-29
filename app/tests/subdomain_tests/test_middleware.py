@@ -6,8 +6,8 @@ from grandchallenge.subdomains.middleware import (
 )
 from tests.factories import ChallengeFactory
 
-# The domain that is set for the main site
-SITE_DOMAIN = "example.com"
+# The domain that is set for the main site, set by RequestFactory
+SITE_DOMAIN = "testserver"
 
 
 @pytest.mark.django_db
@@ -22,11 +22,25 @@ SITE_DOMAIN = "example.com"
     ],
 )
 def test_subdomain_attribute(settings, rf, host, subdomain):
-    # example.com is set in the sites framework
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
-
     request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    assert request.subdomain == subdomain
 
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "host,subdomain",
+    [
+        [f"{SITE_DOMAIN}", None],
+        [f"test.{SITE_DOMAIN}", "test"],
+        [f"not{SITE_DOMAIN}", None],
+        [f"www.not{SITE_DOMAIN}", None],
+    ],
+)
+def test_invalid_domain(settings, rf, host, subdomain):
+    # Other domains will get the main challenge by setting subdomain = None
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}", f".not{SITE_DOMAIN}"]
+    request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
     assert request.subdomain == subdomain
 
 

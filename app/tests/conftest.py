@@ -7,6 +7,7 @@ from typing import NamedTuple
 import docker
 import pytest
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
@@ -19,7 +20,13 @@ from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 def django_db_setup(django_db_setup, django_db_blocker):
     """ Ensure that the main challenge has been created """
     with django_db_blocker.unblock():
+        # The main project should always exist
         Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
+
+        # Set the default domain that is used in RequestFactory
+        site = Site.objects.get(pk=settings.SITE_ID)
+        site.domain = "testserver"
+        site.save()
 
 
 class ChallengeSet(NamedTuple):
