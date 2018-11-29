@@ -613,3 +613,9 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
         '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
         " to your .conf file."
     )
+
+
+# Retina specific settings
+RETINA_ARCHIVES_REQUEST_CACHE_TIME = 24 * 60 * 60
+RETINA_IMAGE_CACHE_TIME = 60*60
+RETINA_GRADERS_GROUP_NAME = "retina_graders"
