@@ -1,23 +1,60 @@
 import pytest
 
-from grandchallenge.subdomains.middleware import subdomain_middleware
+from grandchallenge.subdomains.middleware import (
+    subdomain_middleware,
+    challenge_subdomain_middleware,
+)
+from tests.factories import ChallengeFactory
+
+# The domain that is set for the main site
+SITE_DOMAIN = "example.com"
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "host,subdomain",
     [
-        ["example.com", None],
-        ["test.example.com", "test"],
-        ["TEST.example.com", "test"],
-        ["www.test.example.com", "www.test"],
-        ["www.example.com", "www"],
+        [SITE_DOMAIN, None],
+        [f"test.{SITE_DOMAIN}", "test"],
+        [f"TEST.{SITE_DOMAIN}", "test"],
+        [f"www.test.{SITE_DOMAIN}", "www.test"],
+        [f"www.{SITE_DOMAIN}", "www"],
     ],
 )
 def test_subdomain_attribute(settings, rf, host, subdomain):
     # example.com is set in the sites framework
-    settings.ALLOWED_HOSTS = [".example.com"]
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
 
     request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
 
     assert request.subdomain == subdomain
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "subdomain",
+    [
+        None,
+        "challengesubdomaintest",
+        "ChallengeSubdomainTest",
+        "notachallenge",
+    ],
+)
+def test_challenge_attribute(settings, rf, subdomain):
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
+
+    c = ChallengeFactory(short_name="challengesubdomaintest")
+
+    request = rf.get("/")
+    request.subdomain = subdomain
+
+    assert not hasattr(request, "challenge")
+
+    request = challenge_subdomain_middleware(lambda x: x)(request)
+
+    if subdomain is None:
+        assert request.challenge.short_name == settings.MAIN_PROJECT_NAME
+    elif subdomain.lower() == c.short_name.lower():
+        assert request.challenge == c
+    else:
+        assert request.url == f"http://{SITE_DOMAIN}/"
