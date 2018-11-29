@@ -1,12 +1,15 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated
 
-from grandchallenge.api.serializers import SubmissionSerializer
+from grandchallenge.api.serializers import SubmissionSerializer, UserSerializer, GroupSerializer
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission
 
 from django.contrib.auth import REDIRECT_FIELD_NAME, logout
+from django.contrib.auth.models import User, Group
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
@@ -15,6 +18,18 @@ from rest_framework.authtoken.models import Token
 from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
 from social_django.views import _do_login
+
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.filter(~Q(username="AnonymousUser"))
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class GroupViewSet(ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class SubmissionViewSet(ModelViewSet):

@@ -22,37 +22,35 @@ def get_staff_user_with_token():
 
 @pytest.mark.django_db
 def test_api_challenge_get(client):
-    _, token = get_normal_user_with_token()
-
     n_challenges = 5
     challenges = [ChallengeFactory() for i in range(n_challenges)]
 
+    # HTML list
     url = reverse(f"api:challenge-list")
     response = client.get(
         url,
-        HTTP_ACCEPT="text/html",
-        HTTP_AUTHORIZATION="Token " + token
+        HTTP_ACCEPT="text/html"
     )
     assert response.status_code == 200
     assert "Challenge List" in force_text(response.content)
 
+    # json list
     response = client.get(
         url,
-        HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token
+        HTTP_ACCEPT="application/json"
     )
     assert response.status_code == 200
     j = json.loads(response.content)
     assert len(j) == n_challenges
     for i, c in enumerate(challenges):
         assert j[i]['short_name'] == challenges[i].short_name
-        assert j[i]['creator'] == challenges[i].creator.pk
+        assert j[i]['creator'].endswith(reverse("api:user-detail", kwargs={"pk": challenges[i].creator.pk}))
 
+    # Detail
     url = reverse("api:challenge-detail", kwargs={"pk": challenges[0].pk})
     response = client.get(
         url,
-        HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token
+        HTTP_ACCEPT="application/json"
     )
     assert response.status_code == 200
     j = json.loads(response.content)
@@ -64,6 +62,7 @@ def test_api_challenge_post(client):
     user, token = get_normal_user_with_token()
     short_name = "test-challenge"
 
+    # Create
     url = reverse(f"api:challenge-list")
     response = client.post(
         url,
@@ -74,7 +73,7 @@ def test_api_challenge_post(client):
     assert response.status_code == 201
     j = json.loads(response.content)
     assert j["short_name"] == short_name
-    assert j["creator"] == user.pk
+    assert j["creator"].endswith(reverse("api:user-detail", kwargs={"pk": user.pk}))
 
 
 @pytest.mark.django_db
@@ -83,6 +82,7 @@ def test_api_challenge_put(client):
     token = Token.objects.create(user=c.creator).key
     updated_short_name = "updated-short-name"
 
+    # Update
     url = reverse(f"api:challenge-detail", kwargs={"pk": c.pk})
     response = client.put(
         url,
@@ -95,6 +95,7 @@ def test_api_challenge_put(client):
     j = json.loads(response.content)
     assert j["short_name"] == updated_short_name
 
+    # Update not allowed
     user2, token2 = get_normal_user_with_token()
     response = client.put(
         url,

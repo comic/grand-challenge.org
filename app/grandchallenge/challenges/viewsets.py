@@ -10,12 +10,13 @@ class ChallengeAccessPermission(BasePermission):
         if request.method == "GET":
             # List
             return True
-        if request.method == "POST":
+        elif request.method == "POST":
             # Create: only authenticated users
             return request.user and request.user.is_authenticated
-        if request.method == "PUT":
+        elif request.method == "PUT":
             # Update: only authenticated users (object permission is checked next)
             return request.user and request.user.is_authenticated
+        return False
 
     def has_object_permission(self, request, view, challenge):
         if request.method == "PUT":
