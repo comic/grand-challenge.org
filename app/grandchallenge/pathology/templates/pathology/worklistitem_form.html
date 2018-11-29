@@ -2,13 +2,13 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}Patient to Study relation{% endblock %}
+{% block pageName %}Worklist Item{% endblock %}
 
 {% block contentTitle %}
-    <h2>Patient to Study relation</h2>
+    <h2>Patient Item</h2>
 {% endblock %}
 
 {% block pagecontent %}
     {% crispy form %}
-   <a href="{% url 'pathology:patient-item-display' %}">Cancel</a>
+   <a href="{% url 'pathology:worklist-item-display' %}">Cancel</a>
 {% endblock %}

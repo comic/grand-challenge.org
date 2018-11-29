@@ -1,0 +1,30 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Worklist to Image relations</h2>
+{% csrf_token %}
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <td>Worklist</td>
+            <td>Image</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for worklist_item in object_list %}
+            <tr>
+                <td>{{ worklist_item.worklist }}</td>
+                <td>{{ worklist_item.image }}</td>
+                <td><a href="{% url 'pathology:worklist-item-update' pathology.id %}">Update</a></td>
+                <td><a href="{% url 'pathology:worklist-item-remove' pathology.id %}">Delete</a></td>
+            </tr>
+        {% empty %}
+        <td>No Worklist to Image relations have been inserted.</td>
+        {% endfor %}
+   </tbody>
+</table>
+<p><a href="{% url 'pathology:worklist-item-create' %}">Add Worklist to Image relations</a></p>
+<p><a href="{% url 'worklists:worklist-create' %}">Add Worklist</a></p>
+{% endblock %}

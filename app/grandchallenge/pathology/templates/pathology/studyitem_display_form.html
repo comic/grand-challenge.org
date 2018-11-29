@@ -1,0 +1,30 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Study to Images relations</h2>
+{% csrf_token %}
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <td>Study</td>
+            <td>Image</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for study_item in object_list %}
+            <tr>
+                <td>{{ study_item.study }}</td>
+                <td>{{ study_item.image }}</td>
+                <td><a href="{% url 'pathology:study-item-update' study_item.id %}">Update</a></td>
+                <td><a href="{% url 'pathology:study-item-remove' study_item.id %}">Delete</a></td>
+            </tr>
+        {% empty %}
+        <td>No Study to Image relations have been inserted.</td>
+        {% endfor %}
+   </tbody>
+</table>
+<a href="{% url 'pathology:patient-item-create' %}">Add Study to Image Relations</a>
+<a href="{% url 'studies:study-create' %}">Add Study</a>
+{% endblock %}

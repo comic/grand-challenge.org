@@ -1,0 +1,31 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+
+{% block content %}
+<h2>Patient to Study Relations</h2>
+{% csrf_token %}
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <td>Patient</td>
+            <td>Study</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for patient_item in object_list %}
+            <tr>
+                <td>{{ patient_item.patient }}</td>
+                <td>{{ patient_item.study }}</td>
+                <td><a href="{% url 'pathology:patient-item-update' patient_item.id %}">Update</a></td>
+                <td><a href="{% url 'pathology:patient-item-remove' patient_item.id %}">Delete</a></td>
+            </tr>
+        {% empty %}
+        <td>No Patient to Study have been inserted.</td>
+        {% endfor %}
+   </tbody>
+</table>
+<p><a href="{% url 'pathology:patient-item-create' %}">Add Patient to Study relations</a></p>
+<p><a href="{% url 'patients:patient-create' %}">Add Patient</a></p>
+<p><a href="{% url 'studies:study-create' %}">Add Study</a></p>
+{% endblock %}
