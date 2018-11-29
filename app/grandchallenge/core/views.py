@@ -176,7 +176,9 @@ def comicmain(request, page_title=""):
     pages = site.page_set.all()
 
     if len(pages) == 0:
-        link = reverse("pages:list", args=[challenge_short_name])
+        link = reverse(
+            "pages:list", kwargs={"challenge_short_name": challenge_short_name}
+        )
         link_html = create_HTML_a(link, "admin interface")
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' contains no pages. Please add

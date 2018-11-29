@@ -270,7 +270,8 @@ class comic_URLNode(defaulttags.URLNode):
                     url = url.replace(path_to_site, "/")
 
                 scheme_subsite_and_host = reverse(
-                    "challenge-homepage", args=[project]
+                    "challenge-homepage",
+                    kwargs={"challenge_short_name": project},
                 )
 
                 return urljoin(scheme_subsite_and_host, url)
