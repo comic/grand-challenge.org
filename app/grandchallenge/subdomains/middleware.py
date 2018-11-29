@@ -16,7 +16,11 @@ def subdomain_middleware(get_response):
         pattern = f"^(?:(?P<subdomain>.*?)\.)?{domain}$"
         matches = re.match(pattern, host)
 
-        request.subdomain = matches.group("subdomain")
+        try:
+            request.subdomain = matches.group("subdomain")
+        except AttributeError:
+            # The request was not made on this domain
+            request.subdomain = None
 
         response = get_response(request)
 
@@ -29,7 +33,8 @@ def challenge_subdomain_middleware(get_response):
     def middleware(request):
         """
         Adds the challenge to the request based on the subdomain, redirecting
-        to the main site if the challenge is not valid
+        to the main site if the challenge is not valid. Requires the
+        subdomain to be set on the request (eg, by using subdomain_middleware)
         """
 
         if request.subdomain is None:

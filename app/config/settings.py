@@ -233,13 +233,15 @@ MIDDLEWARE = (
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "grandchallenge.core.middleware.ProjectMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "grandchallenge.core.middleware.ProjectMiddleware",
+    "grandchallenge.subdomains.middleware.subdomain_middleware",
+    # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
 )
 
 ROOT_URLCONF = "config.urls"
