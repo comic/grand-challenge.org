@@ -52,9 +52,9 @@ def get_response_status_viewset(
 
     # determine url
     if action_name == "list" or action_name == "create":
-        url = reverse("{}-{}".format(model_name, "list"))
+        url = reverse("retina:{}-{}".format(model_name, "list"))  # TODO generalize with namespace as variable
     else:
-        url = reverse("{}-{}".format(model_name, "detail"), kwargs={"pk": model.pk})
+        url = reverse("retina:{}-{}".format(model_name, "detail"), kwargs={"pk": model.pk})  # TODO generalize with namespace as variable
 
     # determine request
     if action_name == "create" or action_name == "update":
