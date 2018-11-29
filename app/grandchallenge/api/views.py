@@ -1,6 +1,6 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
 from grandchallenge.api.serializers import SubmissionSerializer, UserSerializer, GroupSerializer
@@ -20,13 +20,13 @@ from social_django.utils import psa
 from social_django.views import _do_login
 
 
-class UserViewSet(ModelViewSet):
+class UserViewSet(ReadOnlyModelViewSet):
     queryset = User.objects.filter(~Q(username="AnonymousUser"))
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
 
-class GroupViewSet(ModelViewSet):
+class GroupViewSet(ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = (IsAuthenticated,)
