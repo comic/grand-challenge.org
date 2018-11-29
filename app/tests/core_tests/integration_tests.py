@@ -326,7 +326,7 @@ class ComicframeworkTestCase(TestCase):
             " sent which had 'signup' in the subject line",
         )
         # validate the user with the link that was emailed
-        pattern = "/example.com(.*)" + PI_LINE_END_REGEX
+        pattern = "/testserver(.*)" + PI_LINE_END_REGEX
         validationlink_result = re.search(
             pattern, validation_mail.body, re.IGNORECASE
         )
