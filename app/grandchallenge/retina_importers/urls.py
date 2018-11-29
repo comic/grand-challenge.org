@@ -1,5 +1,5 @@
 from django.urls import path
-from grandchallenge.importers import views
+from grandchallenge.retina_importers import views
 
 urlpatterns = [
     path("upload_image/", views.UploadImage.as_view(), name="upload-image"),
