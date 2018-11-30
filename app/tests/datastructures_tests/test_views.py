@@ -31,7 +31,7 @@ class TestCustomEndpoints:
         image = RetinaImageFactory()
         url = reverse("image-thumbnail", args=[image.id])
         response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_thumbnail_endpoint_authenticated_non_existant(self, client, django_user_model):
         image = RetinaImageFactory()
@@ -59,7 +59,7 @@ class TestCustomEndpoints:
         image = RetinaImageFactory()
         url = reverse("image-numpy", args=[image.id])
         response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_numpy_endpoint_authenticated_non_existant(self, client, django_user_model):
         image = RetinaImageFactory()

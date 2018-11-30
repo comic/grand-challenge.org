@@ -116,8 +116,8 @@ def create_test_method(url, data, user, expected_status, annotation_data=None):
 def batch_test_upload_views(batch_test_data, test_class):
     for name, test_data in batch_test_data.items():
         user_status_tuple = (
-            ("anonymous", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
-            ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+            ("anonymous", status.HTTP_401_UNAUTHORIZED, status.HTTP_401_UNAUTHORIZED),
+            ("normal", status.HTTP_401_UNAUTHORIZED, status.HTTP_401_UNAUTHORIZED),
             ("staff", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
         )
         for user, expected_status_valid, expected_status_invalid in user_status_tuple:

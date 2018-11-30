@@ -130,6 +130,6 @@ def create_test_method(
         if authenticated:
             assert response_status == authenticated_status
         else:
-            assert response_status == status.HTTP_403_FORBIDDEN
+            assert response_status == status.HTTP_401_UNAUTHORIZED
 
     return test_method

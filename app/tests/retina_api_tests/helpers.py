@@ -172,7 +172,7 @@ def create_data_test_methods(data_type):
             ],
         )
         response = client.get(url)
-        assert status.HTTP_403_FORBIDDEN == response.status_code
+        assert status.HTTP_401_UNAUTHORIZED == response.status_code
 
     def test_load_no_data(self, client):
         ds = create_some_datastructure_data()
