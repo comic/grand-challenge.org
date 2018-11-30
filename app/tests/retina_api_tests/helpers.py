@@ -61,8 +61,8 @@ def create_datastructures_data():
 
 def batch_test_image_endpoint_redirects(test_class):
     for image_type, reverse_name in (
-        ("thumb", "image-thumbnail"),
-        ("original", "image-numpy"),
+        ("thumb", "retina:image-thumbnail"),
+        ("original", "retina:image-numpy"),
     ):
         test_redirect, test_redirect_australia, test_redirect_oct = create_image_test_method(
             image_type, reverse_name
@@ -81,7 +81,7 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
-            "image-api-view",
+            "retina:image-api-view",
             args=[
                 image_type,
                 ds["patient"].name,
@@ -102,7 +102,7 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect_australia(self, client):
         ds = create_some_datastructure_data(archive_pars={"name": "Australia"})
         url = reverse(
-            "image-api-view",
+            "retina:image-api-view",
             args=[
                 image_type,
                 ds["archive"].name,
@@ -123,7 +123,7 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect_oct(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
-            "image-api-view",
+            "retina:image-api-view",
             args=[
                 image_type,
                 ds["patient"].name,
@@ -163,7 +163,7 @@ def create_data_test_methods(data_type):
     def test_load_no_auth(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
-            "data-api-view",
+            "retina:data-api-view",
             args=[
                 data_type,
                 "test",
@@ -178,7 +178,7 @@ def create_data_test_methods(data_type):
         ds = create_some_datastructure_data()
         client = login_user_to_client(client, user="normal")
         url = reverse(
-            "data-api-view",
+            "retina:data-api-view",
             args=[
                 data_type,
                 "test",
@@ -202,7 +202,7 @@ def create_data_test_methods(data_type):
             model = create_load_data(data_type, ds, grader)
 
             url = reverse(
-                "data-api-view",
+                "retina:data-api-view",
                 args=[
                     data_type,
                     "test",
