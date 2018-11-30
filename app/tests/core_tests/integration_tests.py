@@ -727,9 +727,9 @@ class LinkReplacerTest(ComicframeworkTestCase):
         notafile_slash = find_text_between(
             "~notafile_slash~", "~endnotafile_slash~", response.content
         )
-        relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
-        pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-        moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
+        relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
+        pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
+        moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
         notafile_expected = 'href="/faq"'
         notafile_slash_expected = 'href="/faq/"'
