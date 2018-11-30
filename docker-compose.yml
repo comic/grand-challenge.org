@@ -52,7 +52,7 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=localhost
+      - SERVER_NAME=gc.localhost
       - SENDFILE_STATUS=off
     command: >-
         bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf

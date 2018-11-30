@@ -36,12 +36,8 @@ def challenge_subdomain_middleware(get_response):
         to the main site if the challenge is not valid. Requires the
         subdomain to be set on the request (eg, by using subdomain_middleware)
         """
-
-        if request.subdomain is None:
-            request.challenge = Challenge.objects.get(
-                short_name__iexact=settings.MAIN_PROJECT_NAME
-            )
-        else:
+        if request.subdomain is not None:
+            # TODO: add support for PROJECTNAME_IS_SUBDOMAIN?
             try:
                 request.challenge = Challenge.objects.get(
                     short_name__iexact=request.subdomain
@@ -49,6 +45,26 @@ def challenge_subdomain_middleware(get_response):
             except Challenge.DoesNotExist:
                 domain = get_current_site(request).domain.lower()
                 return HttpResponseRedirect(f"{request.scheme}://{domain}/")
+
+        response = get_response(request)
+
+        return response
+
+    return middleware
+
+
+def subdomain_urlconf_middleware(get_response):
+    def middleware(request):
+        """
+        Adds the urlconf to the middleware based on the challenge associated
+        with this request, ensures that the correct urls are matched by the
+        request
+        """
+        if request.subdomain:
+            # TODO: Change to subdomain urls
+            request.urlconf = "grandchallenge.core.urls"
+        else:
+            request.urlconf = settings.ROOT_URLCONF
 
         response = get_response(request)
 

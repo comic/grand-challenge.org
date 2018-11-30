@@ -151,7 +151,7 @@ SUBDOMAIN_IS_PROJECTNAME = strtobool(
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
-DEFAULT_DOMAIN = "localhost"
+DEFAULT_DOMAIN = "gc.localhost"
 if SUBDOMAIN_IS_PROJECTNAME:
     DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
 
@@ -237,6 +237,7 @@ MIDDLEWARE = (
     "grandchallenge.core.middleware.ProjectMiddleware",
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    # "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
 ROOT_URLCONF = "config.urls"
