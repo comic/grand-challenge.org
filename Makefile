@@ -8,7 +8,6 @@ build:
 		-f dockerfiles/web/Dockerfile \
 		.
 	docker build \
-		--build-arg PIPENV_DEV_FLAG=--dev \
 		-t grandchallenge/web-test:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH) \
 		-t grandchallenge/web-test:latest \
 		-f dockerfiles/web/Dockerfile \

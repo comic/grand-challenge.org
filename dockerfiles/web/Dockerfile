@@ -43,8 +43,7 @@ FROM base as test
 
 USER root
 WORKDIR /opt/pipenv
-ARG PIPENV_DEV_FLAG
-RUN pipenv install --system $PIPENV_DEV_FLAG
+RUN pipenv install --system --dev
 
 USER 2001:2001
 WORKDIR /app
