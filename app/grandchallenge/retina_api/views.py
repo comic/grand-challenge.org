@@ -179,9 +179,9 @@ class ImageView(RetinaAPIPermissionMixin, View):
             print("failed unique image search")
 
         if image_type == "thumb":
-            return redirect("image-thumbnail", image_id=image.id)
+            return redirect("retina:image-thumbnail", image_id=image.id)
         else:
-            return redirect("image-numpy", image_id=image.id)
+            return redirect("retina:image-numpy", image_id=image.id)
 
 
 class DataView(RetinaAPIPermissionMixin, View):

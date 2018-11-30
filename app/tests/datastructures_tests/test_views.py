@@ -29,13 +29,13 @@ from grandchallenge.retina_images.models import RetinaImage
 class TestCustomEndpoints:
     def test_thumbnail_endpoint_non_authenticated(self, client):
         image = RetinaImageFactory()
-        url = reverse("image-thumbnail", args=[image.id])
+        url = reverse("retina:image-thumbnail", args=[image.id])
         response = client.get(url)
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_thumbnail_endpoint_authenticated_non_existant(self, client, django_user_model):
         image = RetinaImageFactory()
-        url = reverse("image-thumbnail", args=[image.id])
+        url = reverse("retina:image-thumbnail", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         image.delete()  # remove model so response must return 404
@@ -44,7 +44,7 @@ class TestCustomEndpoints:
 
     def test_thumbnail_endpoint_authenticated(self, client, django_user_model):
         image = RetinaImageFactory()
-        url = reverse("image-thumbnail", args=[image.id])
+        url = reverse("retina:image-thumbnail", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
@@ -57,13 +57,13 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_non_authenticated(self, client):
         image = RetinaImageFactory()
-        url = reverse("image-numpy", args=[image.id])
+        url = reverse("retina:image-numpy", args=[image.id])
         response = client.get(url)
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_numpy_endpoint_authenticated_non_existant(self, client, django_user_model):
         image = RetinaImageFactory()
-        url = reverse("image-numpy", args=[image.id])
+        url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         image.delete()  # remove model so response must return 404
@@ -72,7 +72,7 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_authenticated_status(self, client, django_user_model):
         image = RetinaImageFactory()
-        url = reverse("image-numpy", args=[image.id])
+        url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
@@ -81,7 +81,7 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_authenticated_images_correspond(self, client, django_user_model):
         image = RetinaImageFactory(modality=RetinaImage.MODALITY_CF)
-        url = reverse("image-numpy", args=[image.id])
+        url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
@@ -91,7 +91,7 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_authenticated_oct_series_status(self, client, django_user_model):
         series_oct, images_oct = create_oct_series()
-        url = reverse("image-numpy", args=[images_oct[0].id])
+        url = reverse("retina:image-numpy", args=[images_oct[0].id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
@@ -100,7 +100,7 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_authenticated_oct_series_image_count(self, client, django_user_model):
         series_oct, images_oct = create_oct_series()
-        url = reverse("image-numpy", args=[images_oct[0].id])
+        url = reverse("retina:image-numpy", args=[images_oct[0].id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
@@ -109,7 +109,7 @@ class TestCustomEndpoints:
 
     def test_numpy_endpoint_authenticated_oct_series_images_corresond(self, client, django_user_model):
         series_oct, images_oct = create_oct_series()
-        url = reverse("image-numpy", args=[images_oct[0].id])
+        url = reverse("retina:image-numpy", args=[images_oct[0].id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
