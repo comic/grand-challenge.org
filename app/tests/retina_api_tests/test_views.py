@@ -30,7 +30,7 @@ class TestArchiveIndexAPIEndpoints:
         url = reverse("retina:archives-list")
         client = login_user_to_client(client)
         response = client.get(url)
-        assert status.HTTP_401_UNAUTHORIZED == response.status_code
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_archive_view_auth(self, client):
         # Create data

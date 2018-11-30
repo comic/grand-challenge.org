@@ -37,9 +37,8 @@ batch_test_factories(factories, TestDatastructuresModels)
 class TestImage:
     def test_create_image_file_name(self):
         # create test image
-        test_image_path = Path("test.png")
-        image = open(test_image_path, "w")
-        filename = RetinaImage.create_image_file_name(image)
+        retina_image = RetinaImageFactory()
+        filename = RetinaImage.create_image_file_name(retina_image.image)
         name, ext = filename.split(".")
 
         try:
@@ -47,11 +46,7 @@ class TestImage:
         except ValueError:
             pytest.fail("Filename does not contain valid uuidv4")
 
-        assert ext == "png"
-
-        # remove test image
-        Path.unlink(test_image_path)
-        assert not Path.is_file(test_image_path)
+        assert ext == "jpg"
 
     def test_get_all_oct_images(self):
         series_oct, images_oct = create_oct_series()
