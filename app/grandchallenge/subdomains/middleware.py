@@ -55,22 +55,3 @@ def challenge_subdomain_middleware(get_response):
         return response
 
     return middleware
-
-
-def challenge_urlconf_middleware(get_response):
-    def middleware(request):
-        """
-        Adds the urlconf to the middleware based on the challenge associated
-        with this request
-        """
-
-        if request.subdomain:
-            # TODO: Change to subdomain urls
-            request.urlconf = "grandchallenge.core.urls"
-        else:
-            request.urlconf = settings.ROOT_URLCONF
-
-        response = get_response(request)
-        return response
-
-    return middleware

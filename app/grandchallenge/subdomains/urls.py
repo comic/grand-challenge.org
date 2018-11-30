@@ -12,30 +12,23 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     """
     kwargs = kwargs or {}
 
+    domain = Site.objects.get_current().domain.lower()
+    scheme = "http"
+
     if settings.SUBDOMAIN_IS_PROJECTNAME and "challenge_short_name" in kwargs:
-
         challenge_short_name = kwargs.pop("challenge_short_name")
-
-        domain = Site.objects.get_current().domain.lower()
-
-        urlconf = "grandchallenge.core.urls"
-
-        path = reverse_org(
-            viewname,
-            urlconf=urlconf,
-            args=args,
-            kwargs=kwargs,
-            current_app=current_app,
-        )
-
-        return urljoin(f"http://{challenge_short_name}.{domain}", path)
-
+        domain = f"{scheme}://{challenge_short_name}.{domain}"
+        urlconf = urlconf or "grandchallenge.core.urls"
     else:
+        domain = f"{scheme}://{domain}"
+        urlconf = urlconf or settings.ROOT_URLCONF
 
-        return reverse_org(
-            viewname,
-            urlconf=urlconf,
-            args=args,
-            kwargs=kwargs,
-            current_app=current_app,
-        )
+    path = reverse_org(
+        viewname,
+        urlconf=urlconf,
+        args=args,
+        kwargs=kwargs,
+        current_app=current_app,
+    )
+
+    return urljoin(domain, path)

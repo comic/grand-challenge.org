@@ -7,7 +7,6 @@ import re
 import string
 import traceback
 from io import StringIO
-from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
@@ -16,16 +15,14 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
-from django.template import defaulttags
-from django.urls import reverse as reverse_djangocore
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.subdomains.urls import reverse
 from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
+from grandchallenge.subdomains.urls import reverse
 
 register = library_plus.LibraryPlus()
 logger = logging.getLogger("django")
@@ -96,44 +93,9 @@ def subdomain_is_projectname():
     return is_projectname
 
 
-@register.tag
-def url(parser, token):
-    """Overwrites built in url tag to use . It works identicaly, except that where possible
-    it will use subdomains to refer to a project instead of a full url path.
-
-    For example, if the subdomain is vessel12.domain.com it will refer to a page
-    'details' as /details/ instead of /site/vessel12/details/
-
-    REQUIREMENTS:
-    * MIDDLEWARE_CLASSES in settings should contain
-      'core.middleware.subdomain.SubdomainMiddleware'
-
-    * These keys should be in the django settings file:
-      SUBDOMAIN_IS_PROJECTNAME = True
-      MAIN_HOST_NAME = <your site's hostname>
-
-    * APACHE url rewriting should be in effect to rewrite subdomain to
-      site/project/. To get you started: the following apache config does this
-      for the domain 'devcomicframework.org'
-      (put this in your apache config file)
-
-        RewriteEngine   on
-        RewriteCond $1 .*/$
-        RewriteCond $1 !^/site/.*
-        RewriteCond %{HTTP_HOST} !^devcomicframework\.org$
-        RewriteCond %{HTTP_HOST} !^www.devcomicframework\.org$
-        RewriteCond %{HTTP_HOST} ^([^.]+)\.devcomicframework\.org$
-        RewriteRule (.*) /site/%1$1 [PT]
-
-
-    TODO: turn on and off this behaviour in settings, maybe explicitly define
-    base domain to also make it possible to use dots in the base domain.
-
-    """
-    orgnode = defaulttags.url(parser, token)
-    return comic_URLNode(
-        orgnode.view_name, orgnode.args, orgnode.kwargs, orgnode.asvar
-    )
+@register.simple_tag()
+def url(view_name, *args, **kwargs):
+    return reverse(view_name, args=args, kwargs=kwargs)
 
 
 def filter_by_extension(filenames, extensions):
@@ -216,67 +178,6 @@ def substitute(string, substitutions):
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
-
-
-class comic_URLNode(defaulttags.URLNode):
-    def render(self, context):
-        # get the url the default django method would give.
-        url = super().render(context)
-
-        if subdomain_is_projectname() and (
-            (
-                self.view_name.var
-                in ["challenge-homepage", "project_serve_file"]
-            )
-            or (
-                self.view_name.var.split(":")[0]
-                in [
-                    "evaluation",
-                    "teams",
-                    "pages",
-                    "participants",
-                    "admins",
-                    "uploads",
-                    "datasets",
-                ]
-            )
-        ):
-            # Interpret subdomain as a challenge. What would normally be the
-            # path to this challenge?
-            args = [arg.resolve(context) for arg in self.args]
-            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
-
-            try:
-                project = args[0]
-            except IndexError:
-                # No project was set, so must be part of the main site
-                project = kwargs.get(
-                    "challenge_short_name", settings.MAIN_PROJECT_NAME
-                )
-
-            if project == settings.MAIN_PROJECT_NAME:
-                # this url cannot use the domain name shortcut, so it is
-                # probably meant as a link the main comicframework site.
-                # in that case hardcode the domain to make sure the sub-
-                # domain is gone after following this link
-                return settings.MAIN_HOST_NAME + url
-
-            else:
-                path_to_site = reverse_djangocore(
-                    "challenge-homepage", args=[project]
-                )
-
-                if url.startswith(path_to_site):
-                    url = url.replace(path_to_site, "/")
-
-                scheme_subsite_and_host = reverse(
-                    "challenge-homepage",
-                    kwargs={"challenge_short_name": project},
-                )
-
-                return urljoin(scheme_subsite_and_host, url)
-
-        return url
 
 
 class TagListNode(template.Node):
@@ -843,13 +744,13 @@ def render_anode09_table(filename):
     table_id = id_generator()
     tableHTML = (
         """<table border=1 class = "comictable csvtable sortable" id="%s">
-                <thead><tr>
-                    <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-                    <td align=center width='54'>1/4</td>
-                    <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-                    <td align=center width='54'>2</td><td align=center width='54'>4</td>
-                    <td align=center width='54'>8</td><td align=center width='54'>average</td>
-                </tr></thead>"""
+                    <thead><tr>
+                        <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                        <td align=center width='54'>1/4</td>
+                        <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                        <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                        <td align=center width='54'>8</td><td align=center width='54'>average</td>
+                    </tr></thead>"""
         % table_id
     )
     tableHTML = tableHTML + "<tbody>"
@@ -930,7 +831,7 @@ def parse_php_arrays(filename):
             if result is None:
                 msg = (
                     "Could not match regex pattern '%s' to '%s'\
-                                            "
+                                                "
                     % (phpvar.pattern, var)
                 )
                 continue
@@ -938,7 +839,7 @@ def parse_php_arrays(filename):
             if len(result.groups()) != 2:
                 msg = (
                     "Expected to find  varname and content,\
-                              but regex '%s' found %d items:%s "
+                                  but regex '%s' found %d items:%s "
                     % (
                         phpvar.pattern,
                         len(result.groups()),
