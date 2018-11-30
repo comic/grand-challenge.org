@@ -149,11 +149,6 @@ SUBDOMAIN_IS_PROJECTNAME = strtobool(
     os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "False")
 )
 
-# For links to basic comicframework content, for example the main comic help
-# page, django needs to know the hostname. This setting is only used when
-# SUBDOMAIN_IS_PROJECTNAME = True
-MAIN_HOST_NAME = os.environ.get("MAIN_HOST_NAME", "https://localhost")
-
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
 DEFAULT_DOMAIN = "localhost"
@@ -571,9 +566,6 @@ if MEDIA_ROOT[-1] != "/":
         + "'. Please add a slash"
     )
     raise ImproperlyConfigured(msg)
-
-if MAIN_HOST_NAME[-1] == "/":
-    raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
 ENABLE_DEBUG_TOOLBAR = False
 

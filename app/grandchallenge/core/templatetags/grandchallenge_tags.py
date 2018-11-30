@@ -77,22 +77,6 @@ def get_taglist(parser, token):
     return TagListNode()
 
 
-def subdomain_is_projectname():
-    """ Check whether this setting is true in settings. Return false if not found
-
-    """
-    is_projectname = False
-    if hasattr(settings, "SUBDOMAIN_IS_PROJECTNAME"):
-        is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
-        if is_projectname and not hasattr(settings, "MAIN_HOST_NAME"):
-            msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
-             but 'MAIN_HOST_NAME' was not. These belong together. Please
-             add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
-            raise ImproperlyConfigured(msg)
-
-    return is_projectname
-
-
 @register.simple_tag()
 def url(view_name, *args, **kwargs):
     return reverse(view_name, args=args, kwargs=kwargs)
@@ -220,16 +204,6 @@ def sanitize_django_items(string):
     out = out.replace("<", "&#60;")
     out = out.replace("\n", "<br/>")
     return out
-
-
-@register.simple_tag
-def main_page_url():
-    """ Gets the url to the main page """
-    if settings.SUBDOMAIN_IS_PROJECTNAME:
-        return settings.MAIN_HOST_NAME
-
-    else:
-        return "/"
 
 
 @register.tag(
