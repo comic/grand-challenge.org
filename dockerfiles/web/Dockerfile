@@ -29,13 +29,6 @@ RUN pipenv install --system
 
 RUN chown 2001:2001 /static /dbox/Dropbox/media
 
-USER 2001:2001
-WORKDIR /app
-
-ADD --chown=2001:2001 ./app/config /app/config
-ADD --chown=2001:2001 ./app/grandchallenge /app/grandchallenge
-ADD --chown=2001:2001 ./app/manage.py /app/
-
 ###################
 #  Test Container #
 ###################
@@ -47,5 +40,13 @@ RUN pipenv install --system --dev
 
 USER 2001:2001
 WORKDIR /app
-ADD --chown=2001:2001 ./app/tests /app/tests
-ADD --chown=2001:2001 ./app/pytest.ini /app/
+ADD --chown=2001:2001 ./app/ /app/
+
+##################
+# Dist Container #
+##################
+FROM base as dist
+
+USER 2001:2001
+WORKDIR /app
+ADD --chown=2001:2001 ./app/ /app/
