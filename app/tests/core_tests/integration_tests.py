@@ -963,14 +963,14 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         # Sanity check: do two different pages give different urls?
         content = (
-            "-url1-{% url 'pages:detail' '"
+            "-url1-{% url 'pages:detail' challenge_short_name='"
             + self.testproject.short_name
-            + "' 'testurlfakepage1' %}-endurl1-"
+            + "' page_title='testurlfakepage1' %}-endurl1-"
         )
         content += (
-            "-url2-{% url 'pages:detail' '"
+            "-url2-{% url 'pages:detail' challenge_short_name='"
             + self.testproject.short_name
-            + "' 'testurlfakepage2' %}-endurl2-"
+            + "' page_title='testurlfakepage2' %}-endurl2-"
         )
         urlpage = create_page(self.testproject, "testurltagpage", content)
         # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered

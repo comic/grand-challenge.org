@@ -5,11 +5,11 @@
 
 
     <p>Your request to participate in
-        <a href="{% url 'challenge-homepage' challenge.short_name %}">{{ challenge.short_name }}</a>
+        <a href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a>
         on {{ site.domain }} has been approved.</p>
 
     <p>When logged in, you can now view participant-only pages on <a
-            href="{% url 'challenge-homepage' challenge.short_name %}">{{ challenge.short_name }}</a>.
+            href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a>.
     </p>
 
     <p>Regards,<br/>

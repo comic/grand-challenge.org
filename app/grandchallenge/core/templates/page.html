@@ -21,7 +21,7 @@
                 {% if "change_challenge" in challenge_perms %}
                     <br>
                     <a class="editPageLink"
-                       href="{% url 'pages:update' currentpage.challenge.short_name currentpage.title %}">Edit
+                       href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}">Edit
                         this
                         page</a>
                 {% endif %}

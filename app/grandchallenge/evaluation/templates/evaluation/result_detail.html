@@ -72,7 +72,7 @@
 
     {% if "change_challenge" in challenge_perms %}
         <form method="post"
-              action="{% url 'evaluation:result-update' site.short_name object.pk %}">
+              action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
             {% csrf_token %}
             {% if object.published %}
                 <input type="hidden" name="published"
