@@ -13,7 +13,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     kwargs = kwargs or {}
 
     domain = Site.objects.get_current().domain.lower()
-    scheme = "http"
+    scheme = settings.DEFAULT_SCHEME
 
     if settings.SUBDOMAIN_IS_PROJECTNAME and "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")

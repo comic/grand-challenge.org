@@ -159,6 +159,7 @@ ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = (
     "grandchallenge.core.urls"
 )  # TODO: Change to subdomain urls
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
 
 SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
 SESSION_COOKIE_SECURE = strtobool(
