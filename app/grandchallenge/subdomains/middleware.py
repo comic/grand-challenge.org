@@ -61,8 +61,7 @@ def subdomain_urlconf_middleware(get_response):
         request
         """
         if request.subdomain:
-            # TODO: Change to subdomain urls
-            request.urlconf = "grandchallenge.core.urls"
+            request.urlconf = settings.SUBDOMAIN_URL_CONF
         else:
             request.urlconf = settings.ROOT_URLCONF
 

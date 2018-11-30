@@ -155,6 +155,11 @@ DEFAULT_DOMAIN = "gc.localhost"
 if SUBDOMAIN_IS_PROJECTNAME:
     DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
 
+ROOT_URLCONF = "config.urls"
+SUBDOMAIN_URL_CONF = (
+    "grandchallenge.core.urls"
+)  # TODO: Change to subdomain urls
+
 SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
@@ -240,7 +245,6 @@ MIDDLEWARE = (
     # "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
-ROOT_URLCONF = "config.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
