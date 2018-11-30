@@ -51,7 +51,7 @@ class TestImage:
     def test_get_all_oct_images(self):
         series_oct, images_oct = create_oct_series()
         all_images = images_oct[0].get_all_oct_images()
-        assert images_oct == [x for x in all_images]
+        assert images_oct.sort() == [x for x in all_images].sort()
 
     def test_get_all_oct_images_wrong_modality(self):
         all_images = RetinaImageFactory(modality=RetinaImage.MODALITY_CF).get_all_oct_images()
