@@ -1,24 +1,11 @@
 import json
-from rest_framework.test import APIRequestFactory
 import pytest
 from rest_framework import status
 from django.urls import reverse
 from django.core.cache import cache
-from django.contrib.auth import get_user_model
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
-from grandchallenge.retina_images.models import RetinaImage
-from tests.datastructures_tests.factories import (
-    ArchiveFactory,
-    PatientFactory,
-    StudyFactory,
-    RetinaImageFactory,
-    create_oct_series,
-    create_some_datastructure_data,
-)
-from tests.registrations_tests.factories import OctObsRegistrationFactory
+from tests.retina_importers_tests.helpers import get_auth_token_header
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
-    login_user_to_client,
     batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
 )
@@ -35,11 +22,11 @@ class TestArchiveIndexAPIEndpoints:
         # Create data
         create_datastructures_data()
 
-        # login user
-        client = login_user_to_client(client, "normal")
+        # get authentication token header
+        auth_header = get_auth_token_header("normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url)
+        response = client.get(url, **auth_header)
         assert response.status_code == status.HTTP_200_OK
 
     def test_archive_view_returns_correct_data(self, client):
@@ -49,11 +36,12 @@ class TestArchiveIndexAPIEndpoints:
         datastructures, datastructures_aus, oct_obs_registration, oct_obs_registration_aus = (
             create_datastructures_data()
         )
-        # login user
-        client = login_user_to_client(client, "normal")
+
+        # get authentication token header
+        auth_header = get_auth_token_header("normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url)
+        response = client.get(url, **auth_header)
         response_data = json.loads(response.content)
         # check if correct data is sent
         expected_response_data = {

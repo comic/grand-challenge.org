@@ -1,42 +1,22 @@
 import json
-from django.contrib.auth import get_user_model
 from rest_framework import status
 from django.urls import reverse
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
+from tests.factories import UserFactory
+from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
 from tests.datastructures_tests.factories import (
-    ArchiveFactory,
-    PatientFactory,
-    StudyFactory,
     RetinaImageFactory,
-    create_oct_series,
     create_some_datastructure_data,
 )
-from tests.registrations_tests.factories import (
-    OctObsRegistrationFactory,
-)
+from tests.registrations_tests.factories import OctObsRegistrationFactory
 from tests.annotations_tests.factories import (
     ETDRSGridAnnotationFactory,
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    CoordinateListAnnotationFactory,
     PolygonAnnotationSetFactory,
     SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
     SingleLandmarkAnnotationFactory,
 )
-from grandchallenge.retina_images.models import RetinaImage
-
-
-def login_user_to_client(client, user="anonymous"):
-    # login user
-    if user == "staff":
-        user = get_user_model().objects.create_superuser(**TEST_USER_CREDENTIALS)
-        client.login(**TEST_USER_CREDENTIALS)
-    elif user == "normal":
-        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-        client.login(**TEST_USER_CREDENTIALS)
-    return client
 
 
 def create_datastructures_data():
@@ -49,7 +29,8 @@ def create_datastructures_data():
         obs_image=datastructures_aus["image_obs"],
     )
     oct_obs_registration = OctObsRegistrationFactory(
-        oct_series=datastructures["oct_slices"][0], obs_image=datastructures["image_obs"]
+        oct_series=datastructures["oct_slices"][0],
+        obs_image=datastructures["image_obs"],
     )
     return (
         datastructures,
@@ -67,13 +48,21 @@ def batch_test_image_endpoint_redirects(test_class):
         test_redirect, test_redirect_australia, test_redirect_oct = create_image_test_method(
             image_type, reverse_name
         )
-        test_redirect.__name__ = "test_image_{}_redirect_rotterdam".format(image_type)
+        test_redirect.__name__ = "test_image_{}_redirect_rotterdam".format(
+            image_type
+        )
         test_redirect_australia.__name__ = "test_image_{}_redirect_australia".format(
             image_type
         )
-        test_redirect_oct.__name__ = "test_image_{}_redirect_oct".format(image_type)
+        test_redirect_oct.__name__ = "test_image_{}_redirect_oct".format(
+            image_type
+        )
         setattr(test_class, test_redirect.__name__, test_redirect)
-        setattr(test_class, test_redirect_australia.__name__, test_redirect_australia)
+        setattr(
+            test_class,
+            test_redirect_australia.__name__,
+            test_redirect_australia,
+        )
         setattr(test_class, test_redirect_oct.__name__, test_redirect_oct)
 
 
@@ -90,8 +79,11 @@ def create_image_test_method(image_type, reverse_name):
                 "default",
             ],
         )
-        client = login_user_to_client(client, user="normal")
-        response = client.get(url, follow=True)
+
+        # get authentication token header
+        auth_header = get_auth_token_header("normal")
+
+        response = client.get(url, follow=True, **auth_header)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         assert (
             reverse(reverse_name, args=[ds["image_cf"].id])
@@ -111,8 +103,11 @@ def create_image_test_method(image_type, reverse_name):
                 "default",
             ],
         )
-        client = login_user_to_client(client, user="normal")
-        response = client.get(url, follow=True)
+
+        # get authentication token header
+        auth_header = get_auth_token_header("normal")
+
+        response = client.get(url, follow=True, **auth_header)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         assert (
             reverse(reverse_name, args=[ds["image_cf"].id])
@@ -132,8 +127,11 @@ def create_image_test_method(image_type, reverse_name):
                 "oct",
             ],
         )
-        client = login_user_to_client(client, user="normal")
-        response = client.get(url, follow=True)
+
+        # get authentication token header
+        auth_header = get_auth_token_header("normal")
+
+        response = client.get(url, follow=True, **auth_header)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         number = len(ds["oct_slices"]) // 2
         oct_image_id = ds["oct_slices"][number].id
@@ -149,7 +147,9 @@ def create_image_test_method(image_type, reverse_name):
 
 def batch_test_data_endpoints(test_class):
     for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA"):
-        test_load_no_auth, test_load_no_data, test_load_save_data = create_data_test_methods(data_type)
+        test_load_no_auth, test_load_no_data, test_load_save_data = create_data_test_methods(
+            data_type
+        )
 
         test_load_no_auth.__name__ = "test_load_{}_no_auth".format(data_type)
         test_load_no_data.__name__ = "test_load_{}_no_data".format(data_type)
@@ -161,38 +161,39 @@ def batch_test_data_endpoints(test_class):
 
 def create_data_test_methods(data_type):
     def test_load_no_auth(self, client):
+        # create grader user
+        username = "grader"
+        UserFactory(username=username)
         ds = create_some_datastructure_data()
         url = reverse(
             "retina:data-api-view",
-            args=[
-                data_type,
-                "test",
-                ds["archive"].name,
-                ds["patient"].name,
-            ],
+            args=[data_type, username, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_load_no_data(self, client):
         ds = create_some_datastructure_data()
-        client = login_user_to_client(client, user="normal")
+
+        # get token and grader user
+        grader, token = get_user_with_token(is_staff=False)
+        # get authentication token header
+        auth_header = get_auth_token_header("_", token=token)
+
         url = reverse(
             "retina:data-api-view",
-            args=[
-                data_type,
-                "test",
-                ds["archive"].name,
-                ds["patient"].name,
-            ],
+            args=[data_type, grader.username, ds["archive"].name, ds["patient"].name],
         )
-        response = client.get(url)
+        response = client.get(url, **auth_header)
         assert status.HTTP_200_OK == response.status_code
         assert b'{"status": "no data", "data": {}}' == response.content
 
     def test_load_save_data(self, client):
-        client = login_user_to_client(client, user="normal")
-        grader = get_user_model().objects.get(username="test")
+        # get token and grader user
+        grader, token = get_user_with_token(is_staff=False)
+        # get authentication token header
+        auth_header = get_auth_token_header("_", token=token)
+
         for archive in ("Rotterdam", "Australia"):
             if archive == "Rotterdam" and data_type in ("Measure", "Fovea"):
                 continue  # These annotations do not exist for Rotterdam archive type
@@ -205,37 +206,50 @@ def create_data_test_methods(data_type):
                 "retina:data-api-view",
                 args=[
                     data_type,
-                    "test",
+                    grader.username,
                     ds["archive"].name,
                     ds["patient"].name,
                 ],
             )
-            response = client.get(url)
+            response = client.get(url, **auth_header)
 
             assert status.HTTP_200_OK == response.status_code
             response_content = json.loads(response.content)
             assert response_content["status"] == "data"
             if isinstance(model, list):
                 for single_model in model:
-                    response_data_key = single_model.created.strftime("%Y-%m-%d--%H-%M-%S--%f")
-                    save_request_data = response_content["data"][response_data_key]
+                    response_data_key = single_model.created.strftime(
+                        "%Y-%m-%d--%H-%M-%S--%f"
+                    )
+                    save_request_data = response_content["data"][
+                        response_data_key
+                    ]
 
                     response = client.put(
-                        url, json.dumps(save_request_data), content_type="application/json"
+                        url,
+                        json.dumps(save_request_data),
+                        content_type="application/json",
                     )
 
                     assert status.HTTP_201_CREATED == response.status_code
                     save_response_content = json.loads(response.content)
                     assert save_response_content["success"]
             else:
-                response_data_key = model.created.strftime("%Y-%m-%d--%H-%M-%S--%f")
+                response_data_key = model.created.strftime(
+                    "%Y-%m-%d--%H-%M-%S--%f"
+                )
                 if data_type == "ETDRS" and ds["archive"].name == "Australia":
                     save_request_data = response_content["data"]
                 else:
-                    save_request_data = response_content["data"][response_data_key]
+                    save_request_data = response_content["data"][
+                        response_data_key
+                    ]
 
                 response = client.put(
-                    url, json.dumps(save_request_data), content_type="application/json"
+                    url,
+                    json.dumps(save_request_data),
+                    content_type="application/json",
+                    **auth_header,
                 )
 
                 assert status.HTTP_201_CREATED == response.status_code
@@ -248,13 +262,17 @@ def create_data_test_methods(data_type):
 def create_load_data(data_type, ds, grader):
     if data_type == "Registration":
         model = LandmarkAnnotationSetFactory(grader=grader)
-        SingleLandmarkAnnotationFactory(annotation_set=model, image=ds["image_cf"]),
+        SingleLandmarkAnnotationFactory(
+            annotation_set=model, image=ds["image_cf"]
+        ),
         if ds["archive"].name == "Australia":
             # Australia does not allow obs images so create a new cf image for Australia test
             img = RetinaImageFactory(study=ds["study"])
             SingleLandmarkAnnotationFactory(annotation_set=model, image=img)
         else:
-            SingleLandmarkAnnotationFactory(annotation_set=model, image=ds["image_obs"]),
+            SingleLandmarkAnnotationFactory(
+                annotation_set=model, image=ds["image_obs"]
+            ),
     elif data_type == "ETDRS":
         model = ETDRSGridAnnotationFactory(grader=grader, image=ds["image_cf"])
     elif data_type == "GA":

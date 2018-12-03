@@ -17,11 +17,33 @@ from tests.datastructures_tests.factories import (
 from grandchallenge.studies.models import Study
 
 
-def get_user_with_token(is_staff=False):
-    user = UserFactory(is_staff=is_staff)
+def get_user_with_token(**user_kwargs):
+    user = UserFactory(**user_kwargs)
     token = Token.objects.create(user=user)
 
     return user, token.key
+
+
+def get_auth_token_header(user, token=None):
+    """
+    Retrieve auth token that can be inserted into client request for authentication
+    :param user: "staff" for staff user, "normal" for normal user, else AnonymousUser
+    :param token: (optional) authentication token, `user` is not used if this is defined
+    :return:
+    """
+    if token is None:
+        if user == "staff":
+            _, token = get_user_with_token(is_staff=True)
+        elif user == "normal":
+            _, token = get_user_with_token()
+
+    auth_header = {}
+    if token:
+        auth_header.update({
+            "HTTP_AUTHORIZATION": "Token " + token,
+        })
+
+    return auth_header
 
 
 # helper functions
@@ -86,18 +108,7 @@ def remove_test_image(response):
 def get_response_status(
     client, url, data, user="anonymous", annotation_data=None
 ):
-    # get auth token
-    token = None
-    if user == "staff":
-        _, token = get_user_with_token(is_staff=True)
-    elif user == "normal":
-        _, token = get_user_with_token()
-
-    auth_header = {}
-    if token:
-        auth_header.update({
-            "HTTP_AUTHORIZATION": "Token " + token,
-        })
+    auth_header = get_auth_token_header(user)
 
     if annotation_data:
         # create objects that need to exist in database before request is made
