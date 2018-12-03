@@ -5,8 +5,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.http import Http404
-from django.utils.translation import gettext as _
 from django.views.generic import (
     CreateView,
     ListView,
@@ -31,34 +29,8 @@ from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
 )
+from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.urls import reverse
-
-
-class ChallengeSubdomainObjectMixin:
-    def get_object(self, queryset=None):
-        try:
-            obj = super().get_object(queryset=queryset)
-        except AttributeError:
-            # Could not be found with the usual parameters
-            if queryset is None:
-                queryset = self.get_queryset()
-
-            # Filter by the request challenge
-            slug_field = self.get_slug_field()
-            queryset = queryset.filter(
-                **{slug_field: self.request.challenge.short_name}
-            )
-
-            try:
-                # Get the single item from the filtered queryset
-                obj = queryset.get()
-            except queryset.model.DoesNotExist:
-                raise Http404(
-                    _("No %(verbose_name)s found matching the query")
-                    % {"verbose_name": queryset.model._meta.verbose_name}
-                )
-
-        return obj
 
 
 class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
