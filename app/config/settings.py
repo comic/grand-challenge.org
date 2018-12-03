@@ -44,9 +44,9 @@ APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ["POSTGRES_DB"],
-        "USER": os.environ["POSTGRES_USER"],
-        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+        "NAME": os.environ.get("POSTGRES_DB", "comic"),
+        "USER": os.environ.get("POSTGRES_USER", "comic"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": "",
     }
