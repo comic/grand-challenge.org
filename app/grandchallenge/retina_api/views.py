@@ -1,7 +1,7 @@
 import json
 from django.utils import timezone
 from django.views import View
-from rest_framework import status
+from rest_framework import status, permissions
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -18,7 +18,8 @@ from grandchallenge.retina_images.models import RetinaImage
 from grandchallenge.annotations.models import PolygonAnnotationSet, LandmarkAnnotationSet
 
 
-class ArchiveView(RetinaAPIPermissionMixin, View):
+class ArchiveView(View):
+    permission_classes = (permissions.IsAuthenticated,)
     @staticmethod
     def create_response_object():
         archives = Archive.objects.all()
@@ -138,7 +139,9 @@ class ArchiveView(RetinaAPIPermissionMixin, View):
         return JsonResponse(self.create_response_object())
 
 
-class ImageView(RetinaAPIPermissionMixin, View):
+class ImageView(View):
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get(
         self,
         request,
@@ -184,7 +187,9 @@ class ImageView(RetinaAPIPermissionMixin, View):
             return redirect("retina:image-numpy", image_id=image.id)
 
 
-class DataView(RetinaAPIPermissionMixin, View):
+class DataView(View):
+    permission_classes = (permissions.IsAuthenticated,)
+
     @staticmethod
     def coordinate_to_dict(coordinate):
         return {"x": coordinate[0], "y": coordinate[1]}
