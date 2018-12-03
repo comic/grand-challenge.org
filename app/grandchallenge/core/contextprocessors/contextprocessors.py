@@ -13,36 +13,26 @@ def comic_site(request):
     figure it out. Use main project. 
     
     """
-    try:
-        resolution = resolve(request.path)
-    except Http404 as e:
-        # fail silently beacuse any exeception here will cause a 500 server
-        # error on page. Let views show errors but not the context processor
-        resolution = resolve("/")
 
-    challenge_short_name = resolution.kwargs.get(
-        "challenge_short_name", settings.MAIN_PROJECT_NAME
-    )
-
-    try:
-        challenge = Challenge.objects.get(
-            short_name__iexact=challenge_short_name
-        )
-        pages = challenge.page_set.all()
-    except Challenge.DoesNotExist:
-        # Don't crash the system here, if a challenge cannot be found it will
-        # crash in a more appropriate location
-        return {}
+    challenge = request.challenge
 
     try:
         user = request.user
     except AttributeError:
         user = get_anonymous_user()
 
+    if challenge is None:
+        permissions = pages = []
+        is_participant = False
+    else:
+        permissions = get_perms(user, challenge)
+        pages = challenge.page_set.all()
+        is_participant = challenge.is_participant(user)
+
     return {
         "site": challenge,
-        "challenge_perms": get_perms(user, challenge),
-        "user_is_participant": challenge.is_participant(user),
+        "challenge_perms": permissions,
+        "user_is_participant": is_participant,
         "pages": pages,
         "main_challenge_name": settings.MAIN_PROJECT_NAME,
         "geochart_api_key": settings.GOOGLE_MAPS_API_KEY,
