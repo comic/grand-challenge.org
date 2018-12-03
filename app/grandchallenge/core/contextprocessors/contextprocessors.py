@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve
@@ -7,9 +9,17 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import build_absolute_uri
 
+logger = logging.getLogger(__name__)
+
 
 def comic_site(request):
-    challenge = request.challenge
+    try:
+        challenge = request.challenge
+    except AttributeError:
+        logger.warning(
+            f"Could not get challenge for request: {request.build_absolute_url()}"
+        )
+        challenge = None
 
     if challenge is None:
         # Use the main challenge if there is no challenge associated with
