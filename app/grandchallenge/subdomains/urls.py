@@ -12,15 +12,18 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     """
     kwargs = kwargs or {}
 
-    domain = Site.objects.get_current().domain.lower()
     scheme = settings.DEFAULT_SCHEME
+
+    host = Site.objects.get_current().domain.lower()
+    domain = f"{scheme}://{host}"
 
     if settings.SUBDOMAIN_IS_PROJECTNAME and "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")
-        domain = f"{scheme}://{challenge_short_name}.{domain}"
+        if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
+            domain = f"{scheme}://{challenge_short_name}.{host}"
+
         urlconf = urlconf or settings.SUBDOMAIN_URL_CONF
     else:
-        domain = f"{scheme}://{domain}"
         urlconf = urlconf or settings.ROOT_URLCONF
 
     path = reverse_org(

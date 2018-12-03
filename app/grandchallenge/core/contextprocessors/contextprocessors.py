@@ -9,25 +9,23 @@ from grandchallenge.core.utils import build_absolute_uri
 
 
 def comic_site(request):
-    """ Find out in which challenge this request is for. If you cannot
-    figure it out. Use main project. 
-    
-    """
-
     challenge = request.challenge
+
+    if challenge is None:
+        # Use the main challenge if there is no challenge associated with
+        # this request
+        challenge = Challenge.objects.get(
+            short_name__iexact=settings.MAIN_PROJECT_NAME
+        )
 
     try:
         user = request.user
     except AttributeError:
         user = get_anonymous_user()
 
-    if challenge is None:
-        permissions = pages = []
-        is_participant = False
-    else:
-        permissions = get_perms(user, challenge)
-        pages = challenge.page_set.all()
-        is_participant = challenge.is_participant(user)
+    permissions = get_perms(user, challenge)
+    pages = challenge.page_set.all()
+    is_participant = challenge.is_participant(user)
 
     return {
         "site": challenge,
