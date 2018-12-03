@@ -3,9 +3,11 @@ from PIL import Image as PILImage
 from pathlib import Path
 import json
 from django.conf import settings
+from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
+from tests.factories import UserFactory
 from tests.datastructures_tests.factories import (
     ArchiveFactory,
     PatientFactory,
@@ -13,6 +15,13 @@ from tests.datastructures_tests.factories import (
     RetinaImageFactory,
 )
 from grandchallenge.studies.models import Study
+
+
+def get_user_with_token(is_staff=False):
+    user = UserFactory(is_staff=is_staff)
+    token = Token.objects.create(user=user)
+
+    return user, token.key
 
 
 # helper functions
@@ -30,7 +39,9 @@ def create_test_image():
 
 
 def read_json_file(path_to_file):
-    path_to_file = Path("/app/tests/retina_importers_tests/test_data") / path_to_file
+    path_to_file = (
+        Path("/app/tests/retina_importers_tests/test_data") / path_to_file
+    )
     print(path_to_file.absolute())
     try:
         file = open(path_to_file, "r")
@@ -66,18 +77,27 @@ def create_upload_image_invalid_test_data():
 def remove_test_image(response):
     # Remove uploaded test image from filesystem
     response_obj = json.loads(response.content)
-    full_path_to_image = settings.APPS_DIR / Path(response_obj["image"]["image"][1:])
+    full_path_to_image = settings.APPS_DIR / Path(
+        response_obj["image"]["image"][1:]
+    )
     Path.unlink(full_path_to_image)
 
 
-def get_response_status(client, url, data, user="anonymous", annotation_data=None):
-    # login user
+def get_response_status(
+    client, url, data, user="anonymous", annotation_data=None
+):
+    # get auth token
+    token = None
     if user == "staff":
-        user = get_user_model().objects.create_superuser(**TEST_USER_CREDENTIALS)
-        client.login(**TEST_USER_CREDENTIALS)
+        _, token = get_user_with_token(is_staff=True)
     elif user == "normal":
-        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-        client.login(**TEST_USER_CREDENTIALS)
+        _, token = get_user_with_token()
+
+    auth_header = {}
+    if token:
+        auth_header.update({
+            "HTTP_AUTHORIZATION": "Token " + token,
+        })
 
     if annotation_data:
         # create objects that need to exist in database before request is made
@@ -85,29 +105,48 @@ def get_response_status(client, url, data, user="anonymous", annotation_data=Non
         existing_models = {"studies": [], "series": [], "images": []}
         images = []
         for data_row in data.get("data"):
-            if data_row.get("study_identifier") not in existing_models["studies"]:
-                study = StudyFactory(name=data_row.get("study_identifier"), patient=patient)
+            if (
+                data_row.get("study_identifier")
+                not in existing_models["studies"]
+            ):
+                study = StudyFactory(
+                    name=data_row.get("study_identifier"), patient=patient
+                )
                 existing_models["studies"].append(study.name)
             else:
-                study = Study.objects.get(name=data_row.get("study_identifier"))
+                study = Study.objects.get(
+                    name=data_row.get("study_identifier")
+                )
 
-            if data_row.get("image_identifier") not in existing_models["images"]:
-                image = RetinaImageFactory(name=data_row.get("image_identifier"), study=study)
+            if (
+                data_row.get("image_identifier")
+                not in existing_models["images"]
+            ):
+                image = RetinaImageFactory(
+                    name=data_row.get("image_identifier"), study=study
+                )
                 existing_models["images"].append(image.name)
                 images.append(image)
-        archive = ArchiveFactory(name=data.get("archive_identifier"), images=images)
+        archive = ArchiveFactory(
+            name=data.get("archive_identifier"), images=images
+        )
 
         response = client.post(
-            url, data=json.dumps(data), content_type="application/json"
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            **auth_header
         )
     else:
-        response = client.post(url, data=data)
+        response = client.post(url, data=data, **auth_header)
     return response.status_code
 
 
 def create_test_method(url, data, user, expected_status, annotation_data=None):
     def test_method(self, client):
-        response_status = get_response_status(client, url, data, user, annotation_data)
+        response_status = get_response_status(
+            client, url, data, user, annotation_data
+        )
         assert response_status == expected_status
 
     return test_method
@@ -116,23 +155,39 @@ def create_test_method(url, data, user, expected_status, annotation_data=None):
 def batch_test_upload_views(batch_test_data, test_class):
     for name, test_data in batch_test_data.items():
         user_status_tuple = (
-            ("anonymous", status.HTTP_401_UNAUTHORIZED, status.HTTP_401_UNAUTHORIZED),
-            ("normal", status.HTTP_401_UNAUTHORIZED, status.HTTP_401_UNAUTHORIZED),
+            (
+                "anonymous",
+                status.HTTP_401_UNAUTHORIZED,
+                status.HTTP_401_UNAUTHORIZED,
+            ),
+            (
+                "normal",
+                status.HTTP_403_FORBIDDEN,
+                status.HTTP_403_FORBIDDEN,
+            ),
             ("staff", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
         )
-        for user, expected_status_valid, expected_status_invalid in user_status_tuple:
+        for (
+            user,
+            expected_status_valid,
+            expected_status_invalid,
+        ) in user_status_tuple:
             for valid_data in (False, True):
                 post_data = (
-                    test_data["data"] if valid_data else test_data["invalid_data"]
+                    test_data["data"]
+                    if valid_data
+                    else test_data["invalid_data"]
                 )
                 test_method = create_test_method(
                     test_data["url"],
                     post_data,
                     user,
-                    expected_status_valid if valid_data else expected_status_invalid,
+                    expected_status_valid
+                    if valid_data
+                    else expected_status_invalid,
                     annotation_data=test_data.get("annotation_data"),
                 )
-                test_method.__name__ = "test_{}_upload_view_{}_{}_data".format(
+                test_method.__name__ = "test_{}_view_{}_{}_data".format(
                     name, user, "valid" if valid_data else "invalid"
                 )
                 setattr(test_class, test_method.__name__, test_method)
