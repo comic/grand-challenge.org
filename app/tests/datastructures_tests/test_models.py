@@ -50,8 +50,19 @@ class TestImage:
 
     def test_get_all_oct_images(self):
         series_oct, images_oct = create_oct_series()
-        all_images = images_oct[0].get_all_oct_images()
-        assert images_oct.sort() == [x for x in all_images].sort()
+        all_images_qs = images_oct[0].get_all_oct_images()
+
+        # Check if images_oct and all_images contain the same models
+        all_images = [x for x in all_images_qs] # Convert Queryset to list
+        for img in images_oct:
+            if img in all_images:
+                # remove from list
+                all_images.remove(img)
+            else:
+                pytest.fail("{} not in list of OCT images")
+                break
+
+        assert len(all_images) == 0
 
     def test_get_all_oct_images_wrong_modality(self):
         all_images = RetinaImageFactory(modality=RetinaImage.MODALITY_CF).get_all_oct_images()
