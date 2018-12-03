@@ -38,6 +38,7 @@ def challenge_subdomain_middleware(get_response):
         """
         if request.subdomain is not None:
             # TODO: add support for PROJECTNAME_IS_SUBDOMAIN?
+            # TODO: return the main challenge if no subdomain?
             try:
                 request.challenge = Challenge.objects.get(
                     short_name__iexact=request.subdomain
@@ -45,6 +46,8 @@ def challenge_subdomain_middleware(get_response):
             except Challenge.DoesNotExist:
                 domain = get_current_site(request).domain.lower()
                 return HttpResponseRedirect(f"{request.scheme}://{domain}/")
+        else:
+            request.challenge = None
 
         response = get_response(request)
 
