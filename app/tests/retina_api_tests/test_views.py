@@ -27,8 +27,7 @@ from tests.retina_api_tests.helpers import (
 @pytest.mark.django_db
 class TestArchiveIndexAPIEndpoints:
     def test_archive_view_non_auth(self, client):
-        url = reverse("retina:archives-list")
-        client = login_user_to_client(client)
+        url = reverse("retina:archives-api-view")
         response = client.get(url)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -39,7 +38,7 @@ class TestArchiveIndexAPIEndpoints:
         # login user
         client = login_user_to_client(client, "normal")
 
-        url = reverse("retina:archives-list")
+        url = reverse("retina:archives-api-view")
         response = client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
@@ -53,7 +52,7 @@ class TestArchiveIndexAPIEndpoints:
         # login user
         client = login_user_to_client(client, "normal")
 
-        url = reverse("retina:archives-list")
+        url = reverse("retina:archives-api-view")
         response = client.get(url)
         response_data = json.loads(response.content)
         # check if correct data is sent

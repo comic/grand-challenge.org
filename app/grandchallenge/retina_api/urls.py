@@ -13,7 +13,7 @@ urlpatterns = [
     path(
         "archives/",
         cache_page(settings.RETINA_ARCHIVES_REQUEST_CACHE_TIME)(views.ArchiveView.as_view()),
-        name="archives-list",
+        name="archives-api-view",
     ),
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
