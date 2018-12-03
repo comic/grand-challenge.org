@@ -2,6 +2,7 @@ from django.conf.urls import include
 from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
+from grandchallenge.challenges.views import ChallengeUpdate
 from grandchallenge.core.views import site
 from grandchallenge.serving.views import ChallengeServeRedirect
 
@@ -32,6 +33,7 @@ urlpatterns = [
         "datasets/",
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
+    path("update/", ChallengeUpdate.as_view(), name="update"),
     #################
     #
     # Legacy apps
