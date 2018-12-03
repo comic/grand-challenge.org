@@ -34,6 +34,7 @@ urlpatterns = [
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
     path("update/", ChallengeUpdate.as_view(), name="update"),
+    path("summernote/", include("django_summernote.urls")),
     #################
     #
     # Legacy apps
@@ -53,4 +54,7 @@ urlpatterns = [
     #################
     # If nothing specific matches, try to resolve the url as project/pagename
     path("", include("grandchallenge.pages.urls", namespace="pages")),
+    path(
+        "media/", include("grandchallenge.serving.urls", namespace="serving")
+    ),
 ]

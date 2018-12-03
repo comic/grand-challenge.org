@@ -52,7 +52,6 @@ urlpatterns = [
         name="apple-touch-icon-precomposed-sized",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
-    path("summernote/", include("django_summernote.urls")),
     path(
         "site/<slug:challenge_short_name>/",
         include("grandchallenge.core.urls"),
