@@ -457,6 +457,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "grandchallenge": {
+            "level": "WARNING",
+            "handlers": ["console"],
+            "propagate": True,
+        },
         "django.db.backends": {
             "level": "ERROR",
             "handlers": ["console"],

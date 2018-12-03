@@ -16,7 +16,7 @@ from guardian.utils import get_anonymous_user
 
 from grandchallenge.subdomains.urls import reverse
 
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 class ChallengeManager(models.Manager):

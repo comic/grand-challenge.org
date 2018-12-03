@@ -4,7 +4,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 class HtmlLinkReplacer:

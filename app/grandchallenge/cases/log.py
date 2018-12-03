@@ -1,3 +1,3 @@
 import logging
 
-logger = logging.getLogger("grandchallenge-cases")
+logger = logging.getLogger(__name__)

@@ -25,7 +25,7 @@ from grandchallenge.profiles.models import UserProfile
 from grandchallenge.subdomains.urls import reverse
 
 register = library_plus.LibraryPlus()
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 def parseKeyValueToken(token):
