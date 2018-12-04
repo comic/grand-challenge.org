@@ -22,15 +22,18 @@ class UploadList(
     model = UploadModel
 
 
-def upload_handler(request, challenge_short_name):
+def upload_handler(request, challenge_short_name=None):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
-    view_url = reverse(
-        "uploads:create", kwargs={"challenge_short_name": challenge_short_name}
-    )
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        site = getSite(challenge_short_name)
 
-    site = getSite(challenge_short_name)
+    view_url = reverse(
+        "uploads:create", kwargs={"challenge_short_name": site.short_name}
+    )
 
     if request.method == "POST":
         # set values excluded from form here to make the model validate
