@@ -626,7 +626,7 @@ class ViewsTest(ComicframeworkTestCase):
             % (page_url, response.status_code),
         )
 
-    def test_non_exitant_project_gives_404(self):
+    def test_non_exitant_project_gives_404_or_302(self):
         """ reproduces issue #219,
         https://github.com/comic/grand-challenge.org/issues/219
         
@@ -637,13 +637,23 @@ class ViewsTest(ComicframeworkTestCase):
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)
-        self.assertEqual(
-            response.status_code,
-            404,
-            "Expected non existing url"
-            "'%s' to give 404, instead found %s"
-            % (non_existant_url, response.status_code),
-        )
+        if settings.SUBDOMAIN_IS_PROJECTNAME:
+            # If SUBDOMAIN_IS_PROJECTNAME we redirect to the main project
+            self.assertEqual(
+                response.status_code,
+                302,
+                "Expected non existing url"
+                "'%s' to give 302, instead found %s"
+                % (non_existant_url, response.status_code),
+            )
+        else:
+            self.assertEqual(
+                response.status_code,
+                404,
+                "Expected non existing url"
+                "'%s' to give 404, instead found %s"
+                % (non_existant_url, response.status_code),
+            )
 
 
 class LinkReplacerTest(ComicframeworkTestCase):
@@ -714,9 +724,14 @@ class LinkReplacerTest(ComicframeworkTestCase):
         notafile_slash = find_text_between(
             "~notafile_slash~", "~endnotafile_slash~", response.content
         )
-        relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
-        pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-        moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
+        if settings.SUBDOMAIN_IS_PROJECTNAME:
+            relative_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/relative.html'
+            pathrelativelink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/folder1/relative.html'
+            moveuplink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/../moveup.html'
+        else:
+            relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
+            pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
+            moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
         notafile_expected = 'href="/faq"'
         notafile_slash_expected = 'href="/faq/"'
