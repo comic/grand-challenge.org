@@ -93,7 +93,8 @@ urlpatterns = [
     # order
     path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
-        "media/", include("grandchallenge.serving.urls", namespace="serving")
+        "media/",
+        include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

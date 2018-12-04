@@ -272,7 +272,7 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:
             downloadlink = reverse(
-                "serving:challenge-file",
+                "root-serving:challenge-file",
                 kwargs={
                     "challenge_short_name": challenge_short_name,
                     "path": f"{self.path}/{filename}",
