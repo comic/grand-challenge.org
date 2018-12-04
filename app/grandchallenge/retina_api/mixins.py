@@ -10,7 +10,6 @@ class RetinaAPIPermission(permissions.BasePermission):
         # TODO specific permissions?
         # uncomment next line and fix all tests accordingly to only allow users from retina_graders group
         # return self.request.user.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).exists()
-        print(request.user.username)
         return bool(request.user and request.user.is_authenticated)
 
 
