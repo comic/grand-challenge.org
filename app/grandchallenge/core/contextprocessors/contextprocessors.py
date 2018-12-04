@@ -1,8 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.http import Http404
-from django.urls import resolve
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
@@ -16,9 +14,14 @@ def comic_site(request):
     try:
         challenge = request.challenge
     except AttributeError:
-        logger.warning(
-            f"Could not get challenge for request: {request.build_absolute_url()}"
-        )
+
+        # build_absolut_uri does not exist in some cases (eg, in tests)
+        try:
+            warning_url = request.build_absolute_url()
+        except AttributeError:
+            warning_url = request.path
+
+        logger.warning(f"Could not get challenge for request: {warning_url}")
         challenge = None
 
     if challenge is None:
