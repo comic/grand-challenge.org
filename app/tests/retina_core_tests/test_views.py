@@ -8,9 +8,14 @@ from django.conf import settings
 class TestTokenAuthentication:
     def test_no_auth(self, client):
         url = reverse("retina:home")
-        response = client.get(url)
-        assert response.status_code == status.HTTP_302_FOUND
-        assert response.url == settings.LOGIN_URL + "?next=" + reverse("retina:home")
+        response = client.get(url, follow=True)
+
+        assert response.redirect_chain[0][1] == status.HTTP_302_FOUND
+        assert (
+            settings.LOGIN_URL + "?next=" + reverse("retina:home")
+            == response.redirect_chain[0][0]
+        )
+        assert status.HTTP_200_OK == response.status_code
 
     def test_auth_normal(self, client):
         url = reverse("retina:home")
