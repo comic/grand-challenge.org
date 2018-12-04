@@ -80,10 +80,9 @@ def create_image_test_method(image_type, reverse_name):
             ],
         )
 
-        # get authentication token header
-        auth_header = get_auth_token_header("normal")
-
-        response = client.get(url, follow=True, **auth_header)
+        user, _ = get_user_with_token()
+        client.force_login(user=user)
+        response = client.get(url, follow=True)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         assert (
             reverse(reverse_name, args=[ds["image_cf"].id])
@@ -103,12 +102,11 @@ def create_image_test_method(image_type, reverse_name):
                 "default",
             ],
         )
+        user, _ = get_user_with_token()
+        client.force_login(user=user)
 
-        # get authentication token header
-        auth_header = get_auth_token_header("normal")
-
-        response = client.get(url, follow=True, **auth_header)
-        assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
+        response = client.get(url, follow=True)
+        assert response.redirect_chain[0][1] == status.HTTP_302_FOUND
         assert (
             reverse(reverse_name, args=[ds["image_cf"].id])
             == response.redirect_chain[0][0]
@@ -127,15 +125,13 @@ def create_image_test_method(image_type, reverse_name):
                 "oct",
             ],
         )
+        user, _ = get_user_with_token()
+        client.force_login(user=user)
 
-        # get authentication token header
-        auth_header = get_auth_token_header("normal")
-
-        response = client.get(url, follow=True, **auth_header)
+        response = client.get(url, follow=True)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         number = len(ds["oct_slices"]) // 2
         oct_image_id = ds["oct_slices"][number].id
-        print(oct_image_id)
         assert (
             reverse(reverse_name, args=[oct_image_id])
             == response.redirect_chain[0][0]
@@ -170,7 +166,7 @@ def create_data_test_methods(data_type):
             args=[data_type, username, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_load_no_data(self, client):
         ds = create_some_datastructure_data()
@@ -186,7 +182,7 @@ def create_data_test_methods(data_type):
         )
         response = client.get(url, **auth_header)
         assert status.HTTP_200_OK == response.status_code
-        assert b'{"status": "no data", "data": {}}' == response.content
+        assert b'{"status":"no data","data":{}}' == response.content
 
     def test_load_save_data(self, client):
         # get token and grader user
@@ -229,6 +225,7 @@ def create_data_test_methods(data_type):
                         url,
                         json.dumps(save_request_data),
                         content_type="application/json",
+                        **auth_header,
                     )
 
                     assert status.HTTP_201_CREATED == response.status_code

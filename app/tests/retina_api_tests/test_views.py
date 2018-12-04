@@ -3,7 +3,7 @@ import pytest
 from rest_framework import status
 from django.urls import reverse
 from django.core.cache import cache
-from tests.retina_importers_tests.helpers import get_auth_token_header
+from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
@@ -14,8 +14,10 @@ from tests.retina_api_tests.helpers import (
 @pytest.mark.django_db
 class TestArchiveIndexAPIEndpoints:
     def test_archive_view_non_auth(self, client):
+        # Clear cache manually (this is not done by pytest-django for some reason...)
+        cache.clear()
         url = reverse("retina:archives-api-view")
-        response = client.get(url)
+        response = client.get(url, HTTP_ACCEPT="application/json")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_archive_view_auth(self, client):
@@ -26,7 +28,7 @@ class TestArchiveIndexAPIEndpoints:
         auth_header = get_auth_token_header("normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url, **auth_header)
+        response = client.get(url, HTTP_ACCEPT="application/json", **auth_header)
         assert response.status_code == status.HTTP_200_OK
 
     def test_archive_view_returns_correct_data(self, client):
@@ -41,7 +43,7 @@ class TestArchiveIndexAPIEndpoints:
         auth_header = get_auth_token_header("normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url, **auth_header)
+        response = client.get(url, HTTP_ACCEPT="application/json", **auth_header)
         response_data = json.loads(response.content)
         # check if correct data is sent
         expected_response_data = {
