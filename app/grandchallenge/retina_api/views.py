@@ -1,6 +1,8 @@
 import json
 from django.utils import timezone
 from django.views import View
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponse, JsonResponse
@@ -10,7 +12,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
+from grandchallenge.retina_api.mixins import RetinaAPIPermission, RetinaAPIPermissionMixin
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
@@ -18,8 +20,9 @@ from grandchallenge.retina_images.models import RetinaImage
 from grandchallenge.annotations.models import PolygonAnnotationSet, LandmarkAnnotationSet
 
 
-class ArchiveView(View):
-    permission_classes = (permissions.IsAuthenticated,)
+class ArchiveView(APIView):
+    permission_classes = (RetinaAPIPermission,)
+
     @staticmethod
     def create_response_object():
         archives = Archive.objects.all()
@@ -136,12 +139,10 @@ class ArchiveView(View):
         return response
 
     def get(self, request):
-        return JsonResponse(self.create_response_object())
+        return Response(self.create_response_object())
 
 
-class ImageView(View):
-    permission_classes = (permissions.IsAuthenticated,)
-
+class ImageView(RetinaAPIPermissionMixin, View):
     def get(
         self,
         request,
@@ -182,13 +183,17 @@ class ImageView(View):
             print("failed unique image search")
 
         if image_type == "thumb":
-            return redirect("retina:image-thumbnail", image_id=image.id)
+            response = redirect("retina:image-thumbnail", image_id=image.id)
         else:
-            return redirect("retina:image-numpy", image_id=image.id)
+            response = redirect("retina:image-numpy", image_id=image.id)
+
+        # Set token authentication header to pass on
+        #response["AUTHORIZATION"] = "Token " + request.META["HTTP_AUTHORIZATION"]
+        return response
 
 
-class DataView(View):
-    permission_classes = (permissions.IsAuthenticated,)
+class DataView(APIView):
+    permission_classes = (RetinaAPIPermission,)
 
     @staticmethod
     def coordinate_to_dict(coordinate):
@@ -422,7 +427,7 @@ class DataView(View):
         else:
             response_data = {"status": "data", "data": data}
 
-        return JsonResponse(response_data)
+        return Response(response_data)
 
     @method_decorator(ensure_csrf_cookie)
     def put(self, request, data_type, username, archive_identifier, patient_identifier):
@@ -519,4 +524,4 @@ class DataView(View):
                                 value=self.dict_list_to_coordinates(single_ga_data)
                             )
 
-        return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
+        return Response({"success": True}, status=status.HTTP_201_CREATED)
