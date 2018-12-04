@@ -1,4 +1,6 @@
-import tifffile
+import traceback
+
+import tifffile as tiff_lib
 
 
 def validate_tif(path):
@@ -7,12 +9,26 @@ def validate_tif(path):
                              "PHOTOMETRIC.ARGB": 4,
                              "PHOTOMETRIC.YCBCR": 4, }
 
-    required_tile_tags = ("TileWidth", "TileLength", "TileOffsets", "TileByteCounts",)
+    required_tile_tags = ("TileWidth",
+                          "TileLength",
+                          "TileOffsets",
+                          "TileByteCounts", )
+
+    forbidden_description_tags = ("DICOM",
+                                  "XML",
+                                  "xml", )
 
     try:
         # Reads the TIF tags
-        tif_file = tifffile.TiffFile(path)
+        tif_file = tiff_lib.TiffFile(path)
         tif_tags = tif_file.pages[0].tags
+
+        # Checks if the image description exists, if so, ensure there's no DICOM or XML data
+        if "ImageDescription" in tif_tags:
+            image_description = str(tif_tags["ImageDescription"].value)
+            for forbidden in forbidden_description_tags:
+                if forbidden in image_description:
+                    return False
 
         # Checks image storage information
         for tag in required_tile_tags:
@@ -43,18 +59,5 @@ def validate_tif(path):
 
         return True
     except:
+        traceback.print_exc()
         return False
-
-
-print(validate_tif("D:/WSIs/testfile.tif"))
-print(validate_tif("D:/WSIs/testfilelog.txt"))
-
-file = tifffile.TiffFile("D:/WSIs/testfile.tif")
-
-#for page in file.pages:
-#    print(page)
-
- #   for tag in page.tags.values():
-  #      print(tag)
-#    print(tag[0])
-#   print(tag[1])
