@@ -240,10 +240,9 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "grandchallenge.core.middleware.ProjectMiddleware",
     "grandchallenge.subdomains.middleware.subdomain_middleware",
-    # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
-    # "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
 

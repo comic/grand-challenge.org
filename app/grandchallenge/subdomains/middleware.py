@@ -1,10 +1,14 @@
+import logging
 import re
 
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
+from django.urls import resolve, Resolver404
 
 from grandchallenge.challenges.models import Challenge
+
+logger = logging.getLogger(__name__)
 
 
 def subdomain_middleware(get_response):
@@ -29,6 +33,20 @@ def subdomain_middleware(get_response):
     return middleware
 
 
+def _get_challenge_name(request):
+    """Gets the challenge name from the request"""
+    if settings.SUBDOMAIN_IS_PROJECTNAME:
+        challenge_name = request.subdomain
+    else:
+        try:
+            resolution = resolve(request.path)
+            challenge_name = resolution.kwargs["challenge_short_name"]
+        except (Resolver404, KeyError):
+            challenge_name = None
+
+    return challenge_name
+
+
 def challenge_subdomain_middleware(get_response):
     def middleware(request):
         """
@@ -36,18 +54,24 @@ def challenge_subdomain_middleware(get_response):
         to the main site if the challenge is not valid. Requires the
         subdomain to be set on the request (eg, by using subdomain_middleware)
         """
-        if request.subdomain is not None:
-            # TODO: add support for PROJECTNAME_IS_SUBDOMAIN?
-            # TODO: return the main challenge if no subdomain?
+        challenge_name = _get_challenge_name(request)
+
+        if challenge_name is None:
+            request.challenge = None
+        else:
             try:
                 request.challenge = Challenge.objects.get(
-                    short_name__iexact=request.subdomain
+                    short_name__iexact=challenge_name
                 )
             except Challenge.DoesNotExist:
-                domain = get_current_site(request).domain.lower()
-                return HttpResponseRedirect(f"{request.scheme}://{domain}/")
-        else:
-            request.challenge = None
+                logger.warning(f"Could not find challenge {challenge_name}")
+                if settings.SUBDOMAIN_IS_PROJECTNAME:
+                    domain = get_current_site(request).domain.lower()
+                    return HttpResponseRedirect(
+                        f"{request.scheme}://{domain}/"
+                    )
+                else:
+                    raise Http404(f"Challenge {challenge_name} does not exist")
 
         response = get_response(request)
 
