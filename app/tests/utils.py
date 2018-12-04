@@ -74,10 +74,7 @@ def get_view_for_user(
     if method is None:
         method = client.get
 
-    urlparts = urlparse(url)
-    if urlparts[1]:
-        kwargs.update({"HTTP_HOST": urlparts[1]})
-        url = urlparts[2]
+    url, kwargs = get_http_host(url=url, kwargs=kwargs)
 
     try:
         response = method(url, **kwargs)
@@ -86,6 +83,15 @@ def get_view_for_user(
             client.logout()
 
     return response
+
+
+def get_http_host(*, url, kwargs):
+    """ Takes a url and splits out the http host, if found """
+    urlparts = urlparse(url)
+    if urlparts[1]:
+        kwargs.update({"HTTP_HOST": urlparts[1]})
+        url = urlparts[2]
+    return url, kwargs
 
 
 def assert_viewname_status(*, code: int, **kwargs):

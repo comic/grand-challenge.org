@@ -23,6 +23,8 @@ from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
 
 # Platform independent regex which will match line endings in win and linux
+from tests.utils import get_http_host
+
 PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
@@ -92,7 +94,6 @@ def is_subset(listA, listB):
     PASSWORD_HASHERS=("django.contrib.auth.hashers.SHA1PasswordHasher",)
 )
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
-@override_settings(SITE_ID=1)
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """
@@ -259,7 +260,11 @@ class ComicframeworkTestCase(TestCase):
 
     def _view_url(self, user, url):
         self._login(user)
-        response = self.client.get(url)
+
+        url, kwargs = get_http_host(url=url, kwargs={})
+
+        response = self.client.get(url, **kwargs)
+
         if user is None:
             username = "anonymous_user"
         else:
