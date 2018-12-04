@@ -271,8 +271,14 @@ class ListDirNode(template.Node):
             filenames = filter_by_extension(filenames, extensions)
         links = []
         for filename in filenames:
+
+            if settings.SUBDOMAIN_IS_PROJECTNAME:
+                serving_view = "challenge-serving:challenge-file"
+            else:
+                serving_view = "root-serving:challenge-file"
+
             downloadlink = reverse(
-                "root-serving:challenge-file",
+                serving_view,
                 kwargs={
                     "challenge_short_name": challenge_short_name,
                     "path": f"{self.path}/{filename}",
