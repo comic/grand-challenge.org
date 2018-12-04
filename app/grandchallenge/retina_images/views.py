@@ -20,11 +20,11 @@ RetinaImage custom views
 """
 
 
-class ThumbnailView(View):
+class ThumbnailView(RetinaAPIPermissionMixin, View):
     """
     View class for returning a thumbnail of an image (max height/width: 128px)
     """
-    permission_classes = (permissions.IsAuthenticated,)
+    raise_exception = True  # Raise 403 on unauthenticated request
 
     def get(self, request, image_id):
         image_object = get_object_or_404(RetinaImage, pk=image_id)
@@ -35,11 +35,11 @@ class ThumbnailView(View):
         return response
 
 
-class NumpyView(View):
+class NumpyView(RetinaAPIPermissionMixin, View):
     """
     View class for returning a numpy array of a specific image
     """
-    permission_classes = (permissions.IsAuthenticated,)
+    raise_exception = True  # Raise 403 on unauthenticated request
 
     def get(self, request, image_id):
         image_object = get_object_or_404(RetinaImage, pk=image_id)
