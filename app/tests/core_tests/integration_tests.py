@@ -457,24 +457,6 @@ class ComicframeworkTestCase(TestCase):
                 ),
             )
 
-    def apply_standard_middleware(self, request):
-        """ Some actions in the admin pages require certain middleware which is not
-        always present in admin. Apply this explicitly here.
-        
-        """
-        from django.contrib.sessions.middleware import (
-            SessionMiddleware
-        )  # Some admin actions render messages and will crash without explicit import
-        from django.contrib.messages.middleware import MessageMiddleware
-        from grandchallenge.core.middleware.project import ProjectMiddleware
-
-        sm = SessionMiddleware()
-        mm = MessageMiddleware()
-        pm = ProjectMiddleware()
-        sm.process_request(request)
-        mm.process_request(request)
-        pm.process_request(request)
-
 
 class CreateProjectTest(ComicframeworkTestCase):
     def test_cannot_create_project_with_weird_name(self):
