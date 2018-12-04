@@ -146,7 +146,7 @@ MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 # does.
 # True: Changes links on pages where possible to use subdomain.
 SUBDOMAIN_IS_PROJECTNAME = strtobool(
-    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "False")
+    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "True")
 )
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
