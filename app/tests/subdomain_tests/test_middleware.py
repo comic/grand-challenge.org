@@ -54,8 +54,12 @@ def test_invalid_domain(settings, rf, host, subdomain):
         "notachallenge",
     ],
 )
-def test_challenge_attribute(settings, rf, subdomain):
+@pytest.mark.parametrize("subdomain_is_projectname", [True, False])
+def test_challenge_attribute(
+    settings, rf, subdomain, subdomain_is_projectname
+):
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
+    settings.SUBDOMAIN_IS_PROJECTNAME = subdomain_is_projectname
 
     c = ChallengeFactory(short_name="challengesubdomaintest")
 
@@ -66,7 +70,7 @@ def test_challenge_attribute(settings, rf, subdomain):
 
     request = challenge_subdomain_middleware(lambda x: x)(request)
 
-    if subdomain is None:
+    if subdomain is None or not settings.SUBDOMAIN_IS_PROJECTNAME:
         assert request.challenge == None
     elif subdomain.lower() == c.short_name.lower():
         assert request.challenge == c
