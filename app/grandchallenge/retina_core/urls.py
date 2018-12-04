@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
+from rest_framework.authtoken import views
 from .views import IndexView
 
 
@@ -12,6 +13,7 @@ urlpatterns = [
     # path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("", IndexView.as_view(), name="home"),
     path("api/", include("grandchallenge.retina_api.urls")),
+    path("api-token-auth/", views.obtain_auth_token),
     path("archives/", include("grandchallenge.archives.urls")),
     path("patients/", include("grandchallenge.patients.urls")),
     path("studies/", include("grandchallenge.studies.urls")),
