@@ -89,7 +89,7 @@ class MethodForm(forms.ModelForm):
         validators=[ExtensionValidator(allowed_extensions=(".tar",))],
         help_text=(
             "Tar archive of the container image produced from the command "
-            "`docker save IMAGE > IMAGE.tar`. See "
+            "'docker save IMAGE > IMAGE.tar'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
