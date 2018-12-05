@@ -78,3 +78,12 @@ def test_insert_graph(rf: RequestFactory, view_type):
         assert "Created with matplotlib" in rendered
     else:
         assert "comictablecontainer" in rendered
+
+
+@pytest.mark.django_db
+def test_google_group():
+    template = Template(
+        "{% load google_group from grandchallenge_tags %}{% google_group 'my-group' %}"
+    )
+    rendered = template.render(Context({}))
+    assert 'data-groupname="my-group"' in rendered
