@@ -136,7 +136,9 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
                 depth=depth if depth else None,
+                resolution_level=1,
                 color_space=color_space,
+                image_type="MHD",
             )
             db_image_files = []
             for _file in work_dir.iterdir():
