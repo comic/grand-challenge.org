@@ -114,10 +114,12 @@ class ContainerImageModel(models.Model):
     image = models.FileField(
         blank=True,
         upload_to=docker_image_path,
-        validators=[ExtensionValidator(allowed_extensions=(".tar",))],
+        validators=[
+            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+        ],
         help_text=(
-            "Tar archive of the container image produced from the command "
-            "`docker save IMAGE > IMAGE.tar`. See "
+            ".tar.gz archive of the container image produced from the command "
+            "'docker save IMAGE > IMAGE.tar | gzip'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
