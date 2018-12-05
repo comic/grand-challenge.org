@@ -2,6 +2,7 @@ import os
 import zipfile
 from collections import namedtuple
 from pathlib import Path
+from subprocess import call
 from typing import NamedTuple
 
 import docker
@@ -130,8 +131,11 @@ def evaluation_image(tmpdir_factory):
         for chunk in image:
             f.write(chunk)
     client.images.remove(image=im.id)
+
+    call(["gzip", outfile])
+
     assert im.id not in [x.id for x in client.images.list()]
-    return outfile, im.id
+    return f"{outfile}.gz", im.id
 
 
 @pytest.fixture(scope="session")
