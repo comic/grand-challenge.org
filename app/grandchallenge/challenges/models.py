@@ -7,12 +7,14 @@ import re
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import CICharField, ArrayField
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
 from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
+from tldextract import extract
 
 from grandchallenge.core.urlresolvers import reverse
 
@@ -286,7 +288,8 @@ class ChallengeBase(models.Model):
         """
         classes = set()
 
-        classes.add(self.get_host_id())
+        if self.get_registered_domain():
+            classes.add(f"host-{self.get_registered_domain()}")
 
         # Filter by modality
         for mod in self.modalities.all():
@@ -303,21 +306,14 @@ class ChallengeBase(models.Model):
 
         return list(classes)
 
-    def get_host_id(self):
+    def get_registered_domain(self):
         """
         Copied from grandchallenge_tags
 
         Try to find out what framework this challenge is hosted on, return
         a string which can also be an id or class in HTML
         """
-        if self.hosted_on_comic:
-            return "grand-challenge"
-
-        if "codalab.org" in self.get_absolute_url():
-            return "codalab"
-
-        else:
-            return "Unknown"
+        return extract(self.get_absolute_url()).registered_domain
 
     def get_host_link(self):
         """
@@ -325,18 +321,12 @@ class ChallengeBase(models.Model):
 
         Try to find out what framework this challenge is hosted on
         """
-        host_id = self.get_host_id()
+        domain = self.get_registered_domain()
 
-        if host_id == "grand-challenge":
-            framework_name = "grand-challenge.org"
-            framework_url = "http://grand-challenge.org"
-        elif host_id == "codalab":
-            framework_name = "codalab.org"
-            framework_url = "http://codalab.org"
+        if domain:
+            return f'<a href="http://{domain}">{domain}</a>'
         else:
             return None
-
-        return f"<a href={framework_url}>{framework_name}</a>"
 
     class Meta:
         abstract = True
