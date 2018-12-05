@@ -245,7 +245,7 @@
                                             <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
                                         {% endif %}
 
-                                        {% if challenge.cached_num_results %}
+                                        {% if challenge.use_evaluation and challenge.cached_num_results %}
                                             <dt>Results</dt>
                                             <dd>
                                                 <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_num_results }}</a>

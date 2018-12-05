@@ -16,8 +16,9 @@
               content="open, science, medical, image, computing, validated"/>
 
         {% comment %}
-        <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js" crossorigin="anonymous"></script>
-        <script>Raven.config('{% sentry_public_dsn %}').install()</script>
+            <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
+                    crossorigin="anonymous"></script>
+            <script>Raven.config('{% sentry_public_dsn %}').install()</script>
         {% endcomment %}
 
         <!-- Global Site Tag (gtag.js) - Google Analytics -->
@@ -275,6 +276,11 @@
 {% endblock %}
 
 {% block postjs %}
+
+    {# For displaying equations on the site, the safe config is important #}
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+            async></script>
+
     <script type='text/javascript'>
         $(document).ready(function () {
             $('table.sortable').dataTable({
