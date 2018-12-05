@@ -3,6 +3,7 @@ import hashlib
 import logging
 import os
 import re
+from collections import namedtuple
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -288,8 +289,8 @@ class ChallengeBase(models.Model):
         """
         classes = set()
 
-        if self.get_registered_domain():
-            classes.add(f"host-{self.get_registered_domain()}")
+        if self.host_filter.host:
+            classes.add(self.host_filter.filter_tag)
 
         # Filter by modality
         for mod in self.modalities.all():
@@ -306,7 +307,14 @@ class ChallengeBase(models.Model):
 
         return list(classes)
 
-    def get_registered_domain(self):
+    @property
+    def host_filter(self):
+        host_filter = namedtuple("host_filter", ["host", "filter_tag"])
+        domain = self.registered_domain
+        return host_filter(domain, re.sub(r"\W+", "", domain))
+
+    @property
+    def registered_domain(self):
         """
         Copied from grandchallenge_tags
 
@@ -315,13 +323,14 @@ class ChallengeBase(models.Model):
         """
         return extract(self.get_absolute_url()).registered_domain
 
-    def get_host_link(self):
+    @property
+    def host_link(self):
         """
         Copied from grandchallenge tags
 
         Try to find out what framework this challenge is hosted on
         """
-        domain = self.get_registered_domain()
+        domain = self.registered_domain
 
         if domain:
             return f'<a href="http://{domain}">{domain}</a>'

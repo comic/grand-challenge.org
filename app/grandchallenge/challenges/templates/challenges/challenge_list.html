@@ -31,6 +31,39 @@
                         <div class="card mb-3">
                             <a class="collapsed"
                                data-toggle="collapse"
+                               href="#collapseHost">
+                                <div class="card-body">
+                                    <i class="fas fa-chevron-circle-right"
+                                       id="host-chevron">
+                                    </i>
+                                    <b>Host</b></div>
+                            </a>
+
+                            <div id="collapseHost" class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <form>
+                                        {% for host in hosts %}
+                                            {# Note that the host filter works slightly differently as we have no filter_tag attribute #}
+                                            <label id="{{ host.filter_tag }}"
+                                                   class="checkbox-inline font-weight-bold">
+                                                <input type="checkbox"
+                                                       class="filter"
+                                                       value="{{ host.host }}"
+                                                       id="{{ host.filter_tag }}">
+                                                <span>{{ host.host }}</span><span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ host.filter_tag }}"></span>
+                                            </label><br>
+                                        {% endfor %}
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <a class="collapsed"
+                               data-toggle="collapse"
                                href="#collapseModality">
                                 <div class="card-body">
                                     <i class="fas fa-chevron-circle-right"
@@ -280,10 +313,10 @@
                                             </dd>
                                         {% endif %}
 
-                                        {% if challenge.get_host_link %}
+                                        {% if challenge.host_link %}
                                             <dt>Hosted on</dt>
                                             <dd>
-                                                {{ challenge.get_host_link|safe }}
+                                                {{ challenge.host_link|safe }}
                                             </dd>
                                         {% endif %}
 
