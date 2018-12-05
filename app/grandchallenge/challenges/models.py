@@ -8,7 +8,6 @@ from collections import namedtuple
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import CICharField, ArrayField
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
