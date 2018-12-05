@@ -91,3 +91,4 @@ app/celerybeat-schedule
 
 # Local postgres data
 postgres_data/
+

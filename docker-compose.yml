@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: comic
       POSTGRES_DB: comic
     ports:
-      - "5432:5432"
+      - "5432:5432" # Only required for running django locally
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
@@ -80,7 +80,7 @@ services:
     command: redis-server --appendonly yes
     restart: always
     ports:
-    - "6379:6379"
+      - "6379:6379" # Only required for running django locally
 
   celery_worker:
     image: grandchallenge/web-test:latest
