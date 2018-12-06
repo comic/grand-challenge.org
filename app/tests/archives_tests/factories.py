@@ -1,5 +1,5 @@
 from grandchallenge.archives.models import Archive
-from tests.datastructures_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import RetinaImageFactory
 
 
 class ArchiveFactory(factory.DjangoModelFactory):

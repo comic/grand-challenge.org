@@ -16,7 +16,7 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
 )
-from tests.datastructures_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.factories import UserFactory
 
 

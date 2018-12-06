@@ -4,7 +4,7 @@ import factory.fuzzy
 import datetime
 import pytz
 from grandchallenge.registrations.models import OctObsRegistration
-from tests.datastructures_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.factories import UserFactory
 from grandchallenge.retina_images.models import RetinaImage
 

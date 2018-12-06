@@ -1,7 +1,5 @@
 import pytest
-from tests.datastructures_tests.factories import (
-    RetinaImageFactory,
-)
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory

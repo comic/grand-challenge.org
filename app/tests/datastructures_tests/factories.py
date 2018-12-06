@@ -1,44 +1,8 @@
-import factory.fuzzy
-import random
 from grandchallenge.retina_images.models import RetinaImage
 from tests.archives_tests.factories import ArchiveFactory
 from tests.patients_tests.factories import PatientFactory
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.studies_tests.factories import StudyFactory
-
-
-# class SeriesFactory(factory.DjangoModelFactory):
-#     class Meta:
-#         model = Series
-#
-#     identifier = factory.Sequence(lambda n: "Series {}".format(n))
-#     study = factory.SubFactory(StudyFactory)
-#     left_or_right_eye = factory.Iterator(
-#         [x[0] for x in Series.LEFT_OR_RIGHT_EYE_CHOICES]
-#     )
-#     voxel_size = [
-#         random.uniform(0.0, 500.0),
-#         random.uniform(0.0, 500.0),
-#         random.uniform(0.0, 500.0),
-#     ]
-
-
-class RetinaImageFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = RetinaImage
-
-    name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
-    image = factory.django.ImageField()
-    study = factory.SubFactory(StudyFactory)
-    modality = factory.Iterator([x[0] for x in RetinaImage.MODALITY_CHOICES])
-    number = factory.Sequence(lambda n: n)
-    eye_choice = factory.Iterator(
-        [x[0] for x in RetinaImage.EYE_CHOICES]
-    )
-    voxel_size = [
-        random.uniform(0.0, 500.0),
-        random.uniform(0.0, 500.0),
-        random.uniform(0.0, 500.0),
-    ]
 
 
 def create_oct_series(**paremeters):

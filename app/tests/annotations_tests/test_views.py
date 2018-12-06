@@ -10,7 +10,7 @@ from tests.annotations_tests.factories import (
     SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
 )
-from tests.datastructures_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.factories import UserFactory
 from grandchallenge.annotations.views import (
     ETDRSGridAnnotationViewSet,

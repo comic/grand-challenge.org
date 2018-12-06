@@ -8,9 +8,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.factories import UserFactory
-from tests.datastructures_tests.factories import (
-    RetinaImageFactory,
-)
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory

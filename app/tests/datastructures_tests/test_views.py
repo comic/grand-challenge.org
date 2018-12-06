@@ -5,9 +5,9 @@ from PIL import Image as PILImage
 import numpy as np
 import io
 from tests.datastructures_tests.factories import (
-    RetinaImageFactory,
     create_oct_series,
 )
+from tests.retina_images_tests.factories import RetinaImageFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
