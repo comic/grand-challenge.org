@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions, authentication
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -22,6 +22,7 @@ from grandchallenge.annotations.models import PolygonAnnotationSet, LandmarkAnno
 
 class ArchiveView(APIView):
     permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
 
     @staticmethod
     def create_response_object():
@@ -143,6 +144,8 @@ class ArchiveView(APIView):
 
 
 class ImageView(RetinaAPIPermissionMixin, View):
+    authentication_classes = (authentication.SessionAuthentication,)
+
     def get(
         self,
         request,
@@ -194,6 +197,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
 
 class DataView(APIView):
     permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
 
     @staticmethod
     def coordinate_to_dict(coordinate):
