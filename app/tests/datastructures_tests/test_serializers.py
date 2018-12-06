@@ -2,8 +2,8 @@ import pytest
 from tests.datastructures_tests.factories import (
     RetinaImageFactory,
     StudyFactory,
-    PatientFactory,
 )
+from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.patients.serializers import PatientSerializer

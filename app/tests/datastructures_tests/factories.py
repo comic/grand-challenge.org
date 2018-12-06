@@ -2,21 +2,10 @@ import factory.fuzzy
 import random
 import datetime
 import pytz
-from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.retina_images.models import RetinaImage
 from tests.archives_tests.factories import ArchiveFactory
-
-
-class PatientFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Patient
-
-    name = factory.Sequence(lambda n: "Patient {}".format(n))
-    # archive = factory.SubFactory(ArchiveFactory)
-    # patient_name = factory.Sequence(lambda n: "Patient {} name".format(n))
-    # birth_date = factory.fuzzy.FuzzyDate(datetime.date(1950, 1, 1))
-    # sex = factory.Iterator([x[0] for x in Patient.PATIENT_SEX_CHOICES])
+from tests.patients_tests.factories import PatientFactory
 
 
 class StudyFactory(factory.DjangoModelFactory):

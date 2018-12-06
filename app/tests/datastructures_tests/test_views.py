@@ -5,11 +5,11 @@ from PIL import Image as PILImage
 import numpy as np
 import io
 from tests.datastructures_tests.factories import (
-    PatientFactory,
     StudyFactory,
     RetinaImageFactory,
     create_oct_series,
 )
+from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.views import ArchiveViewSet
 from grandchallenge.patients.views import PatientViewSet
