@@ -1,19 +1,19 @@
 import pytest
-from tests.studies_tests.factories import StudyFactory
+from tests.patients_tests.factories import PatientFactory
 from tests.model_helpers import batch_test_factories
 
 
 @pytest.mark.django_db
-class TestStudiesModels:
+class TestPatientsModels:
     # test functions are added dynamically to this class
     def test_study_str(self):
-        model = StudyFactory()
+        model = PatientFactory()
         assert str(model) == "<{} {}>".format(
             model.__class__.__name__, model.name
         )
 
 
 factories = {
-    "study": StudyFactory,
+    "archive": PatientFactory,
 }
-batch_test_factories(factories, TestStudiesModels)
+batch_test_factories(factories, TestPatientsModels)
