@@ -1,3 +1,4 @@
+import factory
 from grandchallenge.archives.models import Archive
 from tests.retina_images_tests.factories import RetinaImageFactory
 
