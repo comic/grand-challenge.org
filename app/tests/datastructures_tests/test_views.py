@@ -1,18 +1,16 @@
 import pytest
 from tests.retina_images_tests.factories import RetinaImageFactory
-from tests.retina_images_tests.test_views import image_actions, required_relations
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.views import ArchiveViewSet
 from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.studies.views import StudyViewSet
-from grandchallenge.retina_images.views import RetinaImageViewSet
 
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.studies.serializers import StudySerializer
-from grandchallenge.retina_images.serializers import RetinaImageSerializer
+from tests.studies_tests.test_views import required_relations
 
 from tests.viewset_helpers import batch_test_viewset_endpoints, VIEWSET_ACTIONS
 
@@ -49,16 +47,7 @@ batch_test_viewset_endpoints(
     serializer=PatientSerializer,
 )
 
-required_relations = {"patient": PatientFactory}
-batch_test_viewset_endpoints(
-    actions,
-    StudyViewSet,
-    "study",
-    StudyFactory,
-    TestViewsets,
-    required_relations,
-    serializer=StudySerializer,
-)
+
 #
 # required_relations = {"study": StudyFactory}
 # batch_test_viewset_endpoints(

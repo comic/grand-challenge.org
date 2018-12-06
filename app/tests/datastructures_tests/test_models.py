@@ -19,8 +19,6 @@ class TestDatastructuresModels:
 factories = {
     "archive": ArchiveFactory,
     "patient": PatientFactory,
-    "study": StudyFactory,
-    "image": RetinaImageFactory,
 }
 batch_test_factories(factories, TestDatastructuresModels)
 

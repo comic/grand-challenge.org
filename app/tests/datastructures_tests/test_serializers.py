@@ -29,18 +29,6 @@ serializers = {
         "serializer": PatientSerializer,
         "fields": ("id", "name"),
     },
-    "study": {
-        "unique": True,
-        "factory": StudyFactory,
-        "serializer": StudySerializer,
-        "fields": (
-            "id",
-            "name",
-            "datetime",
-            "patient",
-        ),
-    },
-
 }
 
 batch_test_serializers(serializers, TestDatastructuresSerializers)

@@ -11,10 +11,10 @@ from tests.model_helpers import batch_test_factories
 @pytest.mark.django_db
 class TestRetinaImagesModels:
     # test functions are added dynamically to this class
-    def test_default_datastructure_str(self):
-        archive = RetinaImageFactory()
-        assert str(archive) == "<{} {}>".format(
-            archive.__class__.__name__, archive.name
+    def test_retina_image_str(self):
+        model = RetinaImageFactory()
+        assert str(model) == "<{} {}>".format(
+            model.__class__.__name__, model.name
         )
 
 
