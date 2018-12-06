@@ -3,8 +3,8 @@ from tests.datastructures_tests.factories import (
     RetinaImageFactory,
     StudyFactory,
     PatientFactory,
-    ArchiveFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.studies.serializers import StudySerializer

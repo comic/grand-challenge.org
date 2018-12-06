@@ -9,11 +9,11 @@ from django.contrib.auth import get_user_model
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.factories import UserFactory
 from tests.datastructures_tests.factories import (
-    ArchiveFactory,
     PatientFactory,
     StudyFactory,
     RetinaImageFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.studies.models import Study
 
 
