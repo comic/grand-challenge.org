@@ -1,24 +1,9 @@
 import factory.fuzzy
 import random
-import datetime
-import pytz
-from grandchallenge.studies.models import Study
 from grandchallenge.retina_images.models import RetinaImage
 from tests.archives_tests.factories import ArchiveFactory
 from tests.patients_tests.factories import PatientFactory
-
-
-class StudyFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Study
-
-    name = factory.Sequence(lambda n: "Study {}".format(n))
-    patient = factory.SubFactory(PatientFactory)
-    datetime = factory.fuzzy.FuzzyDateTime(
-        datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
-    )
-    # referring_physicians_name = factory.fuzzy.FuzzyText()
-    # accession_number = factory.fuzzy.FuzzyText()
+from tests.studies_tests.factories import StudyFactory
 
 
 # class SeriesFactory(factory.DjangoModelFactory):

@@ -5,9 +5,9 @@ import numpy as np
 from pathlib import Path
 from tests.datastructures_tests.factories import (
     RetinaImageFactory,
-    StudyFactory,
     create_oct_series,
 )
+from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.retina_images.models import RetinaImage
