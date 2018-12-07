@@ -24,8 +24,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         if not valid:
             invalid_file_errors[file.name] = message
         else:
-
-            new_images.append(CreateTiffImageEntry(file))
+            new_images.append(CreateTiffImageEntry(file.name, file.absolute()))
             new_image_files.append(ImageFile(image=new_images[-1], file=File(file, name=file.name)))
             consumed_files.add(file.name)
 
@@ -96,9 +95,9 @@ def validate_tiff(path: Path):
         return False, str(e)
 
 
-def CreateTiffImageEntry(file):
+def CreateTiffImageEntry(filename, path: Path):
     # Reads the TIFF tags
-    tiff_file = tiff_lib.TiffFile(file.absolute)
+    tiff_file = tiff_lib.TiffFile(str(path))
     tiff_tags = tiff_file.pages[0].tags
 
     # Detects the color space and formats it correctly
@@ -111,7 +110,7 @@ def CreateTiffImageEntry(file):
 
     # Builds a new Image model item
     new_image = Image(
-        name=file.name,
+        name=filename,
         width=tiff_tags["ImageWidth"].value,
         height=tiff_tags["ImageLength"].value,
         depth=None,
