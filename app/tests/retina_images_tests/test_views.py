@@ -7,8 +7,8 @@ from django.urls import reverse
 from rest_framework import status
 
 from grandchallenge.retina_images.models import RetinaImage
-from tests.datastructures_tests.test_views import actions
-from tests.retina_images_tests.factories import RetinaImageFactory, create_oct_series
+from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_core_tests.factories import create_oct_series
 from tests.studies_tests.factories import StudyFactory
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.viewset_helpers import batch_test_viewset_endpoints, VIEWSET_ACTIONS
