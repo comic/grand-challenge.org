@@ -224,6 +224,7 @@ TEMPLATES = [
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
                 "grandchallenge.core.contextprocessors.contextprocessors.subdomain_absolute_uri",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
+                "grandchallenge.core.contextprocessors.contextprocessors.logout_url",
             ]
         },
     }

@@ -54,3 +54,7 @@ def subdomain_absolute_uri(request):
 
 def google_analytics_id(*_, **__):
     return {"google_analytics_id": settings.GOOGLE_ANALYTICS_ID}
+
+
+def logout_url():
+    return settings.LOGOUT_URL
