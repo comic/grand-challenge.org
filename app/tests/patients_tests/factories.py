@@ -1,3 +1,4 @@
+import factory
 from grandchallenge.patients.models import Patient
 
 
