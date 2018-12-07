@@ -56,5 +56,5 @@ def google_analytics_id(*_, **__):
     return {"google_analytics_id": settings.GOOGLE_ANALYTICS_ID}
 
 
-def logout_url():
-    return settings.LOGOUT_URL
+def logout_url(request):
+    return {"LOGOUT_URL": settings.LOGOUT_URL}
