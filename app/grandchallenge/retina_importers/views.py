@@ -230,8 +230,25 @@ class AbstractUploadView(generics.CreateAPIView):
 
     def trace_image_through_parents(self, data, patient):
         try:
-            study = Study.objects.get(name=data["study_identifier"], patient=patient)
-            image = RetinaImage.objects.get(name=data["image_identifier"], study=study)
+            study = Study.objects.get(
+                name=data["study_identifier"], patient=patient
+            )
+            if data["image_identifier"] == "obs_000":
+                image = RetinaImage.objects.get(
+                    name=data["series_identifier"],
+                    modality=RetinaImage.MODALITY_OBS,
+                    study=study,
+                )
+            elif data["image_identifier"] == "obs_000":
+                image = RetinaImage.objects.get(
+                    name=data["series_identifier"],
+                    modality=RetinaImage.MODALITY_OCT,
+                    study=study,
+                )
+            else:
+                image = RetinaImage.objects.get(
+                    name=data["image_identifier"], study=study
+                )
         except ObjectDoesNotExist:
             error = "Non-existant object. Data: {}".format(data)
             self.response.update({"errors": error})
