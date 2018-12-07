@@ -21,7 +21,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
     for file in path.iterdir():
         valid, message = validate_tiff(file.absolute())
-        file.
+
         if not valid:
             invalid_file_errors[file.name] = message
         else:
