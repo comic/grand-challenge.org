@@ -95,7 +95,12 @@ class UploadImage(generics.CreateAPIView):
         study_valid = study_serializer.is_valid()
         image_valid = image_serializer.is_valid()
 
-        if not archive_valid or not patient_valid or not study_valid or not image_valid:
+        if (
+            not archive_valid
+            or not patient_valid
+            or not study_valid
+            or not image_valid
+        ):
             errors = {
                 "archive_errors": archive_serializer.errors,
                 "patient_errors": patient_serializer.errors,
@@ -105,7 +110,9 @@ class UploadImage(generics.CreateAPIView):
             return JsonResponse(errors, status=status.HTTP_400_BAD_REQUEST)
 
         # get existing or create new data structure models in database
-        archive, archive_created = Archive.objects.get_or_create(**archive_dict)
+        archive, archive_created = Archive.objects.get_or_create(
+            **archive_dict
+        )
         patient, patient_created = Patient.objects.update_or_create(
             name=patient_dict["name"],
             defaults=exclude_val_from_dict(patient_dict, "name"),
@@ -171,7 +178,9 @@ class AbstractUploadView(generics.CreateAPIView):
     serializer_class = None  # Upload data serializer
     child_serializer_class = None  # Child model serializer
     parent_model_class = None  # parent model
-    child_model_class = None  # child model (for models in request.data.get("data")
+    child_model_class = (
+        None
+    )  # child model (for models in request.data.get("data")
 
     def handle_validation(self, serializer, request):
         serializer = serializer(data=request.data)
@@ -181,7 +190,9 @@ class AbstractUploadView(generics.CreateAPIView):
             return None, None, None, None, None
 
         try:
-            archive = Archive.objects.get(name=request.data.get("archive_identifier"))
+            archive = Archive.objects.get(
+                name=request.data.get("archive_identifier")
+            )
         except Archive.DoesNotExist:
             r = "Archive does not exist: {}".format(
                 request.data.get("archive_identifier")
@@ -189,7 +200,9 @@ class AbstractUploadView(generics.CreateAPIView):
             self.response.update({"errors": [r]})
             return None, None, None, None, None
 
-        patient = Patient.objects.get(name=request.data.get("patient_identifier"))
+        patient = Patient.objects.get(
+            name=request.data.get("patient_identifier")
+        )
 
         grader_group, group_created = Group.objects.get_or_create(
             name=settings.RETINA_GRADERS_GROUP_NAME
@@ -201,7 +214,9 @@ class AbstractUploadView(generics.CreateAPIView):
 
         if (
             user_created
-            or grader.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).count()
+            or grader.groups.filter(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            ).count()
             == 0
         ):
             grader_group.user_set.add(grader)
@@ -236,7 +251,9 @@ class AbstractUploadView(generics.CreateAPIView):
 
             class_name = model.__class__.__name__
 
-            msg = "{} already exists for {}".format(class_name, ", ".join(args_arr))
+            msg = "{} already exists for {}".format(
+                class_name, ", ".join(args_arr)
+            )
             self.response.update({"errors": {"duplicate": msg}})
 
             return model
@@ -248,7 +265,9 @@ class AbstractUploadView(generics.CreateAPIView):
             self.serializer_class, request
         )
         if "errors" in self.response:
-            return JsonResponse(self.response, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(
+                self.response, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if self.parent_model_class == LandmarkAnnotationSet:
             parent_model = self.parent_model_class(
@@ -259,11 +278,15 @@ class AbstractUploadView(generics.CreateAPIView):
                 parent_model,
                 {
                     "grader": grader.username,
-                    "created": annotation_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z"),
+                    "created": annotation_datetime.strftime(
+                        "%Y-%m-%dT%H:%M:%S.%f%z"
+                    ),
                 },
             )
             if "errors" in self.response:
-                return JsonResponse(self.response, status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse(
+                    self.response, status=status.HTTP_400_BAD_REQUEST
+                )
 
         if self.child_model_class:
             child_bulk_save_models = []
@@ -272,7 +295,8 @@ class AbstractUploadView(generics.CreateAPIView):
                 image = self.trace_image_through_parents(annotation, patient)
                 if "errors" in self.response:
                     return JsonResponse(
-                        self.response, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        self.response,
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
 
                 for k in self.delete_keys:
@@ -298,7 +322,7 @@ class AbstractUploadView(generics.CreateAPIView):
                         grader=grader,
                         created=annotation_datetime,
                         image=image,
-                        **annotation
+                        **annotation,
                     )
 
                     saved_model = self.create_or_return_duplicate_error_message(
@@ -328,7 +352,8 @@ class AbstractUploadView(generics.CreateAPIView):
                             if len(polygon) > 0:
                                 child_bulk_save_models.append(
                                     SinglePolygonAnnotation(
-                                        value=polygon, annotation_set=saved_model
+                                        value=polygon,
+                                        annotation_set=saved_model,
                                     )
                                 )
                         if len(child_bulk_save_models) > 0:
@@ -338,7 +363,9 @@ class AbstractUploadView(generics.CreateAPIView):
                             child_bulk_save_models = []
 
             if len(child_bulk_save_models) > 0:
-                self.child_model_class.objects.bulk_create(child_bulk_save_models)
+                self.child_model_class.objects.bulk_create(
+                    child_bulk_save_models
+                )
             self.response.update(
                 {
                     "success": True,
@@ -353,7 +380,9 @@ class AbstractUploadView(generics.CreateAPIView):
 
 class UploadLandmarkAnnotationSet(AbstractUploadView):
     queryset = LandmarkAnnotationSet.objects.all()
-    serializer_class = UploadLandmarkAnnotationSetSerializer  # Upload data serializer
+    serializer_class = (
+        UploadLandmarkAnnotationSetSerializer
+    )  # Upload data serializer
     child_serializer_class = (
         SingleLandmarkAnnotationSerializer
     )  # Child model serializer
@@ -365,8 +394,12 @@ class UploadLandmarkAnnotationSet(AbstractUploadView):
 
 class UploadETDRSGridAnnotation(AbstractUploadView):
     queryset = ETDRSGridAnnotation.objects.all()
-    serializer_class = UploadETDRSGridAnnotationSerializer  # Upload data serializer
-    child_serializer_class = ETDRSGridAnnotationSerializer  # Child model serializer
+    serializer_class = (
+        UploadETDRSGridAnnotationSerializer
+    )  # Upload data serializer
+    child_serializer_class = (
+        ETDRSGridAnnotationSerializer
+    )  # Child model serializer
     parent_model_class = None  # parent model
     child_model_class = (
         ETDRSGridAnnotation
@@ -375,8 +408,12 @@ class UploadETDRSGridAnnotation(AbstractUploadView):
 
 class UploadMeasurementAnnotation(AbstractUploadView):
     queryset = MeasurementAnnotation.objects.all()
-    serializer_class = UploadMeasurementAnnotationSerializer  # Upload data serializer
-    child_serializer_class = MeasurementAnnotationSerializer  # Child model serializer
+    serializer_class = (
+        UploadMeasurementAnnotationSerializer
+    )  # Upload data serializer
+    child_serializer_class = (
+        MeasurementAnnotationSerializer
+    )  # Child model serializer
     parent_model_class = None  # parent model
     child_model_class = (
         MeasurementAnnotation
