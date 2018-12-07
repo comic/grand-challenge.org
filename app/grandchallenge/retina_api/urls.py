@@ -12,7 +12,8 @@ urlpatterns = [
     path("", include(router.urls)),
     path(
         "archives/",
-        cache_page(settings.RETINA_ARCHIVES_REQUEST_CACHE_TIME)(views.ArchiveView.as_view()),
+        # cache_page(settings.RETINA_ARCHIVES_REQUEST_CACHE_TIME)(views.ArchiveView.as_view()),
+        views.ArchiveView.as_view(),
         name="archives-api-view",
     ),
     path(
