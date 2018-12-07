@@ -8,7 +8,10 @@ from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
+    client_login,
 )
+
+
 
 
 @pytest.mark.django_db
@@ -18,17 +21,17 @@ class TestArchiveIndexAPIEndpoints:
         cache.clear()
         url = reverse("retina:archives-api-view")
         response = client.get(url, HTTP_ACCEPT="application/json")
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_archive_view_auth(self, client):
         # Create data
         create_datastructures_data()
 
-        # get authentication token header
-        auth_header = get_auth_token_header("normal")
+        # login client
+        client, _ = client_login(client, user="normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json", **auth_header)
+        response = client.get(url, HTTP_ACCEPT="application/json")
         assert response.status_code == status.HTTP_200_OK
 
     def test_archive_view_returns_correct_data(self, client):
@@ -39,11 +42,11 @@ class TestArchiveIndexAPIEndpoints:
             create_datastructures_data()
         )
 
-        # get authentication token header
-        auth_header = get_auth_token_header("normal")
+        # login client
+        client, _ = client_login(client, user="normal")
 
         url = reverse("retina:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json", **auth_header)
+        response = client.get(url, HTTP_ACCEPT="application/json")
         response_data = json.loads(response.content)
         # check if correct data is sent
         expected_response_data = {

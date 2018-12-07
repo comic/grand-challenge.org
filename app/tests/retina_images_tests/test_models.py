@@ -14,9 +14,7 @@ class TestRetinaImagesModels:
     # test functions are added dynamically to this class
     def test_retina_image_str(self):
         model = RetinaImageFactory()
-        assert str(model) == "<{} {}>".format(
-            model.__class__.__name__, model.name
-        )
+        assert str(model) == "<{} {} {}>".format(model.__class__.__name__, model.name, model.modality)
 
 
 factories = {

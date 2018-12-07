@@ -15,6 +15,19 @@ from tests.annotations_tests.factories import (
     LandmarkAnnotationSetFactory,
     SingleLandmarkAnnotationFactory,
 )
+from tests.viewset_helpers import TEST_USER_CREDENTIALS
+from django.contrib.auth import get_user_model
+
+
+def client_login(client, user=None):
+    # login user
+    if user == "staff":
+        user = get_user_model().objects.create_superuser(**TEST_USER_CREDENTIALS)
+        client.login(**TEST_USER_CREDENTIALS)
+    elif user == "normal":
+        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
+        client.login(**TEST_USER_CREDENTIALS)
+    return client, user
 
 
 def create_datastructures_data():
@@ -169,24 +182,20 @@ def create_data_test_methods(data_type):
     def test_load_no_data(self, client):
         ds = create_some_datastructure_data()
 
-        # get token and grader user
-        grader, token = get_user_with_token(is_staff=False)
-        # get authentication token header
-        auth_header = get_auth_token_header("_", token=token)
+        # login client
+        client, grader = client_login(client, user="normal")
 
         url = reverse(
             "retina:data-api-view",
             args=[data_type, grader.username, ds["archive"].name, ds["patient"].name],
         )
-        response = client.get(url, **auth_header)
+        response = client.get(url)
         assert status.HTTP_200_OK == response.status_code
         assert b'{"status":"no data","data":{}}' == response.content
 
     def test_load_save_data(self, client):
-        # get token and grader user
-        grader, token = get_user_with_token(is_staff=False)
-        # get authentication token header
-        auth_header = get_auth_token_header("_", token=token)
+        # login client
+        client, grader = client_login(client, user="normal")
 
         for archive in ("Rotterdam", "Australia"):
             if archive == "Rotterdam" and data_type in ("Measure", "Fovea"):
@@ -205,7 +214,7 @@ def create_data_test_methods(data_type):
                     ds["patient"].name,
                 ],
             )
-            response = client.get(url, **auth_header)
+            response = client.get(url)
 
             assert status.HTTP_200_OK == response.status_code
             response_content = json.loads(response.content)
@@ -223,7 +232,6 @@ def create_data_test_methods(data_type):
                         url,
                         json.dumps(save_request_data),
                         content_type="application/json",
-                        **auth_header,
                     )
 
                     assert status.HTTP_201_CREATED == response.status_code
@@ -244,7 +252,6 @@ def create_data_test_methods(data_type):
                     url,
                     json.dumps(save_request_data),
                     content_type="application/json",
-                    **auth_header,
                 )
 
                 assert status.HTTP_201_CREATED == response.status_code
