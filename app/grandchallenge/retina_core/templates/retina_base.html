@@ -81,6 +81,7 @@
           /* Custom data */
           STATIC_URL = "{% get_static_prefix %}";
           MEDIA_URL = "{% get_media_prefix %}";
+          LOGOUT_URL = "{{ LOGOUT_URL }}";
           {%  load tz %}
           {%  get_current_timezone as TIME_ZONE %}
           TIME_ZONE = "{{ TIME_ZONE }}";
