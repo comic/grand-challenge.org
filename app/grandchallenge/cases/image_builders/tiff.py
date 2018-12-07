@@ -25,10 +25,10 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         if not valid:
             invalid_file_errors[file.name] = message
         else:
-            temp_file = TemporaryFile(file.absolute())
-
             new_images.append(CreateTiffImageEntry(file.name, file.absolute()))
-            new_image_files.append(ImageFile(image=new_images[-1], file=File(temp_file, name=file.name)))
+            new_image_files.append(ImageFile(
+                image=new_images[-1],
+                file=File(open(file.absolute(), "rb"), name=file.name)))
             consumed_files.add(file.name)
 
     return ImageBuilderResult(
