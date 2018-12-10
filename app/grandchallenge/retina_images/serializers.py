@@ -10,7 +10,7 @@ class RetinaImageSerializer(serializers.ModelSerializer):
         queryset=Study.objects.all(), required=False
     )
     # allow image to be empty because the model is not saved yet when serializing for validation
-    image = ImageSerializer(read_only=True)
+    image = ImageSerializer(read_only=True, required=False)
 
     class Meta:
         model = RetinaImage
