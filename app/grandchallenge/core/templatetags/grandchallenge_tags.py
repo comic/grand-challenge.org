@@ -18,6 +18,7 @@ from django.core.files.storage import DefaultStorage
 from django.db.models import Count
 from django.template import defaulttags
 from django.urls import reverse as reverse_djangocore
+from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -328,6 +329,24 @@ def main_page_url():
 
     else:
         return "/"
+
+
+@register.simple_tag
+def google_group(group_name):
+    """Allows challenge admins to add google groups to pages"""
+    return mark_safe(
+        f"""
+    <iframe 
+        class="w-100"
+        id="forum_embed" 
+        data-groupname="{group_name}"
+        src="javascript:void(0)"
+        scrolling="no"
+        frameborder="0"
+        height="700px">
+    </iframe>
+    """
+    )
 
 
 @register.tag(
