@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import RetinaImage
 from grandchallenge.studies.models import Study
+from grandchallenge.cases.serializers import ImageSerializer
 
 
 class RetinaImageSerializer(serializers.ModelSerializer):
@@ -9,7 +10,7 @@ class RetinaImageSerializer(serializers.ModelSerializer):
         queryset=Study.objects.all(), required=False
     )
     # allow image to be empty because the model is not saved yet when serializing for validation
-    image = serializers.ImageField(required=False, allow_null=True)
+    image = ImageSerializer(read_only=True)
 
     class Meta:
         model = RetinaImage
@@ -17,10 +18,7 @@ class RetinaImageSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "study",
-            "number",
             "image",
-            "height",
-            "width",
             "modality",
             "eye_choice",
             "voxel_size",

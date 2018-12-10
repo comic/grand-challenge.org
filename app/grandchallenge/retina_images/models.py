@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.postgres.fields import CICharField, ArrayField
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.studies.models import Study
+from grandchallenge.cases.models import Image
 
 
 class RetinaImage(UUIDModel):
@@ -14,12 +15,13 @@ class RetinaImage(UUIDModel):
 
     study = models.ForeignKey(Study, on_delete=models.CASCADE)
 
-    number = models.IntegerField()
-    image = models.ImageField(
-        max_length=255, upload_to="images/", height_field="height", width_field="width"
-    )
-    height = models.PositiveIntegerField(blank=True, null=True)
-    width = models.PositiveIntegerField(blank=True, null=True)
+    # number = models.IntegerField()
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    # image = models.ImageField(
+    #     max_length=255, upload_to="images/", height_field="height", width_field="width"
+    # )
+    # height = models.PositiveIntegerField(blank=True, null=True)
+    # width = models.PositiveIntegerField(blank=True, null=True)
 
     MODALITY_CF = "CF"
     MODALITY_OCT = "OCT"
@@ -89,4 +91,4 @@ class RetinaImage(UUIDModel):
         return npy
 
     class Meta(UUIDModel.Meta):
-        unique_together = ("study", "name", "number", "modality")
+        unique_together = ("study", "name", "modality")
