@@ -10,10 +10,8 @@ class StudyInline(admin.StackedInline):
 
 class StudyAdmin(admin.ModelAdmin):
     search_fields = (
-        "patient__identifier",
-        "identifier",
-        "referring_physicians_name",
-        "accession_number",
+        "patient__name",
+        "name",
     )
     list_filter = ("datetime",)
     inlines = [ImageInline]
