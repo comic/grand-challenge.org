@@ -49,7 +49,7 @@ class UploadImage(generics.CreateAPIView):
     permission_classes = (permissions.IsAdminUser,)
     parser_classes = (parsers.MultiPartParser,)
 
-    def post(self, request, *args, **kwargs):
+    def create_model_dicts(self, request):
         # generate data dictionaries, excluding relations
         archive_dict = {"name": request.data.get("archive_identifier")}
         patient_dict = {"name": request.data.get("patient_identifier")}
@@ -66,7 +66,7 @@ class UploadImage(generics.CreateAPIView):
 
         image_dict = {
             "name": request.data.get("image_identifier"),
-            "number": request.data.get("image_number"),
+            # "number": request.data.get("image_number"),
             "modality": upperize(request.data.get("image_modality")),
             "eye_choice": upperize(request.data.get("image_eye_choice")),
         }
@@ -107,6 +107,17 @@ class UploadImage(generics.CreateAPIView):
                 "study_errors": study_serializer.errors,
                 "image_errors": image_serializer.errors,
             }
+        else:
+            errors = None
+
+        return errors, archive_dict, patient_dict, study_dict, image_dict
+
+    def post(self, request, *args, **kwargs):
+        errors, archive_dict, patient_dict, study_dict, image_dict = self.create_model_dicts(
+            request
+        )
+
+        if errors:
             return JsonResponse(errors, status=status.HTTP_400_BAD_REQUEST)
 
         # get existing or create new data structure models in database
@@ -140,9 +151,9 @@ class UploadImage(generics.CreateAPIView):
             img.image.save(image_name, image_file, save=True)
             archive.images.add(img)
             image_created = True
-        except Exception:
+        except Exception as e:
             return JsonResponse(
-                {"error": Exception}, status=status.HTTP_400_BAD_REQUEST
+                {"error": e}, status=status.HTTP_400_BAD_REQUEST
             )
 
         # Create response
