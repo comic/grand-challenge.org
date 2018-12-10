@@ -13,7 +13,7 @@ class ImageAdmin(admin.ModelAdmin):
         "name",
         "study__name",
         "study__patient__name",
-        "archive_set__name",
+        "archive__name",
         "modality",
     )
     list_filter = ("modality",)
