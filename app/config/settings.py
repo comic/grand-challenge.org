@@ -407,7 +407,13 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "abbr": ["title"],
     "acronym": ["title"],
     "div": ["data-geochart"],  # Required for geocharts
-    "iframe": ["src", "sandbox"],  # For continuous registration challenge
+    "iframe": [
+        "src",
+        "sandbox",
+        "data-groupname",
+        "scrolling",
+        "height",
+    ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
