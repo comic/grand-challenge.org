@@ -93,10 +93,10 @@ class ArchiveView(APIView):
         def generate_images(image_list):
             for image in image_list.all():
                 if image.modality == RetinaImage.MODALITY_OCT:
-                    if (
-                        image.number != 1
-                    ):  # only add data for first oct image in set
-                        continue
+                    # if (
+                    #     image.number != 1
+                    # ):  # only add data for first oct image in set
+                    #     continue
                     # oct image add info
                     try:
                         obs_list = image.oct_image.get().registration_values
@@ -185,9 +185,10 @@ class ImageView(RetinaAPIPermissionMixin, View):
             if image_modality == "obs_000":
                 image = image.get(modality=RetinaImage.MODALITY_OBS)
             elif image_modality == "oct":
-                qs = image.filter(modality=RetinaImage.MODALITY_OCT)
-                number = len(qs)
-                image = qs.get(number=number // 2)
+                qs = image.get(modality=RetinaImage.MODALITY_OCT)
+                # qs = image.filter(modality=RetinaImage.MODALITY_OCT)
+                # number = len(qs)
+                # image = qs.get(number=number // 2)
             else:
                 image = image.get()
         except MultipleObjectsReturned:
