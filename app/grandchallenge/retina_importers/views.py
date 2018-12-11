@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions, generics, parsers, status, serializers
 import datetime
+import uuid
 from django.http.response import JsonResponse
 from django.db import IntegrityError, transaction
 from django.core.files import File
@@ -55,7 +56,6 @@ class UploadImage(generics.CreateAPIView):
             request
         )
 
-        print(image_dict)
         if errors:
             return JsonResponse(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -87,13 +87,16 @@ class UploadImage(generics.CreateAPIView):
             )
 
             # Create ImageFile object without linking image file and without saving
-            img_file_model = ImageFile(image=img)
-            # Save image fieldfile into ImageFile, also triggers ImageFile model save method
-            image_file = File(request.data["image"])
-            image_name = retina_img.create_image_file_name(
-                request.data.get("image")
-            )
-            img_file_model.file.save(image_name, image_file, save=True)
+            random_uuid_str = str(uuid.uuid4())
+            for image_key in ("image_hd", "image_raw"):
+                img_file_model = ImageFile(image=img)
+
+                # Save image fieldfile into ImageFile, also triggers ImageFile model save method
+                image_file = File(request.data[image_key])
+                extension = "raw" if image_key == "image_raw" else "mhd"
+                image_name = "{}.{}".format(random_uuid_str, extension)
+                img_file_model.file.save(image_name, image_file, save=True)
+
             archive.images.add(retina_img)
             image_created = True
         except Exception as e:
