@@ -33,6 +33,8 @@ from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
 from grandchallenge.retina_images.models import RetinaImage
 from grandchallenge.retina_images.serializers import RetinaImageSerializer
+from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.serializers import ImageSerializer
 
 from .serializers import (
     UploadETDRSGridAnnotationSerializer,
@@ -45,78 +47,15 @@ from .serializers import (
 
 class UploadImage(generics.CreateAPIView):
     queryset = RetinaImage.objects.all()
-    serializer_class = RetinaImageSerializer
     permission_classes = (permissions.IsAdminUser,)
     parser_classes = (parsers.MultiPartParser,)
 
-    def create_model_dicts(self, request):
-        # generate data dictionaries, excluding relations
-        archive_dict = {"name": request.data.get("archive_identifier")}
-        patient_dict = {"name": request.data.get("patient_identifier")}
-        study_datetime = None
-        if request.data.get("study_datetime") is not None:
-            study_datetime = datetime.datetime.strptime(
-                request.data.get("study_datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"
-            )
-
-        study_dict = {
-            "name": request.data.get("study_identifier"),
-            "datetime": study_datetime,
-        }
-
-        image_dict = {
-            "name": request.data.get("image_identifier"),
-            # "number": request.data.get("image_number"),
-            "modality": upperize(request.data.get("image_modality")),
-            "eye_choice": upperize(request.data.get("image_eye_choice")),
-        }
-        if (
-            request.data.get("series_voxel_size_axial") is not None
-            and request.data.get("series_voxel_size_lateral") is not None
-            and request.data.get("series_voxel_size_transversal") is not None
-        ):
-            image_dict.update(
-                {
-                    "voxel_size": [
-                        request.data.get("series_voxel_size_axial"),
-                        request.data.get("series_voxel_size_lateral"),
-                        request.data.get("series_voxel_size_transversal"),
-                    ]
-                }
-            )
-
-        # Perform validation with serializers
-        archive_serializer = ArchiveSerializer(data=archive_dict)
-        patient_serializer = PatientSerializer(data=patient_dict)
-        study_serializer = StudySerializer(data=study_dict)
-        image_serializer = RetinaImageSerializer(data=image_dict)
-        archive_valid = archive_serializer.is_valid()
-        patient_valid = patient_serializer.is_valid()
-        study_valid = study_serializer.is_valid()
-        image_valid = image_serializer.is_valid()
-
-        if (
-            not archive_valid
-            or not patient_valid
-            or not study_valid
-            or not image_valid
-        ):
-            errors = {
-                "archive_errors": archive_serializer.errors,
-                "patient_errors": patient_serializer.errors,
-                "study_errors": study_serializer.errors,
-                "image_errors": image_serializer.errors,
-            }
-        else:
-            errors = None
-
-        return errors, archive_dict, patient_dict, study_dict, image_dict
-
     def post(self, request, *args, **kwargs):
-        errors, archive_dict, patient_dict, study_dict, image_dict = self.create_model_dicts(
+        errors, archive_dict, patient_dict, study_dict, retina_image_dict, image_dict = self.create_model_dicts(
             request
         )
 
+        print(image_dict)
         if errors:
             return JsonResponse(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -133,23 +72,29 @@ class UploadImage(generics.CreateAPIView):
             name=study_dict["name"],
             defaults=exclude_val_from_dict(study_dict, "name"),
         )
-
+        img, img_created = Image.objects.get_or_create(**image_dict)
         image_created = False
-        img = None
         # Check if image already exists in database
         try:
-            img = RetinaImage.objects.get(study=study, **image_dict)
+            retina_img = RetinaImage.objects.get(
+                study=study, image=img, **retina_image_dict
+            )
             # RetinaImage already exists. Do nothing and return response
         except RetinaImage.DoesNotExist:
             # RetinaImage does not exist yet.
-            # Create image object without linking image file and without saving
-            img = RetinaImage(study=study, **image_dict)
+            retina_img = RetinaImage.objects.create(
+                study=study, image=img, **retina_image_dict
+            )
 
-            # Save image fieldfile into RetinaImage, also triggers RetinaImage model save method
-            image_file = File(request.data.get("image"))
-            image_name = img.create_image_file_name(request.data.get("image"))
-            img.image.save(image_name, image_file, save=True)
-            archive.images.add(img)
+            # Create ImageFile object without linking image file and without saving
+            img_file_model = ImageFile(image=img)
+            # Save image fieldfile into ImageFile, also triggers ImageFile model save method
+            image_file = File(request.data["image"])
+            image_name = retina_img.create_image_file_name(
+                request.data.get("image")
+            )
+            img_file_model.file.save(image_name, image_file, save=True)
+            archive.images.add(retina_img)
             image_created = True
         except Exception as e:
             return JsonResponse(
@@ -166,14 +111,108 @@ class UploadImage(generics.CreateAPIView):
             "patient": PatientSerializer(patient).data,
             "study_created": study_created,
             "study": StudySerializer(study).data,
-            "image_created": image_created,
-            "image": RetinaImageSerializer(img).data,
+            "retina_image_created": image_created,
+            "retina_image": RetinaImageSerializer(retina_img).data,
+            "image_created": img_created,
+            "image": ImageSerializer(img).data
         }
         response_status = status.HTTP_201_CREATED
         if not image_created:
             response_status = status.HTTP_400_BAD_REQUEST
 
         return JsonResponse(response_obj, status=response_status)
+
+    def create_model_dicts(self, request):
+        # generate data dictionaries, excluding relations
+        archive_dict = {"name": request.data.get("archive_identifier")}
+        patient_dict = {"name": request.data.get("patient_identifier")}
+        study_datetime = None
+        if request.data.get("study_datetime") is not None:
+            study_datetime = datetime.datetime.strptime(
+                request.data.get("study_datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"
+            )
+
+        study_dict = {
+            "name": request.data.get("study_identifier"),
+            "datetime": study_datetime,
+        }
+
+        retina_image_dict = {
+            "name": request.data.get("image_identifier"),
+            # "number": request.data.get("image_number"),
+            "modality": upperize(request.data.get("image_modality")),
+            "eye_choice": upperize(request.data.get("image_eye_choice")),
+        }
+        if (
+            request.data.get("series_voxel_size_axial") is not None
+            and request.data.get("series_voxel_size_lateral") is not None
+            and request.data.get("series_voxel_size_transversal") is not None
+        ):
+            retina_image_dict.update(
+                {
+                    "voxel_size": [
+                        request.data.get("series_voxel_size_axial"),
+                        request.data.get("series_voxel_size_lateral"),
+                        request.data.get("series_voxel_size_transversal"),
+                    ]
+                }
+            )
+
+        if (
+            retina_image_dict["modality"] == "OCT"
+            or retina_image_dict["modality"] == "HRA"
+        ):
+            color_space = Image.COLOR_SPACE_GRAY
+        else:
+            color_space = Image.COLOR_SPACE_RGB
+
+        image_dict = {
+            "name": "{}/{}".format(
+                retina_image_dict["name"], retina_image_dict["modality"]
+            ),
+            "color_space": color_space,
+            "width": request.data.get("image_width"),
+            "height": request.data.get("image_height"),
+            "depth": request.data.get("image_depth"),
+        }
+
+        # Perform validation with serializers
+        archive_serializer = ArchiveSerializer(data=archive_dict)
+        patient_serializer = PatientSerializer(data=patient_dict)
+        study_serializer = StudySerializer(data=study_dict)
+        retina_image_serializer = RetinaImageSerializer(data=retina_image_dict)
+        image_serializer = ImageSerializer(data=image_dict)
+        archive_valid = archive_serializer.is_valid()
+        patient_valid = patient_serializer.is_valid()
+        study_valid = study_serializer.is_valid()
+        retina_image_valid = retina_image_serializer.is_valid()
+        image_valid = image_serializer.is_valid()
+
+        if (
+            not archive_valid
+            or not patient_valid
+            or not study_valid
+            or not retina_image_valid
+            or not image_valid
+        ):
+            errors = {
+                "archive_errors": archive_serializer.errors,
+                "patient_errors": patient_serializer.errors,
+                "study_errors": study_serializer.errors,
+                "retina_image_errors": retina_image_serializer.errors,
+                "image_errors": image_serializer.errors,
+            }
+        else:
+            errors = None
+
+        return (
+            errors,
+            archive_dict,
+            patient_dict,
+            study_dict,
+            retina_image_dict,
+            image_dict,
+        )
 
 
 class AbstractUploadView(generics.CreateAPIView):
