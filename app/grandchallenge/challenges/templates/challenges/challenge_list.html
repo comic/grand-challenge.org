@@ -250,7 +250,7 @@
                     {% for challenge in challenges %}
                         <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
-                                <a id="{{ challenge.short_name }}" title="{{ challenge.title }}"
+                                <a id="{{ challenge.short_name }}" title="{% firstof challenge.title challenge.short_name %}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
                                     <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
