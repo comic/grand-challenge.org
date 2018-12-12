@@ -349,7 +349,8 @@ class Challenge(ChallengeBase):
     public_folder = "public_html"
     skin = models.CharField(
         max_length=225,
-        default=public_folder + "/project.css",
+        default="",
+        blank=True,
         help_text="css file to include throughout this"
         " project. relative to project data folder",
     )
