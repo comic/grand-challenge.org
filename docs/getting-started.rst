@@ -22,7 +22,7 @@ Installation
 
     $ ./cycle_docker_compose.sh
 
-You can then navigate to https://localhost in your browser to see the development site, 
+You can then navigate to https://gc.localhost in your browser to see the development site,
 this is using a self-signed certificate so you will need to accept the security warning.
 The ``app/`` directory is mounted in the containers, so if you make any changes to the code you will need to restart the processes.
 You can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window, 

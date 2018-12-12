@@ -68,7 +68,7 @@
                         <td>
                             {% if job.result %}
                                 <form method="post"
-                                      action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
+                                      action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=job.result.pk %}">
                                     {% csrf_token %}
                                     {% if job.result.published %}
                                         <input type="hidden" name="published"

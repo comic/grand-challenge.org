@@ -18,7 +18,7 @@ from django.views.generic import (
 from favicon.models import Favicon
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.core.views import (
     getRenderedPageIfAllowed,
     get_data_folder_path,
@@ -100,10 +100,13 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Legacy methods, moved from comicsite/views.py
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def page(request, challenge_short_name, page_title):
+def page(request, page_title, challenge_short_name=None):
     """ show a single page on a site """
 
-    site = getSite(challenge_short_name)
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        site = getSite(challenge_short_name)
 
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
 
@@ -118,7 +121,7 @@ def page(request, challenge_short_name, page_title):
     return response
 
 
-def insertedpage(request, challenge_short_name, page_title, dropboxpath):
+def insertedpage(request, page_title, dropboxpath, challenge_short_name=None):
     """ show contents of a file from the local dropbox folder for this project
 
     """
@@ -133,7 +136,10 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     if mimetype == "application/pdf" or mimetype == "application/zip":
         return inserted_file(request, challenge_short_name, dropboxpath)
 
-    site = getSite(challenge_short_name)
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        site = getSite(challenge_short_name)
 
     p = get_object_or_404(
         Page, challenge__short_name=site.short_name, title=page_title
@@ -165,10 +171,13 @@ def insertedpage(request, challenge_short_name, page_title, dropboxpath):
     )
 
 
-def inserted_file(request, challenge_short_name, filepath=""):
+def inserted_file(request, challenge_short_name=None, filepath=""):
     """ Get image from local dropbox and serve.
 
     """
+    if challenge_short_name is None:
+        challenge_short_name = request.challenge.short_name
+
     data_folder_root = get_data_folder_path(challenge_short_name)
     filepath = posixpath.normpath(filepath).lstrip("/")
     filename = safe_join(data_folder_root, filepath)

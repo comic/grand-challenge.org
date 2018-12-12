@@ -1,0 +1,78 @@
+import pytest
+
+from grandchallenge.subdomains.middleware import (
+    subdomain_middleware,
+    challenge_subdomain_middleware,
+)
+from tests.factories import ChallengeFactory
+
+# The domain that is set for the main site, set by RequestFactory
+SITE_DOMAIN = "testserver"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "host,subdomain",
+    [
+        [SITE_DOMAIN, None],
+        [f"test.{SITE_DOMAIN}", "test"],
+        [f"TEST.{SITE_DOMAIN}", "test"],
+        [f"www.test.{SITE_DOMAIN}", "www.test"],
+        [f"www.{SITE_DOMAIN}", "www"],
+    ],
+)
+def test_subdomain_attribute(settings, rf, host, subdomain):
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
+    request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    assert request.subdomain == subdomain
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "host,subdomain",
+    [
+        [f"{SITE_DOMAIN}", None],
+        [f"test.{SITE_DOMAIN}", "test"],
+        [f"not{SITE_DOMAIN}", None],
+        [f"www.not{SITE_DOMAIN}", None],
+    ],
+)
+def test_invalid_domain(settings, rf, host, subdomain):
+    # Other domains will get the main challenge by setting subdomain = None
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}", f".not{SITE_DOMAIN}"]
+    request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    assert request.subdomain == subdomain
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "subdomain",
+    [
+        None,
+        "challengesubdomaintest",
+        "ChallengeSubdomainTest",
+        "notachallenge",
+    ],
+)
+@pytest.mark.parametrize("subdomain_is_projectname", [True, False])
+def test_challenge_attribute(
+    settings, rf, subdomain, subdomain_is_projectname
+):
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
+    settings.SUBDOMAIN_IS_PROJECTNAME = subdomain_is_projectname
+
+    c = ChallengeFactory(short_name="challengesubdomaintest")
+
+    request = rf.get("/")
+    request.subdomain = subdomain
+
+    assert not hasattr(request, "challenge")
+
+    request = challenge_subdomain_middleware(lambda x: x)(request)
+
+    if subdomain is None or not settings.SUBDOMAIN_IS_PROJECTNAME:
+        assert request.challenge == None
+    elif subdomain.lower() == c.short_name.lower():
+        assert request.challenge == c
+    else:
+        assert request.url == f"http://{SITE_DOMAIN}/"

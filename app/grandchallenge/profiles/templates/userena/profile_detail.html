@@ -60,7 +60,7 @@
                             {% for challenge in profile.get_challenges_as_participant %}
 
                                 <li>
-                                    <a href="{% url 'challenge-homepage' challenge.short_name %}">{{ challenge.short_name }}</a>
+                                    <a href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a>
                                 </li>
 
                             {% empty %}

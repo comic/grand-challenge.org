@@ -5,7 +5,7 @@
 Dear Admin,
 <br/>
 User {{uploader.username}} (email: {{uploader.email}}) has just uploaded file '{{filename}}' to {{challenge.short_name}}. A list of uploads can also be found
-<a href ="{% url 'uploads:list' challenge.short_name %}"> here</a>.
+<a href ="{% url 'uploads:list' challenge_short_name=challenge.short_name %}"> here</a>.
 <br/>
 <br/>
 Regards,<br/>

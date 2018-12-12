@@ -13,16 +13,18 @@ from django.core.management import call_command
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
-from django.urls import reverse
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.pages.models import Page
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
 
 # Platform independent regex which will match line endings in win and linux
+from tests.utils import get_http_host
+
 PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
@@ -92,7 +94,6 @@ def is_subset(listA, listB):
     PASSWORD_HASHERS=("django.contrib.auth.hashers.SHA1PasswordHasher",)
 )
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
-@override_settings(SITE_ID=1)
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
     """
@@ -259,7 +260,11 @@ class ComicframeworkTestCase(TestCase):
 
     def _view_url(self, user, url):
         self._login(user)
-        response = self.client.get(url)
+
+        url, kwargs = get_http_host(url=url, kwargs={})
+
+        response = self.client.get(url, **kwargs)
+
         if user is None:
             username = "anonymous_user"
         else:
@@ -326,7 +331,7 @@ class ComicframeworkTestCase(TestCase):
             " sent which had 'signup' in the subject line",
         )
         # validate the user with the link that was emailed
-        pattern = "/example.com(.*)" + PI_LINE_END_REGEX
+        pattern = "/testserver(.*)" + PI_LINE_END_REGEX
         validationlink_result = re.search(
             pattern, validation_mail.body, re.IGNORECASE
         )
@@ -456,24 +461,6 @@ class ComicframeworkTestCase(TestCase):
                     expected, attr, found
                 ),
             )
-
-    def apply_standard_middleware(self, request):
-        """ Some actions in the admin pages require certain middleware which is not
-        always present in admin. Apply this explicitly here.
-        
-        """
-        from django.contrib.sessions.middleware import (
-            SessionMiddleware
-        )  # Some admin actions render messages and will crash without explicit import
-        from django.contrib.messages.middleware import MessageMiddleware
-        from grandchallenge.core.middleware.project import ProjectMiddleware
-
-        sm = SessionMiddleware()
-        mm = MessageMiddleware()
-        pm = ProjectMiddleware()
-        sm.process_request(request)
-        mm.process_request(request)
-        pm.process_request(request)
 
 
 class CreateProjectTest(ComicframeworkTestCase):
@@ -639,7 +626,7 @@ class ViewsTest(ComicframeworkTestCase):
             % (page_url, response.status_code),
         )
 
-    def test_non_exitant_project_gives_404(self):
+    def test_non_exitant_project_gives_404_or_302(self):
         """ reproduces issue #219,
         https://github.com/comic/grand-challenge.org/issues/219
         
@@ -650,13 +637,23 @@ class ViewsTest(ComicframeworkTestCase):
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)
-        self.assertEqual(
-            response.status_code,
-            404,
-            "Expected non existing url"
-            "'%s' to give 404, instead found %s"
-            % (non_existant_url, response.status_code),
-        )
+        if settings.SUBDOMAIN_IS_PROJECTNAME:
+            # If SUBDOMAIN_IS_PROJECTNAME we redirect to the main project
+            self.assertEqual(
+                response.status_code,
+                302,
+                "Expected non existing url"
+                "'%s' to give 302, instead found %s"
+                % (non_existant_url, response.status_code),
+            )
+        else:
+            self.assertEqual(
+                response.status_code,
+                404,
+                "Expected non existing url"
+                "'%s' to give 404, instead found %s"
+                % (non_existant_url, response.status_code),
+            )
 
 
 class LinkReplacerTest(ComicframeworkTestCase):
@@ -727,9 +724,14 @@ class LinkReplacerTest(ComicframeworkTestCase):
         notafile_slash = find_text_between(
             "~notafile_slash~", "~endnotafile_slash~", response.content
         )
-        relative_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
-        pathrelativelink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-        moveuplink_expected = 'href="/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
+        if settings.SUBDOMAIN_IS_PROJECTNAME:
+            relative_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/relative.html'
+            pathrelativelink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/folder1/relative.html'
+            moveuplink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/../moveup.html'
+        else:
+            relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
+            pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
+            moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
         notafile_expected = 'href="/faq"'
         notafile_slash_expected = 'href="/faq/"'
@@ -963,14 +965,14 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         # Sanity check: do two different pages give different urls?
         content = (
-            "-url1-{% url 'pages:detail' '"
+            "-url1-{% url 'pages:detail' challenge_short_name='"
             + self.testproject.short_name
-            + "' 'testurlfakepage1' %}-endurl1-"
+            + "' page_title='testurlfakepage1' %}-endurl1-"
         )
         content += (
-            "-url2-{% url 'pages:detail' '"
+            "-url2-{% url 'pages:detail' challenge_short_name='"
             + self.testproject.short_name
-            + "' 'testurlfakepage2' %}-endurl2-"
+            + "' page_title='testurlfakepage2' %}-endurl2-"
         )
         urlpage = create_page(self.testproject, "testurltagpage", content)
         # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered

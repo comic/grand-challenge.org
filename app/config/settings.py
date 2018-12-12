@@ -32,10 +32,6 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/phpmyadmin/"),
 ]
 
-# Django will throw an exeception if the URL you type to load the framework is
-# not in the list below. This is a security measure.
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
-
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the "Comic" app dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -150,25 +146,29 @@ MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 # does.
 # True: Changes links on pages where possible to use subdomain.
 SUBDOMAIN_IS_PROJECTNAME = strtobool(
-    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "False")
+    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "True")
 )
-
-# For links to basic comicframework content, for example the main comic help
-# page, django needs to know the hostname. This setting is only used when
-# SUBDOMAIN_IS_PROJECTNAME = True
-MAIN_HOST_NAME = os.environ.get("MAIN_HOST_NAME", "https://localhost")
 
 # To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
 # SESSION_COOKIE_DOMAIN = '.mydomain'
-SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", None)
+DEFAULT_DOMAIN = "gc.localhost"
+if SUBDOMAIN_IS_PROJECTNAME:
+    DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
+
+ROOT_URLCONF = "config.urls"
+SUBDOMAIN_URL_CONF = (
+    "grandchallenge.core.urls"
+)  # TODO: Change to subdomain urls
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
+
+SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-if SESSION_COOKIE_DOMAIN:
-    ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -234,17 +234,17 @@ MIDDLEWARE = (
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "grandchallenge.core.middleware.subdomain.SubdomainMiddleware",
-    "grandchallenge.core.middleware.project.ProjectMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "grandchallenge.subdomains.middleware.subdomain_middleware",
+    "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
-ROOT_URLCONF = "config.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
@@ -462,6 +462,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "grandchallenge": {
+            "level": "WARNING",
+            "handlers": ["console"],
+            "propagate": True,
+        },
         "django.db.backends": {
             "level": "ERROR",
             "handlers": ["console"],
@@ -577,9 +582,6 @@ if MEDIA_ROOT[-1] != "/":
         + "'. Please add a slash"
     )
     raise ImproperlyConfigured(msg)
-
-if MAIN_HOST_NAME[-1] == "/":
-    raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
 ENABLE_DEBUG_TOOLBAR = False
 

@@ -16,9 +16,9 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 class ChallengeManager(models.Manager):
@@ -493,7 +493,10 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        return reverse("challenge-homepage", args=[self.short_name])
+        return reverse(
+            "challenge-homepage",
+            kwargs={"challenge_short_name": self.short_name},
+        )
 
     def add_participant(self, user):
         if user != get_anonymous_user():

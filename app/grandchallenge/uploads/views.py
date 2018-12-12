@@ -4,13 +4,13 @@ from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import reverse
 from django.views.generic import ListView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.views import getSite, permissionMessage
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.uploads.emails import send_file_uploaded_notification_email
 from grandchallenge.uploads.forms import UserUploadForm
 from grandchallenge.uploads.models import UploadModel
@@ -22,15 +22,18 @@ class UploadList(
     model = UploadModel
 
 
-def upload_handler(request, challenge_short_name):
+def upload_handler(request, challenge_short_name=None):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
-    view_url = reverse(
-        "uploads:create", kwargs={"challenge_short_name": challenge_short_name}
-    )
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        site = getSite(challenge_short_name)
 
-    site = getSite(challenge_short_name)
+    view_url = reverse(
+        "uploads:create", kwargs={"challenge_short_name": site.short_name}
+    )
 
     if request.method == "POST":
         # set values excluded from form here to make the model validate

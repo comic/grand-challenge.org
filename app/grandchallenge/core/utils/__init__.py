@@ -7,6 +7,7 @@ from django.conf import settings
 def build_absolute_uri(request):
     """
     Total hack to get around SUBDOMAN_IS_PROJECTNAME for absolute urls
+    TODO: This might no longer be needed
     """
     subdomain_absolute_uri = request.build_absolute_uri()
     if settings.SUBDOMAIN_IS_PROJECTNAME:
