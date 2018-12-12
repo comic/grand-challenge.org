@@ -40,10 +40,10 @@ APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ["POSTGRES_DB"],
-        "USER": os.environ["POSTGRES_USER"],
-        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-        "HOST": "postgres",
+        "NAME": os.environ.get("POSTGRES_DB", "comic"),
+        "USER": os.environ.get("POSTGRES_USER", "comic"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
+        "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": "",
     }
 }
@@ -406,7 +406,13 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "abbr": ["title"],
     "acronym": ["title"],
     "div": ["data-geochart"],  # Required for geocharts
-    "iframe": ["src", "sandbox"],  # For continuous registration challenge
+    "iframe": [
+        "src",
+        "sandbox",
+        "data-groupname",
+        "scrolling",
+        "height",
+    ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
@@ -488,8 +494,8 @@ REST_FRAMEWORK = {
     ),
 }
 
-CELERY_BROKER_URL = "redis://redis:6379/0"
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260

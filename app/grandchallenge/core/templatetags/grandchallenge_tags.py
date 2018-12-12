@@ -206,6 +206,24 @@ def sanitize_django_items(string):
     return out
 
 
+@register.simple_tag
+def google_group(group_name):
+    """Allows challenge admins to add google groups to pages"""
+    return mark_safe(
+        f"""
+    <iframe 
+        class="w-100"
+        id="forum_embed" 
+        data-groupname="{group_name}"
+        src="javascript:void(0)"
+        scrolling="no"
+        frameborder="0"
+        height="700px">
+    </iframe>
+    """
+    )
+
+
 @register.tag(
     name="listdir",
     usagestr="""Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}

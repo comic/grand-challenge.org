@@ -59,9 +59,11 @@ class ChallengeList(TemplateView):
         )
 
         challenges_by_year = defaultdict(list)
+        hosts = set()
 
         for c in challenges:
             challenges_by_year[c.year].append(c)
+            hosts.add(c.host_filter)
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
@@ -83,6 +85,7 @@ class ChallengeList(TemplateView):
                         reverse=True,
                     )
                 ),
+                "hosts": sorted([h for h in hosts if h.host]),
             }
         )
 

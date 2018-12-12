@@ -88,3 +88,7 @@ app/celerybeat-schedule
 
 # No coverage files
 .coverage
+
+# Local postgres data
+postgres_data/
+

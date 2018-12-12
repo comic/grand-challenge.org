@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from typing import Tuple
 
 import magic
@@ -67,7 +67,9 @@ class ExtensionValidator(object):
                 self._validate_filepath(v.name)
 
     def _validate_filepath(self, s):
-        _, extension = os.path.splitext(s)
+        extensions = Path(s).suffixes
+        extension = "".join(extensions)
+
         if extension.lower() not in self.allowed_extensions:
             raise ValidationError(
                 f"File of type {extension} is not supported."

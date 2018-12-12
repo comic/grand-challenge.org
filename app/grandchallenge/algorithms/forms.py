@@ -26,10 +26,12 @@ class AlgorithmForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=algorithm_upload_widget,
         label="Algorithm Image",
-        validators=[ExtensionValidator(allowed_extensions=(".tar",))],
+        validators=[
+            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+        ],
         help_text=(
-            "Tar archive of the container image produced from the command "
-            "`docker save IMAGE > IMAGE.tar`. See "
+            ".tar.gz archive of the container image produced from the command "
+            "'docker save IMAGE > IMAGE.tar | gzip'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
