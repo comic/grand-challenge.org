@@ -2,6 +2,7 @@ from django.conf.urls import include
 from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
+from grandchallenge.challenges.views import ChallengeUpdate
 from grandchallenge.core.views import site
 from grandchallenge.serving.views import ChallengeServeRedirect
 
@@ -32,6 +33,8 @@ urlpatterns = [
         "datasets/",
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
+    path("update/", ChallengeUpdate.as_view(), name="update"),
+    path("summernote/", include("django_summernote.urls")),
     #################
     #
     # Legacy apps
@@ -51,4 +54,8 @@ urlpatterns = [
     #################
     # If nothing specific matches, try to resolve the url as project/pagename
     path("", include("grandchallenge.pages.urls", namespace="pages")),
+    path(
+        "media/",
+        include("grandchallenge.serving.urls", namespace="challenge-serving"),
+    ),
 ]

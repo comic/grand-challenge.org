@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
 from django.template.response import TemplateResponse
-from django.urls import re_path, path
+from django.urls import path
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.core.views import comicmain
@@ -52,7 +52,6 @@ urlpatterns = [
         name="apple-touch-icon-precomposed-sized",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
-    path("summernote/", include("django_summernote.urls")),
     path(
         "site/<slug:challenge_short_name>/",
         include("grandchallenge.core.urls"),
@@ -87,6 +86,7 @@ urlpatterns = [
         "algorithms/",
         include("grandchallenge.algorithms.urls", namespace="algorithms"),
     ),
+    path("summernote/", include("django_summernote.urls")),
     path(
         "retina/",
         include("grandchallenge.retina_core.urls", namespace="retina"),
@@ -97,7 +97,8 @@ urlpatterns = [
     # order
     path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
-        "media/", include("grandchallenge.serving.urls", namespace="serving")
+        "media/",
+        include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

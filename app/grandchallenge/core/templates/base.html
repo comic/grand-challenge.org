@@ -16,8 +16,9 @@
               content="open, science, medical, image, computing, validated"/>
 
         {% comment %}
-        <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js" crossorigin="anonymous"></script>
-        <script>Raven.config('{% sentry_public_dsn %}').install()</script>
+            <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
+                    crossorigin="anonymous"></script>
+            <script>Raven.config('{% sentry_public_dsn %}').install()</script>
         {% endcomment %}
 
         <!-- Global Site Tag (gtag.js) - Google Analytics -->
@@ -129,7 +130,7 @@
     <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
 
         <a class="navbar-brand mr-md-2 text-capitalize"
-           href="{% main_page_url %}">
+           href="{% url 'home' %}">
             {{ main_challenge_name }}
         </a>
         <!-- Toggler/collapsibe Button -->
@@ -275,6 +276,11 @@
 {% endblock %}
 
 {% block postjs %}
+
+    {# For displaying equations on the site, the safe config is important #}
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+            async></script>
+
     <script type='text/javascript'>
         $(document).ready(function () {
             $('table.sortable').dataTable({
@@ -287,6 +293,18 @@
                 "bAutoWidth": false
             });
         });
+
+        var forum = document.getElementById('forum_embed');
+        if (forum) {
+            try {
+                forum.src = 'https://groups.google.com/forum/embed/?place=forum/'
+                        + forum.dataset['groupname']
+                        + '&showsearch=true&showpopout=true&showtabs=false'
+                        + '&parenturl=' + encodeURIComponent(window.location.href);
+            } catch (e) {
+                console.log(e);
+            }
+        }
 
         google.charts.load('current', {'packages': ['geochart']});
         google.charts.setOnLoadCallback(drawGeoCharts);

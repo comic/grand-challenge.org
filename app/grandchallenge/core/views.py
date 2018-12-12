@@ -6,15 +6,19 @@ from django.template import Template, TemplateSyntaxError, RequestContext
 from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.urls import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 
-def site(request, challenge_short_name):
-    try:
-        site = getSite(challenge_short_name)
-    except Challenge.DoesNotExist:
-        raise Http404("Project %s does not exist" % challenge_short_name)
+def site(request, challenge_short_name=None):
+
+    if challenge_short_name is None:
+        site = request.challenge
+    else:
+        try:
+            site = getSite(challenge_short_name)
+        except Challenge.DoesNotExist:
+            raise Http404("Project %s does not exist" % challenge_short_name)
 
     pages = site.page_set.all()
 
@@ -176,7 +180,9 @@ def comicmain(request, page_title=""):
     pages = site.page_set.all()
 
     if len(pages) == 0:
-        link = reverse("pages:list", args=[challenge_short_name])
+        link = reverse(
+            "pages:list", kwargs={"challenge_short_name": challenge_short_name}
+        )
         link_html = create_HTML_a(link, "admin interface")
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' contains no pages. Please add
@@ -198,7 +204,7 @@ def comicmain(request, page_title=""):
 
         if len(pages) != 1:
             raise ValueError(
-                f"More than 1 page with title {page_title} was found for {site}"
+                f"{len(pages)} pages with title {page_title} were found for {site}"
             )
 
     page = pages[0]

@@ -22,7 +22,7 @@ Installation
 
     $ ./cycle_docker_compose.sh
 
-You can then navigate to https://localhost in your browser to see the development site, 
+You can then navigate to https://gc.localhost in your browser to see the development site,
 this is using a self-signed certificate so you will need to accept the security warning.
 The ``app/`` directory is mounted in the containers, so if you make any changes to the code you will need to restart the processes.
 You can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window, 
@@ -63,8 +63,13 @@ You will need to install pre-commit so that the code is correctly formatted
 
     $ python3 -m pip install pre-commit
 
+Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.
+
 We recommend using Pycharm for development.
-You will need the Professional edition to use the docker-compose integration. 
+
+Running through docker-compose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You will need the Professional edition to use the docker-compose integration.
 To set up the environment in Pycharm Professional 2018.1:
 
 1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Cog wheel (top right) -> Add -> Docker Compose
@@ -77,7 +82,51 @@ If you edit any template files these will be updated on the fly.
 If you edit any ``.py``, ``.css``, ``.js`` (etc) you will need to restart the processes using ``CTRL+D`` with ``cycle_docker_compose.sh``.
 You can then add ``py.test`` test configurations to run the tests from within Pycharm.
 
-Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.
+Running locally
+~~~~~~~~~~~~~~~
+Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
+not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
+``docker-compose`` stack, except for the web service. Though this service is running, a separate Django dev server is
+started in PyCharm (or from the terminal). As the dev server is running on port 8000 by default, there is no port conflict
+with the service running in the docker container.
+
+1. Run the ``docker-compose`` stack for the database and celery task handling
+
+.. code-block:: console
+
+    $ ./cycle_docker_compose.sh
+
+2. Make sure you have ``pipenv`` installed.
+3. In a new terminal, create a new virtual python environment using ``pipenv install --dev`` in this repository's root folder.
+4. Activate the virtual env: ``pipenv shell``.
+5. Load the environmental variables contained in ``.env.local``
+
+.. code-block:: console
+
+    $ export $(cat .env.local | egrep -v "^#" | xargs)
+
+6. Run migrations and check_permissions (optionally load demo data).
+
+.. code-block:: console
+
+    $ cd app
+    $ python manage.py migrate
+    $ python manage.py check_permissions
+    $ python manage.py initcomicdemo
+
+7. You can now start the server using ``python manage.py runserver``.
+
+8. To setup PyCharm:
+
+   1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Select your created pipenv environment
+   2. For each run/debug configuration, make sure the environmental variables are loaded,
+      the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
+      the folder icon in the `Environmental variables` field.
+   3. Useful to setup: the built-in python/django console in Pycharm:
+      Settings -> Build, execution, deployment -> Console -> Python/Django console.
+      Choose the same python interpreter here, and make sure to load the environmental variables
+      (the .env plugin cannot be used here, the variables can only be pasted).
+
 
 Creating Migrations
 -------------------

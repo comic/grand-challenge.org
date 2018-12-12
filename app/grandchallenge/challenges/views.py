@@ -2,7 +2,6 @@ from collections import defaultdict, OrderedDict
 from itertools import chain
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import (
@@ -28,11 +27,13 @@ from grandchallenge.challenges.models import (
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsStaffMixin,
+    UserIsNotAnonMixin,
 )
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
+from grandchallenge.subdomains.urls import reverse
 
 
-class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
     model = Challenge
     form_class = ChallengeCreateForm
     success_message = "Challenge successfully created"
@@ -58,9 +59,11 @@ class ChallengeList(TemplateView):
         )
 
         challenges_by_year = defaultdict(list)
+        hosts = set()
 
         for c in challenges:
             challenges_by_year[c.year].append(c)
+            hosts.add(c.host_filter)
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
@@ -82,13 +85,14 @@ class ChallengeList(TemplateView):
                         reverse=True,
                     )
                 ),
+                "hosts": sorted([h for h in hosts if h.host]),
             }
         )
 
         return context
 
 
-class UsersChallengeList(LoginRequiredMixin, ListView):
+class UsersChallengeList(UserIsNotAnonMixin, ListView):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
 
@@ -103,7 +107,10 @@ class UsersChallengeList(LoginRequiredMixin, ListView):
 
 
 class ChallengeUpdate(
-    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+    UserIsChallengeAdminMixin,
+    SuccessMessageMixin,
+    ChallengeSubdomainObjectMixin,
+    UpdateView,
 ):
     model = Challenge
     slug_field = "short_name__iexact"

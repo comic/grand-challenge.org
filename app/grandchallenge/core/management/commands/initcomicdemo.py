@@ -1,6 +1,7 @@
 import base64
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
@@ -22,6 +23,11 @@ class Command(BaseCommand):
         """
         Creates the main project, demo user and demo challenge
         """
+        # Set the default domain that is used in RequestFactory
+        site = Site.objects.get(pk=settings.SITE_ID)
+        site.domain = "gc.localhost"
+        site.save()
+
         challenge, created = Challenge.objects.get_or_create(
             short_name=settings.MAIN_PROJECT_NAME,
             description="main project",

@@ -1,3 +1,4 @@
+{% load url from grandchallenge_tags %}
 {% load i18n %}{% autoescape off %}
 {% if not without_usernames %}{% blocktrans with user.username as username %}Dear {{ username }},{% endblocktrans %}
 {% endif %}

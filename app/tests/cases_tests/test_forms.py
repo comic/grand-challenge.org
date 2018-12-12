@@ -37,7 +37,7 @@ def test_upload_some_images(client: Client, ChallengeSet, settings):
     response = client.post("/cases/uploads/", data={"files": f"{file1.uuid}"})
     assert response.status_code == 302
 
-    redirect_match = re.match(
+    redirect_match = re.search(
         r"/cases/uploads/(?P<uuid>[^/]+)/?$", response["Location"]
     )
 

@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
       POSTGRES_DB: comic
+    ports:
+      - "5432:5432" # Only required for running django locally
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
@@ -38,7 +40,7 @@ services:
     volumes:
       - static:/static/
       - media:/dbox/Dropbox/media/
-      - ./app:/app/
+      - ./app:/app/:ro
       # The docker socket is only needed for testing
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:
@@ -52,7 +54,7 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=localhost
+      - SERVER_NAME=gc.localhost
       - SENDFILE_STATUS=off
     command: >-
         bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
@@ -77,6 +79,8 @@ services:
     image: redis:4.0
     command: redis-server --appendonly yes
     restart: always
+    ports:
+      - "6379:6379" # Only required for running django locally
 
   celery_worker:
     image: grandchallenge/web-test:latest
