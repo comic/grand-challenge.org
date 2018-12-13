@@ -22,7 +22,7 @@ from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 register = library_plus.LibraryPlus()
 logger = logging.getLogger(__name__)

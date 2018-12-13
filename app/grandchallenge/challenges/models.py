@@ -16,7 +16,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 

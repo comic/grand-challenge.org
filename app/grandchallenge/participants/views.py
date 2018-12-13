@@ -18,7 +18,7 @@ from grandchallenge.participants.emails import (
     send_participation_request_rejected_email,
 )
 from grandchallenge.participants.models import RegistrationRequest
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 class ParticipantsList(UserIsChallengeAdminMixin, ListView):

@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.test_background_tasks import (
     create_raw_upload_image_session
 )

@@ -33,20 +33,6 @@ def subdomain_middleware(get_response):
     return middleware
 
 
-def _get_challenge_name(request):
-    """Gets the challenge name from the request"""
-    if settings.SUBDOMAIN_IS_PROJECTNAME:
-        challenge_name = request.subdomain
-    else:
-        try:
-            resolution = resolve(request.path)
-            challenge_name = resolution.kwargs["challenge_short_name"]
-        except (Resolver404, KeyError):
-            challenge_name = None
-
-    return challenge_name
-
-
 def challenge_subdomain_middleware(get_response):
     def middleware(request):
         """
@@ -54,7 +40,7 @@ def challenge_subdomain_middleware(get_response):
         to the main site if the challenge is not valid. Requires the
         subdomain to be set on the request (eg, by using subdomain_middleware)
         """
-        challenge_name = _get_challenge_name(request)
+        challenge_name = request.subdomain
 
         if challenge_name is None:
             request.challenge = None
@@ -65,13 +51,8 @@ def challenge_subdomain_middleware(get_response):
                 )
             except Challenge.DoesNotExist:
                 logger.warning(f"Could not find challenge {challenge_name}")
-                if settings.SUBDOMAIN_IS_PROJECTNAME:
-                    domain = get_current_site(request).domain.lower()
-                    return HttpResponseRedirect(
-                        f"{request.scheme}://{domain}/"
-                    )
-                else:
-                    raise Http404(f"Challenge {challenge_name} does not exist")
+                domain = get_current_site(request).domain.lower()
+                return HttpResponseRedirect(f"{request.scheme}://{domain}/")
 
         response = get_response(request)
 

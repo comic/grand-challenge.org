@@ -30,7 +30,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsNotAnonMixin,
 )
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
