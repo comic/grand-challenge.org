@@ -1,4 +1,6 @@
 from celery import shared_task
+from django.core.mail import mail_managers
+from requests import get, exceptions
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 
@@ -38,3 +40,32 @@ def update_filter_classes():
                     pass
 
             obj.objects.filter(pk=c.pk).update(**kwargs)
+
+
+@shared_task
+def check_external_challenge_urls():
+    """
+    Checks that all external challenge urls are reachable, and emails the
+    managers if not.
+    """
+
+    challenges = ExternalChallenge.objects.all()
+    errors = []
+
+    for challenge in challenges:
+        try:
+            url = challenge.homepage
+            if not url.startswith("http"):
+                url = "http://" + url
+            r = get(url)
+            # raise an exception when we receive a http error (e.g., 404)
+            r.raise_for_status()
+        except exceptions.RequestException as err:
+            errors.append(
+                f"Error when trying to access '{challenge.title}': {err}"
+            )
+
+    mail_managers(
+        subject=f"Unreachable external challenges ({len(errors)})",
+        message="\n".join(errors),
+    )
