@@ -148,7 +148,7 @@ def comicmain(request, page_title=""):
     challenge_short_name = settings.MAIN_PROJECT_NAME
 
     try:
-        site = getSite(challenge_short_name)
+        site = Challenge.objects.get(short_name__iexact=challenge_short_name)
     except Challenge.DoesNotExist:
         link = reverse("challenges:create")
         link = link + "?short_name=%s" % challenge_short_name
@@ -206,10 +206,6 @@ def comicmain(request, page_title=""):
 
 
 # ======================================== not called directly from urls.py ==
-def getSite(challenge_short_name):
-    return Challenge.objects.get(short_name__iexact=challenge_short_name)
-
-
 def create_HTML_a(link_url, link_text):
     return '<a href="' + link_url + '">' + link_text + "</a>"
 
