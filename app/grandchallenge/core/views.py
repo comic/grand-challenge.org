@@ -6,7 +6,7 @@ from django.template import Template, TemplateSyntaxError, RequestContext
 from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 

@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponseForbidden, QueryDict, HttpResponseRedirect
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 class UserAuthAndTestMixin(UserPassesTestMixin):

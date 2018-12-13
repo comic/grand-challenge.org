@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Max
 
 from grandchallenge.challenges.models import ComicSiteModel
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.utils.query import index
 
 

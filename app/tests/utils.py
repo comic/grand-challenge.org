@@ -7,7 +7,7 @@ from django.test import RequestFactory, Client
 from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 
 

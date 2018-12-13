@@ -7,7 +7,7 @@ from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory, ChallengeFactory
 
 

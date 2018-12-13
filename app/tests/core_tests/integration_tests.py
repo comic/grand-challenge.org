@@ -18,7 +18,7 @@ from userena.models import UserenaSignup
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.pages.models import Page
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
 

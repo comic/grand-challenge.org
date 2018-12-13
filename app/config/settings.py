@@ -142,9 +142,7 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
 ROOT_URLCONF = "config.urls"
-SUBDOMAIN_URL_CONF = (
-    "grandchallenge.core.urls"
-)  # TODO: Change to subdomain urls
+SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
 
 SESSION_COOKIE_DOMAIN = os.environ.get(

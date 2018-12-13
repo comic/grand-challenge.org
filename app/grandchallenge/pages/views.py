@@ -18,7 +18,7 @@ from django.views.generic import (
 from favicon.models import Favicon
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.views import (
     getRenderedPageIfAllowed,
     get_data_folder_path,

@@ -1,37 +1,54 @@
-from urllib.parse import urljoin
+from django.urls import path, include
+from django.views.generic import TemplateView, RedirectView
 
-from django.conf import settings
-from django.contrib.sites.models import Site
-from django.urls import reverse as reverse_org
+from grandchallenge.challenges.views import ChallengeUpdate
+from grandchallenge.core.views import site
 
-
-def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
-    """ Reverse url, but try to use subdomain to designate site where possible.
-    This means 'site1' will not get url 'hostname/site/site1' but rather
-    'challenge.hostname'
-    """
-    kwargs = kwargs or {}
-
-    scheme = settings.DEFAULT_SCHEME
-
-    host = Site.objects.get_current().domain.lower()
-    domain = f"{scheme}://{host}"
-
-    if "challenge_short_name" in kwargs:
-        challenge_short_name = kwargs.pop("challenge_short_name")
-        if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
-            domain = f"{scheme}://{challenge_short_name}.{host}"
-
-        urlconf = urlconf or settings.SUBDOMAIN_URL_CONF
-    else:
-        urlconf = urlconf or settings.ROOT_URLCONF
-
-    path = reverse_org(
-        viewname,
-        urlconf=urlconf,
-        args=args,
-        kwargs=kwargs,
-        current_app=current_app,
-    )
-
-    return urljoin(domain, path)
+urlpatterns = [
+    path("", site, name="challenge-homepage"),
+    path(
+        "robots.txt/",
+        TemplateView.as_view(
+            template_name="robots.txt", content_type="text/plain"
+        ),
+        name="comicsite_robots_txt",
+    ),
+    # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
+    path(
+        "evaluation/",
+        include("grandchallenge.evaluation.urls", namespace="evaluation"),
+    ),
+    path("teams/", include("grandchallenge.teams.urls", namespace="teams")),
+    path(
+        "participants/",
+        include("grandchallenge.participants.urls", namespace="participants"),
+    ),
+    path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
+    path(
+        "uploads/", include("grandchallenge.uploads.urls", namespace="uploads")
+    ),
+    path(
+        "datasets/",
+        include("grandchallenge.datasets.urls", namespace="datasets"),
+    ),
+    path("update/", ChallengeUpdate.as_view(), name="update"),
+    path("summernote/", include("django_summernote.urls")),
+    #################
+    #
+    # Legacy apps
+    #
+    path(
+        "files/",
+        RedirectView.as_view(pattern_name="uploads:create", permanent=False),
+    ),
+    #
+    # End Legacy
+    #
+    #################
+    # If nothing specific matches, try to resolve the url as project/pagename
+    path("", include("grandchallenge.pages.urls", namespace="pages")),
+    path(
+        "media/",
+        include("grandchallenge.serving.urls", namespace="challenge-serving"),
+    ),
+]
