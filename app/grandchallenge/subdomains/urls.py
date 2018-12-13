@@ -17,7 +17,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     host = Site.objects.get_current().domain.lower()
     domain = f"{scheme}://{host}"
 
-    if settings.SUBDOMAIN_IS_PROJECTNAME and "challenge_short_name" in kwargs:
+    if "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")
         if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
             domain = f"{scheme}://{challenge_short_name}.{host}"

@@ -637,23 +637,15 @@ class ViewsTest(ComicframeworkTestCase):
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)
-        if settings.SUBDOMAIN_IS_PROJECTNAME:
-            # If SUBDOMAIN_IS_PROJECTNAME we redirect to the main project
-            self.assertEqual(
-                response.status_code,
-                302,
-                "Expected non existing url"
-                "'%s' to give 302, instead found %s"
-                % (non_existant_url, response.status_code),
-            )
-        else:
-            self.assertEqual(
-                response.status_code,
-                404,
-                "Expected non existing url"
-                "'%s' to give 404, instead found %s"
-                % (non_existant_url, response.status_code),
-            )
+
+        # We redirect to the main challenge if it is not found
+        self.assertEqual(
+            response.status_code,
+            302,
+            "Expected non existing url"
+            "'%s' to give 302, instead found %s"
+            % (non_existant_url, response.status_code),
+        )
 
 
 class LinkReplacerTest(ComicframeworkTestCase):
@@ -724,14 +716,10 @@ class LinkReplacerTest(ComicframeworkTestCase):
         notafile_slash = find_text_between(
             "~notafile_slash~", "~endnotafile_slash~", response.content
         )
-        if settings.SUBDOMAIN_IS_PROJECTNAME:
-            relative_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/relative.html'
-            pathrelativelink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/folder1/relative.html'
-            moveuplink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/../moveup.html'
-        else:
-            relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
-            pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-            moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
+
+        relative_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/relative.html'
+        pathrelativelink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/folder1/relative.html'
+        moveuplink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/../moveup.html'
         absolute_expected = 'href="http://www.hostname.com/somelink.html'
         notafile_expected = 'href="/faq"'
         notafile_slash_expected = 'href="/faq/"'
@@ -957,51 +945,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
         self._test_page_can_be_viewed(self.root, page2)
         self._test_page_can_be_viewed(self.signedup_user, page2)
-
-    def test_url_tag(self):
-        """ url tag returns a url to view a given objects. Comicframework uses
-        a custom url tag to be able use subdomain rewriting. 
-        
-        """
-        # Sanity check: do two different pages give different urls?
-        content = (
-            "-url1-{% url 'pages:detail' challenge_short_name='"
-            + self.testproject.short_name
-            + "' page_title='testurlfakepage1' %}-endurl1-"
-        )
-        content += (
-            "-url2-{% url 'pages:detail' challenge_short_name='"
-            + self.testproject.short_name
-            + "' page_title='testurlfakepage2' %}-endurl2-"
-        )
-        urlpage = create_page(self.testproject, "testurltagpage", content)
-        # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
-        with self.settings(SUBDOMAIN_IS_PROJECTNAME=False):
-            response = self._test_page_can_be_viewed(
-                self.signedup_user, urlpage
-            )
-            url1 = find_text_between("-url1-", "-endurl1", response.content)
-            url2 = find_text_between("-url2-", "-endurl2", response.content)
-            self.assertTrue(
-                url1 != url2,
-                "With SUBDOMAIN_IS_PROJECTNAME = False"
-                " URL tag gave the same url for two different "
-                "pages. Both 'testurlfakepage1' and "
-                "'testurlfakepage1' got url '%s'" % url1,
-            )
-        with self.settings(SUBDOMAIN_IS_PROJECTNAME=True):
-            response = self._test_page_can_be_viewed(
-                self.signedup_user, urlpage
-            )
-            url1 = find_text_between("-url1-", "-endurl1", response.content)
-            url2 = find_text_between("-url2-", "-endurl2", response.content)
-            self.assertTrue(
-                url1 != url2,
-                "With SUBDOMAIN_IS_PROJECTNAME = True"
-                " URL tag gave the same url for two different "
-                "pages. Both 'testurlfakepage1' and "
-                "'testurlfakepage1' got url '%s'" % url1,
-            )
 
     def test_insert_file_tag(self):
         """ Can directly include the contents of a file. Contents can again 

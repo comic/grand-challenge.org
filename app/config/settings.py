@@ -141,27 +141,15 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
-# The url for a project in comic is /site/<challenge>. This is quite ugly. It
-# would be nicer to be able to use <challenge>.examplehost.com/, like blogger
-# does.
-# True: Changes links on pages where possible to use subdomain.
-SUBDOMAIN_IS_PROJECTNAME = strtobool(
-    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "True")
-)
-
-# To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
-# SESSION_COOKIE_DOMAIN = '.mydomain'
-DEFAULT_DOMAIN = "gc.localhost"
-if SUBDOMAIN_IS_PROJECTNAME:
-    DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
-
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = (
     "grandchallenge.core.urls"
 )  # TODO: Change to subdomain urls
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
 
-SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
+SESSION_COOKIE_DOMAIN = os.environ.get(
+    "SESSION_COOKIE_DOMAIN", ".gc.localhost"
+)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )

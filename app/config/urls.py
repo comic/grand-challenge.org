@@ -53,11 +53,6 @@ urlpatterns = [
     ),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
-        "site/<slug:challenge_short_name>/",
-        include("grandchallenge.core.urls"),
-        name="site",
-    ),
-    path(
         "stats/",
         include("grandchallenge.statistics.urls", namespace="statistics"),
     ),
