@@ -210,7 +210,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                "grandchallenge.core.contextprocessors.contextprocessors.subdomain_absolute_uri",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
             ]
         },

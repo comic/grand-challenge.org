@@ -6,7 +6,6 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponseForbidden, QueryDict, HttpResponseRedirect
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.core.utils import build_absolute_uri
 from grandchallenge.subdomains.urls import reverse
 
 
@@ -55,7 +54,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
                 "You need to login to access this page.",
             )
             return self.redirect_to_login(
-                build_absolute_uri(self.request),
+                self.request.build_absolute_uri(),
                 self.get_login_url(),
                 self.get_redirect_field_name(),
             )
