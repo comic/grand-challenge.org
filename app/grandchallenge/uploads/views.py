@@ -71,7 +71,7 @@ def upload_handler(request):
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(challenge=site, title="files")
-        currentpage = permissionMessage(request, site, p)
+        currentpage = permissionMessage(request, p)
         response = render(
             request,
             "page.html",

@@ -775,7 +775,7 @@ class UploadTest(ComicframeworkTestCase):
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
-        fakefile = File(StringIO("some uploaded content for" + testfilename))
+        request.challenge = self.testproject
         fakecontent = "some uploaded content for" + testfilename
         request.FILES["file"] = SimpleUploadedFile(
             name=testfilename, content=fakecontent.encode()
@@ -789,7 +789,7 @@ class UploadTest(ComicframeworkTestCase):
         setattr(request, "session", "session")
         messages = FallbackStorage(request)
         setattr(request, "_messages", messages)
-        response = upload_handler(request, project.short_name)
+        response = upload_handler(request)
         self.assertEqual(
             response.status_code,
             302,

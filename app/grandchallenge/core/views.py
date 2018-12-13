@@ -23,7 +23,7 @@ def site(request):
     else:
         currentpage = pages[0]
 
-    currentpage = getRenderedPageIfAllowed(currentpage, request, site)
+    currentpage = getRenderedPageIfAllowed(currentpage, request)
 
     return render(
         request,
@@ -73,7 +73,7 @@ def renderTags(request, p, recursecount=0):
     return pagecontents
 
 
-def permissionMessage(request, site, p):
+def permissionMessage(request, p):
     if request.user.is_authenticated:
         msg = """ <div class="system_message">
                 <h2> Restricted page</h2>
@@ -98,11 +98,11 @@ def permissionMessage(request, site, p):
         )
         title = p.title
 
-    return ErrorPage(challenge=site, title=title, html=msg)
+    return ErrorPage(challenge=request.challenge, title=title, html=msg)
 
 
 # TODO: could a decorator be better then all these ..IfAllowed pages?
-def getRenderedPageIfAllowed(page_or_page_title, request, site):
+def getRenderedPageIfAllowed(page_or_page_title, request):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
     if isinstance(page_or_page_title, bytes):
@@ -111,7 +111,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     if isinstance(page_or_page_title, str):
         page_title = page_or_page_title
         try:
-            p = site.page_set.get(title__iexact=page_title)
+            p = request.challenge.page_set.get(title__iexact=page_title)
         except Page.DoesNotExist:
             raise Http404
     else:
@@ -121,7 +121,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
         p.html = renderTags(request, p)
         currentpage = p
     else:
-        currentpage = permissionMessage(request, site, p)
+        currentpage = permissionMessage(request, p)
 
     return currentpage
 

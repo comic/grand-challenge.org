@@ -101,8 +101,7 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, page_title):
     """ show a single page on a site """
-    site = request.challenge
-    currentpage = getRenderedPageIfAllowed(page_title, request, site)
+    currentpage = getRenderedPageIfAllowed(page_title, request)
 
     response = render(request, "page.html", {"currentpage": currentpage})
 
@@ -149,7 +148,7 @@ def insertedpage(request, page_title, dropboxpath):
     )
     p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
 
-    currentpage = getRenderedPageIfAllowed(p, request, site)
+    currentpage = getRenderedPageIfAllowed(p, request)
 
     return render(
         request, "dropboxpage.html", {"site": site, "currentpage": currentpage}
