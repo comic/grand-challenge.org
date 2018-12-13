@@ -18,16 +18,15 @@ from django.views.generic import (
 from favicon.models import Favicon
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.views import (
     getRenderedPageIfAllowed,
     get_data_folder_path,
-    getSite,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import can_access
+from grandchallenge.subdomains.utils import reverse
 
 
 class ChallengeFilteredQuerysetMixin(object):
@@ -100,14 +99,9 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Legacy methods, moved from comicsite/views.py
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def page(request, page_title, challenge_short_name=None):
+def page(request, page_title):
     """ show a single page on a site """
-
-    if challenge_short_name is None:
-        site = request.challenge
-    else:
-        site = getSite(challenge_short_name)
-
+    site = request.challenge
     currentpage = getRenderedPageIfAllowed(page_title, request, site)
 
     response = render(request, "page.html", {"currentpage": currentpage})
@@ -121,37 +115,28 @@ def page(request, page_title, challenge_short_name=None):
     return response
 
 
-def insertedpage(request, page_title, dropboxpath, challenge_short_name=None):
+def insertedpage(request, page_title, dropboxpath):
     """ show contents of a file from the local dropbox folder for this project
 
     """
+    site = request.challenge
+
     (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
     if mimetype is None:
-        mimetype = (
-            "NoneType"
-        )  # make the next statement not crash on non-existant mimetype
-    if mimetype.startswith("image"):
-        return inserted_file(request, challenge_short_name, dropboxpath)
+        # make the next statement not crash on non-existant mimetype
+        mimetype = "NoneType"
 
-    if mimetype == "application/pdf" or mimetype == "application/zip":
-        return inserted_file(request, challenge_short_name, dropboxpath)
+    if (
+        mimetype.startswith("image")
+        or mimetype == "application/pdf"
+        or mimetype == "application/zip"
+    ):
+        return inserted_file(request, dropboxpath)
 
-    if challenge_short_name is None:
-        site = request.challenge
-    else:
-        site = getSite(challenge_short_name)
+    p = get_object_or_404(Page, challenge=site, title=page_title)
 
-    p = get_object_or_404(
-        Page, challenge__short_name=site.short_name, title=page_title
-    )
+    baselink = p.get_absolute_url()
 
-    baselink = reverse(
-        "pages:detail",
-        kwargs={
-            "challenge_short_name": p.challenge.short_name,
-            "page_title": p.title,
-        },
-    )
     msg = (
         '<div class="breadcrumbtrail"> Displaying \''
         + dropboxpath
@@ -171,12 +156,11 @@ def insertedpage(request, page_title, dropboxpath, challenge_short_name=None):
     )
 
 
-def inserted_file(request, challenge_short_name=None, filepath=""):
+def inserted_file(request, filepath=""):
     """ Get image from local dropbox and serve.
 
     """
-    if challenge_short_name is None:
-        challenge_short_name = request.challenge.short_name
+    challenge_short_name = request.challenge.short_name
 
     data_folder_root = get_data_folder_path(challenge_short_name)
     filepath = posixpath.normpath(filepath).lstrip("/")

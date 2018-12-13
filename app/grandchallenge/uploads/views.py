@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.views.generic import ListView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import getSite, permissionMessage
+from grandchallenge.core.views import permissionMessage
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from grandchallenge.subdomains.utils import reverse
@@ -22,14 +22,11 @@ class UploadList(
     model = UploadModel
 
 
-def upload_handler(request, challenge_short_name=None):
+def upload_handler(request):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
-    if challenge_short_name is None:
-        site = request.challenge
-    else:
-        site = getSite(challenge_short_name)
+    site = request.challenge
 
     view_url = reverse(
         "uploads:create", kwargs={"challenge_short_name": site.short_name}
