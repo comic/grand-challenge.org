@@ -537,9 +537,9 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(minutes=5),
     },
     "validate_external_challenges": {
-        "task": "grandchallenge.challenges.tasks.validate_external_challenges",
+        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
-    }
+    },
 }
 
 CELERY_TASK_ROUTES = {
