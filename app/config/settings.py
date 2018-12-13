@@ -294,15 +294,15 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
 
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
+
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""
 )
-
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
@@ -322,6 +322,7 @@ SOCIAL_AUTH_PIPELINE = (
 # Do not sanitize redirects for social auth so we can redirect back to
 # other subdomains
 SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
