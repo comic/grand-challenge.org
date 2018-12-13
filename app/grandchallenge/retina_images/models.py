@@ -71,11 +71,11 @@ class RetinaImage(UUIDModel):
         return "<{} {} {}>".format(self.__class__.__name__, self.name, self.modality)
 
     def get_sitk_image(self):
-        image_path = self.image.files.first().file.path
+        image_path = Path(self.image.files.first().file.path)
         if not Path.is_file(image_path):
             return None
         # TODO add try/catch for failing to load mhd file
-        return sitk.ReadImage(image_path)
+        return sitk.ReadImage(str(image_path))
 
     @staticmethod
     def create_image_file_name(file):
