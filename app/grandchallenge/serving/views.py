@@ -7,7 +7,6 @@ from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
-from django.views.generic import RedirectView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
