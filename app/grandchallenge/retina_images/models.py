@@ -1,6 +1,8 @@
 import uuid
 from PIL import Image as PILImage
 import numpy as np
+from pathlib import Path
+import SimpleITK as sitk
 from django.db import models
 from django.contrib.postgres.fields import CICharField, ArrayField
 from grandchallenge.core.models import UUIDModel
@@ -67,6 +69,13 @@ class RetinaImage(UUIDModel):
 
     def __str__(self):
         return "<{} {} {}>".format(self.__class__.__name__, self.name, self.modality)
+
+    def get_sitk_image(self):
+        image_path = self.image.files.first().file.path
+        if not Path.is_file(image_path):
+            return None
+        # TODO add try/catch for failing to load mhd file
+        return sitk.ReadImage(image_path)
 
     @staticmethod
     def create_image_file_name(file):

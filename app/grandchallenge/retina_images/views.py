@@ -2,8 +2,10 @@ from rest_framework import permissions, viewsets
 from django.shortcuts import get_object_or_404
 from django.views import View
 from PIL import Image as PILImage
+from rest_framework import status
 from django.http.response import HttpResponse
 import numpy as np
+from pathlib import Path
 import SimpleITK as sitk
 from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
 from .models import RetinaImage
@@ -29,7 +31,9 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
     def get(self, request, image_id):
         image_object = get_object_or_404(RetinaImage, pk=image_id)
-        image_itk = sitk.ReadImage(image_object.image.files.last().file.path)
+        image_itk = image_object.get_sitk_image()
+        if image_itk is None:
+            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
         image_nparray = sitk.GetArrayFromImage(image_itk)
         image = PILImage.fromarray(image_nparray)
         image.thumbnail((128, 128), PILImage.ANTIALIAS)
@@ -54,7 +58,10 @@ class NumpyView(RetinaAPIPermissionMixin, View):
             # normal image, return as numpy array
             # image = PILImage.open(image_object.image.files.first().file.path)
             # npy = np.array(image)
-        image_itk = sitk.ReadImage(image_object.image.files.first().file.path)
+
+        image_itk = image_object.get_sitk_image()
+        if image_itk is None:
+            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
         npy = sitk.GetArrayFromImage(image_itk)
 
         # return numpy array as response
