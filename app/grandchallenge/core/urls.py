@@ -4,7 +4,6 @@ from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.challenges.views import ChallengeUpdate
 from grandchallenge.core.views import site
-from grandchallenge.serving.views import ChallengeServeRedirect
 
 urlpatterns = [
     path("", site, name="challenge-homepage"),
@@ -42,11 +41,6 @@ urlpatterns = [
     path(
         "files/",
         RedirectView.as_view(pattern_name="uploads:create", permanent=False),
-    ),
-    path(
-        "serve/<path:path>/",
-        ChallengeServeRedirect.as_view(),
-        name="project_serve_file",
     ),
     #
     # End Legacy

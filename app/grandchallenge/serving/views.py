@@ -97,15 +97,3 @@ def serve_images(request, *, pk, path):
         return serve_fullpath(fullpath=fullpath)
 
     raise Http404("File not found.")
-
-
-class ChallengeServeRedirect(RedirectView):
-    # Do not redirect to a view name as this could skip some other handlers
-
-    def get_redirect_url(self, *args, **kwargs):
-        try:
-            challenge_name = kwargs["challenge_short_name"]
-        except KeyError:
-            challenge_name = self.request.challenge.short_name
-
-        return f"/media/{challenge_name}/{kwargs['path']}/"
