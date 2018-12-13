@@ -9,6 +9,8 @@ from distutils.util import strtobool as strtobool_i
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
+from config.denylist import USERNAME_DENYLIST
+
 
 def strtobool(val) -> bool:
     """ Returns disutils.util.strtobool as a boolean """
@@ -547,12 +549,7 @@ CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
-    "www",
     "m",
-    "mx",
-    "mobile",
-    "mail",
-    "webmail",
     "images",
     "logos",
     "banners",
@@ -563,7 +560,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-]
+] + USERNAME_DENYLIST
 
 if MEDIA_ROOT[-1] != "/":
     msg = (
