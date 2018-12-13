@@ -1,7 +1,27 @@
 import random
 import factory
+from pathlib import Path
 from grandchallenge.retina_images.models import RetinaImage
 from tests.studies_tests.factories import StudyFactory
+from tests.factories import ImageFactory, ImageFileFactory
+from tests.cases_tests import RESOURCE_PATH
+
+
+class ImageFileFactoryWithMHDFile(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "image10x10x10.mhd")
+
+
+class ImageFactoryWithImageFile(ImageFactory):
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            for image in extracted:
+                self.files.add(image)
+        if create and not extracted:
+            self.files.add(ImageFileFactoryWithMHDFile())
 
 
 class RetinaImageFactory(factory.DjangoModelFactory):
