@@ -9,10 +9,9 @@ class RetinaImageFactory(factory.DjangoModelFactory):
         model = RetinaImage
 
     name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
-    image = factory.django.ImageField()
+    image = factory.SubFactory(ImageFactoryWithImageFile)
     study = factory.SubFactory(StudyFactory)
     modality = factory.Iterator([x[0] for x in RetinaImage.MODALITY_CHOICES])
-    number = factory.Sequence(lambda n: n)
     eye_choice = factory.Iterator(
         [x[0] for x in RetinaImage.EYE_CHOICES]
     )
