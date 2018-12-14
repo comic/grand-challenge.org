@@ -5,7 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [("challenges", "0003_challenge_allow_unfiltered_page_html")]
+    dependencies = [
+        ("challenges", "0003_challenge_allow_unfiltered_page_html")
+    ]
 
     operations = [
         migrations.RenameField(

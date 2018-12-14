@@ -41,6 +41,7 @@ RUN pipenv install --system --dev
 USER 2001:2001
 WORKDIR /app
 ADD --chown=2001:2001 ./app/ /app/
+ADD --chown=2001:2001 pyproject.toml /tmp/pyproject.toml
 
 ##################
 # Dist Container #
