@@ -13,6 +13,7 @@ from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.studies.models import Study
+from tests.cases_tests import RESOURCE_PATH
 
 
 def get_user_with_token(**user_kwargs):
@@ -45,17 +46,21 @@ def get_auth_token_header(user, token=None):
 
 
 # helper functions
-def create_test_image():
+def create_test_images():
     """
     Create image for testing purposes
     :return: file
     """
-    file = BytesIO()
-    image = PILImage.new("RGBA", size=(50, 50), color=(155, 0, 0))
-    image.save(file, "png")
-    file.name = "test.png"
-    file.seek(0)
-    return file
+    files = {}
+    for file_type in ("mhd", "zraw"):
+        files[file_type] = BytesIO()
+        fh = open(RESOURCE_PATH / "image5x6x7.{}".format(file_type), "rb")
+        files[file_type].name = fh.name
+        files[file_type].write(fh.read())
+        fh.close()
+        files[file_type].seek(0)
+
+    return files
 
 
 def read_json_file(path_to_file):
@@ -78,19 +83,19 @@ def read_json_file(path_to_file):
 
 def create_upload_image_test_data():
     # create image
-    file = create_test_image()
+    files = create_test_images()
     data = read_json_file("upload_image_valid_data.json")
     # create request payload
-    data.update({"image": file})
+    data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
 def create_upload_image_invalid_test_data():
     # create image
-    file = create_test_image()
+    files = create_test_images()
     data = read_json_file("upload_image_invalid_data.json")
     # create request payload
-    data.update({"image": file})
+    data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
