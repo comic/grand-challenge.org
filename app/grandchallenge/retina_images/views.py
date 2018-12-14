@@ -34,7 +34,11 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
         image_itk = image_object.get_sitk_image()
         if image_itk is None:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+        depth = image_itk.GetDepth()
         image_nparray = sitk.GetArrayFromImage(image_itk)
+        if depth > 0:
+            # Get middle slice of image if 3D
+            image_nparray = image_nparray[depth // 2]
         image = PILImage.fromarray(image_nparray)
         image.thumbnail((128, 128), PILImage.ANTIALIAS)
         response = HttpResponse(content_type="image/png")
@@ -50,14 +54,6 @@ class NumpyView(RetinaAPIPermissionMixin, View):
 
     def get(self, request, image_id):
         image_object = get_object_or_404(RetinaImage, pk=image_id)
-
-        # if image_object.modality == RetinaImage.MODALITY_OCT:
-        #     # return all 128 images as list of numpy arrays
-        #     npy = image_object.get_all_oct_images_as_npy()
-        # else:
-            # normal image, return as numpy array
-            # image = PILImage.open(image_object.image.files.first().file.path)
-            # npy = np.array(image)
 
         image_itk = image_object.get_sitk_image()
         if image_itk is None:
