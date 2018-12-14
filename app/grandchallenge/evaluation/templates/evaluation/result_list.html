@@ -215,7 +215,7 @@
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
                 {% if evaluation_config.extra_results_columns|length > 0 %}
-                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                dom: "<'row'<'col-5'l><'col-7'f>>" +
                      "<'row'<'col-sm-12'Btr>>" +
                      "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
@@ -223,6 +223,18 @@
                         extend: 'colvis',
                         text: 'Additional metrics',
                         columns: '.toggable'
+                    },
+                    {
+                        text: 'Show all metrics',
+                        action: function ( e, dt, node, config ) {
+                            if($(node).text().indexOf('Hide') > -1) {
+                                dt.column('.toggable').visible(false);
+                                $(node).text('Show all metrics');
+                            } else {
+                                dt.column('.toggable').visible(true);
+                                $(node).text('Hide additional metrics');
+                            }
+                        }
                     }
                 ],
                 {% endif %}
