@@ -560,7 +560,8 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-] + USERNAME_DENYLIST
+    *USERNAME_DENYLIST,
+]
 
 if MEDIA_ROOT[-1] != "/":
     msg = (

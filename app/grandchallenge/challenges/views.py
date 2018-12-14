@@ -60,10 +60,12 @@ class ChallengeList(TemplateView):
 
         challenges_by_year = defaultdict(list)
         hosts = set()
+        host_count = defaultdict(int)
 
         for c in challenges:
             challenges_by_year[c.year].append(c)
             hosts.add(c.host_filter)
+            host_count[c.host_filter.host] += 1
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
@@ -85,7 +87,13 @@ class ChallengeList(TemplateView):
                         reverse=True,
                     )
                 ),
-                "hosts": sorted([h for h in hosts if h.host]),
+                "hosts": sorted(
+                    # Order the hosts and only display hosts with more than
+                    # 1 challenge
+                    [h for h in hosts if h.host and host_count[h.host] > 1],
+                    key=lambda h: host_count[h.host],
+                    reverse=True,
+                ),
             }
         )
 
