@@ -227,11 +227,13 @@
                     {
                         text: 'Show all metrics',
                         action: function ( e, dt, node, config ) {
-                            if($(node).text().indexOf('Hide') > -1) {
+                            if($(node).hasClass('metrics-hidden')) {
                                 dt.column('.toggable').visible(false);
+                                $(node).removeClass('metrics-hidden')
                                 $(node).text('Show all metrics');
                             } else {
                                 dt.column('.toggable').visible(true);
+                                $(node).addClass('metrics-hidden')
                                 $(node).text('Hide additional metrics');
                             }
                         }
