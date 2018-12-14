@@ -2,7 +2,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions, generics, parsers, status, serializers
 import datetime
 import uuid
+import sys
+from io import BytesIO
 from django.http.response import JsonResponse
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import IntegrityError, transaction
 from django.core.files import File
 from django.conf import settings
@@ -88,6 +91,12 @@ class UploadImage(generics.CreateAPIView):
 
             # Create ImageFile object without linking image file and without saving
             random_uuid_str = str(uuid.uuid4())
+
+            # Set ElementDataFile in mhd file to correct zraw filename
+            raw_file_name = random_uuid_str + ".zraw"
+            request.data["image_hd"] = self.set_element_data_file_header(
+                request.data["image_hd"], raw_file_name
+            )
             for image_key in ("image_hd", "image_raw"):
                 img_file_model = ImageFile(image=img)
 
@@ -117,7 +126,7 @@ class UploadImage(generics.CreateAPIView):
             "retina_image_created": image_created,
             "retina_image": RetinaImageSerializer(retina_img).data,
             "image_created": img_created,
-            "image": ImageSerializer(img).data
+            "image": ImageSerializer(img).data,
         }
         response_status = status.HTTP_201_CREATED
         if not image_created:
@@ -216,6 +225,21 @@ class UploadImage(generics.CreateAPIView):
             retina_image_dict,
             image_dict,
         )
+
+    def set_element_data_file_header(self, mhd_file, raw_file_name):
+        # Read file lines into list
+        f_content = mhd_file.readlines()
+
+        # Replace line with new ElementDataFile name
+        for i, line in enumerate(f_content):
+            if b"ElementDataFile" in line:
+                f_content[i] = "ElementDataFile = {}".format(raw_file_name).encode()
+
+        # Write lines into new file and return
+        new_file = BytesIO()
+        new_file.writelines(f_content)
+        new_file.seek(0)
+        return InMemoryUploadedFile(new_file, "ImageField", mhd_file.name, "application/octet-stream", None, sys.getsizeof(new_file))
 
 
 class AbstractUploadView(generics.CreateAPIView):
