@@ -39,7 +39,7 @@
                 </th>
 
                 {% for col in evaluation_config.extra_results_columns %}
-                    <th>
+                    <th class="toggable">
                         {{ col.title }}
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                             (#)
@@ -124,7 +124,7 @@
 
                         {% for col in evaluation_config.extra_results_columns %}
                             {% with result.metrics|get_jsonpath:col.path as metric %}
-                                <td data-order="{{ metric }}">
+                                <td data-order="{{ metric }}" class="toggable">
                                     <a href="{{ result_url }}">
                                         {% filter remove_whitespace %}
                                             {{ metric|floatformat:evaluation_config.score_decimal_places }}
@@ -201,24 +201,31 @@
                     "searchable": false,
                     "orderable": false,
                     "visible": true
-                }, {
-                    "targets": [2, -1],
+                }
+                {% if evaluation_config.extra_results_columns|length > 0 %}
+                ,{
+                    "targets": 'toggable',
                     "visible": false,
-                }],
+                }
+                {% endif %}
+                ],
                 ordering: true,
-                dom: 'Bfrtip',
                 autoWidth: false,
+                {% comment %}
+                    Default dom-setting copied from here: https://datatables.net/reference/option/dom
+                {% endcomment %}
+                {% if evaluation_config.extra_results_columns|length > 0 %}
+                dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                     "<'row'<'col-sm-12'Btr>>" +
+                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
                     {
                         extend: 'colvis',
                         text: 'Additional metrics',
-                        {%  if evaluation_config.show_supplementary_file_link %}
-                        columns: [4, -2]
-                        {% else %}
-                        columns: [4, -1]
-                        {% endif %}
+                        columns: '.toggable'
                     }
                 ],
+                {% endif %}
                 scrollX: true
             });
         });
