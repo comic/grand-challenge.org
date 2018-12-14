@@ -11,6 +11,10 @@ class ImageFileFactoryWithMHDFile(ImageFileFactory):
     file = factory.django.FileField(from_path=RESOURCE_PATH / "image10x10x10.mhd")
 
 
+class ImageFileFactoryWithRAWFile(ImageFileFactory):
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "image10x10x10.zraw")
+
+
 class ImageFactoryWithImageFile(ImageFactory):
     @factory.post_generation
     def files(self, create, extracted, **kwargs):
@@ -22,6 +26,7 @@ class ImageFactoryWithImageFile(ImageFactory):
                 self.files.add(image)
         if create and not extracted:
             self.files.add(ImageFileFactoryWithMHDFile())
+            self.files.add(ImageFileFactoryWithRAWFile())
 
 
 class RetinaImageFactory(factory.DjangoModelFactory):
