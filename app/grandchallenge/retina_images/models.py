@@ -80,12 +80,14 @@ class RetinaImage(UUIDModel):
 
     @staticmethod
     def create_image_file_name(file):
+        # TODO remove, not used anymore
         uuid_str = str(uuid.uuid4())
         # extension = imghdr.what('tmp/' + file.name) # remove tmp?
         extension = file.name.split(".")[-1]  # No file validation... unsafe?
         return "{}.{}".format(uuid_str, extension)
 
     def get_all_oct_images(self):
+        # TODO remove, not used anymore
         # Returns all oct images that belong in the same series
         if self.modality == RetinaImage.MODALITY_OCT:
             return self.study.retinaimage_set.filter(modality=RetinaImage.MODALITY_OCT)
@@ -94,6 +96,7 @@ class RetinaImage(UUIDModel):
             return []
 
     def get_all_oct_images_as_npy(self):
+        # TODO remove, not used anymore
         # Returns all oct images from one series as a numpy array
         npy = []
         for image in self.get_all_oct_images():
