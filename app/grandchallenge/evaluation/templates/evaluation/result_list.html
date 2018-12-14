@@ -191,7 +191,7 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#resultsTable').DataTable({
+            var table = $('#resultsTable').DataTable({
                 {% comment %}
                     The column index of the default sort, must match the table
                     set up.
@@ -246,6 +246,24 @@
                 {% endif %}
                 scrollX: true
             });
+            $('#resultsTable').on( 'column-visibility.dt', function ( e, settings, column, state ) {
+                var button = table.button(1).node();
+                visibility_columns = table.columns('.toggable').visible();
+                var not_all_visible = false;
+                visibility_columns.each(function(value) {
+                    if (value === false) {
+                        not_all_visible = true;
+                        return false;
+                    }
+                });
+                if (!not_all_visible) {
+                    button.addClass('metrics-hidden');
+                    button.text('Hide additional metrics');
+                } else {
+                    button.removeClass('metrics-hidden');
+                    button.text('Show all metrics');
+                }
+            } );
         });
         $(window).resize(function () {
             $('#resultsTable').DataTable().columns.adjust()
