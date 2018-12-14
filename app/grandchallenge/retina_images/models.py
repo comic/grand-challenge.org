@@ -71,7 +71,8 @@ class RetinaImage(UUIDModel):
         return "<{} {} {}>".format(self.__class__.__name__, self.name, self.modality)
 
     def get_sitk_image(self):
-        image_path = Path(self.image.files.first().file.path)
+        # Only works if image.files contains only one .mhd file (TODO try/catch and test?)
+        image_path = Path(self.image.files.get(file__endswith=".mhd").file.path)
         if not Path.is_file(image_path):
             return None
         # TODO add try/catch for failing to load mhd file
