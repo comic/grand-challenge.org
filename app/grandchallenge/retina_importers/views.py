@@ -93,7 +93,7 @@ class UploadImage(generics.CreateAPIView):
 
                 # Save image fieldfile into ImageFile, also triggers ImageFile model save method
                 image_file = File(request.data[image_key])
-                extension = "raw" if image_key == "image_raw" else "mhd"
+                extension = "zraw" if image_key == "image_raw" else "mhd"
                 image_name = "{}.{}".format(random_uuid_str, extension)
                 img_file_model.file.save(image_name, image_file, save=True)
 
