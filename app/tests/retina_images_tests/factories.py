@@ -8,11 +8,11 @@ from tests.cases_tests import RESOURCE_PATH
 
 
 class ImageFileFactoryWithMHDFile(ImageFileFactory):
-    file = factory.django.FileField(from_path=RESOURCE_PATH / "image10x10x10.mhd")
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "image5x6x7.mhd")
 
 
 class ImageFileFactoryWithRAWFile(ImageFileFactory):
-    file = factory.django.FileField(from_path=RESOURCE_PATH / "image10x10x10.zraw")
+    file = factory.django.FileField(from_path=RESOURCE_PATH / "image5x6x7.zraw")
 
 
 class ImageFactoryWithImageFile(ImageFactory):
@@ -25,8 +25,8 @@ class ImageFactoryWithImageFile(ImageFactory):
             for image in extracted:
                 self.files.add(image)
         if create and not extracted:
-            self.files.add(ImageFileFactoryWithMHDFile())
-            self.files.add(ImageFileFactoryWithRAWFile())
+            ImageFileFactoryWithMHDFile(image=self)
+            ImageFileFactoryWithRAWFile(image=self)
 
 
 class RetinaImageFactory(factory.DjangoModelFactory):
