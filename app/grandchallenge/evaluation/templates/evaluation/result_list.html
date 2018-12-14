@@ -30,6 +30,8 @@
                 <th
                         {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
                             class="table-active"
+                        {% else %}
+                            class="toggable"
                         {% endif %}
                 >
                     {{ evaluation_config.score_title }}
@@ -99,6 +101,8 @@
                             <td data-order="{{ metric }}"
                                     {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
                                 class="table-active"
+                                    {% else %}
+                                class="toggable"
                                     {% endif %}
                             >
                                 <a href="{{ result_url }}">
@@ -202,43 +206,43 @@
                     "orderable": false,
                     "visible": true
                 }
-                {% if evaluation_config.extra_results_columns|length > 0 %}
-                ,{
-                    "targets": 'toggable',
-                    "visible": false,
-                }
-                {% endif %}
+                    {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                        ,{
+                        "targets": 'toggable',
+                        "visible": false,
+                    }
+                    {% endif %}
                 ],
                 ordering: true,
                 autoWidth: false,
                 {% comment %}
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
-                {% if evaluation_config.extra_results_columns|length > 0 %}
-                dom: "<'row'<'col-5'l><'col-7'f>>" +
-                     "<'row'<'col-sm-12'Btr>>" +
-                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                buttons: [
-                    {
-                        extend: 'colvis',
-                        text: 'Additional metrics',
-                        columns: '.toggable'
-                    },
-                    {
-                        text: 'Show all metrics',
-                        action: function ( e, dt, node, config ) {
-                            if($(node).hasClass('metrics-hidden')) {
-                                dt.column('.toggable').visible(false);
-                                $(node).removeClass('metrics-hidden')
-                                $(node).text('Show all metrics');
-                            } else {
-                                dt.column('.toggable').visible(true);
-                                $(node).addClass('metrics-hidden')
-                                $(node).text('Hide additional metrics');
+                {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                    dom: "<'row'<'col-5'l><'col-7'f>>" +
+                        "<'row'<'col-sm-12'Btr>>" +
+                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    buttons: [
+                        {
+                            extend: 'colvis',
+                            text: 'Additional metrics',
+                            columns: '.toggable'
+                        },
+                        {
+                            text: 'Show all metrics',
+                            action: function (e, dt, node, config) {
+                                if ($(node).hasClass('metrics-hidden')) {
+                                    dt.columns('.toggable').visible(false);
+                                    $(node).removeClass('metrics-hidden');
+                                    $(node).text('Show all metrics');
+                                } else {
+                                    dt.columns('.toggable').visible(true);
+                                    $(node).addClass('metrics-hidden');
+                                    $(node).text('Hide additional metrics');
+                                }
                             }
                         }
-                    }
-                ],
+                    ],
                 {% endif %}
                 scrollX: true
             });
