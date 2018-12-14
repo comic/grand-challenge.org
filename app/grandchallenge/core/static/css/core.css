@@ -224,3 +224,18 @@ dl.inline dt:after {
 .invalid-feedback {
   display: block;
 }
+
+
+/* hide sorting arrows in second hidden header of datatable */
+div.dataTables_scrollBody table.dataTable thead .sorting:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_asc:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_desc:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_asc_disabled:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_desc_disabled:before {
+  content: '';
+}
+
+/* float seach box of datatables to the right of metric-toggling box */
+div.dataTables_wrapper div.dataTables_filter {
+  float: right;
+}

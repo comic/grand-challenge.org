@@ -199,11 +199,31 @@
                         "targets": [-1],
                     {% endif %}
                     "searchable": false,
-                    "orderable": false
+                    "orderable": false,
+                    "visible": true
+                }, {
+                    "targets": [2, -1],
+                    "visible": false,
                 }],
-                ordering: true
+                ordering: true,
+                dom: 'Bfrtip',
+                autoWidth: false,
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'Additional metrics',
+                        {%  if evaluation_config.show_supplementary_file_link %}
+                        columns: [4, -2]
+                        {% else %}
+                        columns: [4, -1]
+                        {% endif %}
+                    }
+                ],
+                scrollX: true
             });
-
+        });
+        $(window).resize(function () {
+            $('#resultsTable').DataTable().columns.adjust()
         });
     </script>
 
