@@ -20,7 +20,6 @@ from matplotlib.figure import Figure
 
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.subdomains.utils import reverse
 
@@ -354,14 +353,13 @@ def insert_file(parser, token):
         args = {}
         filename = all_args[0]
         args["file"] = add_quotes(filename)
-    replacer = HtmlLinkReplacer()
-    return InsertFileNode(args, replacer, parser)
+
+    return InsertFileNode(args, parser)
 
 
 class InsertFileNode(template.Node):
-    def __init__(self, args, replacer, parser):
+    def __init__(self, args, parser):
         self.args = args
-        self.replacer = replacer
         self.parser = parser
 
     def make_error_msg(self, msg):
@@ -394,35 +392,6 @@ class InsertFileNode(template.Node):
         path = path.replace("\\\\", "/")
         return path.replace("\\", "/")
 
-    def replace_links(self, filename, contents, currentpage):
-        """Relative urls which work on disk might not
-        work properly when used in included file. Make sure any links in contents
-        still point to the right place 
-        
-        """
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse(
-            "pages:insert-detail",
-            kwargs={
-                "challenge_short_name": currentpage.challenge.short_name,
-                "page_title": currentpage.title,
-                "dropboxpath": "remove",
-            },
-        )
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = (
-            ntpath.dirname(filename) + "/"
-        )  # path of currently inserted file
-        replaced = self.replacer.replace_links(
-            contents, base_url, current_path
-        )
-        html_out = replaced
-        return html_out
-
     def render(self, context):
         # text typed in the tag
         token = self.args["file"]
@@ -454,23 +423,8 @@ class InsertFileNode(template.Node):
             return self.make_error_msg("error opening file:" + str(e))
 
         # TODO check content safety
-        # For some special pages like login and signup, there is no current page
-        # In that case just don't try any link rewriting
 
-        if "currentpage" in context:
-            currentpage = context["currentpage"]
-        else:
-            currentpage = None
-
-        if currentpage and os.path.splitext(filename)[1] != ".css":
-            html_out = self.replace_links(
-                filename, contents, currentpage
-            ).decode()
-        # rewrite relative links
-        else:
-            html_out = contents
-
-        return html_out
+        return contents
 
 
 @register.tag(name="insert_graph")
@@ -499,14 +453,12 @@ def insert_graph(parser, token):
             args["type"] = all_args[1].split(":")[1]
         else:
             args["type"] = "anode09"  # default
-    replacer = HtmlLinkReplacer()
-    return InsertGraphNode(args, replacer)
+    return InsertGraphNode(args)
 
 
 class InsertGraphNode(template.Node):
-    def __init__(self, args, replacer):
+    def __init__(self, args):
         self.args = args
-        self.replacer = replacer
 
     def make_error_msg(self, msg):
         logger.error(
