@@ -13,6 +13,8 @@
   "series_voxel_size_lateral": 2.234,
   "series_voxel_size_transversal": 3.234,
   "image_identifier": "TestSeriesImageName",
-  "image_number": 1,
-  "image_modality": "CF"
+  "image_modality": "CF",
+  "image_width": 7,
+  "image_height": 6,
+  "image_depth": 5
 }
