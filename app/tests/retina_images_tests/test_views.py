@@ -5,6 +5,7 @@ import pytest
 from PIL import Image as PILImage
 from django.urls import reverse
 from rest_framework import status
+import SimpleITK as sitk
 
 from grandchallenge.retina_images.models import RetinaImage
 from tests.retina_images_tests.factories import RetinaImageFactory
@@ -42,9 +43,14 @@ class TestCustomEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert response["Content-type"] == "image/png"
 
-        response_np = np.array(PILImage.open(io.BytesIO(response.content)))
-        request_np = np.array(PILImage.open(image.image.path))
-        assert np.array_equal(response_np, request_np)
+        response_np = np.array(PILImage.open(io.BytesIO(response.content)), np.uint8)
+        sitk_image = image.get_sitk_image()
+        depth = sitk_image.GetDepth()
+        nda_image = sitk.GetArrayFromImage(sitk_image)
+        if depth > 0:
+            nda_image = nda_image[depth // 2]
+        expected_np = nda_image.astype(np.uint8)
+        assert np.array_equal(response_np, expected_np)
 
     def test_numpy_endpoint_non_authenticated(self, client):
         image = RetinaImageFactory()
@@ -77,7 +83,9 @@ class TestCustomEndpoints:
         client.login(**TEST_USER_CREDENTIALS)
         response = client.get(url)
         response_np = np.load(io.BytesIO(response.content))
-        request_image_arr = np.array(PILImage.open(image.image.path))
+        sitk_image = image.get_sitk_image()
+        nda_image = sitk.GetArrayFromImage(sitk_image)
+        request_image_arr = nda_image.astype(np.uint8)
         assert np.array_equal(response_np, request_image_arr)
 
     def test_numpy_endpoint_authenticated_oct_series_status(self, client, django_user_model):
@@ -89,7 +97,7 @@ class TestCustomEndpoints:
         assert response.status_code == status.HTTP_200_OK
         assert response["Content-type"] == "application/octet-stream"
 
-    def test_numpy_endpoint_authenticated_oct_series_image_count(self, client, django_user_model):
+    def test_numpy_endpoint_authenticated_oct_series_z_count(self, client, django_user_model):
         series_oct, images_oct = create_oct_series()
         url = reverse("retina:image-numpy", args=[images_oct[0].id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
