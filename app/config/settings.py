@@ -145,7 +145,7 @@ MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
-DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
