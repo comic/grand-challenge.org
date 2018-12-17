@@ -107,8 +107,8 @@ class ArchiveView(APIView):
                         obs_registration_flat = []
 
                     voxel_size = [0, 0, 0]
-                    if image.voxel_size:
-                        voxel_size = image.voxel_size
+                    # if image.voxel_size:
+                    #     voxel_size = image.voxel_size
                     study_datetime = "Unknown"
                     if image.study.datetime:
                         study_datetime = image.study.datetime.strftime(
@@ -279,7 +279,7 @@ class DataView(APIView):
             study__patient=patient,
             study__name=request_data.get("visit_nr"),
             name=request_data.get("img_name"),
-            **conditions,
+            **conditions
         )
 
     def get(
@@ -524,16 +524,16 @@ class DataView(APIView):
                 )
                 if data_type == "ETDRS":
                     image.etdrsgridannotation_set.create(
-                        **save_data,
                         fovea=self.dict_to_coordinate(data["fovea"]),
                         optic_disk=self.dict_to_coordinate(data["optic_disk"]),
+                        **save_data,
                     )
                 elif data_type == "GA":
                     for ga_type, ga_data_list in data.items():
                         if not ga_data_list:
                             continue  # skip empty arrays
                         ga_points_model = image.polygonannotationset_set.create(
-                            **save_data, name=ga_type.lower()
+                            name=ga_type.lower(), **save_data
                         )
                         for ga_data in ga_data_list:
                             ga_points_model.singlepolygonannotation_set.create(
@@ -541,20 +541,20 @@ class DataView(APIView):
                             )
                 elif data_type == "Fovea":
                     image.booleanclassificationannotation_set.create(
-                        **save_data,
                         name="fovea_affected",
                         value=data["fovea_affected"],
+                        **save_data,
                     )
                 elif data_type == "Measure":
                     for measurement in data:
                         image.measurementannotation_set.create(
-                            **save_data,
                             start_voxel=self.dict_to_coordinate(
                                 measurement["from"]
                             ),
                             end_voxel=self.dict_to_coordinate(
                                 measurement["to"]
                             ),
+                            **save_data,
                         )
                 elif data_type == "Registration":
                     landmark_annotation_set_model.singlelandmarkannotation_set.create(
