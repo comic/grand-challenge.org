@@ -155,20 +155,6 @@ class UploadImage(generics.CreateAPIView):
             "modality": upperize(request.data.get("image_modality")),
             "eye_choice": upperize(request.data.get("image_eye_choice")),
         }
-        if (
-            request.data.get("series_voxel_size_axial") is not None
-            and request.data.get("series_voxel_size_lateral") is not None
-            and request.data.get("series_voxel_size_transversal") is not None
-        ):
-            retina_image_dict.update(
-                {
-                    "voxel_size": [
-                        request.data.get("series_voxel_size_axial"),
-                        request.data.get("series_voxel_size_lateral"),
-                        request.data.get("series_voxel_size_transversal"),
-                    ]
-                }
-            )
 
         if (
             retina_image_dict["modality"] == "OCT"
