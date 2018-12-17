@@ -21,7 +21,6 @@ class RetinaImageSerializer(serializers.ModelSerializer):
             "image",
             "modality",
             "eye_choice",
-            "voxel_size",
         )
 
     def get_unique_together_validators(self):

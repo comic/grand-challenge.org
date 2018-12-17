@@ -60,11 +60,6 @@ class RetinaImage(UUIDModel):
         help_text="The eye of which this image is from",
     )
 
-    # Voxel size field. Order: [ axial, lateral, transversal ]
-    voxel_size = ArrayField(
-        models.FloatField(blank=True, null=True), size=3, blank=True, null=True
-    )
-
     name = models.CharField(max_length=255)
 
     def __str__(self):
