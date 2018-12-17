@@ -219,7 +219,7 @@ class UploadImage(generics.CreateAPIView):
         # Replace line with new ElementDataFile name
         for i, line in enumerate(f_content):
             if b"ElementDataFile" in line:
-                f_content[i] = "ElementDataFile = {}".format(raw_file_name).encode()
+                f_content[i] = "ElementDataFile = {}\n".format(raw_file_name).encode()
 
         # Write lines into new file and return
         new_file = BytesIO()
