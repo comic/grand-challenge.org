@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import RetinaImage
-from grandchallenge.annotations.admin import SingleLandmarkAnnotationInline
+# from grandchallenge.annotations.admin import SingleLandmarkAnnotationInline
 
 
 class ImageInline(admin.StackedInline):
@@ -17,7 +17,7 @@ class ImageAdmin(admin.ModelAdmin):
         "modality",
     )
     list_filter = ("modality",)
-    inlines = [SingleLandmarkAnnotationInline]
+    # inlines = [SingleLandmarkAnnotationInline]
 
 
 admin.site.register(RetinaImage, ImageAdmin)

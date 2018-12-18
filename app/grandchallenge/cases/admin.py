@@ -14,6 +14,9 @@ class ImageAdmin(admin.ModelAdmin):
     )
     inlines = [ImageFileInline]
 
+class ImageInline(admin.StackedInline):
+    model = Image
+    extra = 0
 
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile)
