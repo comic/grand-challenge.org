@@ -165,4 +165,5 @@ class AnnotationSetFactory(factory.DjangoModelFactory):
 class ImagingModalityFactory(factory.DjangoModelFactory):
     class Meta:
         model = ImagingModality
+        django_get_or_create = ('modality',)
     modality = factory.sequence(lambda n: f"Modality {n}")
