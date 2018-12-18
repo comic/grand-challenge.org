@@ -1,6 +1,6 @@
 import pytest
 from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 from tests.factories import UserFactory
 from grandchallenge.registrations.views import OctObsRegistrationViewSet
 from grandchallenge.registrations.serializers import OctObsRegistrationSerializer
@@ -15,7 +15,7 @@ class TestViewsets:
 
 actions = VIEWSET_ACTIONS
 # Add all model viewset test functions to class
-required_relations = {"obs_image": RetinaImageFactory, "oct_series": RetinaImageFactory}
+required_relations = {"obs_image": ImageFactory, "oct_series": ImageFactory}
 batch_test_viewset_endpoints(
     actions,
     OctObsRegistrationViewSet,

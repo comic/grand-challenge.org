@@ -1,6 +1,6 @@
 import factory
 from grandchallenge.archives.models import Archive
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 
 
 class ArchiveFactory(factory.DjangoModelFactory):
@@ -18,4 +18,4 @@ class ArchiveFactory(factory.DjangoModelFactory):
             for image in extracted:
                 self.images.add(image)
         if create and not extracted:
-            self.images.add(RetinaImageFactory())
+            self.images.add(ImageFactory())

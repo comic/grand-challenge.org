@@ -8,7 +8,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.factories import UserFactory
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -136,7 +136,7 @@ def get_response_status(
                 data_row.get("image_identifier")
                 not in existing_models["images"]
             ):
-                image = RetinaImageFactory(
+                image = ImageFactory(
                     name=data_row.get("image_identifier"), study=study
                 )
                 existing_models["images"].append(image.name)

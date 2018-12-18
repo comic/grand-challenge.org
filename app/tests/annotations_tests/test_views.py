@@ -10,7 +10,7 @@ from tests.annotations_tests.factories import (
     SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
 )
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 from tests.factories import UserFactory
 from grandchallenge.annotations.views import (
     ETDRSGridAnnotationViewSet,
@@ -37,7 +37,7 @@ class TestViewsets:
 
 actions = VIEWSET_ACTIONS
 # Add all model viewset test functions to class
-required_relations = {"image": RetinaImageFactory, "grader": UserFactory}
+required_relations = {"image": ImageFactory, "grader": UserFactory}
 batch_test_viewset_endpoints(
     actions,
     ETDRSGridAnnotationViewSet,

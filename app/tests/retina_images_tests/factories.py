@@ -1,9 +1,11 @@
 import random
 import factory
 from pathlib import Path
-from grandchallenge.retina_images.models import RetinaImage
+# from grandchallenge.retina_images.models import RetinaImage
+from grandchallenge.cases.models import Image
+from grandchallenge.challenges.models import ImagingModality
 from tests.studies_tests.factories import StudyFactory
-from tests.factories import ImageFactory, ImageFileFactory
+from tests.factories import ImageFactory, ImageFileFactory, ImagingModalityFactory
 from tests.cases_tests import RESOURCE_PATH
 
 
@@ -27,23 +29,9 @@ class ImageFactoryWithImageFile(ImageFactory):
         if create and not extracted:
             ImageFileFactoryWithMHDFile(image=self)
             ImageFileFactoryWithRAWFile(image=self)
-
-
-class RetinaImageFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = RetinaImage
-
-    name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
-    image = factory.SubFactory(ImageFactoryWithImageFile)
-    study = factory.SubFactory(StudyFactory)
-    modality = factory.Iterator([x[0] for x in RetinaImage.MODALITY_CHOICES])
     eye_choice = factory.Iterator(
-        [x[0] for x in RetinaImage.EYE_CHOICES]
+        [x[0] for x in Image.EYE_CHOICES]
     )
-    voxel_size = [
-        random.uniform(0.0, 500.0),
-        random.uniform(0.0, 500.0),
-        random.uniform(0.0, 500.0),
-    ]
-
-
+    study = factory.SubFactory(StudyFactory)
+    name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
+    modality = factory.SubFactory(ImagingModalityFactory, modality=ImagingModality.MODALITY_CF)

@@ -7,26 +7,26 @@ from django.urls import reverse
 from rest_framework import status
 import SimpleITK as sitk
 
-from grandchallenge.retina_images.models import RetinaImage
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
+from grandchallenge.challenges.models import ImagingModality
 from tests.retina_core_tests.factories import create_oct_series
 from tests.studies_tests.factories import StudyFactory
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.viewset_helpers import batch_test_viewset_endpoints, VIEWSET_ACTIONS
-from grandchallenge.retina_images.views import RetinaImageViewSet
-from grandchallenge.retina_images.serializers import RetinaImageSerializer
+from grandchallenge.cases.views import ImageViewSet
+from grandchallenge.cases.serializers import ImageSerializer
 
 
 @pytest.mark.django_db
 class TestCustomEndpoints:
     def test_thumbnail_endpoint_non_authenticated(self, client):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-thumbnail", args=[image.id])
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_thumbnail_endpoint_authenticated_non_existant(self, client, django_user_model):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-thumbnail", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
@@ -35,7 +35,7 @@ class TestCustomEndpoints:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_thumbnail_endpoint_authenticated(self, client, django_user_model):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-thumbnail", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
@@ -53,13 +53,13 @@ class TestCustomEndpoints:
         assert np.array_equal(response_np, expected_np)
 
     def test_numpy_endpoint_non_authenticated(self, client):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-numpy", args=[image.id])
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_numpy_endpoint_authenticated_non_existant(self, client, django_user_model):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
@@ -68,7 +68,7 @@ class TestCustomEndpoints:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_numpy_endpoint_authenticated_status(self, client, django_user_model):
-        image = RetinaImageFactory()
+        image = ImageFactory()
         url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
@@ -77,7 +77,7 @@ class TestCustomEndpoints:
         assert response["Content-type"] == "application/octet-stream"
 
     def test_numpy_endpoint_authenticated_images_correspond(self, client, django_user_model):
-        image = RetinaImageFactory(modality=RetinaImage.MODALITY_CF)
+        image = ImageFactory(modality__modality=ImagingModality.MODALITY_CF)
         url = reverse("retina:image-numpy", args=[image.id])
         django_user_model.objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
@@ -139,10 +139,10 @@ required_relations = {"study": StudyFactory}
 # skip create and update for image because no image file can be made.
 batch_test_viewset_endpoints(
     image_actions,
-    RetinaImageViewSet,
-    "retinaimage",
-    RetinaImageFactory,
+    ImageViewSet,
+    "image",
+    ImageFactory,
     TestViewsets,
     required_relations,
-    serializer=RetinaImageSerializer,
+    serializer=ImageSerializer,
 )

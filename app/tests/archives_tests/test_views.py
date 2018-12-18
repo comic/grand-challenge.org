@@ -1,5 +1,5 @@
 import pytest
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 from grandchallenge.archives.views import ArchiveViewSet
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.serializers import ArchiveSerializer
@@ -12,7 +12,7 @@ class TestViewsets:
     pass
 
 
-required_relations = {"images": [RetinaImageFactory]}
+required_relations = {"images": [ImageFactory]}
 batch_test_viewset_endpoints(
     VIEWSET_ACTIONS,
     ArchiveViewSet,

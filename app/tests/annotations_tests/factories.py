@@ -16,7 +16,7 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
 )
-from tests.retina_images_tests.factories import RetinaImageFactory
+from tests.retina_images_tests.factories import ImageFactory
 from tests.factories import UserFactory
 
 
@@ -25,7 +25,7 @@ class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
         model = AbstractImageAnnotationModel
         abstract = True
 
-    image = factory.SubFactory(RetinaImageFactory)
+    image = factory.SubFactory(ImageFactory)
     grader = factory.SubFactory(UserFactory)
     created = factory.fuzzy.FuzzyDateTime(
         datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
@@ -131,7 +131,7 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
     class Meta:
         model = SingleLandmarkAnnotation
 
-    image = factory.SubFactory(RetinaImageFactory)
+    image = factory.SubFactory(ImageFactory)
     annotation_set = factory.SubFactory(LandmarkAnnotationSetFactory)
 
     landmarks = [
