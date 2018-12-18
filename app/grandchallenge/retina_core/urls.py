@@ -19,7 +19,6 @@ urlpatterns = [
     path("archives/", include("grandchallenge.archives.urls")),
     path("patients/", include("grandchallenge.patients.urls")),
     path("studies/", include("grandchallenge.studies.urls")),
-    # path("retina_images/", include("grandchallenge.retina_images.urls")),
     path("annotations/", include("grandchallenge.annotations.urls")),
     path("retina_importers/", include("grandchallenge.retina_importers.urls")),
     path("registrations/", include("grandchallenge.registrations.urls")),

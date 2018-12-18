@@ -303,7 +303,6 @@ LOCAL_APPS = [
     'grandchallenge.registrations',
     'grandchallenge.annotations',
     'grandchallenge.retina_core',
-    'grandchallenge.retina_images',
     'grandchallenge.retina_importers',
     'grandchallenge.retina_api',
 ]

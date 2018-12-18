@@ -36,8 +36,6 @@ from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
 
-# from grandchallenge.retina_images.models import RetinaImage
-# from grandchallenge.retina_images.serializers import RetinaImageSerializer
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.challenges.models import ImagingModality
