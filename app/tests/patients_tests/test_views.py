@@ -15,6 +15,7 @@ batch_test_viewset_endpoints(
     VIEWSET_ACTIONS,
     PatientViewSet,
     "patient",
+    "patients",
     PatientFactory,
     TestViewsets,
     # required_relations,

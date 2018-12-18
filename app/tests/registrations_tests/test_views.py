@@ -20,6 +20,7 @@ batch_test_viewset_endpoints(
     actions,
     OctObsRegistrationViewSet,
     "octobsregistration",
+    "registrations",
     OctObsRegistrationFactory,
     TestViewsets,
     required_relations,

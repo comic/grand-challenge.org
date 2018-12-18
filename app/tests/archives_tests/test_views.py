@@ -17,6 +17,7 @@ batch_test_viewset_endpoints(
     VIEWSET_ACTIONS,
     ArchiveViewSet,
     "archive",
+    "archives",
     ArchiveFactory,
     TestViewsets,
     required_relations,

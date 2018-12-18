@@ -17,6 +17,7 @@ batch_test_viewset_endpoints(
     VIEWSET_ACTIONS,
     StudyViewSet,
     "study",
+    "studies",
     StudyFactory,
     TestViewsets,
     required_relations,

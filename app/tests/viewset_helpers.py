@@ -23,6 +23,7 @@ def get_response_status_viewset(
     rf,
     viewset,
     model_name,
+    namespace,
     action_name,
     request_method,
     model_factory=None,
@@ -52,9 +53,9 @@ def get_response_status_viewset(
 
     # determine url
     if action_name == "list" or action_name == "create":
-        url = reverse("retina:{}-{}".format(model_name, "list"))  # TODO generalize with namespace as variable
+        url = reverse(f"{namespace}:{model_name}-list")
     else:
-        url = reverse("retina:{}-{}".format(model_name, "detail"), kwargs={"pk": model.pk})  # TODO generalize with namespace as variable
+        url = reverse(f"{namespace}:{model_name}-detail", kwargs={"pk": model.pk})
 
     # determine request
     if action_name == "create" or action_name == "update":
@@ -79,13 +80,14 @@ def get_response_status_viewset(
     return response.status_code
 
 
-def batch_test_viewset_endpoints(actions, viewset, model_name, model_factory, test_class, required_relations={}, serializer=None):
+def batch_test_viewset_endpoints(actions, viewset, model_name, namespace, model_factory, test_class, required_relations={}, serializer=None):
     for action_name, request_method, authenticated_status in actions:
         for authenticated in (False, True):
 
             test_method = create_test_method(
                 viewset,
                 model_name,
+                namespace,
                 action_name,
                 request_method,
                 model_factory,
@@ -106,6 +108,7 @@ def batch_test_viewset_endpoints(actions, viewset, model_name, model_factory, te
 def create_test_method(
     viewset,
     model_name,
+    namespace,
     action_name,
     request_method,
     model_factory,
@@ -120,6 +123,7 @@ def create_test_method(
             rf,
             viewset,
             model_name,
+            namespace,
             action_name,
             request_method,
             model_factory=model_factory,

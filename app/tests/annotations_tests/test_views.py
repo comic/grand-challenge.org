@@ -36,12 +36,14 @@ class TestViewsets:
 
 
 actions = VIEWSET_ACTIONS
+namespace = "annotations"
 # Add all model viewset test functions to class
 required_relations = {"image": ImageFactory, "grader": UserFactory}
 batch_test_viewset_endpoints(
     actions,
     ETDRSGridAnnotationViewSet,
     "etdrsgridannotation",
+    namespace,
     ETDRSGridAnnotationFactory,
     TestViewsets,
     required_relations,
@@ -51,6 +53,7 @@ batch_test_viewset_endpoints(
     actions,
     MeasurementAnnotationViewSet,
     "measurementannotation",
+    namespace,
     MeasurementAnnotationFactory,
     TestViewsets,
     required_relations,
@@ -61,6 +64,7 @@ batch_test_viewset_endpoints(
     actions,
     BooleanClassificationAnnotationViewSet,
     "booleanclassificationannotation",
+    namespace,
     BooleanClassificationAnnotationFactory,
     TestViewsets,
     required_relations,
@@ -71,6 +75,7 @@ batch_test_viewset_endpoints(
     actions,
     PolygonAnnotationSetViewSet,
     "polygonannotationset",
+    namespace,
     PolygonAnnotationSetFactory,
     TestViewsets,
     required_relations,
@@ -82,6 +87,7 @@ batch_test_viewset_endpoints(
     actions,
     LandmarkAnnotationSetViewSet,
     "landmarkannotationset",
+    namespace,
     LandmarkAnnotationSetFactory,
     TestViewsets,
     required_relations,
