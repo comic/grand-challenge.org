@@ -14,4 +14,14 @@ class ImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = ("pk", "name", "files")
+        fields = (
+            "pk",
+            "name",
+            "files",
+            "eye_choice",
+            "modality",
+            "color_space",
+            "width",
+            "height",
+            "depth",
+        )

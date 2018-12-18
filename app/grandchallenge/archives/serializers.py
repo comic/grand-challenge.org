@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from .models import Archive
-from grandchallenge.retina_images.serializers import RetinaImageSerializer
+from grandchallenge.cases.serializers import ImageSerializer
 
 
 class ArchiveSerializer(serializers.ModelSerializer):
-    images = RetinaImageSerializer(read_only=True, many=True)
+    images = ImageSerializer(read_only=True, many=True)
 
     class Meta:
         model = Archive
