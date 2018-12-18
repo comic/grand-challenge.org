@@ -12,14 +12,13 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('annotations', '0001_initial'),
-        ('retina_images', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='singlelandmarkannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='polygonannotationset',
@@ -29,7 +28,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='polygonannotationset',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='measurementannotation',
@@ -39,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='measurementannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='landmarkannotationset',
@@ -54,7 +53,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='integerclassificationannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='etdrsgridannotation',
@@ -64,7 +63,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='etdrsgridannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='coordinatelistannotation',
@@ -74,7 +73,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coordinatelistannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AddField(
             model_name='booleanclassificationannotation',
@@ -84,7 +83,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='booleanclassificationannotation',
             name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
         ),
         migrations.AlterUniqueTogether(
             name='singlelandmarkannotation',

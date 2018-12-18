@@ -10,19 +10,18 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('registrations', '0001_initial'),
-        ('retina_images', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='octobsregistration',
             name='obs_image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='obs_image', to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='obs_image', to='cases.Image'),
         ),
         migrations.AddField(
             model_name='octobsregistration',
             name='oct_series',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='oct_image', to='retina_images.RetinaImage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='oct_image', to='cases.Image'),
         ),
         migrations.AlterUniqueTogether(
             name='octobsregistration',
