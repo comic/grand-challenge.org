@@ -13,8 +13,8 @@ class OctObsRegistrationFactory(factory.DjangoModelFactory):
     class Meta:
         model = OctObsRegistration
 
-    obs_image = factory.SubFactory(ImageFactory, modality__modality=ImagingModality.MODALITY_OBS)
-    oct_series = factory.SubFactory(ImageFactory, modality__modality=ImagingModality.MODALITY_OCT)
+    obs_image = factory.SubFactory(ImageFactory)
+    oct_series = factory.SubFactory(ImageFactory)
 
     registration_values = [
         [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],

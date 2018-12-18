@@ -17,11 +17,15 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = (
             "pk",
             "name",
+            "study",
             "files",
-            "eye_choice",
-            "modality",
-            "color_space",
             "width",
             "height",
             "depth",
+            "color_space",
+            "modality",
+            "eye_choice",
+            "shape_without_color",
+            "shape",
+            "cirrus_link"
         )

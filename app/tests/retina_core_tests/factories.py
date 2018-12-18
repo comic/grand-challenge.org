@@ -1,7 +1,7 @@
 from grandchallenge.challenges.models import ImagingModality
 from tests.archives_tests.factories import ArchiveFactory
 from tests.patients_tests.factories import PatientFactory
-from tests.retina_images_tests.factories import ImageFactory
+from tests.retina_images_tests.factories import ImageFactoryWithImageFile
 from tests.studies_tests.factories import StudyFactory
 
 
@@ -9,7 +9,7 @@ def create_oct_series(**paremeters):
     study = StudyFactory(**paremeters)
     oct_slices = []
     for i in range(128):
-        oct_slices.append(ImageFactory(study=study, modality__modality=ImagingModality.MODALITY_OCT, number=i))
+        oct_slices.append(ImageFactoryWithImageFile(study=study, modality__modality=ImagingModality.MODALITY_OCT))
 
     return study, oct_slices
 
@@ -25,9 +25,9 @@ def create_some_datastructure_data(
 
     patient = PatientFactory(**patient_pars)
     study = StudyFactory(patient=patient, **study_pars)
-    image_cf = ImageFactory(study=study, modality__modality=ImagingModality.MODALITY_CF, **image_cf_pars)
+    image_cf = ImageFactoryWithImageFile(study=study, modality__modality=ImagingModality.MODALITY_CF, **image_cf_pars)
     study_oct, oct_slices = create_oct_series(patient=patient, **oct_study_pars)
-    image_obs = ImageFactory(study=study_oct, modality=ImagingModality.MODALITY_OBS, **image_obs_pars)
+    image_obs = ImageFactoryWithImageFile(study=study_oct, modality=ImagingModality.MODALITY_OBS, **image_obs_pars)
     archive = ArchiveFactory.create(images=(*oct_slices, image_cf, image_obs), **archive_pars)
     return {
         "archive": archive,
