@@ -8,15 +8,14 @@ class ImageFileInline(admin.StackedInline):
 
 
 class ImageAdmin(admin.ModelAdmin):
-    search_fields = (
-        "pk",
-        "name",
-    )
+    search_fields = ("pk", "name")
     inlines = [ImageFileInline]
+
 
 class ImageInline(admin.StackedInline):
     model = Image
     extra = 0
+
 
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile)

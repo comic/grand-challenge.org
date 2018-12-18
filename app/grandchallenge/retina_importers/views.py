@@ -80,7 +80,7 @@ class UploadImage(generics.CreateAPIView):
             img = Image.objects.get(study=study, **image_dict)
             # Image already exists. Do nothing and return response
         except Image.DoesNotExist:
-            # RetinaImage does not exist yet.
+            # Image does not exist yet.
             img = Image.objects.create(study=study, **image_dict)
 
             # Create ImageFile object without linking image file and without saving

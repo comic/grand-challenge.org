@@ -188,9 +188,6 @@ class ImageView(RetinaAPIPermissionMixin, View):
                 image = image.get(modality__modality=ImagingModality.MODALITY_OBS)
             elif image_modality == "oct":
                 image = image.get(modality__modality=ImagingModality.MODALITY_OCT)
-                # qs = image.filter(modality=RetinaImage.MODALITY_OCT)
-                # number = len(qs)
-                # image = qs.get(number=number // 2)
             else:
                 image = image.get()
         except MultipleObjectsReturned:
