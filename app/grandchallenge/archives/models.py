@@ -1,6 +1,6 @@
 from django.db import models
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.retina_images.models import RetinaImage
+from grandchallenge.cases.models import Image
 
 
 class Archive(UUIDModel):
@@ -10,7 +10,7 @@ class Archive(UUIDModel):
 
     name = models.CharField(max_length=255, default="Unnamed Archive")
 
-    images = models.ManyToManyField(RetinaImage)
+    images = models.ManyToManyField(Image)
 
     def __str__(self):
         return "<{} {}>".format(self.__class__.__name__, self.name)

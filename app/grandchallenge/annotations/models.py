@@ -4,10 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone
 from rest_framework.serializers import ValidationError
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.archives.models import Archive
-from grandchallenge.patients.models import Patient
-from grandchallenge.studies.models import Study
-from grandchallenge.retina_images.models import RetinaImage
+from grandchallenge.cases.models import Image
 # from retina_backend.users.models import User
 from django.contrib.auth import get_user_model
 
@@ -29,7 +26,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
     """
     Abstract model for annotation linking to a single image
     """
-    image = models.ForeignKey(RetinaImage, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
 
     def __str__(self):
         return "<{} by {} on {} for {}>".format(
@@ -125,7 +122,7 @@ class SingleLandmarkAnnotation(UUIDModel):
     LandmarkAnnotations in the LandmarkAnnotationSet it belongs to. This is used for image registration.
     """
     annotation_set = models.ForeignKey(LandmarkAnnotationSet, on_delete=models.CASCADE)
-    image = models.ForeignKey(RetinaImage, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
 
     # General form: [[x1,y1],[x2,y2],...]
     landmarks = ArrayField(ArrayField(models.FloatField(), size=2))

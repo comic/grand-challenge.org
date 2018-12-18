@@ -1,12 +1,16 @@
 from typing import List
+from pathlib import Path
+import SimpleITK as sitk
 
 from django.conf import settings
 from django.db import models
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.urls import reverse
-
+from grandchallenge.studies.models import Study
+from grandchallenge.challenges.models import ImagingModality
 
 class UPLOAD_SESSION_STATE:
     created = "created"
@@ -137,6 +141,7 @@ def case_file_path(instance, filename):
 
 
 class Image(UUIDModel):
+
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
     COLOR_SPACE_RGBA = "RGBA"
@@ -153,16 +158,36 @@ class Image(UUIDModel):
         COLOR_SPACE_RGBA: 4,
     }
 
+    EYE_OD = "OD"
+    EYE_OS = "OS"
+    EYE_UNKNOWN = "U"
+    EYE_NA = "NA"
+    EYE_CHOICES = (
+        (EYE_OD, "Oculus Dexter (right eye)"),
+        (EYE_OS, "Oculus Sinister (left eye)"),
+        (EYE_UNKNOWN, "Unknown"),
+        (EYE_NA, "Not applicable"),
+    )
+
     name = models.CharField(max_length=128)
+    study = models.ForeignKey(Study, on_delete=models.PROTECT, null=True)
     origin = models.ForeignKey(
         to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
     )
+    modality = models.ForeignKey(ImagingModality, on_delete=models.SET_NULL, null=True)
 
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=4, blank=False, choices=COLOR_SPACES
+    )
+
+    eye_choice = models.CharField(
+        max_length=2,
+        choices=EYE_CHOICES,
+        default=EYE_NA,
+        help_text="Is this (retina) image from the right or left eye?",
     )
 
     def __str__(self):
@@ -188,6 +213,27 @@ class Image(UUIDModel):
     @property
     def cirrus_link(self) -> str:
         return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
+
+    def get_sitk_image(self):
+        # TODO test all
+        try:
+            # self.files should contain 1 .mhd file
+            image = self.files.get(file__endswith=".mhd")
+        except MultipleObjectsReturned:
+            raise
+        except ObjectDoesNotExist:
+            raise
+
+        image_path = Path(image.file.path)
+        if not Path.is_file(image_path):
+            raise FileNotFoundError("No .mhd file found in {}".format(image_path))
+
+        try:
+            sitk_image = sitk.ReadImage(str(image_path))
+        except Exception as e:
+            print("Failed to load SimpleITK image with error: {}".format(e))
+            raise
+        return sitk_image
 
     class Meta:
         ordering = ("name",)
