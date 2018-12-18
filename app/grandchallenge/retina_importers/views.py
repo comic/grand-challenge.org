@@ -35,11 +35,12 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
-from grandchallenge.retina_images.models import RetinaImage
-from grandchallenge.retina_images.serializers import RetinaImageSerializer
+
+# from grandchallenge.retina_images.models import RetinaImage
+# from grandchallenge.retina_images.serializers import RetinaImageSerializer
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.serializers import ImageSerializer
-
+from grandchallenge.challenges.models import ImagingModality
 from .serializers import (
     UploadETDRSGridAnnotationSerializer,
     UploadBooleanClassificationAnnotationSerializer,
@@ -50,12 +51,12 @@ from .serializers import (
 
 
 class UploadImage(generics.CreateAPIView):
-    queryset = RetinaImage.objects.all()
+    queryset = Image.objects.all()
     permission_classes = (permissions.IsAdminUser,)
     parser_classes = (parsers.MultiPartParser,)
 
     def post(self, request, *args, **kwargs):
-        errors, archive_dict, patient_dict, study_dict, retina_image_dict, image_dict = self.create_model_dicts(
+        errors, archive_dict, patient_dict, study_dict, image_dict = self.create_model_dicts(
             request
         )
 
@@ -75,19 +76,14 @@ class UploadImage(generics.CreateAPIView):
             name=study_dict["name"],
             defaults=exclude_val_from_dict(study_dict, "name"),
         )
-        img, img_created = Image.objects.get_or_create(**image_dict)
         image_created = False
         # Check if image already exists in database
         try:
-            retina_img = RetinaImage.objects.get(
-                study=study, image=img, **retina_image_dict
-            )
-            # RetinaImage already exists. Do nothing and return response
-        except RetinaImage.DoesNotExist:
+            img = Image.objects.get(study=study, **image_dict)
+            # Image already exists. Do nothing and return response
+        except Image.DoesNotExist:
             # RetinaImage does not exist yet.
-            retina_img = RetinaImage.objects.create(
-                study=study, image=img, **retina_image_dict
-            )
+            img = Image.objects.create(study=study, **image_dict)
 
             # Create ImageFile object without linking image file and without saving
             random_uuid_str = str(uuid.uuid4())
@@ -106,7 +102,7 @@ class UploadImage(generics.CreateAPIView):
                 image_name = "{}.{}".format(random_uuid_str, extension)
                 img_file_model.file.save(image_name, image_file, save=True)
 
-            archive.images.add(retina_img)
+            archive.images.add(img)
             image_created = True
         except Exception as e:
             return JsonResponse(
@@ -123,9 +119,7 @@ class UploadImage(generics.CreateAPIView):
             "patient": PatientSerializer(patient).data,
             "study_created": study_created,
             "study": StudySerializer(study).data,
-            "retina_image_created": image_created,
-            "retina_image": RetinaImageSerializer(retina_img).data,
-            "image_created": img_created,
+            "image_created": image_created,
             "image": ImageSerializer(img).data,
         }
         response_status = status.HTTP_201_CREATED
@@ -148,26 +142,25 @@ class UploadImage(generics.CreateAPIView):
             "name": request.data.get("study_identifier"),
             "datetime": study_datetime,
         }
+        modality = upperize(request.data.get("image_modality"))
 
-        retina_image_dict = {
-            "name": request.data.get("image_identifier"),
-            # "number": request.data.get("image_number"),
-            "modality": upperize(request.data.get("image_modality")),
-            "eye_choice": upperize(request.data.get("image_eye_choice")),
-        }
-
-        if (
-            retina_image_dict["modality"] == "OCT"
-            or retina_image_dict["modality"] == "HRA"
-        ):
+        # Set color space
+        if modality == "OCT" or modality == "HRA":
             color_space = Image.COLOR_SPACE_GRAY
         else:
             color_space = Image.COLOR_SPACE_RGB
 
+        # Set modality
+        if modality == "FUN":
+            modality = ImagingModality.MODALITY_CF
+        if modality == "HRA":
+            modality = ImagingModality.MODALITY_FA
+        modality, _ = ImagingModality.objects.get_or_create(modality=modality)
+
         image_dict = {
-            "name": "{}/{}".format(
-                retina_image_dict["name"], retina_image_dict["modality"]
-            ),
+            "name": request.data.get("image_identifier"),
+            "eye_choice": upperize(request.data.get("image_eye_choice")),
+            "modality_id": modality.pk,
             "color_space": color_space,
             "width": request.data.get("image_width"),
             "height": request.data.get("image_height"),
@@ -178,26 +171,22 @@ class UploadImage(generics.CreateAPIView):
         archive_serializer = ArchiveSerializer(data=archive_dict)
         patient_serializer = PatientSerializer(data=patient_dict)
         study_serializer = StudySerializer(data=study_dict)
-        retina_image_serializer = RetinaImageSerializer(data=retina_image_dict)
         image_serializer = ImageSerializer(data=image_dict)
         archive_valid = archive_serializer.is_valid()
         patient_valid = patient_serializer.is_valid()
         study_valid = study_serializer.is_valid()
-        retina_image_valid = retina_image_serializer.is_valid()
         image_valid = image_serializer.is_valid()
 
         if (
             not archive_valid
             or not patient_valid
             or not study_valid
-            or not retina_image_valid
             or not image_valid
         ):
             errors = {
                 "archive_errors": archive_serializer.errors,
                 "patient_errors": patient_serializer.errors,
                 "study_errors": study_serializer.errors,
-                "retina_image_errors": retina_image_serializer.errors,
                 "image_errors": image_serializer.errors,
             }
         else:
@@ -208,7 +197,6 @@ class UploadImage(generics.CreateAPIView):
             archive_dict,
             patient_dict,
             study_dict,
-            retina_image_dict,
             image_dict,
         )
 
@@ -219,13 +207,22 @@ class UploadImage(generics.CreateAPIView):
         # Replace line with new ElementDataFile name
         for i, line in enumerate(f_content):
             if b"ElementDataFile" in line:
-                f_content[i] = "ElementDataFile = {}\n".format(raw_file_name).encode()
+                f_content[i] = "ElementDataFile = {}\n".format(
+                    raw_file_name
+                ).encode()
 
         # Write lines into new file and return
         new_file = BytesIO()
         new_file.writelines(f_content)
         new_file.seek(0)
-        return InMemoryUploadedFile(new_file, "ImageField", mhd_file.name, "application/octet-stream", None, sys.getsizeof(new_file))
+        return InMemoryUploadedFile(
+            new_file,
+            "ImageField",
+            mhd_file.name,
+            "application/octet-stream",
+            None,
+            sys.getsizeof(new_file),
+        )
 
 
 class AbstractUploadView(generics.CreateAPIView):
@@ -297,19 +294,19 @@ class AbstractUploadView(generics.CreateAPIView):
                 name=data["study_identifier"], patient=patient
             )
             if data["image_identifier"] == "obs_000":
-                image = RetinaImage.objects.get(
+                image = Image.objects.get(
                     name=data["series_identifier"],
-                    modality=RetinaImage.MODALITY_OBS,
+                    modality=ImagingModality.objects.get(modality=ImagingModality.MODALITY_OBS),
                     study=study,
                 )
-            elif data["image_identifier"] == "obs_000":
-                image = RetinaImage.objects.get(
+            elif data["image_identifier"] == "oct":
+                image = Image.objects.get(
                     name=data["series_identifier"],
-                    modality=RetinaImage.MODALITY_OCT,
+                    modality=ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT),
                     study=study,
                 )
             else:
-                image = RetinaImage.objects.get(
+                image = Image.objects.get(
                     name=data["image_identifier"], study=study
                 )
         except ObjectDoesNotExist:
