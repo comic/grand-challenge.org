@@ -15,13 +15,8 @@ urlpatterns = [
     # path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("", IndexView.as_view(), name="home"),
     path("api/", include("grandchallenge.retina_api.urls")),
-    path("api-token-auth/", views.obtain_auth_token),
-    path("archives/", include("grandchallenge.archives.urls")),
-    path("patients/", include("grandchallenge.patients.urls")),
-    path("studies/", include("grandchallenge.studies.urls")),
-    path("annotations/", include("grandchallenge.annotations.urls")),
+    # path("api-token-auth/", views.obtain_auth_token), Allow for getting of token
     path("retina_importers/", include("grandchallenge.retina_importers.urls")),
-    path("registrations/", include("grandchallenge.registrations.urls")),
     path(
         "image/thumbnail/<uuid:image_id>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(ThumbnailView.as_view()),
