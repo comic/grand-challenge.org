@@ -5,10 +5,12 @@ from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
 from rest_framework.authtoken import views
-from .views import IndexView
+from .views import IndexView, ThumbnailView, NumpyView
+from django.views.decorators.cache import cache_page
+from django.conf import settings
 
 
-app_name = 'retina'
+app_name = "retina"
 urlpatterns = [
     # path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("", IndexView.as_view(), name="home"),
@@ -17,34 +19,18 @@ urlpatterns = [
     path("archives/", include("grandchallenge.archives.urls")),
     path("patients/", include("grandchallenge.patients.urls")),
     path("studies/", include("grandchallenge.studies.urls")),
-    path("retina_images/", include("grandchallenge.retina_images.urls")),
+    # path("retina_images/", include("grandchallenge.retina_images.urls")),
     path("annotations/", include("grandchallenge.annotations.urls")),
     path("retina_importers/", include("grandchallenge.retina_importers.urls")),
     path("registrations/", include("grandchallenge.registrations.urls")),
+    path(
+        "image/thumbnail/<uuid:image_id>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(ThumbnailView.as_view()),
+        name="image-thumbnail",
+    ),
+    path(
+        "image/numpy/<uuid:image_id>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(NumpyView.as_view()),
+        name="image-numpy",
+    ),
 ]
-
-# if settings.DEBUG:
-#     # This allows the error pages to be debugged during development, just visit
-#     # these url in browser to see how these error pages look like.
-#     urlpatterns += [
-#         path(
-#             "400/",
-#             default_views.bad_request,
-#             kwargs={"exception": Exception("Bad Request!")},
-#         ),
-#         path(
-#             "403/",
-#             default_views.permission_denied,
-#             kwargs={"exception": Exception("Permission Denied")},
-#         ),
-#         path(
-#             "404/",
-#             default_views.page_not_found,
-#             kwargs={"exception": Exception("Page not Found")},
-#         ),
-#         path("500/", default_views.server_error),
-#     ]
-#     if "debug_toolbar" in settings.INSTALLED_APPS:
-#         import debug_toolbar
-#
-#         urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
