@@ -36,11 +36,11 @@ def create_datastructures_data():
         archive_pars={"name": "Australia"}
     )
     oct_obs_registration_aus = OctObsRegistrationFactory(
-        oct_series=datastructures_aus["oct_slices"][0],
+        oct_series=datastructures_aus["image_oct"],
         obs_image=datastructures_aus["image_obs"],
     )
     oct_obs_registration = OctObsRegistrationFactory(
-        oct_series=datastructures["oct_slices"][0],
+        oct_series=datastructures["image_oct"],
         obs_image=datastructures["image_obs"],
     )
     return (
@@ -81,7 +81,7 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
-            "retina:image-api-view",
+            "retina:api:image-api-view",
             args=[
                 image_type,
                 ds["patient"].name,
@@ -104,7 +104,7 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect_australia(self, client):
         ds = create_some_datastructure_data(archive_pars={"name": "Australia"})
         url = reverse(
-            "retina:image-api-view",
+            "retina:api:image-api-view",
             args=[
                 image_type,
                 ds["archive"].name,
@@ -127,12 +127,12 @@ def create_image_test_method(image_type, reverse_name):
     def test_redirect_oct(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
-            "retina:image-api-view",
+            "retina:api:image-api-view",
             args=[
                 image_type,
                 ds["patient"].name,
                 ds["study_oct"].name,
-                ds["oct_slices"][0].name,
+                ds["image_oct"].name,
                 "oct",
             ],
         )
@@ -141,8 +141,7 @@ def create_image_test_method(image_type, reverse_name):
 
         response = client.get(url, follow=True)
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
-        number = len(ds["oct_slices"]) // 2
-        oct_image_id = ds["oct_slices"][number].id
+        oct_image_id = ds["image_oct"].id
         assert (
             reverse(reverse_name, args=[oct_image_id])
             == response.redirect_chain[0][0]
@@ -173,7 +172,7 @@ def create_data_test_methods(data_type):
         UserFactory(username=username)
         ds = create_some_datastructure_data()
         url = reverse(
-            "retina:data-api-view",
+            "retina:api:data-api-view",
             args=[data_type, username, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
@@ -186,7 +185,7 @@ def create_data_test_methods(data_type):
         client, grader = client_login(client, user="normal")
 
         url = reverse(
-            "retina:data-api-view",
+            "retina:api:data-api-view",
             args=[data_type, grader.username, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
@@ -206,7 +205,7 @@ def create_data_test_methods(data_type):
             model = create_load_data(data_type, ds, grader)
 
             url = reverse(
-                "retina:data-api-view",
+                "retina:api:data-api-view",
                 args=[
                     data_type,
                     grader.username,

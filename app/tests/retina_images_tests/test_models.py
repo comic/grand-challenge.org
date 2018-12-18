@@ -5,7 +5,6 @@ import pytest
 from PIL import Image as PILImage
 
 from tests.retina_images_tests.factories import ImageFactory
-from tests.retina_core_tests.factories import create_oct_series
 from tests.model_helpers import batch_test_factories
 
 @pytest.mark.django_db
