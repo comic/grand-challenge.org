@@ -19,11 +19,12 @@ from grandchallenge.retina_api.mixins import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
-from grandchallenge.retina_images.models import RetinaImage
+from grandchallenge.cases.models import Image
 from grandchallenge.annotations.models import (
     PolygonAnnotationSet,
     LandmarkAnnotationSet,
 )
+from grandchallenge.challenges.models import ImagingModality
 
 
 class ArchiveView(APIView):
@@ -35,10 +36,11 @@ class ArchiveView(APIView):
         archives = Archive.objects.all()
         patients = Patient.objects.all().prefetch_related(
             "study_set",
-            "study_set__retinaimage_set",
-            "study_set__retinaimage_set__obs_image",
-            "study_set__retinaimage_set__oct_image",
-            "study_set__retinaimage_set__archive_set",
+            "study_set__image_set",
+            "study_set__image_set__modality",
+            "study_set__image_set__obs_image",
+            "study_set__image_set__oct_image",
+            "study_set__image_set__archive_set",
         )
 
         def generate_archives(archive_list, patients):
@@ -53,14 +55,14 @@ class ArchiveView(APIView):
 
         def generate_patients(archive, patients):
             patient_list = patients.filter(
-                study__retinaimage__archive=archive
+                study__image__archive=archive
             ).distinct()
             for patient in patient_list:
                 if archive.name == "Australia":
                     image_set = {}
                     for study in patient.study_set.all():
                         image_set.update(
-                            dict(generate_images(study.retinaimage_set))
+                            dict(generate_images(study.image_set))
                         )
                     yield patient.name, {
                         "subfolders": {},
@@ -84,7 +86,7 @@ class ArchiveView(APIView):
             for study in study_list.all():
                 yield study.name, {
                     "info": "level 5",
-                    "images": dict(generate_images(study.retinaimage_set)),
+                    "images": dict(generate_images(study.image_set)),
                     "name": study.name,
                     "id": study.id,
                     "subfolders": {},
@@ -92,7 +94,7 @@ class ArchiveView(APIView):
 
         def generate_images(image_list):
             for image in image_list.all():
-                if image.modality == RetinaImage.MODALITY_OCT:
+                if image.modality.modality == ImagingModality.MODALITY_OCT:
                     # if (
                     #     image.number != 1
                     # ):  # only add data for first oct image in set
@@ -136,7 +138,7 @@ class ArchiveView(APIView):
                             },
                         },
                     }
-                elif image.modality == RetinaImage.MODALITY_OBS:
+                elif image.modality.modality == ImagingModality.MODALITY_OBS:
                     # skip, already in fds
                     pass
                 else:
@@ -170,12 +172,12 @@ class ImageView(RetinaAPIPermissionMixin, View):
         # This works good only if name for series is unique. (should be but is not enforced)
         if patient_identifier == "Australia":
             # BMES data contains no study name, switched up parameters
-            image = RetinaImage.objects.filter(
+            image = Image.objects.filter(
                 study__patient__name=study_identifier,  # this argument contains patient identifier
                 name=image_identifier,
             )
         else:
-            image = RetinaImage.objects.filter(
+            image = Image.objects.filter(
                 name=image_identifier,
                 study__name=study_identifier,
                 study__patient__name=patient_identifier,
@@ -183,9 +185,9 @@ class ImageView(RetinaAPIPermissionMixin, View):
 
         try:
             if image_modality == "obs_000":
-                image = image.get(modality=RetinaImage.MODALITY_OBS)
+                image = image.get(modality__modality=ImagingModality.MODALITY_OBS)
             elif image_modality == "oct":
-                image = image.get(modality=RetinaImage.MODALITY_OCT)
+                image = image.get(modality__modality=ImagingModality.MODALITY_OCT)
                 # qs = image.filter(modality=RetinaImage.MODALITY_OCT)
                 # number = len(qs)
                 # image = qs.get(number=number // 2)
@@ -271,11 +273,11 @@ class DataView(APIView):
         conditions = {}
         if image_identifier == "oct":
             conditions.update(
-                {"modality": RetinaImage.MODALITY_OCT, "number": 0}
+                {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT), "number": 0}
             )  # set number for oct images
         elif image_identifier == "obs_000":
-            conditions.update({"modality": RetinaImage.MODALITY_OBS})
-        return RetinaImage.objects.get(
+            conditions.update({"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_CF)})
+        return Image.objects.get(
             study__patient=patient,
             study__name=request_data.get("visit_nr"),
             name=request_data.get("img_name"),
@@ -291,7 +293,7 @@ class DataView(APIView):
         patient_identifier,
     ):
         data = {}
-        images = RetinaImage.objects.filter(
+        images = Image.objects.filter(
             study__patient__name=patient_identifier,
             archive__name=archive_identifier,
         )
@@ -332,9 +334,9 @@ class DataView(APIView):
                         "visit_nr": annotation.image.study.name,
                         "img_name": annotation.image.name,
                     }
-                    if annotation.image.modality == RetinaImage.MODALITY_OBS:
+                    if annotation.image.modality.modality == ImagingModality.MODALITY_OBS:
                         result_dict.update({"sub_img_name": "obs_000"})
-                    if annotation.image.modality == RetinaImage.MODALITY_OCT:
+                    if annotation.image.modality.modality == ImagingModality.MODALITY_OCT:
                         result_dict.update({"sub_img_name": "oct"})
                     if data.get(date_key):
                         data[date_key].append(result_dict)
@@ -369,13 +371,13 @@ class DataView(APIView):
                     )
 
                     if (
-                        annotation_model.image.modality
-                        == RetinaImage.MODALITY_OBS
+                        annotation_model.image.modality.modality
+                        == ImagingModality.MODALITY_OBS
                     ):
                         result_dict.update({"sub_img_name": "obs_000"})
                     if (
-                        annotation_model.image.modality
-                        == RetinaImage.MODALITY_OCT
+                        annotation_model.image.modality.modality
+                        == ImagingModality.MODALITY_OCT
                     ):
                         result_dict.update({"sub_img_name": "oct"})
                     if data.get(date_key):
@@ -445,13 +447,13 @@ class DataView(APIView):
                         visit_id = annotation_model.image.study.name
                         sub_img_name = None
                         if (
-                            annotation_model.image.modality
-                            == RetinaImage.MODALITY_OBS
+                            annotation_model.image.modality.modality
+                            == ImagingModality.MODALITY_OBS
                         ):
                             sub_img_name = "obs_000"
                         if (
-                            annotation_model.image.modality
-                            == RetinaImage.MODALITY_OCT
+                            annotation_model.image.modality.modality
+                            == ImagingModality.MODALITY_OCT
                         ):
                             sub_img_name = "oct"
 
@@ -502,7 +504,7 @@ class DataView(APIView):
         patient = (
             Patient.objects.filter(
                 name=patient_identifier,
-                study__retinaimage__archive__name=archive_identifier,
+                study__image__archive__name=archive_identifier,
             )
             .distinct()
             .get()
@@ -519,7 +521,7 @@ class DataView(APIView):
         if archive_identifier == "Australia":
             # Australia
             for image_name, data in request_data.items():
-                image = RetinaImage.objects.get(
+                image = Image.objects.get(
                     name=image_name, study__patient=patient
                 )
                 if data_type == "ETDRS":
@@ -587,14 +589,14 @@ class DataView(APIView):
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
                         conditions.update(
-                            {"modality": RetinaImage.MODALITY_OBS}
+                            {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OBS)}
                         )
                     elif ga_data["img_name"][1] == "oct":
                         conditions.update(
-                            {"modality": RetinaImage.MODALITY_OCT}
+                            {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT)}
                         )
 
-                    image = RetinaImage.objects.get(
+                    image = Image.objects.get(
                         study__name=ga_data["visit_nr"],
                         study__patient=patient,
                         name=ga_data["img_name"][0],
