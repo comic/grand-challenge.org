@@ -14,9 +14,9 @@ app_name = "retina"
 urlpatterns = [
     # path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("", IndexView.as_view(), name="home"),
-    path("api/", include("grandchallenge.retina_api.urls")),
+    path("api/", include("grandchallenge.retina_api.urls", namespace="api")),
     # path("api-token-auth/", views.obtain_auth_token), Allow for getting of token
-    path("retina_importers/", include("grandchallenge.retina_importers.urls")),
+    path("retina_importers/", include("grandchallenge.retina_importers.urls", namespace="importers")),
     path(
         "image/thumbnail/<uuid:image_id>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(ThumbnailView.as_view()),
