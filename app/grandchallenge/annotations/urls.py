@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from grandchallenge.annotations import views
 
+app_name = "annotations"
 
 router = DefaultRouter()
 router.register(r"etdrs_grid_placement", views.ETDRSGridAnnotationViewSet)
