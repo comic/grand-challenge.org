@@ -75,6 +75,11 @@ class TaskType(models.Model):
 class ImagingModality(models.Model):
     """ Stores the modality options, eg, MR, CT, PET, XR """
 
+    MODALITY_OBS = "OBS"  # CF / oct TODO remove and refactor
+    MODALITY_OCT = "OCT"  # Optical coherence tomography
+    MODALITY_CF = "CF"  # Color fundus photography
+    MODALITY_FA = "FA"  # Fluorescein angiography
+
     modality = CICharField(max_length=16, blank=False, unique=True)
 
     class Meta:
