@@ -35,3 +35,4 @@ class ImageFactoryWithImageFile(ImageFactory):
     study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
     modality = factory.SubFactory(ImagingModalityFactory, modality=ImagingModality.MODALITY_CF)
+    color_space = Image.COLOR_SPACE_RGB

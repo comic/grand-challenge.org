@@ -1,19 +1,19 @@
 import pytest
 from grandchallenge.cases.serializers import ImageSerializer
-from tests.retina_images_tests.factories import ImageFactory
+from tests.retina_images_tests.factories import ImageFactoryWithImageFile
 from tests.serializer_helpers import check_if_valid
 from tests.serializer_helpers import batch_test_serializers
 
 @pytest.mark.django_db
 class TestRetinaImageSerializers:
     def test_image_serializer_valid(self):
-        assert check_if_valid(ImageFactory(), ImageSerializer)
+        assert check_if_valid(ImageFactoryWithImageFile(), ImageSerializer)
 
 
 serializers = {
     "image": {
         "unique": True,
-        "factory": ImageFactory,
+        "factory": ImageFactoryWithImageFile,
         "serializer": ImageSerializer,
         "fields": (
             "pk",
