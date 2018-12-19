@@ -262,7 +262,7 @@ class TestArchiveIndexAPIEndpoints:
             response_data["subfolders"][datastructures["archive"].name]["subfolders"][
                 datastructures["patient"].name
             ]["subfolders"][datastructures["study_oct"].name]["images"][
-                datastructures["oct_slices"][0].name
+                datastructures["image_oct"].name
             ][
                 "info"
             ][
@@ -284,7 +284,7 @@ class TestArchiveIndexAPIEndpoints:
             response_data["subfolders"][datastructures_aus["archive"].name][
                 "subfolders"
             ][datastructures_aus["patient"].name]["images"][
-                datastructures_aus["oct_slices"][0].name
+                datastructures_aus["image_oct"].name
             ][
                 "info"
             ][
