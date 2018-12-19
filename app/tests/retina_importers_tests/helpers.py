@@ -14,6 +14,8 @@ from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.studies.models import Study
 from tests.cases_tests import RESOURCE_PATH
+from grandchallenge.subdomains.urls import reverse
+
 
 
 def get_user_with_token(**user_kwargs):
@@ -109,10 +111,10 @@ def remove_test_image(response):
 
 
 def get_response_status(
-    client, url, data, user="anonymous", annotation_data=None
+    client, reverse_name, data, user="anonymous", annotation_data=None
 ):
     auth_header = get_auth_token_header(user)
-
+    url = reverse(reverse_name)
     if annotation_data:
         # create objects that need to exist in database before request is made
         patient = PatientFactory(name=data.get("patient_identifier"))
@@ -156,10 +158,10 @@ def get_response_status(
     return response.status_code
 
 
-def create_test_method(url, data, user, expected_status, annotation_data=None):
+def create_test_method(reverse_name, data, user, expected_status, annotation_data=None):
     def test_method(self, client):
         response_status = get_response_status(
-            client, url, data, user, annotation_data
+            client, reverse_name, data, user, annotation_data
         )
         assert response_status == expected_status
 
@@ -193,7 +195,7 @@ def batch_test_upload_views(batch_test_data, test_class):
                     else test_data["invalid_data"]
                 )
                 test_method = create_test_method(
-                    test_data["url"],
+                    test_data["reverse_name"],
                     post_data,
                     user,
                     expected_status_valid
