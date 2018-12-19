@@ -227,6 +227,7 @@ def create_data_test_methods(data_type):
                     response_data_key = single_model.created.strftime(
                         "%Y-%m-%d--%H-%M-%S--%f"
                     )
+                    assert response_data_key in response_content["data"]
                     save_request_data = response_content["data"][
                         response_data_key
                     ]
@@ -247,6 +248,7 @@ def create_data_test_methods(data_type):
                 if data_type == "ETDRS" and ds["archive"].name == "Australia":
                     save_request_data = response_content["data"]
                 else:
+                    assert response_data_key in response_content["data"]
                     save_request_data = response_content["data"][
                         response_data_key
                     ]
