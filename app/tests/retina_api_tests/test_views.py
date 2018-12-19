@@ -55,15 +55,6 @@ class TestArchiveIndexAPIEndpoints:
                     "subfolders": {
                         datastructures["patient"].name: {
                             "subfolders": {
-                                datastructures["study"].name: {
-                                    "info": "level 5",
-                                    "images": {
-                                        datastructures["image_cf"].name: "no tags"
-                                    },
-                                    "name": datastructures["study"].name,
-                                    "id": str(datastructures["study"].id),
-                                    "subfolders": {},
-                                },
                                 datastructures["study_oct"].name: {
                                     "info": "level 5",
                                     "images": {
@@ -76,7 +67,7 @@ class TestArchiveIndexAPIEndpoints:
                                                 "oct": "no info",
                                             },
                                             "info": {
-                                                "voxel_size": [0, 0, 0],
+                                                "voxel_size": {'axial': 0, 'lateral': 0, 'transversal': 0},
                                                 "date": datastructures[
                                                     "study_oct"
                                                 ].datetime.strftime(
@@ -91,6 +82,15 @@ class TestArchiveIndexAPIEndpoints:
                                     },
                                     "name": datastructures["study_oct"].name,
                                     "id": str(datastructures["study_oct"].id),
+                                    "subfolders": {},
+                                },
+                                datastructures["study"].name: {
+                                    "info": "level 5",
+                                    "images": {
+                                        datastructures["image_cf"].name: "no tags"
+                                    },
+                                    "name": datastructures["study"].name,
+                                    "id": str(datastructures["study"].id),
                                     "subfolders": {},
                                 },
                             },
@@ -113,7 +113,6 @@ class TestArchiveIndexAPIEndpoints:
                             "name": datastructures_aus["patient"].name,
                             "id": str(datastructures_aus["patient"].id),
                             "images": {
-                                datastructures_aus["image_cf"].name: "no tags",
                                 datastructures_aus["image_oct"].name: {
                                     "images": {
                                         "trc_000": "no info",
@@ -123,7 +122,7 @@ class TestArchiveIndexAPIEndpoints:
                                         "oct": "no info",
                                     },
                                     "info": {
-                                        "voxel_size": [0, 0, 0],
+                                        "voxel_size": {'axial': 0, 'lateral': 0, 'transversal': 0},
                                         "date": datastructures_aus[
                                             "study_oct"
                                         ].datetime.strftime("%Y/%m/%d %H:%M:%S"),
@@ -133,6 +132,7 @@ class TestArchiveIndexAPIEndpoints:
                                         },
                                     },
                                 },
+                                datastructures_aus["image_cf"].name: "no tags",
                             },
                         }
                     },
