@@ -4,7 +4,7 @@ import numpy as np
 import SimpleITK as sitk
 from PIL import Image as PILImage
 from rest_framework import status
-from django.urls import reverse
+from grandchallenge.subdomains.urls import reverse
 from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
 from django.conf import settings
 from tests.retina_images_tests.factories import ImageFactoryWithImageFile

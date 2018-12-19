@@ -1,6 +1,6 @@
 import json
 from rest_framework import status
-from django.urls import reverse
+from grandchallenge.subdomains.urls import reverse
 from tests.factories import UserFactory
 from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
 from tests.retina_images_tests.factories import ImageFactory
