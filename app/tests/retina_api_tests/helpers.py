@@ -2,7 +2,10 @@ import json
 from rest_framework import status
 from grandchallenge.subdomains.urls import reverse
 from tests.factories import UserFactory
-from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
+from tests.retina_importers_tests.helpers import (
+    get_auth_token_header,
+    get_user_with_token,
+)
 from tests.retina_images_tests.factories import ImageFactory
 from tests.retina_core_tests.factories import create_some_datastructure_data
 from tests.registrations_tests.factories import OctObsRegistrationFactory
@@ -22,7 +25,9 @@ from django.contrib.auth import get_user_model
 def client_login(client, user=None):
     # login user
     if user == "staff":
-        user = get_user_model().objects.create_superuser(**TEST_USER_CREDENTIALS)
+        user = get_user_model().objects.create_superuser(
+            **TEST_USER_CREDENTIALS
+        )
         client.login(**TEST_USER_CREDENTIALS)
     elif user == "normal":
         user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
@@ -94,11 +99,9 @@ def create_image_test_method(image_type, reverse_name):
         user, _ = get_user_with_token()
         client.force_login(user=user)
         response = client.get(url, follow=True)
+        expected_redirect_url = reverse(reverse_name, args=[ds["image_cf"].id])
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
-        assert (
-            reverse(reverse_name, args=[ds["image_cf"].id])
-            == response.redirect_chain[0][0]
-        )
+        assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
 
     def test_redirect_australia(self, client):
@@ -117,11 +120,9 @@ def create_image_test_method(image_type, reverse_name):
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
+        expected_redirect_url = reverse(reverse_name, args=[ds["image_cf"].id])
         assert response.redirect_chain[0][1] == status.HTTP_302_FOUND
-        assert (
-            reverse(reverse_name, args=[ds["image_cf"].id])
-            == response.redirect_chain[0][0]
-        )
+        assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
 
     def test_redirect_oct(self, client):
@@ -140,12 +141,9 @@ def create_image_test_method(image_type, reverse_name):
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
+        expected_redirect_url = reverse(reverse_name, args=[ds["image_oct"].id])
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
-        oct_image_id = ds["image_oct"].id
-        assert (
-            reverse(reverse_name, args=[oct_image_id])
-            == response.redirect_chain[0][0]
-        )
+        assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
 
     return [test_redirect, test_redirect_australia, test_redirect_oct]
@@ -186,7 +184,12 @@ def create_data_test_methods(data_type):
 
         url = reverse(
             "retina:api:data-api-view",
-            args=[data_type, grader.username, ds["archive"].name, ds["patient"].name],
+            args=[
+                data_type,
+                grader.username,
+                ds["archive"].name,
+                ds["patient"].name,
+            ],
         )
         response = client.get(url)
         assert status.HTTP_200_OK == response.status_code
