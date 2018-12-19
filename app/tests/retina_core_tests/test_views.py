@@ -5,6 +5,7 @@ import SimpleITK as sitk
 from PIL import Image as PILImage
 from rest_framework import status
 from grandchallenge.subdomains.urls import reverse
+from django.urls import reverse as django_reverse
 from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
 from django.conf import settings
 from tests.retina_images_tests.factories import ImageFactoryWithImageFile
@@ -19,7 +20,7 @@ class TestTokenAuthentication:
 
         assert response.redirect_chain[0][1] == status.HTTP_302_FOUND
         assert (
-            settings.LOGIN_URL + "?next=" + reverse("retina:home")
+            settings.LOGIN_URL + "?next=" + django_reverse("retina:home")
             == response.redirect_chain[0][0]
         )
         assert status.HTTP_200_OK == response.status_code
