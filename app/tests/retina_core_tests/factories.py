@@ -17,11 +17,25 @@ def create_some_datastructure_data(
     # Create datastructures
     patient = PatientFactory(**patient_pars)
     study = StudyFactory(patient=patient, **study_pars)
-    image_cf = ImageFactoryWithImageFile(study=study, modality__modality=ImagingModality.MODALITY_CF, **image_cf_pars)
+    image_cf = ImageFactoryWithImageFile(
+        study=study,
+        modality__modality=ImagingModality.MODALITY_CF,
+        **image_cf_pars,
+    )
     study_oct = StudyFactory(patient=patient, **oct_study_pars)
-    image_obs = ImageFactoryWithImageFile(study=study_oct, modality__modality=ImagingModality.MODALITY_OBS, **image_obs_pars)
-    image_oct = ImageFactoryWithImageFile(study=study_oct, modality__modality=ImagingModality.MODALITY_OCT, **image_oct_pars)
-    archive = ArchiveFactory.create(images=(image_oct, image_cf, image_obs), **archive_pars)
+    image_obs = ImageFactoryWithImageFile(
+        study=study_oct,
+        modality__modality=ImagingModality.MODALITY_OBS,
+        **image_obs_pars,
+    )
+    image_oct = ImageFactoryWithImageFile(
+        study=study_oct,
+        modality__modality=ImagingModality.MODALITY_OCT,
+        **image_oct_pars,
+    )
+    archive = ArchiveFactory.create(
+        images=(image_oct, image_cf, image_obs), **archive_pars
+    )
     return {
         "archive": archive,
         "patient": patient,

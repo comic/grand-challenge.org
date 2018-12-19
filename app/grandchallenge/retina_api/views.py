@@ -270,10 +270,10 @@ class DataView(APIView):
         conditions = {}
         if image_identifier == "oct":
             conditions.update(
-                {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT), "number": 0}
+                {"modality__modality": ImagingModality.MODALITY_OCT}
             )  # set number for oct images
         elif image_identifier == "obs_000":
-            conditions.update({"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_CF)})
+            conditions.update({"modality__modality": ImagingModality.MODALITY_OBS})
         return Image.objects.get(
             study__patient=patient,
             study__name=request_data.get("visit_nr"),
