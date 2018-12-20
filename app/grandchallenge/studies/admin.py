@@ -9,10 +9,7 @@ class StudyInline(admin.StackedInline):
 
 
 class StudyAdmin(admin.ModelAdmin):
-    search_fields = (
-        "patient__name",
-        "name",
-    )
+    search_fields = ("patient__name", "name")
     list_filter = ("datetime",)
     inlines = [ImageInline]
 

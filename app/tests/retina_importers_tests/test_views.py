@@ -14,6 +14,7 @@ class TestCustomUploadEndpoints:
     # test functions are added dynamically to this class
     def test_empty(self):
         assert True
+
     pass
 
 
@@ -49,9 +50,11 @@ batch_test_data = {
     },
     "upload_landmark_annotation": {
         "data": read_json_file("upload_registration_valid_data.json"),
-        "invalid_data": read_json_file("upload_registration_invalid_data.json"),
+        "invalid_data": read_json_file(
+            "upload_registration_invalid_data.json"
+        ),
         "reverse_name": "retina:importers:upload-image-registration-landmarks",
         "annotation_data": True,
-    }
+    },
 }
 batch_test_upload_views(batch_test_data, TestCustomUploadEndpoints)

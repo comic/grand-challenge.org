@@ -15,7 +15,7 @@ serializers = {
         "factory": PatientFactory,
         "serializer": PatientSerializer,
         "fields": ("id", "name"),
-    },
+    }
 }
 
 batch_test_serializers(serializers, TestPatientsSerializers)

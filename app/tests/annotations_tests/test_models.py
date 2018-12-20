@@ -14,7 +14,6 @@ from tests.model_helpers import batch_test_factories
 from django.db import IntegrityError
 
 
-
 @pytest.mark.django_db
 class TestAnnotationModels:
     # test functions are added dynamically to this class
@@ -25,7 +24,7 @@ class TestAnnotationModels:
             etdrs.__class__.__name__,
             etdrs.grader.username,
             etdrs.created.strftime("%Y-%m-%d at %H:%M:%S"),
-            etdrs.image
+            etdrs.image,
         )
 
     def test_measurement_duplicate_not_allowed(self):
@@ -38,7 +37,9 @@ class TestAnnotationModels:
                 start_voxel=measurement.start_voxel,
                 end_voxel=measurement.end_voxel,
             )
-            pytest.fail("No integrity error when submitting duplicate measurement annotation")
+            pytest.fail(
+                "No integrity error when submitting duplicate measurement annotation"
+            )
         except IntegrityError:
             pass
 

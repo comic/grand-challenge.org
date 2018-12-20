@@ -55,8 +55,8 @@ serializers = {
         "unique": True,
         "factory": LandmarkAnnotationSetFactory,
         "serializer": LandmarkAnnotationSetSerializer,
-        "fields": ("grader", "created")
-    }
+        "fields": ("grader", "created"),
+    },
 }
 
 batch_test_serializers(serializers, TestAnnotationSerializers)

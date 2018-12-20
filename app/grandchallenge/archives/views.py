@@ -8,4 +8,3 @@ class ArchiveViewSet(viewsets.ModelViewSet):
     queryset = Archive.objects.all()
     serializer_class = ArchiveSerializer
     permission_classes = (permissions.IsAuthenticated,)
-

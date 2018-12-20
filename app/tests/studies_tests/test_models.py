@@ -13,7 +13,5 @@ class TestStudiesModels:
         )
 
 
-factories = {
-    "study": StudyFactory,
-}
+factories = {"study": StudyFactory}
 batch_test_factories(factories, TestStudiesModels)

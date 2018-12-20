@@ -91,11 +91,27 @@ urlpatterns = [
         "retina/",
         include("grandchallenge.retina_core.urls", namespace="retina"),
     ),
-    path("archives/", include("grandchallenge.archives.urls", namespace="archives")),
-    path("patients/", include("grandchallenge.patients.urls", namespace="patients")),
-    path("studies/", include("grandchallenge.studies.urls", namespace="studies")),
-    path("annotations/", include("grandchallenge.annotations.urls", namespace="annotations")),
-    path("registrations/", include("grandchallenge.registrations.urls", namespace="registrations")),
+    path(
+        "archives/",
+        include("grandchallenge.archives.urls", namespace="archives"),
+    ),
+    path(
+        "patients/",
+        include("grandchallenge.patients.urls", namespace="patients"),
+    ),
+    path(
+        "studies/", include("grandchallenge.studies.urls", namespace="studies")
+    ),
+    path(
+        "annotations/",
+        include("grandchallenge.annotations.urls", namespace="annotations"),
+    ),
+    path(
+        "registrations/",
+        include(
+            "grandchallenge.registrations.urls", namespace="registrations"
+        ),
+    ),
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in

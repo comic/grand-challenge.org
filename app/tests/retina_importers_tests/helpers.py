@@ -17,7 +17,6 @@ from tests.cases_tests import RESOURCE_PATH
 from grandchallenge.subdomains.urls import reverse
 
 
-
 def get_user_with_token(**user_kwargs):
     user = UserFactory(**user_kwargs)
     token = Token.objects.create(user=user)
@@ -40,9 +39,7 @@ def get_auth_token_header(user, token=None):
 
     auth_header = {}
     if token:
-        auth_header.update({
-            "HTTP_AUTHORIZATION": "Token " + token,
-        })
+        auth_header.update({"HTTP_AUTHORIZATION": "Token " + token})
 
     return auth_header
 
@@ -151,14 +148,16 @@ def get_response_status(
             url,
             data=json.dumps(data),
             content_type="application/json",
-            **auth_header
+            **auth_header,
         )
     else:
         response = client.post(url, data=data, **auth_header)
     return response.status_code
 
 
-def create_test_method(reverse_name, data, user, expected_status, annotation_data=None):
+def create_test_method(
+    reverse_name, data, user, expected_status, annotation_data=None
+):
     def test_method(self, client):
         response_status = get_response_status(
             client, reverse_name, data, user, annotation_data
@@ -176,11 +175,7 @@ def batch_test_upload_views(batch_test_data, test_class):
                 status.HTTP_401_UNAUTHORIZED,
                 status.HTTP_401_UNAUTHORIZED,
             ),
-            (
-                "normal",
-                status.HTTP_403_FORBIDDEN,
-                status.HTTP_403_FORBIDDEN,
-            ),
+            ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
             ("staff", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
         )
         for (

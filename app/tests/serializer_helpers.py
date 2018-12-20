@@ -48,9 +48,13 @@ def check_if_valid_unique(model_or_factory, serializer):
         model = model_or_factory()
     model_serializer = serializer(data=serializer(model).data)
     valid = model_serializer.is_valid()
-    if not valid and 'non_field_errors' in model_serializer.errors:
+    if not valid and "non_field_errors" in model_serializer.errors:
         for error in model_serializer.errors["non_field_errors"]:
-            if error.code == "unique" and len(model_serializer.errors["non_field_errors"]) == 1 and len(model_serializer.errors) == 1:
+            if (
+                error.code == "unique"
+                and len(model_serializer.errors["non_field_errors"]) == 1
+                and len(model_serializer.errors) == 1
+            ):
                 # if the unique error is the only error in model_serializer.errors, return True
                 valid = True
     return valid
@@ -60,29 +64,46 @@ def batch_test_serializers(serializers, test_class):
     for name, serializer_data in serializers.items():
         if not serializer_data.get("no_valid_check"):
             test_valid_method = create_test_valid_method(serializer_data)
-            test_valid_method.__name__ = "test_{}_serializer_valid".format(name)
+            test_valid_method.__name__ = "test_{}_serializer_valid".format(
+                name
+            )
             setattr(test_class, test_valid_method.__name__, test_valid_method)
 
         if not serializer_data.get("no_contains_check"):
-            test_contains_fields_method = create_test_contains_fields_method(serializer_data)
-            test_contains_fields_method.__name__ = "test_{}_serializer_contains_fields".format(name)
-            setattr(test_class, test_contains_fields_method.__name__, test_contains_fields_method)
+            test_contains_fields_method = create_test_contains_fields_method(
+                serializer_data
+            )
+            test_contains_fields_method.__name__ = "test_{}_serializer_contains_fields".format(
+                name
+            )
+            setattr(
+                test_class,
+                test_contains_fields_method.__name__,
+                test_contains_fields_method,
+            )
 
 
 def create_test_valid_method(serializer_data):
     def test_method(self):
         if serializer_data["unique"]:
-            assert check_if_valid_unique(serializer_data["factory"], serializer_data["serializer"])
+            assert check_if_valid_unique(
+                serializer_data["factory"], serializer_data["serializer"]
+            )
         else:
-            assert check_if_valid(serializer_data["factory"], serializer_data["serializer"])
+            assert check_if_valid(
+                serializer_data["factory"], serializer_data["serializer"]
+            )
 
     return test_method
 
 
 def create_test_contains_fields_method(serializer_data):
     def test_method(self):
-        check_if_field_in_serializer(serializer_data["fields"], serializer_data["serializer"](
-            serializer_data["factory"]()
-        ).data.keys())
+        check_if_field_in_serializer(
+            serializer_data["fields"],
+            serializer_data["serializer"](
+                serializer_data["factory"]()
+            ).data.keys(),
+        )
 
     return test_method

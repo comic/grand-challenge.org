@@ -4,6 +4,7 @@ from tests.retina_images_tests.factories import ImageFactoryWithImageFile
 from tests.serializer_helpers import check_if_valid
 from tests.serializer_helpers import batch_test_serializers
 
+
 @pytest.mark.django_db
 class TestRetinaImageSerializers:
     def test_image_serializer_valid(self):
@@ -28,10 +29,10 @@ serializers = {
             "eye_choice",
             "shape_without_color",
             "shape",
-            "cirrus_link"
+            "cirrus_link",
         ),
         "no_valid_check": True,  # This check is done manually because of the need to skip the image in the check
-    },
+    }
 }
 
 batch_test_serializers(serializers, TestRetinaImageSerializers)

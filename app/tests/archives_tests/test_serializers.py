@@ -15,7 +15,7 @@ serializers = {
         "factory": ArchiveFactory,
         "serializer": ArchiveSerializer,
         "fields": ("id", "name", "images"),
-    },
+    }
 }
 
 batch_test_serializers(serializers, TestArchivesSerializers)

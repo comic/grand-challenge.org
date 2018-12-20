@@ -7,6 +7,4 @@ app_name = "studies"
 router = DefaultRouter()
 router.register(r"studies", views.StudyViewSet)
 
-urlpatterns = [
-    path("", include(router.urls)),
-]
+urlpatterns = [path("", include(router.urls))]

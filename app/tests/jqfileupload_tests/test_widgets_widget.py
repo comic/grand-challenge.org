@@ -117,7 +117,9 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10
     )
-    post_request.META["HTTP_CONTENT_RANGE"] = "corrupted data: 54343-3223/21323"
+    post_request.META[
+        "HTTP_CONTENT_RANGE"
+    ] = "corrupted data: 54343-3223/21323"
     assert isinstance(widget.handle_ajax(post_request), HttpResponseBadRequest)
     post_request = create_partial_upload_file_request(
         rf, upload_id, content, 0, 10

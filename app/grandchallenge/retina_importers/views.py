@@ -190,13 +190,7 @@ class UploadImage(generics.CreateAPIView):
         else:
             errors = None
 
-        return (
-            errors,
-            archive_dict,
-            patient_dict,
-            study_dict,
-            image_dict,
-        )
+        return (errors, archive_dict, patient_dict, study_dict, image_dict)
 
     def set_element_data_file_header(self, mhd_file, raw_file_name):
         # Read file lines into list
@@ -294,13 +288,17 @@ class AbstractUploadView(generics.CreateAPIView):
             if data["image_identifier"] == "obs_000":
                 image = Image.objects.get(
                     name=data["series_identifier"],
-                    modality=ImagingModality.objects.get(modality=ImagingModality.MODALITY_OBS),
+                    modality=ImagingModality.objects.get(
+                        modality=ImagingModality.MODALITY_OBS
+                    ),
                     study=study,
                 )
             elif data["image_identifier"] == "oct":
                 image = Image.objects.get(
                     name=data["series_identifier"],
-                    modality=ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT),
+                    modality=ImagingModality.objects.get(
+                        modality=ImagingModality.MODALITY_OCT
+                    ),
                     study=study,
                 )
             else:

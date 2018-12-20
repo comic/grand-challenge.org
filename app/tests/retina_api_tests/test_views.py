@@ -3,15 +3,16 @@ import pytest
 from rest_framework import status
 from grandchallenge.subdomains.urls import reverse
 from django.core.cache import cache
-from tests.retina_importers_tests.helpers import get_auth_token_header, get_user_with_token
+from tests.retina_importers_tests.helpers import (
+    get_auth_token_header,
+    get_user_with_token,
+)
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
     client_login,
 )
-
-
 
 
 @pytest.mark.django_db
@@ -67,7 +68,11 @@ class TestArchiveIndexAPIEndpoints:
                                                 "oct": "no info",
                                             },
                                             "info": {
-                                                "voxel_size": {'axial': 0, 'lateral': 0, 'transversal': 0},
+                                                "voxel_size": {
+                                                    "axial": 0,
+                                                    "lateral": 0,
+                                                    "transversal": 0,
+                                                },
                                                 "date": datastructures[
                                                     "study_oct"
                                                 ].datetime.strftime(
@@ -87,7 +92,9 @@ class TestArchiveIndexAPIEndpoints:
                                 datastructures["study"].name: {
                                     "info": "level 5",
                                     "images": {
-                                        datastructures["image_cf"].name: "no tags"
+                                        datastructures[
+                                            "image_cf"
+                                        ].name: "no tags"
                                     },
                                     "name": datastructures["study"].name,
                                     "id": str(datastructures["study"].id),
@@ -122,10 +129,16 @@ class TestArchiveIndexAPIEndpoints:
                                         "oct": "no info",
                                     },
                                     "info": {
-                                        "voxel_size": {'axial': 0, 'lateral': 0, 'transversal': 0},
+                                        "voxel_size": {
+                                            "axial": 0,
+                                            "lateral": 0,
+                                            "transversal": 0,
+                                        },
                                         "date": datastructures_aus[
                                             "study_oct"
-                                        ].datetime.strftime("%Y/%m/%d %H:%M:%S"),
+                                        ].datetime.strftime(
+                                            "%Y/%m/%d %H:%M:%S"
+                                        ),
                                         "registration": {
                                             "obs": "Checked separately",
                                             "trc": [0, 0, 0, 0],
@@ -259,9 +272,13 @@ class TestArchiveIndexAPIEndpoints:
             #     "voxel_size"
             # ] = "Checked separately"
 
-            response_data["subfolders"][datastructures["archive"].name]["subfolders"][
-                datastructures["patient"].name
-            ]["subfolders"][datastructures["study_oct"].name]["images"][
+            response_data["subfolders"][datastructures["archive"].name][
+                "subfolders"
+            ][datastructures["patient"].name]["subfolders"][
+                datastructures["study_oct"].name
+            ][
+                "images"
+            ][
                 datastructures["image_oct"].name
             ][
                 "info"

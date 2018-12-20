@@ -20,4 +20,5 @@ def create_test_model_method(name, factory):
             factory()
         except:
             pytest.fail("Failed model creation for {}".format(name))
+
     return test_method

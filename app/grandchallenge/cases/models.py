@@ -12,6 +12,7 @@ from grandchallenge.subdomains.urls import reverse
 from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
 
+
 class UPLOAD_SESSION_STATE:
     created = "created"
     queued = "queued"
@@ -174,7 +175,9 @@ class Image(UUIDModel):
     origin = models.ForeignKey(
         to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
     )
-    modality = models.ForeignKey(ImagingModality, on_delete=models.SET_NULL, null=True)
+    modality = models.ForeignKey(
+        ImagingModality, on_delete=models.SET_NULL, null=True
+    )
 
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)

@@ -48,7 +48,9 @@ class MeasurementAnnotationFactory(DefaultImageAnnotationModelFactory):
     end_voxel = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
 
 
-class DefaultNamedImageAnnotationModelFactory(DefaultImageAnnotationModelFactory):
+class DefaultNamedImageAnnotationModelFactory(
+    DefaultImageAnnotationModelFactory
+):
     class Meta:
         model = AbstractNamedImageAnnotationModel
         abstract = True
@@ -56,14 +58,18 @@ class DefaultNamedImageAnnotationModelFactory(DefaultImageAnnotationModelFactory
     name = factory.fuzzy.FuzzyText()
 
 
-class BooleanClassificationAnnotationFactory(DefaultNamedImageAnnotationModelFactory):
+class BooleanClassificationAnnotationFactory(
+    DefaultNamedImageAnnotationModelFactory
+):
     class Meta:
         model = BooleanClassificationAnnotation
 
     value = factory.fuzzy.FuzzyChoice([True, False])
 
 
-class IntegerClassificationAnnotationFactory(DefaultNamedImageAnnotationModelFactory):
+class IntegerClassificationAnnotationFactory(
+    DefaultNamedImageAnnotationModelFactory
+):
     class Meta:
         model = IntegerClassificationAnnotation
 
@@ -155,7 +161,9 @@ def create_batch_landmarks():
     landmark_annotations = []
     for i in range(3):
         landmark_annotations.append(
-            SingleLandmarkAnnotationFactory(registration=landmark_annotation_set)
+            SingleLandmarkAnnotationFactory(
+                registration=landmark_annotation_set
+            )
         )
 
     return landmark_annotation_set, landmark_annotations

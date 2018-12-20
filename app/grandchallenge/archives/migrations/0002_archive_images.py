@@ -7,14 +7,12 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('archives', '0001_initial'),
-    ]
+    dependencies = [("archives", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='archive',
-            name='images',
-            field=models.ManyToManyField(to='cases.Image'),
-        ),
+            model_name="archive",
+            name="images",
+            field=models.ManyToManyField(to="cases.Image"),
+        )
     ]

@@ -24,6 +24,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
     """
     View class for returning a thumbnail of an image (max height/width: 128px)
     """
+
     raise_exception = True  # Raise 403 on unauthenticated request
 
     def get(self, request, image_id):
@@ -47,6 +48,7 @@ class NumpyView(RetinaAPIPermissionMixin, View):
     """
     View class for returning a numpy array of a specific image
     """
+
     raise_exception = True  # Raise 403 on unauthenticated request
 
     def get(self, request, image_id):

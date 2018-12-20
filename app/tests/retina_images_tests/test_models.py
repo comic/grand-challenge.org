@@ -2,8 +2,14 @@ import pytest
 from pathlib import Path
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from tests.retina_images_tests.factories import ImageFactory, ImageFactoryWithImageFile, ImageFileFactoryWithMHDFile, ImageFileFactoryWithRAWFile
+from tests.retina_images_tests.factories import (
+    ImageFactory,
+    ImageFactoryWithImageFile,
+    ImageFileFactoryWithMHDFile,
+    ImageFileFactoryWithRAWFile,
+)
 from tests.model_helpers import batch_test_factories
+
 
 @pytest.mark.django_db
 class TestRetinaImagesModels:
@@ -13,9 +19,7 @@ class TestRetinaImagesModels:
         assert str(model) == f"Image {model.name} {model.shape_without_color}"
 
 
-factories = {
-    "image": ImageFactory,
-}
+factories = {"image": ImageFactory}
 batch_test_factories(factories, TestRetinaImagesModels)
 
 
@@ -26,7 +30,9 @@ class TestGetSitkImage:
         extra_mhd_file = ImageFileFactoryWithMHDFile()
         extra_raw = ImageFileFactoryWithRAWFile()
         extra_raw_file = ImageFileFactoryWithRAWFile()
-        image = ImageFactoryWithImageFile(files=(extra_mhd, extra_raw, extra_mhd_file,extra_raw_file))
+        image = ImageFactoryWithImageFile(
+            files=(extra_mhd, extra_raw, extra_mhd_file, extra_raw_file)
+        )
         try:
             image.get_sitk_image()
             pytest.fail("No MultipleObjectsReturned exception")
@@ -74,4 +80,3 @@ class TestGetSitkImage:
         assert sitk_image.GetNumberOfComponentsPerPixel() == 1
         assert sitk_image.GetPixelIDValue() == 0
         assert sitk_image.GetPixelIDTypeAsString() == "8-bit signed integer"
-

@@ -57,7 +57,7 @@ batch_test_viewset_endpoints(
     MeasurementAnnotationFactory,
     TestViewsets,
     required_relations,
-    serializer=MeasurementAnnotationSerializer
+    serializer=MeasurementAnnotationSerializer,
 )
 
 batch_test_viewset_endpoints(
@@ -68,7 +68,7 @@ batch_test_viewset_endpoints(
     BooleanClassificationAnnotationFactory,
     TestViewsets,
     required_relations,
-    serializer=BooleanClassificationAnnotationSerializer
+    serializer=BooleanClassificationAnnotationSerializer,
 )
 
 batch_test_viewset_endpoints(
@@ -79,7 +79,7 @@ batch_test_viewset_endpoints(
     PolygonAnnotationSetFactory,
     TestViewsets,
     required_relations,
-    serializer=PolygonAnnotationSetSerializer
+    serializer=PolygonAnnotationSetSerializer,
 )
 
 required_relations = {"grader": UserFactory}
@@ -91,5 +91,5 @@ batch_test_viewset_endpoints(
     LandmarkAnnotationSetFactory,
     TestViewsets,
     required_relations,
-    serializer=LandmarkAnnotationSetSerializer
+    serializer=LandmarkAnnotationSetSerializer,
 )

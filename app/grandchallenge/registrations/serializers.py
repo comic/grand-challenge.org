@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
-from .models import (
-    OctObsRegistration,
-)
+from .models import OctObsRegistration
 
 
 class OctObsRegistrationSerializer(serializers.ModelSerializer):

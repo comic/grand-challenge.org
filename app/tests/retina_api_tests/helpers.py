@@ -100,7 +100,9 @@ def create_image_test_method(image_type, reverse_name):
         user, _ = get_user_with_token()
         client.force_login(user=user)
         response = client.get(url, follow=True)
-        expected_redirect_url = django_reverse(reverse_name, args=[ds["image_cf"].id])
+        expected_redirect_url = django_reverse(
+            reverse_name, args=[ds["image_cf"].id]
+        )
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
@@ -121,7 +123,9 @@ def create_image_test_method(image_type, reverse_name):
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
-        expected_redirect_url = django_reverse(reverse_name, args=[ds["image_cf"].id])
+        expected_redirect_url = django_reverse(
+            reverse_name, args=[ds["image_cf"].id]
+        )
         assert response.redirect_chain[0][1] == status.HTTP_302_FOUND
         assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
@@ -142,7 +146,9 @@ def create_image_test_method(image_type, reverse_name):
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
-        expected_redirect_url = django_reverse(reverse_name, args=[ds["image_oct"].id])
+        expected_redirect_url = django_reverse(
+            reverse_name, args=[ds["image_oct"].id]
+        )
         assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
         assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code

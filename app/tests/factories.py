@@ -4,7 +4,11 @@ import factory
 from django.conf import settings
 
 from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
-from grandchallenge.challenges.models import Challenge, ExternalChallenge, ImagingModality
+from grandchallenge.challenges.models import (
+    Challenge,
+    ExternalChallenge,
+    ImagingModality,
+)
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
@@ -165,5 +169,6 @@ class AnnotationSetFactory(factory.DjangoModelFactory):
 class ImagingModalityFactory(factory.DjangoModelFactory):
     class Meta:
         model = ImagingModality
-        django_get_or_create = ('modality',)
+        django_get_or_create = ("modality",)
+
     modality = factory.sequence(lambda n: f"Modality {n}")

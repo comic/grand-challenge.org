@@ -297,14 +297,14 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
-    'grandchallenge.archives',
-    'grandchallenge.patients',
-    'grandchallenge.studies',
-    'grandchallenge.registrations',
-    'grandchallenge.annotations',
-    'grandchallenge.retina_core',
-    'grandchallenge.retina_importers',
-    'grandchallenge.retina_api',
+    "grandchallenge.archives",
+    "grandchallenge.patients",
+    "grandchallenge.studies",
+    "grandchallenge.registrations",
+    "grandchallenge.annotations",
+    "grandchallenge.retina_core",
+    "grandchallenge.retina_importers",
+    "grandchallenge.retina_api",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -625,5 +625,5 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
 
 # Retina specific settings
 RETINA_ARCHIVES_REQUEST_CACHE_TIME = 24 * 60 * 60
-RETINA_IMAGE_CACHE_TIME = 60*60
+RETINA_IMAGE_CACHE_TIME = 60 * 60
 RETINA_GRADERS_GROUP_NAME = "retina_graders"

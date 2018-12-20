@@ -19,12 +19,12 @@ urlpatterns = [
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
         views.ImageView.as_view(),
-        name="image-api-view"
+        name="image-api-view",
     ),
     # path("image/original/<str:patient_identifier>/<str:study_identifier>/<str:series_identifier>/<str:image_name>/", views.OriginalImageView.as_view()),
     path(
         "data/<str:data_type>/<str:username>/<str:archive_identifier>/<str:patient_identifier>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(views.DataView.as_view()),
-        name="data-api-view"
+        name="data-api-view",
     ),
 ]

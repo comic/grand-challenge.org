@@ -32,20 +32,30 @@ class AbstractUploadSerializer(serializers.Serializer):
         # Check if value is valid charfield
         if required and not value:
             print(value)
-            raise serializers.ValidationError("{} cannot be empty".format(name))
+            raise serializers.ValidationError(
+                "{} cannot be empty".format(name)
+            )
 
         if not isinstance(value, str):
-            raise serializers.ValidationError("{} must be a string".format(name))
+            raise serializers.ValidationError(
+                "{} must be a string".format(name)
+            )
 
         if len(value) > max_length:
             raise serializers.ValidationError(
-                "{} exceeds max length of {} characters".format(name, max_length)
+                "{} exceeds max length of {} characters".format(
+                    name, max_length
+                )
             )
 
     def validate_data(self, value):
         for dict_obj in value:
             for key, val in dict_obj.items():
-                if key in ("series_identifier", "image_identifier", "study_identifier"):
+                if key in (
+                    "series_identifier",
+                    "image_identifier",
+                    "study_identifier",
+                ):
                     self.do_validate_as_charfield(val, key)
 
         return value
@@ -99,7 +109,9 @@ class UploadMeasurementAnnotationSerializer(AbstractUploadSerializer):
         return data
 
 
-class UploadBooleanClassificationAnnotationSerializer(AbstractUploadSerializer):
+class UploadBooleanClassificationAnnotationSerializer(
+    AbstractUploadSerializer
+):
     def validate(self, data):
         for annotation in data["data"]:
             if not isinstance(annotation["value"], bool):

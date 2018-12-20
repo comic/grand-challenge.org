@@ -185,9 +185,13 @@ class ImageView(RetinaAPIPermissionMixin, View):
 
         try:
             if image_modality == "obs_000":
-                image = image.get(modality__modality=ImagingModality.MODALITY_OBS)
+                image = image.get(
+                    modality__modality=ImagingModality.MODALITY_OBS
+                )
             elif image_modality == "oct":
-                image = image.get(modality__modality=ImagingModality.MODALITY_OCT)
+                image = image.get(
+                    modality__modality=ImagingModality.MODALITY_OCT
+                )
             else:
                 image = image.get()
         except MultipleObjectsReturned:
@@ -273,12 +277,14 @@ class DataView(APIView):
                 {"modality__modality": ImagingModality.MODALITY_OCT}
             )  # set number for oct images
         elif image_identifier == "obs_000":
-            conditions.update({"modality__modality": ImagingModality.MODALITY_OBS})
+            conditions.update(
+                {"modality__modality": ImagingModality.MODALITY_OBS}
+            )
         return Image.objects.get(
             study__patient=patient,
             study__name=request_data.get("visit_nr"),
             name=request_data.get("img_name"),
-            **conditions
+            **conditions,
         )
 
     def get(
@@ -331,9 +337,15 @@ class DataView(APIView):
                         "visit_nr": annotation.image.study.name,
                         "img_name": annotation.image.name,
                     }
-                    if annotation.image.modality.modality == ImagingModality.MODALITY_OBS:
+                    if (
+                        annotation.image.modality.modality
+                        == ImagingModality.MODALITY_OBS
+                    ):
                         result_dict.update({"sub_img_name": "obs_000"})
-                    if annotation.image.modality.modality == ImagingModality.MODALITY_OCT:
+                    if (
+                        annotation.image.modality.modality
+                        == ImagingModality.MODALITY_OCT
+                    ):
                         result_dict.update({"sub_img_name": "oct"})
                     if data.get(date_key):
                         data[date_key].append(result_dict)
@@ -586,11 +598,19 @@ class DataView(APIView):
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
                         conditions.update(
-                            {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OBS)}
+                            {
+                                "modality": ImagingModality.objects.get(
+                                    modality=ImagingModality.MODALITY_OBS
+                                )
+                            }
                         )
                     elif ga_data["img_name"][1] == "oct":
                         conditions.update(
-                            {"modality": ImagingModality.objects.get(modality=ImagingModality.MODALITY_OCT)}
+                            {
+                                "modality": ImagingModality.objects.get(
+                                    modality=ImagingModality.MODALITY_OCT
+                                )
+                            }
                         )
 
                     image = Image.objects.get(

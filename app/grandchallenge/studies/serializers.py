@@ -17,9 +17,4 @@ class StudySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Study
-        fields = (
-            "id",
-            "name",
-            "datetime",
-            "patient",
-        )
+        fields = ("id", "name", "datetime", "patient")

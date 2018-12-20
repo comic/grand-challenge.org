@@ -7,6 +7,4 @@ app_name = "archives"
 router = DefaultRouter()
 router.register(r"archives", views.ArchiveViewSet)
 
-urlpatterns = [
-    path("", include(router.urls)),
-]
+urlpatterns = [path("", include(router.urls))]

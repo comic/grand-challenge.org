@@ -7,6 +7,4 @@ app_name = "registrations"
 router = DefaultRouter()
 router.register(r"oct_obs_registrations", views.OctObsRegistrationViewSet)
 
-urlpatterns = [
-    path("", include(router.urls)),
-]
+urlpatterns = [path("", include(router.urls))]

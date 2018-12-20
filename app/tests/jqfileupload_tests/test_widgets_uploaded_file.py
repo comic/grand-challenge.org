@@ -204,7 +204,9 @@ def test_file_cleanup():
 @pytest.mark.django_db
 def test_missing_file():
     file_content = b"HelloWorld" * 5
-    uploaded_file_uuid = create_uploaded_file(file_content, [len(file_content)])
+    uploaded_file_uuid = create_uploaded_file(
+        file_content, [len(file_content)]
+    )
     tested_file = StagedAjaxFile(uploaded_file_uuid)
     assert tested_file.exists
     assert tested_file.is_complete

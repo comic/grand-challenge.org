@@ -27,5 +27,5 @@ class ImageSerializer(serializers.ModelSerializer):
             "eye_choice",
             "shape_without_color",
             "shape",
-            "cirrus_link"
+            "cirrus_link",
         )

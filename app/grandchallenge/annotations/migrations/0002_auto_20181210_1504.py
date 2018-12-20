@@ -11,110 +11,147 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('annotations', '0001_initial'),
+        ("annotations", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='singlelandmarkannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="singlelandmarkannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='polygonannotationset',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="polygonannotationset",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='polygonannotationset',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="polygonannotationset",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='measurementannotation',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="measurementannotation",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='measurementannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="measurementannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='landmarkannotationset',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="landmarkannotationset",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='integerclassificationannotation',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="integerclassificationannotation",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='integerclassificationannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="integerclassificationannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='etdrsgridannotation',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="etdrsgridannotation",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='etdrsgridannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="etdrsgridannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='coordinatelistannotation',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="coordinatelistannotation",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='coordinatelistannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="coordinatelistannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AddField(
-            model_name='booleanclassificationannotation',
-            name='grader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="booleanclassificationannotation",
+            name="grader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='booleanclassificationannotation',
-            name='image',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image'),
+            model_name="booleanclassificationannotation",
+            name="image",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="cases.Image"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='singlelandmarkannotation',
-            unique_together={('image', 'annotation_set')},
+            name="singlelandmarkannotation",
+            unique_together={("image", "annotation_set")},
         ),
         migrations.AlterUniqueTogether(
-            name='polygonannotationset',
-            unique_together={('image', 'grader', 'created', 'name')},
+            name="polygonannotationset",
+            unique_together={("image", "grader", "created", "name")},
         ),
         migrations.AlterUniqueTogether(
-            name='measurementannotation',
-            unique_together={('image', 'grader', 'created', 'start_voxel', 'end_voxel')},
+            name="measurementannotation",
+            unique_together={
+                ("image", "grader", "created", "start_voxel", "end_voxel")
+            },
         ),
         migrations.AlterUniqueTogether(
-            name='landmarkannotationset',
-            unique_together={('grader', 'created')},
+            name="landmarkannotationset",
+            unique_together={("grader", "created")},
         ),
         migrations.AlterUniqueTogether(
-            name='integerclassificationannotation',
-            unique_together={('image', 'grader', 'created', 'name')},
+            name="integerclassificationannotation",
+            unique_together={("image", "grader", "created", "name")},
         ),
         migrations.AlterUniqueTogether(
-            name='etdrsgridannotation',
-            unique_together={('image', 'grader', 'created')},
+            name="etdrsgridannotation",
+            unique_together={("image", "grader", "created")},
         ),
         migrations.AlterUniqueTogether(
-            name='coordinatelistannotation',
-            unique_together={('image', 'grader', 'created', 'name')},
+            name="coordinatelistannotation",
+            unique_together={("image", "grader", "created", "name")},
         ),
         migrations.AlterUniqueTogether(
-            name='booleanclassificationannotation',
-            unique_together={('image', 'grader', 'created', 'name')},
+            name="booleanclassificationannotation",
+            unique_together={("image", "grader", "created", "name")},
         ),
     ]

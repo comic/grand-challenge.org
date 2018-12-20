@@ -16,7 +16,11 @@ VIEWSET_ACTIONS = (
     ("update", "put", status.HTTP_200_OK),
 )
 
-TEST_USER_CREDENTIALS = {"username": "test", "password": "test", "email": "test@example.com"}
+TEST_USER_CREDENTIALS = {
+    "username": "test",
+    "password": "test",
+    "email": "test@example.com",
+}
 
 
 def get_response_status_viewset(
@@ -29,7 +33,7 @@ def get_response_status_viewset(
     model_factory=None,
     authenticated=False,
     required_relations={},
-    serializer=None
+    serializer=None,
 ):
     # get model
     if model_factory:
@@ -44,10 +48,14 @@ def get_response_status_viewset(
                     # many to many
                     model_serialized[relation_name] = []
                     for single_relation_factory in relation_factory:
-                        model_serialized[relation_name].append(str(single_relation_factory().pk))
+                        model_serialized[relation_name].append(
+                            str(single_relation_factory().pk)
+                        )
                 else:
                     # many to one
-                    model_serialized[relation_name] = str(relation_factory().pk)
+                    model_serialized[relation_name] = str(
+                        relation_factory().pk
+                    )
         else:
             model = model_factory()
 
@@ -55,12 +63,16 @@ def get_response_status_viewset(
     if action_name == "list" or action_name == "create":
         url = reverse(f"{namespace}:{model_name}-list")
     else:
-        url = reverse(f"{namespace}:{model_name}-detail", kwargs={"pk": model.pk})
+        url = reverse(
+            f"{namespace}:{model_name}-detail", kwargs={"pk": model.pk}
+        )
 
     # determine request
     if action_name == "create" or action_name == "update":
         request = getattr(rf, request_method)(
-            url, data=json.dumps(model_serialized), content_type="application/json"
+            url,
+            data=json.dumps(model_serialized),
+            content_type="application/json",
         )
     else:
         request = getattr(rf, request_method)(url)
@@ -80,7 +92,16 @@ def get_response_status_viewset(
     return response.status_code
 
 
-def batch_test_viewset_endpoints(actions, viewset, model_name, namespace, model_factory, test_class, required_relations={}, serializer=None):
+def batch_test_viewset_endpoints(
+    actions,
+    viewset,
+    model_name,
+    namespace,
+    model_factory,
+    test_class,
+    required_relations={},
+    serializer=None,
+):
     for action_name, request_method, authenticated_status in actions:
         for authenticated in (False, True):
 
@@ -94,7 +115,7 @@ def batch_test_viewset_endpoints(actions, viewset, model_name, namespace, model_
                 authenticated,
                 required_relations,
                 authenticated_status,
-                serializer
+                serializer,
             )
 
             test_method.__name__ = "test_{}_viewset_{}_{}".format(
@@ -115,7 +136,7 @@ def create_test_method(
     authenticated,
     required_relations,
     authenticated_status,
-    serializer
+    serializer,
 ):
     # create test method
     def test_method(self, rf):
@@ -129,7 +150,7 @@ def create_test_method(
             model_factory=model_factory,
             authenticated=authenticated,
             required_relations=required_relations,
-            serializer=serializer
+            serializer=serializer,
         )
         if authenticated:
             assert response_status == authenticated_status

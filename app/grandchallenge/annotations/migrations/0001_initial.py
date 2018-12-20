@@ -11,122 +11,252 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='BooleanClassificationAnnotation',
+            name="BooleanClassificationAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('name', models.CharField(max_length=255)),
-                ('value', models.BooleanField()),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("value", models.BooleanField()),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='CoordinateListAnnotation',
+            name="CoordinateListAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('name', models.CharField(max_length=255)),
-                ('value', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2), size=None)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "value",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.FloatField(), size=2
+                        ),
+                        size=None,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='ETDRSGridAnnotation',
+            name="ETDRSGridAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('fovea', django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2)),
-                ('optic_disk', django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                (
+                    "fovea",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.FloatField(), size=2
+                    ),
+                ),
+                (
+                    "optic_disk",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.FloatField(), size=2
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='IntegerClassificationAnnotation',
+            name="IntegerClassificationAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('name', models.CharField(max_length=255)),
-                ('value', models.IntegerField()),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("value", models.IntegerField()),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='LandmarkAnnotationSet',
+            name="LandmarkAnnotationSet",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='MeasurementAnnotation',
+            name="MeasurementAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('start_voxel', django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2)),
-                ('end_voxel', django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                (
+                    "start_voxel",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.FloatField(), size=2
+                    ),
+                ),
+                (
+                    "end_voxel",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.FloatField(), size=2
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='PolygonAnnotationSet',
+            name="PolygonAnnotationSet",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "created",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='SingleLandmarkAnnotation',
+            name="SingleLandmarkAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('landmarks', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2), size=None)),
-                ('annotation_set', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='annotations.LandmarkAnnotationSet')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "landmarks",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.FloatField(), size=2
+                        ),
+                        size=None,
+                    ),
+                ),
+                (
+                    "annotation_set",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="annotations.LandmarkAnnotationSet",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='SinglePolygonAnnotation',
+            name="SinglePolygonAnnotation",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('value', django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.FloatField(), size=2), size=None)),
-                ('annotation_set', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='annotations.PolygonAnnotationSet')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "value",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=django.contrib.postgres.fields.ArrayField(
+                            base_field=models.FloatField(), size=2
+                        ),
+                        size=None,
+                    ),
+                ),
+                (
+                    "annotation_set",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="annotations.PolygonAnnotationSet",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

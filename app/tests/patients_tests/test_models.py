@@ -13,7 +13,5 @@ class TestPatientsModels:
         )
 
 
-factories = {
-    "archive": PatientFactory,
-}
+factories = {"archive": PatientFactory}
 batch_test_factories(factories, TestPatientsModels)
