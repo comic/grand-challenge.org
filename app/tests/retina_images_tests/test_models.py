@@ -1,10 +1,8 @@
-from uuid import UUID
-
-import numpy as np
 import pytest
-from PIL import Image as PILImage
+from pathlib import Path
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from tests.retina_images_tests.factories import ImageFactory
+from tests.retina_images_tests.factories import ImageFactory, ImageFactoryWithImageFile, ImageFileFactoryWithMHDFile, ImageFileFactoryWithRAWFile
 from tests.model_helpers import batch_test_factories
 
 @pytest.mark.django_db
@@ -22,46 +20,50 @@ batch_test_factories(factories, TestRetinaImagesModels)
 
 
 @pytest.mark.django_db
-class TestImage:
-    pass
-    # def test_create_image_file_name(self):
-    #     # create test image
-    #     retina_image = ImageFactory()
-    #     filename = RetinaImage.create_image_file_name(retina_image.image)
-    #     name, ext = filename.split(".")
-    #
-    #     try:
-    #         UUID(name, version=4)
-    #     except ValueError:
-    #         pytest.fail("Filename does not contain valid uuidv4")
-    #
-    #     assert ext == "jpg"
+class TestGetSitkImage:
+    def test_multiple_mhds(self):
+        extra_mhd = ImageFileFactoryWithMHDFile()
+        extra_mhd_file = ImageFileFactoryWithMHDFile()
+        extra_raw = ImageFileFactoryWithRAWFile()
+        extra_raw_file = ImageFileFactoryWithRAWFile()
+        image = ImageFactoryWithImageFile(files=(extra_mhd, extra_raw, extra_mhd_file,extra_raw_file))
+        try:
+            image.get_sitk_image()
+            pytest.fail("No MultipleObjectsReturned exception")
+        except MultipleObjectsReturned:
+            pass
 
-    # def test_get_all_oct_images(self):
-    #     series_oct, images_oct = create_oct_series()
-    #     all_images_qs = images_oct[0].get_all_oct_images()
-    #
-    #     # Check if images_oct and all_images contain the same models
-    #     all_images = [x for x in all_images_qs] # Convert Queryset to list
-    #     for img in images_oct:
-    #         if img in all_images:
-    #             # remove from list
-    #             all_images.remove(img)
-    #         else:
-    #             pytest.fail("{} not in list of OCT images")
-    #             break
-    #
-    #     assert len(all_images) == 0
+    def test_no_mhds(self):
+        image = ImageFactoryWithImageFile()
+        image.files.all().delete()
+        try:
+            image.get_sitk_image()
+            pytest.fail("No ObjectDoesNotExist exception")
+        except ObjectDoesNotExist:
+            pass
 
-    # def test_get_all_oct_images_wrong_modality(self):
-    #     all_images = RetinaImageFactory(modality=RetinaImage.MODALITY_CF).get_all_oct_images()
-    #     assert all_images == []
-    #
-    # def test_get_all_oct_images_as_npy(self):
-    #     series_oct, images_oct = create_oct_series()
-    #     npy = images_oct[0].get_all_oct_images_as_npy()
-    #     for index, npy_image in enumerate(npy):
-    #         assert np.array_equal(
-    #             npy_image, np.array(PILImage.open(images_oct[index].image.path))
-    #         )
-    #TODO test get_sitk_image()
+    def test_file_not_found(self):
+        image = ImageFactoryWithImageFile()
+        for file in image.files.all():
+            Path.unlink(Path(file.file.path))
+        try:
+            image.get_sitk_image()
+            pytest.fail("No FileNotFoundError exception")
+        except FileNotFoundError:
+            pass
+
+    def test_no_raw_file(self):
+        image = ImageFactoryWithImageFile()
+        imagefile = image.files.get(file__endswith=".zraw")
+        Path.unlink(Path(imagefile.file.path))
+        try:
+            image.get_sitk_image()
+            pytest.fail("No exception with missing raw file")
+        except Exception as e:
+            print(e)
+            pass
+
+    def test_correct_dimensions(self):
+        image = ImageFactoryWithImageFile()
+        sitk_image = image.get_sitk_image()
+        assert sitk_image.GetSize() == (7, 6, 5)
