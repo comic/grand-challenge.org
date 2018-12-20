@@ -8,7 +8,8 @@ class ImageFileInline(admin.StackedInline):
 
 
 class ImageAdmin(admin.ModelAdmin):
-    search_fields = ("pk", "name")
+    search_fields = ("pk", "name", "study__name", "modality", "color_space", "eye_choice")
+    list_filter = ("modality", "color_space", "eye_choice")
     inlines = [ImageFileInline]
 
 
