@@ -30,7 +30,8 @@ class RetinaAPIPermission(permissions.BasePermission):
 class RetinaOwnerAPIPermission(permissions.BasePermission):
     # Checks if user is in retina admins group or is owner of this object
     def has_permission(self, request, view):
-        user = get_user_model().objects.get(username=request.GET.get("username").lower())
+        username = view.kwargs.get("username")
+        user = get_user_model().objects.get(username=username.lower())
         is_owner = request.user == user
         return is_in_retina_admins_group(request.user) or is_owner
 
