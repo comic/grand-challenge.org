@@ -15,6 +15,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
+    RetinaOwnerAPIPermission,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
@@ -208,7 +209,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
 
 
 class DataView(APIView):
-    permission_classes = (RetinaAPIPermission,)
+    permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
 
     @staticmethod
