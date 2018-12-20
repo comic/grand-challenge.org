@@ -215,7 +215,6 @@ class Image(UUIDModel):
         return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
     def get_sitk_image(self):
-        # TODO test all
         try:
             # self.files should contain 1 .mhd file
             image = self.files.get(file__endswith=".mhd")
@@ -226,12 +225,12 @@ class Image(UUIDModel):
 
         image_path = Path(image.file.path)
         if not Path.is_file(image_path):
-            raise FileNotFoundError("No .mhd file found in {}".format(image_path))
+            raise FileNotFoundError(f"No .mhd file found in {image_path}")
 
         try:
             sitk_image = sitk.ReadImage(str(image_path))
-        except Exception as e:
-            print("Failed to load SimpleITK image with error: {}".format(e))
+        except RuntimeError as e:
+            print(f"Failed to load SimpleITK image with error: {e}")
             raise
         return sitk_image
 
