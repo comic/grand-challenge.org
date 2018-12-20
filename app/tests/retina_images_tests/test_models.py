@@ -60,9 +60,9 @@ class TestGetSitkImage:
             image.get_sitk_image()
             pytest.fail("No exception with missing raw file")
         except RuntimeError as e:
-            assert "Exception thrown in SimpleITK ReadImage:" in e
-            assert "File cannot be read" in e
-            assert "Reason: Success" in e
+            assert "Exception thrown in SimpleITK ReadImage:" in str(e)
+            assert "File cannot be read" in str(e)
+            assert "Reason: Success" in str(e)
 
     def test_correct_dimensions(self):
         image = ImageFactoryWithImageFile()
