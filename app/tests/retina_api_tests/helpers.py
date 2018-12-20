@@ -2,6 +2,8 @@ import json
 from rest_framework import status
 from django.urls import reverse as django_reverse
 from grandchallenge.subdomains.urls import reverse
+from django.conf import settings
+from django.contrib.auth.models import Group
 from tests.factories import UserFactory
 from tests.retina_importers_tests.helpers import (
     get_auth_token_header,
@@ -30,9 +32,17 @@ def client_login(client, user=None):
             **TEST_USER_CREDENTIALS
         )
         client.login(**TEST_USER_CREDENTIALS)
+    elif user == "retina_user":
+        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
+        grader_group, group_created = Group.objects.get_or_create(
+            name=settings.RETINA_GRADERS_GROUP_NAME
+        )
+        grader_group.user_set.add(user)
+        client.login(**TEST_USER_CREDENTIALS)
     elif user == "normal":
         user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
         client.login(**TEST_USER_CREDENTIALS)
+
     return client, user
 
 
@@ -158,14 +168,16 @@ def create_image_test_method(image_type, reverse_name):
 
 def batch_test_data_endpoints(test_class):
     for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA"):
-        test_load_no_auth, test_load_no_data, test_load_save_data = create_data_test_methods(
+        test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_save_data = create_data_test_methods(
             data_type
         )
 
         test_load_no_auth.__name__ = "test_load_{}_no_auth".format(data_type)
+        test_load_normal_user_no_auth.__name__ = "test_load_{}_normal_user_no_auth".format(data_type)
         test_load_no_data.__name__ = "test_load_{}_no_data".format(data_type)
         test_load_save_data.__name__ = "test_load_save_{}".format(data_type)
         setattr(test_class, test_load_no_auth.__name__, test_load_no_auth)
+        setattr(test_class, test_load_normal_user_no_auth.__name__, test_load_normal_user_no_auth)
         setattr(test_class, test_load_no_data.__name__, test_load_no_data)
         setattr(test_class, test_load_save_data.__name__, test_load_save_data)
 
@@ -183,11 +195,24 @@ def create_data_test_methods(data_type):
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    def test_load_normal_user_no_auth(self, client):
+        # create grader user
+        username = "grader"
+        UserFactory(username=username)
+        ds = create_some_datastructure_data()
+        client, grader = client_login(client, user="normal")
+        url = reverse(
+            "retina:api:data-api-view",
+            args=[data_type, username, ds["archive"].name, ds["patient"].name],
+        )
+        response = client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_load_no_data(self, client):
         ds = create_some_datastructure_data()
 
         # login client
-        client, grader = client_login(client, user="normal")
+        client, grader = client_login(client, user="retina_user")
 
         url = reverse(
             "retina:api:data-api-view",
@@ -204,7 +229,7 @@ def create_data_test_methods(data_type):
 
     def test_load_save_data(self, client):
         # login client
-        client, grader = client_login(client, user="normal")
+        client, grader = client_login(client, user="retina_user")
 
         for archive in ("Rotterdam", "Australia"):
             if archive == "Rotterdam" and data_type in ("Measure", "Fovea"):
@@ -269,7 +294,7 @@ def create_data_test_methods(data_type):
                 response_content = json.loads(response.content)
                 assert response_content["success"]
 
-    return test_load_no_auth, test_load_no_data, test_load_save_data
+    return test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_save_data
 
 
 def create_load_data(data_type, ds, grader):

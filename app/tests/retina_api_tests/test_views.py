@@ -24,12 +24,23 @@ class TestArchiveIndexAPIEndpoints:
         response = client.get(url, HTTP_ACCEPT="application/json")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_archive_view_auth(self, client):
+    def test_archive_view_normal_non_auth(self, client):
         # Create data
         create_datastructures_data()
 
         # login client
         client, _ = client_login(client, user="normal")
+
+        url = reverse("retina:api:archives-api-view")
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_archive_view_retina_auth(self, client):
+        # Create data
+        create_datastructures_data()
+
+        # login client
+        client, _ = client_login(client, user="retina_user")
 
         url = reverse("retina:api:archives-api-view")
         response = client.get(url, HTTP_ACCEPT="application/json")
@@ -44,7 +55,7 @@ class TestArchiveIndexAPIEndpoints:
         )
 
         # login client
-        client, _ = client_login(client, user="normal")
+        client, _ = client_login(client, user="retina_user")
 
         url = reverse("retina:api:archives-api-view")
         response = client.get(url, HTTP_ACCEPT="application/json")

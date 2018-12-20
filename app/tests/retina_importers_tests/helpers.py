@@ -3,6 +3,7 @@ from PIL import Image as PILImage
 from pathlib import Path
 import json
 from django.conf import settings
+from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from django.contrib.auth import get_user_model
@@ -17,10 +18,15 @@ from tests.cases_tests import RESOURCE_PATH
 from grandchallenge.subdomains.urls import reverse
 
 
-def get_user_with_token(**user_kwargs):
+def get_user_with_token(is_retina_user=True, **user_kwargs):
     user = UserFactory(**user_kwargs)
+    if is_retina_user:
+        grader_group, group_created = Group.objects.get_or_create(
+            name=settings.RETINA_GRADERS_GROUP_NAME
+        )
+        grader_group.user_set.add(user)
+    
     token = Token.objects.create(user=user)
-
     return user, token.key
 
 
