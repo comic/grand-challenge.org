@@ -37,7 +37,7 @@ class TestTokenAuthentication:
             response = client.get(url)
             assert response.status_code == status.HTTP_200_OK
         except ValueError as e:
-            assert "Missing static files manifest entry for " in str(e)
+            assert "Missing staticfiles manifest entry for" in str(e)
 
     def test_auth_staff(self, client):
         url = reverse("retina:home")
@@ -50,7 +50,7 @@ class TestTokenAuthentication:
         except ValueError as e:
             # On Travis a ValueError will be raised because django can't find all static files
             # since the static files are in a closed source submodule (DIAGNijmegen/retina-frontend)
-            assert "Missing static files manifest entry for " in str(e)
+            assert "Missing staticfiles manifest entry for" in str(e)
 
     # TODO add retina user test permissions
 
