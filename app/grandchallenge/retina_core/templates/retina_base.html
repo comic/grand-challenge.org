@@ -1,4 +1,6 @@
-{% load static i18n %}<!DOCTYPE html>
+{% load static i18n %}
+{% load placeFavicon from favtags %}
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -13,7 +15,7 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
     <![endif]-->
 
-    <link rel="icon" href="{% static 'images/favicons/favicon.png' %}">
+    {% placeFavicon %}
 
     {% block css %}
     

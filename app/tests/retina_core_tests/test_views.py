@@ -27,19 +27,19 @@ class TestTokenAuthentication:
 
     def test_auth_normal(self, client):
         url = reverse("retina:home")
-        user, token = get_user_with_token()
+        user, _ = get_user_with_token()
         client.force_login(user=user)
         response = client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
     def test_auth_staff(self, client):
         url = reverse("retina:home")
-        user, token = get_user_with_token()
+        user, _ = get_user_with_token()
         client.force_login(user=user)
         response = client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
-    # TODO add retina user test
+    # TODO add retina user test permissions
 
 @pytest.mark.django_db
 class TestCustomImageViews:
