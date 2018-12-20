@@ -168,17 +168,19 @@ def create_image_test_method(image_type, reverse_name):
 
 def batch_test_data_endpoints(test_class):
     for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA"):
-        test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_save_data = create_data_test_methods(
+        test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_no_data_wrong_user, test_load_save_data = create_data_test_methods(
             data_type
         )
 
         test_load_no_auth.__name__ = "test_load_{}_no_auth".format(data_type)
         test_load_normal_user_no_auth.__name__ = "test_load_{}_normal_user_no_auth".format(data_type)
         test_load_no_data.__name__ = "test_load_{}_no_data".format(data_type)
+        test_load_no_data_wrong_user.__name__ = "test_load_{}_wrong_user".format(data_type)
         test_load_save_data.__name__ = "test_load_save_{}".format(data_type)
         setattr(test_class, test_load_no_auth.__name__, test_load_no_auth)
         setattr(test_class, test_load_normal_user_no_auth.__name__, test_load_normal_user_no_auth)
         setattr(test_class, test_load_no_data.__name__, test_load_no_data)
+        setattr(test_class, test_load_no_data_wrong_user.__name__, test_load_no_data_wrong_user)
         setattr(test_class, test_load_save_data.__name__, test_load_save_data)
 
 
@@ -226,6 +228,28 @@ def create_data_test_methods(data_type):
         response = client.get(url)
         assert status.HTTP_200_OK == response.status_code
         assert b'{"status":"no data","data":{}}' == response.content
+
+    def test_load_no_data_wrong_user(self, client):
+        ds = create_some_datastructure_data()
+
+        # login client
+        client, grader = client_login(client, user="retina_user")
+
+        # create grader user
+        username = "grader"
+        UserFactory(username=username)
+
+        url = reverse(
+            "retina:api:data-api-view",
+            args=[
+                data_type,
+                username,
+                ds["archive"].name,
+                ds["patient"].name,
+            ],
+        )
+        response = client.get(url)
+        assert status.HTTP_403_FORBIDDEN == response.status_code
 
     def test_load_save_data(self, client):
         # login client
@@ -294,7 +318,7 @@ def create_data_test_methods(data_type):
                 response_content = json.loads(response.content)
                 assert response_content["success"]
 
-    return test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_save_data
+    return test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_no_data_wrong_user, test_load_save_data
 
 
 def create_load_data(data_type, ds, grader):
