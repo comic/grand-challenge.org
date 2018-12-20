@@ -59,11 +59,19 @@ class TestGetSitkImage:
         try:
             image.get_sitk_image()
             pytest.fail("No exception with missing raw file")
-        except Exception as e:
-            print(e)
-            pass
+        except RuntimeError as e:
+            assert "Exception thrown in SimpleITK ReadImage:" in e
+            assert "File cannot be read" in e
+            assert "Reason: Success" in e
 
     def test_correct_dimensions(self):
         image = ImageFactoryWithImageFile()
         sitk_image = image.get_sitk_image()
+        assert sitk_image.GetDimension() == 3
         assert sitk_image.GetSize() == (7, 6, 5)
+        assert sitk_image.GetOrigin() == (0.0, 0.0, 0.0)
+        assert sitk_image.GetSpacing() == (1.0, 1.0, 1.0)
+        assert sitk_image.GetNumberOfComponentsPerPixel() == 1
+        assert sitk_image.GetPixelIDValue() == 0
+        assert sitk_image.GetPixelIDTypeAsString() == "8-bit signed integer"
+
