@@ -79,6 +79,7 @@ class ImagingModality(models.Model):
     MODALITY_OCT = "OCT"  # Optical coherence tomography
     MODALITY_CF = "CF"  # Color fundus photography
     MODALITY_FA = "FA"  # Fluorescein angiography
+    MODALITY_IR = "IR"  # Infrared Reflectance imaging
 
     modality = CICharField(max_length=16, blank=False, unique=True)
 

@@ -152,7 +152,7 @@ class UploadImage(generics.CreateAPIView):
         if modality == "FUN":
             modality = ImagingModality.MODALITY_CF
         if modality == "HRA":
-            modality = ImagingModality.MODALITY_FA
+            modality = ImagingModality.MODALITY_IR
         modality, _ = ImagingModality.objects.get_or_create(modality=modality)
 
         image_dict = {
