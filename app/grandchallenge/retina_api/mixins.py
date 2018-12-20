@@ -7,19 +7,13 @@ from django.conf import settings
 class RetinaAPIPermission(permissions.BasePermission):
     # Perform permission check
     def has_permission(self, request, view):
-        # TODO specific permissions?
-        # uncomment next line and fix all tests accordingly to only allow users from retina_graders group
-        # return self.request.user.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).exists()
-        return bool(request.user and request.user.is_authenticated)
+        return request.user.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).exists()
 
 
 # Mixin for non APIViews
 class RetinaAPIPermissionMixin(AccessMixin):
-    """Verify that the current user is authenticated."""
-
+    """Verify that the current user is in the retina_graders group."""
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
+        if not request.user.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).exists():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
-
-    # TODO modify to correct permissions check
