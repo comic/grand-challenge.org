@@ -139,8 +139,11 @@ class ArchiveView(APIView):
                             },
                         },
                     }
-                elif image.modality.modality == ImagingModality.MODALITY_OBS:
-                    # skip, already in fds
+                elif (
+                    image.modality.modality == ImagingModality.MODALITY_CF
+                    and image.name.endswith("OCT.fds")
+                ):
+                    # OBS image, skip because this is already in fds
                     pass
                 else:
                     yield image.name, "no tags"
@@ -187,7 +190,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
         try:
             if image_modality == "obs_000":
                 image = image.get(
-                    modality__modality=ImagingModality.MODALITY_OBS
+                    modality__modality=ImagingModality.MODALITY_CF
                 )
             elif image_modality == "oct":
                 image = image.get(
@@ -279,7 +282,7 @@ class DataView(APIView):
             )  # set number for oct images
         elif image_identifier == "obs_000":
             conditions.update(
-                {"modality__modality": ImagingModality.MODALITY_OBS}
+                {"modality__modality": ImagingModality.MODALITY_CF}
             )
         return Image.objects.get(
             study__patient=patient,
@@ -340,7 +343,8 @@ class DataView(APIView):
                     }
                     if (
                         annotation.image.modality.modality
-                        == ImagingModality.MODALITY_OBS
+                        == ImagingModality.MODALITY_CF
+                        and annotation.image.name.endswith("OCT.fds")
                     ):
                         result_dict.update({"sub_img_name": "obs_000"})
                     if (
@@ -382,7 +386,8 @@ class DataView(APIView):
 
                     if (
                         annotation_model.image.modality.modality
-                        == ImagingModality.MODALITY_OBS
+                        == ImagingModality.MODALITY_CF
+                        and annotation_model.image.name.endswith("OCT.fds")
                     ):
                         result_dict.update({"sub_img_name": "obs_000"})
                     if (
@@ -458,7 +463,8 @@ class DataView(APIView):
                         sub_img_name = None
                         if (
                             annotation_model.image.modality.modality
-                            == ImagingModality.MODALITY_OBS
+                            == ImagingModality.MODALITY_CF
+                            and annotation_model.image.name.endswith("OCT.fds")
                         ):
                             sub_img_name = "obs_000"
                         if (
@@ -579,9 +585,9 @@ class DataView(APIView):
             if data_type == "ETDRS":
                 image = self.get_image_from_rotterdam_data(patient, data)
                 image.etdrsgridannotation_set.create(
-                    **save_data,
                     fovea=self.dict_to_coordinate(data["fovea"]),
                     optic_disk=self.dict_to_coordinate(data["optic_disk"]),
+                    **save_data,
                 )
             elif data_type == "Registration":
                 for registration in data:
@@ -601,7 +607,7 @@ class DataView(APIView):
                         conditions.update(
                             {
                                 "modality": ImagingModality.objects.get(
-                                    modality=ImagingModality.MODALITY_OBS
+                                    modality=ImagingModality.MODALITY_CF
                                 )
                             }
                         )
@@ -627,7 +633,7 @@ class DataView(APIView):
                         ):
                             continue  # skip non ga elements in dict
                         ga_points_model = image.polygonannotationset_set.create(
-                            **save_data, name=ga_type.lower()
+                            name=ga_type.lower(), **save_data
                         )
                         for single_ga_data in ga_data_list:
                             ga_points_model.singlepolygonannotation_set.create(

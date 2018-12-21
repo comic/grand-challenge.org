@@ -25,12 +25,13 @@ def create_some_datastructure_data(
     study_oct = StudyFactory(patient=patient, **oct_study_pars)
     image_obs = ImageFactoryWithImageFile(
         study=study_oct,
-        modality__modality=ImagingModality.MODALITY_OBS,
+        modality__modality=ImagingModality.MODALITY_CF,
         **image_obs_pars,
     )
     image_oct = ImageFactoryWithImageFile(
         study=study_oct,
         modality__modality=ImagingModality.MODALITY_OCT,
+        name=image_obs.name,  # OCT image name has to be equal to OBS image name
         **image_oct_pars,
     )
     archive = ArchiveFactory.create(
