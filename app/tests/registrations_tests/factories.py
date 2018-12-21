@@ -14,7 +14,7 @@ class OctObsRegistrationFactory(factory.DjangoModelFactory):
         model = OctObsRegistration
 
     obs_image = factory.SubFactory(ImageFactory)
-    oct_series = factory.SubFactory(ImageFactory)
+    oct_image = factory.SubFactory(ImageFactory)
 
     registration_values = [
         [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],

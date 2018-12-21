@@ -16,7 +16,7 @@ class OctObsRegistration(UUIDModel):
     obs_image = models.ForeignKey(
         Image, related_name="obs_image", on_delete=models.CASCADE
     )
-    oct_series = models.ForeignKey(
+    oct_image = models.ForeignKey(
         Image, related_name="oct_image", on_delete=models.CASCADE
     )
 
@@ -26,4 +26,4 @@ class OctObsRegistration(UUIDModel):
     )
 
     class Meta(UUIDModel.Meta):
-        unique_together = ("obs_image", "oct_series")
+        unique_together = ("obs_image", "oct_image")

@@ -17,7 +17,7 @@ serializers = {
         "unique": True,
         "factory": OctObsRegistrationFactory,
         "serializer": OctObsRegistrationSerializer,
-        "fields": ("obs_image", "oct_series", "registration_values"),
+        "fields": ("obs_image", "oct_image", "registration_values"),
     }
 }
 

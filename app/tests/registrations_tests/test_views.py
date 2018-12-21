@@ -17,7 +17,7 @@ class TestViewsets:
 
 actions = VIEWSET_ACTIONS
 # Add all model viewset test functions to class
-required_relations = {"obs_image": ImageFactory, "oct_series": ImageFactory}
+required_relations = {"obs_image": ImageFactory, "oct_image": ImageFactory}
 batch_test_viewset_endpoints(
     actions,
     OctObsRegistrationViewSet,

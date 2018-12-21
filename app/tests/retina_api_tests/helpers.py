@@ -52,11 +52,11 @@ def create_datastructures_data():
         archive_pars={"name": "Australia"}
     )
     oct_obs_registration_aus = OctObsRegistrationFactory(
-        oct_series=datastructures_aus["image_oct"],
+        oct_image=datastructures_aus["image_oct"],
         obs_image=datastructures_aus["image_obs"],
     )
     oct_obs_registration = OctObsRegistrationFactory(
-        oct_series=datastructures["image_oct"],
+        oct_image=datastructures["image_oct"],
         obs_image=datastructures["image_obs"],
     )
     return (
