@@ -23,15 +23,18 @@ def create_some_datastructure_data(
         **image_cf_pars,
     )
     study_oct = StudyFactory(patient=patient, **oct_study_pars)
+    # oct/obs image name has to end with OCT.fds for obs image recognition
+    oct_obs_fake_name = "OBS_OCT.fds"
     image_obs = ImageFactoryWithImageFile(
         study=study_oct,
         modality__modality=ImagingModality.MODALITY_CF,
+        name=oct_obs_fake_name,
         **image_obs_pars,
     )
     image_oct = ImageFactoryWithImageFile(
         study=study_oct,
         modality__modality=ImagingModality.MODALITY_OCT,
-        name=image_obs.name,  # OCT image name has to be equal to OBS image name
+        name=oct_obs_fake_name,  # OCT image name has to be equal to OBS image name
         **image_oct_pars,
     )
     archive = ArchiveFactory.create(
