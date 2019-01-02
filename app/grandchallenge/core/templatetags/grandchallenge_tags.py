@@ -1,6 +1,5 @@
 import json
 import logging
-import ntpath
 import os
 import random
 import re
@@ -9,15 +8,17 @@ import traceback
 from io import StringIO
 
 from django import template
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
+from django.utils._os import safe_join
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.profiles.models import UserProfile
@@ -273,8 +274,17 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        challenge_short_name = context["currentpage"].challenge.short_name
-        projectpath = challenge_short_name + "/" + self.path
+        challenge: Challenge = context["currentpage"].challenge
+
+        try:
+            projectpath = safe_join(
+                challenge.get_project_data_folder(), self.path
+            )
+        except SuspiciousFileOperation:
+            return self.make_dataset_error_msg(
+                "path is outside the challenge folder."
+            )
+
         storage = DefaultStorage()
         try:
             filenames = storage.listdir(projectpath)[1]
@@ -291,7 +301,7 @@ class ListDirNode(template.Node):
             downloadlink = reverse(
                 "root-serving:challenge-file",
                 kwargs={
-                    "challenge_name": challenge_short_name,
+                    "challenge_name": challenge.short_name,
                     "path": f"{self.path}/{filename}",
                 },
             )
@@ -369,29 +379,6 @@ class InsertFileNode(template.Node):
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
-    def is_inside_project_data_folder(self, folder, project):
-        """ For making sure nosey people do not use too many ../../../ in paths
-        to snoop around in the filesystem.
-        
-        folder: string containing a filepath
-        project: a comicsite object
-        """
-        data_folder = project.get_project_data_folder()
-        folder = self.make_canonical_path(folder)
-        data_folder = self.make_canonical_path(data_folder)
-        if folder.startswith(data_folder):
-            return True
-
-        else:
-            return False
-
-    def make_canonical_path(self, path):
-        """ Make this a nice path, with / separators
-        
-        """
-        path = path.replace("\\\\", "/")
-        return path.replace("\\", "/")
-
     def render(self, context):
         # text typed in the tag
         token = self.args["file"]
@@ -400,19 +387,14 @@ class InsertFileNode(template.Node):
         except PathResolutionException as e:
             return self.make_error_msg(f"Path Resolution failed: {e}")
 
-        challenge_short_name = context["site"].short_name
-        filepath = os.path.join(
-            settings.MEDIA_ROOT, challenge_short_name, filename
-        )
-        filepath = os.path.abspath(filepath)
-        filepath = self.make_canonical_path(filepath)
-        # when all rendering is done, check if the final path is still not getting
-        # into places it should not go.
-        if not self.is_inside_project_data_folder(filepath, context["site"]):
-            error_msg = "'{}' cannot be opened because it is outside the current project.".format(
-                filepath
+        challenge = context["site"]
+
+        try:
+            filepath = safe_join(challenge.get_project_data_folder(), filename)
+        except SuspiciousFileOperation:
+            return self.make_error_msg(
+                f"'{filename}' cannot be opened because it is outside the current challenge."
             )
-            return self.make_error_msg(error_msg)
 
         storage = DefaultStorage()
 
@@ -489,10 +471,15 @@ class InsertGraphNode(template.Node):
             )
             return self.make_error_msg(error_msg)
 
-        challenge_short_name = context["currentpage"].challenge.short_name
-        filename = os.path.join(
-            settings.MEDIA_ROOT, challenge_short_name, filename_clean
-        )
+        challenge: Challenge = context["currentpage"].challenge
+
+        try:
+            filename = safe_join(
+                challenge.get_project_data_folder(), filename_clean
+            )
+        except SuspiciousFileOperation:
+            return self.make_error_msg("file is outside the challenge folder.")
+
         storage = DefaultStorage()
         try:
             contents = storage.open(filename, "r").read()
@@ -500,25 +487,7 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(str(e))
 
         # TODO check content safety
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse(
-            "pages:insert-detail",
-            kwargs={
-                "challenge_short_name": context[
-                    "currentpage"
-                ].challenge.short_name,
-                "page_title": context["currentpage"].title,
-                "dropboxpath": "remove",
-            },
-        )
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = (
-            ntpath.dirname(filename_clean) + "/"
-        )  # path of currently inserted file
+
         try:
             render_function = getrenderer(self.args["type"])
         # (table,headers) = read_function(filename)

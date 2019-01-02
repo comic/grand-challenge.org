@@ -1,4 +1,4 @@
-import ntpath
+from os.path import basename
 
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
@@ -45,7 +45,7 @@ def upload_handler(request):
         )
         if form.is_valid():
             form.save()
-            filename = ntpath.basename(form.instance.file.file.name)
+            filename = basename(form.instance.file.file.name)
             messages.success(
                 request,
                 (

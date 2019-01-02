@@ -3,6 +3,7 @@ from django.core.mail import mail_managers
 from requests import get, exceptions
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
@@ -49,7 +50,7 @@ def check_external_challenge_urls():
     managers if not.
     """
 
-    challenges = ExternalChallenge.objects.all()
+    challenges = ExternalChallenge.objects.filter(hidden=False)
     errors = []
 
     for challenge in challenges:
@@ -61,11 +62,17 @@ def check_external_challenge_urls():
             # raise an exception when we receive a http error (e.g., 404)
             r.raise_for_status()
         except exceptions.RequestException as err:
+            update_url = reverse(
+                "challenges:external-update",
+                kwargs={"short_name": challenge.short_name},
+            )
             errors.append(
-                f"Error when trying to access '{challenge.title}': {err}"
+                f"Error when trying to access '{challenge}': {err}. You can "
+                f"update it here: {update_url}"
             )
 
-    mail_managers(
-        subject=f"Unreachable external challenges ({len(errors)})",
-        message="\n".join(errors),
-    )
+    if errors:
+        mail_managers(
+            subject=f"Unreachable external challenges ({len(errors)})",
+            message="\n\n".join(errors),
+        )
