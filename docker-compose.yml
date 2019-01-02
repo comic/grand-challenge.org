@@ -142,7 +142,11 @@ services:
     environment:
       <<: *postgresenv
     restart: always
-    command: "celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\""
+    command: >-
+        bash -c "
+        rm -f /tmp/celerybeat.pid
+        && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
+        "
     depends_on:
       web:
         condition: service_healthy
