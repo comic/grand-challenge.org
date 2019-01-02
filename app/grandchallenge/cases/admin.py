@@ -8,7 +8,15 @@ class ImageFileInline(admin.StackedInline):
 
 
 class ImageAdmin(admin.ModelAdmin):
-    search_fields = ("pk", "name", "study__name", "modality", "color_space", "eye_choice")
+    search_fields = (
+        "pk",
+        "name",
+        "study__name",
+        "modality__modality",
+        "color_space",
+        "eye_choice",
+        "study__patient__name",
+    )
     list_filter = ("modality", "color_space", "eye_choice")
     inlines = [ImageFileInline]
 
@@ -22,20 +30,18 @@ class MhdOrRawFilter(admin.SimpleListFilter):
     """
     Filter for ImageFileAdmin that allows filtering on mhd or raw/zraw files
     """
+
     title = "MHD or RAW file"
     parameter_name = "mhd_or_raw"
 
     def lookups(self, request, model_admin):
-        return(
-            ('mhd', "MHD file"),
-            ('raw', "RAW/ZRAW file"),
-        )
+        return (("mhd", "MHD file"), ("raw", "RAW/ZRAW file"))
 
     def queryset(self, request, queryset):
-        if self.value() == 'mhd':
-            return queryset.filter(file__endswith='.mhd')
-        if self.value() == 'raw':
-            return queryset.filter(file__endswith='raw')
+        if self.value() == "mhd":
+            return queryset.filter(file__endswith=".mhd")
+        if self.value() == "raw":
+            return queryset.filter(file__endswith="raw")
 
 
 class ImageFileAdmin(admin.ModelAdmin):
