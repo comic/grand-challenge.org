@@ -7,7 +7,7 @@
     {% blocktrans with site.name as site %}<p>Thank you for signing up at {{ site }}.</p>{% endblocktrans %}
     <p>
         {% trans "To activate your account you should click on the link below:" %}<br/>
-        {{ protocol }}://{{ site.domain }}{% url 'userena_activate' activation_key %}
+        {% url 'userena_activate' activation_key %}
     </p>
 
     <p>
