@@ -596,6 +596,9 @@ if DEBUG:
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
 
+if strtobool(os.environ.get("WHITENOISE", "False")):
+    MIDDLEWARE += ("whitenoise.middleware.WhiteNoiseMiddleware",)
+
 if not COMIC_PUBLIC_FOLDER_NAME:
     raise ImproperlyConfigured(
         "Don't know from which folder serving publiv files"
