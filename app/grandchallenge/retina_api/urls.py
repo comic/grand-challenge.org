@@ -10,11 +10,7 @@ router = DefaultRouter()
 
 urlpatterns = [
     path("", include(router.urls)),
-    path(
-        "archives/",
-        views.ArchiveView.as_view(),
-        name="archives-api-view",
-    ),
+    path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
         views.ImageView.as_view(),

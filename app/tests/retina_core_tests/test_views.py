@@ -14,9 +14,7 @@ from django.conf import settings
 from tests.retina_images_tests.factories import ImageFactoryWithImageFile
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from grandchallenge.challenges.models import ImagingModality
-from tests.retina_api_tests.helpers import (
-    client_login,
-)
+from tests.retina_api_tests.helpers import client_login
 
 
 @pytest.mark.django_db

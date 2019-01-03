@@ -39,6 +39,7 @@ class RetinaOwnerAPIPermission(permissions.BasePermission):
 # Mixin for non APIViews
 class RetinaAPIPermissionMixin(AccessMixin):
     """Verify that the current user is in the retina_graders group."""
+
     def dispatch(self, request, *args, **kwargs):
         if not is_in_retina_group(request.user):
             return self.handle_no_permission()

@@ -25,7 +25,7 @@ def get_user_with_token(is_retina_user=True, **user_kwargs):
             name=settings.RETINA_GRADERS_GROUP_NAME
         )
         grader_group.user_set.add(user)
-    
+
     token = Token.objects.create(user=user)
     return user, token.key
 
