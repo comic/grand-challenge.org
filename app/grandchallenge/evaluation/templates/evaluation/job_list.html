@@ -1,6 +1,7 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
 {% load guardian_tags %}
+{% load url from grandchallenge_tags %}
 
 {% block pagecontent %}
 
@@ -48,7 +49,8 @@
                     {% if job.output %}
                         <td>{{ job.output|user_error }}</td>
                     {% elif job.result.metrics and job.result.published %}
-                        <td><a href="{{ job.result.get_absolute_url }}">Result</a>
+                        <td>
+                            <a href="{{ job.result.get_absolute_url }}">Result</a>
                         </td>
                     {% else %}
                         <td></td>
@@ -57,6 +59,11 @@
                     <td>
                         {% if job.result and job.result.rank > 0 %}
                             {{ job.result.rank }}
+                        {% endif %}
+                        {% if job.submission.supplementary_file %}
+                            <a href="{{ job.submission.supplementary_file.url }}">
+                                <i class="fa fa-file"></i>
+                            </a>
                         {% endif %}
                     </td>
 
@@ -68,7 +75,7 @@
                         <td>
                             {% if job.result %}
                                 <form method="post"
-                                      action="{% url 'evaluation:result-update' site.short_name job.result.pk %}">
+                                      action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=job.result.pk %}">
                                     {% csrf_token %}
                                     {% if job.result.published %}
                                         <input type="hidden" name="published"

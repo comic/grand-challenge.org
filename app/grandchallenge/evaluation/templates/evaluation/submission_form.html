@@ -17,7 +17,7 @@
 
         <p>You need to wait until all of your existing submissions have been
             evaluated before you can make another submission. <a
-                    href="{% url 'evaluation:job-list' site.short_name %}">Click
+                    href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click
                 here</a>
             to see their status.
         </p>
@@ -43,7 +43,7 @@
 
     <h3>View my submissions</h3>
 
-    <p><a href="{% url 'evaluation:job-list' site.short_name %}">Click here</a>
+    <p><a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click here</a>
         to view your current submissions to this challenge.</p>
 
 {% endblock %}

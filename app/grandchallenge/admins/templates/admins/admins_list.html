@@ -6,7 +6,7 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'admins:update' site.short_name %}">
+           href="{% url 'admins:update' challenge_short_name=site.short_name %}">
             <i class="fas fa-plus"></i> Add another admin
         </a>
     </p>
@@ -21,7 +21,7 @@
     <td>
         {% if user.pk != this_admin_pk %}
             <form method="post"
-                  action="{% url 'admins:update' site.short_name %}">
+                  action="{% url 'admins:update' challenge_short_name=site.short_name %}">
                 {% csrf_token %}
                 <input name="user" type="hidden" value="{{ user.pk }}">
                 <input name="action" type="hidden"

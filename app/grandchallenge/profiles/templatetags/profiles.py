@@ -2,7 +2,7 @@ from django import template
 from django.contrib.auth.models import AbstractUser
 from django.utils.html import format_html
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
 register = template.Library()
 

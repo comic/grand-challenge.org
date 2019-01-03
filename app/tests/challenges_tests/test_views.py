@@ -1,7 +1,7 @@
 
 import pytest
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory, ChallengeFactory
 from tests.utils import get_view_for_user
 

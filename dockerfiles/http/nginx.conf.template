@@ -100,32 +100,6 @@ http {
   }
 
   server {
-    # Rewrite subdomain uris
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    
-    client_body_buffer_size 16m;
-    client_max_body_size 16m;
-
-    server_name ~^(?<project>.*).${SERVER_NAME};
-
-    if ($uri !~ ^/.*(.css|.js) ) {
-      # If we're not looking for css or js then add a slash at the end of the url
-      rewrite ^(.*[^/])$ $1/ permanent;
-    }
-
-    location ~ ^/(static|site|accounts|socialauth|dbox|media|challenges|cases|algorithms|summernote)/ {
-      proxy_pass $scheme://127.0.0.1$request_uri;
-      proxy_set_header Host ${SERVER_NAME};
-    }
-
-    location / {
-      proxy_pass $scheme://127.0.0.1/site/$project$request_uri;
-      proxy_set_header Host $host;
-    }
-  } 
-
-  server {
     # Try to serve files, otherwise proxy to app
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
@@ -133,7 +107,15 @@ http {
     client_body_buffer_size 16m;
     client_max_body_size 16m;
 
-    server_name ${SERVER_NAME};
+    server_name .${SERVER_NAME};
+
+    location ~* ^/site/([^/]*)/serve/(.*)$ {
+      return 302 $scheme://$1.${SERVER_NAME}/media/$1/$2;
+    }
+
+    location ~* ^/all_challenges/?$ {
+      return 301 $scheme://${SERVER_NAME}/challenges/;
+    }
     
     location /dbox/ {
       internal;

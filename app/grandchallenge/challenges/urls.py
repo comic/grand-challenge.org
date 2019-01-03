@@ -3,7 +3,6 @@ from django.urls import path
 from grandchallenge.challenges.views import (
     ChallengeCreate,
     UsersChallengeList,
-    ChallengeUpdate,
     ExternalChallengeCreate,
     ExternalChallengeUpdate,
     ChallengeList,
@@ -32,10 +31,5 @@ urlpatterns = [
         "external/<slug:short_name>/delete/",
         ExternalChallengeDelete.as_view(),
         name="external-delete",
-    ),
-    path(
-        "<slug:challenge_short_name>/update/",
-        ChallengeUpdate.as_view(),
-        name="update",
     ),
 ]

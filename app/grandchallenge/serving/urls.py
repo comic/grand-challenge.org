@@ -17,7 +17,7 @@ urlpatterns = [
         {"folder": "evaluation-supplementary"},
     ),
     path(
-        "<slug:challenge_short_name>/<path:path>",
+        "<slug:challenge_name>/<path:path>",
         serve_folder,
         name="challenge-file",
     ),
