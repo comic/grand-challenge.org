@@ -1,5 +1,5 @@
 import pytest
-from tests.retina_images_tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactory
 from grandchallenge.archives.views import ArchiveViewSet
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.archives.serializers import ArchiveSerializer

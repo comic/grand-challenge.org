@@ -1,15 +1,12 @@
 from io import BytesIO
-from PIL import Image as PILImage
 from pathlib import Path
 import json
 from django.conf import settings
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework import status
-from django.contrib.auth import get_user_model
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from tests.factories import UserFactory
-from tests.retina_images_tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory

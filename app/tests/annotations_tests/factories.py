@@ -1,5 +1,4 @@
 import random
-import factory
 import factory.fuzzy
 import datetime
 import pytz
@@ -16,7 +15,7 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
 )
-from tests.retina_images_tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory
 
 

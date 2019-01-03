@@ -1,6 +1,6 @@
 import pytest
 from grandchallenge.cases.serializers import ImageSerializer
-from tests.retina_images_tests.factories import ImageFactoryWithImageFile
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.serializer_helpers import check_if_valid
 from tests.serializer_helpers import batch_test_serializers
 

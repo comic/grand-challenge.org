@@ -1,16 +1,12 @@
 import pytest
-from rest_framework import status
 from tests.annotations_tests.factories import (
     ETDRSGridAnnotationFactory,
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    CoordinateListAnnotationFactory,
     PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
 )
-from tests.retina_images_tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory
 from grandchallenge.annotations.views import (
     ETDRSGridAnnotationViewSet,

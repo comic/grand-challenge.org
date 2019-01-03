@@ -1,12 +1,7 @@
 import random
-import factory
 import factory.fuzzy
-import datetime
-import pytz
 from grandchallenge.registrations.models import OctObsRegistration
-from grandchallenge.challenges.models import ImagingModality
-from tests.retina_images_tests.factories import ImageFactory
-from tests.factories import UserFactory
+from tests.cases_tests.factories import ImageFactory
 
 
 class OctObsRegistrationFactory(factory.DjangoModelFactory):

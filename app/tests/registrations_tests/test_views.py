@@ -1,7 +1,6 @@
 import pytest
 from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.retina_images_tests.factories import ImageFactory
-from tests.factories import UserFactory
+from tests.cases_tests.factories import ImageFactory
 from grandchallenge.registrations.views import OctObsRegistrationViewSet
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer

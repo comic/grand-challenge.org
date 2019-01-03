@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from tests.retina_images_tests.factories import (
+from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
     ImageFileFactoryWithMHDFile,

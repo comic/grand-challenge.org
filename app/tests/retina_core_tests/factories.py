@@ -1,7 +1,7 @@
 from grandchallenge.challenges.models import ImagingModality
 from tests.archives_tests.factories import ArchiveFactory
 from tests.patients_tests.factories import PatientFactory
-from tests.retina_images_tests.factories import ImageFactoryWithImageFile
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.studies_tests.factories import StudyFactory
 
 

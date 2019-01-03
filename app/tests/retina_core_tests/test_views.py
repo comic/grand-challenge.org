@@ -7,12 +7,10 @@ from rest_framework import status
 from grandchallenge.subdomains.urls import reverse
 from django.urls import reverse as django_reverse
 from tests.retina_importers_tests.helpers import (
-    get_auth_token_header,
     get_retina_user_with_token,
 )
 from django.conf import settings
-from tests.retina_images_tests.factories import ImageFactoryWithImageFile
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from grandchallenge.challenges.models import ImagingModality
 from tests.retina_api_tests.helpers import client_login
 
