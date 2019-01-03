@@ -27,31 +27,24 @@ def test_api_challenge_get(client):
 
     # HTML list
     url = reverse(f"api:challenge-list")
-    response = client.get(
-        url,
-        HTTP_ACCEPT="text/html"
-    )
+    response = client.get(url, HTTP_ACCEPT="text/html")
     assert response.status_code == 200
     assert "Challenge List" in force_text(response.content)
 
     # json list
-    response = client.get(
-        url,
-        HTTP_ACCEPT="application/json"
-    )
+    response = client.get(url, HTTP_ACCEPT="application/json")
     assert response.status_code == 200
     j = json.loads(response.content)
     assert len(j) == n_challenges
     for i, c in enumerate(challenges):
-        assert j[i]['short_name'] == challenges[i].short_name
-        assert j[i]['creator'].endswith(reverse("api:user-detail", kwargs={"pk": challenges[i].creator.pk}))
+        assert j[i]["short_name"] == challenges[i].short_name
+        assert j[i]["creator"].endswith(
+            reverse("api:user-detail", kwargs={"pk": challenges[i].creator.pk})
+        )
 
     # Detail
     url = reverse("api:challenge-detail", kwargs={"pk": challenges[0].pk})
-    response = client.get(
-        url,
-        HTTP_ACCEPT="application/json"
-    )
+    response = client.get(url, HTTP_ACCEPT="application/json")
     assert response.status_code == 200
     j = json.loads(response.content)
     assert j["short_name"] == challenges[0].short_name
@@ -68,12 +61,14 @@ def test_api_challenge_post(client):
         url,
         {"short_name": short_name},
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token
+        HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 201
     j = json.loads(response.content)
     assert j["short_name"] == short_name
-    assert j["creator"].endswith(reverse("api:user-detail", kwargs={"pk": user.pk}))
+    assert j["creator"].endswith(
+        reverse("api:user-detail", kwargs={"pk": user.pk})
+    )
 
 
 @pytest.mark.django_db
@@ -89,7 +84,7 @@ def test_api_challenge_put(client):
         {"short_name": updated_short_name},
         content_type="application/json",
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token
+        HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 200
     j = json.loads(response.content)
@@ -102,6 +97,6 @@ def test_api_challenge_put(client):
         {"short_name": "this-goes-wrong"},
         content_type="application/json",
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token2
+        HTTP_AUTHORIZATION="Token " + token2,
     )
     assert response.status_code == 403

@@ -3,7 +3,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
-from grandchallenge.api.serializers import SubmissionSerializer, UserSerializer, GroupSerializer
+from grandchallenge.api.serializers import (
+    SubmissionSerializer,
+    UserSerializer,
+    GroupSerializer,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Submission
 
@@ -57,12 +61,12 @@ class SubmissionViewSet(ModelViewSet):
 # views are reimplemented here specifically for authentication through the REST API.
 
 # The namespace used for the REST API social authentication
-NAMESPACE = 'api:social'
+NAMESPACE = "api:social"
 
 # Used to forward the user after he is forwarded from OAUTH2 provider
 @never_cache
 @csrf_exempt
-@psa('{0}:complete'.format(NAMESPACE))
+@psa("{0}:complete".format(NAMESPACE))
 def rest_api_complete(request, backend, *args, **kwargs):
     """Authentication complete view"""
     # The social_django do_complete function returns settings.LOGIN_REDIRECT_URL if no next
@@ -71,9 +75,15 @@ def rest_api_complete(request, backend, *args, **kwargs):
     # redirect url.
     redirect_url = request.session.get("next", "/")
 
-    result = do_complete(request.backend, _do_login, request.user,
-                       redirect_name=REDIRECT_FIELD_NAME, request=request,
-                       *args, **kwargs)
+    result = do_complete(
+        request.backend,
+        _do_login,
+        request.user,
+        redirect_name=REDIRECT_FIELD_NAME,
+        request=request,
+        *args,
+        **kwargs,
+    )
 
     token, created = Token.objects.get_or_create(user=request.user)
 
@@ -85,6 +95,6 @@ def rest_api_complete(request, backend, *args, **kwargs):
 
 # This function is not different from social_django.views.auth, but is repeated here so it includes the proper namespace.
 @never_cache
-@psa('{0}:complete'.format(NAMESPACE))
+@psa("{0}:complete".format(NAMESPACE))
 def rest_api_auth(request, backend):
     return do_auth(request.backend, redirect_name=REDIRECT_FIELD_NAME)
