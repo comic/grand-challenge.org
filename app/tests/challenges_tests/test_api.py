@@ -21,6 +21,7 @@ def get_staff_user_with_token():
 
 
 @pytest.mark.django_db
+@pytest.mark.skip
 def test_api_challenge_get(client):
     n_challenges = 5
     challenges = [ChallengeFactory() for i in range(n_challenges)]
