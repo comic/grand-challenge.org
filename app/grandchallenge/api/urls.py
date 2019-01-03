@@ -30,11 +30,11 @@ urlpatterns_social = [
 ]
 
 urlpatterns = [
+    path("v1/auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("v1/spec/", get_swagger_view(title="Comic API")),
+    path("v1/social/", include((urlpatterns_social, "social"))),
+    path("v1/login/", obtain_auth_token),
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers
     path("v1/", include(router.urls)),
-    path("auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("spec/", get_swagger_view(title="Comic API")),
-    path("social/", include((urlpatterns_social, "social"))),
-    path("login/", obtain_auth_token),
 ]
