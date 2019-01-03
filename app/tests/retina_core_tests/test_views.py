@@ -6,9 +6,7 @@ from PIL import Image as PILImage
 from rest_framework import status
 from grandchallenge.subdomains.utils import reverse
 from django.urls import reverse as django_reverse
-from tests.retina_importers_tests.helpers import (
-    get_retina_user_with_token,
-)
+from tests.retina_importers_tests.helpers import get_retina_user_with_token
 from django.conf import settings
 from tests.cases_tests.factories import ImageFactoryWithImageFile
 from grandchallenge.challenges.models import ImagingModality

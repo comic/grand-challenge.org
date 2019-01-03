@@ -5,9 +5,7 @@ from grandchallenge.subdomains.utils import reverse
 from django.conf import settings
 from django.contrib.auth.models import Group
 from tests.factories import UserFactory
-from tests.retina_importers_tests.helpers import (
-    get_retina_user_with_token,
-)
+from tests.retina_importers_tests.helpers import get_retina_user_with_token
 from tests.cases_tests.factories import ImageFactory
 from tests.retina_core_tests.factories import create_some_datastructure_data
 from tests.registrations_tests.factories import OctObsRegistrationFactory
