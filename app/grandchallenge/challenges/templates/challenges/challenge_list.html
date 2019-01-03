@@ -250,15 +250,15 @@
                     {% for challenge in challenges %}
                         <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
-                                <a id="{{ challenge.short_name }}"
+                                <a id="{{ challenge.short_name }}" title="{% firstof challenge.title challenge.short_name %}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
                                     <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
                                         <img class="thumbnail rounded-top-left flex-shrink-0"
                                              alt="{{ challenge.short_name }} logo"
                                              src="{{ challenge.thumb_image_url }}">
-                                        <h3 class="m-0 px-3 text-nowrap text-truncate flex-shrink-1">
-                                            {% firstof challenge.title challenge.short_name %}
+                                        <h3 class="m-0 px-3 flex-shrink-1">
+                                            {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
                                         </h3>
                                     </div>
                                 </a>
@@ -281,11 +281,11 @@
                                         {% if challenge.use_evaluation and challenge.cached_num_results %}
                                             <dt>Results</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_num_results }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_num_results }}</a>
                                             </dd>
                                             <dt>Latest Result</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
                                             </dd>
                                         {% endif %}
 

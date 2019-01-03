@@ -16,9 +16,9 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 class ChallengeManager(models.Manager):
@@ -349,11 +349,19 @@ class Challenge(ChallengeBase):
     public_folder = "public_html"
     skin = models.CharField(
         max_length=225,
-        default=public_folder + "/project.css",
+        default="",
+        blank=True,
         help_text="css file to include throughout this"
         " project. relative to project data folder",
     )
-    banner = models.ImageField(upload_to=get_banner_path, blank=True)
+    banner = models.ImageField(
+        upload_to=get_banner_path,
+        blank=True,
+        help_text=(
+            "Image that gets displayed at the top of each page. "
+            "Recommended resolution 2200x440 px."
+        ),
+    )
     hide_signin = models.BooleanField(
         default=False,
         help_text="Do no show the Sign in / Register link on any page",
@@ -493,7 +501,10 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
-        return reverse("challenge-homepage", args=[self.short_name])
+        return reverse(
+            "challenge-homepage",
+            kwargs={"challenge_short_name": self.short_name},
+        )
 
     def add_participant(self, user):
         if user != get_anonymous_user():

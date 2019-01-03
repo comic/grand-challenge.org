@@ -20,7 +20,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 

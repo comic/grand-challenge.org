@@ -5,7 +5,7 @@ from django.db import models
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 class UPLOAD_SESSION_STATE:

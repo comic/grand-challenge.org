@@ -7,7 +7,9 @@ from tests.utils import validate_admin_only_view, get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view", ["pages:list", "pages:create", "pages:delete"])
+@pytest.mark.parametrize(
+    "view", ["pages:list", "pages:create", "pages:delete"]
+)
 def test_page_admin_permissions(view, client, TwoChallengeSets):
     if view == "pages:delete":
         PageFactory(

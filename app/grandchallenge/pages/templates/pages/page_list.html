@@ -6,7 +6,7 @@
     <h2>Pages for {{ site.short_name }}</h2>
 
     <p><a class="btn btn-primary"
-          href="{% url 'pages:create' site.short_name %}">
+          href="{% url 'pages:create' challenge_short_name=site.short_name %}">
         <i class="fa fa-plus"></i> Add a new page
     </a></p>
 
@@ -53,12 +53,12 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'pages:update' site.short_name page.title %}">
+                        <a href="{% url 'pages:update' challenge_short_name=site.short_name page_title=page.title %}">
                             <i class="fa fa-edit" title="Edit Page"></i>
                         </a>
                     </td>
                     <td>
-                        <a href="{% url 'pages:delete' site.short_name page.title %}">
+                        <a href="{% url 'pages:delete' challenge_short_name=site.short_name page_title=page.title %}">
                             <i class="fa fa-trash text-danger"
                                title="Delete Page"></i>
                         </a>

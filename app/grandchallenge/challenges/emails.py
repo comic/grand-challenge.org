@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 def send_challenge_created_email(challenge: Challenge):

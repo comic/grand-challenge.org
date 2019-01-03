@@ -169,22 +169,30 @@ class Executor(object):
             raise RuntimeError(exc.stderr.decode())
 
     def _get_result(self) -> dict:
+        """
+        Read and parse the created results file. Due to a bug in the docker
+        client, copy the file to memory first rather than cat and read
+        stdout.
+        """
         try:
-            result = self._client.containers.run(
-                image=self._io_image,
-                volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "ro"}
-                },
-                command=f"cat {self._results_file}",
-                remove=True,
-                **self._run_kwargs,
-            )
-        except ContainerError as exc:
-            raise RuntimeError(exc.stderr.decode())
+            with cleanup(
+                self._client.containers.run(
+                    image=self._io_image,
+                    volumes={
+                        self._output_volume: {"bind": "/output/", "mode": "ro"}
+                    },
+                    detach=True,
+                    tty=True,
+                    **self._run_kwargs,
+                )
+            ) as reader:
+                result = get_file(container=reader, src=self._results_file)
+        except Exception as e:
+            raise RuntimeError(str(e))
 
         try:
             result = json.loads(
-                result.decode(),
+                result.read().decode(),
                 parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
         except JSONDecodeError as exc:
