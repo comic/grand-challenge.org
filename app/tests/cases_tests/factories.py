@@ -1,8 +1,4 @@
-import random
 import factory
-from pathlib import Path
-
-# from grandchallenge.retina_images.models import RetinaImage
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ImagingModality
 from tests.studies_tests.factories import StudyFactory
