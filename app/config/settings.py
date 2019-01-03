@@ -9,6 +9,8 @@ from distutils.util import strtobool as strtobool_i
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
+from config.denylist import USERNAME_DENYLIST
+
 
 def strtobool(val) -> bool:
     """ Returns disutils.util.strtobool as a boolean """
@@ -141,27 +143,13 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
-# The url for a project in comic is /site/<challenge>. This is quite ugly. It
-# would be nicer to be able to use <challenge>.examplehost.com/, like blogger
-# does.
-# True: Changes links on pages where possible to use subdomain.
-SUBDOMAIN_IS_PROJECTNAME = strtobool(
-    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "True")
-)
-
-# To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
-# SESSION_COOKIE_DOMAIN = '.mydomain'
-DEFAULT_DOMAIN = "gc.localhost"
-if SUBDOMAIN_IS_PROJECTNAME:
-    DEFAULT_DOMAIN = f".{DEFAULT_DOMAIN}"
-
 ROOT_URLCONF = "config.urls"
-SUBDOMAIN_URL_CONF = (
-    "grandchallenge.core.urls"
-)  # TODO: Change to subdomain urls
-DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "http")
+SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
-SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", DEFAULT_DOMAIN)
+SESSION_COOKIE_DOMAIN = os.environ.get(
+    "SESSION_COOKIE_DOMAIN", ".gc.localhost"
+)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )
@@ -222,7 +210,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                "grandchallenge.core.contextprocessors.contextprocessors.subdomain_absolute_uri",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
                 "grandchallenge.core.contextprocessors.contextprocessors.logout_url",
             ]
@@ -318,15 +305,15 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
 
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
+
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""
 )
-
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
@@ -346,6 +333,7 @@ SOCIAL_AUTH_PIPELINE = (
 # Do not sanitize redirects for social auth so we can redirect back to
 # other subdomains
 SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
@@ -527,7 +515,7 @@ CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
 CONTAINER_EXEC_MEMORY_LIMIT = "4g"
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
 CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:196d12cf6ab19273823e700516e98eb1910b03b17840f9d5509f03858484d321"
+    "sha256:3f53bb00af943dfdf815650be70c0fa7b426e56a66f5e3362b47a129d57d5991"
 )
 CONTAINER_EXEC_CPU_QUOTA = 100000
 CONTAINER_EXEC_CPU_PERIOD = 100000
@@ -544,6 +532,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_filter_classes": {
         "task": "grandchallenge.challenges.tasks.update_filter_classes",
         "schedule": timedelta(minutes=5),
+    },
+    "validate_external_challenges": {
+        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
+        "schedule": timedelta(days=1),
     },
 }
 
@@ -566,12 +558,7 @@ CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
-    "www",
     "m",
-    "mx",
-    "mobile",
-    "mail",
-    "webmail",
     "images",
     "logos",
     "banners",
@@ -582,6 +569,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+    *USERNAME_DENYLIST,
 ]
 
 if MEDIA_ROOT[-1] != "/":

@@ -1,7 +1,7 @@
 import pytest
 from django.core import mail
 
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.participants.models import RegistrationRequest
 from tests.factories import UserFactory, RegistrationRequestFactory
 from tests.utils import get_view_for_user

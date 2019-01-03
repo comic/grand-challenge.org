@@ -5,7 +5,6 @@ from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.utils import build_absolute_uri
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ def comic_site(request):
         challenge = request.challenge
     except AttributeError:
 
-        # build_absolut_uri does not exist in some cases (eg, in tests)
+        # build_absolute_uri does not exist in some cases (eg, in tests)
         try:
             warning_url = request.build_absolute_url()
         except AttributeError:
@@ -48,11 +47,6 @@ def comic_site(request):
         "main_challenge_name": settings.MAIN_PROJECT_NAME,
         "geochart_api_key": settings.GOOGLE_MAPS_API_KEY,
     }
-
-
-def subdomain_absolute_uri(request):
-    uri = build_absolute_uri(request)
-    return {"subdomain_absolute_uri": uri}
 
 
 def google_analytics_id(*_, **__):

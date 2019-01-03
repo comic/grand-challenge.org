@@ -1,4 +1,4 @@
-import ntpath
+from os.path import basename
 
 from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
@@ -7,10 +7,10 @@ from django.shortcuts import render
 from django.views.generic import ListView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import getSite, permissionMessage
+from grandchallenge.core.views import permissionMessage
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.emails import send_file_uploaded_notification_email
 from grandchallenge.uploads.forms import UserUploadForm
 from grandchallenge.uploads.models import UploadModel
@@ -22,14 +22,11 @@ class UploadList(
     model = UploadModel
 
 
-def upload_handler(request, challenge_short_name=None):
+def upload_handler(request):
     """
     Upload a file to the given comicsite, display files previously uploaded
     """
-    if challenge_short_name is None:
-        site = request.challenge
-    else:
-        site = getSite(challenge_short_name)
+    site = request.challenge
 
     view_url = reverse(
         "uploads:create", kwargs={"challenge_short_name": site.short_name}
@@ -48,7 +45,7 @@ def upload_handler(request, challenge_short_name=None):
         )
         if form.is_valid():
             form.save()
-            filename = ntpath.basename(form.instance.file.file.name)
+            filename = basename(form.instance.file.file.name)
             messages.success(
                 request,
                 (
@@ -74,7 +71,7 @@ def upload_handler(request, challenge_short_name=None):
 
     if not (site.is_admin(request.user) or site.is_participant(request.user)):
         p = Page(challenge=site, title="files")
-        currentpage = permissionMessage(request, site, p)
+        currentpage = permissionMessage(request, p)
         response = render(
             request,
             "page.html",

@@ -1,12 +1,10 @@
 import re
-from io import StringIO
 from random import choice, randint
 
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.core.files import File
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -16,9 +14,8 @@ from django.test.utils import override_settings
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.pages.models import Page
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
 
@@ -637,113 +634,14 @@ class ViewsTest(ComicframeworkTestCase):
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)
-        if settings.SUBDOMAIN_IS_PROJECTNAME:
-            # If SUBDOMAIN_IS_PROJECTNAME we redirect to the main project
-            self.assertEqual(
-                response.status_code,
-                302,
-                "Expected non existing url"
-                "'%s' to give 302, instead found %s"
-                % (non_existant_url, response.status_code),
-            )
-        else:
-            self.assertEqual(
-                response.status_code,
-                404,
-                "Expected non existing url"
-                "'%s' to give 404, instead found %s"
-                % (non_existant_url, response.status_code),
-            )
 
-
-class LinkReplacerTest(ComicframeworkTestCase):
-    """ Tests module which makes sure relative/absolute links in included files
-    will point to the right places.
-      
-    """
-
-    def setUp_extra(self):
-        """ Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
-        """
-        [
-            self.testproject,
-            self.root,
-            self.projectadmin,
-            self.participant,
-            self.signedup_user,
-        ] = self._create_dummy_project("linkreplacer-test")
-        self.replacer = HtmlLinkReplacer()
-
-    def assert_substring_in_string(self, substring, string):
-        self.assertTrue(
-            substring in string,
-            "expected substring '{}' ,was not found in {}".format(
-                substring, string
-            ),
-        )
-
-    def test_replace_links(self):
-        from django.core.files.storage import default_storage
-
-        # this fake file is included on test pa
-        default_storage.add_fake_file(
-            "fakeincludeurls.html",
-            "~relativelink~<a href = 'relative.html'>link</a>~endrelativelink~"
-            "~pathrelativeink~<a href = 'folder1/relative.html'>link</a>~endpathrelativelink~"
-            "~moveuplink~<a href = '../moveup.html'>link</a>~endmoveuplink~"
-            "~absolute~<a href = 'http://www.hostname.com/somelink.html'>link</a>~endabsolute~"
-            "~absolute~<a href = 'http://www.hostname.com/somelink.html'>link</a>~endabsolute~"
-            "~notafile~<a href = '/faq'>link</a>~endnotafile~"
-            "~notafile_slash~<a href = '/faq/'>link</a>~endnotafile_slash~",
-        )
-        content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeincludeurls.html %}</toplevelcontent>"
-        insertfiletagpage = create_page(
-            self.testproject, "testincludefiletagpage", content
-        )
-        response = self._test_page_can_be_viewed(
-            self.signedup_user, insertfiletagpage
-        )
-        # Extract rendered content from included file, see if it has been rendered
-        # In the correct way
-        relative = find_text_between(
-            "~relativelink~", "~endrelativelink~", response.content
-        )
-        pathrelativelink = find_text_between(
-            "~pathrelativeink~", "~endpathrelativelink~", response.content
-        )
-        moveuplink = find_text_between(
-            "~moveuplink~", "~endmoveuplink~", response.content
-        )
-        absolute = find_text_between(
-            "~absolute~", "~endabsolute~", response.content
-        )
-        notafile = find_text_between(
-            "~notafile~", "~endnotafile~", response.content
-        )
-        notafile_slash = find_text_between(
-            "~notafile_slash~", "~endnotafile_slash~", response.content
-        )
-        if settings.SUBDOMAIN_IS_PROJECTNAME:
-            relative_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/relative.html'
-            pathrelativelink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/folder1/relative.html'
-            moveuplink_expected = 'href="http://linkreplacer-test.testserver/testincludefiletagpage/insert/public_html/../moveup.html'
-        else:
-            relative_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/relative.html'
-            pathrelativelink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/folder1/relative.html'
-            moveuplink_expected = 'href="http://testserver/site/linkreplacer-test/testincludefiletagpage/insert/public_html/../moveup.html'
-        absolute_expected = 'href="http://www.hostname.com/somelink.html'
-        notafile_expected = 'href="/faq"'
-        notafile_slash_expected = 'href="/faq/"'
-        self.assert_substring_in_string(relative_expected, relative)
-        self.assert_substring_in_string(
-            pathrelativelink_expected, pathrelativelink
-        )
-        self.assert_substring_in_string(moveuplink_expected, moveuplink)
-        self.assert_substring_in_string(absolute_expected, absolute)
-        self.assert_substring_in_string(notafile_expected, notafile)
-        self.assert_substring_in_string(
-            notafile_slash_expected, notafile_slash
+        # We redirect to the main challenge if it is not found
+        self.assertEqual(
+            response.status_code,
+            302,
+            "Expected non existing url"
+            "'%s' to give 302, instead found %s"
+            % (non_existant_url, response.status_code),
         )
 
 
@@ -787,7 +685,7 @@ class UploadTest(ComicframeworkTestCase):
         factory = RequestFactory()
         request = factory.get(url)
         request.user = user
-        fakefile = File(StringIO("some uploaded content for" + testfilename))
+        request.challenge = self.testproject
         fakecontent = "some uploaded content for" + testfilename
         request.FILES["file"] = SimpleUploadedFile(
             name=testfilename, content=fakecontent.encode()
@@ -801,7 +699,7 @@ class UploadTest(ComicframeworkTestCase):
         setattr(request, "session", "session")
         messages = FallbackStorage(request)
         setattr(request, "_messages", messages)
-        response = upload_handler(request, project.short_name)
+        response = upload_handler(request)
         self.assertEqual(
             response.status_code,
             302,
@@ -957,51 +855,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
         self._test_page_can_be_viewed(self.root, page2)
         self._test_page_can_be_viewed(self.signedup_user, page2)
-
-    def test_url_tag(self):
-        """ url tag returns a url to view a given objects. Comicframework uses
-        a custom url tag to be able use subdomain rewriting. 
-        
-        """
-        # Sanity check: do two different pages give different urls?
-        content = (
-            "-url1-{% url 'pages:detail' challenge_short_name='"
-            + self.testproject.short_name
-            + "' page_title='testurlfakepage1' %}-endurl1-"
-        )
-        content += (
-            "-url2-{% url 'pages:detail' challenge_short_name='"
-            + self.testproject.short_name
-            + "' page_title='testurlfakepage2' %}-endurl2-"
-        )
-        urlpage = create_page(self.testproject, "testurltagpage", content)
-        # SUBDOMAIN_IS_PROJECTNAME affects the way urls are rendered
-        with self.settings(SUBDOMAIN_IS_PROJECTNAME=False):
-            response = self._test_page_can_be_viewed(
-                self.signedup_user, urlpage
-            )
-            url1 = find_text_between("-url1-", "-endurl1", response.content)
-            url2 = find_text_between("-url2-", "-endurl2", response.content)
-            self.assertTrue(
-                url1 != url2,
-                "With SUBDOMAIN_IS_PROJECTNAME = False"
-                " URL tag gave the same url for two different "
-                "pages. Both 'testurlfakepage1' and "
-                "'testurlfakepage1' got url '%s'" % url1,
-            )
-        with self.settings(SUBDOMAIN_IS_PROJECTNAME=True):
-            response = self._test_page_can_be_viewed(
-                self.signedup_user, urlpage
-            )
-            url1 = find_text_between("-url1-", "-endurl1", response.content)
-            url2 = find_text_between("-url2-", "-endurl2", response.content)
-            self.assertTrue(
-                url1 != url2,
-                "With SUBDOMAIN_IS_PROJECTNAME = True"
-                " URL tag gave the same url for two different "
-                "pages. Both 'testurlfakepage1' and "
-                "'testurlfakepage1' got url '%s'" % url1,
-            )
 
     def test_insert_file_tag(self):
         """ Can directly include the contents of a file. Contents can again 

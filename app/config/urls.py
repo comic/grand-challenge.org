@@ -3,7 +3,7 @@ from django.conf.urls import include
 from django.contrib import admin
 from django.template.response import TemplateResponse
 from django.urls import path
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import TemplateView
 
 from grandchallenge.core.views import comicmain
 from grandchallenge.pages.views import FaviconView
@@ -53,11 +53,6 @@ urlpatterns = [
     ),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
-        "site/<slug:challenge_short_name>/",
-        include("grandchallenge.core.urls"),
-        name="site",
-    ),
-    path(
         "stats/",
         include("grandchallenge.statistics.urls", namespace="statistics"),
     ),
@@ -72,14 +67,6 @@ urlpatterns = [
     path(
         "challenges/",
         include("grandchallenge.challenges.urls", namespace="challenges"),
-    ),
-    path(
-        "all_challenges/",
-        RedirectView.as_view(pattern_name="challenges:list", permanent=False),
-    ),
-    path(
-        "All_Challenges/",
-        RedirectView.as_view(pattern_name="challenges:list", permanent=False),
     ),
     path("cases/", include("grandchallenge.cases.urls", namespace="cases")),
     path(

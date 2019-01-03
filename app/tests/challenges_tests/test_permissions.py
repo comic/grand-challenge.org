@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import ExternalChallengeFactory
 from tests.utils import (
     validate_logged_in_view,

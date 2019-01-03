@@ -8,9 +8,9 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.urls import reverse
 from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.subdomains.utils import reverse
 
 
 class UPLOAD_SESSION_STATE:
