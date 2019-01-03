@@ -8,7 +8,7 @@ from grandchallenge.subdomains.urls import reverse
 from django.urls import reverse as django_reverse
 from tests.retina_importers_tests.helpers import (
     get_auth_token_header,
-    get_user_with_token,
+    get_retina_user_with_token,
 )
 from django.conf import settings
 from tests.retina_images_tests.factories import ImageFactoryWithImageFile
@@ -32,7 +32,7 @@ class TestTokenAuthentication:
 
     def test_auth_normal(self, client):
         url = reverse("retina:home")
-        user, _ = get_user_with_token()
+        user, _ = get_retina_user_with_token()
         client.force_login(user=user)
         try:
             response = client.get(url)
@@ -42,7 +42,7 @@ class TestTokenAuthentication:
 
     def test_auth_staff(self, client):
         url = reverse("retina:home")
-        user, _ = get_user_with_token()
+        user, _ = get_retina_user_with_token()
         client.force_login(user=user)
 
         try:
@@ -52,8 +52,6 @@ class TestTokenAuthentication:
             # On Travis a ValueError will be raised because django can't find all static files
             # since the static files are in a closed source submodule (DIAGNijmegen/retina-frontend)
             assert "Missing staticfiles manifest entry for" in str(e)
-
-    # TODO add retina user test permissions
 
 
 @pytest.mark.django_db

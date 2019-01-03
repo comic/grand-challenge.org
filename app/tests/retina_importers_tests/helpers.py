@@ -18,7 +18,7 @@ from tests.cases_tests import RESOURCE_PATH
 from grandchallenge.subdomains.urls import reverse
 
 
-def get_user_with_token(is_retina_user=True, **user_kwargs):
+def get_retina_user_with_token(is_retina_user=True, **user_kwargs):
     user = UserFactory(**user_kwargs)
     if is_retina_user:
         grader_group, group_created = Group.objects.get_or_create(
@@ -39,9 +39,9 @@ def get_auth_token_header(user, token=None):
     """
     if token is None:
         if user == "staff":
-            _, token = get_user_with_token(is_staff=True)
+            _, token = get_retina_user_with_token(is_staff=True)
         elif user == "normal":
-            _, token = get_user_with_token()
+            _, token = get_retina_user_with_token()
 
     auth_header = {}
     if token:

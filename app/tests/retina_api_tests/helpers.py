@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from tests.factories import UserFactory
 from tests.retina_importers_tests.helpers import (
     get_auth_token_header,
-    get_user_with_token,
+    get_retina_user_with_token,
 )
 from tests.retina_images_tests.factories import ImageFactory
 from tests.retina_core_tests.factories import create_some_datastructure_data
@@ -107,7 +107,7 @@ def create_image_test_method(image_type, reverse_name):
             ],
         )
 
-        user, _ = get_user_with_token()
+        user, _ = get_retina_user_with_token()
         client.force_login(user=user)
         response = client.get(url, follow=True)
         expected_redirect_url = django_reverse(
@@ -129,7 +129,7 @@ def create_image_test_method(image_type, reverse_name):
                 "default",
             ],
         )
-        user, _ = get_user_with_token()
+        user, _ = get_retina_user_with_token()
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
@@ -152,7 +152,7 @@ def create_image_test_method(image_type, reverse_name):
                 "oct",
             ],
         )
-        user, _ = get_user_with_token()
+        user, _ = get_retina_user_with_token()
         client.force_login(user=user)
 
         response = client.get(url, follow=True)
