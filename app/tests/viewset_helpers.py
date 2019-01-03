@@ -1,7 +1,7 @@
 from rest_framework.test import force_authenticate
 import factory
 import json
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.db import transaction

@@ -1,7 +1,7 @@
 import json
 import pytest
 from rest_framework import status
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 from django.core.cache import cache
 from tests.retina_importers_tests.helpers import (
     get_auth_token_header,

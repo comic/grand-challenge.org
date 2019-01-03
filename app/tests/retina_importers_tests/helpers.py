@@ -12,7 +12,7 @@ from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
 from grandchallenge.studies.models import Study
 from tests.cases_tests import RESOURCE_PATH
-from grandchallenge.subdomains.urls import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 def get_retina_user_with_token(is_retina_user=True, **user_kwargs):
