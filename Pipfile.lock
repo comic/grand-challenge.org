@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f89d27c504be46c1e6012594b3ad36d6ce8a038b7478d6d15b7babc1f5cc44ff"
+            "sha256": "54d4592530c39c899e7c2e89021d110fcef2b53620620a94005d9973eef3ebec"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -173,10 +173,10 @@
         },
         "django-summernote": {
             "hashes": [
-                "sha256:a3d48cd50ac23aa16beebdff8c88f04ad697f547316786b80ed7de6bcc750586"
+                "sha256:7e2a7cfa806dba508aceee872a7a556b0f86ebcc176f9c3951d4ae56871de609"
             ],
             "index": "pypi",
-            "version": "==0.8.10.0"
+            "version": "==0.8.11.4"
         },
         "django-timezone-field": {
             "hashes": [
@@ -548,9 +548,9 @@
         },
         "python-crontab": {
             "hashes": [
-                "sha256:d28583dc5b2f37f707ad37221f390933cc24ee4f350a641fdc3cf84ba22a9dec"
+                "sha256:91ce4b245ee5e5c117aa0b21b485bc43f2d80df854a36e922b707643f50d7923"
             ],
-            "version": "==2.3.5"
+            "version": "==2.3.6"
         },
         "python-dateutil": {
             "hashes": [
@@ -687,10 +687,10 @@
         },
         "soupsieve": {
             "hashes": [
-                "sha256:057e08f362a255b457a5781675211556799ed3bb8807506eaac3809390bc304b",
-                "sha256:f7d99b41637be2f249dfcc06ae93c13fcbbdfa7bb68b15308cdd0734e58146f1"
+                "sha256:638535780f7b966411123d56eb3b89cd1d2e42d707270c6d7d053c7720a238f3",
+                "sha256:cb61b59c55f9f6e91928a03fe4b500ac1fcef6f8e68082a630db098ab33e2126"
             ],
-            "version": "==1.6.1"
+            "version": "==1.6.2"
         },
         "testpath": {
             "hashes": [
