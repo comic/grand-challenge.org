@@ -5,13 +5,13 @@ from grandchallenge.challenges.models import Challenge
 
 class ChallengeSerializer(serializers.HyperlinkedModelSerializer):
     creator = serializers.HyperlinkedRelatedField(
-        view_name='api:user-detail', read_only=True
+        view_name="api:user-detail", read_only=True
     )
     participants_group = serializers.HyperlinkedRelatedField(
-        view_name='api:group-detail', read_only=True
+        view_name="api:group-detail", read_only=True
     )
     admins_group = serializers.HyperlinkedRelatedField(
-        view_name='api:group-detail', read_only=True
+        view_name="api:group-detail", read_only=True
     )
 
     class Meta:

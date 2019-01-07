@@ -484,13 +484,9 @@ REST_FRAMEWORK = {
 }
 
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'api_key': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization'
-        }
-    },
+    "SECURITY_DEFINITIONS": {
+        "api_key": {"type": "apiKey", "in": "header", "name": "Authorization"}
+    }
 }
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
@@ -595,6 +591,9 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
+
+if strtobool(os.environ.get("WHITENOISE", "False")):
+    MIDDLEWARE += ("whitenoise.middleware.WhiteNoiseMiddleware",)
 
 if not COMIC_PUBLIC_FOLDER_NAME:
     raise ImproperlyConfigured(
