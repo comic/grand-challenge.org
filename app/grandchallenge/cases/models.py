@@ -6,7 +6,6 @@ from django.conf import settings
 from django.db import models
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
@@ -218,6 +217,12 @@ class Image(UUIDModel):
         return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
     def get_sitk_image(self):
+        """
+        This function returns the image that belongs to this model as an SimpleITK image. It requires that exactly one
+        MHD/RAW file pair is associated with the model. Otherwise it wil raise a MultipleObjectsReturned or
+        ObjectDoesNotExist exception.
+        :return: SimpleITK image
+        """
         try:
             # self.files should contain 1 .mhd file
             image = self.files.get(file__endswith=".mhd")

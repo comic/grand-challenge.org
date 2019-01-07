@@ -15,14 +15,9 @@ class IndexView(RetinaAPIPermissionMixin, View):
         return render(request, "pages/home.html")
 
 
-"""
-Retina image custom views
-"""
-
-
 class ThumbnailView(RetinaAPIPermissionMixin, View):
     """
-    View class for returning a thumbnail of an image (max height/width: 128px)
+    View class for returning a thumbnail of an image as png (max height/width: 128px)
     """
 
     raise_exception = True  # Raise 403 on unauthenticated request
@@ -46,7 +41,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
 class NumpyView(RetinaAPIPermissionMixin, View):
     """
-    View class for returning a numpy array of a specific image
+    View class for returning a specific image as a numpy array
     """
 
     raise_exception = True  # Raise 403 on unauthenticated request

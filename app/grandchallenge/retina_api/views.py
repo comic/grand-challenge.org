@@ -3,11 +3,8 @@ from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions, authentication
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http.response import HttpResponse, JsonResponse
+from rest_framework import status, authentication
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.core.cache import cache, caches, InvalidCacheBackendError
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
@@ -19,10 +16,8 @@ from grandchallenge.retina_api.mixins import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
-from grandchallenge.studies.models import Study
 from grandchallenge.cases.models import Image
 from grandchallenge.annotations.models import (
-    PolygonAnnotationSet,
     LandmarkAnnotationSet,
 )
 from grandchallenge.challenges.models import ImagingModality
@@ -96,10 +91,6 @@ class ArchiveView(APIView):
         def generate_images(image_list):
             for image in image_list.all():
                 if image.modality.modality == ImagingModality.MODALITY_OCT:
-                    # if (
-                    #     image.number != 1
-                    # ):  # only add data for first oct image in set
-                    #     continue
                     # oct image add info
                     try:
                         obs_list = image.oct_image.get().registration_values
@@ -109,9 +100,8 @@ class ArchiveView(APIView):
                     except ObjectDoesNotExist:
                         obs_registration_flat = []
 
+                    # leave voxel_size always empty because this info is in mhd file
                     voxel_size = [0, 0, 0]
-                    # if image.voxel_size:
-                    #     voxel_size = image.voxel_size
                     study_datetime = "Unknown"
                     if image.study.datetime:
                         study_datetime = image.study.datetime.strftime(
@@ -173,7 +163,6 @@ class ImageView(RetinaAPIPermissionMixin, View):
         image_identifier,
         image_modality,
     ):
-        # This works good only if name for series is unique. (should be but is not enforced)
         if patient_identifier == "Australia":
             # BMES data contains no study name, switched up parameters
             image = Image.objects.filter(
@@ -206,8 +195,6 @@ class ImageView(RetinaAPIPermissionMixin, View):
         else:
             response = redirect("retina:image-numpy", image_id=image.id)
 
-        # Set token authentication header to pass on
-        # response["AUTHORIZATION"] = "Token " + request.META["HTTP_AUTHORIZATION"]
         return response
 
 

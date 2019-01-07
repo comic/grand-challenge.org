@@ -12,7 +12,6 @@ class PatientAdmin(admin.ModelAdmin):
     fieldsets = []
     inlines = [StudyInline]
     search_fields = ("name",)
-    # list_filter = ("sex", "birth_date")
 
 
 admin.site.register(Patient, PatientAdmin)

@@ -5,7 +5,10 @@ from django.contrib.auth import get_user_model
 
 
 def copy_ada_annotations_to_demo_forward(apps, schema_editor):
-    # For debugging purposes
+    """
+    This migration copies all annotations that belong to grader with username 'ada' to the demo user. This is used for
+    debugging purposes. It has to be run manually when annotation data has been imported.
+    """
     Measurement = apps.get_model("annotations", "MeasurementAnnotation")
     BooleanClassification = apps.get_model(
         "annotations", "BooleanClassificationAnnotation"
@@ -13,11 +16,9 @@ def copy_ada_annotations_to_demo_forward(apps, schema_editor):
     PolygonAnnotationSet = apps.get_model(
         "annotations", "PolygonAnnotationSet"
     )
-    SinglePolygon = apps.get_model("annotations", "SinglePolygonAnnotation")
     LandmarkAnnotationSet = apps.get_model(
         "annotations", "LandmarkAnnotationSet"
     )
-    SingleLandmark = apps.get_model("annotations", "SingleLandmarkAnnotation")
     ETDRSGrid = apps.get_model("annotations", "ETDRSGridAnnotation")
 
     for model in (
@@ -46,7 +47,9 @@ def copy_ada_annotations_to_demo_forward(apps, schema_editor):
 
 
 def copy_ada_annotations_to_demo_backward(apps, schema_editor):
-    # For debugging purposes
+    """
+    Removes ALL annotations that belong to demo user.
+    """
     Measurement = apps.get_model("annotations", "MeasurementAnnotation")
     BooleanClassification = apps.get_model(
         "annotations", "BooleanClassificationAnnotation"

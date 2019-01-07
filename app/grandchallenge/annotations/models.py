@@ -1,26 +1,21 @@
 from django.db import models
-from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone
-from rest_framework.serializers import ValidationError
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
-
-# from retina_backend.users.models import User
 from django.contrib.auth import get_user_model
 
 
 class AbstractAnnotationModel(UUIDModel):
     """
     Abstract model for an annotation linking to a grader.
-    Overrides the created attribute to allow the value to be changed.
+    Overrides the created attribute from UUIDModel to allow the value to be set to a specific value on save.
     See: https://docs.djangoproject.com/en/2.1/ref/models/fields/#django.db.models.DateField.auto_now_add
     """
 
     grader = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    created = models.DateTimeField(
-        default=timezone.now
-    )  # Override inherited 'created' attribute
+    # Override inherited 'created' attribute
+    created = models.DateTimeField(default=timezone.now)
 
     class Meta(UUIDModel.Meta):
         abstract = True
@@ -107,7 +102,7 @@ class CoordinateListAnnotation(AbstractNamedImageAnnotationModel):
 class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
     General model containing a set of specific polygon annotations.
-    Contains only the fields from AbstractNamedImageAnnotationModel
+    Looks empty because it only contains the fields from AbstractNamedImageAnnotationModel
     """
 
 
@@ -150,7 +145,7 @@ class SingleLandmarkAnnotation(UUIDModel):
     landmarks = ArrayField(ArrayField(models.FloatField(), size=2))
 
     class Meta(UUIDModel.Meta):
-        # Make sure there is only one LandmarkAnnotation for an image in a set
+        # Allow only one LandmarkAnnotation for a specific image in a set
         unique_together = ("image", "annotation_set")
 
 
