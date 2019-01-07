@@ -440,7 +440,9 @@ class DataView(APIView):
             )
 
             for annotation_model in annotation_models:
-                ga_type = annotation_model.name.capitalize()
+                ga_type = annotation_model.name
+                if data_type == "GA":
+                    ga_type = ga_type.capitalize()
                 for spa in annotation_model.singlepolygonannotation_set.all():
                     date_key = annotation_model.created.strftime(
                         "%Y-%m-%d--%H-%M-%S--%f"
