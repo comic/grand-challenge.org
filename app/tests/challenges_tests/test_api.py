@@ -37,7 +37,7 @@ def test_api_challenge_get(client):
     j = json.loads(response.content)
 
     # Filter out the main project created in tests/conftest.py
-    j = [x for x in j if x['short_name'] != 'comic']
+    j = [x for x in j if x["short_name"] != "comic"]
 
     assert len(j) == n_challenges
 
