@@ -37,6 +37,7 @@ class RetinaAPIPermission(permissions.BasePermission):
     Permission class for APIViews in retina app.
     Checks if user is in retina group
     """
+
     def has_permission(self, request, view):
         return is_in_retina_group(request.user)
 
@@ -46,6 +47,7 @@ class RetinaOwnerAPIPermission(permissions.BasePermission):
     Permission class for annotation APIViews in retina app.
     Checks if user is in retina admins group or is owner of this object.
     """
+
     def has_permission(self, request, view):
         username = view.kwargs.get("username")
         user = get_user_model().objects.get(username=username.lower())

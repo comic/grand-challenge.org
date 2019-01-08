@@ -17,9 +17,7 @@ from grandchallenge.retina_api.mixins import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
 from grandchallenge.cases.models import Image
-from grandchallenge.annotations.models import (
-    LandmarkAnnotationSet,
-)
+from grandchallenge.annotations.models import LandmarkAnnotationSet
 from grandchallenge.challenges.models import ImagingModality
 
 
@@ -421,7 +419,7 @@ class DataView(APIView):
             data = self.create_annotation_data_australia(
                 data_type, annotation_models
             )
-        elif data_type == "GA" or data_type == 'all':
+        elif data_type == "GA" or data_type == "all":
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "polygonannotationset_set"
             )
@@ -439,16 +437,18 @@ class DataView(APIView):
                     )
 
                     image_name = annotation_model.image.name
-                    result_data = {
-                        ga_type: [result_data_points],
-                    }
+                    result_data = {ga_type: [result_data_points]}
                     if data_type == "GA":
                         opposing_type = (
-                            "Peripapillary" if ga_type == "Macular" else "Macular"
+                            "Peripapillary"
+                            if ga_type == "Macular"
+                            else "Macular"
                         )
-                        result_data.update({
-                            opposing_type: [],  # Add opposing GA type to object to prevent front-end error
-                        })
+                        result_data.update(
+                            {
+                                opposing_type: []  # Add opposing GA type to object to prevent front-end error
+                            }
+                        )
                     series_name = image_name
                     if archive_identifier != "Australia":
                         visit_id = annotation_model.image.study.name
@@ -538,7 +538,7 @@ class DataView(APIView):
                         optic_disk=self.dict_to_coordinate(data["optic_disk"]),
                         **save_data,
                     )
-                elif data_type == "GA" or data_type == 'all':
+                elif data_type == "GA" or data_type == "all":
                     for ga_type, ga_data_list in data.items():
                         if not ga_data_list:
                             continue  # skip empty arrays
@@ -592,7 +592,7 @@ class DataView(APIView):
                             registration["points"]
                         ),
                     )
-            elif data_type == "GA" or data_type == 'all':
+            elif data_type == "GA" or data_type == "all":
                 for visit_image_name, ga_data in data.items():
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
