@@ -32,7 +32,7 @@ class ProvisioningError(Exception):
 
 
 def populate_provisioning_directory(
-    raw_files: Sequence[RawImageFile], provisioning_dir: Path
+        raw_files: Sequence[RawImageFile], provisioning_dir: Path
 ):
     """
     Provisions provisioning_dir with the files associated using the given
@@ -119,7 +119,7 @@ IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd,
 
 
 def remove_duplicate_files(
-    session_files: Sequence[RawImageFile]
+        session_files: Sequence[RawImageFile]
 ) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
@@ -233,8 +233,8 @@ def build_images(upload_session_uuid: UUID):
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
                     for (
-                        filename,
-                        msg,
+                            filename,
+                            msg,
                     ) in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
