@@ -199,7 +199,7 @@ class WorklistFactory(factory.DjangoModelFactory):
     set = factory.SubFactory(WorklistSetFactory)
 
 
-class PatientItemFactory(factory.DJangoModelFactory):
+class PatientItemFactory(factory.DjangoModelFactory):
     class Meta:
         model = PatientItem
 
