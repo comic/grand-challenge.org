@@ -5,7 +5,7 @@ from rest_framework import generics
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializer import PatientSerializer
 from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 

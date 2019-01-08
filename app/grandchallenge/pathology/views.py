@@ -5,7 +5,7 @@ from rest_framework import generics
 
 from grandchallenge.pathology.models import WorklistItem, PatientItem, StudyItem
 from grandchallenge.pathology.serializer import WorklistItemSerializer, PatientItemSerializer, StudyItemSerializer
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.pathology.forms import (PatientItemCreateForm,
                                             PatientItemUpdateForm,

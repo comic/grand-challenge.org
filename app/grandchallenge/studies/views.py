@@ -5,7 +5,7 @@ from rest_framework import generics
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializer import StudySerializer
 from grandchallenge.studies.forms import StudyCreateForm, StudyUpdateForm
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 

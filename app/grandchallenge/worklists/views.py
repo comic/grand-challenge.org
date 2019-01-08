@@ -4,7 +4,7 @@ from rest_framework import generics
 
 from grandchallenge.worklists.models import Worklist, WorklistSet
 from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.worklists.forms import (WorklistCreateForm,
                                             WorklistUpdateForm,
