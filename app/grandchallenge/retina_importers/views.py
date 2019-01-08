@@ -26,7 +26,6 @@ from grandchallenge.annotations.serializers import (
     BooleanClassificationAnnotationSerializer,
     MeasurementAnnotationSerializer,
     PolygonAnnotationSetSerializer,
-    LandmarkAnnotationSetSerializer,
     SingleLandmarkAnnotationSerializer,
 )
 from grandchallenge.archives.models import Archive

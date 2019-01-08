@@ -73,18 +73,7 @@ class AbstractUploadSerializer(serializers.Serializer):
 
 class UploadLandmarkAnnotationSetSerializer(AbstractUploadSerializer):
     def validate(self, data):
-        # check if amount of points equal
-        length = None
         for annotation in data["data"]:
-            # Uncomment to enable equal points validation check
-            # if length is None:
-            #     length = len(annotation["points"])
-            # else:
-            #     if length != len(annotation["points"]):
-            #         raise serializers.ValidationError(
-            #             "The amount of points in each registrations must be equal"
-            #         )
-
             for point in annotation["landmarks"]:
                 self.do_validate_coordinates(point)
 
