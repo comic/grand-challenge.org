@@ -5,7 +5,6 @@ Image builder for TIFF files.
 from pathlib import Path
 from django.core.files import File
 
-from tempfile import TemporaryFile
 import tifffile as tiff_lib
 import traceback
 
@@ -25,7 +24,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         if not valid:
             invalid_file_errors[file.name] = message
         else:
-            new_images.append(CreateTiffImageEntry(file.name, file.absolute()))
+            new_images.append(create_tiff_image_entry(file.name, file.absolute()))
             new_image_files.append(ImageFile(
                 image=new_images[-1],
                 file=File(open(file.absolute(), "rb"), name=file.name)))
@@ -98,7 +97,7 @@ def validate_tiff(path: Path):
         return False, str(e)
 
 
-def CreateTiffImageEntry(filename, path: Path):
+def create_tiff_image_entry(filename, path: Path):
     # Reads the TIFF tags
     tiff_file = tiff_lib.TiffFile(str(path))
     tiff_tags = tiff_file.pages[0].tags
