@@ -15,7 +15,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.jqfileupload.models import StagedFile
 

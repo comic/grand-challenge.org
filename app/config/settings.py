@@ -9,6 +9,8 @@ from distutils.util import strtobool as strtobool_i
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
+from config.denylist import USERNAME_DENYLIST
+
 
 def strtobool(val) -> bool:
     """ Returns disutils.util.strtobool as a boolean """
@@ -32,10 +34,6 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/phpmyadmin/"),
 ]
 
-# Django will throw an exeception if the URL you type to load the framework is
-# not in the list below. This is a security measure.
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
-
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the "Comic" app dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -44,10 +42,10 @@ APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ["POSTGRES_DB"],
-        "USER": os.environ["POSTGRES_USER"],
-        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-        "HOST": "postgres",
+        "NAME": os.environ.get("POSTGRES_DB", "comic"),
+        "USER": os.environ.get("POSTGRES_USER", "comic"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
+        "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": "",
     }
 }
@@ -145,30 +143,20 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 # arguments, and pages in this project appear as menu items throughout the site
 MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
-# The url for a project in comic is /site/<challenge>. This is quite ugly. It
-# would be nicer to be able to use <challenge>.examplehost.com/, like blogger
-# does.
-# True: Changes links on pages where possible to use subdomain.
-SUBDOMAIN_IS_PROJECTNAME = strtobool(
-    os.environ.get("SUBDOMAIN_IS_PROJECTNAME", "False")
+ROOT_URLCONF = "config.urls"
+SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
+DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
+
+SESSION_COOKIE_DOMAIN = os.environ.get(
+    "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
-
-# For links to basic comicframework content, for example the main comic help
-# page, django needs to know the hostname. This setting is only used when
-# SUBDOMAIN_IS_PROJECTNAME = True
-MAIN_HOST_NAME = os.environ.get("MAIN_HOST_NAME", "https://localhost")
-
-# To make logins valid over all subdomains, project1.mydomain, project2.mydomain etc. use
-# SESSION_COOKIE_DOMAIN = '.mydomain'
-SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN", None)
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-if SESSION_COOKIE_DOMAIN:
-    ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -222,7 +210,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                "grandchallenge.core.contextprocessors.contextprocessors.subdomain_absolute_uri",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
             ]
         },
@@ -234,17 +221,17 @@ MIDDLEWARE = (
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "grandchallenge.core.middleware.subdomain.SubdomainMiddleware",
-    "grandchallenge.core.middleware.project.ProjectMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "grandchallenge.subdomains.middleware.subdomain_middleware",
+    "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
-ROOT_URLCONF = "config.urls"
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
@@ -309,15 +296,15 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
 
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
+
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
 )
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""
 )
-
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
@@ -337,6 +324,7 @@ SOCIAL_AUTH_PIPELINE = (
 # Do not sanitize redirects for social auth so we can redirect back to
 # other subdomains
 SOCIAL_AUTH_SANITIZE_REDIRECTS = False
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
@@ -406,7 +394,13 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "abbr": ["title"],
     "acronym": ["title"],
     "div": ["data-geochart"],  # Required for geocharts
-    "iframe": ["src", "sandbox"],  # For continuous registration challenge
+    "iframe": [
+        "src",
+        "sandbox",
+        "data-groupname",
+        "scrolling",
+        "height",
+    ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
@@ -456,6 +450,11 @@ LOGGING = {
         },
     },
     "loggers": {
+        "grandchallenge": {
+            "level": "WARNING",
+            "handlers": ["console"],
+            "propagate": True,
+        },
         "django.db.backends": {
             "level": "ERROR",
             "handlers": ["console"],
@@ -483,8 +482,8 @@ REST_FRAMEWORK = {
     ),
 }
 
-CELERY_BROKER_URL = "redis://redis:6379/0"
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
@@ -507,7 +506,7 @@ CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
 CONTAINER_EXEC_MEMORY_LIMIT = "4g"
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
 CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:196d12cf6ab19273823e700516e98eb1910b03b17840f9d5509f03858484d321"
+    "sha256:3f53bb00af943dfdf815650be70c0fa7b426e56a66f5e3362b47a129d57d5991"
 )
 CONTAINER_EXEC_CPU_QUOTA = 100000
 CONTAINER_EXEC_CPU_PERIOD = 100000
@@ -524,6 +523,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_filter_classes": {
         "task": "grandchallenge.challenges.tasks.update_filter_classes",
         "schedule": timedelta(minutes=5),
+    },
+    "validate_external_challenges": {
+        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
+        "schedule": timedelta(days=1),
     },
 }
 
@@ -546,12 +549,7 @@ CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
-    "www",
     "m",
-    "mx",
-    "mobile",
-    "mail",
-    "webmail",
     "images",
     "logos",
     "banners",
@@ -562,6 +560,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "favicon",
     "i",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
+    *USERNAME_DENYLIST,
 ]
 
 if MEDIA_ROOT[-1] != "/":
@@ -571,9 +570,6 @@ if MEDIA_ROOT[-1] != "/":
         + "'. Please add a slash"
     )
     raise ImproperlyConfigured(msg)
-
-if MAIN_HOST_NAME[-1] == "/":
-    raise ImproperlyConfigured("MAIN_HOST_NAME should end without a slash")
 
 ENABLE_DEBUG_TOOLBAR = False
 

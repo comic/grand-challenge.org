@@ -31,6 +31,39 @@
                         <div class="card mb-3">
                             <a class="collapsed"
                                data-toggle="collapse"
+                               href="#collapseHost">
+                                <div class="card-body">
+                                    <i class="fas fa-chevron-circle-right"
+                                       id="host-chevron">
+                                    </i>
+                                    <b>Host</b></div>
+                            </a>
+
+                            <div id="collapseHost" class="collapse"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <form>
+                                        {% for host in hosts %}
+                                            {# Note that the host filter works slightly differently as we have no filter_tag attribute #}
+                                            <label id="{{ host.filter_tag }}"
+                                                   class="checkbox-inline font-weight-bold">
+                                                <input type="checkbox"
+                                                       class="filter"
+                                                       value="{{ host.host }}"
+                                                       id="{{ host.filter_tag }}">
+                                                <span>{{ host.host }}</span><span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ host.filter_tag }}"></span>
+                                            </label><br>
+                                        {% endfor %}
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <a class="collapsed"
+                               data-toggle="collapse"
                                href="#collapseModality">
                                 <div class="card-body">
                                     <i class="fas fa-chevron-circle-right"
@@ -217,15 +250,15 @@
                     {% for challenge in challenges %}
                         <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
-                                <a id="{{ challenge.short_name }}"
+                                <a id="{{ challenge.short_name }}" title="{% firstof challenge.title challenge.short_name %}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
                                     <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
                                         <img class="thumbnail rounded-top-left flex-shrink-0"
                                              alt="{{ challenge.short_name }} logo"
                                              src="{{ challenge.thumb_image_url }}">
-                                        <h3 class="m-0 px-3 text-nowrap text-truncate flex-shrink-1">
-                                            {% firstof challenge.title challenge.short_name %}
+                                        <h3 class="m-0 px-3 flex-shrink-1">
+                                            {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
                                         </h3>
                                     </div>
                                 </a>
@@ -248,11 +281,11 @@
                                         {% if challenge.use_evaluation and challenge.cached_num_results %}
                                             <dt>Results</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_num_results }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_num_results }}</a>
                                             </dd>
                                             <dt>Latest Result</dt>
                                             <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
+                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
                                             </dd>
                                         {% endif %}
 
@@ -280,10 +313,10 @@
                                             </dd>
                                         {% endif %}
 
-                                        {% if challenge.get_host_link %}
+                                        {% if challenge.host_link %}
                                             <dt>Hosted on</dt>
                                             <dd>
-                                                {{ challenge.get_host_link|safe }}
+                                                {{ challenge.host_link|safe }}
                                             </dd>
                                         {% endif %}
 

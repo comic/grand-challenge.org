@@ -1,9 +1,12 @@
-from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
-from django.contrib.auth.views import redirect_to_login
-from django.http import HttpResponseForbidden
+from urllib.parse import urlparse, urlunparse
 
-from grandchallenge.core.utils import build_absolute_uri
+from django.contrib import messages
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import HttpResponseForbidden, QueryDict, HttpResponseRedirect
+from guardian.utils import get_anonymous_user
+
+from grandchallenge.subdomains.utils import reverse
 
 
 class UserAuthAndTestMixin(UserPassesTestMixin):
@@ -21,6 +24,28 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
         "You do not have the correct permissions to access this page"
     )
 
+    def get_login_url(self):
+        return reverse("userena_signin")
+
+    # TODO: add a test for this
+    def redirect_to_login(
+        self, next, login_url=None, redirect_field_name=REDIRECT_FIELD_NAME
+    ):
+        """
+        Redirect the user to the login page, passing the given 'next' page.
+
+        Uses the grand challenge reversal.
+        """
+        resolved_url = login_url or self.get_login_url()
+
+        login_url_parts = list(urlparse(resolved_url))
+        if redirect_field_name:
+            querystring = QueryDict(login_url_parts[4], mutable=True)
+            querystring[redirect_field_name] = next
+            login_url_parts[4] = querystring.urlencode(safe="/")
+
+        return HttpResponseRedirect(urlunparse(login_url_parts))
+
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated:
             messages.add_message(
@@ -28,8 +53,8 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
                 messages.INFO,
                 "You need to login to access this page.",
             )
-            return redirect_to_login(
-                build_absolute_uri(self.request),
+            return self.redirect_to_login(
+                self.request.build_absolute_uri(),
                 self.get_login_url(),
                 self.get_redirect_field_name(),
             )
@@ -39,6 +64,18 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
             return HttpResponseForbidden(self.get_permission_denied_message())
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class UserIsNotAnonMixin(UserAuthAndTestMixin):
+    """
+    A mixin that determines if a user is not anonymous. Like LoginRequiredMixin
+    but works with subdomains
+
+    DO NOT USE MORE THAN ONE OF THESE MIXINS
+    """
+
+    def test_func(self):
+        return self.request.user != get_anonymous_user()
 
 
 class UserIsChallengeAdminMixin(UserAuthAndTestMixin):

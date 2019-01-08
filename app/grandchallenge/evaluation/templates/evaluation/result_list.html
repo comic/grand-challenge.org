@@ -30,6 +30,8 @@
                 <th
                         {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
                             class="table-active"
+                        {% else %}
+                            class="toggable"
                         {% endif %}
                 >
                     {{ evaluation_config.score_title }}
@@ -39,7 +41,7 @@
                 </th>
 
                 {% for col in evaluation_config.extra_results_columns %}
-                    <th>
+                    <th class="toggable">
                         {{ col.title }}
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                             (#)
@@ -99,6 +101,8 @@
                             <td data-order="{{ metric }}"
                                     {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
                                 class="table-active"
+                                    {% else %}
+                                class="toggable"
                                     {% endif %}
                             >
                                 <a href="{{ result_url }}">
@@ -124,7 +128,7 @@
 
                         {% for col in evaluation_config.extra_results_columns %}
                             {% with result.metrics|get_jsonpath:col.path as metric %}
-                                <td data-order="{{ metric }}">
+                                <td data-order="{{ metric }}" class="toggable">
                                     <a href="{{ result_url }}">
                                         {% filter remove_whitespace %}
                                             {{ metric|floatformat:evaluation_config.score_decimal_places }}
@@ -187,7 +191,7 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#resultsTable').DataTable({
+            var table = $('#resultsTable').DataTable({
                 {% comment %}
                     The column index of the default sort, must match the table
                     set up.
@@ -199,11 +203,70 @@
                         "targets": [-1],
                     {% endif %}
                     "searchable": false,
-                    "orderable": false
-                }],
-                ordering: true
+                    "orderable": false,
+                    "visible": true
+                }
+                    {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                        ,{
+                        "targets": 'toggable',
+                        "visible": false,
+                    }
+                    {% endif %}
+                ],
+                ordering: true,
+                autoWidth: false,
+                {% comment %}
+                    Default dom-setting copied from here: https://datatables.net/reference/option/dom
+                {% endcomment %}
+                {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                    dom: "<'row'<'col-5'l><'col-7'f>>" +
+                        "<'row'<'col-sm-12'Btr>>" +
+                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    buttons: [
+                        {
+                            extend: 'colvis',
+                            text: 'Additional metrics',
+                            columns: '.toggable'
+                        },
+                        {
+                            text: 'Show all metrics',
+                            action: function (e, dt, node, config) {
+                                if ($(node).hasClass('metrics-hidden')) {
+                                    dt.columns('.toggable').visible(false);
+                                    $(node).removeClass('metrics-hidden');
+                                    $(node).text('Show all metrics');
+                                } else {
+                                    dt.columns('.toggable').visible(true);
+                                    $(node).addClass('metrics-hidden');
+                                    $(node).text('Hide additional metrics');
+                                }
+                            }
+                        }
+                    ],
+                {% endif %}
+                scrollX: true
             });
-
+            $('#resultsTable').on( 'column-visibility.dt', function ( e, settings, column, state ) {
+                var button = table.button(1).node();
+                visibility_columns = table.columns('.toggable').visible();
+                var not_all_visible = false;
+                visibility_columns.each(function(value) {
+                    if (value === false) {
+                        not_all_visible = true;
+                        return false;
+                    }
+                });
+                if (!not_all_visible) {
+                    button.addClass('metrics-hidden');
+                    button.text('Hide additional metrics');
+                } else {
+                    button.removeClass('metrics-hidden');
+                    button.text('Show all metrics');
+                }
+            } );
+        });
+        $(window).resize(function () {
+            $('#resultsTable').DataTable().columns.adjust()
         });
     </script>
 

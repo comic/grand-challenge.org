@@ -13,7 +13,7 @@
 
     <ul>
         <li>
-            <a href="{% url 'evaluation:config-update' site.short_name %}">
+            <a href="{% url 'evaluation:config-update' challenge_short_name=site.short_name %}">
                 Update configuration
             </a>
         </li>
@@ -22,12 +22,12 @@
     <h3>Methods</h3>
     <ul>
         <li>
-            <a href="{% url 'evaluation:method-list' site.short_name %}">
+            <a href="{% url 'evaluation:method-list' challenge_short_name=site.short_name %}">
                 List methods
             </a>
         </li>
         <li>
-            <a href="{% url 'evaluation:method-create' site.short_name %}">
+            <a href="{% url 'evaluation:method-create' challenge_short_name=site.short_name %}">
                 Add a new method
             </a>
         </li>
@@ -36,12 +36,12 @@
     <h3>Submissions</h3>
     <ul>
         <li>
-            <a href="{% url 'evaluation:submission-list' site.short_name %}">
+            <a href="{% url 'evaluation:submission-list' challenge_short_name=site.short_name %}">
                 List submissions
             </a>
         </li>
         <li>
-            <a href="{% url 'evaluation:submission-create' site.short_name %}">
+            <a href="{% url 'evaluation:submission-create' challenge_short_name=site.short_name %}">
                 Add a new submission
             </a>
         </li>
@@ -50,12 +50,12 @@
     <h3>Jobs</h3>
     <ul>
         <li>
-            <a href="{% url 'evaluation:job-list' site.short_name %}">
+            <a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">
                 List jobs
             </a>
         </li>
         <li>
-            <a href="{% url 'evaluation:job-create' site.short_name %}">
+            <a href="{% url 'evaluation:job-create' challenge_short_name=site.short_name %}">
                 Add a new job
             </a>
         </li>
@@ -64,7 +64,7 @@
     <h3>Results</h3>
     <ul>
         <li>
-            <a href="{% url 'evaluation:result-list' site.short_name %}">
+            <a href="{% url 'evaluation:result-list' challenge_short_name=site.short_name %}">
                 List results
             </a>
         </li>

@@ -1,4 +1,5 @@
 {% extends "site.html" %}
+{% load url from grandchallenge_tags %}
 
 {% block pagecontent %}
 
@@ -6,14 +7,14 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'evaluation:submission-create' site.short_name %}">
+           href="{% url 'evaluation:submission-create' challenge_short_name=site.short_name %}">
             <i class="fas fa-plus"></i> Add a new submission
         </a>
     </p>
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'evaluation:submission-create-legacy' site.short_name %}">
+           href="{% url 'evaluation:submission-create-legacy' challenge_short_name=site.short_name %}">
             <i class="fas fa-plus"></i> Add a legacy submission
         </a>
     </p>

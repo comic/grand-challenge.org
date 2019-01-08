@@ -33,7 +33,7 @@ class ChallengeFactory(factory.DjangoModelFactory):
     class Meta:
         model = Challenge
 
-    short_name = factory.Sequence(lambda n: f"test_challenge_{n}")
+    short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
     creator = factory.SubFactory(UserFactory)
 
 

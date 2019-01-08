@@ -18,7 +18,9 @@ def filter_requires_request_argument(f):
 
 
 @filter_requires_request_argument
-def reject_duplicate_filenames(file: UploadedFile, request: HttpRequest = None):
+def reject_duplicate_filenames(
+    file: UploadedFile, request: HttpRequest = None
+):
     """
     Upload filter that can be used together with
     AjaxUploadWidget-upload_filters. This filter will NOT work properly as a

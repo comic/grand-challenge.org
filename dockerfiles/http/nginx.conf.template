@@ -133,7 +133,15 @@ http {
     client_body_buffer_size 16m;
     client_max_body_size 0;
 
-    server_name ${SERVER_NAME};
+    server_name .${SERVER_NAME};
+
+    location ~* ^/site/([^/]*)/serve/(.*)$ {
+      return 302 $scheme://$1.${SERVER_NAME}/media/$1/$2;
+    }
+
+    location ~* ^/all_challenges/?$ {
+      return 301 $scheme://${SERVER_NAME}/challenges/;
+    }
     
     location /dbox/ {
       internal;

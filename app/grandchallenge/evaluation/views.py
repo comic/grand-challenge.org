@@ -11,7 +11,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.forms import (
     MethodForm,
     SubmissionForm,

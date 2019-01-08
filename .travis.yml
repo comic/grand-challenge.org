@@ -19,6 +19,8 @@ before_install:
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage
+  - sudo service postgresql stop
+  - sudo service redis-server stop
 
 install:
   - make build
@@ -36,8 +38,5 @@ deploy:
   - provider: script
     script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
     on:
-      branch: master
-  - provider: script
-    script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
-    on:
-      branch: eyra-master
+      all_branches: true
+      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$

@@ -7,7 +7,6 @@ from django.core.files.storage import DefaultStorage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
-from django.views.generic import RedirectView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -36,7 +35,7 @@ def serve_fullpath(*, fullpath):
         raise Http404("File not found.")
 
 
-def serve_folder(request, *, challenge_short_name=None, folder=None, path):
+def serve_folder(request, *, challenge_name=None, folder=None, path):
     """
     Serve static files in a folder.
 
@@ -48,14 +47,12 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
     """
     path = posixpath.normpath(path).lstrip("/")
 
-    if challenge_short_name:
+    if challenge_name:
         if folder:
-            raise AttributeError(
-                "Only challenge_short_name or folder should be set"
-            )
+            raise AttributeError("Only challenge_name or folder should be set")
 
         challenge = get_object_or_404(
-            Challenge, short_name__iexact=challenge_short_name
+            Challenge, short_name__iexact=challenge_name
         )
 
         document_root = safe_join(settings.MEDIA_ROOT, challenge.short_name)
@@ -70,7 +67,7 @@ def serve_folder(request, *, challenge_short_name=None, folder=None, path):
         fullpath = safe_join(document_root, path)
         allowed = True
     else:
-        raise AttributeError("challenge_short_name or folder must be set")
+        raise AttributeError("challenge_name or folder must be set")
 
     if not allowed:
         raise Http404("File not found.")
@@ -99,10 +96,3 @@ def serve_images(request, *, pk, path):
         return serve_fullpath(fullpath=fullpath)
 
     raise Http404("File not found.")
-
-
-class ChallengeServeRedirect(RedirectView):
-    # Do not redirect to a view name as this could skip some other handlers
-
-    def get_redirect_url(self, *args, **kwargs):
-        return f"/media/{kwargs['challenge_short_name']}/{kwargs['path']}/"

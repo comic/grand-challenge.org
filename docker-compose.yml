@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
       POSTGRES_DB: comic
+    ports:
+      - "5432:5432" # Only required for running django locally
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
@@ -52,7 +54,7 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=localhost
+      - SERVER_NAME=gc.localhost
       - SENDFILE_STATUS=off
     command: >-
         bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
@@ -77,6 +79,8 @@ services:
     image: redis:4.0
     command: redis-server --appendonly yes
     restart: always
+    ports:
+      - "6379:6379" # Only required for running django locally
 
   celery_worker:
     image: grandchallenge/web-test:latest
@@ -138,7 +142,11 @@ services:
     environment:
       <<: *postgresenv
     restart: always
-    command: "celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\""
+    command: >-
+        bash -c "
+        rm -f /tmp/celerybeat.pid
+        && celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
+        "
     depends_on:
       web:
         condition: service_healthy
