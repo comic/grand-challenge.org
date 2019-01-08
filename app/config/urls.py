@@ -93,5 +93,5 @@ if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
     urlpatterns = [
-        path("__debug__/", include(debug_toolbar.urls))
-    ] + urlpatterns
+                      path("__debug__/", include(debug_toolbar.urls))
+                  ] + urlpatterns

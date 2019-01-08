@@ -16,7 +16,6 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.worklists.models import Worklist, WorklistSet
 
-
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
 

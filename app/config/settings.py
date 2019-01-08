@@ -156,7 +156,7 @@ SESSION_COOKIE_SECURE = strtobool(
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web", "127.0.0.1"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -231,7 +231,6 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
-
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"

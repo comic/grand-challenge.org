@@ -8,7 +8,6 @@ from django_select2.forms import Select2MultipleWidget
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
-
 """" Patient Items """
 
 
@@ -85,6 +84,7 @@ class StudyItemUpdateForm(ModelForm):
         widgets = {
             "image": Select2MultipleWidget,
         }
+
 
 """ Worklist Items """
 

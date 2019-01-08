@@ -2,7 +2,6 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
 
-
 from grandchallenge.pathology.models import WorklistItem, PatientItem, StudyItem
 from grandchallenge.pathology.serializer import WorklistItemSerializer, PatientItemSerializer, StudyItemSerializer
 from grandchallenge.subdomains.utils import reverse
@@ -13,7 +12,6 @@ from grandchallenge.pathology.forms import (PatientItemCreateForm,
                                             StudyItemUpdateForm,
                                             WorklistItemCreateForm,
                                             WorklistItemUpdateForm)
-
 
 """ Patient Items """
 

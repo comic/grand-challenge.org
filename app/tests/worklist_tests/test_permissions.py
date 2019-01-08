@@ -28,6 +28,7 @@ def test_worklist_form_access(view, client):
         reverse_kwargs=reverse_kwargs,
     )
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view",
