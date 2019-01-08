@@ -108,7 +108,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         return data_file == "LOCAL"
 
     def convert_itk_file(
-        headers: Mapping[str, Union[str, None]], filename: Path
+            headers: Mapping[str, Union[str, None]], filename: Path
     ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
             simple_itk_image = sitk.ReadImage(str(filename.absolute()))
@@ -136,7 +136,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
                 depth=depth if depth else None,
-                resolution_levels= None,
+                resolution_levels=None,
                 color_space=color_space,
                 image_type="MHD",
             )
