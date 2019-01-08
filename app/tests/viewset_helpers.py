@@ -4,8 +4,7 @@ import json
 from grandchallenge.subdomains.utils import reverse
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from django.db import transaction
-
+from tests.factories import UserFactory
 
 # Endpoints to check
 VIEWSET_ACTIONS = (
@@ -31,7 +30,7 @@ def get_response_status_viewset(
     action_name,
     request_method,
     model_factory=None,
-    authenticated=False,
+    user=None,
     required_relations={},
     serializer=None,
 ):
@@ -42,7 +41,6 @@ def get_response_status_viewset(
             model_build = model_factory.build()
             model_serialized = serializer(model_build).data
             # create related models
-            relations = {}
             for relation_name, relation_factory in required_relations.items():
                 if isinstance(relation_factory, list):
                     # many to many
@@ -80,9 +78,12 @@ def get_response_status_viewset(
     view = viewset.as_view(actions={request_method: action_name})
 
     # authenticate user
-    if authenticated:
-        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-        force_authenticate(request, user=user)
+    if user == "user":
+        normal_user = UserFactory()
+        force_authenticate(request, user=normal_user)
+    elif user == "admin":
+        staff_user = UserFactory(is_staff=True)
+        force_authenticate(request, user=staff_user)
 
     # get response
     if action_name == "list" or action_name == "create":
@@ -103,7 +104,7 @@ def batch_test_viewset_endpoints(
     serializer=None,
 ):
     for action_name, request_method, authenticated_status in actions:
-        for authenticated in (False, True):
+        for (user, authenticated) in ((None, False), ("user", False), ("admin", True)):
 
             test_method = create_test_method(
                 viewset,
@@ -112,6 +113,7 @@ def batch_test_viewset_endpoints(
                 action_name,
                 request_method,
                 model_factory,
+                user,
                 authenticated,
                 required_relations,
                 authenticated_status,
@@ -121,7 +123,7 @@ def batch_test_viewset_endpoints(
             test_method.__name__ = "test_{}_viewset_{}_{}".format(
                 model_name,
                 action_name,
-                "authenticated" if authenticated else "non_authenticated",
+                "authenticated_as_{}".format(str(user))
             )
             setattr(test_class, test_method.__name__, test_method)
 
@@ -133,6 +135,7 @@ def create_test_method(
     action_name,
     request_method,
     model_factory,
+    user,
     authenticated,
     required_relations,
     authenticated_status,
@@ -148,13 +151,16 @@ def create_test_method(
             action_name,
             request_method,
             model_factory=model_factory,
-            authenticated=authenticated,
+            user=user,
             required_relations=required_relations,
             serializer=serializer,
         )
         if authenticated:
             assert response_status == authenticated_status
         else:
-            assert response_status == status.HTTP_401_UNAUTHORIZED
+            if user == "user":
+                assert response_status == status.HTTP_403_FORBIDDEN
+            else:
+                assert response_status == status.HTTP_401_UNAUTHORIZED
 
     return test_method
