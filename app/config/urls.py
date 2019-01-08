@@ -79,21 +79,6 @@ urlpatterns = [
         include("grandchallenge.retina_core.urls", namespace="retina"),
     ),
     path(
-        "archives/",
-        include("grandchallenge.archives.urls", namespace="archives"),
-    ),
-    path(
-        "patients/",
-        include("grandchallenge.patients.urls", namespace="patients"),
-    ),
-    path(
-        "studies/", include("grandchallenge.studies.urls", namespace="studies")
-    ),
-    path(
-        "annotations/",
-        include("grandchallenge.annotations.urls", namespace="annotations"),
-    ),
-    path(
         "registrations/",
         include(
             "grandchallenge.registrations.urls", namespace="registrations"
