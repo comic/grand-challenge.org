@@ -19,15 +19,18 @@
 
     {% block css %}
     
-    <!-- Latest compiled and minified Bootstrap 4.1.1 CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    
+        <!-- Latest compiled and minified Bootstrap 4.1.1 CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
-    <!-- Your stuff: Third-party CSS libraries go here -->
-    <!-- This file stores project-specific CSS -->
-    <link href="{% static 'css/_styles.css' %}" rel="stylesheet">
-    <link href="{% static 'css/main.css' %}" rel="stylesheet">
-    <link href="{% static 'css/rotterdam_australia.css' %}" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+
+        <!-- Your stuff: Third-party CSS libraries go here -->
+        <!-- This file stores project-specific CSS -->
+        <link href="{% static 'css/_styles.css' %}" rel="stylesheet">
+        <link href="{% static 'css/main.css' %}" rel="stylesheet">
+        <link href="{% static 'css/rotterdam_australia.css' %}" rel="stylesheet">
     
     
     {% endblock %}
@@ -60,12 +63,11 @@
     {% block javascript %}
       
       <!-- Required by Bootstrap v4.1.1 -->
-      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
 
       <!-- Your stuff: Third-party javascript libraries go here -->
-      <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.1.2/math.min.js"></script>
       <script src="{% static 'js/external_libs/regression.js' %}"></script>
       <script src="{% static 'js/external_libs/ResizeSensor.js' %}"></script>
@@ -80,7 +82,7 @@
       <script type="module" src="{% static 'js/main.js' %}"></script>
 
       <script>
-          /* Custom data */
+          /* Custom JS data */
           STATIC_URL = "{% get_static_prefix %}";
           MEDIA_URL = "{% get_media_prefix %}";
           LOGOUT_URL = "{{ LOGOUT_URL }}";
