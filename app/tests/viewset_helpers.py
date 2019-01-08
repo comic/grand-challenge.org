@@ -104,7 +104,11 @@ def batch_test_viewset_endpoints(
     serializer=None,
 ):
     for action_name, request_method, authenticated_status in actions:
-        for (user, authenticated) in ((None, False), ("user", False), ("admin", True)):
+        for (user, authenticated) in (
+            (None, False),
+            ("user", False),
+            ("admin", True),
+        ):
 
             test_method = create_test_method(
                 viewset,
@@ -123,7 +127,7 @@ def batch_test_viewset_endpoints(
             test_method.__name__ = "test_{}_viewset_{}_{}".format(
                 model_name,
                 action_name,
-                "authenticated_as_{}".format(str(user))
+                "authenticated_as_{}".format(str(user)),
             )
             setattr(test_class, test_method.__name__, test_method)
 
