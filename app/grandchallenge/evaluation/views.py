@@ -11,7 +11,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.forms import (
     MethodForm,
     SubmissionForm,
@@ -252,6 +252,19 @@ class JobDetail(UserIsChallengeAdminMixin, DetailView):
 
 class ResultList(ListView):
     model = Result
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(
+            {
+                "evaluation_config": Config.objects.get(
+                    challenge=self.request.challenge
+                )
+            }
+        )
+
+        return context
 
     def get_queryset(self):
         queryset = super().get_queryset()

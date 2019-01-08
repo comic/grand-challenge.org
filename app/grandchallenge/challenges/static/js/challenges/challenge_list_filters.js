@@ -243,6 +243,16 @@ $(document).ready(function () {
         }
     }
 
+    $('#collapseHost').on('show.bs.collapse', function () {
+        $('#host-chevron').removeClass('fa-chevron-circle-right');
+        $('#host-chevron').addClass('fa-chevron-circle-down');
+    });
+
+    $('#collapseHost').on('hide.bs.collapse', function () {
+        $('#host-chevron').removeClass('fa-chevron-circle-down');
+        $('#host-chevron').addClass('fa-chevron-circle-right');
+    });
+
     $('#collapseModality').on('show.bs.collapse', function () {
         $('#modality-chevron').removeClass('fa-chevron-circle-right');
         $('#modality-chevron').addClass('fa-chevron-circle-down');

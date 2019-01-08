@@ -35,6 +35,14 @@ def get_jsonpath(obj: dict, jsonpath):
 
 
 @register.filter
+def get_key(obj: dict, key):
+    try:
+        return obj[key]
+    except KeyError:
+        return ""
+
+
+@register.filter
 def user_error(obj: [str, bytes]):
     """
     Filter an error message to just return the last, none-empty line. Used

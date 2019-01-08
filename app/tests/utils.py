@@ -7,7 +7,7 @@ from django.test import RequestFactory, Client
 from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 
 
@@ -74,6 +74,8 @@ def get_view_for_user(
     if method is None:
         method = client.get
 
+    url, kwargs = get_http_host(url=url, kwargs=kwargs)
+
     try:
         response = method(url, **kwargs)
     finally:
@@ -81,6 +83,15 @@ def get_view_for_user(
             client.logout()
 
     return response
+
+
+def get_http_host(*, url, kwargs):
+    """ Takes a url and splits out the http host, if found """
+    urlparts = urlparse(url)
+    if urlparts[1]:
+        kwargs.update({"HTTP_HOST": urlparts[1]})
+        url = urlparts[2]
+    return url, kwargs
 
 
 def assert_viewname_status(*, code: int, **kwargs):

@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load user_profile_link from profiles %}
+{% load url from grandchallenge_tags %}
 
 {% block pagecontent %}
 
@@ -56,7 +57,7 @@
                     <td>
                         {% if regrequest.status != regrequest.ACCEPTED %}
                             <form method="post"
-                                  action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                                  action="{% url 'participants:registration-update' challenge_short_name=site.short_name pk=regrequest.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status"
                                        value="{{ regrequest.ACCEPTED }}">
@@ -67,7 +68,7 @@
                         {% endif %}
                         {% if regrequest.status != regrequest.REJECTED %}
                             <form method="post"
-                                  action="{% url 'participants:registration-update' site.short_name regrequest.pk %}">
+                                  action="{% url 'participants:registration-update' challenge_short_name=site.short_name pk=regrequest.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status"
                                        value="{{ regrequest.REJECTED }}">

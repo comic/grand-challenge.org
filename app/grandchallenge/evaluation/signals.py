@@ -57,16 +57,6 @@ def recalculate_ranks(instance: Union[Result, Config] = None, *_, **__):
 
 @receiver(post_save, sender=Result)
 @disable_for_loaddata
-def cache_absolute_url(instance: Result = None, *_, **__):
-    """Cache the absolute url to speed up the results page, needs the pk of
-    the result so cannot so into a custom save method"""
-    Result.objects.filter(pk=instance.pk).update(
-        absolute_url=instance.get_absolute_url()
-    )
-
-
-@receiver(post_save, sender=Result)
-@disable_for_loaddata
 def result_created_email(instance: Result, created: bool = False, *_, **__):
     if created:
         # Only send emails on created, as EVERY result for this challenge is

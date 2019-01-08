@@ -5,7 +5,13 @@ from django import forms
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.evaluation.models import Method, Submission, Config
+from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.evaluation.models import (
+    Method,
+    Submission,
+    Config,
+    EXTRA_RESULT_COLUMNS_SCHEMA,
+)
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
@@ -19,15 +25,20 @@ submission_options = (
     "publication_url_choice",
 )
 
-result_list_options = (
-    "use_teams",
+scoring_options = (
     "score_title",
     "score_jsonpath",
+    "score_error_jsonpath",
     "score_default_sort",
     "score_decimal_places",
     "extra_results_columns",
+    "scoring_method_choice",
     "auto_publish_new_results",
     "result_display_choice",
+)
+
+leaderboard_options = (
+    "use_teams",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
@@ -43,7 +54,8 @@ class ConfigForm(forms.ModelForm):
         self.helper.layout = Layout(
             TabHolder(
                 Tab("Submission", *submission_options),
-                Tab("Result List", *result_list_options),
+                Tab("Scoring", *scoring_options),
+                Tab("Leaderboard", *leaderboard_options),
                 Tab("Result Detail", *result_detail_options),
             ),
             ButtonHolder(Submit("save", "Save")),
@@ -53,10 +65,16 @@ class ConfigForm(forms.ModelForm):
         model = Config
         fields = (
             *submission_options,
-            *result_list_options,
+            *scoring_options,
+            *leaderboard_options,
             *result_detail_options,
         )
-        widgets = {"submission_page_html": SummernoteInplaceWidget()}
+        widgets = {
+            "submission_page_html": SummernoteInplaceWidget(),
+            "extra_results_columns": JSONEditorWidget(
+                schema=EXTRA_RESULT_COLUMNS_SCHEMA
+            ),
+        }
 
 
 method_upload_widget = uploader.AjaxUploadWidget(
@@ -68,10 +86,12 @@ class MethodForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=method_upload_widget,
         label="Evaluation Method Container",
-        validators=[ExtensionValidator(allowed_extensions=(".tar",))],
+        validators=[
+            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+        ],
         help_text=(
-            "Tar archive of the container image produced from the command "
-            "`docker save IMAGE > IMAGE.tar`. See "
+            ".tar.gz archive of the container image produced from the command "
+            "'docker save IMAGE > IMAGE.tar | gzip'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )

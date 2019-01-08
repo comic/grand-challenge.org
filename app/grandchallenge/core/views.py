@@ -6,16 +6,12 @@ from django.template import Template, TemplateSyntaxError, RequestContext
 from django.utils._os import safe_join
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 
-def site(request, challenge_short_name):
-    try:
-        site = getSite(challenge_short_name)
-    except Challenge.DoesNotExist:
-        raise Http404("Project %s does not exist" % challenge_short_name)
-
+def site(request):
+    site = request.challenge
     pages = site.page_set.all()
 
     if len(pages) == 0:
@@ -27,7 +23,7 @@ def site(request, challenge_short_name):
     else:
         currentpage = pages[0]
 
-    currentpage = getRenderedPageIfAllowed(currentpage, request, site)
+    currentpage = getRenderedPageIfAllowed(currentpage, request)
 
     return render(
         request,
@@ -77,7 +73,7 @@ def renderTags(request, p, recursecount=0):
     return pagecontents
 
 
-def permissionMessage(request, site, p):
+def permissionMessage(request, p):
     if request.user.is_authenticated:
         msg = """ <div class="system_message">
                 <h2> Restricted page</h2>
@@ -102,11 +98,11 @@ def permissionMessage(request, site, p):
         )
         title = p.title
 
-    return ErrorPage(challenge=site, title=title, html=msg)
+    return ErrorPage(challenge=request.challenge, title=title, html=msg)
 
 
 # TODO: could a decorator be better then all these ..IfAllowed pages?
-def getRenderedPageIfAllowed(page_or_page_title, request, site):
+def getRenderedPageIfAllowed(page_or_page_title, request):
     """ check permissions and render tags in page. If string title is given page is looked for 
         return nice message if not allowed to view"""
     if isinstance(page_or_page_title, bytes):
@@ -115,7 +111,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
     if isinstance(page_or_page_title, str):
         page_title = page_or_page_title
         try:
-            p = site.page_set.get(title__iexact=page_title)
+            p = request.challenge.page_set.get(title__iexact=page_title)
         except Page.DoesNotExist:
             raise Http404
     else:
@@ -125,7 +121,7 @@ def getRenderedPageIfAllowed(page_or_page_title, request, site):
         p.html = renderTags(request, p)
         currentpage = p
     else:
-        currentpage = permissionMessage(request, site, p)
+        currentpage = permissionMessage(request, p)
 
     return currentpage
 
@@ -152,7 +148,7 @@ def comicmain(request, page_title=""):
     challenge_short_name = settings.MAIN_PROJECT_NAME
 
     try:
-        site = getSite(challenge_short_name)
+        site = Challenge.objects.get(short_name__iexact=challenge_short_name)
     except Challenge.DoesNotExist:
         link = reverse("challenges:create")
         link = link + "?short_name=%s" % challenge_short_name
@@ -176,7 +172,9 @@ def comicmain(request, page_title=""):
     pages = site.page_set.all()
 
     if len(pages) == 0:
-        link = reverse("pages:list", args=[challenge_short_name])
+        link = reverse(
+            "pages:list", kwargs={"challenge_short_name": challenge_short_name}
+        )
         link_html = create_HTML_a(link, "admin interface")
         html = """I'm trying to show the first page for main project '%s' here,
         but '%s' contains no pages. Please add
@@ -198,7 +196,7 @@ def comicmain(request, page_title=""):
 
         if len(pages) != 1:
             raise ValueError(
-                f"More than 1 page with title {page_title} was found for {site}"
+                f"{len(pages)} pages with title {page_title} were found for {site}"
             )
 
     page = pages[0]
@@ -208,10 +206,6 @@ def comicmain(request, page_title=""):
 
 
 # ======================================== not called directly from urls.py ==
-def getSite(challenge_short_name):
-    return Challenge.objects.get(short_name__iexact=challenge_short_name)
-
-
 def create_HTML_a(link_url, link_text):
     return '<a href="' + link_url + '">' + link_text + "</a>"
 

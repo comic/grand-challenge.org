@@ -3,11 +3,11 @@ import os
 
 import pytest
 from django.conf import settings
-from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory, ChallengeFactory
 
 

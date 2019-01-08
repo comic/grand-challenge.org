@@ -1,3 +1,4 @@
+{% load url from grandchallenge_tags %}
 {% load i18n %}{% autoescape off %}
 {% if not without_usernames %}{% blocktrans with user.username as username %}Dear {{ username }},{% endblocktrans %}
 {% endif %}
@@ -5,7 +6,7 @@
 
 {% trans "To activate your account you should click on the link below:" %}
 
-{{ protocol }}://{{ site.domain }}{% url 'userena_activate' activation_key %}
+{% url 'userena_activate' activation_key %}
 
 Your account can be used in any project hosted on {{site.domain}}. To participate in any specific project however, explicit permission by the projects organizers might be required.
 

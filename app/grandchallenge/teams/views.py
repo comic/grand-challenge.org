@@ -13,7 +13,7 @@ from django.views.generic import (
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeParticipantOrAdminMixin
 )
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.teams.permissions.mixins import (
     UserIsTeamOwnerOrChallengeAdminMixin,

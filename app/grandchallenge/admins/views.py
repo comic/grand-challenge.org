@@ -4,7 +4,7 @@ from django.views.generic import ListView, FormView
 
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
 
 class AdminsList(UserIsChallengeAdminMixin, ListView):

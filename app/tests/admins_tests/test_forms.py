@@ -40,7 +40,10 @@ def test_admins_remove(client, TwoChallengeSets):
         client=client,
         method=client.post,
         challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        data={"user": TwoChallengeSets.admin12.pk, "action": AdminsForm.REMOVE},
+        data={
+            "user": TwoChallengeSets.admin12.pk,
+            "action": AdminsForm.REMOVE,
+        },
         user=TwoChallengeSets.ChallengeSet1.admin,
     )
     assert response.status_code == 302

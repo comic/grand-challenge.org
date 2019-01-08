@@ -2,10 +2,13 @@ import os
 import zipfile
 from collections import namedtuple
 from pathlib import Path
+from subprocess import call
+from typing import NamedTuple
 
 import docker
 import pytest
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
@@ -14,21 +17,29 @@ from tests.factories import UserFactory, ChallengeFactory, MethodFactory
 """ Defines fixtures than can be used across all of the tests """
 
 
-@pytest.fixture(name="ChallengeSet")
-def challenge_set():
-    """ Creates a challenge with creator, 2 participants, and non participant.
-    To use this you must mark the test with @pytest.mark.django_db """
-    ChallengeSet = namedtuple(
-        "ChallengeSet",
-        [
-            "challenge",
-            "creator",
-            "admin",
-            "participant",
-            "participant1",
-            "non_participant",
-        ],
-    )
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """ Ensure that the main challenge has been created """
+    with django_db_blocker.unblock():
+        # Set the default domain that is used in RequestFactory
+        site = Site.objects.get(pk=settings.SITE_ID)
+        site.domain = "testserver"
+        site.save()
+
+        # The main project should always exist
+        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
+
+
+class ChallengeSet(NamedTuple):
+    challenge: ChallengeFactory
+    creator: UserFactory
+    admin: UserFactory
+    participant: UserFactory
+    participant1: UserFactory
+    non_participant: UserFactory
+
+
+def generate_challenge_set():
     creator = UserFactory()
     challenge = ChallengeFactory(creator=creator)
     admin = UserFactory()
@@ -38,13 +49,27 @@ def challenge_set():
     participant1 = UserFactory()
     challenge.add_participant(participant1)
     non_participant = UserFactory()
+
     try:
         Challenge.objects.get(short_name=settings.MAIN_PROJECT_NAME)
     except ObjectDoesNotExist:
         ChallengeFactory(short_name=settings.MAIN_PROJECT_NAME)
+
     return ChallengeSet(
-        challenge, creator, admin, participant, participant1, non_participant
+        challenge=challenge,
+        creator=creator,
+        admin=admin,
+        participant=participant,
+        participant1=participant1,
+        non_participant=non_participant,
     )
+
+
+@pytest.fixture(name="ChallengeSet")
+def challenge_set():
+    """ Creates a challenge with creator, 2 participants, and non participant.
+    To use this you must mark the test with @pytest.mark.django_db """
+    return generate_challenge_set()
 
 
 @pytest.fixture(name="TwoChallengeSets")
@@ -60,8 +85,8 @@ def two_challenge_sets():
             "admin1participant2",
         ],
     )
-    ChallengeSet1 = challenge_set()
-    ChallengeSet2 = challenge_set()
+    ChallengeSet1 = generate_challenge_set()
+    ChallengeSet2 = generate_challenge_set()
     admin12 = UserFactory()
     ChallengeSet1.challenge.add_admin(admin12)
     ChallengeSet2.challenge.add_admin(admin12)
@@ -120,8 +145,11 @@ def evaluation_image(tmpdir_factory):
         for chunk in image:
             f.write(chunk)
     client.images.remove(image=im.id)
+
+    call(["gzip", outfile])
+
     assert im.id not in [x.id for x in client.images.list()]
-    return outfile, im.id
+    return f"{outfile}.gz", im.id
 
 
 @pytest.fixture(scope="session")

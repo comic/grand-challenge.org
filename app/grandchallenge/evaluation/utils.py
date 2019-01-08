@@ -1,5 +1,5 @@
-from collections import defaultdict, namedtuple
-from typing import Tuple
+from collections import OrderedDict
+from typing import Tuple, NamedTuple, List, Callable, Iterable, Dict
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -7,44 +7,110 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import (
 )
 
 
-def generate_rank_dict(
-    queryset: Tuple[Result, ...],
-    metric_paths: Tuple[str, ...],
-    metric_reverse: Tuple[bool, ...],
-):
-    """
-    Generates a dictionary that contains the ranking of results based on a
-    given metric path.
-    """
-    rank = defaultdict(dict)
-    pk_val = namedtuple("pk_val", ["pk", "val"])
+class Metric(NamedTuple):
+    path: str
+    reverse: bool
 
-    for (metric_path, reverse) in zip(metric_paths, metric_reverse):
+
+class Positions(NamedTuple):
+    ranks: Dict[str, float]
+    rank_scores: Dict[str, float]
+    rank_per_metric: Dict[str, Dict[str, float]]
+
+
+def rank_results(
+    *,
+    results: Tuple[Result, ...],
+    metrics: Tuple[Metric, ...],
+    score_method: Callable,
+) -> Positions:
+    """
+    Calculates the overall rank for each result, along with the rank_score
+    and the rank per metric.
+    """
+
+    results = _filter_valid_results(results=results, metrics=metrics)
+
+    rank_per_metric = _get_rank_per_metric(results=results, metrics=metrics)
+
+    rank_scores = {
+        pk: score_method([m for m in metrics.values()])
+        for pk, metrics in rank_per_metric.items()
+    }
+
+    return Positions(
+        ranks=_scores_to_ranks(scores=rank_scores, reverse=False),
+        rank_scores=rank_scores,
+        rank_per_metric=rank_per_metric,
+    )
+
+
+def _filter_valid_results(
+    *, results: Iterable[Result], metrics: Tuple[Metric, ...]
+) -> List[Result]:
+    """ Ensure that all of the metrics are in every result """
+    return [
+        res
+        for res in results
+        if all(get_jsonpath(res.metrics, m.path) != "" for m in metrics)
+    ]
+
+
+def _get_rank_per_metric(
+    *, results: Iterable[Result], metrics: Tuple[Metric, ...]
+) -> Dict[str, Dict[str, float]]:
+    """
+    Takes results and calculates the rank for each of the individual metrics
+
+    Returns a dictionary where the key is the pk of the result, and the
+    values is another dictionary where the key is the path of the metric and
+    the value is the rank of this result for this metric
+    """
+    metric_rank = {}
+    for metric in metrics:
         # Extract the value of the metric for this primary key and sort on the
         # value of the metric
-        pk_vals = [
-            pk_val(str(res.pk), get_jsonpath(res.metrics, metric_path))
-            for res in queryset
-            if get_jsonpath(res.metrics, metric_path) != ""
-        ]
-        pk_vals.sort(key=lambda x: x.val, reverse=reverse)
+        metric_scores = {
+            res.pk: get_jsonpath(res.metrics, metric.path) for res in results
+        }
+        metric_rank[metric.path] = _scores_to_ranks(
+            scores=metric_scores, reverse=metric.reverse
+        )
 
-        # Assign the ranks
-        try:
-            current_val = pk_vals[0].val
-            current_rank = 1
-        except IndexError:
-            # No results to work with for this metric
-            continue
+    return {
+        res.pk: {
+            metric_path: ranks[res.pk]
+            for metric_path, ranks in metric_rank.items()
+        }
+        for res in results
+    }
 
-        for idx, result_pk_val in enumerate(pk_vals):
 
-            # If the values of the metrics are the same, keep the rank
-            # position the same
-            if result_pk_val.val != current_val:
-                current_val = result_pk_val.val
-                current_rank = idx + 1
+def _scores_to_ranks(
+    *, scores: Dict, reverse: bool = False
+) -> Dict[str, float]:
+    """
+    Go from a score (a scalar) to a rank (integer). If two scalars are the
+    same then they will have the same rank.
 
-            rank[result_pk_val.pk][metric_path] = current_rank
+    Takes a dictionary where the keys are the pk of the results and the values
+    are the scores.
 
-    return rank
+    Outputs a dictionary where they keys are the pk of the results and the
+    values are the ranks.
+    """
+    scores = OrderedDict(
+        sorted(scores.items(), key=lambda t: t[1], reverse=reverse)
+    )
+
+    ranks = {}
+    current_score = current_rank = None
+
+    for idx, (pk, score) in enumerate(scores.items()):
+        if score != current_score:
+            current_score = score
+            current_rank = idx + 1
+
+        ranks[pk] = current_rank
+
+    return ranks

@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Max
 
 from grandchallenge.challenges.models import ComicSiteModel
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.utils.query import index
 
 
@@ -94,7 +94,11 @@ class Page(ComicSiteModel):
     def get_absolute_url(self):
         """ With this method, admin will show a 'view on site' button """
         url = reverse(
-            "pages:detail", args=[self.challenge.short_name, self.title]
+            "pages:detail",
+            kwargs={
+                "challenge_short_name": self.challenge.short_name,
+                "page_title": self.title,
+            },
         )
         return url
 

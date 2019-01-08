@@ -1,34 +1,31 @@
 import json
 import logging
-import ntpath
 import os
 import random
 import re
 import string
 import traceback
 from io import StringIO
-from urllib.parse import urljoin
 
 from django import template
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import DefaultStorage
 from django.db.models import Count
-from django.template import defaulttags
-from django.urls import reverse as reverse_djangocore
+from django.utils._os import safe_join
+from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.core.urlresolvers import reverse
-from grandchallenge.core.utils.HtmlLinkReplacer import HtmlLinkReplacer
 from grandchallenge.profiles.models import UserProfile
+from grandchallenge.subdomains.utils import reverse
 
 register = library_plus.LibraryPlus()
-logger = logging.getLogger("django")
+logger = logging.getLogger(__name__)
 
 
 def parseKeyValueToken(token):
@@ -80,60 +77,9 @@ def get_taglist(parser, token):
     return TagListNode()
 
 
-def subdomain_is_projectname():
-    """ Check whether this setting is true in settings. Return false if not found
-
-    """
-    is_projectname = False
-    if hasattr(settings, "SUBDOMAIN_IS_PROJECTNAME"):
-        is_projectname = settings.SUBDOMAIN_IS_PROJECTNAME
-        if is_projectname and not hasattr(settings, "MAIN_HOST_NAME"):
-            msg = """Key 'SUBDOMAIN_IS_PROJECTNAME' was defined in settings,
-             but 'MAIN_HOST_NAME' was not. These belong together. Please
-             add 'MAIN_HOST_NAME' and set it to the hostname of your site."""
-            raise ImproperlyConfigured(msg)
-
-    return is_projectname
-
-
-@register.tag
-def url(parser, token):
-    """Overwrites built in url tag to use . It works identicaly, except that where possible
-    it will use subdomains to refer to a project instead of a full url path.
-
-    For example, if the subdomain is vessel12.domain.com it will refer to a page
-    'details' as /details/ instead of /site/vessel12/details/
-
-    REQUIREMENTS:
-    * MIDDLEWARE_CLASSES in settings should contain
-      'core.middleware.subdomain.SubdomainMiddleware'
-
-    * These keys should be in the django settings file:
-      SUBDOMAIN_IS_PROJECTNAME = True
-      MAIN_HOST_NAME = <your site's hostname>
-
-    * APACHE url rewriting should be in effect to rewrite subdomain to
-      site/project/. To get you started: the following apache config does this
-      for the domain 'devcomicframework.org'
-      (put this in your apache config file)
-
-        RewriteEngine   on
-        RewriteCond $1 .*/$
-        RewriteCond $1 !^/site/.*
-        RewriteCond %{HTTP_HOST} !^devcomicframework\.org$
-        RewriteCond %{HTTP_HOST} !^www.devcomicframework\.org$
-        RewriteCond %{HTTP_HOST} ^([^.]+)\.devcomicframework\.org$
-        RewriteRule (.*) /site/%1$1 [PT]
-
-
-    TODO: turn on and off this behaviour in settings, maybe explicitly define
-    base domain to also make it possible to use dots in the base domain.
-
-    """
-    orgnode = defaulttags.url(parser, token)
-    return comic_URLNode(
-        orgnode.view_name, orgnode.args, orgnode.kwargs, orgnode.asvar
-    )
+@register.simple_tag()
+def url(view_name, *args, **kwargs):
+    return reverse(view_name, args=args, kwargs=kwargs)
 
 
 def filter_by_extension(filenames, extensions):
@@ -218,66 +164,6 @@ def substitute(string, substitutions):
     return string
 
 
-class comic_URLNode(defaulttags.URLNode):
-    def render(self, context):
-        # get the url the default django method would give.
-        url = super().render(context)
-
-        if subdomain_is_projectname() and (
-            (
-                self.view_name.var
-                in ["challenge-homepage", "project_serve_file"]
-            )
-            or (
-                self.view_name.var.split(":")[0]
-                in [
-                    "evaluation",
-                    "teams",
-                    "pages",
-                    "participants",
-                    "admins",
-                    "uploads",
-                    "datasets",
-                ]
-            )
-        ):
-            # Interpret subdomain as a challenge. What would normally be the
-            # path to this challenge?
-            args = [arg.resolve(context) for arg in self.args]
-            kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
-
-            try:
-                project = args[0]
-            except IndexError:
-                # No project was set, so must be part of the main site
-                project = kwargs.get(
-                    "challenge_short_name", settings.MAIN_PROJECT_NAME
-                )
-
-            if project == settings.MAIN_PROJECT_NAME:
-                # this url cannot use the domain name shortcut, so it is
-                # probably meant as a link the main comicframework site.
-                # in that case hardcode the domain to make sure the sub-
-                # domain is gone after following this link
-                return settings.MAIN_HOST_NAME + url
-
-            else:
-                path_to_site = reverse_djangocore(
-                    "challenge-homepage", args=[project]
-                )
-
-                if url.startswith(path_to_site):
-                    url = url.replace(path_to_site, "/")
-
-                scheme_subsite_and_host = reverse(
-                    "challenge-homepage", args=[project]
-                )
-
-                return urljoin(scheme_subsite_and_host, url)
-
-        return url
-
-
 class TagListNode(template.Node):
     """ Print available tags as text
     """
@@ -321,13 +207,21 @@ def sanitize_django_items(string):
 
 
 @register.simple_tag
-def main_page_url():
-    """ Gets the url to the main page """
-    if settings.SUBDOMAIN_IS_PROJECTNAME:
-        return settings.MAIN_HOST_NAME
-
-    else:
-        return "/"
+def google_group(group_name):
+    """Allows challenge admins to add google groups to pages"""
+    return mark_safe(
+        f"""
+    <iframe 
+        class="w-100"
+        id="forum_embed" 
+        data-groupname="{group_name}"
+        src="javascript:void(0)"
+        scrolling="no"
+        frameborder="0"
+        height="700px">
+    </iframe>
+    """
+    )
 
 
 @register.tag(
@@ -380,8 +274,17 @@ class ListDirNode(template.Node):
         return makeErrorMsgHtml(errormsg)
 
     def render(self, context):
-        challenge_short_name = context["currentpage"].challenge.short_name
-        projectpath = challenge_short_name + "/" + self.path
+        challenge: Challenge = context["currentpage"].challenge
+
+        try:
+            projectpath = safe_join(
+                challenge.get_project_data_folder(), self.path
+            )
+        except SuspiciousFileOperation:
+            return self.make_dataset_error_msg(
+                "path is outside the challenge folder."
+            )
+
         storage = DefaultStorage()
         try:
             filenames = storage.listdir(projectpath)[1]
@@ -396,9 +299,9 @@ class ListDirNode(template.Node):
         links = []
         for filename in filenames:
             downloadlink = reverse(
-                "serving:challenge-file",
+                "root-serving:challenge-file",
                 kwargs={
-                    "challenge_short_name": challenge_short_name,
+                    "challenge_name": challenge.short_name,
                     "path": f"{self.path}/{filename}",
                 },
             )
@@ -460,14 +363,13 @@ def insert_file(parser, token):
         args = {}
         filename = all_args[0]
         args["file"] = add_quotes(filename)
-    replacer = HtmlLinkReplacer()
-    return InsertFileNode(args, replacer, parser)
+
+    return InsertFileNode(args, parser)
 
 
 class InsertFileNode(template.Node):
-    def __init__(self, args, replacer, parser):
+    def __init__(self, args, parser):
         self.args = args
-        self.replacer = replacer
         self.parser = parser
 
     def make_error_msg(self, msg):
@@ -477,58 +379,6 @@ class InsertFileNode(template.Node):
         errormsg = "Error including file"
         return makeErrorMsgHtml(errormsg)
 
-    def is_inside_project_data_folder(self, folder, project):
-        """ For making sure nosey people do not use too many ../../../ in paths
-        to snoop around in the filesystem.
-        
-        folder: string containing a filepath
-        project: a comicsite object
-        """
-        data_folder = project.get_project_data_folder()
-        folder = self.make_canonical_path(folder)
-        data_folder = self.make_canonical_path(data_folder)
-        if folder.startswith(data_folder):
-            return True
-
-        else:
-            return False
-
-    def make_canonical_path(self, path):
-        """ Make this a nice path, with / separators
-        
-        """
-        path = path.replace("\\\\", "/")
-        return path.replace("\\", "/")
-
-    def replace_links(self, filename, contents, currentpage):
-        """Relative urls which work on disk might not
-        work properly when used in included file. Make sure any links in contents
-        still point to the right place 
-        
-        """
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse(
-            "pages:insert-detail",
-            kwargs={
-                "challenge_short_name": currentpage.challenge.short_name,
-                "page_title": currentpage.title,
-                "dropboxpath": "remove",
-            },
-        )
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link.
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = (
-            ntpath.dirname(filename) + "/"
-        )  # path of currently inserted file
-        replaced = self.replacer.replace_links(
-            contents, base_url, current_path
-        )
-        html_out = replaced
-        return html_out
-
     def render(self, context):
         # text typed in the tag
         token = self.args["file"]
@@ -537,19 +387,14 @@ class InsertFileNode(template.Node):
         except PathResolutionException as e:
             return self.make_error_msg(f"Path Resolution failed: {e}")
 
-        challenge_short_name = context["site"].short_name
-        filepath = os.path.join(
-            settings.MEDIA_ROOT, challenge_short_name, filename
-        )
-        filepath = os.path.abspath(filepath)
-        filepath = self.make_canonical_path(filepath)
-        # when all rendering is done, check if the final path is still not getting
-        # into places it should not go.
-        if not self.is_inside_project_data_folder(filepath, context["site"]):
-            error_msg = "'{}' cannot be opened because it is outside the current project.".format(
-                filepath
+        challenge = context["site"]
+
+        try:
+            filepath = safe_join(challenge.get_project_data_folder(), filename)
+        except SuspiciousFileOperation:
+            return self.make_error_msg(
+                f"'{filename}' cannot be opened because it is outside the current challenge."
             )
-            return self.make_error_msg(error_msg)
 
         storage = DefaultStorage()
 
@@ -560,23 +405,8 @@ class InsertFileNode(template.Node):
             return self.make_error_msg("error opening file:" + str(e))
 
         # TODO check content safety
-        # For some special pages like login and signup, there is no current page
-        # In that case just don't try any link rewriting
 
-        if "currentpage" in context:
-            currentpage = context["currentpage"]
-        else:
-            currentpage = None
-
-        if currentpage and os.path.splitext(filename)[1] != ".css":
-            html_out = self.replace_links(
-                filename, contents, currentpage
-            ).decode()
-        # rewrite relative links
-        else:
-            html_out = contents
-
-        return html_out
+        return contents
 
 
 @register.tag(name="insert_graph")
@@ -605,14 +435,12 @@ def insert_graph(parser, token):
             args["type"] = all_args[1].split(":")[1]
         else:
             args["type"] = "anode09"  # default
-    replacer = HtmlLinkReplacer()
-    return InsertGraphNode(args, replacer)
+    return InsertGraphNode(args)
 
 
 class InsertGraphNode(template.Node):
-    def __init__(self, args, replacer):
+    def __init__(self, args):
         self.args = args
-        self.replacer = replacer
 
     def make_error_msg(self, msg):
         logger.error(
@@ -643,10 +471,15 @@ class InsertGraphNode(template.Node):
             )
             return self.make_error_msg(error_msg)
 
-        challenge_short_name = context["currentpage"].challenge.short_name
-        filename = os.path.join(
-            settings.MEDIA_ROOT, challenge_short_name, filename_clean
-        )
+        challenge: Challenge = context["currentpage"].challenge
+
+        try:
+            filename = safe_join(
+                challenge.get_project_data_folder(), filename_clean
+            )
+        except SuspiciousFileOperation:
+            return self.make_error_msg("file is outside the challenge folder.")
+
         storage = DefaultStorage()
         try:
             contents = storage.open(filename, "r").read()
@@ -654,25 +487,7 @@ class InsertGraphNode(template.Node):
             return self.make_error_msg(str(e))
 
         # TODO check content safety
-        # any relative link inside included file has to be replaced to make it work within the COMIC
-        # context.
-        base_url = reverse(
-            "pages:insert-detail",
-            kwargs={
-                "challenge_short_name": context[
-                    "currentpage"
-                ].challenge.short_name,
-                "page_title": context["currentpage"].title,
-                "dropboxpath": "remove",
-            },
-        )
-        # for some reason reverse matching does not work for emtpy dropboxpath (maybe views.dropboxpage
-        # throws an error?. Workaround is to add 'remove' as path and chop this off the returned link
-        # nice.
-        base_url = base_url[:-7]  # remove "remove/" from baseURL
-        current_path = (
-            ntpath.dirname(filename_clean) + "/"
-        )  # path of currently inserted file
+
         try:
             render_function = getrenderer(self.args["type"])
         # (table,headers) = read_function(filename)
@@ -842,13 +657,13 @@ def render_anode09_table(filename):
     table_id = id_generator()
     tableHTML = (
         """<table border=1 class = "comictable csvtable sortable" id="%s">
-                <thead><tr>
-                    <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-                    <td align=center width='54'>1/4</td>
-                    <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-                    <td align=center width='54'>2</td><td align=center width='54'>4</td>
-                    <td align=center width='54'>8</td><td align=center width='54'>average</td>
-                </tr></thead>"""
+                    <thead><tr>
+                        <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                        <td align=center width='54'>1/4</td>
+                        <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                        <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                        <td align=center width='54'>8</td><td align=center width='54'>average</td>
+                    </tr></thead>"""
         % table_id
     )
     tableHTML = tableHTML + "<tbody>"
@@ -929,7 +744,7 @@ def parse_php_arrays(filename):
             if result is None:
                 msg = (
                     "Could not match regex pattern '%s' to '%s'\
-                                            "
+                                                "
                     % (phpvar.pattern, var)
                 )
                 continue
@@ -937,7 +752,7 @@ def parse_php_arrays(filename):
             if len(result.groups()) != 2:
                 msg = (
                     "Expected to find  varname and content,\
-                              but regex '%s' found %d items:%s "
+                                  but regex '%s' found %d items:%s "
                     % (
                         phpvar.pattern,
                         len(result.groups()),

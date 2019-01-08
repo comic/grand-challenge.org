@@ -5,6 +5,7 @@ echo "Press Ctrl+C (once) to stop"
 sleep 1
 
 export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
+export TRAVIS_BRANCH=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//")
 
 make build
 

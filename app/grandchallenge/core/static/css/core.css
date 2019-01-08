@@ -191,9 +191,13 @@ table.dataTable {
 
 /* resultsTable styling */
 
-div#resultsTable_wrapper div.col-sm-12 {
+div#resultsTable_wrapper {
     font-size: 0.8em;
     line-height: 1.1em;
+}
+
+div#resultsTable_wrapper button.btn {
+    font-size: 1em;
 }
 
 div#pageContainer {
@@ -218,4 +222,49 @@ dl.inline dt {
 
 dl.inline dt:after {
     content: ":";
+}
+
+/* Fix display of error messages on forms. See: https://github.com/twbs/bootstrap/issues/23454 */
+.invalid-feedback {
+  display: block;
+}
+
+
+/* hide sorting arrows in second hidden header of datatable */
+div.dataTables_scrollBody table.dataTable thead .sorting:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_asc:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_desc:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_asc_disabled:before, 
+div.dataTables_scrollBody table.dataTable thead .sorting_desc_disabled:before {
+  content: '';
+}
+
+/* float seach box of datatables to the right of metric-toggling box */
+div.dataTables_wrapper div.dataTables_filter {
+  float: right;
+}
+
+/* Fix button group in datatable */
+div.table-responsive .btn {
+  border-radius: .25rem;
+}
+
+div.table-responsive .dt-button-collection-title {
+  display: none;
+}
+
+.btn-group .btn+.btn, 
+.btn-group .btn+.btn-group, 
+.btn-group .btn-group+.btn
+.btn-group .btn-group+.btn-group,
+.btn-group-vertical .btn+.btn,
+.btn-group-vertical .btn+.btn-group,
+.btn-group-vertical .btn-group+.btn,
+.btn-group-vertical .btn-group+.btn-group,
+.dropdown-menu+.btn {
+  margin-left: -3px;
+}
+
+div.table-responsive .dropdown-menu .dropdown-item {
+  font-size: 0.9em;
 }

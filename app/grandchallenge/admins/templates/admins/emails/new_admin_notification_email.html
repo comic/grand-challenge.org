@@ -3,7 +3,7 @@
 {% autoescape off %}
     Dear {{ new_admin.username }},
 
-    <p>You have been made admin of the project <a href="{% url 'challenge-homepage' challenge.short_name %}">{{ challenge.short_name }}</a> on {{ site.domain }}.</p>
+    <p>You have been made admin of the project <a href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a> on {{ site.domain }}.</p>
 
     <p>When you are logged in to {{ site.name }}, the admin button will now appear in the {{ challenge.short_name }} site menu.</p>
 

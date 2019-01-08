@@ -10,7 +10,7 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 

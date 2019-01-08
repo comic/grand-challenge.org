@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from tests.utils import validate_admin_only_text_in_page
 
 
@@ -17,10 +17,15 @@ from tests.utils import validate_admin_only_text_in_page
 def test_admins_see_links(view, client, TwoChallengeSets):
     url = reverse(
         "challenge-homepage",
-        args=[TwoChallengeSets.ChallengeSet1.challenge.short_name],
+        kwargs={
+            "challenge_short_name": TwoChallengeSets.ChallengeSet1.challenge.short_name
+        },
     )
     expected = reverse(
-        view, args=[TwoChallengeSets.ChallengeSet1.challenge.short_name]
+        view,
+        kwargs={
+            "challenge_short_name": TwoChallengeSets.ChallengeSet1.challenge.short_name
+        },
     )
     validate_admin_only_text_in_page(
         url=url,

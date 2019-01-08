@@ -1,6 +1,7 @@
 import base64
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
@@ -22,6 +23,11 @@ class Command(BaseCommand):
         """
         Creates the main project, demo user and demo challenge
         """
+        # Set the default domain that is used in RequestFactory
+        site = Site.objects.get(pk=settings.SITE_ID)
+        site.domain = "gc.localhost"
+        site.save()
+
         challenge, created = Challenge.objects.get_or_create(
             short_name=settings.MAIN_PROJECT_NAME,
             description="main project",
@@ -98,10 +104,26 @@ class Command(BaseCommand):
             job = Job.objects.create(submission=submission, method=method)
 
             Result.objects.create(
-                challenge=demo, metrics={"acc": 0.5}, job=job
+                challenge=demo,
+                metrics={
+                    "acc": {"mean": 0.5, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                },
+                job=job,
             )
 
-            demo.evaluation_config.score_jsonpath = "acc"
+            demo.evaluation_config.score_title = "Accuracy ± std"
+            demo.evaluation_config.score_jsonpath = "acc.mean"
+            demo.evaluation_config.score_error_jsonpath = "acc.std"
+            demo.evaluation_config.extra_results_columns = [
+                {
+                    "title": "Dice ± std",
+                    "path": "dice.mean",
+                    "error_path": "dice.std",
+                    "order": "desc",
+                }
+            ]
+
             demo.evaluation_config.save()
 
             ex_challenge = ExternalChallenge.objects.create(

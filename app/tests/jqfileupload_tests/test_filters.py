@@ -25,14 +25,20 @@ def test_upload_duplicate_images(rf: RequestFactory):
 
     response = widget1.handle_ajax(
         upload_session.single_chunk_upload(
-            rf, "test_duplicate_filename.txt", content, widget1.ajax_target_path
+            rf,
+            "test_duplicate_filename.txt",
+            content,
+            widget1.ajax_target_path,
         )
     )
     assert response.status_code == 200
 
     response = widget1.handle_ajax(
         upload_session.single_chunk_upload(
-            rf, "test_duplicate_filename.txt", content, widget1.ajax_target_path
+            rf,
+            "test_duplicate_filename.txt",
+            content,
+            widget1.ajax_target_path,
         )
     )
     assert response.status_code == 403

@@ -1,7 +1,7 @@
 import pytest
 from django.core import mail
 
-from grandchallenge.core.urlresolvers import reverse
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.participants.models import RegistrationRequest
 from tests.factories import UserFactory, RegistrationRequestFactory
 from tests.utils import get_view_for_user
@@ -31,7 +31,7 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
         email = mail.outbox[-1]
         approval_link = reverse(
             "participants:registration-list",
-            args=[ChallengeSet.challenge.short_name],
+            kwargs={"challenge_short_name": ChallengeSet.challenge.short_name},
         )
         assert ChallengeSet.admin.email in email.to
         assert "New participation request" in email.subject

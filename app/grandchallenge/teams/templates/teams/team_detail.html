@@ -38,7 +38,7 @@
                 {{ tm.user|user_profile_link }}
                 {% if "change_team" in team_perms and tm.user != object.owner %}
                     <form method="post"
-                          action="{% url 'teams:member-delete' site.short_name tm.pk %}">
+                          action="{% url 'teams:member-delete' challenge_short_name=site.short_name pk=tm.pk %}">
                         {% csrf_token %}
                         <button type="submit"
                                 class="btn btn-danger">
@@ -55,11 +55,11 @@
 
     {% if "change_team" in team_perms or "change_challenge" in challenge_perms %}
         <h3>Team Owner Settings</h3>
-        <a href="{% url 'teams:update' site.short_name object.pk %}"
+        <a href="{% url 'teams:update' challenge_short_name=site.short_name pk=object.pk %}"
            class="btn btn-primary">Edit
             Team</a>
         <form method="post"
-              action="{% url 'teams:delete' site.short_name object.pk %}">
+              action="{% url 'teams:delete' challenge_short_name=site.short_name pk=object.pk %}">
             {% csrf_token %}
             <button type="submit"
                     class="btn btn-danger">
@@ -73,7 +73,7 @@
         <h3>Team Member Settings</h3>
 
         <form method="post"
-              action="{% url 'teams:member-delete' site.short_name user_team.pk %}">
+              action="{% url 'teams:member-delete' challenge_short_name=site.short_name pk=user_team.pk %}">
             {% csrf_token %}
             <button type="submit"
                     class="btn btn-danger">

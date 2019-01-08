@@ -13,7 +13,7 @@ def get_classes(csvfile: str):
 
 def write_metrics(metrics: dict):
     with open("/output/metrics.json", "w") as f:
-        f.write(json.dumps(metrics, ensure_ascii=True))
+        f.write(json.dumps(metrics, ensure_ascii=True, indent=2))
 
 
 if __name__ == "__main__":

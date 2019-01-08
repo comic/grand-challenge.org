@@ -1,10 +1,8 @@
-
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.datasets.forms import (
     ImageSetUpdateForm,
     AnnotationSetForm,
@@ -14,6 +12,7 @@ from grandchallenge.datasets.forms import (
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
+from grandchallenge.subdomains.utils import reverse
 
 
 class ImageSetList(UserIsStaffMixin, ChallengeFilteredQuerysetMixin, ListView):
@@ -37,13 +36,7 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse(
-            "datasets:imageset-detail",
-            kwargs={
-                "challenge_short_name": self.kwargs["challenge_short_name"],
-                "pk": self.kwargs["pk"],
-            },
-        )
+        return self.object.imageset.get_absolute_url()
 
 
 class ImageSetUpdate(UserIsStaffMixin, UpdateView):
@@ -122,13 +115,7 @@ class AddImagesToAnnotationSet(
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse(
-            "datasets:annotationset-detail",
-            kwargs={
-                "challenge_short_name": self.kwargs["challenge_short_name"],
-                "pk": self.kwargs["pk"],
-            },
-        )
+        return self.object.annotationset.get_absolute_url()
 
 
 class AnnotationSetUpdateLabels(
@@ -145,15 +132,6 @@ class AnnotationSetUpdateLabels(
             form.instance.labels = process_csv_file(f)
 
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse(
-            "datasets:annotationset-detail",
-            kwargs={
-                "challenge_short_name": self.kwargs["challenge_short_name"],
-                "pk": self.kwargs["pk"],
-            },
-        )
 
 
 class AnnotationSetUpdate(UserIsStaffMixin, UpdateView):

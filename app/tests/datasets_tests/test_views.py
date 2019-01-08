@@ -1,8 +1,8 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.core.urlresolvers import reverse
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.test_background_tasks import (
     create_raw_upload_image_session
 )
@@ -10,8 +10,8 @@ from tests.factories import (
     UserFactory,
     SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
-    ImageSetFactory,
 )
+from tests.utils import get_http_host
 
 
 @pytest.mark.django_db
@@ -38,7 +38,9 @@ def test_imageset_add_images(client, settings):
         images, imageset=imageset
     )
 
-    response = client.get(imageset.get_absolute_url())
+    url, kwargs = get_http_host(url=imageset.get_absolute_url(), kwargs={})
+
+    response = client.get(url, **kwargs)
 
     assert "image10x10x10.mhd" in response.rendered_content
     assert str(session.pk) in response.rendered_content
@@ -69,10 +71,14 @@ def test_annotationset_creation(client, settings):
         },
     )
 
-    response = client.get(url)
+    url, kwargs = get_http_host(url=url, kwargs={})
+
+    response = client.get(url, **kwargs)
     assert response.status_code == 200
 
-    response = client.post(url, data={"kind": AnnotationSet.GROUNDTRUTH})
+    response = client.post(
+        url, data={"kind": AnnotationSet.GROUNDTRUTH}, **kwargs
+    )
     assert response.status_code == 302
 
     annotationset = AnnotationSet.objects.get(
@@ -94,7 +100,11 @@ def test_annotationset_creation(client, settings):
         images, annotationset=annotationset
     )
 
-    response = client.get(annotationset.get_absolute_url())
+    url, kwargs = get_http_host(
+        url=annotationset.get_absolute_url(), kwargs={}
+    )
+
+    response = client.get(url, **kwargs)
 
     assert "image10x10x10.mhd" in response.rendered_content
     assert str(session.pk) in response.rendered_content

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Tuple, Type
 
 from django.conf import settings
@@ -75,8 +76,14 @@ class ContainerExecJobModel(models.Model):
         raise NotImplementedError
 
     def schedule_job(self):
+
+        kwargs = {"task_id": str(self.pk)}
+
+        if self.container.requires_gpu:
+            kwargs.update({"queue": "gpu"})
+
         execute_job.apply_async(
-            task_id=str(self.pk),
+            **kwargs,
             kwargs={
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
@@ -107,20 +114,32 @@ class ContainerImageModel(models.Model):
     image = models.FileField(
         blank=True,
         upload_to=docker_image_path,
-        validators=[ExtensionValidator(allowed_extensions=(".tar",))],
+        validators=[
+            ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
+        ],
         help_text=(
-            "Tar archive of the container image produced from the command "
-            "`docker save IMAGE > IMAGE.tar`. See "
+            ".tar.gz archive of the container image produced from the command "
+            "'docker save IMAGE > IMAGE.tar | gzip'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
+
     image_sha256 = models.CharField(editable=False, max_length=71)
+
     ready = models.BooleanField(
         default=False,
         editable=False,
         help_text="Is this image ready to be used?",
     )
     status = models.TextField(editable=False)
+
+    requires_gpu = models.BooleanField(default=False)
+    requires_gpu_memory_gb = models.PositiveIntegerField(default=4)
+    requires_memory_gb = models.PositiveIntegerField(default=4)
+    # Support up to 99.99 cpu cores
+    requires_cpu_cores = models.DecimalField(
+        default=Decimal("1.0"), max_digits=4, decimal_places=2
+    )
 
     class Meta:
         abstract = True
