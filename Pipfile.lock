@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5851ce8401113288ea8bba4d53f4b76da683f03400e9371d1ad4585da2e1c79c"
+            "sha256": "a560ba3e072d4549b613afa75aa21a9ddbb8bc2cb6f51aae5bea31b8a7f69c9c"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -614,6 +614,13 @@
             ],
             "version": "==2.21.0"
         },
+        "requests-file": {
+            "hashes": [
+                "sha256:75c175eed739270aec3c5279ffd74e6527dada275c5c0d76b5817e9c86bb7dea",
+                "sha256:8f04aa6201bacda0567e7ac7f677f1499b0fc76b22140c54bc06edf1ba92e2fa"
+            ],
+            "version": "==1.4.3"
+        },
         "requests-oauthlib": {
             "hashes": [
                 "sha256:8886bfec5ad7afb391ed5443b1f697c6f4ae98d0e5620839d8b4499c032ada3f",
@@ -699,6 +706,14 @@
             ],
             "index": "pypi",
             "version": "==2019.1.4"
+        },
+        "tldextract": {
+            "hashes": [
+                "sha256:29797125db1f2e72ce2ee51f7a764ec8b1e6588812520795ffeae93bcd46bab4",
+                "sha256:84a0b275c262e34df7506e10767e357e8b5a755a3a620cdc2cfe035061f7806d"
+            ],
+            "index": "pypi",
+            "version": "==2.2.0"
         },
         "traitlets": {
             "hashes": [
