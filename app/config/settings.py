@@ -156,7 +156,7 @@ SESSION_COOKIE_SECURE = strtobool(
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web", "127.0.0.1"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web", ]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
