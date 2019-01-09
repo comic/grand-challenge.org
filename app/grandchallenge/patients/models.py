@@ -5,12 +5,12 @@ from grandchallenge.core.models import UUIDModel
 
 
 class Patient(UUIDModel):
-    SexChoices = (('M', 'Male'),
-                  ('F', 'Female'),
-                  ('O', 'Other'))
+    SexChoices = (("M", "Male"), ("F", "Female"), ("O", "Other"))
 
-    name = models.CharField(_("Name of Patient"), null=False, blank=False, max_length=255)
-    sex = models.CharField(max_length=1, choices=SexChoices, default='O')
+    name = models.CharField(
+        _("Name of Patient"), null=False, blank=False, max_length=255
+    )
+    sex = models.CharField(max_length=1, choices=SexChoices, default="O")
     height = models.IntegerField(null=False, blank=False)
 
     def __str__(self):

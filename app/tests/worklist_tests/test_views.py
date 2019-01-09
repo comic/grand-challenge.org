@@ -11,7 +11,9 @@ def test_worklist_list(client):
     inserted = WorklistFactory()
 
     staff_user = UserFactory(is_staff=True)
-    response = get_view_for_user(client=client, viewname="worklists:worklist-list", user=staff_user)
+    response = get_view_for_user(
+        client=client, viewname="worklists:worklist-list", user=staff_user
+    )
     assert str(inserted.id) in response.rendered_content
 
 
@@ -20,5 +22,7 @@ def test_worklist_set_list(client):
     inserted = WorklistSetFactory()
 
     staff_user = UserFactory(is_staff=True)
-    response = get_view_for_user(client=client, viewname="worklists:set-list", user=staff_user)
+    response = get_view_for_user(
+        client=client, viewname="worklists:set-list", user=staff_user
+    )
     assert str(inserted.id) in response.rendered_content

@@ -11,5 +11,7 @@ def test_study_list(client):
     inserted = StudyFactory()
 
     staff_user = UserFactory(is_staff=True)
-    response = get_view_for_user(client=client, viewname="studies:study-list", user=staff_user)
+    response = get_view_for_user(
+        client=client, viewname="studies:study-list", user=staff_user
+    )
     assert str(inserted.id) in response.rendered_content

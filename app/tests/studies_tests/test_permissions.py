@@ -23,7 +23,5 @@ def test_study_form_access(view, client):
         reverse_kwargs.update({"pk": study.pk})
 
     validate_staff_only_view(
-        viewname=view,
-        client=client,
-        reverse_kwargs=reverse_kwargs,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs
     )

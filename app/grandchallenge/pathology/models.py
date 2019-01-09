@@ -8,15 +8,27 @@ from grandchallenge.core.models import UUIDModel
 
 
 class PatientItem(UUIDModel):
-    patient = models.ForeignKey("patients.Patient", null=False, blank=False, on_delete=models.CASCADE)
-    study = models.ForeignKey("studies.Study", null=False, blank=False, on_delete=models.CASCADE)
+    patient = models.ForeignKey(
+        "patients.Patient", null=False, blank=False, on_delete=models.CASCADE
+    )
+    study = models.ForeignKey(
+        "studies.Study", null=False, blank=False, on_delete=models.CASCADE
+    )
 
 
 class StudyItem(UUIDModel):
-    study = models.ForeignKey("studies.Study", null=False, blank=False, on_delete=models.CASCADE)
-    image = models.ForeignKey("cases.Image", null=False, blank=False, on_delete=models.CASCADE)
+    study = models.ForeignKey(
+        "studies.Study", null=False, blank=False, on_delete=models.CASCADE
+    )
+    image = models.ForeignKey(
+        "cases.Image", null=False, blank=False, on_delete=models.CASCADE
+    )
 
 
 class WorklistItem(UUIDModel):
-    worklist = models.ForeignKey("worklists.Worklist", null=False, blank=False, on_delete=models.CASCADE)
-    image = models.ForeignKey("cases.Image", null=False, blank=False, on_delete=models.CASCADE)
+    worklist = models.ForeignKey(
+        "worklists.Worklist", null=False, blank=False, on_delete=models.CASCADE
+    )
+    image = models.ForeignKey(
+        "cases.Image", null=False, blank=False, on_delete=models.CASCADE
+    )

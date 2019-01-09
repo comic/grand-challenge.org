@@ -3,13 +3,18 @@ from django.views.generic.list import ListView
 from rest_framework import generics
 
 from grandchallenge.worklists.models import Worklist, WorklistSet
-from grandchallenge.worklists.serializer import WorklistSerializer, WorklistSetSerializer
+from grandchallenge.worklists.serializer import (
+    WorklistSerializer,
+    WorklistSetSerializer,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.worklists.forms import (WorklistCreateForm,
-                                            WorklistUpdateForm,
-                                            WorklistSetCreateForm,
-                                            WorklistSetUpdateForm)
+from grandchallenge.worklists.forms import (
+    WorklistCreateForm,
+    WorklistUpdateForm,
+    WorklistSetCreateForm,
+    WorklistSetUpdateForm,
+)
 
 """ Worklist """
 
@@ -34,7 +39,7 @@ class WorklistCreateView(UserIsStaffMixin, CreateView):
 
 class WorklistRemoveView(UserIsStaffMixin, DeleteView):
     model = Worklist
-    template_name = 'worklists/worklist_deletion_form.html'
+    template_name = "worklists/worklist_deletion_form.html"
 
     def get_success_url(self):
         return reverse("worklists:worklist-display")
@@ -51,7 +56,7 @@ class WorklistUpdateView(UserIsStaffMixin, UpdateView):
 class WorklistDisplayView(UserIsStaffMixin, ListView):
     model = Worklist
     paginate_by = 100
-    template_name = 'worklists/worklist_display_form.html'
+    template_name = "worklists/worklist_display_form.html"
 
 
 """ Worklist Set """
@@ -77,7 +82,7 @@ class WorklistSetCreateView(UserIsStaffMixin, CreateView):
 
 class WorklistSetRemoveView(UserIsStaffMixin, DeleteView):
     model = WorklistSet
-    template_name = 'worklists/worklistset_remove_form.html'
+    template_name = "worklists/worklistset_remove_form.html"
 
     def get_success_url(self):
         return reverse("worklists:set-display")
@@ -94,4 +99,4 @@ class WorklistSetUpdateView(UserIsStaffMixin, UpdateView):
 class WorklistSetDisplayView(UserIsStaffMixin, ListView):
     model = WorklistSet
     paginate_by = 100
-    template_name = 'worklists/worklistset_display_form.html'
+    template_name = "worklists/worklistset_display_form.html"

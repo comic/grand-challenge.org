@@ -13,7 +13,7 @@ class WorklistCreateForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "set", ]
+        fields = ["title", "set"]
 
 
 class WorklistUpdateForm(ModelForm):
@@ -24,7 +24,7 @@ class WorklistUpdateForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "set", ]
+        fields = ["title", "set"]
 
 
 class WorklistSetCreateForm(ModelForm):
@@ -35,7 +35,7 @@ class WorklistSetCreateForm(ModelForm):
 
     class Meta:
         model = WorklistSet
-        fields = ["title", ]
+        fields = ["title"]
 
 
 class WorklistSetUpdateForm(ModelForm):
@@ -46,4 +46,4 @@ class WorklistSetUpdateForm(ModelForm):
 
     class Meta:
         model = WorklistSet
-        fields = ["title", ]
+        fields = ["title"]

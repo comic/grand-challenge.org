@@ -8,7 +8,9 @@ from rest_framework.authtoken.models import Token
 from tests.factories import UserFactory
 
 
-def assert_api_crud(client, table_reverse, record_reverse, expected_table, object_factory):
+def assert_api_crud(
+    client, table_reverse, record_reverse, expected_table, object_factory
+):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
     record_url = reverse(record_reverse)
@@ -18,19 +20,27 @@ def assert_api_crud(client, table_reverse, record_reverse, expected_table, objec
 
     # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
+    record_fields = model_to_dict(
+        record, fields=[field.name for field in record._meta.fields]
+    )
     assert_record_deletion(client, record_url, token, record.id)
 
     # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(client, table_url, token, dict_to_json(record_fields))
+    new_record_id = assert_table_insert(
+        client, table_url, token, dict_to_json(record_fields)
+    )
 
     # Attempts to display the object
     assert_record_display(client, record_url, token, new_record_id)
 
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
-    record_fields = model_to_dict(record, fields=[field.name for field in record._meta.fields])
-    assert_record_update(client, record_url, token, dict_to_json(record_fields), record.id)
+    record_fields = model_to_dict(
+        record, fields=[field.name for field in record._meta.fields]
+    )
+    assert_record_update(
+        client, record_url, token, dict_to_json(record_fields), record.id
+    )
 
 
 def assert_table_access(client, url, token, expected):
@@ -55,7 +65,8 @@ def assert_table_insert(client, url, token, json_record):
         url,
         json_record,
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token)
+        HTTP_AUTHORIZATION="Token " + token,
+    )
     json_response = json.loads(response.content)
 
     assert response.status_code == 201
@@ -66,7 +77,8 @@ def assert_record_display(client, url, token, record_id):
     response = client.get(
         url + str(record_id) + "/",
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token)
+        HTTP_AUTHORIZATION="Token " + token,
+    )
     json_response = json.loads(response.content)
 
     assert response.status_code == 200
@@ -79,7 +91,8 @@ def assert_record_update(client, url, token, json_record, record_id):
         json_record,
         content_type="application/json",
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token)
+        HTTP_AUTHORIZATION="Token " + token,
+    )
 
     assert response.status_code == 200
 
@@ -88,7 +101,8 @@ def assert_record_deletion(client, url, token, record_id):
     response = client.delete(
         url + str(record_id) + "/",
         HTTP_ACCEPT="application/json",
-        HTTP_AUTHORIZATION="Token " + token)
+        HTTP_AUTHORIZATION="Token " + token,
+    )
 
     assert response.status_code == 204
 

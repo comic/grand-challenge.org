@@ -14,12 +14,12 @@ class PatientTable(generics.ListCreateAPIView):
 
     def get_queryset(self):
         # Get URL parameter as a string, if exists
-        ids = self.request.query_params.get('ids', None)
+        ids = self.request.query_params.get("ids", None)
 
         # Get snippets for ids if they exist
         if ids is not None:
             # Convert parameter string to list of integers
-            ids = [int(x) for x in ids.split(',')]
+            ids = [int(x) for x in ids.split(",")]
             # Get objects for all parameter ids
             queryset = Patient.objects.filter(pk__in=ids)
 

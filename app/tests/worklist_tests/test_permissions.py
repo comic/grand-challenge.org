@@ -23,9 +23,7 @@ def test_worklist_form_access(view, client):
         reverse_kwargs.update({"pk": worklist.pk})
 
     validate_staff_only_view(
-        viewname=view,
-        client=client,
-        reverse_kwargs=reverse_kwargs,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs
     )
 
 
@@ -46,7 +44,5 @@ def test_worklist_set_form_access(view, client):
         reverse_kwargs.update({"pk": set.pk})
 
     validate_staff_only_view(
-        viewname=view,
-        client=client,
-        reverse_kwargs=reverse_kwargs,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs
     )

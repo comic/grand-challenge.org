@@ -156,7 +156,7 @@ SESSION_COOKIE_SECURE = strtobool(
 CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web", ]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -437,7 +437,7 @@ LOGGING = {
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
-                      "%(process)d %(thread)d %(message)s"
+            "%(process)d %(thread)d %(message)s"
         }
     },
     "handlers": {
@@ -511,8 +511,8 @@ CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
 CONTAINER_EXEC_IO_SHA256 = (
     "sha256:3f53bb00af943dfdf815650be70c0fa7b426e56a66f5e3362b47a129d57d5991"
 )
-CONTAINER_EXEC_CPU_QUOTA = 100000
-CONTAINER_EXEC_CPU_PERIOD = 100000
+CONTAINER_EXEC_CPU_QUOTA = 100_000
+CONTAINER_EXEC_CPU_PERIOD = 100_000
 
 CELERY_BEAT_SCHEDULE = {
     "cleanup_stale_uploads": {
@@ -568,9 +568,9 @@ DISALLOWED_CHALLENGE_NAMES = [
 
 if MEDIA_ROOT[-1] != "/":
     msg = (
-            "MEDIA_ROOT setting should end in a slash. Found '"
-            + MEDIA_ROOT
-            + "'. Please add a slash"
+        "MEDIA_ROOT setting should end in a slash. Found '"
+        + MEDIA_ROOT
+        + "'. Please add a slash"
     )
     raise ImproperlyConfigured(msg)
 

@@ -16,7 +16,9 @@ class WorklistSet(UUIDModel):
 
 class Worklist(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
-    set = models.ForeignKey("WorklistSet", null=False, blank=False, on_delete=models.CASCADE)
+    set = models.ForeignKey(
+        "WorklistSet", null=False, blank=False, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))

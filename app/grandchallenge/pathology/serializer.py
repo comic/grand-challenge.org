@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from grandchallenge.pathology.models import WorklistItem, PatientItem, StudyItem
+from grandchallenge.pathology.models import (
+    WorklistItem,
+    PatientItem,
+    StudyItem,
+)
 
 
 class PatientItemSerializer(serializers.ModelSerializer):

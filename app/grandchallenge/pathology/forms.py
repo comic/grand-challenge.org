@@ -1,5 +1,9 @@
 from django.forms import ModelForm
-from grandchallenge.pathology.models import PatientItem, StudyItem, WorklistItem
+from grandchallenge.pathology.models import (
+    PatientItem,
+    StudyItem,
+    WorklistItem,
+)
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.worklists.models import Worklist
@@ -19,14 +23,9 @@ class PatientItemCreateForm(ModelForm):
 
     class Meta:
         model = PatientItem
-        fields = [
-            "patient",
-            "study",
-        ]
+        fields = ["patient", "study"]
 
-        widgets = {
-            "study": Select2MultipleWidget,
-        }
+        widgets = {"study": Select2MultipleWidget}
 
 
 class PatientItemUpdateForm(ModelForm):
@@ -37,14 +36,9 @@ class PatientItemUpdateForm(ModelForm):
 
     class Meta:
         model = PatientItem
-        fields = [
-            "patient",
-            "study",
-        ]
+        fields = ["patient", "study"]
 
-        widgets = {
-            "study": Select2MultipleWidget,
-        }
+        widgets = {"study": Select2MultipleWidget}
 
 
 """ Study Items """
@@ -58,14 +52,9 @@ class StudyItemCreateForm(ModelForm):
 
     class Meta:
         model = StudyItem
-        fields = [
-            "study",
-            "image",
-        ]
+        fields = ["study", "image"]
 
-        widgets = {
-            "image": Select2MultipleWidget,
-        }
+        widgets = {"image": Select2MultipleWidget}
 
 
 class StudyItemUpdateForm(ModelForm):
@@ -76,14 +65,9 @@ class StudyItemUpdateForm(ModelForm):
 
     class Meta:
         model = StudyItem
-        fields = [
-            "study",
-            "image",
-        ]
+        fields = ["study", "image"]
 
-        widgets = {
-            "image": Select2MultipleWidget,
-        }
+        widgets = {"image": Select2MultipleWidget}
 
 
 """ Worklist Items """
@@ -97,14 +81,9 @@ class WorklistItemCreateForm(ModelForm):
 
     class Meta:
         model = WorklistItem
-        fields = [
-            "worklist",
-            "image",
-        ]
+        fields = ["worklist", "image"]
 
-        widgets = {
-            "image": Select2MultipleWidget,
-        }
+        widgets = {"image": Select2MultipleWidget}
 
 
 class WorklistItemUpdateForm(ModelForm):
@@ -115,11 +94,6 @@ class WorklistItemUpdateForm(ModelForm):
 
     class Meta:
         model = WorklistItem
-        fields = [
-            "worklist",
-            "image",
-        ]
+        fields = ["worklist", "image"]
 
-        widgets = {
-            "image": Select2MultipleWidget,
-        }
+        widgets = {"image": Select2MultipleWidget}

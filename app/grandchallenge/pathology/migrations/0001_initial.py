@@ -9,50 +9,104 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('cases', '0007_auto_20180909_0513'),
-        ('patients', '0001_initial'),
-        ('studies', '0001_initial'),
-        ('worklists', '0001_initial'),
+        ("cases", "0007_auto_20180909_0513"),
+        ("patients", "0001_initial"),
+        ("studies", "0001_initial"),
+        ("worklists", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PatientItem',
+            name="PatientItem",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='patients.Patient')),
-                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='studies.Study')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.Patient",
+                    ),
+                ),
+                (
+                    "study",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="studies.Study",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='StudyItem',
+            name="StudyItem",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image')),
-                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='studies.Study')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "image",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="cases.Image",
+                    ),
+                ),
+                (
+                    "study",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="studies.Study",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='WorklistItem',
+            name="WorklistItem",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('image', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='cases.Image')),
-                ('worklist', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='worklists.Worklist')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "image",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="cases.Image",
+                    ),
+                ),
+                (
+                    "worklist",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="worklists.Worklist",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
     ]

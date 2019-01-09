@@ -23,7 +23,5 @@ def test_patient_form_access(view, client):
         reverse_kwargs.update({"pk": patient.pk})
 
     validate_staff_only_view(
-        viewname=view,
-        client=client,
-        reverse_kwargs=reverse_kwargs,
+        viewname=view, client=client, reverse_kwargs=reverse_kwargs
     )
