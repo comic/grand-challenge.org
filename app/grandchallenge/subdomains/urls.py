@@ -51,4 +51,20 @@ urlpatterns = [
         "media/",
         include("grandchallenge.serving.urls", namespace="challenge-serving"),
     ),
+    # Pathology support namespaces
+    path(
+        "pathology/",
+        include("grandchallenge.pathology.urls", namespace="pathology"),
+    ),
+    path(
+        "patients/",
+        include("grandchallenge.patients.urls", namespace="patients"),
+    ),
+    path(
+        "studies/", include("grandchallenge.studies.urls", namespace="studies")
+    ),
+    path(
+        "worklists/",
+        include("grandchallenge.worklists.urls", namespace="worklists"),
+    ),
 ]
