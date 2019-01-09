@@ -4,20 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ('cases', '0007_auto_20180909_0513'),
-    ]
+    dependencies = [("cases", "0007_auto_20180909_0513")]
 
     operations = [
         migrations.AddField(
-            model_name='image',
-            name='image_type',
-            field=models.CharField(choices=[('MHD', 'MHD'), ('TIFF', 'TIFF')], default=2, max_length=4),
+            model_name="image",
+            name="image_type",
+            field=models.CharField(
+                choices=[("MHD", "MHD"), ("TIFF", "TIFF")],
+                default=2,
+                max_length=4,
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='image',
-            name='resolution_levels',
+            model_name="image",
+            name="resolution_levels",
             field=models.IntegerField(null=True),
         ),
     ]

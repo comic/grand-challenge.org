@@ -108,7 +108,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         return data_file == "LOCAL"
 
     def convert_itk_file(
-            headers: Mapping[str, Union[str, None]], filename: Path
+        headers: Mapping[str, Union[str, None]], filename: Path
     ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
             simple_itk_image = sitk.ReadImage(str(filename.absolute()))

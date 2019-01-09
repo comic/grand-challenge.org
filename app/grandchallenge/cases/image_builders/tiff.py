@@ -24,33 +24,41 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         if not valid:
             invalid_file_errors[file.name] = message
         else:
-            new_images.append(create_tiff_image_entry(file.name, file.absolute()))
-            new_image_files.append(ImageFile(
-                image=new_images[-1],
-                file=File(open(file.absolute(), "rb"), name=file.name)))
+            new_images.append(
+                create_tiff_image_entry(file.name, file.absolute())
+            )
+            new_image_files.append(
+                ImageFile(
+                    image=new_images[-1],
+                    file=File(open(file.absolute(), "rb"), name=file.name),
+                )
+            )
             consumed_files.add(file.name)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
         file_errors_map=invalid_file_errors,
         new_images=new_images,
-        new_image_files=new_image_files, )
+        new_image_files=new_image_files,
+    )
 
 
 def validate_tiff(path: Path):
-    accepted_color_models = {"PHOTOMETRIC.MINISBLACK": 1,
-                             "PHOTOMETRIC.RGB": 3,
-                             "PHOTOMETRIC.ARGB": 4,
-                             "PHOTOMETRIC.YCBCR": 4, }
+    accepted_color_models = {
+        "PHOTOMETRIC.MINISBLACK": 1,
+        "PHOTOMETRIC.RGB": 3,
+        "PHOTOMETRIC.ARGB": 4,
+        "PHOTOMETRIC.YCBCR": 4,
+    }
 
-    required_tile_tags = ("TileWidth",
-                          "TileLength",
-                          "TileOffsets",
-                          "TileByteCounts",)
+    required_tile_tags = (
+        "TileWidth",
+        "TileLength",
+        "TileOffsets",
+        "TileByteCounts",
+    )
 
-    forbidden_description_tags = ("DICOM",
-                                  "XML",
-                                  "xml",)
+    forbidden_description_tags = ("DICOM", "XML", "xml")
 
     try:
         # Reads the TIF tags
@@ -73,14 +81,24 @@ def validate_tiff(path: Path):
             return False, "Image only has a single resolution level"
 
         if str(tif_tags["PlanarConfiguration"].value) != "PLANARCONFIG.CONTIG":
-            return False, "Image planar configuration isn't configured as 'Chunky' format"
+            return (
+                False,
+                "Image planar configuration isn't configured as 'Chunky' format",
+            )
 
         # Checks colour model information
-        if str(tif_tags["PhotometricInterpretation"].value) not in accepted_color_models:
+        if (
+            str(tif_tags["PhotometricInterpretation"].value)
+            not in accepted_color_models
+        ):
             return False, "Image utilizes an invalid color model"
 
-        if (accepted_color_models[str(tif_tags["PhotometricInterpretation"].value)]
-                != tif_tags["SamplesPerPixel"].value):
+        if (
+            accepted_color_models[
+                str(tif_tags["PhotometricInterpretation"].value)
+            ]
+            != tif_tags["SamplesPerPixel"].value
+        ):
             return False, ""
 
         # Check type information
@@ -118,6 +136,6 @@ def create_tiff_image_entry(filename, path: Path):
         depth=None,
         resolution_levels=len(tiff_file.pages),
         color_space=color_space,
-        image_type="TIFF"
+        image_type="TIFF",
     )
     return new_image

@@ -140,10 +140,7 @@ class Image(UUIDModel):
     IMAGE_TYPE_MHD = "MHD"
     IMAGE_TYPE_TIFF = "TIFF"
 
-    IMAGE_TYPES = (
-        (IMAGE_TYPE_MHD, "MHD"),
-        (IMAGE_TYPE_TIFF, "TIFF"),
-    )
+    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
 
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
@@ -170,8 +167,12 @@ class Image(UUIDModel):
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
-    color_space = models.CharField(max_length=4, blank=False, choices=COLOR_SPACES)
-    image_type = models.CharField(max_length=4, blank=False, choices=IMAGE_TYPES)
+    color_space = models.CharField(
+        max_length=4, blank=False, choices=COLOR_SPACES
+    )
+    image_type = models.CharField(
+        max_length=4, blank=False, choices=IMAGE_TYPES
+    )
 
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
