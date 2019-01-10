@@ -39,7 +39,7 @@ class WorklistCreateView(UserIsStaffMixin, CreateView):
 
 class WorklistRemoveView(UserIsStaffMixin, DeleteView):
     model = Worklist
-    template_name = "worklists/worklist_deletion_form.html"
+    template_name = "worklists/worklist_remove_form.html"
 
     def get_success_url(self):
         return reverse("worklists:worklist-display")
