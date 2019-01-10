@@ -4,88 +4,86 @@ from grandchallenge.pathology import views
 app_name = "pathology"
 urlpatterns = [
     path(
-        "patient_items/",
-        views.PatientItemTable.as_view(),
-        name="patient-items",
+        "patient_item/", views.PatientItemTable.as_view(), name="patient-items"
     ),
     path(
-        "patient_items/<uuid:pk>/",
+        "patient_item/<uuid:pk>/",
         views.PatientItemRecord.as_view(),
         name="patient-item",
     ),
     path(
-        "patient_items/create/",
+        "patient_item/create/",
         views.PatientItemCreateView.as_view(),
         name="patient-item-create",
     ),
     path(
-        "patient_items/remove/<uuid:pk>/",
+        "patient_item/remove/<uuid:pk>/",
         views.PatientItemRemoveView.as_view(),
         name="patient-item-remove",
     ),
     path(
-        "patient_items/update/<uuid:pk>/",
+        "patient_item/update/<uuid:pk>/",
         views.PatientItemUpdateView.as_view(),
         name="patient-item-update",
     ),
     path(
-        "patient_items/display/",
+        "patient_item/display/",
         views.PatientItemDisplayView.as_view(),
         name="patient-item-display",
     ),
-    path("study_items/", views.StudyItemTable.as_view(), name="study-items"),
+    path("study_item/", views.StudyItemTable.as_view(), name="study-items"),
     path(
-        "study_items/<uuid:pk>/",
+        "study_item/<uuid:pk>/",
         views.StudyItemRecord.as_view(),
         name="study-item",
     ),
     path(
-        "study_items/create/",
+        "study_item/create/",
         views.StudyItemCreateView.as_view(),
         name="study-item-create",
     ),
     path(
-        "study_items/remove/<uuid:pk>/",
+        "study_item/remove/<uuid:pk>/",
         views.StudyItemRemoveView.as_view(),
         name="study-item-remove",
     ),
     path(
-        "study_items/update/<uuid:pk>/",
+        "study_item/update/<uuid:pk>/",
         views.StudyItemUpdateView.as_view(),
         name="study-item-update",
     ),
     path(
-        "study_items/display/",
+        "study_item/display/",
         views.StudyItemDisplayView.as_view(),
         name="study-item-display",
     ),
     path(
-        "worklist_items/",
+        "worklist_item/",
         views.WorklistItemTable.as_view(),
         name="worklist-items",
     ),
     path(
-        "worklist_items/<uuid:pk>/",
+        "worklist_item/<uuid:pk>/",
         views.WorklistItemRecord.as_view(),
         name="worklist-item",
     ),
     path(
-        "worklist_items/create/",
+        "worklist_item/create/",
         views.WorklistItemCreateView.as_view(),
         name="worklist-item-create",
     ),
     path(
-        "worklist_items/remove/<uuid:pk>/",
+        "worklist_item/remove/<uuid:pk>/",
         views.WorklistItemRemoveView.as_view(),
         name="worklist-item-remove",
     ),
     path(
-        "worklist_items/update/<uuid:pk>/",
+        "worklist_item/update/<uuid:pk>/",
         views.WorklistItemUpdateView.as_view(),
         name="worklist-item-update",
     ),
     path(
-        "worklist_items/display/",
+        "worklist_item/display/",
         views.WorklistItemDisplayView.as_view(),
         name="worklist-item-display",
     ),
