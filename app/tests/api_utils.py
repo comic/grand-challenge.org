@@ -1,9 +1,9 @@
 import json
 
 from django.forms.models import model_to_dict
-from django.urls import reverse
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
+from grandchallenge.subdomains.utils import reverse
 
 from tests.factories import UserFactory
 
