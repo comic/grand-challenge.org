@@ -7,6 +7,7 @@ from django.core.files import File
 
 import tifffile as tiff_lib
 import traceback
+import sys
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
@@ -111,6 +112,7 @@ def validate_tiff(path: Path):
 
         return True, ""
     except Exception as e:
+        traceback.print_exc(file=sys.stdout)
         return False, str(e)
 
 
