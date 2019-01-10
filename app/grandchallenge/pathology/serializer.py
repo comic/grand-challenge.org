@@ -21,4 +21,4 @@ class StudyItemSerializer(serializers.ModelSerializer):
 class WorklistItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorklistItem
-        fields = ("id", "worklist", "study")
+        fields = ("id", "worklist", "image")

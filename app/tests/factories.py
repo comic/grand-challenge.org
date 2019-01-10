@@ -11,11 +11,7 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
-from grandchallenge.pathology.models import (
-    PatientItem,
-    StudyItem,
-    WorklistItem,
-)
+from grandchallenge.pathology.models import PatientItem, StudyItem, WorklistItem,
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 from grandchallenge.worklists.models import Worklist, WorklistSet
