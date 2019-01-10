@@ -111,7 +111,6 @@ def validate_tiff(path: Path):
 
         return True, ""
     except Exception as e:
-        traceback.print_exc()
         return False, str(e)
 
 
