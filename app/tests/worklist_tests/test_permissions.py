@@ -10,15 +10,15 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "worklists:worklist-list",
         "worklists:worklist-create",
+        "worklists:worklist-remove",
         "worklists:worklist-update",
-        "worklists:worklist-delete",
+        "worklists:worklist-display",
     ],
 )
 def test_worklist_form_access(view, client):
     reverse_kwargs = {}
-    if view in ("worklists:worklist-update", "worklists:worklist-delete"):
+    if view in ("worklists:worklist-update", "worklists:worklist-remove"):
         worklist = WorklistFactory()
         reverse_kwargs.update({"pk": worklist.pk})
 
@@ -31,15 +31,15 @@ def test_worklist_form_access(view, client):
 @pytest.mark.parametrize(
     "view",
     [
-        "worklists:set-list",
         "worklists:set-create",
+        "worklists:set-remove",
         "worklists:set-update",
-        "worklists:set-delete",
+        "worklists:set-display",
     ],
 )
 def test_worklist_set_form_access(view, client):
     reverse_kwargs = {}
-    if view in ("worklists:set-update", "worklists:set-delete"):
+    if view in ("worklists:set-update", "worklists:set-remove"):
         set = WorklistSetFactory()
         reverse_kwargs.update({"pk": set.pk})
 

@@ -10,10 +10,10 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "studies:study-list",
         "studies:study-create",
+        "studies:study-remove",
         "studies:study-update",
-        "studies:study-delete",
+        "studies:study-display",
     ],
 )
 def test_study_form_access(view, client):

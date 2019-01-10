@@ -12,6 +12,6 @@ def test_patient_list(client):
 
     staff_user = UserFactory(is_staff=True)
     response = get_view_for_user(
-        client=client, viewname="patients:patient-list", user=staff_user
+        client=client, viewname="patients:patient-display", user=staff_user
     )
     assert str(inserted.id) in response.rendered_content

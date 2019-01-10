@@ -10,10 +10,10 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "patients:patient-list",
         "patients:patient-create",
+        "patients:patient-remove",
         "patients:patient-update",
-        "patients:patient-delete",
+        "patients:patient-display",
     ],
 )
 def test_patient_form_access(view, client):
