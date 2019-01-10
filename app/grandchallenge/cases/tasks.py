@@ -114,7 +114,7 @@ def store_image(image: Image, all_image_files: Sequence[ImageFile]):
         af.save()
 
 
-IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd, image_builder_tiff]
+IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd]
 
 
 def remove_duplicate_files(
