@@ -210,7 +210,6 @@ class DataView(APIView):
         GA = "GA"
         ALL = "all"
 
-
     @staticmethod
     def coordinate_to_dict(coordinate):
         return {"x": coordinate[0], "y": coordinate[1]}
@@ -549,7 +548,10 @@ class DataView(APIView):
                         optic_disk=self.dict_to_coordinate(data["optic_disk"]),
                         **save_data,
                     )
-                elif data_type == self.DataType.GA or data_type == self.DataType.ALL:
+                elif (
+                    data_type == self.DataType.GA
+                    or data_type == self.DataType.ALL
+                ):
                     for ga_type, ga_data_list in data.items():
                         if not ga_data_list:
                             continue  # skip empty arrays
@@ -603,7 +605,9 @@ class DataView(APIView):
                             registration["points"]
                         ),
                     )
-            elif data_type == self.DataType.GA or data_type == self.DataType.ALL:
+            elif (
+                data_type == self.DataType.GA or data_type == self.DataType.ALL
+            ):
                 for visit_image_name, ga_data in data.items():
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
