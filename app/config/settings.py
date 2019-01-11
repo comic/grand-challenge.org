@@ -211,7 +211,6 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
-                "grandchallenge.core.contextprocessors.contextprocessors.logout_url",
             ]
         },
     }

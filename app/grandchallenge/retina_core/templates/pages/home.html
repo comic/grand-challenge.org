@@ -27,3 +27,9 @@
       </div>
   </div>
 {% endblock %}
+
+{% block page_specific_javascript %}
+    <script type="application/javascript">
+        LOGOUT_URL = "{{ LOGOUT_URL }}";
+    </script>
+{% endblock %}

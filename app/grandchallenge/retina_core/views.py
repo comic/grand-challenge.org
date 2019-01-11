@@ -1,6 +1,6 @@
-from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-from django.views import View
+from django.views import View, generic
+from config import settings
 from PIL import Image as PILImage
 from rest_framework import status
 from django.http.response import HttpResponse
@@ -10,9 +10,13 @@ from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
 from grandchallenge.cases.models import Image
 
 
-class IndexView(RetinaAPIPermissionMixin, View):
-    def get(self, request):
-        return render(request, "pages/home.html")
+class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
+    template_name = "pages/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["LOGOUT_URL"] = settings.LOGOUT_URL
+        return context
 
 
 class ThumbnailView(RetinaAPIPermissionMixin, View):
