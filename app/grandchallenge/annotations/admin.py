@@ -24,7 +24,6 @@ class PolygonAnnotationSetAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "created", "name")
     list_filter = ("created", "grader__username", "name")
     inlines = [SinglePolygonAnnotationInline]
-    # list_per_page = 250
 
 
 class SingleLandmarkAnnotationInline(admin.StackedInline):
