@@ -149,13 +149,9 @@ class SingleLandmarkAnnotation(UUIDModel):
         unique_together = ("image", "annotation_set")
 
 
-"""
-Retina specific annotations
-"""
-
-
 class ETDRSGridAnnotation(AbstractImageAnnotationModel):
     """
+    Retina specific annotation
     Model for the placement of an ETDRS grid on an retina image
     """
 
