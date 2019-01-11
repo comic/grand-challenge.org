@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
@@ -9,6 +10,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+from config.settings import RETINA_EXCEPTION_ARCHIVE
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -52,7 +54,7 @@ class ArchiveView(APIView):
                 study__image__archive=archive
             ).distinct()
             for patient in patient_list:
-                if archive.name == "Australia":
+                if archive.name == RETINA_EXCEPTION_ARCHIVE:
                     image_set = {}
                     for study in patient.study_set.all():
                         image_set.update(
@@ -161,7 +163,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
         image_identifier,
         image_modality,
     ):
-        if patient_identifier == "Australia":
+        if patient_identifier == RETINA_EXCEPTION_ARCHIVE:
             # BMES data contains no study name, switched up parameters
             image = Image.objects.filter(
                 study__patient__name=study_identifier,  # this argument contains patient identifier
@@ -199,6 +201,15 @@ class ImageView(RetinaAPIPermissionMixin, View):
 class DataView(APIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+
+    class DataType(Enum):
+        REGISTRATION = "Registration"
+        ETDRS = "ETDRS"
+        FOVEA = "Fovea"
+        MEASURE = "Measure"
+        GA = "GA"
+        ALL = "all"
+
 
     @staticmethod
     def coordinate_to_dict(coordinate):
@@ -240,14 +251,14 @@ class DataView(APIView):
                 "%Y-%m-%d--%H-%M-%S--%f"
             )
             image_name = annotation_model.image.name
-            if data_type == "ETDRS":
+            if data_type == self.DataType.ETDRS:
                 result_data = {
                     "fovea": self.coordinate_to_dict(annotation_model.fovea),
                     "optic_disk": self.coordinate_to_dict(
                         annotation_model.optic_disk
                     ),
                 }
-            elif data_type == "Fovea":
+            elif data_type == self.DataType.FOVEA:
                 result_data = {"fovea_affected": annotation_model.value}
                 pass
             result_dict = {image_name: result_data}
@@ -292,7 +303,7 @@ class DataView(APIView):
 
         user = get_user_model().objects.get(username=username.lower())
 
-        if data_type == "Registration":
+        if data_type == self.DataType.REGISTRATION:
             landmark_annotations = []
             for image in images:
                 user_landmark_annotations = image.singlelandmarkannotation_set.filter(
@@ -305,7 +316,7 @@ class DataView(APIView):
                 date_key = annotation.annotation_set.created.strftime(
                     "%Y-%m-%d--%H-%M-%S--%f"
                 )
-                if archive_identifier == "Australia":
+                if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
                     image_name = annotation.image.name
 
                     result_dict = {
@@ -342,7 +353,7 @@ class DataView(APIView):
                     else:
                         data.update({date_key: [result_dict]})
 
-        elif data_type == "ETDRS":
+        elif data_type == self.DataType.ETDRS:
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "etdrsgridannotation_set"
             )
@@ -358,7 +369,7 @@ class DataView(APIView):
                         annotation_model.optic_disk
                     ),
                 }
-                if archive_identifier == "Australia":
+                if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
                     result_dict = {image_name: result_data}
                     data.update(result_dict)
                 else:
@@ -385,7 +396,7 @@ class DataView(APIView):
                     else:
                         data.update({date_key: result_data})
 
-        elif data_type == "Measure":
+        elif data_type == self.DataType.MEASURE:
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "measurementannotation_set"
             )
@@ -409,7 +420,7 @@ class DataView(APIView):
                         data[date_key].update(result_dict)
                 else:
                     data.update({date_key: result_dict})
-        elif data_type == "Fovea":
+        elif data_type == self.DataType.FOVEA:
             annotation_models = self.get_models_related_to_image_and_user(
                 images,
                 user,
@@ -419,14 +430,14 @@ class DataView(APIView):
             data = self.create_annotation_data_australia(
                 data_type, annotation_models
             )
-        elif data_type == "GA" or data_type == "all":
+        elif data_type == self.DataType.GA or data_type == self.DataType.ALL:
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "polygonannotationset_set"
             )
 
             for annotation_model in annotation_models:
                 ga_type = annotation_model.name
-                if data_type == "GA":
+                if data_type == self.DataType.GA:
                     ga_type = ga_type.capitalize()
                 for spa in annotation_model.singlepolygonannotation_set.all():
                     date_key = annotation_model.created.strftime(
@@ -438,7 +449,7 @@ class DataView(APIView):
 
                     image_name = annotation_model.image.name
                     result_data = {ga_type: [result_data_points]}
-                    if data_type == "GA":
+                    if data_type == self.DataType.GA:
                         opposing_type = (
                             "Peripapillary"
                             if ga_type == "Macular"
@@ -450,7 +461,7 @@ class DataView(APIView):
                             }
                         )
                     series_name = image_name
-                    if archive_identifier != "Australia":
+                    if archive_identifier != RETINA_EXCEPTION_ARCHIVE:
                         visit_id = annotation_model.image.study.name
                         sub_img_name = None
                         if (
@@ -520,25 +531,25 @@ class DataView(APIView):
         user = get_user_model().objects.get(username=username.lower())
 
         save_data = {"grader": user, "created": timezone.now()}
-        if data_type == "Registration":
+        if data_type == self.DataType.REGISTRATION:
             # Create parent LandmarkAnnotationSet model to link landmarks to
             landmark_annotation_set_model = LandmarkAnnotationSet.objects.create(
                 **save_data
             )
 
-        if archive_identifier == "Australia":
+        if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
             # Australia
             for image_name, data in request_data.items():
                 image = Image.objects.get(
                     name=image_name, study__patient=patient
                 )
-                if data_type == "ETDRS":
+                if data_type == self.DataType.ETDRS:
                     image.etdrsgridannotation_set.create(
                         fovea=self.dict_to_coordinate(data["fovea"]),
                         optic_disk=self.dict_to_coordinate(data["optic_disk"]),
                         **save_data,
                     )
-                elif data_type == "GA" or data_type == "all":
+                elif data_type == self.DataType.GA or data_type == self.DataType.ALL:
                     for ga_type, ga_data_list in data.items():
                         if not ga_data_list:
                             continue  # skip empty arrays
@@ -549,13 +560,13 @@ class DataView(APIView):
                             ga_points_model.singlepolygonannotation_set.create(
                                 value=self.dict_list_to_coordinates(ga_data)
                             )
-                elif data_type == "Fovea":
+                elif data_type == self.DataType.FOVEA:
                     image.booleanclassificationannotation_set.create(
                         name="fovea_affected",
                         value=data["fovea_affected"],
                         **save_data,
                     )
-                elif data_type == "Measure":
+                elif data_type == self.DataType.MEASURE:
                     for measurement in data:
                         image.measurementannotation_set.create(
                             start_voxel=self.dict_to_coordinate(
@@ -566,7 +577,7 @@ class DataView(APIView):
                             ),
                             **save_data,
                         )
-                elif data_type == "Registration":
+                elif data_type == self.DataType.REGISTRATION:
                     landmark_annotation_set_model.singlelandmarkannotation_set.create(
                         image=image,
                         landmarks=self.dict_list_to_coordinates(data),
@@ -574,14 +585,14 @@ class DataView(APIView):
         else:
             # Rotterdam study data
             data = request_data
-            if data_type == "ETDRS":
+            if data_type == self.DataType.ETDRS:
                 image = self.get_image_from_rotterdam_data(patient, data)
                 image.etdrsgridannotation_set.create(
                     fovea=self.dict_to_coordinate(data["fovea"]),
                     optic_disk=self.dict_to_coordinate(data["optic_disk"]),
                     **save_data,
                 )
-            elif data_type == "Registration":
+            elif data_type == self.DataType.REGISTRATION:
                 for registration in data:
                     image = self.get_image_from_rotterdam_data(
                         patient, registration
@@ -592,7 +603,7 @@ class DataView(APIView):
                             registration["points"]
                         ),
                     )
-            elif data_type == "GA" or data_type == "all":
+            elif data_type == self.DataType.GA or data_type == self.DataType.ALL:
                 for visit_image_name, ga_data in data.items():
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":

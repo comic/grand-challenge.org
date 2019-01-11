@@ -1,15 +1,18 @@
 from typing import List
 from pathlib import Path
 import SimpleITK as sitk
+import logging
 
 from django.conf import settings
 from django.db import models
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.subdomains.utils import reverse
+
+
+logger = logging.getLogger(__name__)
 
 
 class UPLOAD_SESSION_STATE:
@@ -223,13 +226,8 @@ class Image(UUIDModel):
         ObjectDoesNotExist exception.
         :return: SimpleITK image
         """
-        try:
-            # self.files should contain 1 .mhd file
-            image = self.files.get(file__endswith=".mhd")
-        except MultipleObjectsReturned:
-            raise
-        except ObjectDoesNotExist:
-            raise
+        # self.files should contain 1 .mhd file
+        image = self.files.get(file__endswith=".mhd")
 
         image_path = Path(image.file.path)
         if not Path.is_file(image_path):
@@ -238,7 +236,7 @@ class Image(UUIDModel):
         try:
             sitk_image = sitk.ReadImage(str(image_path))
         except RuntimeError as e:
-            print(f"Failed to load SimpleITK image with error: {e}")
+            logging.error(f"Failed to load SimpleITK image with error: {e}")
             raise
         return sitk_image
 
