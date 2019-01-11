@@ -429,7 +429,7 @@ class DataView(APIView):
             data = self.create_annotation_data_australia(
                 data_type, annotation_models
             )
-        elif data_type == self.DataType.GA .valueor data_type == self.DataType.ALL.value:
+        elif data_type == self.DataType.GA.value or data_type == self.DataType.ALL.value:
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "polygonannotationset_set"
             )
@@ -606,7 +606,7 @@ class DataView(APIView):
                         ),
                     )
             elif (
-                data_type == self.DataType.GA .valueor data_type == self.DataType.ALL.value
+                data_type == self.DataType.GA.value or data_type == self.DataType.ALL.value
             ):
                 for visit_image_name, ga_data in data.items():
                     conditions = {}
