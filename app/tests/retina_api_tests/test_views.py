@@ -3,10 +3,6 @@ import pytest
 from rest_framework import status
 from grandchallenge.subdomains.utils import reverse
 from django.core.cache import cache
-from tests.retina_importers_tests.helpers import (
-    get_auth_token_header,
-    get_retina_user_with_token,
-)
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
@@ -211,29 +207,6 @@ class TestArchiveIndexAPIEndpoints:
                     oct_obs_registration_aus,
                 ),
             ):
-                # # voxel size
-                # response_voxel_size = response_info.get("voxel_size")
-                # floats_to_compare.append(
-                #     (
-                #         response_voxel_size["axial"],
-                #         ds["oct_slices"][0].voxel_size[0],
-                #         archive + " voxel size axial",
-                #     )
-                # )
-                # floats_to_compare.append(
-                #     (
-                #         response_voxel_size["lateral"],
-                #         ds["oct_slices"][0].voxel_size[1],
-                #         archive + " voxel size lateral",
-                #     )
-                # )
-                # floats_to_compare.append(
-                #     (
-                #         response_voxel_size["transversal"],
-                #         ds["oct_slices"][0].voxel_size[2],
-                #         archive + " voxel size transversal",
-                #     )
-                # )
 
                 # oct obs registration
                 response_obs = response_info.get("registration").get("obs")
@@ -273,16 +246,6 @@ class TestArchiveIndexAPIEndpoints:
                     pytest.fail(name + " does not equal expected value")
 
             # Clear voxel and obs registration objects before response object to expected object comparison
-            # response_data["subfolders"][datastructures["archive"].name]["subfolders"][
-            #     datastructures["patient"].name
-            # ]["subfolders"][datastructures["study_oct"].name]["images"][
-            #     datastructures["oct_slices"][0].name
-            # ][
-            #     "info"
-            # ][
-            #     "voxel_size"
-            # ] = "Checked separately"
-
             response_data["subfolders"][datastructures["archive"].name][
                 "subfolders"
             ][datastructures["patient"].name]["subfolders"][
@@ -298,16 +261,6 @@ class TestArchiveIndexAPIEndpoints:
             ][
                 "obs"
             ] = "Checked separately"
-
-            # response_data["subfolders"][datastructures_aus["archive"].name][
-            #     "subfolders"
-            # ][datastructures_aus["patient"].name]["images"][
-            #     datastructures_aus["oct_slices"][0].name
-            # ][
-            #     "info"
-            # ][
-            #     "voxel_size"
-            # ] = "Checked separately"
 
             response_data["subfolders"][datastructures_aus["archive"].name][
                 "subfolders"
