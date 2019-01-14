@@ -10,7 +10,7 @@ from grandchallenge.api.views import (
     GroupViewSet,
     rest_api_complete,
     rest_api_auth,
-)
+    CurrentUserView)
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
 
@@ -33,6 +33,7 @@ urlpatterns = [
     path(
         "v1/auth/", include("rest_framework.urls", namespace="rest_framework")
     ),
+    path("v1/me/", CurrentUserView.as_view()),
     path("v1/spec/", get_swagger_view(title="Comic API")),
     path("v1/social/", include((urlpatterns_social, "social"))),
     path("v1/login/", obtain_auth_token),

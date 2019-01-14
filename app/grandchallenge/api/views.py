@@ -1,5 +1,7 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
@@ -22,6 +24,12 @@ from rest_framework.authtoken.models import Token
 from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
 from social_django.views import _do_login
+
+
+class CurrentUserView(APIView):
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
 
 
 class UserViewSet(ReadOnlyModelViewSet):
