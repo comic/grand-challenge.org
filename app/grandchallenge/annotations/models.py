@@ -17,7 +17,7 @@ class AbstractAnnotationModel(UUIDModel):
     # Override inherited 'created' attribute
     created = models.DateTimeField(default=timezone.now)
 
-    class Meta(UUIDModel.Meta):
+    class Meta:
         abstract = True
 
 
@@ -36,7 +36,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
             self.image,
         )
 
-    class Meta(UUIDModel.Meta):
+    class Meta:
         abstract = True
 
 
@@ -48,7 +48,7 @@ class AbstractNamedImageAnnotationModel(AbstractImageAnnotationModel):
 
     name = models.CharField(max_length=255)
 
-    class Meta(AbstractImageAnnotationModel.Meta):
+    class Meta:
         # Create unique together constraint to disallow duplicates
         unique_together = ("image", "grader", "created", "name")
         abstract = True
@@ -63,7 +63,7 @@ class MeasurementAnnotation(AbstractImageAnnotationModel):
     start_voxel = ArrayField(models.FloatField(), size=2)
     end_voxel = ArrayField(models.FloatField(), size=2)
 
-    class Meta(AbstractImageAnnotationModel.Meta):
+    class Meta:
         # Create unique together constraint to disallow duplicates
         unique_together = (
             "image",
@@ -126,7 +126,7 @@ class LandmarkAnnotationSet(AbstractAnnotationModel):
     Contains only the fields from AbstractAnnotationModel
     """
 
-    class Meta(AbstractAnnotationModel.Meta):
+    class Meta:
         unique_together = ("grader", "created")
 
 
@@ -144,7 +144,7 @@ class SingleLandmarkAnnotation(UUIDModel):
     # General form: [[x1,y1],[x2,y2],...]
     landmarks = ArrayField(ArrayField(models.FloatField(), size=2))
 
-    class Meta(UUIDModel.Meta):
+    class Meta:
         # Allow only one LandmarkAnnotation for a specific image in a set
         unique_together = ("image", "annotation_set")
 
@@ -159,5 +159,5 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
     fovea = ArrayField(models.FloatField(), size=2)
     optic_disk = ArrayField(models.FloatField(), size=2)
 
-    class Meta(AbstractImageAnnotationModel.Meta):
+    class Meta:
         unique_together = ("image", "grader", "created")
