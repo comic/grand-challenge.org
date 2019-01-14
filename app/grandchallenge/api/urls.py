@@ -10,7 +10,8 @@ from grandchallenge.api.views import (
     GroupViewSet,
     rest_api_complete,
     rest_api_auth,
-    CurrentUserView)
+    CurrentUserView,
+)
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
 
