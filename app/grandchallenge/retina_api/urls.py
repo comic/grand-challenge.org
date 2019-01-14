@@ -4,7 +4,7 @@ from grandchallenge.retina_api import views
 from django.views.decorators.cache import cache_page
 from django.conf import settings
 
-app_name = "api"
+app_name = "retina_api"
 
 router = DefaultRouter()
 
