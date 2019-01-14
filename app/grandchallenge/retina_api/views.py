@@ -178,13 +178,9 @@ class ImageView(RetinaAPIPermissionMixin, View):
 
         try:
             if image_modality == "obs_000":
-                image = image.get(
-                    modality__modality=settings.MODALITY_CF
-                )
+                image = image.get(modality__modality=settings.MODALITY_CF)
             elif image_modality == "oct":
-                image = image.get(
-                    modality__modality=settings.MODALITY_OCT
-                )
+                image = image.get(modality__modality=settings.MODALITY_OCT)
             else:
                 image = image.get()
         except MultipleObjectsReturned:
@@ -276,9 +272,7 @@ class DataView(APIView):
                 {"modality__modality": settings.MODALITY_OCT}
             )  # set number for oct images
         elif image_identifier == "obs_000":
-            conditions.update(
-                {"modality__modality": settings.MODALITY_CF}
-            )
+            conditions.update({"modality__modality": settings.MODALITY_CF})
         return Image.objects.get(
             study__patient=patient,
             study__name=request_data.get("visit_nr"),
@@ -429,7 +423,10 @@ class DataView(APIView):
             data = self.create_annotation_data_australia(
                 data_type, annotation_models
             )
-        elif data_type == self.DataType.GA.value or data_type == self.DataType.ALL.value:
+        elif (
+            data_type == self.DataType.GA.value
+            or data_type == self.DataType.ALL.value
+        ):
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "polygonannotationset_set"
             )
@@ -606,7 +603,8 @@ class DataView(APIView):
                         ),
                     )
             elif (
-                data_type == self.DataType.GA.value or data_type == self.DataType.ALL.value
+                data_type == self.DataType.GA.value
+                or data_type == self.DataType.ALL.value
             ):
                 for visit_image_name, ga_data in data.items():
                     conditions = {}

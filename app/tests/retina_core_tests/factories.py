@@ -18,9 +18,7 @@ def create_some_datastructure_data(
     patient = PatientFactory(**patient_pars)
     study = StudyFactory(patient=patient, **study_pars)
     image_cf = ImageFactoryWithImageFile(
-        study=study,
-        modality__modality=settings.MODALITY_CF,
-        **image_cf_pars,
+        study=study, modality__modality=settings.MODALITY_CF, **image_cf_pars
     )
     study_oct = StudyFactory(patient=patient, **oct_study_pars)
     # oct/obs image name has to end with OCT.fds for obs image recognition
