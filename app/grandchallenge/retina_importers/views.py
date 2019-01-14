@@ -149,9 +149,9 @@ class UploadImage(generics.CreateAPIView):
 
         # Set modality
         if modality == "FUN" or modality == "OBS":
-            modality = ImagingModality.MODALITY_CF
+            modality = settings.MODALITY_CF
         if modality == "HRA":
-            modality = ImagingModality.MODALITY_IR
+            modality = settings.MODALITY_IR
         modality, _ = ImagingModality.objects.get_or_create(modality=modality)
 
         image_dict = {
@@ -287,14 +287,14 @@ class AbstractUploadView(generics.CreateAPIView):
             if data["image_identifier"] == "obs_000":
                 image = Image.objects.get(
                     name=data["series_identifier"],
-                    modality__modality=ImagingModality.MODALITY_CF,
+                    modality__modality=settings.MODALITY_CF,
                     study=study,
                 )
             elif data["image_identifier"] == "oct":
                 image = Image.objects.get(
                     name=data["series_identifier"],
                     modality=ImagingModality.objects.get(
-                        modality=ImagingModality.MODALITY_OCT
+                        modality=settings.MODALITY_OCT
                     ),
                     study=study,
                 )

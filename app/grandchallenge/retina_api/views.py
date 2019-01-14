@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from config.settings import RETINA_EXCEPTION_ARCHIVE
+from django.conf import settings
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -54,7 +54,7 @@ class ArchiveView(APIView):
                 study__image__archive=archive
             ).distinct()
             for patient in patient_list:
-                if archive.name == RETINA_EXCEPTION_ARCHIVE:
+                if archive.name == settings.RETINA_EXCEPTION_ARCHIVE:
                     image_set = {}
                     for study in patient.study_set.all():
                         image_set.update(
@@ -90,7 +90,7 @@ class ArchiveView(APIView):
 
         def generate_images(image_list):
             for image in image_list.all():
-                if image.modality.modality == ImagingModality.MODALITY_OCT:
+                if image.modality.modality == settings.MODALITY_OCT:
                     # oct image add info
                     try:
                         obs_list = image.oct_image.get().registration_values
@@ -130,7 +130,7 @@ class ArchiveView(APIView):
                         },
                     }
                 elif (
-                    image.modality.modality == ImagingModality.MODALITY_CF
+                    image.modality.modality == settings.MODALITY_CF
                     and image.name.endswith("OCT.fds")
                 ):
                     # OBS image, skip because this is already in fds
@@ -163,7 +163,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
         image_identifier,
         image_modality,
     ):
-        if patient_identifier == RETINA_EXCEPTION_ARCHIVE:
+        if patient_identifier == settings.RETINA_EXCEPTION_ARCHIVE:
             # BMES data contains no study name, switched up parameters
             image = Image.objects.filter(
                 study__patient__name=study_identifier,  # this argument contains patient identifier
@@ -179,11 +179,11 @@ class ImageView(RetinaAPIPermissionMixin, View):
         try:
             if image_modality == "obs_000":
                 image = image.get(
-                    modality__modality=ImagingModality.MODALITY_CF
+                    modality__modality=settings.MODALITY_CF
                 )
             elif image_modality == "oct":
                 image = image.get(
-                    modality__modality=ImagingModality.MODALITY_OCT
+                    modality__modality=settings.MODALITY_OCT
                 )
             else:
                 image = image.get()
@@ -273,11 +273,11 @@ class DataView(APIView):
         conditions = {}
         if image_identifier == "oct":
             conditions.update(
-                {"modality__modality": ImagingModality.MODALITY_OCT}
+                {"modality__modality": settings.MODALITY_OCT}
             )  # set number for oct images
         elif image_identifier == "obs_000":
             conditions.update(
-                {"modality__modality": ImagingModality.MODALITY_CF}
+                {"modality__modality": settings.MODALITY_CF}
             )
         return Image.objects.get(
             study__patient=patient,
@@ -315,7 +315,7 @@ class DataView(APIView):
                 date_key = annotation.annotation_set.created.strftime(
                     "%Y-%m-%d--%H-%M-%S--%f"
                 )
-                if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
+                if archive_identifier == settings.RETINA_EXCEPTION_ARCHIVE:
                     image_name = annotation.image.name
 
                     result_dict = {
@@ -338,13 +338,13 @@ class DataView(APIView):
                     }
                     if (
                         annotation.image.modality.modality
-                        == ImagingModality.MODALITY_CF
+                        == settings.MODALITY_CF
                         and annotation.image.name.endswith("OCT.fds")
                     ):
                         result_dict.update({"sub_img_name": "obs_000"})
                     if (
                         annotation.image.modality.modality
-                        == ImagingModality.MODALITY_OCT
+                        == settings.MODALITY_OCT
                     ):
                         result_dict.update({"sub_img_name": "oct"})
                     if data.get(date_key):
@@ -368,7 +368,7 @@ class DataView(APIView):
                         annotation_model.optic_disk
                     ),
                 }
-                if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
+                if archive_identifier == settings.RETINA_EXCEPTION_ARCHIVE:
                     result_dict = {image_name: result_data}
                     data.update(result_dict)
                 else:
@@ -381,13 +381,13 @@ class DataView(APIView):
 
                     if (
                         annotation_model.image.modality.modality
-                        == ImagingModality.MODALITY_CF
+                        == settings.MODALITY_CF
                         and annotation_model.image.name.endswith("OCT.fds")
                     ):
                         result_dict.update({"sub_img_name": "obs_000"})
                     if (
                         annotation_model.image.modality.modality
-                        == ImagingModality.MODALITY_OCT
+                        == settings.MODALITY_OCT
                     ):
                         result_dict.update({"sub_img_name": "oct"})
                     if data.get(date_key):
@@ -460,18 +460,18 @@ class DataView(APIView):
                             }
                         )
                     series_name = image_name
-                    if archive_identifier != RETINA_EXCEPTION_ARCHIVE:
+                    if archive_identifier != settings.RETINA_EXCEPTION_ARCHIVE:
                         visit_id = annotation_model.image.study.name
                         sub_img_name = None
                         if (
                             annotation_model.image.modality.modality
-                            == ImagingModality.MODALITY_CF
+                            == settings.MODALITY_CF
                             and annotation_model.image.name.endswith("OCT.fds")
                         ):
                             sub_img_name = "obs_000"
                         if (
                             annotation_model.image.modality.modality
-                            == ImagingModality.MODALITY_OCT
+                            == settings.MODALITY_OCT
                         ):
                             sub_img_name = "oct"
 
@@ -536,7 +536,7 @@ class DataView(APIView):
                 **save_data
             )
 
-        if archive_identifier == RETINA_EXCEPTION_ARCHIVE:
+        if archive_identifier == settings.RETINA_EXCEPTION_ARCHIVE:
             # Australia
             for image_name, data in request_data.items():
                 image = Image.objects.get(
@@ -614,7 +614,7 @@ class DataView(APIView):
                         conditions.update(
                             {
                                 "modality": ImagingModality.objects.get(
-                                    modality=ImagingModality.MODALITY_CF
+                                    modality=settings.MODALITY_CF
                                 )
                             }
                         )
@@ -622,7 +622,7 @@ class DataView(APIView):
                         conditions.update(
                             {
                                 "modality": ImagingModality.objects.get(
-                                    modality=ImagingModality.MODALITY_OCT
+                                    modality=settings.MODALITY_OCT
                                 )
                             }
                         )

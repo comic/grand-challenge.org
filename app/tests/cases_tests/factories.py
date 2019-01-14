@@ -1,6 +1,6 @@
 import factory
+from django.conf import settings
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import ImagingModality
 from tests.studies_tests.factories import StudyFactory
 from tests.factories import (
     ImageFactory,
@@ -37,6 +37,6 @@ class ImageFactoryWithImageFile(ImageFactory):
     study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
     modality = factory.SubFactory(
-        ImagingModalityFactory, modality=ImagingModality.MODALITY_CF
+        ImagingModalityFactory, modality=settings.MODALITY_CF
     )
     color_space = Image.COLOR_SPACE_RGB

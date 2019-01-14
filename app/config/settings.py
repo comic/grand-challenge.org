@@ -609,6 +609,11 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
         " to your .conf file."
     )
 
+# Modality name constants
+MODALITY_OCT = "OCT"  # Optical coherence tomography
+MODALITY_CF = "Fundus Photography"  # Color fundus photography
+MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
+MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 
 # Retina specific settings
 RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24

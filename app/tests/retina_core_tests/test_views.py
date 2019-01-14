@@ -9,7 +9,6 @@ from django.urls import reverse as django_reverse
 from tests.retina_importers_tests.helpers import get_retina_user_with_token
 from django.conf import settings
 from tests.cases_tests.factories import ImageFactoryWithImageFile
-from grandchallenge.challenges.models import ImagingModality
 from tests.retina_api_tests.helpers import client_login
 
 
@@ -136,7 +135,7 @@ class TestCustomImageViews:
         self, client, django_user_model
     ):
         image = ImageFactoryWithImageFile(
-            modality__modality=ImagingModality.MODALITY_CF
+            modality__modality=settings.MODALITY_CF
         )
         url = reverse("retina:image-numpy", args=[image.id])
         client, _ = client_login(client, user="retina_user")

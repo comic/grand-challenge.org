@@ -1,4 +1,4 @@
-from grandchallenge.challenges.models import ImagingModality
+from django.conf import settings
 from tests.archives_tests.factories import ArchiveFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFile
@@ -19,7 +19,7 @@ def create_some_datastructure_data(
     study = StudyFactory(patient=patient, **study_pars)
     image_cf = ImageFactoryWithImageFile(
         study=study,
-        modality__modality=ImagingModality.MODALITY_CF,
+        modality__modality=settings.MODALITY_CF,
         **image_cf_pars,
     )
     study_oct = StudyFactory(patient=patient, **oct_study_pars)
@@ -27,13 +27,13 @@ def create_some_datastructure_data(
     oct_obs_fake_name = "OBS_OCT.fds"
     image_obs = ImageFactoryWithImageFile(
         study=study_oct,
-        modality__modality=ImagingModality.MODALITY_CF,
+        modality__modality=settings.MODALITY_CF,
         name=oct_obs_fake_name,
         **image_obs_pars,
     )
     image_oct = ImageFactoryWithImageFile(
         study=study_oct,
-        modality__modality=ImagingModality.MODALITY_OCT,
+        modality__modality=settings.MODALITY_OCT,
         name=oct_obs_fake_name,  # OCT image name has to be equal to OBS image name
         **image_oct_pars,
     )
