@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-# from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User, Group
 from django.conf import settings
 
 #
@@ -75,8 +75,9 @@ from django.conf import settings
 
 
 def create_retina_groups_and_user_forward(apps, schema_editor):
-    User = apps.get_model("auth", "User")
-    Group = apps.get_model("auth", "Group")
+    # You would want to get the historical models for User and Group, but this does not seem to work
+    # User = apps.get_model("auth", "User")
+    # Group = apps.get_model("auth", "Group")
 
     # Create retina import user
     User.objects.create_user(settings.RETINA_IMPORT_USER_NAME)
@@ -87,8 +88,9 @@ def create_retina_groups_and_user_forward(apps, schema_editor):
 
 
 def create_retina_groups_and_user_backward(apps, schema_editor):
-    User = apps.get_model("auth", "User")
-    Group = apps.get_model("auth", "Group")
+    # You would want to get the historical models for User and Group, but this does not seem to work
+    # User = apps.get_model("auth", "User")
+    # Group = apps.get_model("auth", "Group")
 
     # Remove retina import user
     User.objects.get(username=settings.RETINA_IMPORT_USER_NAME).delete()
