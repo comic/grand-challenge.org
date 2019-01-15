@@ -243,7 +243,9 @@ class Image(UUIDModel):
 
         # Check file size to guard for out of memory error
         if file_size > settings.MAX_SITK_FILE_SIZE:
-            raise IOError(f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})")
+            raise IOError(
+                f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
+            )
 
         try:
             sitk_image = sitk.ReadImage(str(Path(mhd_file.file.path)))

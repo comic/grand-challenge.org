@@ -93,8 +93,8 @@ class TestGetSitkImage:
         f.close()
         # Add too large file as ImageFile model to image.files
         too_large_file_field = factory.django.FileField(
-                from_path=str(too_large_file_raw)
-            )
+            from_path=str(too_large_file_raw)
+        )
         too_large_imagefile = ImageFileFactory(file=too_large_file_field)
         image.files.add(too_large_imagefile)
 
