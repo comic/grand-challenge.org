@@ -4,6 +4,7 @@ import numpy as np
 import SimpleITK as sitk
 from PIL import Image as PILImage
 from rest_framework import status
+from guardian.shortcuts import assign_perm
 from grandchallenge.subdomains.utils import reverse
 from django.urls import reverse as django_reverse
 from tests.retina_importers_tests.helpers import get_retina_user_with_token
@@ -78,8 +79,18 @@ class TestCustomImageViews:
         response = client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_thumbnail_endpoint_authenticated_no_perm(
+        self, client, django_user_model
+    ):
+        image = ImageFactoryWithImageFile()
+        url = reverse("retina:image-thumbnail", args=[image.id])
+        client, _ = client_login(client, user="retina_user")
+        response = client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_thumbnail_endpoint_authenticated(self, client, django_user_model):
         image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
         url = reverse("retina:image-thumbnail", args=[image.id])
         client, _ = client_login(client, user="retina_user")
         response = client.get(url)
@@ -121,10 +132,20 @@ class TestCustomImageViews:
         response = client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_numpy_endpoint_authenticated_status_no_perm(
+        self, client, django_user_model
+    ):
+        image = ImageFactoryWithImageFile()
+        url = reverse("retina:image-numpy", args=[image.id])
+        client, _ = client_login(client, user="retina_user")
+        response = client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_numpy_endpoint_authenticated_status(
         self, client, django_user_model
     ):
         image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
         url = reverse("retina:image-numpy", args=[image.id])
         client, _ = client_login(client, user="retina_user")
         response = client.get(url)
@@ -137,6 +158,7 @@ class TestCustomImageViews:
         image = ImageFactoryWithImageFile(
             modality__modality=settings.MODALITY_CF
         )
+        image.permit_viewing_by_retina_users()
         url = reverse("retina:image-numpy", args=[image.id])
         client, _ = client_login(client, user="retina_user")
         response = client.get(url)

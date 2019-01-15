@@ -8,6 +8,7 @@ import numpy as np
 import SimpleITK as sitk
 from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
 from grandchallenge.cases.models import Image
+from grandchallenge.serving.permissions import user_can_download_image
 
 
 class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
@@ -28,6 +29,10 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
     def get(self, request, image_id):
         image_object = get_object_or_404(Image, pk=image_id)
+
+        if not user_can_download_image(user=request.user, image=image_object):
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+
         image_itk = image_object.get_sitk_image()
         if image_itk is None:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
@@ -52,6 +57,9 @@ class NumpyView(RetinaAPIPermissionMixin, View):
 
     def get(self, request, image_id):
         image_object = get_object_or_404(Image, pk=image_id)
+
+        if not user_can_download_image(user=request.user, image=image_object):
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         image_itk = image_object.get_sitk_image()
         if image_itk is None:

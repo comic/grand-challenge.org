@@ -185,6 +185,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
                 image = image.get()
         except MultipleObjectsReturned:
             print("failed unique image search")
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
         if image_type == "thumb":
             response = redirect("retina:image-thumbnail", image_id=image.id)

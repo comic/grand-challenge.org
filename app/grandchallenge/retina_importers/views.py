@@ -11,6 +11,7 @@ from django.core.files import File
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from guardian.shortcuts import assign_perm
 from .utils import upperize, exclude_val_from_dict
 from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
@@ -101,6 +102,8 @@ class UploadImage(generics.CreateAPIView):
 
             archive.images.add(img)
             image_created = True
+
+            img.permit_viewing_by_retina_users()
         except Exception as e:
             return JsonResponse(
                 {"error": e}, status=status.HTTP_400_BAD_REQUEST

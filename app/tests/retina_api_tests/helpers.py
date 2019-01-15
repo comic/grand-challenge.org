@@ -69,18 +69,14 @@ def batch_test_image_endpoint_redirects(test_class):
         ("thumb", "retina:image-thumbnail"),
         ("original", "retina:image-numpy"),
     ):
-        test_redirect, test_redirect_australia, test_redirect_oct = create_image_test_method(
+        test_redirect_no_perm, test_redirect, test_redirect_australia, test_redirect_oct = create_image_test_method(
             image_type, reverse_name
         )
-        test_redirect.__name__ = "test_image_{}_redirect_rotterdam".format(
-            image_type
-        )
-        test_redirect_australia.__name__ = "test_image_{}_redirect_australia".format(
-            image_type
-        )
-        test_redirect_oct.__name__ = "test_image_{}_redirect_oct".format(
-            image_type
-        )
+        test_redirect_no_perm.__name__ = f"test_image_{image_type}_redirect_no_perm"
+        test_redirect.__name__ = f"test_image_{image_type}_redirect_rotterdam"
+        test_redirect_australia.__name__ = f"test_image_{image_type}_redirect_australia"
+        test_redirect_oct.__name__ = f"test_image_{image_type}_redirect_oct"
+        setattr(test_class, test_redirect_no_perm.__name__, test_redirect_no_perm)
         setattr(test_class, test_redirect.__name__, test_redirect)
         setattr(
             test_class,
@@ -91,6 +87,29 @@ def batch_test_image_endpoint_redirects(test_class):
 
 
 def create_image_test_method(image_type, reverse_name):
+    def test_redirect_no_perm(self, client):
+        ds = create_some_datastructure_data()
+        url = reverse(
+            "retina:api:image-api-view",
+            args=[
+                image_type,
+                ds["patient"].name,
+                ds["study"].name,
+                ds["image_cf"].name,
+                "default",
+            ],
+        )
+
+        user, _ = get_retina_user_with_token()
+        client.force_login(user=user)
+        response = client.get(url, follow=True)
+        expected_redirect_url = django_reverse(
+            reverse_name, args=[ds["image_cf"].id]
+        )
+        assert status.HTTP_302_FOUND == response.redirect_chain[0][1]
+        assert expected_redirect_url == response.redirect_chain[0][0]
+        assert status.HTTP_403_FORBIDDEN == response.status_code
+
     def test_redirect(self, client):
         ds = create_some_datastructure_data()
         url = reverse(
@@ -106,6 +125,8 @@ def create_image_test_method(image_type, reverse_name):
 
         user, _ = get_retina_user_with_token()
         client.force_login(user=user)
+        ds["image_cf"].permit_viewing_by_retina_users()
+
         response = client.get(url, follow=True)
         expected_redirect_url = django_reverse(
             reverse_name, args=[ds["image_cf"].id]
@@ -128,6 +149,7 @@ def create_image_test_method(image_type, reverse_name):
         )
         user, _ = get_retina_user_with_token()
         client.force_login(user=user)
+        ds["image_cf"].permit_viewing_by_retina_users()
 
         response = client.get(url, follow=True)
         expected_redirect_url = django_reverse(
@@ -151,6 +173,7 @@ def create_image_test_method(image_type, reverse_name):
         )
         user, _ = get_retina_user_with_token()
         client.force_login(user=user)
+        ds["image_oct"].permit_viewing_by_retina_users()
 
         response = client.get(url, follow=True)
         expected_redirect_url = django_reverse(
@@ -160,7 +183,7 @@ def create_image_test_method(image_type, reverse_name):
         assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
 
-    return [test_redirect, test_redirect_australia, test_redirect_oct]
+    return [test_redirect_no_perm, test_redirect, test_redirect_australia, test_redirect_oct]
 
 
 def batch_test_data_endpoints(test_class):
