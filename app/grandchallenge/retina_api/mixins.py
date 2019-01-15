@@ -31,7 +31,6 @@ def is_in_retina_group(user):
     return is_in_retina_graders_group(user) or is_in_retina_admins_group(user)
 
 
-#
 class RetinaAPIPermission(permissions.BasePermission):
     """
     Permission class for APIViews in retina app.
