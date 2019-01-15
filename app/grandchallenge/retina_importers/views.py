@@ -46,11 +46,12 @@ from .serializers import (
     UploadPolygonAnnotationSetSerializer,
     UploadLandmarkAnnotationSetSerializer,
 )
+from .mixins import RetinaImportPermission
 
 
 class UploadImage(generics.CreateAPIView):
     queryset = Image.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (RetinaImportPermission,)
     parser_classes = (parsers.MultiPartParser,)
 
     def post(self, request, *args, **kwargs):
@@ -220,7 +221,7 @@ class UploadImage(generics.CreateAPIView):
 
 
 class AbstractUploadView(generics.CreateAPIView):
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (RetinaImportPermission,)
     parser_classes = (parsers.JSONParser,)
     response = {}
 

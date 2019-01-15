@@ -30,7 +30,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            create_retina_groups_forward,
-            create_retina_groups_backward,
+            create_retina_groups_forward, create_retina_groups_backward
         )
     ]

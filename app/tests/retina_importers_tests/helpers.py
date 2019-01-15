@@ -2,6 +2,7 @@ from io import BytesIO
 from pathlib import Path
 import json
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework import status
@@ -39,6 +40,12 @@ def get_auth_token_header(user, token=None):
             _, token = get_retina_user_with_token(is_staff=True)
         elif user == "normal":
             _, token = get_retina_user_with_token()
+        elif user == "import_user":
+            user = get_user_model().objects.get(
+                username=settings.RETINA_IMPORT_USER_NAME
+            )
+            token_obj = Token.objects.create(user=user)
+            token = token_obj.key
 
     auth_header = {}
     if token:
@@ -179,7 +186,12 @@ def batch_test_upload_views(batch_test_data, test_class):
                 status.HTTP_401_UNAUTHORIZED,
             ),
             ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
-            ("staff", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
+            ("staff", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+            (
+                "import_user",
+                status.HTTP_201_CREATED,
+                status.HTTP_400_BAD_REQUEST,
+            ),
         )
         for (
             user,
