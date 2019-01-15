@@ -615,6 +615,9 @@ MODALITY_CF = "Fundus Photography"  # Color fundus photography
 MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
 MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 
+# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
+MAX_SITK_FILE_SIZE = 268435456  # == 256 mb
+
 # Retina specific settings
 RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24
 RETINA_GRADERS_GROUP_NAME = "retina_graders"

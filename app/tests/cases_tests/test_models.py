@@ -1,7 +1,9 @@
 import pytest
+import factory
 from pathlib import Path
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-
+from django.conf import settings
+from tests.factories import ImageFileFactory
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -39,36 +41,69 @@ class TestGetSitkImage:
         except MultipleObjectsReturned:
             pass
 
-    def test_no_mhds(self):
+    def test_no_mhd_object(self):
         image = ImageFactoryWithImageFile()
-        image.files.all().delete()
+        image.files.get(file__endswith=".mhd").delete()
+        try:
+            image.get_sitk_image()
+            pytest.fail("No ObjectDoesNotExist exception for mhd object")
+        except ObjectDoesNotExist:
+            pass
+
+    def test_no_raw_object(self):
+        image = ImageFactoryWithImageFile()
+        image.files.get(file__endswith=".zraw").delete()
         try:
             image.get_sitk_image()
             pytest.fail("No ObjectDoesNotExist exception")
         except ObjectDoesNotExist:
             pass
 
-    def test_file_not_found(self):
+    def test_file_not_found_mhd(self):
         image = ImageFactoryWithImageFile()
-        for file in image.files.all():
-            Path.unlink(Path(file.file.path))
+        imagefile = image.files.get(file__endswith=".mhd")
+        Path.unlink(Path(imagefile.file.path))
         try:
             image.get_sitk_image()
             pytest.fail("No FileNotFoundError exception")
         except FileNotFoundError:
             pass
 
-    def test_no_raw_file(self):
+    def test_file_not_found_raw(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".zraw")
         Path.unlink(Path(imagefile.file.path))
         try:
             image.get_sitk_image()
-            pytest.fail("No exception with missing raw file")
-        except RuntimeError as e:
-            assert "Exception thrown in SimpleITK ReadImage:" in str(e)
-            assert "File cannot be read" in str(e)
-            assert "Reason: Success" in str(e)
+            pytest.fail("No FileNotFoundError exception")
+        except FileNotFoundError:
+            pass
+
+    def test_file_too_large_throws_error(self, tmpdir):
+        image = ImageFactoryWithImageFile()
+        # Remove zraw file
+        old_raw = image.files.get(file__endswith=".zraw")
+        raw_file_name = Path(old_raw.file.path).name
+        old_raw.delete()
+        # Create fake too large zraw file
+        too_large_file_raw = tmpdir.join(raw_file_name)
+        f = too_large_file_raw.open(mode="wb")
+        f.seek(settings.MAX_SITK_FILE_SIZE)
+        f.write(b"\0")
+        f.close()
+        # Add too large file as ImageFile model to image.files
+        too_large_file_field = factory.django.FileField(
+                from_path=str(too_large_file_raw)
+            )
+        too_large_imagefile = ImageFileFactory(file=too_large_file_field)
+        image.files.add(too_large_imagefile)
+
+        # Try to open and catch expected exception
+        try:
+            image.get_sitk_image()
+            pytest.fail("No File exceeds maximum exception")
+        except IOError as e:
+            assert "File exceeds maximum file size." in str(e)
 
     def test_correct_dimensions(self):
         image = ImageFactoryWithImageFile()

@@ -229,14 +229,24 @@ class Image(UUIDModel):
         :return: SimpleITK image
         """
         # self.files should contain 1 .mhd file
-        image = self.files.get(file__endswith=".mhd")
+        mhd_file = self.files.get(file__endswith=".mhd")
+        raw_file = self.files.get(file__endswith="raw")
 
-        image_path = Path(image.file.path)
-        if not Path.is_file(image_path):
-            raise FileNotFoundError(f"No .mhd file found in {image_path}")
+        file_size = 0
+        for file in (mhd_file, raw_file):
+            image_path = Path(file.file.path)
+            if not Path.is_file(image_path):
+                raise FileNotFoundError(f"No file found in {image_path}")
+
+            # Add up file sizes of mhd and raw file to get total file size
+            file_size += image_path.stat().st_size
+
+        # Check file size to guard for out of memory error
+        if file_size > settings.MAX_SITK_FILE_SIZE:
+            raise IOError(f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})")
 
         try:
-            sitk_image = sitk.ReadImage(str(image_path))
+            sitk_image = sitk.ReadImage(str(Path(mhd_file.file.path)))
         except RuntimeError as e:
             logging.error(f"Failed to load SimpleITK image with error: {e}")
             raise
