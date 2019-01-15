@@ -83,7 +83,7 @@ def user_can_download_image(*, user, image: Image) -> bool:
     if user.is_staff:
         return True
 
-    if user.has_perm('view_image', image):
+    if user.has_perm("view_image", image):
         return True
 
     imagesets = image.imagesets.all().select_related("challenge")

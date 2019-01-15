@@ -246,9 +246,12 @@ class Image(UUIDModel):
         """ Calling this function will give the retina graders and retina admins object specific permissions
         to view this image. """
         # Set object level view permissions for retina_graders and retina_admins
-        for group_name in (settings.RETINA_GRADERS_GROUP_NAME, settings.RETINA_ADMINS_GROUP_NAME):
+        for group_name in (
+            settings.RETINA_GRADERS_GROUP_NAME,
+            settings.RETINA_ADMINS_GROUP_NAME,
+        ):
             group = Group.objects.get(name=group_name)
-            assign_perm('view_image', group, self)
+            assign_perm("view_image", group, self)
 
     class Meta:
         ordering = ("name",)

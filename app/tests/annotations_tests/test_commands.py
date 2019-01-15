@@ -12,6 +12,7 @@ from grandchallenge.annotations.models import (
     CoordinateListAnnotation,
 )
 
+
 @pytest.mark.django_db
 class TestCommands:
     def test_copyannotations_command_requires_arguments(self):
@@ -46,9 +47,7 @@ class TestCommands:
         user_to = UserFactory()
         try:
             call_command(
-                "copyannotations",
-                user_from.username,
-                user_to.username,
+                "copyannotations", user_from.username, user_to.username
             )
             assert False
         except CommandError as e:
@@ -60,18 +59,32 @@ class TestCommands:
 
         out = StringIO()
         call_command(
-            "copyannotations",
-            user_from.username,
-            user_to.username,
-            stdout=out,
+            "copyannotations", user_from.username, user_to.username, stdout=out
         )
         output = out.getvalue()
-        assert f"Copied MeasurementAnnotation({AnnotationSet.measurement.pk})" in output
-        assert f"Copied BooleanClassificationAnnotation({AnnotationSet.boolean.pk})" in output
-        assert f"Copied PolygonAnnotationSet({AnnotationSet.polygon.pk}) with 10 children" in output
-        assert f"Copied CoordinateListAnnotation({AnnotationSet.coordinatelist.pk})" in output
-        assert f"Copied LandmarkAnnotationSet({AnnotationSet.landmark.pk}) with 5 children" in output
-        assert f"Copied ETDRSGridAnnotation({AnnotationSet.etdrs.pk})" in output
+        assert (
+            f"Copied MeasurementAnnotation({AnnotationSet.measurement.pk})"
+            in output
+        )
+        assert (
+            f"Copied BooleanClassificationAnnotation({AnnotationSet.boolean.pk})"
+            in output
+        )
+        assert (
+            f"Copied PolygonAnnotationSet({AnnotationSet.polygon.pk}) with 10 children"
+            in output
+        )
+        assert (
+            f"Copied CoordinateListAnnotation({AnnotationSet.coordinatelist.pk})"
+            in output
+        )
+        assert (
+            f"Copied LandmarkAnnotationSet({AnnotationSet.landmark.pk}) with 5 children"
+            in output
+        )
+        assert (
+            f"Copied ETDRSGridAnnotation({AnnotationSet.etdrs.pk})" in output
+        )
         assert "Done! Copied 6 annotations/sets and 15 children" in output
 
     def test_copyannotations_command_copies_correctly(self, AnnotationSet):
@@ -82,13 +95,20 @@ class TestCommands:
             "copyannotations",
             user_from.username,
             user_to.username,
-            stdout=None  # suppress output
+            stdout=None,  # suppress output
         )
 
         # Fields containing (nested) float values. These are skipped in equality check for now
         # because of rounding errors in python.
         # TODO (low prio) create check for these values
-        float_fields = ('start_voxel', 'end_voxel', 'fovea', 'optic_disk', 'value', 'landmarks')
+        float_fields = (
+            "start_voxel",
+            "end_voxel",
+            "fovea",
+            "optic_disk",
+            "value",
+            "landmarks",
+        )
 
         for model, name in (
             (MeasurementAnnotation, "measurement"),
@@ -96,11 +116,11 @@ class TestCommands:
             (PolygonAnnotationSet, "polygon"),
             (LandmarkAnnotationSet, "landmark"),
             (ETDRSGridAnnotation, "etdrs"),
-            (CoordinateListAnnotation, "coordinatelist")
+            (CoordinateListAnnotation, "coordinatelist"),
         ):
             models = {
                 "original": model_to_dict(getattr(AnnotationSet, name)),
-                "copy": model_to_dict(model.objects.get(grader=user_to))
+                "copy": model_to_dict(model.objects.get(grader=user_to)),
             }
             # remove some values from model dicts
             for name in ("original", "copy"):

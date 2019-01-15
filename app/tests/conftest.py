@@ -12,7 +12,12 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
-from tests.factories import UserFactory, ChallengeFactory, MethodFactory, ImageFactory
+from tests.factories import (
+    UserFactory,
+    ChallengeFactory,
+    MethodFactory,
+    ImageFactory,
+)
 from tests.annotations_tests.factories import (
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
@@ -23,6 +28,7 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
+
 """ Defines fixtures than can be used across all of the tests """
 
 
@@ -232,9 +238,7 @@ def generate_annotation_set():
     # Create child models for landmark annotation set (3 per image)
     for i in range(5):
         image = ImageFactory()
-        SingleLandmarkAnnotationFactory(
-            annotation_set=landmark, image=image
-        )
+        SingleLandmarkAnnotationFactory(annotation_set=landmark, image=image)
 
     return AnnotationSet(
         grader=grader,

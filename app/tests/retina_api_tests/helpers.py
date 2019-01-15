@@ -72,11 +72,17 @@ def batch_test_image_endpoint_redirects(test_class):
         test_redirect_no_perm, test_redirect, test_redirect_australia, test_redirect_oct = create_image_test_method(
             image_type, reverse_name
         )
-        test_redirect_no_perm.__name__ = f"test_image_{image_type}_redirect_no_perm"
+        test_redirect_no_perm.__name__ = (
+            f"test_image_{image_type}_redirect_no_perm"
+        )
         test_redirect.__name__ = f"test_image_{image_type}_redirect_rotterdam"
-        test_redirect_australia.__name__ = f"test_image_{image_type}_redirect_australia"
+        test_redirect_australia.__name__ = (
+            f"test_image_{image_type}_redirect_australia"
+        )
         test_redirect_oct.__name__ = f"test_image_{image_type}_redirect_oct"
-        setattr(test_class, test_redirect_no_perm.__name__, test_redirect_no_perm)
+        setattr(
+            test_class, test_redirect_no_perm.__name__, test_redirect_no_perm
+        )
         setattr(test_class, test_redirect.__name__, test_redirect)
         setattr(
             test_class,
@@ -183,7 +189,12 @@ def create_image_test_method(image_type, reverse_name):
         assert expected_redirect_url == response.redirect_chain[0][0]
         assert status.HTTP_200_OK == response.status_code
 
-    return [test_redirect_no_perm, test_redirect, test_redirect_australia, test_redirect_oct]
+    return [
+        test_redirect_no_perm,
+        test_redirect,
+        test_redirect_australia,
+        test_redirect_oct,
+    ]
 
 
 def batch_test_data_endpoints(test_class):

@@ -44,7 +44,7 @@ class Command(BaseCommand):
             PolygonAnnotationSet,
             LandmarkAnnotationSet,
             ETDRSGridAnnotation,
-            CoordinateListAnnotation
+            CoordinateListAnnotation,
         ):
             for obj in model.objects.filter(grader=user_from):
                 # For annotations with child models, also copy those models
