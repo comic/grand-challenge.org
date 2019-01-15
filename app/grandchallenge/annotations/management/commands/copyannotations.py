@@ -5,6 +5,7 @@ from grandchallenge.annotations.models import (
     PolygonAnnotationSet,
     LandmarkAnnotationSet,
     ETDRSGridAnnotation,
+    CoordinateListAnnotation,
 )
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
@@ -43,19 +44,23 @@ class Command(BaseCommand):
             PolygonAnnotationSet,
             LandmarkAnnotationSet,
             ETDRSGridAnnotation,
+            CoordinateListAnnotation
         ):
             for obj in model.objects.filter(grader=user_from):
+                # For annotations with child models, also copy those models
+                children = []
+                if model == PolygonAnnotationSet:
+                    children = obj.singlepolygonannotation_set.all()
+                if model == LandmarkAnnotationSet:
+                    children = obj.singlelandmarkannotation_set.all()
+
+                # Save annotation copy
                 obj_pk = obj.pk
                 obj.grader_id = user_to.id
                 obj.pk = None
                 obj.save()
 
-                # For annotations with child models, also copy those models
-                children = []
-                if type(obj) == PolygonAnnotationSet:
-                    children = obj.singlepolygonannotation_set.all()
-                if type(obj) == LandmarkAnnotationSet:
-                    children = obj.singlelandmarkannotation_set.all()
+                # Save child model copies
                 for child in children:
                     child.pk = None
                     child.annotation_set = obj
@@ -67,7 +72,7 @@ class Command(BaseCommand):
                     else ""
                 )
                 self.stdout.write(
-                    f"Copied {str(type(obj))}({obj_pk}){with_children_output}"
+                    f"Copied {str(obj.__class__.__name__)}({obj_pk}){with_children_output}"
                 )
 
                 total_parents_copied += 1
@@ -78,6 +83,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Done! Copied {total_parents_copied} parents and {total_children_copied} in total"
+                    f"Done! Copied {total_parents_copied} annotations/sets and {total_children_copied} children"
                 )
             )
