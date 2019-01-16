@@ -86,7 +86,9 @@ def get_response_status_viewset(
         staff_user = UserFactory(is_staff=True)
         force_authenticate(request, user=staff_user)
     elif user == "retina_importer":
-        retina_import_user = get_user_model().objects.get(username=settings.RETINA_IMPORT_USER_NAME)
+        retina_import_user = get_user_model().objects.get(
+            username=settings.RETINA_IMPORT_USER_NAME
+        )
         force_authenticate(request, user=retina_import_user)
 
     # get response
