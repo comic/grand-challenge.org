@@ -5,6 +5,7 @@ from grandchallenge.subdomains.utils import reverse
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from tests.factories import UserFactory
+from django.conf import settings
 
 # Endpoints to check
 VIEWSET_ACTIONS = (
@@ -84,6 +85,9 @@ def get_response_status_viewset(
     elif user == "admin":
         staff_user = UserFactory(is_staff=True)
         force_authenticate(request, user=staff_user)
+    elif user == "retina_importer":
+        retina_import_user = get_user_model().objects.get(username=settings.RETINA_IMPORT_USER_NAME)
+        force_authenticate(request, user=retina_import_user)
 
     # get response
     if action_name == "list" or action_name == "create":
@@ -107,7 +111,8 @@ def batch_test_viewset_endpoints(
         for (user, authenticated) in (
             (None, False),
             ("user", False),
-            ("admin", True),
+            ("admin", False),
+            ("retina_importer", True),
         ):
 
             test_method = create_test_method(
@@ -162,9 +167,9 @@ def create_test_method(
         if authenticated:
             assert response_status == authenticated_status
         else:
-            if user == "user":
-                assert response_status == status.HTTP_403_FORBIDDEN
-            else:
+            if user is None:
                 assert response_status == status.HTTP_401_UNAUTHORIZED
+            else:
+                assert response_status == status.HTTP_403_FORBIDDEN
 
     return test_method
