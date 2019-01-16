@@ -23,6 +23,7 @@ class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
 class ThumbnailView(RetinaAPIPermissionMixin, View):
     """
     View class for returning a thumbnail of an image as png (max height/width: 128px)
+    Currently, the thumbnail is created on the fly. Later this should be done on import.
     """
 
     raise_exception = True  # Raise 403 on unauthenticated request
