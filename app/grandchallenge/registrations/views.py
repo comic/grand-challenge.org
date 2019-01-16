@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from .models import OctObsRegistration
 from .serializers import OctObsRegistrationSerializer
+from grandchallenge.retina_importers.mixins import RetinaImportPermission
 
 
 class OctObsRegistrationViewSet(viewsets.ModelViewSet):
@@ -11,4 +12,4 @@ class OctObsRegistrationViewSet(viewsets.ModelViewSet):
 
     queryset = OctObsRegistration.objects.all()
     serializer_class = OctObsRegistrationSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    permission_classes = (RetinaImportPermission,)
