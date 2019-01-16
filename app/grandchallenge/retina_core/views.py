@@ -69,6 +69,10 @@ class NumpyView(RetinaAPIPermissionMixin, View):
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
         npy = sitk.GetArrayFromImage(image_itk)
 
+        bio = BytesIO()
+        np.save(bio, npy)
+        bio.seek(0)
         # return numpy array as response
-        response = HttpResponse(npy.tobytes(), content_type="application/octet-stream")
+        response = HttpResponse(bio.getvalue(), content_type="application/octet-stream")
+        bio.close()
         return response
