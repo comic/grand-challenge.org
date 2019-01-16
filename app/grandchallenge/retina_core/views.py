@@ -1,3 +1,5 @@
+from io import BytesIO
+from wsgiref.util import FileWrapper
 from django.shortcuts import get_object_or_404
 from django.views import View, generic
 from config import settings
@@ -68,6 +70,5 @@ class NumpyView(RetinaAPIPermissionMixin, View):
         npy = sitk.GetArrayFromImage(image_itk)
 
         # return numpy array as response
-        response = HttpResponse(content_type="application/octet-stream")
-        np.save(response, npy)
+        response = HttpResponse(npy.tobytes(), content_type="application/octet-stream")
         return response
