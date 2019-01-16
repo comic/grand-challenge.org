@@ -275,7 +275,6 @@ class AbstractUploadView(generics.CreateAPIView):
             == 0
         ):
             grader_group.user_set.add(grader)
-            print(grader.username, "added to", grader_group.name)
 
         annotation_datetime = datetime.datetime.strptime(
             request.data.get("datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"

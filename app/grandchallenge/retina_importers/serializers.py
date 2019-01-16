@@ -31,7 +31,6 @@ class AbstractUploadSerializer(serializers.Serializer):
     def do_validate_as_charfield(value, name, max_length=255, required=True):
         # Check if value is valid charfield
         if required and not value:
-            print(value)
             raise serializers.ValidationError(
                 "{} cannot be empty".format(name)
             )

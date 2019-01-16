@@ -1,5 +1,4 @@
 from io import BytesIO
-from wsgiref.util import FileWrapper
 from django.shortcuts import get_object_or_404
 from django.views import View, generic
 from config import settings
