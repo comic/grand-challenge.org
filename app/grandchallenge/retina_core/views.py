@@ -73,6 +73,8 @@ class NumpyView(RetinaAPIPermissionMixin, View):
         np.save(bio, npy)
         bio.seek(0)
         # return numpy array as response
-        response = HttpResponse(bio.getvalue(), content_type="application/octet-stream")
+        response = HttpResponse(
+            bio.getvalue(), content_type="application/octet-stream"
+        )
         bio.close()
         return response
