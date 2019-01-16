@@ -230,25 +230,23 @@ def batch_test_data_endpoints(test_class):
 def create_data_test_methods(data_type):
     def test_load_no_auth(self, client):
         # create grader user
-        username = "grader"
-        UserFactory(username=username)
+        user = UserFactory()
         ds = create_some_datastructure_data()
         url = reverse(
             "retina:api:data-api-view",
-            args=[data_type, username, ds["archive"].name, ds["patient"].name],
+            args=[data_type, user.id, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_load_normal_user_no_auth(self, client):
         # create grader user
-        username = "grader"
-        UserFactory(username=username)
+        user = UserFactory()
         ds = create_some_datastructure_data()
         client, grader = client_login(client, user="normal")
         url = reverse(
             "retina:api:data-api-view",
-            args=[data_type, username, ds["archive"].name, ds["patient"].name],
+            args=[data_type, user.id, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -263,7 +261,7 @@ def create_data_test_methods(data_type):
             "retina:api:data-api-view",
             args=[
                 data_type,
-                grader.username,
+                grader.id,
                 ds["archive"].name,
                 ds["patient"].name,
             ],
@@ -279,12 +277,11 @@ def create_data_test_methods(data_type):
         client, grader = client_login(client, user="retina_user")
 
         # create grader user
-        username = "grader"
-        UserFactory(username=username)
+        user = UserFactory()
 
         url = reverse(
             "retina:api:data-api-view",
-            args=[data_type, username, ds["archive"].name, ds["patient"].name],
+            args=[data_type, user.id, ds["archive"].name, ds["patient"].name],
         )
         response = client.get(url)
         assert status.HTTP_403_FORBIDDEN == response.status_code
@@ -305,7 +302,7 @@ def create_data_test_methods(data_type):
                 "retina:api:data-api-view",
                 args=[
                     data_type,
-                    grader.username,
+                    grader.id,
                     ds["archive"].name,
                     ds["patient"].name,
                 ],

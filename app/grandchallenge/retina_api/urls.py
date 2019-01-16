@@ -17,7 +17,7 @@ urlpatterns = [
         name="image-api-view",
     ),
     path(
-        "data/<str:data_type>/<str:username>/<str:archive_identifier>/<str:patient_identifier>/",
+        "data/<str:data_type>/<uuid:user_id>/<str:archive_identifier>/<str:patient_identifier>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(views.DataView.as_view()),
         name="data-api-view",
     ),

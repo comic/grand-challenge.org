@@ -285,7 +285,7 @@ class DataView(APIView):
         self,
         request,
         data_type,
-        username,
+        user_id,
         archive_identifier,
         patient_identifier,
     ):
@@ -295,7 +295,7 @@ class DataView(APIView):
             archive__name=archive_identifier,
         )
 
-        user = get_user_model().objects.get(username=username.lower())
+        user = get_user_model().objects.get(id=user_id)
 
         if data_type == self.DataType.REGISTRATION.value:
             landmark_annotations = []
@@ -512,7 +512,7 @@ class DataView(APIView):
         self,
         request,
         data_type,
-        username,
+        user_id,
         archive_identifier,
         patient_identifier,
     ):
@@ -525,7 +525,7 @@ class DataView(APIView):
             .distinct()
             .get()
         )
-        user = get_user_model().objects.get(username=username.lower())
+        user = get_user_model().objects.get(id=user_id)
 
         save_data = {"grader": user, "created": timezone.now()}
         if data_type == self.DataType.REGISTRATION.value:
