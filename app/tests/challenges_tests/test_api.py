@@ -21,7 +21,6 @@ def get_staff_user_with_token():
 
 
 @pytest.mark.django_db
-@pytest.mark.skip
 def test_api_challenge_get(client):
     n_challenges = 5
     challenges = [ChallengeFactory() for i in range(n_challenges)]
@@ -36,7 +35,12 @@ def test_api_challenge_get(client):
     response = client.get(url, HTTP_ACCEPT="application/json")
     assert response.status_code == 200
     j = json.loads(response.content)
+
+    # Filter out the main project created in tests/conftest.py
+    j = [x for x in j if x["short_name"] != "comic"]
+
     assert len(j) == n_challenges
+
     for i, c in enumerate(challenges):
         assert j[i]["short_name"] == challenges[i].short_name
         assert j[i]["creator"].endswith(
