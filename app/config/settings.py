@@ -217,6 +217,7 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
@@ -264,6 +265,7 @@ THIRD_PARTY_APPS = [
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "rest_framework_swagger",  # REST API Swagger spec
+    "corsheaders",  # To manage CORS headers for frontend on different domain
 ]
 
 LOCAL_APPS = [
@@ -610,3 +612,8 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
         '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
         " to your .conf file."
     )
+
+CORS_ORIGIN_REGEX_WHITELIST = (
+    r"^.*\.eyrabenchmark.net",
+    r"https?://localhost:3000",
+)
