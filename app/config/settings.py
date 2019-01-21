@@ -617,3 +617,4 @@ CORS_ORIGIN_REGEX_WHITELIST = (
     r"^.*\.eyrabenchmark.net",
     r"https?://localhost:3000",
 )
+# CORS_ORIGIN_ALLOW_ALL = True
