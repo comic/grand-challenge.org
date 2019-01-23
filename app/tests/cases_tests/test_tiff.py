@@ -11,7 +11,7 @@ from tests.cases_tests import RESOURCE_PATH
 
 @pytest.mark.parametrize(
     "resource, expected_error_message"[
-        (RESOURCE_PATH / "valid_tiff.tif", None),
+        (RESOURCE_PATH / "valid_tiff.tif", ""),
         (
             RESOURCE_PATH / "invalid_meta_data_tiff.tif",
             "Image contains unauthorized information",
@@ -27,7 +27,7 @@ from tests.cases_tests import RESOURCE_PATH
     ]
 )
 def test_tiff_validation(resource: Path, expected_error_message: str):
-    error_message = None
+    error_message = ""
 
     try:
         validate_tiff(resource)
