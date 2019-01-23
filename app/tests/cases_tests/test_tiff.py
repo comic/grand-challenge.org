@@ -4,8 +4,9 @@ Tests for the TIFF-file validation.
 
 import pytest
 from django.core.exceptions import ValidationError
-from tests.cases_tests import RESOURCE_PATH
+from pathlib import Path
 from grandchallenge.cases.image_builders.tiff import validate_tiff
+from tests.cases_tests import RESOURCE_PATH
 
 
 @pytest.mark.parametrize(
@@ -25,7 +26,7 @@ from grandchallenge.cases.image_builders.tiff import validate_tiff
         ),
     ]
 )
-def test_tiff_validation(resource, expected_error_message):
+def test_tiff_validation(resource: Path, expected_error_message: str):
     error_message = None
 
     try:
