@@ -26,7 +26,7 @@ from tests.cases_tests import RESOURCE_PATH
         ),
     ]
 )
-def test_tiff_validation(resource, expected_error_message):
+def test_tiff_validation(resource: Path, expected_error_message: str):
     error_message = None
 
     try:
