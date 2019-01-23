@@ -9,8 +9,7 @@ from grandchallenge.cases.image_builders.tiff import validate_tiff
 
 
 @pytest.mark.parametrize(
-    "resource",
-    "error_message"[
+    "resource, error_message"[
         (RESOURCE_PATH / "valid_tiff.tif", None),
         (
             RESOURCE_PATH / "invalid_meta_data_tiff.tif",
@@ -24,7 +23,7 @@ from grandchallenge.cases.image_builders.tiff import validate_tiff
             RESOURCE_PATH / "invalid_tiles_tiff.tif",
             "Image has incomplete tile information",
         ),
-    ],
+    ]
 )
 def test_tiff_validation(resource, expected_error_message):
     error_message = None

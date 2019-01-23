@@ -42,6 +42,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
 
 def validate_tiff(path: Path):
+    # Model names and color channels
     accepted_color_models = {
         "PHOTOMETRIC.MINISBLACK": 1,
         "PHOTOMETRIC.RGB": 3,
@@ -56,57 +57,66 @@ def validate_tiff(path: Path):
         "TileByteCounts",
     )
 
-    forbidden_description_tags = ("DICOM", "XML", "xml")
+    forbidden_description_tags = ("dicom", "xml")
 
     # Reads the TIF tags
     tif_file = tiff_lib.TiffFile(str(path))
     tif_tags = tif_file.pages[0].tags
 
     # Checks if the image description exists, if so, ensure there's no DICOM or XML data
-    if "ImageDescription" in tif_tags:
-        image_description = str(tif_tags["ImageDescription"].value)
+    try:
+        image_description = str(tif_tags["ImageDescription"].value).lower()
         for forbidden in forbidden_description_tags:
             if forbidden in image_description:
                 raise ValidationError(
                     "Image contains unauthorized information"
                 )
+    except KeyError:
+        pass
 
-    # Checks image storage information
-    for tag in required_tile_tags:
-        if tag not in tif_tags.keys():
-            raise ValidationError("Image has incomplete tile information")
+    # Fails if the image doesn't have all required tile tags
+    if not all(tag in required_tile_tags for tag in tif_tags):
+        raise ValidationError("Image has incomplete tile information")
 
+    # Fails if the image only has a single resolution page
     if len(tif_file.pages) == 1:
         raise ValidationError("Image only has a single resolution level")
 
+    # Fails if the image doesn't have the chunky format
     if str(tif_tags["PlanarConfiguration"].value) != "PLANARCONFIG.CONTIG":
         raise ValidationError(
             "Image planar configuration isn't configured as 'Chunky' format"
         )
 
-    # Checks colour model information
-    if (
-        str(tif_tags["PhotometricInterpretation"].value)
-        not in accepted_color_models
-    ):
-        raise ValidationError("Image utilizes an invalid color model")
+    # Checks color space information
+    try:
+        # Fails if the color space model isn't supported
+        tif_color_model = str(tif_tags["PhotometricInterpretation"].value)
+        if tif_color_model not in accepted_color_models:
+            raise ValidationError("Image utilizes an invalid color model")
 
-    if (
-        accepted_color_models[str(tif_tags["PhotometricInterpretation"].value)]
-        != tif_tags["SamplesPerPixel"].value
-    ):
-        raise ValidationError(
-            "Image contains invalid amount of bytes per pixel."
-        )
+        # Fails if the amount of bytes per sample doesn't correspond to the color model
+        tif_color_channels = tif_tags["SamplesPerPixel"].value
+        if accepted_color_models[tif_color_model] != tif_color_channels:
+            raise ValidationError("Image contains invalid amount of channels.")
+    except KeyError:
+        ValidationError("Image lacks color space information")
 
-    # Check type information
-    if str(tif_tags["SampleFormat"].value[0]) == "IEEEFP":
-        if tif_tags["BitsPerSample"].value[0] != 32:
-            raise ValidationError("Image data type has an invalid byte size")
+    # Checks type information
+    try:
+        if str(tif_tags["SampleFormat"].value[0]) == "IEEEFP":
+            if tif_tags["BitsPerSample"].value[0] != 32:
+                raise ValidationError(
+                    "Image data type has an invalid byte size"
+                )
 
-    elif str(tif_tags["SampleFormat"].value[0]) == "UINT":
-        if tif_tags["BitsPerSample"].value[0] not in (8, 16, 32):
-            raise ValidationError("Image data type has an invalid byte size")
+        elif str(tif_tags["SampleFormat"].value[0]) == "UINT":
+            if tif_tags["BitsPerSample"].value[0] not in (8, 16, 32):
+                raise ValidationError(
+                    "Image data type has an invalid byte size"
+                )
+    except KeyError:
+        raise ValidationError("Image lacks sample information")
 
 
 def create_tiff_image_entry(file: Path):
