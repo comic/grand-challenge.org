@@ -138,7 +138,6 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 depth=depth if depth else None,
                 resolution_levels=None,
                 color_space=color_space,
-                image_type="MHD",
             )
             db_image_files = []
             for _file in work_dir.iterdir():
@@ -150,7 +149,9 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                         temp_file.write(buffer)
 
                 db_image_file = ImageFile(
-                    image=db_image, file=File(temp_file, name=_file.name)
+                    image=db_image,
+                    image_type=ImageFile.IMAGE_TYPE_MHD,
+                    file=File(temp_file, name=_file.name),
                 )
                 db_image_files.append(db_image_file)
 

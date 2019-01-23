@@ -137,11 +137,6 @@ def case_file_path(instance, filename):
 
 
 class Image(UUIDModel):
-    IMAGE_TYPE_MHD = "MHD"
-    IMAGE_TYPE_TIFF = "TIFF"
-
-    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
-
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
     COLOR_SPACE_RGBA = "RGBA"
@@ -169,9 +164,6 @@ class Image(UUIDModel):
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=4, blank=False, choices=COLOR_SPACES
-    )
-    image_type = models.CharField(
-        max_length=4, blank=False, choices=IMAGE_TYPES
     )
 
     def __str__(self):
@@ -203,7 +195,15 @@ class Image(UUIDModel):
 
 
 class ImageFile(UUIDModel):
+    IMAGE_TYPE_MHD = "MHD"
+    IMAGE_TYPE_TIFF = "TIFF"
+
+    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
+
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
+    )
+    image_type = models.CharField(
+        max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
     file = models.FileField(upload_to=image_file_path, blank=False)
