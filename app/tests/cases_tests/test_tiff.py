@@ -10,7 +10,7 @@ from tests.cases_tests import RESOURCE_PATH
 
 
 @pytest.mark.parametrize(
-    "resource, error_message"[
+    "resource, expected_error_message"[
         (RESOURCE_PATH / "valid_tiff.tif", None),
         (
             RESOURCE_PATH / "invalid_meta_data_tiff.tif",
@@ -26,7 +26,7 @@ from tests.cases_tests import RESOURCE_PATH
         ),
     ]
 )
-def test_tiff_validation(resource: Path, expected_error_message: str):
+def test_tiff_validation(resource, expected_error_message):
     error_message = None
 
     try:
