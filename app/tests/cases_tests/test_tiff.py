@@ -11,7 +11,7 @@ from grandchallenge.cases.image_builders.tiff import (
     create_tiff_image_entry,
     get_color_space,
 )
-from grandchallenge.models import Image
+from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
 
