@@ -1,0 +1,2 @@
+class BaseType(object):
+    pass

@@ -14,6 +14,7 @@ from grandchallenge.api.views import (
 )
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
+from grandchallenge.eyra_datasets.viewsets import EyraDataSetViewSet
 
 app_name = "api"
 
@@ -22,6 +23,10 @@ router.register(r"submissions", SubmissionViewSet)
 router.register(r"cases/images", ImageViewSet)
 
 router.register(r"challenges", ChallengeViewSet)
+
+
+router.register(r"datasets", EyraDataSetViewSet)
+
 router.register(r"users", UserViewSet)
 router.register(r"groups", GroupViewSet)
 
