@@ -34,4 +34,4 @@ def test_tiff_validation(resource, expected_error_message):
     except ValidationError as e:
         error_message = e.message
 
-    assert error_message is expected_error_message
+    assert error_message == expected_error_message
