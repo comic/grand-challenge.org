@@ -42,14 +42,6 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
 
 def validate_tiff(path: Path):
-    # Model names and color channels
-    accepted_color_models = {
-        "PHOTOMETRIC.MINISBLACK": 1,
-        "PHOTOMETRIC.RGB": 3,
-        "PHOTOMETRIC.ARGB": 4,
-        "PHOTOMETRIC.YCBCR": 4,
-    }
-
     required_tile_tags = (
         "TileWidth",
         "TileLength",
@@ -93,14 +85,17 @@ def validate_tiff(path: Path):
 
     # Checks color space information
     try:
-        # Fails if the color space model isn't supported
-        tif_color_model = str(tif_tags["PhotometricInterpretation"].value)
-        if tif_color_model not in accepted_color_models:
-            raise ValidationError("Image utilizes an invalid color model")
+        # Fails if the color space isn't supported
+        try:
+            tif_color_space = get_color_space(
+                str(tif_tags["PhotometricInterpretation"].value)
+            )
+        except ValueError:
+            raise ValidationError("Image utilizes an invalid color space")
 
-        # Fails if the amount of bytes per sample doesn't correspond to the color model
+        # Fails if the amount of bytes per sample doesn't correspond to the color space
         tif_color_channels = tif_tags["SamplesPerPixel"].value
-        if accepted_color_models[tif_color_model] != tif_color_channels:
+        if Image.COLOR_SPACE_COMPONENTS[tif_color_space] != tif_color_channels:
             raise ValidationError("Image contains invalid amount of channels.")
     except KeyError:
         ValidationError("Image lacks color space information")
@@ -122,21 +117,15 @@ def validate_tiff(path: Path):
         raise ValidationError("Image lacks sample information")
 
 
-def create_tiff_image_entry(file: Path):
+def create_tiff_image_entry(file: Path) -> Image:
+    # Function assumes validation was succesful
+
     # Reads the TIFF tags
     try:
         tiff_file = tiff_lib.TiffFile(str(file.absolute()))
         tiff_tags = tiff_file.pages[0].tags
     except ValueError:
         raise ValidationError("Image isn't a TIFF file")
-
-    # Detects the color space and formats it correctly
-    color_space = str(tiff_tags["PhotometricInterpretation"].value)
-
-    if color_space == "PHOTOMETRIC.YCBCR":
-        color_space = "YCBCR"
-    else:
-        color_space = color_space.split(".")[1]
 
     # Builds a new Image model item
     new_image = Image(
@@ -145,6 +134,22 @@ def create_tiff_image_entry(file: Path):
         height=tiff_tags["ImageLength"].value,
         depth=None,
         resolution_levels=len(tiff_file.pages),
-        color_space=color_space,
+        color_space=get_color_space(
+            str(tiff_tags["PhotometricInterpretation"].value)
+        ),
     )
     return new_image
+
+
+def get_color_space(color_space_string) -> Image.COLOR_SPACES:
+    color_space_string = color_space_string.split(".")[1].upper()
+
+    if color_space_string == "MINISBLACK":
+        color_space = Image.COLOR_SPACE_GRAY
+    else:
+        try:
+            color_space = dict(Image.COLOR_SPACES)[color_space_string]
+        except KeyError:
+            raise ValueError("Invalid color space")
+
+    return color_space

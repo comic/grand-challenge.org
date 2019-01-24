@@ -140,17 +140,20 @@ class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
     COLOR_SPACE_RGBA = "RGBA"
+    COLOR_SPACE_YCBCR = "YCBCR"
 
     COLOR_SPACES = (
         (COLOR_SPACE_GRAY, "GRAY"),
         (COLOR_SPACE_RGB, "RGB"),
         (COLOR_SPACE_RGBA, "RGBA"),
+        (COLOR_SPACE_YCBCR, "YCBCR"),
     )
 
     COLOR_SPACE_COMPONENTS = {
         COLOR_SPACE_GRAY: 1,
         COLOR_SPACE_RGB: 3,
         COLOR_SPACE_RGBA: 4,
+        COLOR_SPACE_YCBCR: 4,
     }
 
     name = models.CharField(max_length=128)
@@ -163,7 +166,7 @@ class Image(UUIDModel):
     depth = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
-        max_length=4, blank=False, choices=COLOR_SPACES
+        max_length=5, blank=False, choices=COLOR_SPACES
     )
 
     def __str__(self):
