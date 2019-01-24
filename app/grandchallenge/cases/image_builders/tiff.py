@@ -78,7 +78,7 @@ def validate_tiff(path: Path):
         pass
 
     # Fails if the image doesn't have all required tile tags
-    if not all(tag in required_tile_tags for tag in tif_tags):
+    if not all(tag in tif_tags for tag in required_tile_tags):
         raise ValidationError("Image has incomplete tile information")
 
     # Fails if the image only has a single resolution page
