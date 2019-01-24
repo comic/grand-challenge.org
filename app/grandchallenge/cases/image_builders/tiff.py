@@ -20,18 +20,18 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     for file in path.iterdir():
         try:
             validate_tiff(file.absolute())
+
+            new_images.append(create_tiff_image_entry(file))
+            new_image_files.append(
+                ImageFile(
+                    image=new_images[-1],
+                    image_type=ImageFile.IMAGE_TYPE_TIFF,
+                    file=File(open(file.absolute(), "rb"), name=file.name),
+                )
+            )
+            consumed_files.add(file.name)
         except ValidationError as e:
             invalid_file_errors[file.name] = e.message
-
-        new_images.append(create_tiff_image_entry(file))
-        new_image_files.append(
-            ImageFile(
-                image=new_images[-1],
-                image_type=ImageFile.IMAGE_TYPE_TIFF,
-                file=File(open(file.absolute(), "rb"), name=file.name),
-            )
-        )
-        consumed_files.add(file.name)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
@@ -60,8 +60,11 @@ def validate_tiff(path: Path):
     forbidden_description_tags = ("dicom", "xml")
 
     # Reads the TIF tags
-    tif_file = tiff_lib.TiffFile(str(path))
-    tif_tags = tif_file.pages[0].tags
+    try:
+        tif_file = tiff_lib.TiffFile(str(path))
+        tif_tags = tif_file.pages[0].tags
+    except ValueError:
+        raise ValidationError("Image isn't a TIFF file")
 
     # Checks if the image description exists, if so, ensure there's no DICOM or XML data
     try:
@@ -121,8 +124,11 @@ def validate_tiff(path: Path):
 
 def create_tiff_image_entry(file: Path):
     # Reads the TIFF tags
-    tiff_file = tiff_lib.TiffFile(str(file.absolute()))
-    tiff_tags = tiff_file.pages[0].tags
+    try:
+        tiff_file = tiff_lib.TiffFile(str(file.absolute()))
+        tiff_tags = tiff_file.pages[0].tags
+    except ValueError:
+        raise ValidationError("Image isn't a TIFF file")
 
     # Detects the color space and formats it correctly
     color_space = str(tiff_tags["PhotometricInterpretation"].value)
