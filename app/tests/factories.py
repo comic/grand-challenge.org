@@ -139,7 +139,6 @@ class ImageFactory(factory.DjangoModelFactory):
     origin = factory.SubFactory(UploadSessionFactory)
     width = 128
     height = 128
-    image_type = "MHD"
 
 
 class ImageFileFactory(factory.DjangoModelFactory):
@@ -147,6 +146,7 @@ class ImageFileFactory(factory.DjangoModelFactory):
         model = ImageFile
 
     image = factory.SubFactory(ImageFactory)
+    image_type = ImageFile.IMAGE_TYPE_MHD
     file = factory.django.FileField()
 
 
