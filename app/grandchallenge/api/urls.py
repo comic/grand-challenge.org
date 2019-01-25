@@ -14,7 +14,7 @@ from grandchallenge.api.views import (
 )
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
-from grandchallenge.eyra_datasets.viewsets import EyraDataSetViewSet
+from grandchallenge.eyra_datasets.viewsets import DataSetViewSet, DataSetTypeViewSet, DataSetFileViewSet, upload_file
 
 app_name = "api"
 
@@ -25,7 +25,9 @@ router.register(r"cases/images", ImageViewSet)
 router.register(r"challenges", ChallengeViewSet)
 
 
-router.register(r"datasets", EyraDataSetViewSet)
+router.register(r"datasets", DataSetViewSet)
+router.register(r"datasettypes", DataSetTypeViewSet)
+# router.register(r"datasetfiles", DataSetFileViewSet)
 
 router.register(r"users", UserViewSet)
 router.register(r"groups", GroupViewSet)
@@ -39,6 +41,7 @@ urlpatterns = [
     path(
         "v1/auth/", include("rest_framework.urls", namespace="rest_framework")
     ),
+    path('v1/datasetfiles/<str:uuid>/', upload_file),
     path("v1/me/", CurrentUserView.as_view()),
     path("v1/spec/", get_swagger_view(title="Comic API")),
     path("v1/social/", include((urlpatterns_social, "social"))),

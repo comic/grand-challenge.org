@@ -1,76 +1,94 @@
-import logging, re
-from .types import types
+import logging
 
-from compat import URLValidator
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django_s3_storage.storage import S3Storage
 
 from grandchallenge.core.models import UUIDModel
-
-from django.core.files.storage import Storage, FileSystemStorage
 
 logger = logging.getLogger(__name__)
 
 
-class EyraDataSet(UUIDModel):
-    TYPES = {type.name: type for type in types}
-
-    ACCESS_PRIVATE = "private"
-    ACCESS_PUBLIC = "public"
-
-    ACCESS_TYPES = ((ACCESS_PRIVATE, "Private"), (ACCESS_PUBLIC, "Public"))
+class DataSet(UUIDModel):
+    # TYPES = {type.name: type for type in types}
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
         on_delete=models.SET_NULL,
-        related_name="eyra_datasets",
+        related_name="_datasets",
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=20, null=False, blank=False)
-    type = models.CharField(
-        choices=[(type.name, type.verbose_name) for type in types],
-        max_length=20,
-    )
+    type = models.ForeignKey('DataSetType', on_delete=models.CASCADE)
     frozen = models.BooleanField(default=False)
 
-    def get_type_class(self):
-        return self.TYPES[self.type]
-
-    # access_type = models.CharField(
-    #     max_length=8,
-    #     null=False,
-    #     blank=False,
-    #     choices=ACCESS_TYPES,
-    # )
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # editing an existing object
+            return ( 'type', 'name')
+        return ()
 
 
-@receiver(post_save, sender=EyraDataSet)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        type_class = instance.get_type_class()
-        for file in type_class.files:
-            new_file = EyraDataSetFile(
-                role=file,
-                dataset=instance,
-            )
-            new_file.save()
+class DataSetType(UUIDModel):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=40)
+
+    def __str__(self):
+        return self.name
 
 
-class EyraDataSetFileStorage(FileSystemStorage):
-    # todo: make this S3/Minio/DO Spaces storage or something
-    pass
+class DataSetTypeFile(UUIDModel):
+    dataset_type = models.ForeignKey('DataSetType', on_delete=models.CASCADE, related_name='files')
+    type = models.ForeignKey('FileType', on_delete=models.CASCADE)
+    name = models.CharField(max_length=40)
+    required = models.BooleanField(default=False)
 
 
-class EyraDataSetFile(UUIDModel):
+class FileType(UUIDModel):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=40)
+
+    def __str__(self):
+        return self.name
+
+
+storage = S3Storage(
+    aws_s3_bucket_name = 'eyra-datasets',
+    aws_s3_endpoint_url = settings.S3_ENDPOINT_URL,
+    aws_s3_file_overwrite = True,
+    aws_access_key_id = settings.S3_ACCESS_KEY_ID,
+    aws_secret_access_key = settings.S3_SECRET_ACCESS_KEY,
+)
+
+
+def get_dataset_file_name(obj, filename):
+    return 'dataset_files/'+str(obj.id)
+
+
+class DataSetFile(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     dataset = models.ForeignKey(
-        to=EyraDataSet, on_delete=models.CASCADE, related_name="files"
+        to=DataSet, on_delete=models.CASCADE, related_name="files"
     )
-    file = models.FileField(storage=EyraDataSetFileStorage, blank=True)
-    role = models.CharField(max_length=40)
+    original_file_name = models.CharField(null=True, blank=True, max_length=150)
+    dataset_type_file = models.ForeignKey(DataSetTypeFile, on_delete=models.CASCADE)
+    file = models.FileField(storage=storage, blank=True, upload_to=get_dataset_file_name)
     sha = models.CharField(max_length=40, null=True, blank=True)
+    is_public = models.BooleanField(default=False)
+
+
+@receiver(post_save, sender=DataSet)
+def create_draft_files(sender, instance, created, **kwargs):
+    if created:
+        for type_file in instance.type.files.all():
+            new_file = DataSetFile(
+                dataset=instance,
+                dataset_type_file=type_file
+            )
+            new_file.save()
