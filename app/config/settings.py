@@ -150,10 +150,10 @@ DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
-SESSION_COOKIE_SECURE = strtobool(
-    os.environ.get("SESSION_COOKIE_SECURE", "False")
-)
-CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
+# We're always running behind a proxy so set these to true
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
