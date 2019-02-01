@@ -1,4 +1,5 @@
 from pathlib import Path
+from tempfile import TemporaryFile
 from typing import NamedTuple
 
 import tifffile
@@ -145,22 +146,29 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     for file_path in path.iterdir():
         try:
             tiff_file = load_tiff_file(path=file_path)
-
-            new_images.append(create_tiff_image_entry(tiff_file=tiff_file))
-
-            with open(tiff_file.path.absolute(), "rb") as f:
-                new_image_files.append(
-                    ImageFile(
-                        image=new_images[-1],
-                        image_type=ImageFile.IMAGE_TYPE_TIFF,
-                        file=File(f, name=tiff_file.path.name),
-                    )
-                )
-
-            consumed_files.add(tiff_file.path.name)
-
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message
+            continue
+
+        image = create_tiff_image_entry(tiff_file=tiff_file)
+
+        temp_file = TemporaryFile()
+        with open(tiff_file.path.absolute(), "rb") as open_file:
+            buffer = True
+            while buffer:
+                buffer = open_file.read(1024)
+                temp_file.write(buffer)
+
+        new_image_files.append(
+            ImageFile(
+                image=image,
+                image_type=ImageFile.IMAGE_TYPE_TIFF,
+                file=File(temp_file, name=tiff_file.path.name),
+            )
+        )
+
+        new_images.append(image)
+        consumed_files.add(tiff_file.path.name)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
