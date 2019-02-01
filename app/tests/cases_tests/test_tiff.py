@@ -1,15 +1,12 @@
-"""
-Tests for the TIFF-file validation.
-"""
-
 import pytest
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
+
 from grandchallenge.cases.image_builders.tiff import (
     image_builder_tiff,
-    validate_tiff,
     create_tiff_image_entry,
     get_color_space,
+    load_tiff_file,
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
@@ -61,7 +58,7 @@ def test_tiff_validation(resource, expected_error_message):
     error_message = ""
 
     try:
-        validate_tiff(resource)
+        load_tiff_file(path=resource)
     except ValidationError as e:
         error_message = e.message
 
@@ -80,7 +77,8 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
     error_message = ""
 
     try:
-        image_entry = create_tiff_image_entry(resource)
+        tiff_file = load_tiff_file(path=resource)
+        image_entry = create_tiff_image_entry(tiff_file=tiff_file)
     except ValidationError as e:
         error_message = e.message
 

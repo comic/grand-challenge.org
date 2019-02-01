@@ -1,9 +1,7 @@
-"""
-Image builder for TIFF files.
-"""
-import tifffile as tiff_lib
-
 from pathlib import Path
+from typing import NamedTuple, Dict
+
+import tifffile
 from django.core.exceptions import ValidationError
 from django.core.files import File
 
@@ -11,37 +9,31 @@ from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
 
 
-def image_builder_tiff(path: Path) -> ImageBuilderResult:
-    new_images = []
-    new_image_files = []
-    consumed_files = set()
-    invalid_file_errors = {}
+class GrandChallengeTiffFile(NamedTuple):
+    tifffile_tags: Dict[str, tifffile.TiffTag]
+    name: str
+    resolution_levels: int
 
-    for file in path.iterdir():
-        try:
-            validate_tiff(file.absolute())
 
-            new_images.append(create_tiff_image_entry(file))
-            new_image_files.append(
-                ImageFile(
-                    image=new_images[-1],
-                    image_type=ImageFile.IMAGE_TYPE_TIFF,
-                    file=File(open(file.absolute(), "rb"), name=file.name),
-                )
-            )
-            consumed_files.add(file.name)
-        except ValidationError as e:
-            invalid_file_errors[file.name] = e.message
+def load_tiff_file(*, path: Path) -> GrandChallengeTiffFile:
+    try:
+        file = tifffile.TiffFile(str(path.absolute()))
+        tags = file.pages[0].tags
+    except ValueError:
+        raise ValidationError("Image isn't a TIFF file")
 
-    return ImageBuilderResult(
-        consumed_files=consumed_files,
-        file_errors_map=invalid_file_errors,
-        new_images=new_images,
-        new_image_files=new_image_files,
+    resolution_levels = len(file.pages)
+
+    validate_tiff(tags=tags, resolution_levels=resolution_levels)
+
+    return GrandChallengeTiffFile(
+        tifffile_tags=tags, name=path.name, resolution_levels=resolution_levels
     )
 
 
-def validate_tiff(path: Path):
+def validate_tiff(
+    *, tags: Dict[str, tifffile.TiffTag], resolution_levels: int
+):
     required_tile_tags = (
         "TileWidth",
         "TileLength",
@@ -51,16 +43,9 @@ def validate_tiff(path: Path):
 
     forbidden_description_tags = ("dicom", "xml")
 
-    # Reads the TIF tags
-    try:
-        tif_file = tiff_lib.TiffFile(str(path))
-        tif_tags = tif_file.pages[0].tags
-    except ValueError:
-        raise ValidationError("Image isn't a TIFF file")
-
     # Checks if the image description exists, if so, ensure there's no DICOM or XML data
     try:
-        image_description = str(tif_tags["ImageDescription"].value).lower()
+        image_description = str(tags["ImageDescription"].value).lower()
         for forbidden in forbidden_description_tags:
             if forbidden in image_description:
                 raise ValidationError(
@@ -70,15 +55,15 @@ def validate_tiff(path: Path):
         pass
 
     # Fails if the image doesn't have all required tile tags
-    if not all(tag in tif_tags for tag in required_tile_tags):
+    if not all(tag in tags for tag in required_tile_tags):
         raise ValidationError("Image has incomplete tile information")
 
     # Fails if the image only has a single resolution page
-    if len(tif_file.pages) == 1:
+    if resolution_levels == 1:
         raise ValidationError("Image only has a single resolution level")
 
     # Fails if the image doesn't have the chunky format
-    if str(tif_tags["PlanarConfiguration"].value) != "PLANARCONFIG.CONTIG":
+    if str(tags["PlanarConfiguration"].value) != "PLANARCONFIG.CONTIG":
         raise ValidationError(
             "Image planar configuration isn't configured as 'Chunky' format"
         )
@@ -88,13 +73,13 @@ def validate_tiff(path: Path):
         # Fails if the color space isn't supported
         try:
             tif_color_space = get_color_space(
-                str(tif_tags["PhotometricInterpretation"].value)
+                str(tags["PhotometricInterpretation"].value)
             )
         except ValueError:
             raise ValidationError("Image utilizes an invalid color space")
 
         # Fails if the amount of bytes per sample doesn't correspond to the color space
-        tif_color_channels = tif_tags["SamplesPerPixel"].value
+        tif_color_channels = tags["SamplesPerPixel"].value
         if Image.COLOR_SPACE_COMPONENTS[tif_color_space] != tif_color_channels:
             raise ValidationError("Image contains invalid amount of channels.")
     except KeyError:
@@ -102,14 +87,14 @@ def validate_tiff(path: Path):
 
     # Checks type information
     try:
-        if str(tif_tags["SampleFormat"].value[0]) == "IEEEFP":
-            if tif_tags["BitsPerSample"].value[0] != 32:
+        if str(tags["SampleFormat"].value[0]) == "IEEEFP":
+            if tags["BitsPerSample"].value[0] != 32:
                 raise ValidationError(
                     "Image data type has an invalid byte size"
                 )
 
-        elif str(tif_tags["SampleFormat"].value[0]) == "UINT":
-            if tif_tags["BitsPerSample"].value[0] not in (8, 16, 32):
+        elif str(tags["SampleFormat"].value[0]) == "UINT":
+            if tags["BitsPerSample"].value[0] not in (8, 16, 32):
                 raise ValidationError(
                     "Image data type has an invalid byte size"
                 )
@@ -117,28 +102,50 @@ def validate_tiff(path: Path):
         raise ValidationError("Image lacks sample information")
 
 
-def create_tiff_image_entry(file: Path) -> Image:
-    # Function assumes validation was succesful
+def image_builder_tiff(path: Path) -> ImageBuilderResult:
+    new_images = []
+    new_image_files = []
+    consumed_files = set()
+    invalid_file_errors = {}
 
-    # Reads the TIFF tags
-    try:
-        tiff_file = tiff_lib.TiffFile(str(file.absolute()))
-        tiff_tags = tiff_file.pages[0].tags
-    except ValueError:
-        raise ValidationError("Image isn't a TIFF file")
+    for file_path in path.iterdir():
+        try:
+            tiff_file = load_tiff_file(path=file_path)
 
+            new_images.append(create_tiff_image_entry(tiff_file=tiff_file))
+            new_image_files.append(
+                ImageFile(
+                    image=new_images[-1],
+                    image_type=ImageFile.IMAGE_TYPE_TIFF,
+                    file=File(
+                        open(file_path.absolute(), "rb"), name=file_path.name
+                    ),
+                )
+            )
+            consumed_files.add(file_path.name)
+        except ValidationError as e:
+            invalid_file_errors[file_path.name] = e.message
+
+    return ImageBuilderResult(
+        consumed_files=consumed_files,
+        file_errors_map=invalid_file_errors,
+        new_images=new_images,
+        new_image_files=new_image_files,
+    )
+
+
+def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
     # Builds a new Image model item
-    new_image = Image(
-        name=file.name,
-        width=tiff_tags["ImageWidth"].value,
-        height=tiff_tags["ImageLength"].value,
+    return Image(
+        name=tiff_file.name,
+        width=tiff_file.tifffile_tags["ImageWidth"].value,
+        height=tiff_file.tifffile_tags["ImageLength"].value,
         depth=None,
-        resolution_levels=len(tiff_file.pages),
+        resolution_levels=tiff_file.resolution_levels,
         color_space=get_color_space(
-            str(tiff_tags["PhotometricInterpretation"].value)
+            str(tiff_file.tifffile_tags["PhotometricInterpretation"].value)
         ),
     )
-    return new_image
 
 
 def get_color_space(color_space_string) -> Image.COLOR_SPACES:
