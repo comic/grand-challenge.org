@@ -55,7 +55,7 @@ def test_file_session_creation():
 
 
 @pytest.mark.django_db
-def test_mhd_file_creation(settings):
+def test_image_file_creation(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -70,6 +70,8 @@ def test_mhd_file_creation(settings):
         "image10x10x10-extra-stuff.mhd",
         "invalid_utf8.mhd",
         "no_image",
+        "valid_tiff.tif",
+        "invalid_tiles_tiff.tif",
     ]
     session, uploaded_images = create_raw_upload_image_session(images)
 
@@ -77,7 +79,7 @@ def test_mhd_file_creation(settings):
     assert session.session_state == UPLOAD_SESSION_STATE.stopped
     assert session.error_message is None
 
-    assert Image.objects.filter(origin=session).count() == 3
+    assert Image.objects.filter(origin=session).count() == 4
 
     for name, db_object in uploaded_images.items():
         name: str
@@ -86,7 +88,7 @@ def test_mhd_file_creation(settings):
         db_object.refresh_from_db()
 
         assert db_object.staged_file_id is None
-        if name in ("no_image", "invalid_utf8.mhd"):
+        if name in ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif"):
             assert db_object.error is not None
         else:
             assert db_object.error is None

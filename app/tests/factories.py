@@ -146,6 +146,7 @@ class ImageFileFactory(factory.DjangoModelFactory):
         model = ImageFile
 
     image = factory.SubFactory(ImageFactory)
+    image_type = ImageFile.IMAGE_TYPE_MHD
     file = factory.django.FileField()
 
 
