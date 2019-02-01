@@ -85,7 +85,7 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
     # Asserts possible file opening failures
     assert error_message == expected_error_message
 
-    # Asserts succesful creation data
+    # Asserts successful creation data
     try:
         tiff_file = tiff_lib.TiffFile(str(resource.absolute()))
         tiff_tags = tiff_file.pages[0].tags

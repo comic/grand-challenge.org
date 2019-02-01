@@ -17,7 +17,7 @@ class GrandChallengeTiffFileTags(NamedTuple):
 
 
 class GrandChallengeTiffFile(NamedTuple):
-    name: str
+    path: Path
     tags: GrandChallengeTiffFileTags
 
 
@@ -34,7 +34,7 @@ def load_tiff_file(*, path: Path) -> GrandChallengeTiffFile:
 
     tags = _validate_tifffile(pages=file.pages)
 
-    return GrandChallengeTiffFile(name=path.name, tags=tags)
+    return GrandChallengeTiffFile(path=path, tags=tags)
 
 
 def _validate_tifffile(
@@ -147,16 +147,18 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             tiff_file = load_tiff_file(path=file_path)
 
             new_images.append(create_tiff_image_entry(tiff_file=tiff_file))
-            new_image_files.append(
-                ImageFile(
-                    image=new_images[-1],
-                    image_type=ImageFile.IMAGE_TYPE_TIFF,
-                    file=File(
-                        open(file_path.absolute(), "rb"), name=file_path.name
-                    ),
+
+            with open(tiff_file.path.absolute(), "rb") as f:
+                new_image_files.append(
+                    ImageFile(
+                        image=new_images[-1],
+                        image_type=ImageFile.IMAGE_TYPE_TIFF,
+                        file=File(f, name=tiff_file.path.name),
+                    )
                 )
-            )
-            consumed_files.add(file_path.name)
+
+            consumed_files.add(tiff_file.path.name)
+
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message
 
@@ -171,7 +173,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
     # Builds a new Image model item
     return Image(
-        name=tiff_file.name,
+        name=tiff_file.path.name,
         width=tiff_file.tags.image_width,
         height=tiff_file.tags.image_height,
         depth=None,
