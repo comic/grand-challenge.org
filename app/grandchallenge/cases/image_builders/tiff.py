@@ -163,7 +163,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             ImageFile(
                 image=image,
                 image_type=ImageFile.IMAGE_TYPE_TIFF,
-                file=File(temp_file, name=tiff_file.path.name),
+                file=File(temp_file, name="out.tif"),
             )
         )
 
