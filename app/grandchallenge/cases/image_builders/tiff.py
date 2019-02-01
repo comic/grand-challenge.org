@@ -78,23 +78,19 @@ def _validate_tifffile(
             "Image planar configuration isn't configured as 'Chunky' format"
         )
 
-    # Checks color space information
+    # Fails if the color space isn't supported
     try:
-        # Fails if the color space isn't supported
-        try:
-            tif_color_space = get_color_space(
-                str(tags["PhotometricInterpretation"].value)
-            )
-        except ValueError:
-            raise ValidationError("Image utilizes an invalid color space")
-
-        # Fails if the amount of bytes per sample doesn't correspond to the
-        # colour space
-        tif_color_channels = tags["SamplesPerPixel"].value
-        if Image.COLOR_SPACE_COMPONENTS[tif_color_space] != tif_color_channels:
-            raise ValidationError("Image contains invalid amount of channels.")
+        color_space = get_color_space(
+            str(tags["PhotometricInterpretation"].value)
+        )
     except KeyError:
-        ValidationError("Image lacks color space information")
+        raise ValidationError("Image lacks color space information")
+
+    # Fails if the amount of bytes per sample doesn't correspond to the
+    # colour space
+    tif_color_channels = tags["SamplesPerPixel"].value
+    if Image.COLOR_SPACE_COMPONENTS[color_space] != tif_color_channels:
+        raise ValidationError("Image contains invalid amount of channels.")
 
     # Checks type information
     try:
@@ -115,9 +111,6 @@ def _validate_tifffile(
     try:
         image_width = tags["ImageWidth"].value
         image_height = tags["ImageLength"].value
-        color_space = get_color_space(
-            str(tags["PhotometricInterpretation"].value)
-        )
     except KeyError:
         raise ValidationError("Missing tags in tiff file")
 
