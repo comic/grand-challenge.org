@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import NamedTuple, Dict
+from typing import NamedTuple
 
 import tifffile
 from django.core.exceptions import ValidationError
@@ -9,41 +9,50 @@ from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
 
 
-class GrandChallengeTiffFile(NamedTuple):
-    tifffile_tags: Dict[str, tifffile.TiffTag]
-    name: str
+class GrandChallengeTiffFileTags(NamedTuple):
+    image_width: int
+    image_height: int
     resolution_levels: int
+    color_space: str
+
+
+class GrandChallengeTiffFile(NamedTuple):
+    name: str
+    tags: GrandChallengeTiffFileTags
 
 
 def load_tiff_file(*, path: Path) -> GrandChallengeTiffFile:
+    """
+    Loads and validates a file using tifffile
+    :param path: The path to the potential tiff file
+    :return: A tiff file that can be used in the rest of grand challenge
+    """
     try:
         file = tifffile.TiffFile(str(path.absolute()))
-        tags = file.pages[0].tags
     except ValueError:
         raise ValidationError("Image isn't a TIFF file")
 
-    resolution_levels = len(file.pages)
+    tags = _validate_tifffile(pages=file.pages)
 
-    validate_tiff(tags=tags, resolution_levels=resolution_levels)
-
-    return GrandChallengeTiffFile(
-        tifffile_tags=tags, name=path.name, resolution_levels=resolution_levels
-    )
+    return GrandChallengeTiffFile(name=path.name, tags=tags)
 
 
-def validate_tiff(
-    *, tags: Dict[str, tifffile.TiffTag], resolution_levels: int
-):
-    required_tile_tags = (
-        "TileWidth",
-        "TileLength",
-        "TileOffsets",
-        "TileByteCounts",
-    )
+def _validate_tifffile(
+    *, pages: tifffile.tifffile.TiffPages
+) -> GrandChallengeTiffFileTags:
+    """
+    Validates a tiff file loaded with tifffile for use in grand challenge
+    :param pages: The pages and tags from tiffile
+    :return: The extracted tags that are needed by the rest of the framework
+    """
+    required_tile_tags = ("TileOffsets", "TileByteCounts")
 
     forbidden_description_tags = ("dicom", "xml")
 
-    # Checks if the image description exists, if so, ensure there's no DICOM or XML data
+    tags = pages[0].tags
+
+    # Checks if the image description exists,
+    # if so, ensure there's no DICOM or XML data
     try:
         image_description = str(tags["ImageDescription"].value).lower()
         for forbidden in forbidden_description_tags:
@@ -59,6 +68,7 @@ def validate_tiff(
         raise ValidationError("Image has incomplete tile information")
 
     # Fails if the image only has a single resolution page
+    resolution_levels = len(pages)
     if resolution_levels == 1:
         raise ValidationError("Image only has a single resolution level")
 
@@ -78,7 +88,8 @@ def validate_tiff(
         except ValueError:
             raise ValidationError("Image utilizes an invalid color space")
 
-        # Fails if the amount of bytes per sample doesn't correspond to the color space
+        # Fails if the amount of bytes per sample doesn't correspond to the
+        # colour space
         tif_color_channels = tags["SamplesPerPixel"].value
         if Image.COLOR_SPACE_COMPONENTS[tif_color_space] != tif_color_channels:
             raise ValidationError("Image contains invalid amount of channels.")
@@ -100,6 +111,36 @@ def validate_tiff(
                 )
     except KeyError:
         raise ValidationError("Image lacks sample information")
+
+    try:
+        image_width = tags["ImageWidth"].value
+        image_height = tags["ImageLength"].value
+        color_space = get_color_space(
+            str(tags["PhotometricInterpretation"].value)
+        )
+    except KeyError:
+        raise ValidationError("Missing tags in tiff file")
+
+    return GrandChallengeTiffFileTags(
+        image_width=image_width,
+        image_height=image_height,
+        color_space=color_space,
+        resolution_levels=resolution_levels,
+    )
+
+
+def get_color_space(color_space_string) -> Image.COLOR_SPACES:
+    color_space_string = color_space_string.split(".")[1].upper()
+
+    if color_space_string == "MINISBLACK":
+        color_space = Image.COLOR_SPACE_GRAY
+    else:
+        try:
+            color_space = dict(Image.COLOR_SPACES)[color_space_string]
+        except KeyError:
+            raise ValidationError("Invalid color space")
+
+    return color_space
 
 
 def image_builder_tiff(path: Path) -> ImageBuilderResult:
@@ -138,25 +179,9 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
     # Builds a new Image model item
     return Image(
         name=tiff_file.name,
-        width=tiff_file.tifffile_tags["ImageWidth"].value,
-        height=tiff_file.tifffile_tags["ImageLength"].value,
+        width=tiff_file.tags.image_width,
+        height=tiff_file.tags.image_height,
         depth=None,
-        resolution_levels=tiff_file.resolution_levels,
-        color_space=get_color_space(
-            str(tiff_file.tifffile_tags["PhotometricInterpretation"].value)
-        ),
+        resolution_levels=tiff_file.tags.resolution_levels,
+        color_space=tiff_file.tags.color_space,
     )
-
-
-def get_color_space(color_space_string) -> Image.COLOR_SPACES:
-    color_space_string = color_space_string.split(".")[1].upper()
-
-    if color_space_string == "MINISBLACK":
-        color_space = Image.COLOR_SPACE_GRAY
-    else:
-        try:
-            color_space = dict(Image.COLOR_SPACES)[color_space_string]
-        except KeyError:
-            raise ValueError("Invalid color space")
-
-    return color_space

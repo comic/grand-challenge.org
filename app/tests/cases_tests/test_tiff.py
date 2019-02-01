@@ -29,7 +29,7 @@ def test_get_color_space(color_space_string, expected):
 
     try:
         color_space = get_color_space(color_space_string)
-    except ValueError:
+    except ValidationError:
         pass
 
     assert color_space is expected
