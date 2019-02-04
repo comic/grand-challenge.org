@@ -150,17 +150,20 @@ class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
     COLOR_SPACE_RGBA = "RGBA"
+    COLOR_SPACE_YCBCR = "YCBCR"
 
     COLOR_SPACES = (
         (COLOR_SPACE_GRAY, "GRAY"),
         (COLOR_SPACE_RGB, "RGB"),
         (COLOR_SPACE_RGBA, "RGBA"),
+        (COLOR_SPACE_YCBCR, "YCBCR"),
     )
 
     COLOR_SPACE_COMPONENTS = {
         COLOR_SPACE_GRAY: 1,
         COLOR_SPACE_RGB: 3,
         COLOR_SPACE_RGBA: 4,
+        COLOR_SPACE_YCBCR: 4,
     }
 
     EYE_OD = "OD"
@@ -186,8 +189,9 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
-        max_length=4, blank=False, choices=COLOR_SPACES
+        max_length=5, blank=False, choices=COLOR_SPACES
     )
 
     eye_choice = models.CharField(
@@ -270,7 +274,15 @@ class Image(UUIDModel):
 
 
 class ImageFile(UUIDModel):
+    IMAGE_TYPE_MHD = "MHD"
+    IMAGE_TYPE_TIFF = "TIFF"
+
+    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
+
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
+    )
+    image_type = models.CharField(
+        max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
     file = models.FileField(upload_to=image_file_path, blank=False)
