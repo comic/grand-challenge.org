@@ -283,6 +283,14 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
+    "grandchallenge.archives",
+    "grandchallenge.patients",
+    "grandchallenge.studies",
+    "grandchallenge.registrations",
+    "grandchallenge.annotations",
+    "grandchallenge.retina_core",
+    "grandchallenge.retina_importers",
+    "grandchallenge.retina_api",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -600,3 +608,19 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
         '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
         " to your .conf file."
     )
+
+# Modality name constants
+MODALITY_OCT = "OCT"  # Optical coherence tomography
+MODALITY_CF = "Fundus Photography"  # Color fundus photography
+MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
+MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
+
+# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
+MAX_SITK_FILE_SIZE = 268435456  # == 256 mb
+
+# Retina specific settings
+RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24
+RETINA_GRADERS_GROUP_NAME = "retina_graders"
+RETINA_ADMINS_GROUP_NAME = "retina_admins"
+RETINA_IMPORT_USER_NAME = "retina_import_user"
+RETINA_EXCEPTION_ARCHIVE = "Australia"

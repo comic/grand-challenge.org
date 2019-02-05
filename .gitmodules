@@ -1,0 +1,3 @@
+[submodule "app/grandchallenge/retina_core/static"]
+	path = app/grandchallenge/retina_core/static
+	url = https://github.com/DIAGNijmegen/retina-frontend.git

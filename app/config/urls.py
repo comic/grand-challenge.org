@@ -74,6 +74,16 @@ urlpatterns = [
         include("grandchallenge.algorithms.urls", namespace="algorithms"),
     ),
     path("summernote/", include("django_summernote.urls")),
+    path(
+        "retina/",
+        include("grandchallenge.retina_core.urls", namespace="retina"),
+    ),
+    path(
+        "registrations/",
+        include(
+            "grandchallenge.registrations.urls", namespace="registrations"
+        ),
+    ),
     # ========== catch all ====================
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in

@@ -1,0 +1,20 @@
+{
+  "archive_identifier": "Test archive",
+  "patient_identifier": "Test patient",
+  "patient_patient_name": "test_patient_name",
+  "patient_birth_date": "2010-12-31",
+  "patient_sex": "M",
+  "study_identifier": "Test study",
+  "study_datetime": "2011-12-31T12:59:59.123456+0200",
+  "study_referring_physicians_name": "Referring Physicians Test Name",
+  "study_accession_number": "123",
+  "image_eye_choice": "OD",
+  "series_voxel_size_axial": 1.234,
+  "series_voxel_size_lateral": 2.234,
+  "series_voxel_size_transversal": 3.234,
+  "image_identifier": "TestSeriesImageName",
+  "image_modality": "CF",
+  "image_width": 7,
+  "image_height": 6,
+  "image_depth": 5
+}
