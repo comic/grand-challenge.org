@@ -105,7 +105,7 @@ http {
     listen [::]:443 ssl default_server;
 
     client_body_buffer_size 16m;
-    client_max_body_size 64m;
+    client_max_body_size 16m;
 
     server_name .${SERVER_NAME};
 
