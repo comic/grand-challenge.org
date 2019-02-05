@@ -9,27 +9,43 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('patients', '0001_initial'),
-    ]
+    dependencies = [("patients", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='Study',
+            name="Study",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('datetime', models.DateTimeField(blank=True, help_text='The date and time at which this study took place', null=True)),
-                ('name', models.CharField(max_length=255)),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='patients.Patient')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "datetime",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="The date and time at which this study took place",
+                        null=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.Patient",
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.AlterUniqueTogether(
-            name='study',
-            unique_together={('patient', 'name')},
+            name="study", unique_together={("patient", "name")}
         ),
     ]

@@ -7,25 +7,43 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('studies', '0001_initial'),
-        ('challenges', '0017_auto_20181214_1256'),
-        ('cases', '0008_auto_20190201_1312'),
+        ("studies", "0001_initial"),
+        ("challenges", "0017_auto_20181214_1256"),
+        ("cases", "0008_auto_20190201_1312"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='image',
-            name='eye_choice',
-            field=models.CharField(choices=[('OD', 'Oculus Dexter (right eye)'), ('OS', 'Oculus Sinister (left eye)'), ('U', 'Unknown'), ('NA', 'Not applicable')], default='NA', help_text='Is this (retina) image from the right or left eye?', max_length=2),
+            model_name="image",
+            name="eye_choice",
+            field=models.CharField(
+                choices=[
+                    ("OD", "Oculus Dexter (right eye)"),
+                    ("OS", "Oculus Sinister (left eye)"),
+                    ("U", "Unknown"),
+                    ("NA", "Not applicable"),
+                ],
+                default="NA",
+                help_text="Is this (retina) image from the right or left eye?",
+                max_length=2,
+            ),
         ),
         migrations.AddField(
-            model_name='image',
-            name='modality',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='challenges.ImagingModality'),
+            model_name="image",
+            name="modality",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="challenges.ImagingModality",
+            ),
         ),
         migrations.AddField(
-            model_name='image',
-            name='study',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='studies.Study'),
+            model_name="image",
+            name="study",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="studies.Study",
+            ),
         ),
     ]
