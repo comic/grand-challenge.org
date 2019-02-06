@@ -283,14 +283,4 @@ $(document).ready(function () {
         $('#structure-chevron').addClass('fa-chevron-circle-right');
     });
 
-     $('#collapseEducational').on('show.bs.collapse', function () {
-        $('#structure-chevron').removeClass('fa-chevron-circle-right');
-        $('#structure-chevron').addClass('fa-chevron-circle-down');
-    });
-
-     $('#collapseEducational').on('hide.bs.collapse', function () {
-        $('#structure-chevron').removeClass('fa-chevron-circle-down');
-        $('#structure-chevron').addClass('fa-chevron-circle-right');
-    });
-
 });
