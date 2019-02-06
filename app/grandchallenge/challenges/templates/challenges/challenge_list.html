@@ -295,10 +295,7 @@
                                              src="{{ challenge.thumb_image_url }}">
                                         <h3 class="m-0 px-3 flex-shrink-1">
                                             {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
-                                             {% if challenge.educational %}
-                                            <i class="fas fa-university fa-2x"></i>
 
-                                        {% endif %}
                                         </h3>
                                     </div>
                                 </a>
@@ -312,7 +309,10 @@
                                      style="line-height:1.5em">
 
                                     <dl class="inline mb-0">
+                                        {% if challenge.educational %}
+                                            <i class="fas fa-university fa-2x"></i>
 
+                                        {% endif %}
                                         {% if challenge.cached_num_participants %}
                                             <dt>Participants</dt>
                                             <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
