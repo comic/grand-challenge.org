@@ -5,19 +5,21 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0017_auto_20181214_1256'),
-    ]
+    dependencies = [("challenges", "0017_auto_20181214_1256")]
 
     operations = [
         migrations.AddField(
-            model_name='challenge',
-            name='educational_challenge',
-            field=models.BooleanField(default=False, help_text='It is an educational challange'),
+            model_name="challenge",
+            name="educational_challenge",
+            field=models.BooleanField(
+                default=False, help_text="It is an educational challange"
+            ),
         ),
         migrations.AddField(
-            model_name='externalchallenge',
-            name='educational_challenge',
-            field=models.BooleanField(default=False, help_text='It is an educational challange'),
+            model_name="externalchallenge",
+            name="educational_challenge",
+            field=models.BooleanField(
+                default=False, help_text="It is an educational challange"
+            ),
         ),
     ]

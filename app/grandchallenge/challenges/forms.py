@@ -31,7 +31,7 @@ common_information_items = (
     "modalities",
     "structures",
     "hidden",
-    "educational"
+    "educational",
 )
 
 common_images_items = ("logo",)

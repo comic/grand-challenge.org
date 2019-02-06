@@ -5,19 +5,17 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('challenges', '0018_auto_20190129_1524'),
-    ]
+    dependencies = [("challenges", "0018_auto_20190129_1524")]
 
     operations = [
         migrations.RenameField(
-            model_name='challenge',
-            old_name='educational_challenge',
-            new_name='educational',
+            model_name="challenge",
+            old_name="educational_challenge",
+            new_name="educational",
         ),
         migrations.RenameField(
-            model_name='externalchallenge',
-            old_name='educational_challenge',
-            new_name='educational',
+            model_name="externalchallenge",
+            old_name="educational_challenge",
+            new_name="educational",
         ),
     ]
