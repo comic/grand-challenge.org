@@ -273,6 +273,12 @@
 
                                     <dl class="inline mb-0">
 
+                                        {% if challenge.educational %}
+                                            <dd>
+                                               <i class="fas fa-university fa-2x"></i>
+                                            </dd>
+                                        {% endif %}
+
                                         {% if challenge.cached_num_participants %}
                                             <dt>Participants</dt>
                                             <dd>{{ challenge.cached_num_participants|intcomma }}</dd>

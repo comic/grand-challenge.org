@@ -171,6 +171,9 @@ class ChallengeBase(models.Model):
         default=True,
         help_text="Do not display this Project in any public overview",
     )
+    educational = models.BooleanField(
+        default=False, help_text="It is an educational challange"
+    )
     workshop_date = models.DateField(
         null=True,
         blank=True,
