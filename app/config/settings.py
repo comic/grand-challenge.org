@@ -156,7 +156,7 @@ CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Set the allowed hosts to the cookie domain
-ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web", "localhost"]
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
