@@ -1,4 +1,4 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import permissions, generics, parsers, status, serializers
 import datetime
 import uuid
@@ -55,96 +55,103 @@ class UploadImage(generics.CreateAPIView):
     parser_classes = (parsers.MultiPartParser,)
 
     def post(self, request, *args, **kwargs):
-        errors, archive_dict, patient_dict, study_dict, image_dict = self.create_model_dicts(
-            request
-        )
-
-        if errors:
-            return JsonResponse(errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # get existing or create new data structure models in database
-        archive, archive_created = Archive.objects.get_or_create(
-            **archive_dict
-        )
-        patient, patient_created = Patient.objects.update_or_create(
-            name=patient_dict["name"],
-            defaults=exclude_val_from_dict(patient_dict, "name"),
-        )
-        study, study_created = Study.objects.update_or_create(
-            patient=patient,
-            name=study_dict["name"],
-            defaults=exclude_val_from_dict(study_dict, "name"),
-        )
-        image_created = False
-        # Check if image already exists in database
+        response_obj = {}
         try:
-            img = Image.objects.get(study=study, **image_dict)
-            # Image already exists. Do nothing and return response
-        except Image.DoesNotExist:
-            # Image does not exist yet.
-            img = Image.objects.create(study=study, **image_dict)
+            # Process archive
+            archive_name = request.data.get("archive_identifier")
+            archive = None
+            if archive_name is not None:
+                archive_dict = {"name": archive_name}
+                self.validate_model(archive_dict, ArchiveSerializer)
+                archive, archive_created = Archive.objects.get_or_create(
+                    **archive_dict
+                )
+                response_obj.update({
+                    "archive_created": archive_created,
+                    "archive": ArchiveSerializer(archive).data
+                })
 
-            # Create ImageFile object without linking image file and without saving
-            random_uuid_str = str(uuid.uuid4())
+            # Process patient
+            patient_name = request.data.get("patient_identifier")
+            patient = None
+            if patient_name is not None:
+                patient_dict = {"name": patient_name}
+                self.validate_model(patient_dict, PatientSerializer)
+                patient, patient_created = Patient.objects.update_or_create(
+                    name=patient_dict["name"],
+                    defaults=exclude_val_from_dict(patient_dict, "name"),
+                )
+                response_obj.update({
+                    "patient_created": patient_created,
+                    "patient": PatientSerializer(patient).data,
+                })
 
-            # Set ElementDataFile in mhd file to correct zraw filename
-            raw_file_name = random_uuid_str + ".zraw"
-            request.data["image_hd"] = self.set_element_data_file_header(
-                request.data["image_hd"], raw_file_name
-            )
-            for image_key in ("image_hd", "image_raw"):
-                img_file_model = ImageFile(image=img)
+            # Process study (only possible if patient exists)
+            study_name = request.data.get("study_identifier")
+            study = None
+            if study_name is not None and patient is not None:
+                study_datetime = None
+                if request.data.get("study_datetime") is not None:
+                    study_datetime = datetime.datetime.strptime(
+                        request.data.get("study_datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"
+                    )
+                study_dict = {
+                    "name": study_name,
+                    "datetime": study_datetime,
+                }
+                self.validate_model(study_dict, StudySerializer)
+                study, study_created = Study.objects.update_or_create(
+                    patient=patient,
+                    name=study_dict["name"],
+                    defaults=exclude_val_from_dict(study_dict, "name"),
+                )
+                response_obj.update({
+                    "study_created": study_created,
+                    "study": StudySerializer(study).data,
+                })
 
-                # Save image fieldfile into ImageFile, also triggers ImageFile model save method
-                image_file = File(request.data[image_key])
-                extension = "zraw" if image_key == "image_raw" else "mhd"
-                image_name = "{}.{}".format(random_uuid_str, extension)
-                img_file_model.file.save(image_name, image_file, save=True)
+            # Process image
+            image_created = False
+            image_dict = self.create_image_dict(request)
+            # Check if image already exists in database
+            try:
+                img = Image.objects.get(study=study, **image_dict)
+                # Image already exists. Do nothing and return response
+            except Image.DoesNotExist:
+                # Image does not exist yet, create it.
+                img = Image.objects.create(study=study, **image_dict)
 
-            archive.images.add(img)
-            image_created = True
+                # Save mhd and raw files
+                self.save_mhd_and_raw_files(request, img)
 
-            img.permit_viewing_by_retina_users()
-        except Exception as e:
-            return JsonResponse(
-                {"error": e}, status=status.HTTP_400_BAD_REQUEST
-            )
+                # Link images to archive
+                if archive is not None:
+                    archive.images.add(img)
+                image_created = True
+
+                # Set correct permissions for retina image
+                img.permit_viewing_by_retina_users()
+            except Exception as e:
+                return JsonResponse(
+                    {"error": e}, status=status.HTTP_400_BAD_REQUEST
+                )
+            response_obj.update({
+                "image_created": image_created,
+                "image": ImageSerializer(img).data
+            })
+        except ValidationError as e:
+            return JsonResponse(e, status=status.HTTP_400_BAD_REQUEST)
 
         # Create response
-        archive_response = ArchiveSerializer(archive).data
-        archive_response.pop("images")
-        response_obj = {
-            "archive_created": archive_created,
-            "archive": archive_response,
-            "patient_created": patient_created,
-            "patient": PatientSerializer(patient).data,
-            "study_created": study_created,
-            "study": StudySerializer(study).data,
-            "image_created": image_created,
-            "image": ImageSerializer(img).data,
-        }
         response_status = status.HTTP_201_CREATED
         if not image_created:
             response_status = status.HTTP_400_BAD_REQUEST
 
         return JsonResponse(response_obj, status=response_status)
 
-    def create_model_dicts(self, request):
-        # generate data dictionaries, excluding relations
-        archive_dict = {"name": request.data.get("archive_identifier")}
-        patient_dict = {"name": request.data.get("patient_identifier")}
-        study_datetime = None
-        if request.data.get("study_datetime") is not None:
-            study_datetime = datetime.datetime.strptime(
-                request.data.get("study_datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"
-            )
-
-        study_dict = {
-            "name": request.data.get("study_identifier"),
-            "datetime": study_datetime,
-        }
+    @staticmethod
+    def create_image_dict(request):
         modality = upperize(request.data.get("image_modality"))
-
         # Set color space
         if modality == "OCT" or modality == "HRA":
             color_space = Image.COLOR_SPACE_GRAY
@@ -158,7 +165,7 @@ class UploadImage(generics.CreateAPIView):
             modality = settings.MODALITY_IR
         modality, _ = ImagingModality.objects.get_or_create(modality=modality)
 
-        image_dict = {
+        return {
             "name": request.data.get("image_identifier"),
             "eye_choice": upperize(request.data.get("image_eye_choice")),
             "modality_id": modality.pk,
@@ -168,34 +175,16 @@ class UploadImage(generics.CreateAPIView):
             "depth": request.data.get("image_depth"),
         }
 
-        # Perform validation with serializers
-        archive_serializer = ArchiveSerializer(data=archive_dict)
-        patient_serializer = PatientSerializer(data=patient_dict)
-        study_serializer = StudySerializer(data=study_dict)
-        image_serializer = ImageSerializer(data=image_dict)
-        archive_valid = archive_serializer.is_valid()
-        patient_valid = patient_serializer.is_valid()
-        study_valid = study_serializer.is_valid()
-        image_valid = image_serializer.is_valid()
+    @staticmethod
+    def validate_model(model_dict, model_serializer):
+        serializer = model_serializer(data=model_dict)
+        is_valid = serializer.is_valid()
+        if not is_valid:
+            raise ValidationError(serializers.errors)
+        return True
 
-        if (
-            not archive_valid
-            or not patient_valid
-            or not study_valid
-            or not image_valid
-        ):
-            errors = {
-                "archive_errors": archive_serializer.errors,
-                "patient_errors": patient_serializer.errors,
-                "study_errors": study_serializer.errors,
-                "image_errors": image_serializer.errors,
-            }
-        else:
-            errors = None
-
-        return (errors, archive_dict, patient_dict, study_dict, image_dict)
-
-    def set_element_data_file_header(self, mhd_file, raw_file_name):
+    @staticmethod
+    def set_element_data_file_header(mhd_file, raw_file_name):
         # Read file lines into list
         f_content = mhd_file.readlines()
 
@@ -218,6 +207,23 @@ class UploadImage(generics.CreateAPIView):
             None,
             sys.getsizeof(new_file),
         )
+
+    def save_mhd_and_raw_files(self, request, img):
+        # Save MHD and ZRAW files to Image.files model
+        uuid_name_str = str(uuid.uuid4())
+        # Set ElementDataFile in mhd file to correct zraw filename
+        raw_file_name = uuid_name_str + ".zraw"
+        request.data["image_hd"] = self.set_element_data_file_header(
+            request.data["image_hd"], raw_file_name
+        )
+        # Save mhd and zraw files
+        for image_key in ("image_hd", "image_raw"):
+            img_file_model = ImageFile(image=img)
+            # Save image fieldfile into ImageFile, also triggers ImageFile model save method
+            image_file = File(request.data[image_key])
+            extension = "zraw" if image_key == "image_raw" else "mhd"
+            image_name = "{}.{}".format(uuid_name_str, extension)
+            img_file_model.file.save(image_name, image_file, save=True)
 
 
 class AbstractUploadView(generics.CreateAPIView):

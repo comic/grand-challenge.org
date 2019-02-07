@@ -12,9 +12,6 @@ from .helpers import (
 @pytest.mark.django_db
 class TestCustomUploadEndpoints:
     # test functions are added dynamically to this class
-    def test_empty(self):
-        assert True
-
     pass
 
 
