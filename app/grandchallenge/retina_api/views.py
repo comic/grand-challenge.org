@@ -53,7 +53,7 @@ class ArchiveView(APIView):
                     "info": "level 3",
                     "name": archive.name,
                     "id": archive.id,
-                    "images": images
+                    "images": images,
                 }
 
         def generate_patients(archive, patients):
@@ -176,11 +176,12 @@ class ImageView(RetinaAPIPermissionMixin, View):
                 study__patient__name=study_identifier,  # this argument contains patient identifier
                 name=image_identifier,
             )
-        elif patient_identifier == "Archives" and study_identifier == "kappadata":
+        elif (
+            patient_identifier == "Archives"
+            and study_identifier == "kappadata"
+        ):
             # Exception for finding image in kappadata
-            image = Image.objects.filter(
-                name=image_identifier,
-            )
+            image = Image.objects.filter(name=image_identifier)
         else:
             image = Image.objects.filter(
                 name=image_identifier,
@@ -217,7 +218,7 @@ class DataView(APIView):
         FOVEA = "Fovea"
         MEASURE = "Measure"
         GA = "GA"
-        ALL = "all"
+        KAPPA = "kappa"
 
     @staticmethod
     def coordinate_to_dict(coordinate):
@@ -292,6 +293,12 @@ class DataView(APIView):
             name=request_data.get("img_name"),
             **conditions,
         )
+
+    @staticmethod
+    def get_image_from_kappadata(request_data):
+        image_name = request_data.items()[0]
+        image = Image.objects.get(name=image_name)
+        return image
 
     def get(
         self,
@@ -438,7 +445,7 @@ class DataView(APIView):
             )
         elif (
             data_type == self.DataType.GA.value
-            or data_type == self.DataType.ALL.value
+            or data_type == self.DataType.KAPPA.value
         ):
             annotation_models = self.get_models_related_to_image_and_user(
                 images, user, "polygonannotationset_set"
@@ -529,14 +536,16 @@ class DataView(APIView):
         patient_identifier,
     ):
         request_data = json.loads(request.body)
-        patient = (
-            Patient.objects.filter(
-                name=patient_identifier,
-                study__image__archive__name=archive_identifier,
+        if archive_identifier != "kappadata":
+            patient = (
+                Patient.objects.filter(
+                    name=patient_identifier,
+                    study__image__archive__name=archive_identifier,
+                )
+                .distinct()
+                .get()
             )
-            .distinct()
-            .get()
-        )
+
         user = get_user_model().objects.get(id=user_id)
 
         save_data = {"grader": user, "created": timezone.now()}
@@ -560,7 +569,7 @@ class DataView(APIView):
                     )
                 elif (
                     data_type == self.DataType.GA.value
-                    or data_type == self.DataType.ALL.value
+                    or data_type == self.DataType.KAPPA.value
                 ):
                     for ga_type, ga_data_list in data.items():
                         if not ga_data_list:
@@ -594,6 +603,31 @@ class DataView(APIView):
                         image=image,
                         landmarks=self.dict_list_to_coordinates(data),
                     )
+        elif archive_identifier == "kappadata":
+            # kappadata
+            data = request_data
+            if data_type == self.DataType.ETDRS.value:
+                image = Image.objects.get(name=data["img_name"])
+                image.etdrsgridannotation_set.create(
+                    fovea=self.dict_to_coordinate(data["fovea"]),
+                    optic_disk=self.dict_to_coordinate(data["optic_disk"]),
+                    **save_data,
+                )
+            elif data_type == self.DataType.KAPPA.value:
+                for image_name, ga_data in data.items():
+                    image = Image.objects.get(name=image_name)
+                    for ga_type, ga_data_list in ga_data.items():
+                        if not ga_data_list:
+                            continue  # skip empty elements in dict
+                        ga_points_model = image.polygonannotationset_set.create(
+                            name=ga_type.lower(), **save_data
+                        )
+                        for single_ga_data in ga_data_list:
+                            ga_points_model.singlepolygonannotation_set.create(
+                                value=self.dict_list_to_coordinates(
+                                    single_ga_data
+                                )
+                            )
         else:
             # Rotterdam study data
             data = request_data
@@ -617,7 +651,7 @@ class DataView(APIView):
                     )
             elif (
                 data_type == self.DataType.GA.value
-                or data_type == self.DataType.ALL.value
+                or data_type == self.DataType.KAPPA.value
             ):
                 for visit_image_name, ga_data in data.items():
                     conditions = {}
