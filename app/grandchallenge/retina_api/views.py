@@ -41,12 +41,19 @@ class ArchiveView(APIView):
 
         def generate_archives(archive_list, patients):
             for archive in archive_list:
+                if archive.name == "kappadata":
+                    subfolders = {}
+                    images = dict(generate_images(archive.images))
+                else:
+                    subfolders = dict(generate_patients(archive, patients))
+                    images = {}
+
                 yield archive.name, {
-                    "subfolders": dict(generate_patients(archive, patients)),
+                    "subfolders": subfolders,
                     "info": "level 3",
                     "name": archive.name,
                     "id": archive.id,
-                    "images": {},
+                    "images": images
                 }
 
         def generate_patients(archive, patients):
@@ -141,7 +148,7 @@ class ArchiveView(APIView):
         response = {
             "subfolders": dict(generate_archives(archives, patients)),
             "info": "level 2",
-            "name": "GA Archive",
+            "name": "Archives",
             "id": "none",
             "images": {},
         }
@@ -167,6 +174,11 @@ class ImageView(RetinaAPIPermissionMixin, View):
             # BMES data contains no study name, switched up parameters
             image = Image.objects.filter(
                 study__patient__name=study_identifier,  # this argument contains patient identifier
+                name=image_identifier,
+            )
+        elif patient_identifier == "Archives" and study_identifier == "kappadata":
+            # Exception for finding image in kappadata
+            image = Image.objects.filter(
                 name=image_identifier,
             )
         else:
