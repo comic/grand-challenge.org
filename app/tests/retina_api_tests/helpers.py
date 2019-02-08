@@ -229,7 +229,7 @@ def create_image_test_method(image_type, reverse_name):
 
 
 def batch_test_data_endpoints(test_class):
-    for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA"):
+    for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA", "kappa"):
         test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_no_data_wrong_user, test_load_save_data = create_data_test_methods(
             data_type
         )
@@ -321,9 +321,12 @@ def create_data_test_methods(data_type):
         # login client
         client, grader = client_login(client, user="retina_user")
 
-        for archive in ("Rotterdam", "Australia"):
+        for archive in ("Rotterdam", "Australia", "kappadata"):
             if archive == "Rotterdam" and data_type in ("Measure", "Fovea"):
                 continue  # These annotations do not exist for Rotterdam archive type
+
+            if archive == "kappadata" and data_type in ("Measure", "Fovea", "GA", "Registration"):
+                continue  # These annotations do not exist for kappadata archive type
 
             ds = create_some_datastructure_data(archive_pars={"name": archive})
 
@@ -409,7 +412,7 @@ def create_load_data(data_type, ds, grader):
             ),
     elif data_type == "ETDRS":
         model = ETDRSGridAnnotationFactory(grader=grader, image=ds["image_cf"])
-    elif data_type == "GA":
+    elif data_type == "GA" or data_type == "kappa":
         model_macualar = PolygonAnnotationSetFactory(
             grader=grader, image=ds["image_cf"], name="macular"
         )
