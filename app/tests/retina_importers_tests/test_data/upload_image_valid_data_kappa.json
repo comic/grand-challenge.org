@@ -1,0 +1,9 @@
+{
+  "archive_identifier": "Test kappa archive",
+  "image_eye_choice": "U",
+  "image_identifier": "TestImageName",
+  "image_modality": "CF",
+  "image_width": 7,
+  "image_height": 6,
+  "image_depth": 5
+}

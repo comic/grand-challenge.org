@@ -90,19 +90,25 @@ def read_json_file(path_to_file):
     return None
 
 
-def create_upload_image_test_data():
+def create_upload_image_test_data(type="default"):
     # create image
     files = create_test_images()
-    data = read_json_file("upload_image_valid_data.json")
+    if type == "kappa":
+        data = read_json_file("upload_image_valid_data_kappa.json")
+    else:
+        data = read_json_file("upload_image_valid_data.json")
     # create request payload
     data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
-def create_upload_image_invalid_test_data():
+def create_upload_image_invalid_test_data(type="default"):
     # create image
     files = create_test_images()
-    data = read_json_file("upload_image_invalid_data.json")
+    if type == "kappa":
+        data = read_json_file("upload_image_invalid_data_kappa.json")
+    else:
+        data = read_json_file("upload_image_invalid_data.json")
     # create request payload
     data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data

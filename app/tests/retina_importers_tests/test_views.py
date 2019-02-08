@@ -12,6 +12,8 @@ from .helpers import (
 @pytest.mark.django_db
 class TestCustomUploadEndpoints:
     # test functions are added dynamically to this class
+    def test_empty(self):
+        pass
     pass
 
 
@@ -19,6 +21,11 @@ batch_test_data = {
     "upload_image": {
         "data": create_upload_image_test_data(),
         "invalid_data": create_upload_image_invalid_test_data(),
+        "reverse_name": "retina:importers:upload-image",
+    },
+    "upload_image_kappa": {
+        "data": create_upload_image_test_data(type="kappa"),
+        "invalid_data": create_upload_image_invalid_test_data(type="kappa"),
         "reverse_name": "retina:importers:upload-image",
     },
     "upload_etdrs": {
