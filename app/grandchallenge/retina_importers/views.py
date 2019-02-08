@@ -140,7 +140,7 @@ class UploadImage(generics.CreateAPIView):
                 "image": ImageSerializer(img).data
             })
         except ValidationError as e:
-            return JsonResponse(e, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(e.message_dict, status=status.HTTP_400_BAD_REQUEST)
 
         # Create response
         response_status = status.HTTP_201_CREATED
