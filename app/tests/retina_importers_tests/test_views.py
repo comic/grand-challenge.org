@@ -14,6 +14,7 @@ class TestCustomUploadEndpoints:
     # test functions are added dynamically to this class
     def test_empty(self):
         pass
+
     pass
 
 

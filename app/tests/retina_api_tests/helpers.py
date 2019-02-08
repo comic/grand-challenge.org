@@ -76,7 +76,9 @@ def batch_test_image_endpoint_redirects(test_class):
             f"test_image_{image_type}_redirect_no_perm"
         )
         test_redirect.__name__ = f"test_image_{image_type}_redirect_rotterdam"
-        test_redirect_kappa.__name__ = f"test_image_{image_type}_redirect_kappa"
+        test_redirect_kappa.__name__ = (
+            f"test_image_{image_type}_redirect_kappa"
+        )
         test_redirect_australia.__name__ = (
             f"test_image_{image_type}_redirect_australia"
         )
@@ -90,11 +92,7 @@ def batch_test_image_endpoint_redirects(test_class):
             test_redirect_australia.__name__,
             test_redirect_australia,
         )
-        setattr(
-            test_class,
-            test_redirect_kappa.__name__,
-            test_redirect_kappa,
-        )
+        setattr(test_class, test_redirect_kappa.__name__, test_redirect_kappa)
         setattr(test_class, test_redirect_oct.__name__, test_redirect_oct)
 
 
@@ -229,7 +227,14 @@ def create_image_test_method(image_type, reverse_name):
 
 
 def batch_test_data_endpoints(test_class):
-    for data_type in ("Registration", "ETDRS", "Fovea", "Measure", "GA", "kappa"):
+    for data_type in (
+        "Registration",
+        "ETDRS",
+        "Fovea",
+        "Measure",
+        "GA",
+        "kappa",
+    ):
         test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_no_data_wrong_user, test_load_save_data = create_data_test_methods(
             data_type
         )
@@ -325,7 +330,12 @@ def create_data_test_methods(data_type):
             if archive == "Rotterdam" and data_type in ("Measure", "Fovea"):
                 continue  # These annotations do not exist for Rotterdam archive type
 
-            if archive == "kappadata" and data_type in ("Measure", "Fovea", "GA", "Registration"):
+            if archive == "kappadata" and data_type in (
+                "Measure",
+                "Fovea",
+                "GA",
+                "Registration",
+            ):
                 continue  # These annotations do not exist for kappadata archive type
 
             ds = create_some_datastructure_data(archive_pars={"name": archive})

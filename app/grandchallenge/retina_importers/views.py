@@ -66,10 +66,12 @@ class UploadImage(generics.CreateAPIView):
                 archive, archive_created = Archive.objects.get_or_create(
                     **archive_dict
                 )
-                response_obj.update({
-                    "archive_created": archive_created,
-                    "archive": ArchiveSerializer(archive).data
-                })
+                response_obj.update(
+                    {
+                        "archive_created": archive_created,
+                        "archive": ArchiveSerializer(archive).data,
+                    }
+                )
 
             # Process patient
             patient_name = request.data.get("patient_identifier")
@@ -81,10 +83,12 @@ class UploadImage(generics.CreateAPIView):
                     name=patient_dict["name"],
                     defaults=exclude_val_from_dict(patient_dict, "name"),
                 )
-                response_obj.update({
-                    "patient_created": patient_created,
-                    "patient": PatientSerializer(patient).data,
-                })
+                response_obj.update(
+                    {
+                        "patient_created": patient_created,
+                        "patient": PatientSerializer(patient).data,
+                    }
+                )
 
             # Process study (only possible if patient exists)
             study_name = request.data.get("study_identifier")
@@ -93,22 +97,22 @@ class UploadImage(generics.CreateAPIView):
                 study_datetime = None
                 if request.data.get("study_datetime") is not None:
                     study_datetime = datetime.datetime.strptime(
-                        request.data.get("study_datetime"), "%Y-%m-%dT%H:%M:%S.%f%z"
+                        request.data.get("study_datetime"),
+                        "%Y-%m-%dT%H:%M:%S.%f%z",
                     )
-                study_dict = {
-                    "name": study_name,
-                    "datetime": study_datetime,
-                }
+                study_dict = {"name": study_name, "datetime": study_datetime}
                 self.validate_model(study_dict, StudySerializer)
                 study, study_created = Study.objects.update_or_create(
                     patient=patient,
                     name=study_dict["name"],
                     defaults=exclude_val_from_dict(study_dict, "name"),
                 )
-                response_obj.update({
-                    "study_created": study_created,
-                    "study": StudySerializer(study).data,
-                })
+                response_obj.update(
+                    {
+                        "study_created": study_created,
+                        "study": StudySerializer(study).data,
+                    }
+                )
 
             # Process image
             image_created = False
@@ -135,12 +139,16 @@ class UploadImage(generics.CreateAPIView):
                 return JsonResponse(
                     {"error": e}, status=status.HTTP_400_BAD_REQUEST
                 )
-            response_obj.update({
-                "image_created": image_created,
-                "image": ImageSerializer(img).data
-            })
+            response_obj.update(
+                {
+                    "image_created": image_created,
+                    "image": ImageSerializer(img).data,
+                }
+            )
         except ValidationError as e:
-            return JsonResponse(e.message_dict, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(
+                e.message_dict, status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Create response
         response_status = status.HTTP_201_CREATED

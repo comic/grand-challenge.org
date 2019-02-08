@@ -482,7 +482,10 @@ class DataView(APIView):
                         )
                     series_name = image_name
 
-                    if archive_identifier != settings.RETINA_EXCEPTION_ARCHIVE and archive_identifier != "kappadata":
+                    if (
+                        archive_identifier != settings.RETINA_EXCEPTION_ARCHIVE
+                        and archive_identifier != "kappadata"
+                    ):
                         visit_id = annotation_model.image.study.name
                         sub_img_name = None
                         if (
