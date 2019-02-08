@@ -163,7 +163,7 @@ class TestArchiveIndexAPIEndpoints:
                 },
             },
             "info": "level 2",
-            "name": "GA Archive",
+            "name": "Archives",
             "id": "none",
             "images": {},
         }
