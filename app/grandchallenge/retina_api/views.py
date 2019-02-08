@@ -313,6 +313,10 @@ class DataView(APIView):
             study__patient__name=patient_identifier,
             archive__name=archive_identifier,
         )
+        if archive_identifier == "kappadata":
+            images = Image.objects.filter(
+                archive=Archive.objects.get(name="kappadata")
+            )
 
         user = get_user_model().objects.get(id=user_id)
 
@@ -477,7 +481,8 @@ class DataView(APIView):
                             }
                         )
                     series_name = image_name
-                    if archive_identifier != settings.RETINA_EXCEPTION_ARCHIVE:
+
+                    if archive_identifier != settings.RETINA_EXCEPTION_ARCHIVE and archive_identifier != "kappadata":
                         visit_id = annotation_model.image.study.name
                         sub_img_name = None
                         if (
