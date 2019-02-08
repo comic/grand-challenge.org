@@ -180,7 +180,7 @@ class UploadImage(generics.CreateAPIView):
         serializer = model_serializer(data=model_dict)
         is_valid = serializer.is_valid()
         if not is_valid:
-            raise ValidationError(serializers.errors)
+            raise ValidationError(serializer.errors)
         return True
 
     @staticmethod
