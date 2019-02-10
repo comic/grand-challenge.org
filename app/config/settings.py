@@ -263,6 +263,7 @@ THIRD_PARTY_APPS = [
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
+    "sorl.thumbnail",  # for dynamic thumbnails
 ]
 
 LOCAL_APPS = [
@@ -567,6 +568,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation-supplementary",
     "favicon",
     "i",
+    "cache",  # for sorl-thumbnails
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
 ]
