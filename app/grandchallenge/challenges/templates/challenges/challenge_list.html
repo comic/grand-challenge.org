@@ -261,7 +261,7 @@
                                              alt="{{ challenge.short_name }} logo"
                                                 {% if challenge.logo %}
                                                     {# Note, thumbnail class is 5rem/80px in core.css #}
-                                                    {% thumbnail challenge.logo "160x160" crop="center" as im %}
+                                                    {% thumbnail challenge.logo "80x80" crop="center" as im %}
                                              src="{{ im.url }}"
                                                     {% endthumbnail %}
                                                 {% else %}
