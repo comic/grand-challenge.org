@@ -1,4 +1,4 @@
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError, MultipleObjectsReturned
 from rest_framework import permissions, generics, parsers, status, serializers
 import datetime
 import uuid
@@ -269,9 +269,12 @@ class AbstractUploadView(generics.CreateAPIView):
             self.response.update({"errors": [r]})
             return None, None, None, None, None
 
-        patient = Patient.objects.get(
-            name=request.data.get("patient_identifier")
-        )
+        if request.data.get("patient_identifier") != "None":
+            patient = Patient.objects.get(
+                name=request.data.get("patient_identifier")
+            )
+        else:
+            patient = None
 
         grader_group, group_created = Group.objects.get_or_create(
             name=settings.RETINA_GRADERS_GROUP_NAME
@@ -326,6 +329,22 @@ class AbstractUploadView(generics.CreateAPIView):
 
         return image
 
+    def trace_image_through_archive(self, image_identifier, archive_identifier):
+        try:
+            image = Image.objects.get(
+                name=image_identifier,
+                archive__name=archive_identifier
+            )
+            return image
+        except ObjectDoesNotExist:
+            error = f"Non-existant object. Image: {image_identifier}, Archive: {archive_identifier}"
+            self.response.update({"errors": error})
+            return None
+        except MultipleObjectsReturned:
+            error = f"Multiple objects returned. Image: {image_identifier}, Archive: {archive_identifier}"
+            self.response.update({"errors": error})
+            return None
+
     def create_or_return_duplicate_error_message(self, model, unique_args):
         try:
             with transaction.atomic():
@@ -379,7 +398,10 @@ class AbstractUploadView(generics.CreateAPIView):
             child_bulk_save_models = []
             serialized_models = []
             for annotation in request.data.get("data"):
-                image = self.trace_image_through_parents(annotation, patient)
+                if archive.name == "kappadata":
+                    image = self.trace_image_through_archive(annotation["image_identifier"], archive.name)
+                else:
+                    image = self.trace_image_through_parents(annotation, patient)
                 if "errors" in self.response:
                     return JsonResponse(
                         self.response,
