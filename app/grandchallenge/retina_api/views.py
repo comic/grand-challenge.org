@@ -390,12 +390,11 @@ class DataView(APIView):
                     result_dict = {image_name: result_data}
                     data.update(result_dict)
                 else:
-                    result_data.update(
-                        {
-                            "visit_nr": annotation_model.image.study.name,
-                            "img_name": image_name,
-                        }
-                    )
+                    result_data.update({"img_name": image_name})
+                    if annotation_model.image.study is not None:
+                        result_data.update(
+                            {"visit_nr": annotation_model.image.study.name}
+                        )
 
                     if (
                         annotation_model.image.modality.modality
