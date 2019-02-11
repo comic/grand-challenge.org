@@ -409,7 +409,7 @@ class AbstractUploadView(generics.CreateAPIView):
                     )
 
                 for k in self.delete_keys:
-                    annotation.pop(k)
+                    annotation.pop(k, None)
 
                 if self.parent_model_class == LandmarkAnnotationSet:
                     # ImageRegistration2D specific code
