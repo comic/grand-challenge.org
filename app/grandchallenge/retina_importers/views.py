@@ -1,4 +1,8 @@
-from django.core.exceptions import ObjectDoesNotExist, ValidationError, MultipleObjectsReturned
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    ValidationError,
+    MultipleObjectsReturned,
+)
 from rest_framework import permissions, generics, parsers, status, serializers
 import datetime
 import uuid
@@ -329,11 +333,12 @@ class AbstractUploadView(generics.CreateAPIView):
 
         return image
 
-    def trace_image_through_archive(self, image_identifier, archive_identifier):
+    def trace_image_through_archive(
+        self, image_identifier, archive_identifier
+    ):
         try:
             image = Image.objects.get(
-                name=image_identifier,
-                archive__name=archive_identifier
+                name=image_identifier, archive__name=archive_identifier
             )
             return image
         except ObjectDoesNotExist:
@@ -399,9 +404,13 @@ class AbstractUploadView(generics.CreateAPIView):
             serialized_models = []
             for annotation in request.data.get("data"):
                 if archive.name == "kappadata":
-                    image = self.trace_image_through_archive(annotation["image_identifier"], archive.name)
+                    image = self.trace_image_through_archive(
+                        annotation["image_identifier"], archive.name
+                    )
                 else:
-                    image = self.trace_image_through_parents(annotation, patient)
+                    image = self.trace_image_through_parents(
+                        annotation, patient
+                    )
                 if "errors" in self.response:
                     return JsonResponse(
                         self.response,
