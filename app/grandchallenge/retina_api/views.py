@@ -99,8 +99,11 @@ class ArchiveView(APIView):
             for image in image_list.all():
                 if image.modality.modality == settings.MODALITY_OCT:
                     # oct image add info
+                    obs_image_id = "no info"
                     try:
-                        obs_list = image.oct_image.get().registration_values
+                        oct_obs_registration = image.oct_image.get()
+                        obs_image_id = oct_obs_registration.obs_image.id
+                        obs_list = oct_obs_registration.registration_values
                         obs_registration_flat = [
                             val for sublist in obs_list for val in sublist
                         ]
@@ -118,10 +121,10 @@ class ArchiveView(APIView):
                     yield image.name, {
                         "images": {
                             "trc_000": "no info",
-                            "obs_000": "no info",
+                            "obs_000": obs_image_id,
                             "mot_comp": "no info",
                             "trc_001": "no info",
-                            "oct": "no info",
+                            "oct": image.id,
                         },
                         "info": {
                             "voxel_size": {
@@ -143,7 +146,7 @@ class ArchiveView(APIView):
                     # OBS image, skip because this is already in fds
                     pass
                 else:
-                    yield image.name, "no tags"
+                    yield image.name, image.id
 
         response = {
             "subfolders": dict(generate_archives(archives, patients)),
