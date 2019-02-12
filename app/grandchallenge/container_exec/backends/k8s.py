@@ -1,10 +1,18 @@
 from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes import client
 from kubernetes.stream import stream
+from kubernetes.client.rest import ApiException
 import tarfile
 from tempfile import TemporaryFile
 from pathlib import Path
 import time
+
+
+"""
+New idea:
+Create a pod with two containers. One is the data provisioner: it loads the required
+input data from the object storage (Digital Ocean Spaces)
+"""
 
 
 class K8sJob(object):
@@ -75,6 +83,17 @@ class K8sJob(object):
                 self.namespace, self.pvcs[-1]
             )
 
+            print("Checking PVC status...")
+            while True:
+                r = core_v1.read_namespaced_persistent_volume_claim_status(
+                    volume_name, self.namespace
+                )
+                print(r.status.phase)
+                if r.status.phase == "Bound":
+                    break
+                time.sleep(1)
+            print("Done")
+
     def execute_job(self):
         batch_v1 = client.BatchV1Api()
         meta = client.V1ObjectMeta(name=self.job_id)
@@ -94,31 +113,34 @@ class K8sJob(object):
         job = client.V1Job(metadata=meta, spec=jobspec)
 
         r = batch_v1.create_namespaced_job(self.namespace, job)
-
+        print("Executing job...")
         while True:
             r = batch_v1.read_namespaced_job_status(
                 self.job_id, self.namespace
             )
+            print(r.status)
             if not r.status.active:
-                break
+                if r.status.failed or r.status.succeeded:
+                    break
             time.sleep(1)
 
         if r.status.failed:
-            print("Main job failed!")
+            print("Job failed!")
         if r.status.succeeded:
-            print("Main job succeeded!")
+            print("Job succeeded!")
 
         return
 
     def get_result(self):
-        filename = ""
-        pod_name = self.job_id + "-iopod"
+        filename = Path("/output/data.txt")
+        pod_name = self.job_id + "-output-pod"
 
         core_v1 = client.CoreV1Api()
         meta = client.V1ObjectMeta(name=pod_name)
         container = client.V1Container(
             name=self.job_id,
             image="alpine:3.8",
+            command=["sleep", "300"],
             volume_mounts=self.volume_mounts,
         )
         podspec = client.V1PodSpec(
@@ -129,27 +151,30 @@ class K8sJob(object):
         pod = client.V1Pod(metadata=meta, spec=podspec)
 
         r = core_v1.create_namespaced_pod(self.namespace, pod)
-
+        print("Waiting for output provisioning...")
         while True:
             r = core_v1.read_namespaced_pod_status(pod_name, self.namespace)
-            if r.status == "Running":
+            print(r.status.phase)
+            if r.status.phase == "Running":
                 break
             time.sleep(1)
 
         result = get_file(filename, pod_name, self.namespace)
-
+        print("Done")
         r = core_v1.delete_namespaced_pod(pod_name, self.namespace, pod)
         return result
 
     def provision_input_volume(self):
-        filename = ""
-        pod_name = self.job_id + "-iopod"
+        source_filename = "data.txt"
+        dest_filename = "/input/data.txt"
+        pod_name = self.job_id + "-input-pod"
 
         core_v1 = client.CoreV1Api()
         meta = client.V1ObjectMeta(name=pod_name)
         container = client.V1Container(
             name=self.job_id,
             image="alpine:3.8",
+            command=["sleep", "300"],
             volume_mounts=self.volume_mounts,
         )
         podspec = client.V1PodSpec(
@@ -160,16 +185,29 @@ class K8sJob(object):
         pod = client.V1Pod(metadata=meta, spec=podspec)
 
         r = core_v1.create_namespaced_pod(self.namespace, pod)
-
+        print("Waiting for input provisioning...")
         while True:
             r = core_v1.read_namespaced_pod_status(pod_name, self.namespace)
-            if r.status == "Running":
+            print(r.status.phase)
+            if r.status.phase == "Running":
                 break
             time.sleep(1)
 
-        put_file(filename, pod_name, self.namespace)
-
+        put_file(source_filename, dest_filename, pod_name, self.namespace)
+        print("Done")
         r = core_v1.delete_namespaced_pod(pod_name, self.namespace, pod)
+        print(r.status)
+        print("Waiting for input provisioning teardown...")
+        while True:
+            try:
+                r = core_v1.read_namespaced_pod_status(
+                    pod_name, self.namespace
+                )
+            except ApiException:
+                break
+            print(r.status.phase)
+            time.sleep(1)
+        print("Done")
 
     def execute(self):
         self.create_io_volumes()
@@ -178,89 +216,10 @@ class K8sJob(object):
         return self.get_result()
 
 
-class K8sExecutor(object):
-    def __init__(self, job_id, k8s_namespace):
-        self.job_id = str(job_id)
-        self.k8s_namespace = k8s_namespace
-        self.input_volume = f"{self.job_id}-input"
-        self.output_volume = f"{self.job_id}-output"
-
-        incluster = False
-
-        if incluster:
-            load_incluster_config()
-        else:
-            load_kube_config()
-
-    def execute(self):
-        self.create_io_volumes()
-        batch_v1 = client.BatchV1Api()
-        meta = client.V1ObjectMeta(name="test-job")
-        input_claim = client.V1PersistentVolumeClaimVolumeSource(
-            claim_name=self.input_volume
-        )
-        input_volume = client.V1Volume(
-            name="eyra-dev-roel-input-volume",
-            persistent_volume_claim=input_claim,
-        )
-        output_claim = client.V1PersistentVolumeClaimVolumeSource(
-            claim_name=self.output_volume
-        )
-        output_volume = client.V1Volume(
-            name="eyra-dev-roel-output-volume",
-            persistent_volume_claim=output_claim,
-        )
-        volumes = [input_volume, output_volume]
-        input_volume_mount = client.V1VolumeMount(
-            mount_path="/input/", name="eyra-dev-roel-input-volume"
-        )
-        output_volume_mount = client.V1VolumeMount(
-            mount_path="/output/", name="eyra-dev-roel-output-volume"
-        )
-        volume_mounts = [input_volume_mount, output_volume_mount]
-        container = client.V1Container(
-            name="test",
-            image="docker-registry.roel.dev.eyrabenchmark.net/rzi/blabla",
-            volume_mounts=volume_mounts,
-        )
-        podspec = client.V1PodSpec(
-            restart_policy="Never", containers=[container], volumes=volumes
-        )
-        template = client.V1PodTemplateSpec(metadata=meta, spec=podspec)
-        jobspec = client.V1JobSpec(template=template, backoff_limit=3)
-        job = client.V1Job(metadata=meta, spec=jobspec)
-
-        r = batch_v1.create_namespaced_job(self.k8s_namespace, job)
-
-    def create_io_volumes(self):
-        core_v1 = client.CoreV1Api()
-        for volume in [self.input_volume, self.output_volume]:
-            meta = client.V1ObjectMeta(name=volume)
-            resources = client.V1ResourceRequirements(
-                requests={"storage": "8Gi"}
-            )
-            spec = client.V1PersistentVolumeClaimSpec(
-                access_modes=["ReadWriteOnce"], resources=resources
-            )
-            pvc = client.V1PersistentVolumeClaim(metadata=meta, spec=spec)
-            core_v1.create_namespaced_persistent_volume_claim(
-                self.k8s_namespace, pvc
-            )
-
-    def provision_input_volume(self):
-        pass
-
-    def copy_input_files(self):
-        pass
-
-    def get_result(self):
-        pass
-
-
-def put_file(source_file, pod_name, namespace):
+def put_file(source_file, dest_file, pod_name, namespace):
     core_v1 = client.CoreV1Api()
 
-    exec_command = ["tar", "xvf", "-", "-C", "/app"]
+    exec_command = ["tar", "xvf", "-", "-C", "/"]
     resp = stream(
         core_v1.connect_get_namespaced_pod_exec,
         pod_name,
@@ -275,12 +234,12 @@ def put_file(source_file, pod_name, namespace):
 
     with TemporaryFile() as tar_buffer:
         with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
-            tar.add(source_file)
+            tar.add(source_file, arcname=dest_file)
 
         tar_buffer.seek(0)
+
         commands = []
         commands.append(tar_buffer.read().decode())
-        print(commands)
 
         while resp.is_open():
             resp.update(timeout=1)
@@ -298,8 +257,11 @@ def put_file(source_file, pod_name, namespace):
 
 def get_file(src: Path, pod_name: str, namespace: str):
     core_v1 = client.CoreV1Api()
+    if not src.root:
+        raise ValueError("You must supply an absolute path")
 
-    exec_command = ["tar", "cf", "-", src.name, "-C", str(src.parents[0])]
+    exec_command = ["tar", "cf", "-", str(src), "-C", "/"]
+    print(exec_command)
 
     with TemporaryFile() as tar_buffer:
         resp = stream(
@@ -327,17 +289,27 @@ def get_file(src: Path, pod_name: str, namespace: str):
         tar_buffer.seek(0)
 
         with tarfile.open(mode="r", fileobj=tar_buffer) as tar:
-            f = tar.extractfile(src.name)
+            tar.list()
+            f = tar.extractfile(str(src.relative_to("/")))
             content = f.read().decode()
     return content
 
 
 if __name__ == "__main__":
-    incluster = False
+    kj = K8sJob(
+        "test-rzi-1",
+        "dev-roel",
+        "docker-registry.roel.dev.eyrabenchmark.net/rzi/blabla",
+        {"test-rzi-input": "/input", "test-rzi-output": "/output"},
+    )
+    kj.execute()
 
-    if incluster:
-        load_incluster_config()
-    else:
-        load_kube_config()
-
-    put_file("bliep.txt", "eyra-dev-roel-web-6b96dfb97-78csk", "dev-roel")
+    # put_file(
+    #     "bliep.txt",
+    #     "/tmp/bliep.txt",
+    #     "eyra-dev-roel-web-6b96dfb97-78csk",
+    #     "dev-roel",
+    # )
+    # get_file(
+    #     Path("/tmp/bliep.txt"), "eyra-dev-roel-web-6b96dfb97-78csk", "dev-roel"
+    # )
