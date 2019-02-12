@@ -4,6 +4,7 @@ from .models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
     PolygonAnnotationSet,
+    SinglePolygonAnnotation,
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
 )
@@ -27,10 +28,18 @@ class BooleanClassificationAnnotationSerializer(serializers.ModelSerializer):
         fields = ("image", "grader", "created", "name", "value")
 
 
+class SinglePolygonAnnotationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SinglePolygonAnnotation
+        fields = ("id", "value")
+
+
 class PolygonAnnotationSetSerializer(serializers.ModelSerializer):
+    singlepolygonannotation_set = SinglePolygonAnnotationSerializer(many=True, read_only=True)
+
     class Meta:
         model = PolygonAnnotationSet
-        fields = ("image", "grader", "created", "name")
+        fields = ("id", "image", "grader", "created", "name", "singlepolygonannotation_set")
 
 
 class LandmarkAnnotationSetSerializer(serializers.ModelSerializer):

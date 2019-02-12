@@ -21,4 +21,9 @@ urlpatterns = [
         views.DataView.as_view(),
         name="data-api-view",
     ),
+    path(
+        "annotations/<str:annotation_type>/<int:user_id>/<uuid:image_id>/",
+        views.PolygonListView.as_view(),
+        name="annotation-api-view"
+    )
 ]

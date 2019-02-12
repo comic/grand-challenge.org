@@ -3,10 +3,11 @@ from enum import Enum
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -19,7 +20,13 @@ from grandchallenge.retina_api.mixins import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
 from grandchallenge.cases.models import Image
-from grandchallenge.annotations.models import LandmarkAnnotationSet
+from grandchallenge.annotations.models import (
+    LandmarkAnnotationSet,
+    PolygonAnnotationSet,
+)
+from grandchallenge.annotations.serializers import (
+    PolygonAnnotationSetSerializer
+)
 from grandchallenge.challenges.models import ImagingModality
 
 
@@ -705,3 +712,20 @@ class DataView(APIView):
                             )
 
         return Response({"success": True}, status=status.HTTP_201_CREATED)
+
+
+class PolygonListView(ListAPIView):
+    """
+    Get a serialized list of all PolygonAnnotationSets with all related SinglePolygonAnnotations
+    """
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = PolygonAnnotationSetSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        image_id = self.kwargs["image_id"]
+        image = get_object_or_404(Image, id=image_id)
+        return image.polygonannotationset_set.prefetch_related(
+            "singlepolygonannotation_set"
+        ).filter(grader__id=user_id)
