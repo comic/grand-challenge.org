@@ -9,14 +9,18 @@ app_name = "retina_api"
 router = DefaultRouter()
 
 annotation_router = SimpleRouter()
-annotation_router.register("single_polygon", views.SinglePolygonViewSet, basename="single_polygon")
+annotation_router.register(
+    "single_polygon", views.SinglePolygonViewSet, basename="single_polygon"
+)
 
 urlpatterns = [
     path("", include(router.urls)),
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(views.ImageView.as_view()),
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.ImageView.as_view()
+        ),
         name="image-api-view",
     ),
     path(
@@ -27,9 +31,7 @@ urlpatterns = [
     path(
         "annotations/<str:annotation_type>/<int:user_id>/<uuid:image_id>/",
         views.PolygonListView.as_view(),
-        name="annotation-api-view"
+        name="annotation-api-view",
     ),
-    path(
-        "annotation/<int:user_id>/", include(annotation_router.urls)
-    )
+    path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]

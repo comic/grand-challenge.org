@@ -35,11 +35,20 @@ class SinglePolygonAnnotationSerializer(serializers.ModelSerializer):
 
 
 class PolygonAnnotationSetSerializer(serializers.ModelSerializer):
-    singlepolygonannotation_set = SinglePolygonAnnotationSerializer(many=True, read_only=True)
+    singlepolygonannotation_set = SinglePolygonAnnotationSerializer(
+        many=True, read_only=True
+    )
 
     class Meta:
         model = PolygonAnnotationSet
-        fields = ("id", "image", "grader", "created", "name", "singlepolygonannotation_set")
+        fields = (
+            "id",
+            "image",
+            "grader",
+            "created",
+            "name",
+            "singlepolygonannotation_set",
+        )
 
 
 class LandmarkAnnotationSetSerializer(serializers.ModelSerializer):

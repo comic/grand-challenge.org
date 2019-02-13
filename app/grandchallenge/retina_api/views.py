@@ -17,7 +17,7 @@ from grandchallenge.retina_api.mixins import (
     RetinaAPIPermissionMixin,
     RetinaOwnerAPIPermission,
     is_in_retina_admins_group,
-    is_in_retina_graders_group
+    is_in_retina_graders_group,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
@@ -25,11 +25,11 @@ from grandchallenge.cases.models import Image
 from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     PolygonAnnotationSet,
-    SinglePolygonAnnotation
+    SinglePolygonAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
-    SinglePolygonAnnotationSerializer
+    SinglePolygonAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 
@@ -722,6 +722,7 @@ class PolygonListView(ListAPIView):
     """
     Get a serialized list of all PolygonAnnotationSets with all related SinglePolygonAnnotations
     """
+
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
@@ -743,11 +744,15 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if is_in_retina_admins_group(self.request.user):
             if self.request.kwargs.get["user_id"]:
-                queryset = SinglePolygonAnnotation.objects.filter(annotation_set__grader=self.request.kwargs.get["user_id"])
+                queryset = SinglePolygonAnnotation.objects.filter(
+                    annotation_set__grader=self.request.kwargs.get["user_id"]
+                )
             else:
                 queryset = SinglePolygonAnnotation.objects.all()
         elif is_in_retina_graders_group(self.request.user):
-            queryset = SinglePolygonAnnotation.objects.filter(annotation_set__grader=self.request.user)
+            queryset = SinglePolygonAnnotation.objects.filter(
+                annotation_set__grader=self.request.user
+            )
         else:
             # User is not in graders or admins group, should not have access
             queryset = SinglePolygonAnnotation.objects.none()
