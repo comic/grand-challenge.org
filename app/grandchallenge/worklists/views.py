@@ -65,7 +65,7 @@ class WorklistCreateView(UserIsStaffMixin, CreateView):
     form_class = WorklistCreateForm
 
     def get_success_url(self):
-        return reverse("worklists:worklist-display")
+        return reverse("worklists:list-display")
 
 
 class WorklistRemoveView(UserIsStaffMixin, DeleteView):
@@ -73,7 +73,7 @@ class WorklistRemoveView(UserIsStaffMixin, DeleteView):
     template_name = "worklists/worklist_remove_form.html"
 
     def get_success_url(self):
-        return reverse("worklists:worklist-display")
+        return reverse("worklists:list-display")
 
 
 class WorklistUpdateView(UserIsStaffMixin, UpdateView):
@@ -81,7 +81,7 @@ class WorklistUpdateView(UserIsStaffMixin, UpdateView):
     form_class = WorklistUpdateForm
 
     def get_success_url(self):
-        return reverse("worklists:worklist-display")
+        return reverse("worklists:list-display")
 
 
 class WorklistDisplayView(UserIsStaffMixin, ListView):
@@ -142,7 +142,7 @@ class WorklistItemRemoveView(UserIsStaffMixin, DeleteView):
         return reverse("pathology:worklist-item-display")
 
 
-class WorklistItem(UserIsStaffMixin, CreateView):
+class WorklistItemUpdateView(UserIsStaffMixin, UpdateView):
     model = WorklistItem
     form_class = WorklistItemUpdateForm
 
