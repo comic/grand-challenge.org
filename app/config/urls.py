@@ -95,10 +95,6 @@ urlpatterns = [
     ),
     # Pathology support namespaces
     path(
-        "pathology/",
-        include("grandchallenge.pathology.urls", namespace="pathology"),
-    ),
-    path(
         "patients/",
         include("grandchallenge.patients.urls", namespace="patients"),
     ),

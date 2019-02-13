@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import CharField
-
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.cases.models import Image
 
 
 class WorklistSet(UUIDModel):
@@ -17,7 +17,7 @@ class WorklistSet(UUIDModel):
 class Worklist(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
     set = models.ForeignKey(
-        "WorklistSet", null=False, blank=False, on_delete=models.CASCADE
+        WorklistSet, null=False, blank=False, on_delete=models.CASCADE
     )
 
     def __str__(self):
@@ -26,8 +26,8 @@ class Worklist(UUIDModel):
 
 class WorklistItem(UUIDModel):
     worklist = models.ForeignKey(
-        "Worklist", null=False, blank=False, on_delete=models.CASCADE
+        Worklist, null=False, blank=False, on_delete=models.CASCADE
     )
     image = models.ForeignKey(
-        "Image", null=False, blank=False, on_delete=models.CASCADE
+        Image, null=False, blank=False, on_delete=models.CASCADE
     )
