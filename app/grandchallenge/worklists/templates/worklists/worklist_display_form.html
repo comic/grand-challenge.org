@@ -10,6 +10,7 @@
         <tr>
             <td>Title</td>
             <td>Set</td>
+            <td></td>
         </tr>
     </thead>
     <tbody>
@@ -17,13 +18,14 @@
             <tr>
                 <td>{{ worklist.title }}</td>
                 <td>{{ worklist.set }}</td>
-                <td><a href="{% url 'worklists:worklist-update' worklist.id %}">Update</a></td>
-                <td><a href="{% url 'worklists:worklist-remove' worklist.id %}">Delete</a></td>
+                <td><a href="{% url 'worklists:item-create' %}">Add images</a></td>
+                <td><a href="{% url 'worklists:list-update' worklist.id %}">Update</a></td>
+                <td><a href="{% url 'worklists:list-remove' worklist.id %}">Delete</a></td>
             </tr>
         {% empty %}
         <td>No sets have been created.</td>
         {% endfor %}
    </tbody>
 </table>
-<a href="{% url 'worklists:worklist-create' %}">Add Worklist</a>
+<a href="{% url 'worklists:list-create' %}">Add Worklist</a>
 {% endblock %}

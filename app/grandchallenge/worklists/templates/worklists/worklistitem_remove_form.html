@@ -10,12 +10,12 @@
     <table class="table">
         <tbody>
             <tr>
-                <td>{{ worklist.title }}</td>
-                <td>{{ worklist.set }}</td>
+                <td>{{ worklistitem.worklist }}</td>
+                <td>{{ worklistitem.image }}</td>
             </tr>
         </tbody>
     </table>
     <input type="submit" value="Remove">
-    <a href="{% url 'worklists:list-display' %}">Cancel</a>
+    <a href="{% url 'worklists:item-display' %}">Cancel</a>
 </form>
 {% endblock %}

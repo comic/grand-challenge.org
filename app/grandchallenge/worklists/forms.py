@@ -1,8 +1,9 @@
-from django.forms import ModelForm
-from grandchallenge.worklists.models import Worklist, WorklistItem, WorklistSet
-
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from django.forms import ModelForm
+from django_select2.forms import Select2MultipleWidget
+
+from grandchallenge.worklists.models import Worklist, WorklistItem, WorklistSet
 
 
 """ Worklist """
@@ -41,7 +42,8 @@ class WorklistItemCreateForm(ModelForm):
 
     class Meta:
         model = WorklistItem
-        fields = ["worklist", "image"]
+        fields = ("images",)
+        widgets = {"images": Select2MultipleWidget}
 
 
 class WorklistItemUpdateForm(ModelForm):
@@ -52,7 +54,8 @@ class WorklistItemUpdateForm(ModelForm):
 
     class Meta:
         model = WorklistItem
-        fields = ["worklist", "image"]
+        fields = ("images",)
+        widgets = {"images": Select2MultipleWidget}
 
 
 """ WorklistSet """
@@ -74,6 +77,7 @@ class WorklistSetUpdateForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+        self.helper.layout.append()
 
     class Meta:
         model = WorklistSet

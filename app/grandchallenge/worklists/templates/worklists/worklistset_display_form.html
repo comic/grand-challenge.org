@@ -10,7 +10,7 @@
         <tr>
             <td>Title</td>
             <td>Children</td>
-            <td><b>Worklists</b></td>
+            <td></td>
         </tr>
     </thead>
     <tbody>
@@ -18,7 +18,7 @@
             <tr>
                 <td>{{ set.title }}</td>
                 <td>{{ set.get_children|length }}</td>
-                <td><a href="{% url 'worklists:worklist-create' %}">Add Worklist</a></td>
+                <td><a href="{% url 'worklists:list-create' %}">Add Worklist</a></td>
                 <td><a href="{% url 'worklists:set-update' set.id %}">Update</a></td>
                 <td><a href="{% url 'worklists:set-remove' set.id %}">Delete</a></td>
             </tr>
