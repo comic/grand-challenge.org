@@ -22,3 +22,12 @@ class Worklist(UUIDModel):
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
+
+
+class WorklistItem(UUIDModel):
+    worklist = models.ForeignKey(
+        "Worklist", null=False, blank=False, on_delete=models.CASCADE
+    )
+    image = models.ForeignKey(
+        "Image", null=False, blank=False, on_delete=models.CASCADE
+    )

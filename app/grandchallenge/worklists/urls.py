@@ -3,30 +3,52 @@ from grandchallenge.worklists import views
 
 app_name = "worklists"
 urlpatterns = [
-    path("worklist/", views.WorklistTable.as_view(), name="worklists"),
+    path("list/", views.WorklistTable.as_view(), name="list"),
+    path("list/<uuid:pk>/", views.WorklistRecord.as_view(), name="list"),
     path(
-        "worklist/<uuid:pk>/", views.WorklistRecord.as_view(), name="worklist"
+        "list/create/", views.WorklistCreateView.as_view(), name="list-create"
     ),
     path(
-        "worklist/create/",
-        views.WorklistCreateView.as_view(),
-        name="worklist-create",
-    ),
-    path(
-        "worklist/remove/<uuid:pk>/",
+        "list/remove/<uuid:pk>/",
         views.WorklistRemoveView.as_view(),
-        name="worklist-remove",
+        name="list-remove",
     ),
     path(
-        "worklist/update/<uuid:pk>/",
+        "list/update/<uuid:pk>/",
         views.WorklistUpdateView.as_view(),
-        name="worklist-update",
+        name="list-update",
     ),
     path(
-        "worklist/display/",
+        "list/display/",
         views.WorklistDisplayView.as_view(),
-        name="worklist-display",
+        name="list-display",
     ),
+]
+
+urlpatterns += [
+    path("item/", views.WorklistSetTable.as_view(), name="items"),
+    path("item/<uuid:pk>/", views.WorklistSetRecord.as_view(), name="item"),
+    path(
+        "item/create/", views.WorklistSetCreateView.as_view(), name="item-create"
+    ),
+    path(
+        "item/remove/<uuid:pk>/",
+        views.WorklistSetRemoveView.as_view(),
+        name="item-remove",
+    ),
+    path(
+        "item/update/<uuid:pk>/",
+        views.WorklistSetUpdateView.as_view(),
+        name="item-update",
+    ),
+    path(
+        "item/display/",
+        views.WorklistSetDisplayView.as_view(),
+        name="item-display",
+    ),
+]
+
+urlpatterns += [
     path("set/", views.WorklistSetTable.as_view(), name="sets"),
     path("set/<uuid:pk>/", views.WorklistSetRecord.as_view(), name="set"),
     path(

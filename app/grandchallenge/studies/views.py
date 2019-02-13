@@ -3,12 +3,12 @@ from django.views.generic.list import ListView
 from rest_framework import generics
 
 from grandchallenge.studies.models import Study
-from grandchallenge.studies.serializer import StudySerializer
+from grandchallenge.studies.serializers import StudySerializer
 from grandchallenge.studies.forms import StudyCreateForm, StudyUpdateForm
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
-
+""" Study API Endpoints """
 class StudyTable(generics.ListCreateAPIView):
     serializer_class = StudySerializer
 
@@ -35,6 +35,8 @@ class StudyRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = StudySerializer
 
 
+
+""" Study Form Views"""
 class StudyCreateView(UserIsStaffMixin, CreateView):
     model = Study
     form_class = StudyCreateForm
