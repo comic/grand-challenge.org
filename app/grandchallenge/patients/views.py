@@ -3,7 +3,7 @@ from django.views.generic.list import ListView
 from rest_framework import generics
 
 from grandchallenge.patients.models import Patient
-from grandchallenge.patients.serializer import PatientSerializer
+from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin

@@ -13,7 +13,7 @@ class StudyCreateForm(ModelForm):
 
     class Meta:
         model = Study
-        fields = ["code", "region_of_interest"]
+        fields = ["name", "datetime", "patient"]
 
 
 class StudyUpdateForm(ModelForm):
@@ -24,4 +24,4 @@ class StudyUpdateForm(ModelForm):
 
     class Meta:
         model = Study
-        fields = ["code", "region_of_interest"]
+        fields = ["name", "datetime", "patient"]

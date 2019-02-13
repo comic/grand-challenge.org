@@ -13,7 +13,7 @@ class PatientCreateForm(ModelForm):
 
     class Meta:
         model = Patient
-        fields = ["name", "sex", "height"]
+        fields = ["name"]
 
 
 class PatientUpdateForm(ModelForm):
@@ -24,4 +24,4 @@ class PatientUpdateForm(ModelForm):
 
     class Meta:
         model = Patient
-        fields = ["name", "sex", "height"]
+        fields = ["name"]
