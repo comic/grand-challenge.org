@@ -45,6 +45,7 @@ class RetinaOwnerAPIPermission(permissions.BasePermission):
     """
     Permission class for annotation APIViews in retina app.
     Checks if user is in retina admins group or is owner of this object.
+    Requires that user_id is in view.kwargs to check for ownership.
     """
 
     def has_permission(self, request, view):

@@ -5,7 +5,7 @@ from django.views import View
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from rest_framework import status, authentication
+from rest_framework import status, authentication, viewsets
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import get_user_model
@@ -16,6 +16,8 @@ from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
     RetinaOwnerAPIPermission,
+    is_in_retina_admins_group,
+    is_in_retina_graders_group
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
@@ -23,9 +25,11 @@ from grandchallenge.cases.models import Image
 from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     PolygonAnnotationSet,
+    SinglePolygonAnnotation
 )
 from grandchallenge.annotations.serializers import (
-    PolygonAnnotationSetSerializer
+    PolygonAnnotationSetSerializer,
+    SinglePolygonAnnotationSerializer
 )
 from grandchallenge.challenges.models import ImagingModality
 
@@ -729,3 +733,22 @@ class PolygonListView(ListAPIView):
         return image.polygonannotationset_set.prefetch_related(
             "singlepolygonannotation_set"
         ).filter(grader__id=user_id)
+
+
+class SinglePolygonViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = SinglePolygonAnnotationSerializer
+
+    def get_queryset(self):
+        if is_in_retina_admins_group(self.request.user):
+            if self.request.kwargs.get["user_id"]:
+                queryset = SinglePolygonAnnotation.objects.filter(annotation_set__grader=self.request.kwargs.get["user_id"])
+            else:
+                queryset = SinglePolygonAnnotation.objects.all()
+        elif is_in_retina_graders_group(self.request.user):
+            queryset = SinglePolygonAnnotation.objects.filter(annotation_set__grader=self.request.user)
+        else:
+            # User is not in graders or admins group, should not have access
+            queryset = SinglePolygonAnnotation.objects.none()
+        return queryset

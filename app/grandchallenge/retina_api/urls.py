@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import DefaultRouter, SimpleRouter
 from grandchallenge.retina_api import views
 from django.views.decorators.cache import cache_page
 from django.conf import settings
@@ -7,6 +7,9 @@ from django.conf import settings
 app_name = "retina_api"
 
 router = DefaultRouter()
+
+annotation_router = SimpleRouter()
+annotation_router.register("single_polygon", views.SinglePolygonViewSet, basename="single_polygon")
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -25,5 +28,8 @@ urlpatterns = [
         "annotations/<str:annotation_type>/<int:user_id>/<uuid:image_id>/",
         views.PolygonListView.as_view(),
         name="annotation-api-view"
+    ),
+    path(
+        "annotation/<int:user_id>/", include(annotation_router.urls)
     )
 ]
