@@ -1,17 +1,16 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
 from grandchallenge.core.models import UUIDModel
 
 
 class Patient(UUIDModel):
-    SexChoices = (("M", "Male"), ("F", "Female"), ("O", "Other"))
+    """
+    Top level datastructure, contains many studies that contain many images
+    """
 
-    name = models.CharField(
-        _("Name of Patient"), null=False, blank=False, max_length=255
-    )
-    sex = models.CharField(max_length=1, choices=SexChoices, default="O")
-    height = models.IntegerField(null=False, blank=False)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return "%s (%s)" % (self.name, str(self.id))
+        return "<{} {}>".format(self.__class__.__name__, self.name)
+
+    class Meta(UUIDModel.Meta):
+        unique_together = ("name",)

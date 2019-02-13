@@ -11,6 +11,7 @@ urlpatterns = [
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
     path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
     path("i/<path:path>", serve_folder, {"folder": "i"}),
+    path("cache/<path:path>", serve_folder, {"folder": "cache"}),
     path(
         "evaluation-supplementary/<path:path>",
         serve_folder,

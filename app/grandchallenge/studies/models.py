@@ -1,16 +1,24 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
-
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.patients.models import Patient
 
 
 class Study(UUIDModel):
-    code = models.CharField(
-        _("Identifier code"), null=False, blank=False, max_length=100
+    """
+    Middle level datastructure. Child of patient, contains many images
+    """
+
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+
+    datetime = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="The date and time at which this study took place",
     )
-    region_of_interest = models.CharField(
-        _("Region of study"), null=False, blank=False, max_length=255
-    )
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return "%s (%s)" % (self.code, str(self.id))
+        return "<{} {}>".format(self.__class__.__name__, self.name)
+
+    class Meta(UUIDModel.Meta):
+        unique_together = ("patient", "name")

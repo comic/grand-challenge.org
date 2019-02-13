@@ -4,7 +4,11 @@ import factory
 from django.conf import settings
 
 from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import (
+    Challenge,
+    ExternalChallenge,
+    ImagingModality,
+)
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.pages.models import Page
@@ -154,6 +158,7 @@ class ImageFileFactory(factory.DjangoModelFactory):
         model = ImageFile
 
     image = factory.SubFactory(ImageFactory)
+    image_type = ImageFile.IMAGE_TYPE_MHD
     file = factory.django.FileField()
 
 
@@ -170,21 +175,12 @@ class AnnotationSetFactory(factory.DjangoModelFactory):
     base = factory.SubFactory(ImageSetFactory)
 
 
-class PatientFactory(factory.DjangoModelFactory):
+class ImagingModalityFactory(factory.DjangoModelFactory):
     class Meta:
-        model = Patient
+        model = ImagingModality
+        django_get_or_create = ("modality",)
 
-    name = factory.Sequence(lambda n: f"patient_{n}")
-    sex = "O"
-    height = 100
-
-
-class StudyFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Study
-
-    code = factory.Sequence(lambda n: f"identifier_{n}")
-    region_of_interest = "heart"
+    modality = factory.sequence(lambda n: f"Modality {n}")
 
 
 class WorklistSetFactory(factory.DjangoModelFactory):
@@ -200,22 +196,6 @@ class WorklistFactory(factory.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"worklist_{n}")
     set = factory.SubFactory(WorklistSetFactory)
-
-
-class PatientItemFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = PatientItem
-
-    patient = factory.SubFactory(PatientFactory)
-    study = factory.SubFactory(StudyFactory)
-
-
-class StudyItemFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = StudyItem
-
-    study = factory.SubFactory(StudyFactory)
-    image = factory.SubFactory(ImageFactory)
 
 
 class WorklistItemFactory(factory.DjangoModelFactory):

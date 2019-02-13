@@ -136,6 +136,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
                 depth=depth if depth else None,
+                resolution_levels=None,
                 color_space=color_space,
             )
             db_image_files = []
@@ -148,7 +149,9 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                         temp_file.write(buffer)
 
                 db_image_file = ImageFile(
-                    image=db_image, file=File(temp_file, name=_file.name)
+                    image=db_image,
+                    image_type=ImageFile.IMAGE_TYPE_MHD,
+                    file=File(temp_file, name=_file.name),
                 )
                 db_image_files.append(db_image_file)
 
