@@ -12,7 +12,22 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.challenges.models import Challenge
-from tests.factories import UserFactory, ChallengeFactory, MethodFactory
+from tests.factories import (
+    UserFactory,
+    ChallengeFactory,
+    MethodFactory,
+    ImageFactory,
+)
+from tests.annotations_tests.factories import (
+    MeasurementAnnotationFactory,
+    BooleanClassificationAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    CoordinateListAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    ETDRSGridAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
 
 """ Defines fixtures than can be used across all of the tests """
 
@@ -196,3 +211,49 @@ def submission_file(tmpdir_factory):
         z.close()
 
     return testfile
+
+
+class AnnotationSet(NamedTuple):
+    grader: UserFactory
+    measurement: MeasurementAnnotationFactory
+    boolean: BooleanClassificationAnnotationFactory
+    polygon: PolygonAnnotationSetFactory
+    coordinatelist: CoordinateListAnnotationFactory
+    landmark: LandmarkAnnotationSetFactory
+    etdrs: ETDRSGridAnnotationFactory
+
+
+def generate_annotation_set():
+    grader = UserFactory()
+    measurement = MeasurementAnnotationFactory(grader=grader)
+    boolean = BooleanClassificationAnnotationFactory(grader=grader)
+    polygon = PolygonAnnotationSetFactory(grader=grader)
+    coordinatelist = CoordinateListAnnotationFactory(grader=grader)
+    landmark = LandmarkAnnotationSetFactory(grader=grader)
+    etdrs = ETDRSGridAnnotationFactory(grader=grader)
+
+    # Create child models for polygon annotation set
+    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygon)
+
+    # Create child models for landmark annotation set (3 per image)
+    for i in range(5):
+        image = ImageFactory()
+        SingleLandmarkAnnotationFactory(annotation_set=landmark, image=image)
+
+    return AnnotationSet(
+        grader=grader,
+        measurement=measurement,
+        boolean=boolean,
+        polygon=polygon,
+        coordinatelist=coordinatelist,
+        landmark=landmark,
+        etdrs=etdrs,
+    )
+
+
+@pytest.fixture(name="AnnotationSet")
+def annotation_set():
+    """ Creates a user with the one of each of the following annotations: Measurement,
+    BooleanClassification, PolygonAnnotationSet (with 10 child annotations), CoordinateList,
+    LandmarkAnnotationSet(with single landmark annotations for 5 images), ETDRSGrid """
+    return generate_annotation_set()

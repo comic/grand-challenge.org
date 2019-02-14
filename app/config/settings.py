@@ -266,6 +266,7 @@ THIRD_PARTY_APPS = [
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
+    "sorl.thumbnail",  # for dynamic thumbnails
 ]
 
 LOCAL_APPS = [
@@ -286,6 +287,14 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
+    "grandchallenge.archives",
+    "grandchallenge.patients",
+    "grandchallenge.studies",
+    "grandchallenge.registrations",
+    "grandchallenge.annotations",
+    "grandchallenge.retina_core",
+    "grandchallenge.retina_importers",
+    "grandchallenge.retina_api",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -507,9 +516,9 @@ CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
     "CONTAINER_EXEC_DOCKER_TLSKEY", ""
 )
 CONTAINER_EXEC_MEMORY_LIMIT = "4g"
-CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
+CONTAINER_EXEC_IO_IMAGE = "alpine:3.9"
 CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:3f53bb00af943dfdf815650be70c0fa7b426e56a66f5e3362b47a129d57d5991"
+    "sha256:caf27325b298a6730837023a8a342699c8b7b388b8d878966b064a1320043019"
 )
 CONTAINER_EXEC_CPU_QUOTA = 100000
 CONTAINER_EXEC_CPU_PERIOD = 100000
@@ -562,6 +571,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation-supplementary",
     "favicon",
     "i",
+    "cache",  # for sorl-thumbnails
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
 ]
@@ -603,3 +613,19 @@ if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
         '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
         " to your .conf file."
     )
+
+# Modality name constants
+MODALITY_OCT = "OCT"  # Optical coherence tomography
+MODALITY_CF = "Fundus Photography"  # Color fundus photography
+MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
+MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
+
+# Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
+MAX_SITK_FILE_SIZE = 268435456  # == 256 mb
+
+# Retina specific settings
+RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24
+RETINA_GRADERS_GROUP_NAME = "retina_graders"
+RETINA_ADMINS_GROUP_NAME = "retina_admins"
+RETINA_IMPORT_USER_NAME = "retina_import_user"
+RETINA_EXCEPTION_ARCHIVE = "Australia"
