@@ -3,6 +3,7 @@ from crispy_forms.layout import Submit
 from django.forms import ModelForm
 from django_select2.forms import Select2MultipleWidget
 
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.worklists.models import Worklist, WorklistSet
 
 
@@ -14,6 +15,9 @@ class WorklistCreateForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("create", "Create"))
+        self.fields["images"].queryset = Image.objects.filter(
+            study__isnull=False, files__image_type=ImageFile.IMAGE_TYPE_TIFF
+        )
 
     class Meta:
         model = Worklist
@@ -26,6 +30,9 @@ class WorklistUpdateForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+        self.fields["images"].queryset = Image.objects.filter(
+            study__isnull=False, files__image_type=ImageFile.IMAGE_TYPE_TIFF
+        )
 
     class Meta:
         model = Worklist
