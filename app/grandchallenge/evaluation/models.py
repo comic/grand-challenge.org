@@ -13,7 +13,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import private_default_storage
+from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
@@ -373,7 +373,7 @@ class Submission(UUIDModel):
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
-        storage=private_default_storage,
+        storage=private_s3_storage,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,

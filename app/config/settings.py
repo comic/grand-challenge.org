@@ -133,8 +133,7 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
 # This is for storing files that should not be served to the public
 AWS_DEFAULT_ACL = None
-PRIVATE_DEFAULT_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-PRIVATE_DEFAULT_STORAGE_KWARGS = {
+PRIVATE_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
     "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
     "bucket_name": os.environ.get(

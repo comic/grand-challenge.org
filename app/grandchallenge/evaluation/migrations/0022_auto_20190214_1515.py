@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             model_name="submission",
             name="file",
             field=models.FileField(
-                storage=grandchallenge.core.storage.PrivateDefaultStorage(),
+                storage=grandchallenge.core.storage.PrivateS3Storage(),
                 upload_to=grandchallenge.evaluation.models.submission_file_path,
                 validators=[
                     grandchallenge.core.validators.MimeTypeValidator(
