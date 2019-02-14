@@ -19,6 +19,13 @@ from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory
 
 
+def create_fake_coordinate_list(size=10):
+    c_list = []
+    for i in range(size):
+        c_list.append([random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)])
+    return c_list
+
+
 class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
     class Meta:
         model = AbstractImageAnnotationModel
@@ -79,20 +86,7 @@ class CoordinateListAnnotationFactory(DefaultNamedImageAnnotationModelFactory):
     class Meta:
         model = CoordinateListAnnotation
 
-    value = [
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-    ]
+    value = create_fake_coordinate_list()
 
 
 class PolygonAnnotationSetFactory(DefaultNamedImageAnnotationModelFactory):
@@ -106,20 +100,7 @@ class SinglePolygonAnnotationFactory(factory.DjangoModelFactory):
 
     annotation_set = factory.SubFactory(PolygonAnnotationSetFactory)
 
-    value = [
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-    ]
+    value = create_fake_coordinate_list()
 
 
 class LandmarkAnnotationSetFactory(factory.DjangoModelFactory):
@@ -139,20 +120,7 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
     image = factory.SubFactory(ImageFactory)
     annotation_set = factory.SubFactory(LandmarkAnnotationSetFactory)
 
-    landmarks = [
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-        [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)],
-    ]
+    landmarks = create_fake_coordinate_list()
 
 
 def create_batch_landmarks():
