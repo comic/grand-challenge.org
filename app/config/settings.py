@@ -12,6 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 from config.denylist import USERNAME_DENYLIST
 
 
+
 def strtobool(val) -> bool:
     """ Returns disutils.util.strtobool as a boolean """
     return bool(strtobool_i(val))
@@ -244,6 +245,8 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "dal",
+    "dal_select2",
     "django.contrib.admin",
     "django.contrib.postgres",
 ]
