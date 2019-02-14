@@ -29,7 +29,9 @@ class BooleanClassificationAnnotationSerializer(serializers.ModelSerializer):
 
 
 class SinglePolygonAnnotationSerializer(serializers.ModelSerializer):
-    annotation_set = serializers.PrimaryKeyRelatedField(queryset=PolygonAnnotationSet.objects.all())
+    annotation_set = serializers.PrimaryKeyRelatedField(
+        queryset=PolygonAnnotationSet.objects.all()
+    )
 
     class Meta:
         model = SinglePolygonAnnotation

@@ -22,7 +22,9 @@ from tests.factories import UserFactory
 def create_fake_coordinate_list(size=10):
     c_list = []
     for i in range(size):
-        c_list.append([random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)])
+        c_list.append(
+            [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)]
+        )
     return c_list
 
 
