@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import CharField
 from grandchallenge.core.models import UUIDModel
@@ -6,6 +7,7 @@ from grandchallenge.cases.models import Image
 
 class WorklistSet(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
+    user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
 
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
@@ -13,21 +15,17 @@ class WorklistSet(UUIDModel):
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
 
+    class Meta(UUIDModel.Meta):
+        unique_together = ("title", "user")
+
 
 class Worklist(UUIDModel):
     title = CharField(null=False, blank=False, max_length=255)
-    set = models.ForeignKey(
-        WorklistSet, null=False, blank=False, on_delete=models.CASCADE
-    )
+    set = models.ForeignKey(WorklistSet, null=False, on_delete=models.CASCADE)
+    images = models.ManyToManyField(to=Image, related_name="worklist")
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
 
-
-class WorklistItem(UUIDModel):
-    worklist = models.ForeignKey(
-        Worklist, null=False, blank=False, on_delete=models.CASCADE
-    )
-    image = models.ForeignKey(
-        Image, null=False, blank=False, on_delete=models.CASCADE
-    )
+    class Meta(UUIDModel.Meta):
+        unique_together = ("title", "set")

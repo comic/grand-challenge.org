@@ -23,28 +23,6 @@ urlpatterns = [
         views.WorklistDisplayView.as_view(),
         name="list-display",
     ),
-    path("item/", views.WorklistItemTable.as_view(), name="items"),
-    path("item/<uuid:pk>/", views.WorklistItemRecord.as_view(), name="item"),
-    path(
-        "item/create/",
-        views.WorklistItemCreateView.as_view(),
-        name="item-create",
-    ),
-    path(
-        "item/remove/<uuid:pk>/",
-        views.WorklistItemRemoveView.as_view(),
-        name="item-remove",
-    ),
-    path(
-        "item/update/<uuid:pk>/",
-        views.WorklistItemUpdateView.as_view(),
-        name="item-update",
-    ),
-    path(
-        "item/display/",
-        views.WorklistItemDisplayView.as_view(),
-        name="item-display",
-    ),
     path("set/", views.WorklistSetTable.as_view(), name="sets"),
     path("set/<uuid:pk>/", views.WorklistSetRecord.as_view(), name="set"),
     path(

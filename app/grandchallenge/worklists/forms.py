@@ -3,7 +3,7 @@ from crispy_forms.layout import Submit
 from django.forms import ModelForm
 from django_select2.forms import Select2MultipleWidget
 
-from grandchallenge.worklists.models import Worklist, WorklistItem, WorklistSet
+from grandchallenge.worklists.models import Worklist, WorklistSet
 
 
 """ Worklist """
@@ -17,7 +17,8 @@ class WorklistCreateForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "set"]
+        fields = ["title", "set", "images"]
+        widgets = {"images": Select2MultipleWidget}
 
 
 class WorklistUpdateForm(ModelForm):
@@ -28,33 +29,7 @@ class WorklistUpdateForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "set"]
-
-
-""" WorklistItem """
-
-
-class WorklistItemCreateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("create", "Create"))
-
-    class Meta:
-        model = WorklistItem
-        fields = ("images",)
-        widgets = {"images": Select2MultipleWidget}
-
-
-class WorklistItemUpdateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
-    class Meta:
-        model = WorklistItem
-        fields = ("images",)
+        fields = ["title", "set", "images"]
         widgets = {"images": Select2MultipleWidget}
 
 
@@ -69,7 +44,7 @@ class WorklistSetCreateForm(ModelForm):
 
     class Meta:
         model = WorklistSet
-        fields = ["title"]
+        fields = ["title", "user"]
 
 
 class WorklistSetUpdateForm(ModelForm):
@@ -81,4 +56,4 @@ class WorklistSetUpdateForm(ModelForm):
 
     class Meta:
         model = WorklistSet
-        fields = ["title"]
+        fields = ["title", "user"]
