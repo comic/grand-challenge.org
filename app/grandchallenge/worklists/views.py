@@ -31,14 +31,14 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
 """ WorklistSet API Endpoints """
 
 
-class WorklistItemTable(generics.ListCreateAPIView):
-    queryset = WorklistItem.objects.all()
-    serializer_class = WorklistItemSerializer
+class WorklistSetTable(generics.ListCreateAPIView):
+    queryset = WorklistSet.objects.all()
+    serializer_class = WorklistSetSerializer
 
 
-class WorklistItemRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = WorklistItem.objects.all()
-    serializer_class = WorklistItemSerializer
+class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WorklistSet.objects.all()
+    serializer_class = WorklistSetSerializer
 
 
 """ Worklist Forms Views """

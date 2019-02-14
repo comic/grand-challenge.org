@@ -8,9 +8,8 @@
 <table class="table table-sm">
     <thead>
         <tr>
-            <td>Title</td>
-            <td>Set</td>
-            <td></td>
+            <td><b>Title</b></td>
+            <td><b>Set</b></td>
         </tr>
     </thead>
     <tbody>
@@ -18,7 +17,6 @@
             <tr>
                 <td>{{ worklist.title }}</td>
                 <td>{{ worklist.set }}</td>
-                <td><a href="{% url 'worklists:item-create' %}">Add images</a></td>
                 <td><a href="{% url 'worklists:list-update' worklist.id %}">Update</a></td>
                 <td><a href="{% url 'worklists:list-remove' worklist.id %}">Delete</a></td>
             </tr>
@@ -27,5 +25,6 @@
         {% endfor %}
    </tbody>
 </table>
-<a href="{% url 'worklists:list-create' %}">Add Worklist</a>
+<p><a href="{% url 'worklists:set-create' %}">Add Set</a></p>
+<p><a href="{% url 'worklists:list-create' %}">Add Worklist</a></p>
 {% endblock %}
