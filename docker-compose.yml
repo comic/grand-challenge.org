@@ -38,11 +38,19 @@ services:
       memcached:
         condition: service_started
     volumes:
-      - static:/static/
-      - media:/dbox/Dropbox/media/
-      - ./app:/app/
+      - type: volume
+        source: static
+        target: /static/
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+      - type: bind
+        source: ./app
+        target: /app/
       # The docker socket is only needed for testing
-      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
     group_add:
       - 999 # The docker group is only needed for testing
     healthcheck:
@@ -68,8 +76,14 @@ services:
       web:
         condition: service_healthy
     volumes:
-      - static:/srv/public/static/:ro
-      - media:/dbox/Dropbox/media/:ro
+      - type: volume
+        source: static
+        target: /srv/public/static
+        read_only: true
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+        read_only: true
 
   memcached:
     image: memcached:1.4
@@ -116,7 +130,10 @@ services:
     volumes_from:
       - web
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # The docker socket is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
     group_add:
       - 999
 
