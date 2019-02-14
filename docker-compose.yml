@@ -17,10 +17,24 @@ services:
       retries: 5
     restart: always
 
+  minio:
+    image: minio/minio:RELEASE.2019-02-14T00-21-45Z
+    environment: &minioenv
+      MINIO_ACCESS_KEY: minioaccess
+      MINIO_SECRET_KEY: minio12345
+    ports:
+      - "9000:9000" # Only required for running django locally
+    command: "server /data"
+    volumes:
+      - type: volume
+        source: miniodata
+        target: /data
+
   web:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioenv
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
@@ -188,3 +202,4 @@ services:
 volumes:
   static:
   media:
+  miniodata:
