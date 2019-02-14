@@ -244,6 +244,8 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "dal",
+    "dal_select2",
     "django.contrib.admin",
     "django.contrib.postgres",
 ]
