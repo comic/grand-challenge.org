@@ -6,6 +6,10 @@ from grandchallenge.cases.models import Image
 
 
 class WorklistSet(UUIDModel):
+    """
+    Represents a collection of worklists for a single user.
+    """
+
     title = CharField(null=False, blank=False, max_length=255)
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
 
@@ -20,6 +24,10 @@ class WorklistSet(UUIDModel):
 
 
 class Worklist(UUIDModel):
+    """
+    Represents a collection of images.
+    """
+
     title = CharField(null=False, blank=False, max_length=255)
     set = models.ForeignKey(WorklistSet, null=False, on_delete=models.CASCADE)
     images = models.ManyToManyField(to=Image, related_name="worklist")
