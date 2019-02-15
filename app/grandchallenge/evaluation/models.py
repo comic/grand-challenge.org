@@ -13,7 +13,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
@@ -21,6 +21,7 @@ from grandchallenge.core.validators import (
     JSONSchemaValidator,
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
+from grandchallenge.subdomains.utils import reverse
 
 # Example Schema
 """
@@ -366,15 +367,13 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
-    # Limitation for now: only accept zip files as these are expanded in
-    # evaluation.tasks.Evaluation. We could extend this first to csv file
-    # submission with some validation
     file = models.FileField(
         upload_to=submission_file_path,
         validators=[
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
+        storage=private_s3_storage,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,

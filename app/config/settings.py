@@ -102,6 +102,17 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
+# the name of the main project: this project is shown when url is loaded without
+# arguments, and pages in this project appear as menu items throughout the site
+MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
+
+##############################################################################
+#
+# Storage
+#
+##############################################################################
+DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
@@ -111,13 +122,35 @@ MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = "/media/"
 
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = "/static/"
+# In each challenge there can be a single directory out of which files can be
+# downloaded without logging in.
+COMIC_PUBLIC_FOLDER_NAME = "public_html"
+COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 
-# Use memcached for caching
+# In each challenge there can be a single directory from which files can only
+# be downloaded by registered participants of that project
+COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
+
+# This is for storing files that should not be served to the public
+AWS_DEFAULT_ACL = None
+PRIVATE_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
+    ),
+    "auto_create_bucket": True,
+    "endpoint_url": os.environ.get(
+        "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
+    ),
+}
+
+##############################################################################
+#
+# Caching
+#
+##############################################################################
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
@@ -125,23 +158,6 @@ CACHES = {
     }
 }
 
-# In each project there can be a single directory out of which files can be downloaded
-# without logging in. In this folder you can put website header images etc.
-# for security, only MEDIA_ROOT/<project_name>/COMIC_PUBLIC_FOLDER_NAME are served
-# without checking credentials.
-COMIC_PUBLIC_FOLDER_NAME = "public_html"
-
-# Transient solution for server content from certain folders publicly. This will be removed
-# When a full configurable permissions system is in place, see ticket #244
-COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
-
-# In each project there can be a single directory from which files can only be
-# downloaded by registered members of that project
-COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
-
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
@@ -171,8 +187,11 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
+# Absolute path to the directory static files should be collected to.
+# Don't put anything in this directory yourself; store your static files
+# in apps' "static/" subdirectories and in STATICFILES_DIRS.
+# Example: "/home/media/media.lawrence.com/static/"
+STATIC_ROOT = "/static/"
 
 # Serve files using django (debug only)
 STATIC_URL = "/static/"
