@@ -22,20 +22,17 @@
             to see their status.
         </p>
 
-    {% elif remaining_submissions <= 0 %}
+    {% elif remaining_submissions <= 0 and "change_challenge" not in challenge_perms %}
 
         <p>You have reached your submission limit for today. You can make
             another submission in {{ next_submission_at|timeuntil }}.</p>
 
     {% else %}
 
-        <p>You can make {{ remaining_submissions }} more
-            {% if remaining_submissions == 1 %}
-                submission
-            {% else %}
-                submissions
-            {% endif %}
-            today.</p>
+        <p>
+            You can make {{ remaining_submissions }} more
+            submission{{ remaining_submissions|pluralize }} today.
+        </p>
 
         {% crispy form %}
 
@@ -43,7 +40,9 @@
 
     <h3>View my submissions</h3>
 
-    <p><a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click here</a>
+    <p>
+        <a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click
+            here</a>
         to view your current submissions to this challenge.</p>
 
 {% endblock %}
