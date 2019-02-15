@@ -30,6 +30,7 @@ services:
       - type: volume
         source: miniodata
         target: /data
+    restart: always
 
   web:
     image: grandchallenge/web-test:latest

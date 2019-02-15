@@ -137,11 +137,11 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
     "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
-        "MINIO_PRIVATE_DEFAULT_BUCKET_NAME", "grand-challenge-private"
+        "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
     "auto_create_bucket": True,
     "endpoint_url": os.environ.get(
-        "MINIO_PRIVATE_ENDPOINT_URL", "http://minio-private:9000"
+        "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
     ),
 }
 

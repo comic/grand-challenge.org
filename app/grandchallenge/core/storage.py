@@ -24,7 +24,6 @@ class PrivateS3Storage(S3Boto3Storage):
         ):
             raise ImproperlyConfigured(
                 "Not all of the PRIVATE_S3_STORAGE_KWARGS could be set"
-                f"for {settings.PRIVATE_DEFAULT_STORAGE}."
             )
 
 
