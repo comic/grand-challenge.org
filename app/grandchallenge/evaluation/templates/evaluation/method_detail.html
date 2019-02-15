@@ -19,7 +19,7 @@
         <dt>Image</dt>
         <dd>
             {% if object.image %}
-                <a href="{{ object.image.url }}">{{ object.image.name }}</a>
+                {{ object.image.name }}
             {% endif %}
         </dd>
 
