@@ -40,7 +40,6 @@ services:
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
-      python manage.py collectstatic --noinput
       && mkdir -p /dbox/Dropbox/media/
       && python manage.py migrate
       && python manage.py check_permissions
