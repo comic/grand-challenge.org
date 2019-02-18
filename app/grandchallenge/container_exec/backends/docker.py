@@ -61,6 +61,7 @@ class Executor(object):
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
+            "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
         }
 
     def __enter__(self):
