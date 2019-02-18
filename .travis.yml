@@ -28,6 +28,7 @@ before_install:
 install:
   - make build
   - docker-compose run web python manage.py collectstatic --noinput
+  - docker-compose run web python manage.py migrate
   - docker-compose up -d
 
 script:
