@@ -30,8 +30,11 @@ if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
 IGNORABLE_404_URLS = [
-    re.compile(r"\.(php|cgi|asp)/"),
-    re.compile(r"^/phpmyadmin/"),
+    re.compile(r".*\.(php|cgi|asp).*"),
+    re.compile(r"^/phpmyadmin.*"),
+    re.compile(r"^/gen204.*"),
+    re.compile(r"^/wp-content.*"),
+    re.compile(r".*/trackback.*"),
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
