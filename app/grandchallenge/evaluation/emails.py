@@ -1,8 +1,9 @@
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
+from grandchallenge.subdomains.utils import reverse
 
 
 def send_failed_job_email(job):
@@ -21,7 +22,11 @@ def send_failed_job_email(job):
     recipient_emails.append(job.submission.creator.email)
     for email in recipient_emails:
         send_mail(
-            subject="Evaluation Failed",
+            subject=(
+                f"[{Site.objects.get_current().domain.lower()}] "
+                f"[{job.submission.challenge.short_name.lower()}] "
+                f"Evaluation Failed"
+            ),
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
@@ -51,7 +56,11 @@ def send_new_result_email(result):
         )
     for email in recipient_emails:
         send_mail(
-            subject=f"New Result for {result.challenge.short_name}",
+            subject=(
+                f"[{Site.objects.get_current().domain.lower()}] "
+                f"[{result.challenge.short_name.lower()}] "
+                f"New Result"
+            ),
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],

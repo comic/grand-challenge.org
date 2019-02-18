@@ -34,7 +34,7 @@ def test_new_registration_email(participant_review, client, ChallengeSet):
             kwargs={"challenge_short_name": ChallengeSet.challenge.short_name},
         )
         assert ChallengeSet.admin.email in email.to
-        assert "New participation request" in email.subject
+        assert "new participation request" in email.subject.lower()
         assert ChallengeSet.challenge.short_name in email.subject
         assert approval_link in email.alternatives[0][0]
     else:
@@ -63,7 +63,7 @@ def test_registration_updated_email(new_state, client, ChallengeSet):
     email = mail.outbox[-1]
     assert rr.user.email in email.to
     if new_state == RegistrationRequest.ACCEPTED:
-        assert "request accepted" in email.subject
+        assert "request accepted" in email.subject.lower()
     else:
-        assert "request rejected" in email.subject
+        assert "request rejected" in email.subject.lower()
     assert ChallengeSet.challenge.short_name in email.body
