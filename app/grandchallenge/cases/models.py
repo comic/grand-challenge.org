@@ -9,6 +9,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.subdomains.utils import reverse
@@ -285,4 +286,6 @@ class ImageFile(UUIDModel):
     image_type = models.CharField(
         max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
-    file = models.FileField(upload_to=image_file_path, blank=False)
+    file = models.FileField(
+        upload_to=image_file_path, blank=False, storage=protected_s3_storage
+    )
