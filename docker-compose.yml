@@ -143,6 +143,10 @@ services:
       redis:
         condition: service_started
     volumes:
+      # Needed for submission conversion
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
       # The docker socket is only needed for testing
       - type: bind
         source: /var/run/docker.sock
