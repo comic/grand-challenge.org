@@ -57,12 +57,18 @@ class FileType(UUIDModel):
         return self.name
 
 
-storage = S3Storage(
+# inject keys in the constructor, otherwise they'll end up in the migrations file
+class CustomStorage(S3Storage):
+    def __init__(self, **kwargs):
+        kwargs['aws_access_key_id'] = settings.S3_ACCESS_KEY_ID
+        kwargs['aws_secret_access_key'] = settings.S3_SECRET_ACCESS_KEY
+        super().__init__(**kwargs)
+
+
+storage = CustomStorage(
     aws_s3_bucket_name = 'eyra-datasets',
     aws_s3_endpoint_url = settings.S3_ENDPOINT_URL,
     aws_s3_file_overwrite = True,
-    aws_access_key_id = settings.S3_ACCESS_KEY_ID,
-    aws_secret_access_key = settings.S3_SECRET_ACCESS_KEY,
 )
 
 
