@@ -23,31 +23,34 @@ RUN python -m pip install -U pipenv
 
 # Install base python packages
 WORKDIR /opt/pipenv
-ADD Pipfile /opt/pipenv
-ADD Pipfile.lock /opt/pipenv
+COPY Pipfile /opt/pipenv
+COPY Pipfile.lock /opt/pipenv
 RUN pipenv install --system
 
-RUN chown 2001:2001 /static /dbox/Dropbox/media
+RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
+
+RUN chown django:django /app /static /dbox/Dropbox/media
 
 ###################
 #  Test Container #
 ###################
 FROM base as test
 
-USER root
 WORKDIR /opt/pipenv
 RUN pipenv install --system --dev
 
-USER 2001:2001
+USER django:django
 WORKDIR /app
-ADD --chown=2001:2001 ./app/ /app/
-ADD --chown=2001:2001 pyproject.toml /tmp/pyproject.toml
+COPY --chown=django:django ./app/ /app/
+RUN python manage.py collectstatic --noinput
+COPY --chown=django:django pyproject.toml /tmp/pyproject.toml
 
 ##################
 # Dist Container #
 ##################
 FROM base as dist
 
-USER 2001:2001
+USER django:django
 WORKDIR /app
-ADD --chown=2001:2001 ./app/ /app/
+COPY --chown=django:django ./app/ /app/
+RUN python manage.py collectstatic --noinput

@@ -40,8 +40,7 @@ services:
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
-      mkdir -p /dbox/Dropbox/media/
-      && python manage.py migrate
+      python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
       && gunicorn -w 1 -b 0.0.0.0 config.wsgi
@@ -54,11 +53,9 @@ services:
         condition: service_started
     volumes:
       - type: volume
-        source: static
-        target: /static/
-      - type: volume
         source: media
         target: /dbox/Dropbox/media/
+      # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
@@ -92,10 +89,6 @@ services:
         condition: service_healthy
     volumes:
       - type: volume
-        source: static
-        target: /srv/public/static
-        read_only: true
-      - type: volume
         source: media
         target: /dbox/Dropbox/media/
         read_only: true
@@ -125,8 +118,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+        # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_worker_evaluation:
     image: grandchallenge/web-test:latest
@@ -143,13 +142,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
     volumes:
+      # Needed for submission conversion
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
       # The docker socket is only needed for testing
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
     group_add:
       - 999
 
@@ -167,8 +172,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      # Needed for algorithm runs
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+      # The docker socket is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_beat:
     image: grandchallenge/web-test:latest
@@ -187,8 +203,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
 
   flower:
     image: crgwbr/docker-celery-flower
@@ -202,6 +216,5 @@ services:
     restart: always
 
 volumes:
-  static:
   media:
   miniodata:
