@@ -8,6 +8,7 @@ from django.core.management import BaseCommand
 
 from userena.models import UserenaSignup
 from grandchallenge.challenges.models import Challenge, TaskType
+from grandchallenge.evaluation.models import Method
 from grandchallenge.eyra_datasets.models import DataSet, DataSetType, DataSetTypeFile
 
 
@@ -20,6 +21,7 @@ class Command(BaseCommand):
         DataSetType.objects.all().delete()
         DataSetTypeFile.objects.all().delete()
         DataSet.objects.all().delete()
+        Method.objects.all().delete()
         # DataSet.challenges.through.objects.all().delete()
 
         demoadmin = UserenaSignup.objects.create_user(
@@ -149,3 +151,14 @@ class Command(BaseCommand):
         ]
 
         demo.evaluation_config.save()
+
+        def create_method(challenge):
+            # todo: put in evaluation container
+            method = Method(
+                challenge=challenge
+            )
+            method.save()
+
+        create_method(demo)
+
+# todo: create sample algorithms
