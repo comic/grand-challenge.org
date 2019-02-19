@@ -40,8 +40,7 @@ services:
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
-      mkdir -p /dbox/Dropbox/media/
-      && python manage.py migrate
+      python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
       && gunicorn -w 1 -b 0.0.0.0 config.wsgi
@@ -53,9 +52,6 @@ services:
       memcached:
         condition: service_started
     volumes:
-      - type: volume
-        source: static
-        target: /static/
       - type: volume
         source: media
         target: /dbox/Dropbox/media/
@@ -91,10 +87,6 @@ services:
       web:
         condition: service_healthy
     volumes:
-      - type: volume
-        source: static
-        target: /srv/public/static
-        read_only: true
       - type: volume
         source: media
         target: /dbox/Dropbox/media/
@@ -202,6 +194,5 @@ services:
     restart: always
 
 volumes:
-  static:
   media:
   miniodata:
