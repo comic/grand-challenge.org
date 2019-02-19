@@ -8,12 +8,9 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
-def assert_api_crud(
-    client, table_reverse, record_reverse, expected_table, object_factory
-):
+def assert_api_crud(client, table_reverse, expected_table, object_factory):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
-    record_url = reverse(record_reverse)
 
     # Checks the HTML View
     assert_table_access(client, table_url, token, expected_table)
@@ -23,7 +20,7 @@ def assert_api_crud(
     record_fields = model_to_dict(
         record, fields=[field.name for field in record._meta.fields]
     )
-    assert_record_deletion(client, record_url, token, record.id)
+    assert_record_deletion(client, table_url, token, record.id)
 
     # Attempts to create a new record through the API
     new_record_id = assert_table_insert(
@@ -31,7 +28,7 @@ def assert_api_crud(
     )
 
     # Attempts to display the object
-    assert_record_display(client, record_url, token, new_record_id)
+    assert_record_display(client, table_url, token, new_record_id)
 
     # Acquires another object, and attempts to update the current record with the new information
     record = object_factory()
@@ -39,7 +36,7 @@ def assert_api_crud(
         record, fields=[field.name for field in record._meta.fields]
     )
     assert_record_update(
-        client, record_url, token, dict_to_json(record_fields), record.id
+        client, table_url, token, dict_to_json(record_fields), record.id
     )
 
 
