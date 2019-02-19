@@ -43,18 +43,8 @@ class DataSetType(UUIDModel):
 
 class DataSetTypeFile(UUIDModel):
     dataset_type = models.ForeignKey('DataSetType', on_delete=models.CASCADE, related_name='files')
-    type = models.ForeignKey('FileType', on_delete=models.CASCADE)
     name = models.CharField(max_length=40)
     required = models.BooleanField(default=False)
-
-
-class FileType(UUIDModel):
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=40)
-
-    def __str__(self):
-        return self.name
 
 
 # inject keys in the constructor, otherwise they'll end up in the migrations file

@@ -10,7 +10,6 @@ class DataSetTypeFilesSerializer(serializers.ModelSerializer):
             "id",
             "required",
             "name",
-            "type",
         )
         depth = 1
 
