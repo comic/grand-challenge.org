@@ -2,12 +2,7 @@ import pytest
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from tests.factories import (
-    ImageSetFactory,
-    ImageFileFactory,
-    AnnotationSetFactory,
-    UserFactory,
-)
+from tests.factories import ImageFileFactory, AnnotationSetFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
