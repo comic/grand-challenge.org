@@ -23,8 +23,8 @@ services:
     environment:
       MINIO_ACCESS_KEY: minioprivate
       MINIO_SECRET_KEY: minioprivate12345
-    ports:
-      - '9000:9000'
+    expose:
+      - 9000
     command: "server /data"
     volumes:
       - type: volume
@@ -39,8 +39,8 @@ services:
     environment:
       MINIO_ACCESS_KEY: minioprotected
       MINIO_SECRET_KEY: minioprotected12345
-    ports:
-      - '9001:9000'
+    expose:
+      - 9000
     command: "server /data"
     volumes:
       - type: volume
@@ -55,9 +55,12 @@ services:
       <<: &minioprivateenv
         PRIVATE_S3_STORAGE_ACCESS_KEY: minioprivate
         PRIVATE_S3_STORAGE_SECRET_KEY: minioprivate12345
-      <<: &minioprotectedenv
+      <<: &protected_storage_credentials
         PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
         PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
+      <<: &protected_storage_connections
+        PROTECTED_S3_STORAGE_BUCKET_NAME: grand-challenge-protected
+        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
@@ -95,10 +98,11 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=gc.localhost
-      - SENDFILE_STATUS=off
+      SERVER_NAME: gc.localhost
+      SENDFILE_STATUS: 'off'
+      <<: *protected_storage_connections
     command: >-
-        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
         && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always
@@ -130,6 +134,8 @@ services:
     environment:
       <<: *postgresenv
       <<: *minioprivateenv
+      <<: *protected_storage_credentials
+      <<: *protected_storage_connections
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1

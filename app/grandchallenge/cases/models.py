@@ -138,7 +138,9 @@ class RawImageFile(UUIDModel):
 
 
 def image_file_path(instance, filename):
-    return f"images/{instance.image.pk}/{filename}"
+    return (
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{filename}"
+    )
 
 
 def case_file_path(instance, filename):
