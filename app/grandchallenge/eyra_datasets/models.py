@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_s3_storage.storage import S3Storage
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class DataSet(UUIDModel):
     name = models.CharField(max_length=20, null=False, blank=False)
     type = models.ForeignKey('DataSetType', on_delete=models.CASCADE)
     frozen = models.BooleanField(default=False)
+    challenges = models.ManyToManyField(Challenge, related_name='datasets')
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # editing an existing object
