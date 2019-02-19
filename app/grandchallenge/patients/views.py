@@ -13,19 +13,12 @@ class PatientTable(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
 
     def get_queryset(self):
-        # Get URL parameter as a string, if exists
+        queryset = Patient.objects.all()
         ids = self.request.query_params.get("ids", None)
 
-        # Get snippets for ids if they exist
         if ids is not None:
-            # Convert parameter string to list of integers
             ids = [int(x) for x in ids.split(",")]
-            # Get objects for all parameter ids
             queryset = Patient.objects.filter(pk__in=ids)
-
-        else:
-            # Else no parameters, return all objects
-            queryset = Patient.objects.all()
 
         return queryset
 

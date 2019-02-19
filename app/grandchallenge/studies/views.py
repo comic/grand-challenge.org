@@ -9,23 +9,18 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 """ Study API Endpoints """
+
+
 class StudyTable(generics.ListCreateAPIView):
     serializer_class = StudySerializer
 
     def get_queryset(self):
-        # Get URL parameter as a string, if exists
+        queryset = Study.objects.all()
         ids = self.request.query_params.get("ids", None)
 
-        # Get snippets for ids if they exist
         if ids is not None:
-            # Convert parameter string to list of integers
             ids = [int(x) for x in ids.split(",")]
-            # Get objects for all parameter ids
             queryset = Study.objects.filter(pk__in=ids)
-
-        else:
-            # Else no parameters, return all objects
-            queryset = Study.objects.all()
 
         return queryset
 
@@ -35,8 +30,9 @@ class StudyRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = StudySerializer
 
 
-
 """ Study Form Views"""
+
+
 class StudyCreateView(UserIsStaffMixin, CreateView):
     model = Study
     form_class = StudyCreateForm
