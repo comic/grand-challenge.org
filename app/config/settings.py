@@ -266,7 +266,6 @@ THIRD_PARTY_APPS = [
     "django_summernote",  # for WYSIWYG page editing
     "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
-    'django_extensions',
 ]
 
 LOCAL_APPS = [
