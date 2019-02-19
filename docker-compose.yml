@@ -207,7 +207,7 @@ services:
         condition: service_started
 
   flower:
-    image: crgwbr/docker-celery-flower
+    image: mher/flower
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
     ports:
