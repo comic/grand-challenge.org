@@ -55,6 +55,7 @@ services:
       - type: volume
         source: media
         target: /dbox/Dropbox/media/
+      # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
@@ -117,8 +118,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+        # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_worker_evaluation:
     image: grandchallenge/web-test:latest
@@ -135,13 +142,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
     volumes:
       # The docker socket is only needed for testing
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
     group_add:
       - 999
 
@@ -159,8 +168,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      # The docker socket is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_beat:
     image: grandchallenge/web-test:latest
@@ -179,8 +195,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
 
   flower:
     image: crgwbr/docker-celery-flower
