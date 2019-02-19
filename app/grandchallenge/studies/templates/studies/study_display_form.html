@@ -9,15 +9,17 @@
 <table class="table table-sm">
     <thead>
         <tr>
-            <td>Code</td>
-            <td>Region of Interest</td>
+            <td>Name</td>
+            <td>Date</td>
+            <td>Patient</td>
         </tr>
     </thead>
     <tbody>
         {% for study in object_list %}
             <tr>
-                <td>{{ study.code }}</td>
-                <td>{{ study.region_of_interest }}</td>
+                <td>{{ study.name }}</td>
+                <td>{{ study.datetime }}</td>
+                <td>{{ study.patient }}</td>
                 <td><a href="{% url 'studies:study-update' study.id %}">Update</a></td>
                 <td><a href="{% url 'studies:study-remove' study.id %}">Delete</a></td>
             </tr>

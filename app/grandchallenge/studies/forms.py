@@ -1,15 +1,27 @@
 from django.forms import ModelForm
-from grandchallenge.studies.models import Study
-
+from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Button, Submit
+
+from grandchallenge.subdomains.utils import reverse
+from grandchallenge.studies.models import Study
 
 
 class StudyCreateForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("create", "Create"))
+        self.helper.layout.append(
+            FormActions(
+                Submit("create", "Create"),
+                Button(
+                    "cancel",
+                    "Cancel",
+                    onclick="location.href='%s';"
+                    % reverse("studies:study-display"),
+                ),
+            )
+        )
 
     class Meta:
         model = Study
@@ -20,7 +32,17 @@ class StudyUpdateForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
+        self.helper.layout.append(
+            FormActions(
+                Submit("create", "Create"),
+                Button(
+                    "cancel",
+                    "Cancel",
+                    onclick="location.href='%s';"
+                    % reverse("studies:study-display"),
+                ),
+            )
+        )
 
     class Meta:
         model = Study

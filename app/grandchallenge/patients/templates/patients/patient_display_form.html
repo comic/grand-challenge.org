@@ -9,16 +9,12 @@
     <thead>
         <tr>
             <td>Name</td>
-            <td>Sex</td>
-            <td>Height</td>
         </tr>
     </thead>
     <tbody>
         {% for patient in object_list %}
             <tr>
                 <td>{{ patient.name }}</td>
-                <td>{{ patient.sex }}</td>
-                <td>{{ patient.height }}</td>
                 <td><a href="{% url 'patients:patient-update' patient.id %}">Update</a></td>
                 <td><a href="{% url 'patients:patient-remove' patient.id %}">Delete</a></td>
             </tr>
