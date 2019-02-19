@@ -38,10 +38,9 @@ def serve_fullpath(*, fullpath):
 
 
 def protected_storage_redirect(*, name):
-    # Get the internal url for the file by setting custom_domain to an empty
-    # string. This will mean that all urls are prepended with
-    # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']
-    storage = ProtectedS3Storage(custom_domain="")
+    # Get the storage with the internal redirect and auth. This will prepend
+    # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
+    storage = ProtectedS3Storage(internal=True)
 
     if not storage.exists(name=name):
         raise Http404("File not found.")

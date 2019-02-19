@@ -31,17 +31,15 @@ class PrivateS3Storage(S3Storage):
 
 @deconstructible
 class ProtectedS3Storage(S3Storage):
-    def __init__(self, *args, custom_domain=None, **kwargs):
-        config = settings.PROTECTED_S3_STORAGE_KWARGS
+    def __init__(self, *args, internal=False, **kwargs):
+        config = {**settings.PROTECTED_S3_STORAGE_KWARGS}
 
         # Setting a custom domain will strip the aws headers when using minio.
-        # You can get these headers back by setting custom_domain=""
-        if custom_domain is not None:
-            config["custom_domain"] = custom_domain
+        # You can get these headers back by setting the custom_domain to None
+        if internal:
+            config["custom_domain"] = None
 
-        super().__init__(
-            *args, config=settings.PROTECTED_S3_STORAGE_KWARGS, **kwargs
-        )
+        super().__init__(*args, config=config, **kwargs)
 
 
 private_s3_storage = PrivateS3Storage()

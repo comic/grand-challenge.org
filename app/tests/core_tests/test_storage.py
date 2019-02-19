@@ -2,6 +2,7 @@ import importlib
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
+from django.conf import settings as dj_settings
 
 import grandchallenge.core.storage
 
@@ -29,3 +30,22 @@ def test_s3_configs_differ():
         assert getattr(private_s3_storage, attr) != getattr(
             protected_s3_storage, attr
         )
+
+
+def test_custom_domain():
+    # By default we should get the custom domain in the url
+    storage = grandchallenge.core.storage.ProtectedS3Storage()
+    url = storage.url(name="foo")
+
+    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] in url
+    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["endpoint_url"] not in url
+    assert "AWSAccessKeyId" not in url
+
+    # Turning off the custom domain should get us the internal endpoint url
+    # with aws headers
+    storage1 = grandchallenge.core.storage.ProtectedS3Storage(internal=True)
+    url = storage1.url(name="foo")
+
+    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] not in url
+    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["endpoint_url"] in url
+    assert "AWSAccessKeyId" in url
