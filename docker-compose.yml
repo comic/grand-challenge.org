@@ -108,6 +108,7 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioenv
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
@@ -162,6 +163,7 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioenv
     restart: always
     command: "celery -A config worker -l info -Q gpu -c 1"
     scale: 1
