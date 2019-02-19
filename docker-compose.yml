@@ -28,7 +28,23 @@ services:
     command: "server /data"
     volumes:
       - type: volume
-        source: miniodata
+        source: minio-private-data
+        target: /data
+    restart: always
+
+  minio-protected:
+    # This is for protected data, should only be exposed via an internal link
+    # in nginx
+    image: minio/minio:RELEASE.2019-02-14T00-21-45Z
+    environment:
+      MINIO_ACCESS_KEY: minioprotected
+      MINIO_SECRET_KEY: minioprotected12345
+    ports:
+      - '9001:9000'
+    command: "server /data"
+    volumes:
+      - type: volume
+        source: minio-protected-data
         target: /data
     restart: always
 
@@ -39,6 +55,9 @@ services:
       <<: &minioprivateenv
         PRIVATE_S3_STORAGE_ACCESS_KEY: minioprivate
         PRIVATE_S3_STORAGE_SECRET_KEY: minioprivate12345
+      <<: &minioprotectedenv
+        PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
+        PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
@@ -221,4 +240,5 @@ services:
 
 volumes:
   media:
-  miniodata:
+  minio-private-data:
+  minio-protected-data:
