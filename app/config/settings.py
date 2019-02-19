@@ -137,8 +137,8 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 # This is for storing files that should not be served to the public
 AWS_DEFAULT_ACL = None
 PRIVATE_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
+    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
