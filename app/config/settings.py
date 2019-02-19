@@ -266,6 +266,7 @@ THIRD_PARTY_APPS = [
     "django_summernote",  # for WYSIWYG page editing
     "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
+    'django_extensions',
 ]
 
 LOCAL_APPS = [
@@ -619,3 +620,7 @@ CORS_ORIGIN_REGEX_WHITELIST = (
     r"https?://localhost:3000",
 )
 # CORS_ORIGIN_ALLOW_ALL = True
+
+S3_ENDPOINT_URL = os.environ.get('S3_ENDPOINT_URL')
+S3_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
+S3_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
