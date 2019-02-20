@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
@@ -82,3 +83,34 @@ def test_imageset_annotationset_download(
         annotation_file.file.url, HTTP_AUTHORIZATION=f"Token {staff_token.key}"
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_image_response(client):
+    image_file = ImageFileFactory()
+
+    response = get_view_for_user(
+        url=image_file.file.url, client=client, user=None
+    )
+
+    # Forbidden view
+    assert response.status_code == 404
+    assert not response.has_header("x-accel-redirect")
+
+    staff_user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        url=image_file.file.url, client=client, user=staff_user
+    )
+
+    assert response.status_code == 200
+    assert response.has_header("x-accel-redirect")
+
+    redirect = response.get("x-accel-redirect")
+
+    assert redirect.startswith(
+        f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+    )
+    assert "AWSAccessKeyId" in redirect
+    assert "Signature" in redirect
+    assert "Expires" in redirect

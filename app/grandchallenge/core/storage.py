@@ -1,3 +1,5 @@
+import copy
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.deconstruct import deconstructible
@@ -32,7 +34,7 @@ class PrivateS3Storage(S3Storage):
 @deconstructible
 class ProtectedS3Storage(S3Storage):
     def __init__(self, *args, internal=False, **kwargs):
-        config = {**settings.PROTECTED_S3_STORAGE_KWARGS}
+        config = copy.deepcopy(settings.PROTECTED_S3_STORAGE_KWARGS)
 
         # Setting a custom domain will strip the aws headers when using minio.
         # You can get these headers back by setting the custom_domain to None
@@ -44,3 +46,8 @@ class ProtectedS3Storage(S3Storage):
 
 private_s3_storage = PrivateS3Storage()
 protected_s3_storage = ProtectedS3Storage()
+
+if protected_s3_storage.bucket_name == private_s3_storage.bucket_name:
+    raise ImproperlyConfigured(
+        "Private and Protected storage point to the same bucket"
+    )

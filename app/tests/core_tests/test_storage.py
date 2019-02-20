@@ -20,6 +20,15 @@ def test_invalid_private_kwarg(settings):
     importlib.reload(grandchallenge.core.storage)
 
 
+def test_bucket_name_clash(settings):
+    settings.PRIVATE_S3_STORAGE_KWARGS[
+        "bucket_name"
+    ] = settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"] = "foo"
+
+    with pytest.raises(ImproperlyConfigured):
+        importlib.reload(grandchallenge.core.storage)
+
+
 def test_s3_configs_differ():
     from grandchallenge.core.storage import (
         private_s3_storage,
