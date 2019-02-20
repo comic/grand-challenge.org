@@ -20,15 +20,31 @@ services:
   minio-private:
     # This is for private data, should not be exposed to the public
     image: minio/minio:RELEASE.2019-02-14T00-21-45Z
-    environment: &minioenv
-      MINIO_ACCESS_KEY: minioaccess
-      MINIO_SECRET_KEY: minio12345
+    environment:
+      MINIO_ACCESS_KEY: minioprivate
+      MINIO_SECRET_KEY: minioprivate12345
     expose:
       - 9000
     command: "server /data"
     volumes:
       - type: volume
-        source: miniodata
+        source: minio-private-data
+        target: /data
+    restart: always
+
+  minio-protected:
+    # This is for protected data, should only be exposed via an internal link
+    # in nginx
+    image: minio/minio:RELEASE.2019-02-14T00-21-45Z
+    environment:
+      MINIO_ACCESS_KEY: minioprotected
+      MINIO_SECRET_KEY: minioprotected12345
+    expose:
+      - 9000
+    command: "server /data"
+    volumes:
+      - type: volume
+        source: minio-protected-data
         target: /data
     restart: always
 
@@ -36,7 +52,15 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
-      <<: *minioenv
+      <<: &minioprivateenv
+        PRIVATE_S3_STORAGE_ACCESS_KEY: minioprivate
+        PRIVATE_S3_STORAGE_SECRET_KEY: minioprivate12345
+      <<: &protected_storage_credentials
+        PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
+        PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
+      <<: &protected_storage_connections
+        PROTECTED_S3_STORAGE_BUCKET_NAME: grand-challenge-protected
+        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
@@ -74,10 +98,11 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=gc.localhost
-      - SENDFILE_STATUS=off
+      SERVER_NAME: gc.localhost
+      SENDFILE_STATUS: 'off'
+      <<: *protected_storage_connections
     command: >-
-        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
         && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always
@@ -108,6 +133,9 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioprivateenv
+      <<: *protected_storage_credentials
+      <<: *protected_storage_connections
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
@@ -131,7 +159,7 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
-      <<: *minioenv
+      <<: *minioprivateenv
     restart: always
     command: "celery -A config worker -l info -Q evaluation -c 1"
     scale: 1
@@ -162,6 +190,7 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioprivateenv
     restart: always
     command: "celery -A config worker -l info -Q gpu -c 1"
     scale: 1
@@ -205,7 +234,7 @@ services:
         condition: service_started
 
   flower:
-    image: crgwbr/docker-celery-flower
+    image: mher/flower
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
     ports:
@@ -217,4 +246,5 @@ services:
 
 volumes:
   media:
-  miniodata:
+  minio-private-data:
+  minio-protected-data:

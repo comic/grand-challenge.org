@@ -109,12 +109,25 @@ http {
 
     server_name .${SERVER_NAME};
 
+    # Required for minio proxy
+    ignore_invalid_headers off;
+
     location ~* ^/site/([^/]*)/serve/(.*)$ {
       return 302 $scheme://$1.${SERVER_NAME}/media/$1/$2;
     }
 
     location ~* ^/all_challenges/?$ {
       return 301 $scheme://${SERVER_NAME}/challenges/;
+    }
+
+    location /${PROTECTED_S3_STORAGE_BUCKET_NAME}/ {
+      internal;
+
+      # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
+      proxy_buffering off;
+
+      proxy_set_header Host $http_host;
+      proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
     
     location /dbox/ {

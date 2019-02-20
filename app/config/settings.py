@@ -134,17 +134,38 @@ COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 # be downloaded by registered participants of that project
 COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 
+# Subdirectories on root for various files
+JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
+IMAGE_FILES_SUBDIRECTORY = "images"
+
 # This is for storing files that should not be served to the public
 AWS_DEFAULT_ACL = None
 PRIVATE_S3_STORAGE_KWARGS = {
-    "access_key": os.environ.get("MINIO_ACCESS_KEY", ""),
-    "secret_key": os.environ.get("MINIO_SECRET_KEY", ""),
+    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
     "auto_create_bucket": True,
     "endpoint_url": os.environ.get(
         "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
+    ),
+}
+PROTECTED_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
+    ),
+    "auto_create_bucket": True,
+    "endpoint_url": os.environ.get(
+        "PROTECTED_S3_STORAGE_ENDPOINT_URL", "http://minio-protected:9000"
+    ),
+    # This is the domain where people will be able to go to download data
+    # from this bucket. Usually we would use reverse to find this out,
+    # but this needs to be defined before the database is populated
+    "custom_domain": os.environ.get(
+        "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
 }
 
@@ -581,8 +602,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
-
 # CIRRUS Is an external application that can view images
 CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
@@ -591,7 +610,7 @@ CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
     "m",
-    "images",
+    IMAGE_FILES_SUBDIRECTORY,
     "logos",
     "banners",
     "mugshots",

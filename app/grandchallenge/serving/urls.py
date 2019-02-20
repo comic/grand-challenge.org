@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import path
 
 from grandchallenge.serving.views import serve_folder, serve_images
@@ -5,7 +6,10 @@ from grandchallenge.serving.views import serve_folder, serve_images
 app_name = "serving"
 
 urlpatterns = [
-    path("images/<uuid:pk>/<path:path>", serve_images),
+    path(
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/<uuid:pk>/<path:path>",
+        serve_images,
+    ),
     path("logos/<path:path>", serve_folder, {"folder": "logos"}),
     path("banners/<path:path>", serve_folder, {"folder": "banners"}),
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
