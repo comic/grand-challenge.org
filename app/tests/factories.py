@@ -15,14 +15,7 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
-from grandchallenge.pathology.models import (
-    PatientItem,
-    StudyItem,
-    WorklistItem,
-)
-from grandchallenge.patients.models import Patient
-from grandchallenge.studies.models import Study
-from grandchallenge.worklists.models import Worklist, WorklistSet
+
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -181,26 +174,3 @@ class ImagingModalityFactory(factory.DjangoModelFactory):
         django_get_or_create = ("modality",)
 
     modality = factory.sequence(lambda n: f"Modality {n}")
-
-
-class WorklistSetFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = WorklistSet
-
-    title = factory.Sequence(lambda n: f"worklist_set_{n}")
-
-
-class WorklistFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Worklist
-
-    title = factory.Sequence(lambda n: f"worklist_{n}")
-    set = factory.SubFactory(WorklistSetFactory)
-
-
-class WorklistItemFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = WorklistItem
-
-    worklist = factory.SubFactory(WorklistFactory)
-    image = factory.SubFactory(ImageFactory)

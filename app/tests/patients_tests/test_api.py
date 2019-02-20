@@ -1,5 +1,5 @@
 import pytest
-from tests.factories import PatientFactory
+from tests.patients_tests.factories import PatientFactory
 from tests.api_utils import assert_api_crud
 
 
