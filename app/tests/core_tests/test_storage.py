@@ -1,3 +1,4 @@
+import copy
 import importlib
 
 import pytest
@@ -21,12 +22,25 @@ def test_invalid_private_kwarg(settings):
 
 
 def test_bucket_name_clash(settings):
-    settings.PRIVATE_S3_STORAGE_KWARGS[
-        "bucket_name"
-    ] = settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"] = "foo"
+    # Deep copy as otherwise you will modify the value in settings
+    private_kwargs = copy.deepcopy(dj_settings.PRIVATE_S3_STORAGE_KWARGS)
+    protected_kwargs = copy.deepcopy(dj_settings.PROTECTED_S3_STORAGE_KWARGS)
+
+    private_kwargs["bucket_name"] = "foo"
+    protected_kwargs["bucket_name"] = "foo"
+
+    settings.PRIVATE_S3_STORAGE_KWARGS = private_kwargs
+    settings.PROTECTED_S3_STORAGE_KWARGS = protected_kwargs
 
     with pytest.raises(ImproperlyConfigured):
         importlib.reload(grandchallenge.core.storage)
+
+    # Revert to the original settings
+    settings.PRIVATE_S3_STORAGE_KWARGS = dj_settings.PRIVATE_S3_STORAGE_KWARGS
+    settings.PROTECTED_S3_STORAGE_KWARGS = (
+        dj_settings.PROTECTED_S3_STORAGE_KWARGS
+    )
+    importlib.reload(grandchallenge.core.storage)
 
 
 def test_s3_configs_differ():
