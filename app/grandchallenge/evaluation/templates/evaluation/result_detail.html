@@ -62,7 +62,7 @@
             <dd>
                 <a class="btn btn-primary"
                    href="{{ object.job.submission.annotationset.get_absolute_url }}">
-                   <i class="fa fa-eye"></i> View Predictions</a>
+                    <i class="fa fa-eye"></i> View Predictions</a>
             </dd>
         {% endif %}
 
@@ -72,23 +72,31 @@
     <pre>{{ object.metrics|json_dumps }}</pre>
 
     {% if "change_challenge" in challenge_perms %}
+        <h3>Admin Area</h3>
+
+        <h4>Submission</h4>
+        <p><a href="{{ result.job.submission.file.url }}">Download the
+            submission for this result</a></p>
+
+        <h4>Publishing</h4>
         <form method="post"
               action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
             {% csrf_token %}
             {% if object.published %}
                 <input type="hidden" name="published"
                        value="false">
-                <button type="submit" class="btn btn-danger">Remove result from
-                    leaderboard
+                <button type="submit" class="btn btn-danger">Exclude this
+                    result from the leaderboard
                 </button>
             {% else %}
                 <input type="hidden" name="published"
                        value="true">
-                <button type="submit" class="btn btn-primary">Publish result on
-                    leaderboard
+                <button type="submit" class="btn btn-primary">Publish this
+                    result on the leaderboard
                 </button>
             {% endif %}
         </form>
+
     {% endif %}
 
 {% endblock %}

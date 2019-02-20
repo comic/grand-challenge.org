@@ -137,6 +137,7 @@ COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
 # Subdirectories on root for various files
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
+EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
 # This is for storing files that should not be served to the public
 AWS_DEFAULT_ACL = None
@@ -615,7 +616,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "banners",
     "mugshots",
     "docker",
-    "evaluation",
+    EVALUATION_FILES_SUBDIRECTORY,
     "evaluation-supplementary",
     "favicon",
     "i",

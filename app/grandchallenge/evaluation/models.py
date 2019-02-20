@@ -312,7 +312,7 @@ class Config(UUIDModel):
 def method_image_path(instance, filename):
     """ Deprecated: only used in a migration """
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"methods/"
         f"{instance.pk}/"
@@ -338,8 +338,9 @@ class Method(UUIDModel, ContainerImageModel):
 
 
 def submission_file_path(instance, filename):
+    # Must match the protected serving url
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"submissions/"
         f"{instance.creator.pk}/"
