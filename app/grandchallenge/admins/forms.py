@@ -2,9 +2,11 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
+from dal import autocomplete
 
 from grandchallenge.admins.emails import send_new_admin_notification_email
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.subdomains.utils import reverse
 
 
 class AdminsForm(forms.Form):
@@ -20,10 +22,25 @@ class AdminsForm(forms.Form):
             "pages, etc."
         ),
         required=True,
+        widget=autocomplete.ModelSelect2(url="/admins/update-autocomplete"),
+
     )
+
     action = forms.ChoiceField(
         choices=CHOICES, required=True, widget=forms.HiddenInput(), initial=ADD
     )
+
+    # class Meta:
+    #     fields = ('user')
+    #     widgets = {
+    #         'user': autocomplete.ModelSelect2(url='update')
+    #     }
+
+
+    '''
+    widget=autocomplete.ModelSelect2(url='update'),
+    '''
+
 
     def clean_user(self):
         user = self.cleaned_data["user"]
@@ -42,3 +59,4 @@ class AdminsForm(forms.Form):
             )
         elif self.cleaned_data["action"] == AdminsForm.REMOVE:
             challenge.remove_admin(self.cleaned_data["user"])
+
