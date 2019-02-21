@@ -12,7 +12,9 @@ annotation_router = SimpleRouter()
 annotation_router.register(
     "single_polygon", views.SinglePolygonViewSet, basename="single_polygon"
 )
-
+annotation_router.register(
+    "polygon_set", views.PolygonAnnotationSetViewSet, basename="polygon_set"
+)
 urlpatterns = [
     path("", include(router.urls)),
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),

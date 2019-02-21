@@ -718,7 +718,7 @@ class DataView(APIView):
         return Response({"success": True}, status=status.HTTP_201_CREATED)
 
 
-class PolygonListView(ListAPIView):
+class PolygonListView(ListAPIView): #TODO combine with viewset
     """
     Get a serialized list of all PolygonAnnotationSets with all related SinglePolygonAnnotations
     """
@@ -734,6 +734,30 @@ class PolygonListView(ListAPIView):
         return image.polygonannotationset_set.prefetch_related(
             "singlepolygonannotation_set"
         ).filter(grader__id=user_id)
+
+
+class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = PolygonAnnotationSetSerializer
+
+    def get_queryset(self):  # TODO simplify permissions/combine with singlepolygonviewset
+        if is_in_retina_admins_group(self.request.user):
+            if self.request.kwargs.get["user_id"]:
+                queryset = PolygonAnnotationSet.objects.filter(
+                    grader=self.request.kwargs.get["user_id"]
+                )
+            else:
+                queryset = SinglePolygonAnnotation.objects.all()
+        elif is_in_retina_graders_group(self.request.user):
+            queryset = PolygonAnnotationSet.objects.filter(
+                grader=self.request.user
+            )
+        else:
+            # User is not in graders or admins group, should not have access
+            queryset = PolygonAnnotationSet.objects.none()
+        return queryset
+    # TODO: permission for creation... anyone can create a polygon_set and set user_id to what he wants...
 
 
 class SinglePolygonViewSet(viewsets.ModelViewSet):
