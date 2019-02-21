@@ -12,8 +12,10 @@
     <h2>Update the images used in an Annotation Set</h2>
 
     {% crispy form %}
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>
-
 {% endblock %}

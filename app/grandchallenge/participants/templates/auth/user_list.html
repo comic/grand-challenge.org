@@ -61,7 +61,10 @@
 
         </table>
     </div>
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#usersTable').DataTable({

@@ -12,8 +12,10 @@
     <h2>Add images to the {{ phase_display }} dataset</h2>
 
     {% crispy form %}
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>
-
 {% endblock %}
