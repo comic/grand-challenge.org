@@ -1,0 +1,7 @@
+# Default behavior is to set autocrlf
+* text=auto
+
+# Make file and sh should keep their line endings
+*.sh text eol=lf
+Makefile text eol=lf
+

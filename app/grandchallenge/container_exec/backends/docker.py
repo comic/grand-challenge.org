@@ -16,6 +16,7 @@ from django.core.files import File
 from docker.api.container import ContainerApiMixin
 from docker.errors import ContainerError, APIError
 from docker.tls import TLSConfig
+from docker.types import LogConfig
 from requests import HTTPError
 
 
@@ -61,6 +62,10 @@ class Executor(object):
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
+            "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
+            "log_config": LogConfig(
+                type=LogConfig.types.JSON, config={"max-size": "1g"}
+            ),
         }
 
     def __enter__(self):

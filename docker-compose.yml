@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   postgres:
-    image: postgres:10.4
+    image: postgres:10.7
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
@@ -17,16 +17,54 @@ services:
       retries: 5
     restart: always
 
+  minio-private:
+    # This is for private data, should not be exposed to the public
+    image: minio/minio:RELEASE.2019-02-20T22-44-29Z
+    environment:
+      MINIO_ACCESS_KEY: minioprivate
+      MINIO_SECRET_KEY: minioprivate12345
+    expose:
+      - 9000
+    command: "server /data"
+    volumes:
+      - type: volume
+        source: minio-private-data
+        target: /data
+    restart: always
+
+  minio-protected:
+    # This is for protected data, should only be exposed via an internal link
+    # in nginx
+    image: minio/minio:RELEASE.2019-02-20T22-44-29Z
+    environment:
+      MINIO_ACCESS_KEY: minioprotected
+      MINIO_SECRET_KEY: minioprotected12345
+    expose:
+      - 9000
+    command: "server /data"
+    volumes:
+      - type: volume
+        source: minio-protected-data
+        target: /data
+    restart: always
+
   web:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: &minioprivateenv
+        PRIVATE_S3_STORAGE_ACCESS_KEY: minioprivate
+        PRIVATE_S3_STORAGE_SECRET_KEY: minioprivate12345
+      <<: &protected_storage_credentials
+        PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
+        PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
+      <<: &protected_storage_connections
+        PROTECTED_S3_STORAGE_BUCKET_NAME: grand-challenge-protected
+        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     command: >-
       bash -c "
-      python manage.py collectstatic --noinput
-      && mkdir -p /dbox/Dropbox/media/
-      && python manage.py migrate
+      python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
       && gunicorn -w 1 -b 0.0.0.0 config.wsgi
@@ -38,11 +76,17 @@ services:
       memcached:
         condition: service_started
     volumes:
-      - static:/static/
-      - media:/dbox/Dropbox/media/
-      - ./app:/app/
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
       # The docker socket is only needed for testing
-      - /var/run/docker.sock:/var/run/docker.sock
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
     group_add:
       - 999 # The docker group is only needed for testing
     healthcheck:
@@ -54,10 +98,11 @@ services:
   http:
     image: grandchallenge/http:latest
     environment:
-      - SERVER_NAME=gc.localhost
-      - SENDFILE_STATUS=off
+      SERVER_NAME: gc.localhost
+      SENDFILE_STATUS: 'off'
+      <<: *protected_storage_connections
     command: >-
-        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
         && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always
@@ -68,11 +113,13 @@ services:
       web:
         condition: service_healthy
     volumes:
-      - static:/srv/public/static/:ro
-      - media:/dbox/Dropbox/media/:ro
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+        read_only: true
 
   memcached:
-    image: memcached:1.4
+    image: memcached:1.5
     restart: always
 
   redis:
@@ -86,6 +133,9 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioprivateenv
+      <<: *protected_storage_credentials
+      <<: *protected_storage_connections
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
@@ -96,13 +146,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+        # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_worker_evaluation:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioprivateenv
     restart: always
     command: "celery -A config worker -l info -Q evaluation -c 1"
     scale: 1
@@ -113,10 +170,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Needed for submission conversion
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+      # The docker socket is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
     group_add:
       - 999
 
@@ -124,6 +190,7 @@ services:
     image: grandchallenge/web-test:latest
     environment:
       <<: *postgresenv
+      <<: *minioprivateenv
     restart: always
     command: "celery -A config worker -l info -Q gpu -c 1"
     scale: 1
@@ -134,8 +201,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
+    volumes:
+      # Needed for algorithm runs
+      - type: volume
+        source: media
+        target: /dbox/Dropbox/media/
+      # The docker socket is only needed for testing
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      # Bind the app directory for live reloading in development
+      - type: bind
+        source: ./app
+        target: /app/
 
   celery_beat:
     image: grandchallenge/web-test:latest
@@ -154,11 +232,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes_from:
-      - web
 
   flower:
-    image: crgwbr/docker-celery-flower
+    image: mher/flower
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
     ports:
@@ -169,5 +245,6 @@ services:
     restart: always
 
 volumes:
-  static:
   media:
+  minio-private-data:
+  minio-protected-data:

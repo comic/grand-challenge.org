@@ -30,8 +30,11 @@ if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
 IGNORABLE_404_URLS = [
-    re.compile(r"\.(php|cgi|asp)/"),
-    re.compile(r"^/phpmyadmin/"),
+    re.compile(r".*\.(php|cgi|asp).*"),
+    re.compile(r"^/phpmyadmin.*"),
+    re.compile(r"^/gen204.*"),
+    re.compile(r"^/wp-content.*"),
+    re.compile(r".*/trackback.*"),
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
@@ -102,6 +105,17 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
+# the name of the main project: this project is shown when url is loaded without
+# arguments, and pages in this project appear as menu items throughout the site
+MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
+
+##############################################################################
+#
+# Storage
+#
+##############################################################################
+DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
@@ -111,13 +125,57 @@ MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = "/media/"
 
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = "/static/"
+# In each challenge there can be a single directory out of which files can be
+# downloaded without logging in.
+COMIC_PUBLIC_FOLDER_NAME = "public_html"
+COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
 
-# Use memcached for caching
+# In each challenge there can be a single directory from which files can only
+# be downloaded by registered participants of that project
+COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
+
+# Subdirectories on root for various files
+JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
+IMAGE_FILES_SUBDIRECTORY = "images"
+EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+
+# This is for storing files that should not be served to the public
+AWS_DEFAULT_ACL = None
+PRIVATE_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
+    ),
+    "auto_create_bucket": True,
+    "endpoint_url": os.environ.get(
+        "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
+    ),
+}
+PROTECTED_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
+    ),
+    "auto_create_bucket": True,
+    "endpoint_url": os.environ.get(
+        "PROTECTED_S3_STORAGE_ENDPOINT_URL", "http://minio-protected:9000"
+    ),
+    # This is the domain where people will be able to go to download data
+    # from this bucket. Usually we would use reverse to find this out,
+    # but this needs to be defined before the database is populated
+    "custom_domain": os.environ.get(
+        "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
+    ),
+}
+
+##############################################################################
+#
+# Caching
+#
+##############################################################################
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
@@ -125,23 +183,6 @@ CACHES = {
     }
 }
 
-# In each project there can be a single directory out of which files can be downloaded
-# without logging in. In this folder you can put website header images etc.
-# for security, only MEDIA_ROOT/<project_name>/COMIC_PUBLIC_FOLDER_NAME are served
-# without checking credentials.
-COMIC_PUBLIC_FOLDER_NAME = "public_html"
-
-# Transient solution for server content from certain folders publicly. This will be removed
-# When a full configurable permissions system is in place, see ticket #244
-COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
-
-# In each project there can be a single directory from which files can only be
-# downloaded by registered members of that project
-COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
-
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
@@ -171,23 +212,23 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
+# Absolute path to the directory static files should be collected to.
+# Don't put anything in this directory yourself; store your static files
+# in apps' "static/" subdirectories and in STATICFILES_DIRS.
+# Example: "/home/media/media.lawrence.com/static/"
+STATIC_ROOT = "/static/"
 
-# Serve files using django (debug only)
-STATIC_URL = "/static/"
+STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
+STATIC_URL = f"{STATIC_HOST}/static/"
 
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-STATICFILES_STORAGE = (
-    "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
@@ -217,10 +258,11 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
+    "django.middleware.security.SecurityMiddleware",  # Keep security at top
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Keep whitenoise after security and before all else
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
-    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -242,6 +284,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "dal",
@@ -496,8 +539,10 @@ REST_FRAMEWORK = {
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
-CELERY_TASK_SOFT_TIME_LIMIT = 7200
-CELERY_TASK_TIME_LIMIT = 7260
+CELERY_TASK_SOFT_TIME_LIMIT = int(
+    os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
+)
+CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
 
 CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
     "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
@@ -514,13 +559,22 @@ CONTAINER_EXEC_DOCKER_TLSCERT = os.environ.get(
 CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
     "CONTAINER_EXEC_DOCKER_TLSKEY", ""
 )
-CONTAINER_EXEC_MEMORY_LIMIT = "4g"
+CONTAINER_EXEC_MEMORY_LIMIT = os.environ.get(
+    "CONTAINER_EXEC_MEMORY_LIMIT", "4g"
+)
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.9"
 CONTAINER_EXEC_IO_SHA256 = (
     "sha256:caf27325b298a6730837023a8a342699c8b7b388b8d878966b064a1320043019"
 )
-CONTAINER_EXEC_CPU_QUOTA = 100000
-CONTAINER_EXEC_CPU_PERIOD = 100000
+CONTAINER_EXEC_CPU_QUOTA = int(
+    os.environ.get("CONTAINER_EXEC_CPU_QUOTA", "100000")
+)
+CONTAINER_EXEC_CPU_PERIOD = int(
+    os.environ.get("CONTAINER_EXEC_CPU_PERIOD", "100000")
+)
+CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
+    "CONTAINER_EXEC_DOCKER_RUNTIME", None
+)
 
 CELERY_BEAT_SCHEDULE = {
     "cleanup_stale_uploads": {
@@ -551,8 +605,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
-
 # CIRRUS Is an external application that can view images
 CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
@@ -561,12 +613,12 @@ CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
     "m",
-    "images",
+    IMAGE_FILES_SUBDIRECTORY,
     "logos",
     "banners",
     "mugshots",
     "docker",
-    "evaluation",
+    EVALUATION_FILES_SUBDIRECTORY,
     "evaluation-supplementary",
     "favicon",
     "i",

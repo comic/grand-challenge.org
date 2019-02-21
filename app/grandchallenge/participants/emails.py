@@ -11,7 +11,7 @@ def send_participation_request_notification_email(request, obj):
                  participation for which project
 
     """
-    title = f"New participation request for {obj.challenge.short_name}"
+    title = f"[{obj.challenge.short_name.lower()}] New Participation Request"
     mainportal = get_current_site(request)
     kwargs = {"user": obj.user, "site": mainportal, "challenge": obj.challenge}
     for admin in obj.challenge.get_admins():
@@ -33,7 +33,9 @@ def send_participation_request_accepted_email(request, obj):
                  participation for which project
 
     """
-    title = obj.challenge.short_name + " participation request accepted"
+    title = (
+        f"[{obj.challenge.short_name.lower()}] Participation Request Accepted"
+    )
     mainportal = get_current_site(request)
     kwargs = {
         "user": obj.user,
@@ -58,7 +60,9 @@ def send_participation_request_rejected_email(request, obj):
                  participation for which project
 
     """
-    title = obj.challenge.short_name + " participation request rejected"
+    title = (
+        f"[{obj.challenge.short_name.lower()}] Participation Request Rejected"
+    )
     mainportal = get_current_site(request)
     kwargs = {
         "user": obj.user,

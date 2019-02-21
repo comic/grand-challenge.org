@@ -26,21 +26,63 @@
         <dt>Result created</dt>
         <dd>{{ object.created }}</dd>
 
-        <dt>Position on leaderboard</dt>
-        <dd>
-            {% if object.published and object.rank > 0 %}
+        {% if object.published and object.rank > 0 %}
+            <dt>Position on leaderboard</dt>
+            <dd>
                 {{ object.rank }}
+            </dd>
+        {% endif %}
+
+        <dt>Visibility</dt>
+        <dd>
+            {% if object.published %}
+                <i class="fas fa-eye"></i> This result is published on the
+                leaderboard
+                {% if "change_challenge" in challenge_perms %}
+                    <form method="post"
+                          action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="published"
+                               value="false">
+                        <button type="submit" class="btn btn-danger">
+                            Exclude this result from the leaderboard
+                        </button>
+                    </form>
+                {% endif %}
             {% else %}
-                This result has not been published on the leaderboard.
+                <i class="fas fa-eye-slash text-danger"></i> This result is not
+                published on the leaderboard
+                {% if "change_challenge" in challenge_perms %}
+                    <br>
+                    <form method="post"
+                          action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="published"
+                               value="true">
+                        <button type="submit" class="btn btn-primary">
+                            Publish this result on the leaderboard
+                        </button>
+                    </form>
+                {% endif %}
             {% endif %}
         </dd>
+
+        {% if "change_challenge" in challenge_perms %}
+            <dt>Submission File</dt>
+            <dd>
+                <a href="{{ result.job.submission.file.url }}">
+                    <i class="fa fa-file"></i>
+                    Download the submission file for this result
+                </a>
+            </dd>
+        {% endif %}
 
         {% if site.evaluation_config.show_supplementary_file_link %}
             <dt>{{ site.evaluation_config.supplementary_file_label }}:</dt>
             <dd>
                 {% if object.job.submission.supplementary_file %}
                     <a href="{{ object.job.submission.supplementary_file.url }}">
-                        <i class="fa fa-file"></i>
+                        <i class="fa fa-file-pdf"></i>
                     </a>
                 {% endif %}
             </dd>
@@ -62,7 +104,7 @@
             <dd>
                 <a class="btn btn-primary"
                    href="{{ object.job.submission.annotationset.get_absolute_url }}">
-                   <i class="fa fa-eye"></i> View Predictions</a>
+                    <i class="fa fa-eye"></i> View Predictions</a>
             </dd>
         {% endif %}
 
@@ -70,25 +112,5 @@
 
     <h3>Metrics</h3>
     <pre>{{ object.metrics|json_dumps }}</pre>
-
-    {% if "change_challenge" in challenge_perms %}
-        <form method="post"
-              action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
-            {% csrf_token %}
-            {% if object.published %}
-                <input type="hidden" name="published"
-                       value="false">
-                <button type="submit" class="btn btn-danger">Remove result from
-                    leaderboard
-                </button>
-            {% else %}
-                <input type="hidden" name="published"
-                       value="true">
-                <button type="submit" class="btn btn-primary">Publish result on
-                    leaderboard
-                </button>
-            {% endif %}
-        </form>
-    {% endif %}
 
 {% endblock %}

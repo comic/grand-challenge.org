@@ -11,6 +11,8 @@ make build
 
 trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
 
+docker-compose run --rm web python manage.py migrate
+
 docker-compose up &
 
 while true ; do
