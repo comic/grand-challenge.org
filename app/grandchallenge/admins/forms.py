@@ -30,16 +30,6 @@ class AdminsForm(forms.Form):
         choices=CHOICES, required=True, widget=forms.HiddenInput(), initial=ADD
     )
 
-    # class Meta:
-    #     fields = ('user')
-    #     widgets = {
-    #         'user': autocomplete.ModelSelect2(url='update')
-    #     }
-
-
-    '''
-    widget=autocomplete.ModelSelect2(url='update'),
-    '''
 
 
     def clean_user(self):
