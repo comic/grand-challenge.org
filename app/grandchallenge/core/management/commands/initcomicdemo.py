@@ -186,5 +186,7 @@ class Command(BaseCommand):
                 password="retina",
                 active=True,
             )
-            retina_group = Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+            retina_group = Group.objects.get(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            )
             retina_demo.groups.add(retina_group)
