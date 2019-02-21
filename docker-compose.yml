@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   postgres:
-    image: postgres:11.2-alpine
+    image: postgres:11.2
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
@@ -119,11 +119,11 @@ services:
         read_only: true
 
   memcached:
-    image: memcached:1.5-alpine
+    image: memcached:1.5
     restart: always
 
   redis:
-    image: redis:4.0-alpine
+    image: redis:4.0
     command: redis-server --appendonly yes
     restart: always
     ports:
