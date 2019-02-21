@@ -13,28 +13,49 @@
 
     <h3>Create a new submission</h3>
 
-    {% if pending_jobs and "change_challenge" not in challenge_perms %}
-
-        <p>You need to wait until all of your existing submissions have been
-            evaluated before you can make another submission. <a
-                    href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click
-                here</a>
-            to see their status.
-        </p>
-
-    {% elif remaining_submissions <= 0 and "change_challenge" not in challenge_perms %}
-
-        <p>You have reached your submission limit for today. You can make
-            another submission in {{ next_submission_at|timeuntil }}.</p>
-
-    {% else %}
+    {% if "change_challenge" in challenge_perms %}
 
         <p>
-            You can make {{ remaining_submissions }} more
-            submission{{ remaining_submissions|pluralize }} today.
+            As an admin for this challenge you can make as many submissions as
+            you like. Challenge participants will be allow to make
+            {{ site.evaluation_config.daily_submission_limit }}
+            submission{{ site.evaluation_config.daily_submission_limit|pluralize }}
+            per day. You can change the Daily Submission Limit in <a
+                href="{% url 'evaluation:config-update' challenge_short_name=site.short_name %}">
+            Evaluation Settings</a>.
         </p>
 
         {% crispy form %}
+
+    {% else %}
+
+        {% if pending_jobs %}
+
+            <p>
+                You need to wait until all of your existing submissions have
+                been evaluated before you can make another submission.
+                <a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">
+                    Click here
+                </a>
+                to see their status.
+            </p>
+
+        {% elif remaining_submissions <= 0 %}
+
+            <p>
+                You have reached your submission limit for today. You can make
+                another submission in {{ next_submission_at|timeuntil }}.</p>
+
+        {% else %}
+
+            <p>
+                You can make {{ remaining_submissions }} more
+                submission{{ remaining_submissions|pluralize }} today.
+            </p>
+
+            {% crispy form %}
+
+        {% endif %}
 
     {% endif %}
 
