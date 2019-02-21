@@ -307,6 +307,8 @@ THIRD_PARTY_APPS = [
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "sorl.thumbnail",  # for dynamic thumbnails
+    "dal",  # for autocompletion of selection fields
+    "dal_select2",  # for autocompletion of selection fields
 ]
 
 LOCAL_APPS = [
