@@ -62,7 +62,7 @@ class TestGetSitkImage:
     def test_file_not_found_mhd(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".mhd")
-        Path.unlink(Path(imagefile.file.path))
+        imagefile.file.storage.delete(imagefile.file.name)
         try:
             image.get_sitk_image()
             pytest.fail("No FileNotFoundError exception")
@@ -72,7 +72,7 @@ class TestGetSitkImage:
     def test_file_not_found_raw(self):
         image = ImageFactoryWithImageFile()
         imagefile = image.files.get(file__endswith=".zraw")
-        Path.unlink(Path(imagefile.file.path))
+        imagefile.file.storage.delete(imagefile.file.name)
         try:
             image.get_sitk_image()
             pytest.fail("No FileNotFoundError exception")
@@ -81,16 +81,19 @@ class TestGetSitkImage:
 
     def test_file_too_large_throws_error(self, tmpdir):
         image = ImageFactoryWithImageFile()
+
         # Remove zraw file
         old_raw = image.files.get(file__endswith=".zraw")
-        raw_file_name = Path(old_raw.file.path).name
+        raw_file_name = Path(old_raw.file.name).name
         old_raw.delete()
+
         # Create fake too large zraw file
         too_large_file_raw = tmpdir.join(raw_file_name)
         f = too_large_file_raw.open(mode="wb")
         f.seek(settings.MAX_SITK_FILE_SIZE)
         f.write(b"\0")
         f.close()
+
         # Add too large file as ImageFile model to image.files
         too_large_file_field = factory.django.FileField(
             from_path=str(too_large_file_raw)

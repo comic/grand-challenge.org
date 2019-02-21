@@ -2,6 +2,7 @@
 {% load static %}
 {% load url from grandchallenge_tags %}
 {% load humanize %}
+{% load thumbnail %}
 
 {% block containerType %}container{% endblock %}
 
@@ -250,13 +251,24 @@
                     {% for challenge in challenges %}
                         <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
                             <div class="card" style="height:400px">
-                                <a id="{{ challenge.short_name }}" title="{% firstof challenge.title challenge.short_name %}"
+                                <a id="{{ challenge.short_name }}"
+                                   title="{% firstof challenge.title challenge.short_name %}"
                                    href="{{ challenge.get_absolute_url }}"
                                    style="display:block;">
                                     <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
+
                                         <img class="thumbnail rounded-top-left flex-shrink-0"
                                              alt="{{ challenge.short_name }} logo"
-                                             src="{{ challenge.thumb_image_url }}">
+                                                {% if challenge.logo %}
+                                                    {# Note, thumbnail class is 5rem/80px in core.css #}
+                                                    {% thumbnail challenge.logo "80x80" crop="center" as im %}
+                                             src="{{ im.url }}"
+                                                    {% endthumbnail %}
+                                                {% else %}
+                                             src="{{ challenge.gravatar_url }}"
+                                                {% endif %}
+                                        >
+
                                         <h3 class="m-0 px-3 flex-shrink-1">
                                             {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
                                         </h3>
@@ -275,7 +287,7 @@
 
                                         {% if challenge.educational %}
                                             <dd>
-                                               <i class="fas fa-university fa-2x"></i>
+                                                <i class="fas fa-university fa-2x"></i>
                                             </dd>
                                         {% endif %}
 

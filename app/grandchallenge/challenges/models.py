@@ -256,14 +256,11 @@ class ChallengeBase(models.Model):
         return self.short_name
 
     @property
-    def thumb_image_url(self):
-        try:
-            return self.logo.url
-        except ValueError:
-            return (
-                f"https://www.gravatar.com/avatar/"
-                f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
-            )
+    def gravatar_url(self):
+        return (
+            f"https://www.gravatar.com/avatar/"
+            f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
+        )
 
     def get_absolute_url(self):
         raise NotImplementedError

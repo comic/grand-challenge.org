@@ -101,13 +101,16 @@ http {
 
   server {
     # Try to serve files, otherwise proxy to app
-    listen 443 ssl default_server;
-    listen [::]:443 ssl default_server;
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
 
     client_body_buffer_size 16m;
     client_max_body_size 16m;
 
     server_name .${SERVER_NAME};
+
+    # Required for minio proxy
+    ignore_invalid_headers off;
 
     location ~* ^/site/([^/]*)/serve/(.*)$ {
       return 302 $scheme://$1.${SERVER_NAME}/media/$1/$2;
@@ -116,26 +119,23 @@ http {
     location ~* ^/all_challenges/?$ {
       return 301 $scheme://${SERVER_NAME}/challenges/;
     }
+
+    location /${PROTECTED_S3_STORAGE_BUCKET_NAME}/ {
+      internal;
+
+      # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
+      proxy_buffering off;
+
+      proxy_set_header Host $http_host;
+      proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
+    }
     
     location /dbox/ {
       internal;
       alias   /dbox/;
     }
 
-    location /static/ {
-      root /srv/public/;
-
-      rewrite ^/(.*)/$ /$1 break;
-
-      expires 1h;
-      add_header Cache-Control public;
-
-      try_files $uri =404;
-    }
-
     location / {
-      rewrite ^(.*[^/])$ $1/ break;
-
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
       proxy_set_header Host $host;
