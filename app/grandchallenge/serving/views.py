@@ -14,10 +14,12 @@ from rest_framework.exceptions import AuthenticationFailed
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.storage import ProtectedS3Storage
+from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import (
     can_access,
     user_can_download_image,
+    user_can_download_submission,
 )
 
 
@@ -115,5 +117,17 @@ def serve_images(request, *, pk, path):
 
     if user_can_download_image(user=user, image=image):
         return protected_storage_redirect(name=name)
+
+    raise Http404("File not found.")
+
+
+def serve_submissions(request, *, submission_pk, **_):
+    try:
+        submission = Submission.objects.get(pk=submission_pk)
+    except Submission.DoesNotExist:
+        raise Http404("File not found.")
+
+    if user_can_download_submission(user=request.user, submission=submission):
+        return protected_storage_redirect(name=submission.file.name)
 
     raise Http404("File not found.")

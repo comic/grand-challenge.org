@@ -3,7 +3,12 @@ from django.conf import settings
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from tests.factories import ImageFileFactory, AnnotationSetFactory, UserFactory
+from tests.factories import (
+    ImageFileFactory,
+    AnnotationSetFactory,
+    UserFactory,
+    SubmissionFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -114,3 +119,41 @@ def test_image_response(client):
     assert "AWSAccessKeyId" in redirect
     assert "Signature" in redirect
     assert "Expires" in redirect
+
+
+@pytest.mark.django_db
+def test_submission_download(client, TwoChallengeSets):
+    """
+    Only the challenge admin should be able to download submissions
+    """
+    submission = SubmissionFactory(
+        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        creator=TwoChallengeSets.ChallengeSet1.participant,
+    )
+
+    tests = [
+        # (
+        #   image response + annotation response not test ground truth,
+        #   user
+        # )
+        (404, None),
+        (404, TwoChallengeSets.ChallengeSet1.non_participant),
+        (404, TwoChallengeSets.ChallengeSet1.participant),
+        (404, TwoChallengeSets.ChallengeSet1.participant1),
+        (200, TwoChallengeSets.ChallengeSet1.creator),
+        (200, TwoChallengeSets.ChallengeSet1.admin),
+        (404, TwoChallengeSets.ChallengeSet2.non_participant),
+        (404, TwoChallengeSets.ChallengeSet2.participant),
+        (404, TwoChallengeSets.ChallengeSet2.participant1),
+        (404, TwoChallengeSets.ChallengeSet2.creator),
+        (404, TwoChallengeSets.ChallengeSet2.admin),
+        (200, TwoChallengeSets.admin12),
+        (404, TwoChallengeSets.participant12),
+        (200, TwoChallengeSets.admin1participant2),
+    ]
+
+    for test in tests:
+        response = get_view_for_user(
+            url=submission.file.url, client=client, user=test[1]
+        )
+        assert response.status_code == test[0]

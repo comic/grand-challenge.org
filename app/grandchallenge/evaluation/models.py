@@ -13,7 +13,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import private_s3_storage
+from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
@@ -312,7 +312,7 @@ class Config(UUIDModel):
 def method_image_path(instance, filename):
     """ Deprecated: only used in a migration """
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"methods/"
         f"{instance.pk}/"
@@ -338,8 +338,9 @@ class Method(UUIDModel, ContainerImageModel):
 
 
 def submission_file_path(instance, filename):
+    # Must match the protected serving url
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"submissions/"
         f"{instance.creator.pk}/"
@@ -373,7 +374,7 @@ class Submission(UUIDModel):
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
-        storage=private_s3_storage,
+        storage=protected_s3_storage,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
