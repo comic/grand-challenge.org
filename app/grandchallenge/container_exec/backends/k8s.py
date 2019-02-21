@@ -104,14 +104,52 @@ class K8sJob(object):
         batch_v1 = client.BatchV1Api()
         meta = client.V1ObjectMeta(name=self.job_id)
 
+        env_vars = [
+            client.V1EnvVar(
+                name="S3_ACCESS_KEY",
+                value_from=client.V1EnvVarSource(
+                    secret_key_ref=client.V1SecretKeySelector(
+                        name="eyra-spaces-credentials",
+                        key="s3AccessKey"
+                    )
+                )
+            ),
+            client.V1EnvVar(
+                name="S3_SECRET_KEY",
+                value_from=client.V1EnvVarSource(
+                    secret_key_ref=client.V1SecretKeySelector(
+                        name="eyra-spaces-credentials",
+                        key="s3SecretKey"
+                    )
+                )
+            ),
+            client.V1EnvVar(
+                name="S3_REGION",
+                value="ams3"
+            ),
+            client.V1EnvVar(
+                name="S3_BUCKET",
+                value="eyra-datasets"
+            ),
+            client.V1EnvVar(
+                name="S3_OBJECT_KEY_INPUT",
+                value="test_data/data.zip"
+            ),
+            client.V1EnvVar(
+                name="S3_OBJECT_KEY_OUTPUT",
+                value="test_data/result.zip"
+            )
+        ]
+
         init_container = client.V1Container(
             name=self.job_id + "-init",
-            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-dataloader",
+            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
             volume_mounts=self.volume_mounts,
+            env=env_vars,
             command=[
                 "bash",
                 "-c",
-                "python /tmp/load_input.py ams3 V5OTPTWOTJX4LSA3DBNP wyewQ5K30HvnBii/t7bqfI5ovAjKJruHFXfLGVUgeOI eyra-datasets test_data/data.txt example_input_data.txt",
+                "python /tmp/data_io.py load",
             ],
         )
 
@@ -123,12 +161,13 @@ class K8sJob(object):
 
         exit_container = client.V1Container(
             name=self.job_id + "-exit",
-            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-resultloader",
+            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
             volume_mounts=self.volume_mounts,
+            env=env_vars,
             command=[
                 "bash",
                 "-c",
-                "python /tmp/store_result.py ams3 V5OTPTWOTJX4LSA3DBNP wyewQ5K30HvnBii/t7bqfI5ovAjKJruHFXfLGVUgeOI eyra-datasets example_output_data.txt test_data/result.txt",
+                "python /tmp/data_io.py store",
             ],
         )
         podspec = client.V1PodSpec(
