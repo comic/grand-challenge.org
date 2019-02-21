@@ -32,6 +32,16 @@ RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
 RUN chown django:django /app /static /dbox/Dropbox/media
 
 ###################
+#  Webpack        #
+###################
+FROM node:11-alpine as npm
+RUN mkdir /src
+COPY package.json /src/
+WORKDIR /src
+
+RUN npm install
+
+###################
 #  Test Container #
 ###################
 FROM base as test
@@ -42,6 +52,7 @@ RUN pipenv install --system --dev
 USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
+COPY --from=npm --chown=django:django /src/node_modules /node_modules
 RUN python manage.py collectstatic --noinput
 COPY --chown=django:django pyproject.toml /tmp/pyproject.toml
 
@@ -53,4 +64,5 @@ FROM base as dist
 USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
+COPY --from=npm --chown=django:django /src/node_modules /node_modules
 RUN python manage.py collectstatic --noinput
