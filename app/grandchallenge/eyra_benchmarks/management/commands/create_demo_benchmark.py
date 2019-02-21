@@ -3,97 +3,88 @@
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 # django.setup()
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
+from django.core.files import File
 from django.core.management import BaseCommand
 
 from userena.models import UserenaSignup
 from grandchallenge.evaluation.models import Method
 from grandchallenge.eyra_benchmarks.models import Benchmark
-from grandchallenge.eyra_datasets.models import DataSet, DataSetType, DataSetTypeFile
+from grandchallenge.eyra_data.models import DataFile, DataType
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
+        def clean():
+            User.objects.all().delete()
+            Benchmark.objects.all().delete()
+            DataType.objects.all().delete()
+            DataFile.objects.all().delete()
+            Method.objects.all().delete()
 
-        User.objects.all().delete()
-        # Group.objects.all().delete()
-        Benchmark.objects.all().delete()
-        DataSetType.objects.all().delete()
-        DataSetTypeFile.objects.all().delete()
-        DataSet.objects.all().delete()
-        Method.objects.all().delete()
-        # DataSet.challenges.through.objects.all().delete()
-
-        demoadmin = UserenaSignup.objects.create_user(
-            username="demo",
-            email="demo@example.com",
-            password="demo",
-            active=True,
-        )
-        UserenaSignup.objects.create_user(
-            username="user",
-            email="user@example.com",
-            password="user",
-            active=True,
-        )
-        adminuser = UserenaSignup.objects.create_user(
-            username="admin",
-            email="admin@example.com",
-            password="admin",
-            active=True,
-        )
-        adminuser.is_staff = True
-        adminuser.save()
-
-        demo = Benchmark(
-            title = 'Demo for tissue segmentation',
-            description='''
-        This benchmark is set up for illustrative purposes, with the aim to provide an example of an insight challenge and show that additional analyses can be done beyond the leaderboard.    
-            ''',
-            creator=demoadmin,
-            # task_types=[TaskType.objects.get_or_create(type='Segmentation')],
-        )
-
-        demo.save()
-
-
-        def create_data_sets(benchmark):
-            combined_dataset_type, create = DataSetType.objects.get_or_create(
-                name='Ground truth + data'
+        def create_user():
+            demouser = UserenaSignup.objects.create_user(
+                username="admin",
+                email="admin@example.com",
+                password="admin",
+                active=True,
             )
-            combined_dataset_type.save()
-            type_file_data = DataSetTypeFile(
-                dataset_type = combined_dataset_type,
-                name='Data',
-                required=True
-            )
-            type_file_data.save()
-            type_file_ground_truth = DataSetTypeFile(
-                dataset_type=combined_dataset_type,
-                name='Ground truth',
-                required=True
-            )
-            type_file_ground_truth.save()
+            demouser.is_staff = True
+            demouser.save()
+            return demouser
 
-            training_set, created = DataSet.objects.get_or_create(
-                name='Training set',
-                type=combined_dataset_type,
-                creator=adminuser,
+        def create_test_data_types(user):
+            image_set_type = DataType(
+                name='GrayScaleImageSet',
+                description='Set of grayscale images (.npy)',
             )
-            training_set.save()
+            image_set_type.save()
 
-            training_set.benchmarks.add(benchmark)
+            output_metrics_type = DataType(
+                name='OutputMetrics',
+                description='Metrics (.json)'
+            )
+            output_metrics_type.save()
 
-            test_set, created = DataSet.objects.get_or_create(
-                name='Test set',
-                type=combined_dataset_type,
-                creator=adminuser,
+        def create_data_files(user):
+            test_images = DataFile(
+                creator=user,
+                name='Demo challenge test images',
+                description='Demo challenge test images',
+                type=DataType.objects.get(name='GrayScaleImageSet'),
+                is_public=False,
             )
 
-            test_set.save()
-            test_set.benchmarks.add(benchmark)
+            test_images.save()
 
-        create_data_sets(demo)
+            test_file = File(open('/home/tom/Projects/eyra/grand-challenge.org/app/grandchallenge/eyra_benchmarks/management/commands/X_test.npy'))
+            test_images.file.save('filename.png', test_file, save=True)
+
+
+        def create_demo_benchmark(user: User):
+            demo = Benchmark(
+                name='Demo for tissue segmentation',
+                description='''
+            * Demo Challenge
+            This benchmark is set up for illustrative purposes, with the aim to provide an example of an
+            insight challenge and show that additional analyses can be done beyond the leaderboard.
+                        ''',
+                creator=user,
+                # task_types=[TaskType.objects.get_or_create(type='Segmentation')],
+            )
+
+            demo.save()
+            return demo
+
+        clean()
+        demouser = create_user()
+        create_test_data_types(demouser)
+        create_data_files(demouser)
+        # demo = create_demo_benchmark(demouser)
+
+
+
+        # create_data(demo)
 
         # demo.add_participant(demoparticipant)
         # Page.objects.create(

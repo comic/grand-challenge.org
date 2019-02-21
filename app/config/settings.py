@@ -287,10 +287,9 @@ LOCAL_APPS = [
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
-    "grandchallenge.eyra_datasets",
     "grandchallenge.eyra_benchmarks",
-    "grandchallenge.eyra_submissions",
-    "grandchallenge.eyra_evaluators",
+    "grandchallenge.eyra_algorithms",
+    "grandchallenge.eyra_data",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
