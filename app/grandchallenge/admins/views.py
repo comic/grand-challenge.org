@@ -27,7 +27,9 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
         return challenge.get_admins().select_related("user_profile")
 
 
-class AdminsUpdateAutocomplete(autocomplete.Select2QuerySetView):
+class AdminsUpdateAutocomplete(
+    UserIsChallengeAdminMixin, autocomplete.Select2QuerySetView
+):
     def get_queryset(self):
         qs = get_user_model().objects.all().order_by("username")
 
