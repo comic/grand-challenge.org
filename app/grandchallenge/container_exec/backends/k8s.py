@@ -21,16 +21,15 @@ BUCKET = "eyra-datasets"
 
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, volume_defs):
+    def __init__(self, job_id, namespace, image, volume_defs, input_object_keys):
         self.job_id = str(job_id)
         self.namespace = namespace
         self.image = image
         self.volume_defs = volume_defs
-        self.pvcs = []
-        self.pvcss = []
+        self.input_object_keys = input_object_keys
+
         self.volumes = []
         self.volume_mounts = []
-
         self.pods = []
 
         incluster = False
@@ -48,57 +47,17 @@ class K8sJob(object):
         for pod in self.pods:
             pass
 
-        # for pvc in self.pvcs:
-        #     pass
-
     def create_io_volumes(self):
-        # core_v1 = client.CoreV1Api()
-
-        # self.pvcs = []
-        # self.pvcss = []
         self.volumes = []
         self.volume_mounts = []
 
         for volume_name, mount_point in self.volume_defs.items():
-            # self.pvcss.append(
-            #     client.V1PersistentVolumeClaimVolumeSource(
-            #         claim_name=volume_name
-            #     )
-            # )
             self.volumes.append(
-                client.V1Volume(
-                    name=volume_name,
-                    # persistent_volume_claim=self.pvcss[-1]
-                )
+                client.V1Volume(name=volume_name)
             )
             self.volume_mounts.append(
                 client.V1VolumeMount(mount_path=mount_point, name=volume_name)
             )
-
-            # meta = client.V1ObjectMeta(name=volume_name)
-            # resources = client.V1ResourceRequirements(
-            #     requests={"storage": "8Gi"}
-            # )
-            # spec = client.V1PersistentVolumeClaimSpec(
-            #     access_modes=["ReadWriteOnce"], resources=resources
-            # )
-            # self.pvcs.append(
-            #     client.V1PersistentVolumeClaim(metadata=meta, spec=spec)
-            # )
-            # core_v1.create_namespaced_persistent_volume_claim(
-            #     self.namespace, self.pvcs[-1]
-            # )
-
-            # print("Checking PVC status...")
-            # while True:
-            #     r = core_v1.read_namespaced_persistent_volume_claim_status(
-            #         volume_name, self.namespace
-            #     )
-            #     print(r.status.phase)
-            #     if r.status.phase == "Bound":
-            #         break
-            #     time.sleep(1)
-            # print("Done")
 
     def run_pod(self):
         batch_v1 = client.BatchV1Api()
@@ -132,8 +91,8 @@ class K8sJob(object):
                 value="eyra-datasets"
             ),
             client.V1EnvVar(
-                name="S3_OBJECT_KEY_INPUT",
-                value="test_data/data.zip"
+                name="S3_OBJECT_KEYS_INPUT",
+                value=",".join(self.input_object_keys)
             ),
             client.V1EnvVar(
                 name="S3_OBJECT_KEY_OUTPUT",
@@ -210,7 +169,8 @@ if __name__ == "__main__":
     kj = K8sJob(
         "test-rzi-1",
         "dev-roel",
-        "docker-registry.roel.dev.eyrabenchmark.net/simpletest",
+        "docker-registry.roel.dev.eyrabenchmark.net/eyra-demo/algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9",
         {"input-volume": "/input", "output-volume": "/output"},
+        ["test_data/X_test.npy"]
     )
     kj.execute()
