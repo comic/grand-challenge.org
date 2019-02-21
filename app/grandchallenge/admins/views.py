@@ -1,3 +1,5 @@
+from dal import autocomplete
+from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
@@ -5,9 +7,6 @@ from django.views.generic import ListView, FormView
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.subdomains.utils import reverse
-from dal import autocomplete
-from django.contrib.auth import get_user_model
-
 
 
 class AdminsList(UserIsChallengeAdminMixin, ListView):
@@ -27,23 +26,21 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
         challenge = self.request.challenge
         return challenge.get_admins().select_related("user_profile")
 
-class AdminsUpdateAutocomplete(autocomplete.Select2QuerySetView):
 
+class AdminsUpdateAutocomplete(autocomplete.Select2QuerySetView):
     def get_queryset(self):
         qs = get_user_model().objects.all().order_by("username")
 
         if self.q:
-            qs = qs.filter(username__startswith=self.q)
-
+            qs = qs.filter(username__istartswith=self.q)
 
         return qs
+
 
 class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
     form_class = AdminsForm
     template_name = "admins/templates/admins/admins_form.html"
     success_message = "Admins successfully updated"
-
-
 
     def get_success_url(self):
         return reverse(
@@ -57,5 +54,3 @@ class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
             challenge=challenge, site=get_current_site(self.request)
         )
         return super().form_valid(form)
-
-

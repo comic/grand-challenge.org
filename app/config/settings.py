@@ -287,8 +287,6 @@ DJANGO_APPS = [
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
-    "dal",
-    "dal_select2",
     "django.contrib.admin",
     "django.contrib.postgres",
 ]
@@ -309,6 +307,8 @@ THIRD_PARTY_APPS = [
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "sorl.thumbnail",  # for dynamic thumbnails
+    "dal",  # for autocompletion of selection fields
+    "dal_select2",  # for autocompletion of selection fields
 ]
 
 LOCAL_APPS = [
