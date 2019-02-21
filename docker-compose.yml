@@ -19,7 +19,7 @@ services:
 
   minio-private:
     # This is for private data, should not be exposed to the public
-    image: minio/minio:RELEASE.2019-02-14T00-21-45Z
+    image: minio/minio:RELEASE.2019-02-20T22-44-29Z
     environment:
       MINIO_ACCESS_KEY: minioprivate
       MINIO_SECRET_KEY: minioprivate12345
@@ -35,7 +35,7 @@ services:
   minio-protected:
     # This is for protected data, should only be exposed via an internal link
     # in nginx
-    image: minio/minio:RELEASE.2019-02-14T00-21-45Z
+    image: minio/minio:RELEASE.2019-02-20T22-44-29Z
     environment:
       MINIO_ACCESS_KEY: minioprotected
       MINIO_SECRET_KEY: minioprotected12345
