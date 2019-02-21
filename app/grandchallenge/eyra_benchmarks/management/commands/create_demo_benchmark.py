@@ -7,8 +7,8 @@ from django.contrib.auth.models import User, Group
 from django.core.management import BaseCommand
 
 from userena.models import UserenaSignup
-from grandchallenge.challenges.models import Challenge, TaskType
 from grandchallenge.evaluation.models import Method
+from grandchallenge.eyra_benchmarks.models import Benchmark
 from grandchallenge.eyra_datasets.models import DataSet, DataSetType, DataSetTypeFile
 
 
@@ -16,8 +16,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         User.objects.all().delete()
-        Group.objects.all().delete()
-        Challenge.objects.all().delete()
+        # Group.objects.all().delete()
+        Benchmark.objects.all().delete()
         DataSetType.objects.all().delete()
         DataSetTypeFile.objects.all().delete()
         DataSet.objects.all().delete()
@@ -28,12 +28,6 @@ class Command(BaseCommand):
             username="demo",
             email="demo@example.com",
             password="demo",
-            active=True,
-        )
-        demoparticipant = UserenaSignup.objects.create_user(
-            username="demop",
-            email="demop@example.com",
-            password="demop",
             active=True,
         )
         UserenaSignup.objects.create_user(
@@ -51,23 +45,19 @@ class Command(BaseCommand):
         adminuser.is_staff = True
         adminuser.save()
 
-        demo = Challenge(
-            short_name = 'demo-tissue-segmentation',
+        demo = Benchmark(
+            title = 'Demo for tissue segmentation',
             description='''
         This benchmark is set up for illustrative purposes, with the aim to provide an example of an insight challenge and show that additional analyses can be done beyond the leaderboard.    
             ''',
-            use_registration_page=False,
-            title='Eyra Demo Challenge: Tissue Segmentation',
             creator=demoadmin,
-            hidden=False,
-            use_evaluation=True,
             # task_types=[TaskType.objects.get_or_create(type='Segmentation')],
         )
 
         demo.save()
 
 
-        def create_data_sets(challenge):
+        def create_data_sets(benchmark):
             combined_dataset_type, create = DataSetType.objects.get_or_create(
                 name='Ground truth + data'
             )
@@ -92,7 +82,7 @@ class Command(BaseCommand):
             )
             training_set.save()
 
-            training_set.challenges.add(challenge)
+            training_set.benchmarks.add(benchmark)
 
             test_set, created = DataSet.objects.get_or_create(
                 name='Test set',
@@ -101,8 +91,7 @@ class Command(BaseCommand):
             )
 
             test_set.save()
-            test_set.challenges.add(challenge)
-
+            test_set.benchmarks.add(benchmark)
 
         create_data_sets(demo)
 
@@ -138,27 +127,27 @@ class Command(BaseCommand):
         #     job=job,
         # )
 
-        demo.evaluation_config.score_title = "Accuracy ± std"
-        demo.evaluation_config.score_jsonpath = "acc.mean"
-        demo.evaluation_config.score_error_jsonpath = "acc.std"
-        demo.evaluation_config.extra_results_columns = [
-            {
-                "title": "Dice ± std",
-                "path": "dice.mean",
-                "error_path": "dice.std",
-                "order": "desc",
-            }
-        ]
+        # demo.evaluation_config.score_title = "Accuracy ± std"
+        # demo.evaluation_config.score_jsonpath = "acc.mean"
+        # demo.evaluation_config.score_error_jsonpath = "acc.std"
+        # demo.evaluation_config.extra_results_columns = [
+        #     {
+        #         "title": "Dice ± std",
+        #         "path": "dice.mean",
+        #         "error_path": "dice.std",
+        #         "order": "desc",
+        #     }
+        # ]
+        #
+        # demo.evaluation_config.save()
 
-        demo.evaluation_config.save()
-
-        def create_method(challenge):
-            # todo: put in evaluation container
-            method = Method(
-                challenge=challenge
-            )
-            method.save()
-
-        create_method(demo)
+        # def create_method(challenge):
+        #     # todo: put in evaluation container
+        #     method = Method(
+        #         challenge=challenge
+        #     )
+        #     method.save()
+        #
+        # create_method(demo)
 
 # todo: create sample algorithms

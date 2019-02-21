@@ -266,6 +266,7 @@ THIRD_PARTY_APPS = [
     "django_summernote",  # for WYSIWYG page editing
     "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
+    "django_extensions",
 ]
 
 LOCAL_APPS = [
@@ -287,6 +288,9 @@ LOCAL_APPS = [
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
     "grandchallenge.eyra_datasets",
+    "grandchallenge.eyra_benchmarks",
+    "grandchallenge.eyra_submissions",
+    "grandchallenge.eyra_evaluators",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -620,6 +624,10 @@ CORS_ORIGIN_REGEX_WHITELIST = (
 )
 # CORS_ORIGIN_ALLOW_ALL = True
 
-S3_ENDPOINT_URL = os.environ.get('S3_ENDPOINT_URL')
-S3_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
-S3_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = 'eyra'
+AWS_AUTO_CREATE_BUCKET = True
+AWS_S3_HOST = os.environ.get('S3_ENDPOINT_URL')

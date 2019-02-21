@@ -34,7 +34,8 @@ class DataSetViewSet(ModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            return DataSet.objects.filter(frozen=True)
+            # return DataSet.objects.filter(frozen=True)
+            return DataSet.objects.all()
         return DataSet.objects.all()
 
 

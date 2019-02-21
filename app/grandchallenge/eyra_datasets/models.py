@@ -4,9 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django_s3_storage.storage import S3Storage
 
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
 
 logger = logging.getLogger(__name__)
@@ -24,14 +22,20 @@ class DataSet(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=20, null=False, blank=False)
+    description = models.TextField(
+        default="",
+        blank=True,
+        help_text="Description of this dataset in markdown.",
+    )
     type = models.ForeignKey('DataSetType', on_delete=models.CASCADE)
     frozen = models.BooleanField(default=False)
-    challenges = models.ManyToManyField(Challenge, related_name='datasets')
+    is_public = models.BooleanField(default=True)
+    # benchmarks = models.ManyToManyField(Benchmark, related_name='datasets')
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # editing an existing object
-            return ( 'type', 'name')
-        return ()
+    # def get_readonly_fields(self, request, obj=None):
+    #     if obj:  # editing an existing object
+    #         return ( 'type', 'name')
+    #     return ()
 
 
 class DataSetType(UUIDModel):
@@ -47,21 +51,11 @@ class DataSetTypeFile(UUIDModel):
     dataset_type = models.ForeignKey('DataSetType', on_delete=models.CASCADE, related_name='files')
     name = models.CharField(max_length=40)
     required = models.BooleanField(default=False)
-
-
-# inject keys in the constructor, otherwise they'll end up in the migrations file
-class CustomStorage(S3Storage):
-    def __init__(self, **kwargs):
-        kwargs['aws_access_key_id'] = settings.S3_ACCESS_KEY_ID
-        kwargs['aws_secret_access_key'] = settings.S3_SECRET_ACCESS_KEY
-        super().__init__(**kwargs)
-
-
-storage = CustomStorage(
-    aws_s3_bucket_name = 'eyra-datasets',
-    aws_s3_endpoint_url = settings.S3_ENDPOINT_URL,
-    aws_s3_file_overwrite = True,
-)
+    description = models.TextField(
+        default="",
+        blank=True,
+        help_text="Description of this what this file represents.",
+    )
 
 
 def get_dataset_file_name(obj, filename):
@@ -74,11 +68,15 @@ class DataSetFile(UUIDModel):
     dataset = models.ForeignKey(
         to=DataSet, on_delete=models.CASCADE, related_name="files"
     )
+    description = models.TextField(
+        default="",
+        blank=True,
+        help_text="Description of this file.",
+    )
     original_file_name = models.CharField(null=True, blank=True, max_length=150)
     dataset_type_file = models.ForeignKey(DataSetTypeFile, on_delete=models.CASCADE)
-    file = models.FileField(storage=storage, blank=True, upload_to=get_dataset_file_name)
+    file = models.FileField(blank=True, upload_to=get_dataset_file_name)
     sha = models.CharField(max_length=40, null=True, blank=True)
-    is_public = models.BooleanField(default=False)
 
 
 @receiver(post_save, sender=DataSet)

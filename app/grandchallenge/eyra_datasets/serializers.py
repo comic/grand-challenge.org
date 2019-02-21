@@ -31,10 +31,16 @@ class DataSetTypeSerializer(serializers.ModelSerializer):
 
 class FileField(serializers.Field):
     def to_representation(self, value):
-        return {
-            'size': value.size,
-            'url': value.url
-        }
+        if value._file:
+            return {
+                'size': value.size,
+                'url': value.url
+            }
+        else:
+            return {
+                'size': 0,
+                'url': ''
+            }
 
 
 class DataSetFileSerializer(serializers.ModelSerializer):

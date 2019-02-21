@@ -14,6 +14,7 @@ from grandchallenge.api.views import (
 )
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.challenges.viewsets import ChallengeViewSet
+from grandchallenge.eyra_benchmarks.viewsets import EyraBenchmarkViewSet
 from grandchallenge.eyra_datasets.viewsets import DataSetViewSet, DataSetTypeViewSet, DataSetFileViewSet, upload_file
 
 app_name = "api"
@@ -22,7 +23,8 @@ router = routers.DefaultRouter()
 router.register(r"submissions", SubmissionViewSet)
 router.register(r"cases/images", ImageViewSet)
 
-router.register(r"challenges", ChallengeViewSet)
+router.register(r"benchmarks", EyraBenchmarkViewSet)
+# router.register(r"challenges", ChallengeViewSet)
 
 
 router.register(r"datasets", DataSetViewSet)
