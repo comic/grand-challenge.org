@@ -31,8 +31,10 @@ class AdminsUpdateAutocomplete(autocomplete.Select2QuerySetView):
 
     def get_queryset(self):
         qs = get_user_model().objects.all().order_by("username")
+
         if self.q:
-            qs = qs.filter(name__istartswith=self.q)
+            qs = qs.filter(username__startswith=self.q)
+
 
         return qs
 
