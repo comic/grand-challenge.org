@@ -228,6 +228,9 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
 
+# Vendored static files will be put here
+STATICFILES_DIRS = ["/opt/static/"]
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Make this unique, and don't share it with anybody.

@@ -17,7 +17,7 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/pipenv /app /static /dbox/Dropbox/media
+RUN mkdir -p /opt/pipenv /app /static /opt/static /dbox/Dropbox/media
 RUN python -m pip install -U pip
 RUN python -m pip install -U pipenv
 
@@ -29,7 +29,7 @@ RUN pipenv install --system
 
 RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
 
-RUN chown django:django /app /static /dbox/Dropbox/media
+RUN chown django:django /app /static /opt/static /dbox/Dropbox/media
 
 ###################
 #  Webpack        #
@@ -37,9 +37,10 @@ RUN chown django:django /app /static /dbox/Dropbox/media
 FROM node:11-alpine as npm
 RUN mkdir /src
 COPY package.json /src/
+COPY dockerfiles/web/bootstrap.js /src/
 WORKDIR /src
 
-RUN npm install
+RUN npm install -g parcel-bundler && npm install && parcel build bootstrap.js
 
 ###################
 #  Test Container #
@@ -52,7 +53,7 @@ RUN pipenv install --system --dev
 USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
-COPY --from=npm --chown=django:django /src/node_modules /node_modules
+COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput
 COPY --chown=django:django pyproject.toml /tmp/pyproject.toml
 
@@ -64,5 +65,5 @@ FROM base as dist
 USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
-COPY --from=npm --chown=django:django /src/node_modules /node_modules
+COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput
