@@ -10,10 +10,10 @@ router = DefaultRouter()
 
 annotation_router = SimpleRouter()
 annotation_router.register(
-    "single_polygon", views.SinglePolygonViewSet, basename="single_polygon"
+    "singlepolygonannotation", views.SinglePolygonViewSet, basename="singlepolygonannotation"
 )
 annotation_router.register(
-    "polygon_set", views.PolygonAnnotationSetViewSet, basename="polygon_set"
+    "polygonannotationset", views.PolygonAnnotationSetViewSet, basename="polygonannotationset"
 )
 urlpatterns = [
     path("", include(router.urls)),
