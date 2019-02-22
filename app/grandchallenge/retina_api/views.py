@@ -718,9 +718,10 @@ class DataView(APIView):
         return Response({"success": True}, status=status.HTTP_201_CREATED)
 
 
-class PolygonListView(ListAPIView): #TODO combine with viewset
+class PolygonListView(ListAPIView):
     """
     Get a serialized list of all PolygonAnnotationSets with all related SinglePolygonAnnotations
+    belonging to a single user and image.
     """
 
     permission_classes = (RetinaOwnerAPIPermission,)
