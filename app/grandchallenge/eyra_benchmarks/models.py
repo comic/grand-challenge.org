@@ -29,10 +29,10 @@ class Benchmark(UUIDModel):
             "The name of the benchmark"
         ),
     )
-    evaluator = models.ForeignKey(Algorithm, on_delete=models.SET_NULL, null=True, related_name='benchmarks')
-    training_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, related_name='+')
-    test_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, related_name='+')
-    ground_truth_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, related_name='+')
+    evaluator = models.ForeignKey(Algorithm, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
+    training_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    test_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    ground_truth_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
@@ -56,8 +56,8 @@ class Submission(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=32, unique=True, null=True)
+    name = models.CharField(max_length=32, unique=True, null=True, blank=True)
     benchmark = models.ForeignKey(Benchmark, on_delete=models.CASCADE)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name='submissions')
-    algorithm_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, related_name='+')
-    evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, related_name='+')
+    algorithm_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')

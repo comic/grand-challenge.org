@@ -25,7 +25,7 @@ class Algorithm(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=32, unique=True, null=True)
+    name = models.CharField(max_length=32, unique=True, null=True, blank=True)
     description = models.TextField(
         default="",
         blank=True,

@@ -19,6 +19,7 @@ class DataType(UUIDModel):
     description = models.TextField(
         default="",
         blank=True,
+        null=True,
         help_text="Description of this data type in markdown.",
     )
 
@@ -29,6 +30,7 @@ class DataType(UUIDModel):
 class DataFile(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        blank=True,
         null=True,
         on_delete=models.SET_NULL,
         related_name="_datasets",
@@ -39,11 +41,12 @@ class DataFile(UUIDModel):
     description = models.TextField(
         default="",
         blank=True,
+        null=True,
         help_text="Description of this dataset in markdown.",
     )
     type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     frozen = models.BooleanField(default=False)
-    file = models.FileField(blank=True, upload_to=get_data_file_name)
+    file = models.FileField(blank=True, null=True, upload_to=get_data_file_name)
     sha = models.CharField(max_length=40, null=True, blank=True)
     original_file_name = models.CharField(null=True, blank=True, max_length=150)
 
