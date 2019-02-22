@@ -58,7 +58,7 @@ class K8sJob(object):
         # Clean up all resources, if required
         pass
 
-    def create_io_volumes(self):
+    def _create_io_volumes(self):
         """Creates the Kubernetes volumes for input and output data. These are normal volumes, whose life cycle is tied
         to the pod they live in.
         """
@@ -74,7 +74,7 @@ class K8sJob(object):
                 client.V1VolumeMount(mount_path=mount_point, name=volume_name)
             )
 
-    def run_pod(self):
+    def _run_pod(self):
         """Defines a Kubernetes job using the python API and runs it.
         """
 
@@ -206,8 +206,8 @@ class K8sJob(object):
     def execute(self):
         """The main entrypoint for running the job.
         """
-        self.create_io_volumes()
-        self.run_pod()
+        self._create_io_volumes()
+        self._run_pod()
 
     def status(self):
         """Get the status of the job
@@ -220,8 +220,8 @@ class K8sJob(object):
 
 
 if __name__ == "__main__":
-    algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
-    #algorithm_id = "algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9"
+    #algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
+    algorithm_id = "algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9"
     #algorithm_id = "algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9"
 
     kj = K8sJob(
@@ -231,6 +231,7 @@ if __name__ == "__main__":
         volume_defs={"input-volume": "/input", "output-volume": "/output"},
         s3_bucket="eyra-datasets",
         input_object_keys=["test_data/X_test.npy"],
-        output_object_key=f"test_data/result_{algorithm_id}.zip"
+        output_object_key=f"test_data/result_{algorithm_id}.zip",
+        blocking=True
     )
     kj.execute()
