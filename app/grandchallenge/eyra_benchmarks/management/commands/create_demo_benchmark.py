@@ -40,6 +40,7 @@ class Command(BaseCommand):
                 active=True,
             )
             demouser.is_staff = True
+            demouser.is_superuser = True
             demouser.save()
             return demouser
 
@@ -62,7 +63,6 @@ class Command(BaseCommand):
                 name='Demo challenge test images',
                 description='Demo challenge test images',
                 type=DataType.objects.get(name='GrayScaleImageSet'),
-                is_public=False,
             )
 
             test_images.save()
@@ -80,7 +80,6 @@ class Command(BaseCommand):
                 name='Demo challenge ground truth images',
                 description='Demo challenge ground truth images',
                 type=DataType.objects.get(name='GrayScaleImageSet'),
-                is_public=False,
             )
 
             gt_images.save()

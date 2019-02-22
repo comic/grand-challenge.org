@@ -34,9 +34,9 @@ class Benchmark(UUIDModel):
     test_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, related_name='+')
     ground_truth_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, related_name='+')
 
-    def clean(self):
-        if self.training_datafile and not self.training_datafile.is_public:
-            raise ValidationError("Training dataset should be public.")
+    # def clean(self):
+    #     if self.training_datafile and not self.training_datafile.is_public:
+    #         raise ValidationError("Training dataset should be public.")
 
     def __str__(self):
         """ string representation for this object"""

@@ -46,3 +46,6 @@ class DataFile(UUIDModel):
     file = models.FileField(blank=True, upload_to=get_data_file_name)
     sha = models.CharField(max_length=40, null=True, blank=True)
     original_file_name = models.CharField(null=True, blank=True, max_length=150)
+
+    def __str__(self):
+        return self.name

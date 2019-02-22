@@ -38,6 +38,9 @@ class Algorithm(UUIDModel):
     )
     container = models.CharField(max_length=64, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class AlgorithmInput(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
@@ -48,6 +51,9 @@ class AlgorithmInput(UUIDModel):
         on_delete = models.CASCADE,
         related_name='+',
     )
+
+    def __str__(self):
+        return self.name
 
 
 class Job(UUIDModel):
