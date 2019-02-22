@@ -155,7 +155,6 @@ class Command(BaseCommand):
 
             return algo
 
-
         def create_submission(user: User, benchmark: Benchmark, predictor: Algorithm) -> Submission:
             submission = Submission(
                 creator=user,

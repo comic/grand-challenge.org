@@ -1,22 +1,15 @@
-from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from grandchallenge.eyra_benchmarks.models import Benchmark
-from grandchallenge.eyra_data.models import DataFile
+from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 
 
-class BenchmarkSerializer(serializers.HyperlinkedModelSerializer):
-    creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    datasets = serializers.PrimaryKeyRelatedField(many=True, queryset=DataFile.objects.all())
-    # participants_group = serializers.PrimaryKeyRelatedField()
-    # admins_group = serializers.PrimaryKeyRelatedField()
-
+class BenchmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Benchmark
-        fields = (
-            "pk",
-            "datasets",
-            "title",
-            "description",
-            "creator",
-        )
+        fields = '__all__'
+
+
+class SubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Submission
+        fields = '__all__'

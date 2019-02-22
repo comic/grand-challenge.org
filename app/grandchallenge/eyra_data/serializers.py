@@ -5,48 +5,30 @@ from grandchallenge.eyra_data.models import DataFile, DataType
 
 class DataTypeSerializer(serializers.ModelSerializer):
     # files = DataSetTypeFilesSerializer(many=True)
-
     class Meta:
         model = DataType
-        fields = (
-            "id",
-            "created",
-            "modified",
-            "name",
-            # "files",
-        )
-        depth = 1
+        fields = '__all__'
 
 
-class FileField(serializers.Field):
-    def to_representation(self, value):
-        if value._file:
-            return {
-                'size': value.size,
-                'url': value.url
-            }
-        else:
-            return {
-                'size': 0,
-                'url': ''
-            }
+# class FileField(serializers.Field):
+#     def to_representation(self, value):
+#         if value._file:
+#             return {
+#                 'size': value.size,
+#                 'url': value.url
+#             }
+#         else:
+#             return {
+#                 'size': 0,
+#                 'url': ''
+#             }
+#
 
-
-class DataSetSerializer(serializers.ModelSerializer):
-    file = FileField(read_only=True)
-
+class DataFileSerializer(serializers.ModelSerializer):
+    # file = FileField(read_only=True)
     class Meta:
         model = DataFile
-        fields = (
-            "id",
-            "created",
-            "modified",
-            "name",
-            "type",
-            "frozen",
-            "file",
-            "creator",
-        )
+        fields = '__all__'
 
     def update(self, instance, validated_data):
         if 'type' in validated_data:

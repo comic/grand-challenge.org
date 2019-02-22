@@ -1,33 +1,29 @@
-import hashlib
-
 from rest_framework import permissions
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.eyra_data.models import DataFile, DataType
-from grandchallenge.eyra_data.serializers import DataSetSerializer, DataTypeSerializer
+from grandchallenge.eyra_data.serializers import DataFileSerializer, DataTypeSerializer
 
-
-class DataSetAccessPermission(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method == "GET":
-            return True
-        elif request.method in ["POST", "PATCH", "PUT"]:
-            return request.user and request.user.is_authenticated
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in ["PUT", "PATCH"]:
-            return obj.creator == request.user
-        return True
+#
+# class DataSetAccessPermission(permissions.BasePermission):
+#     def has_permission(self, request, view):
+#         if request.method == "GET":
+#             return True
+#         elif request.method in ["POST", "PATCH", "PUT"]:
+#             return request.user and request.user.is_authenticated
+#         return False
+#
+#     def has_object_permission(self, request, view, obj):
+#         if request.method in ["PUT", "PATCH"]:
+#             return obj.creator == request.user
+#         return True
 
 
 class DataFileViewSet(ModelViewSet):
     queryset = DataFile.objects.all()
-    serializer_class = DataSetSerializer
-    permission_classes = (DataSetAccessPermission,)
+    serializer_class = DataFileSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
@@ -42,7 +38,7 @@ class DataFileViewSet(ModelViewSet):
 class DataTypeViewSet(ReadOnlyModelViewSet):
     queryset = DataType.objects.all()
     serializer_class = DataTypeSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 #
 # @api_view(['PATCH'])

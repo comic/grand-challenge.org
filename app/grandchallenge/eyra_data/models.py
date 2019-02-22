@@ -43,7 +43,6 @@ class DataFile(UUIDModel):
     )
     type = models.ForeignKey(DataType, on_delete=models.CASCADE)
     frozen = models.BooleanField(default=False)
-    is_public = models.BooleanField(default=True)
     file = models.FileField(blank=True, upload_to=get_data_file_name)
     sha = models.CharField(max_length=40, null=True, blank=True)
     original_file_name = models.CharField(null=True, blank=True, max_length=150)

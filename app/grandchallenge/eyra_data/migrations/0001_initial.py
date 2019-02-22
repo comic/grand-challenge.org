@@ -25,7 +25,6 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=50)),
                 ('description', models.TextField(blank=True, default='', help_text='Description of this dataset in markdown.')),
                 ('frozen', models.BooleanField(default=False)),
-                ('is_public', models.BooleanField(default=True)),
                 ('file', models.FileField(blank=True, upload_to=grandchallenge.eyra_data.models.get_data_file_name)),
                 ('sha', models.CharField(blank=True, max_length=40, null=True)),
                 ('original_file_name', models.CharField(blank=True, max_length=150, null=True)),

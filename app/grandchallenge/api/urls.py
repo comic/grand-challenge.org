@@ -5,30 +5,31 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
 
 from grandchallenge.api.views import (
-    SubmissionViewSet,
     UserViewSet,
     GroupViewSet,
     rest_api_complete,
     rest_api_auth,
     CurrentUserView,
 )
-from grandchallenge.cases.views import ImageViewSet
-from grandchallenge.challenges.viewsets import ChallengeViewSet
-from grandchallenge.eyra_benchmarks.viewsets import EyraBenchmarkViewSet
+from grandchallenge.eyra_algorithms.viewsets import AlgorithmViewSet, JobViewSet
+from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet
 from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet
 
 app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r"submissions", SubmissionViewSet)
-router.register(r"cases/images", ImageViewSet)
+# router.register(r"submissions", SubmissionViewSet)
+# router.register(r"cases/images", ImageViewSet)
 
-router.register(r"benchmarks", EyraBenchmarkViewSet)
+router.register(r"benchmarks", BenchmarkViewSet)
+router.register(r"submissions", SubmissionViewSet)
+router.register(r"algorithms", AlgorithmViewSet)
+router.register(r"jobs", JobViewSet)
 # router.register(r"challenges", ChallengeViewSet)
 
 
-router.register(r"datasets", DataFileViewSet)
-router.register(r"datasettypes", DataTypeViewSet)
+router.register(r"datafiles", DataFileViewSet)
+router.register(r"datatypes", DataTypeViewSet)
 # router.register(r"datasetfiles", DataSetFileViewSet)
 
 router.register(r"users", UserViewSet)
