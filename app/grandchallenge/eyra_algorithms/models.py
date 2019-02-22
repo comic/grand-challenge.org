@@ -76,5 +76,10 @@ class Job(UUIDModel):
     stopped = models.DateTimeField(blank=True, null=True)
     log = models.TextField(blank=True, null=True)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
-    input = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='+')
     output = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='output_of_job', null=True)
+
+
+class JobInput(UUIDModel):
+    algorithm_input = models.ForeignKey(AlgorithmInput, on_delete=models.CASCADE, related_name='jobs')
+    data_file = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='job_inputs')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='inputs')

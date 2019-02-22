@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
             test_images.save()
 
-            test_file = File(open('/home/tom/Projects/eyra/grand-challenge.org/app/grandchallenge/eyra_benchmarks/management/commands/X_test.npy'))
+            test_file = File(open('/home/tom/Projects/eyra/grand-challenge.org/app/grandchallenge/eyra_benchmarks/management/commands/X_test.npy', 'rb'))
             test_images.file.save('filename.png', test_file, save=True)
 
 
