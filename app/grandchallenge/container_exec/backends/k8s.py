@@ -21,12 +21,13 @@ BUCKET = "eyra-datasets"
 
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, volume_defs, input_object_keys):
+    def __init__(self, job_id, namespace, image, volume_defs, input_object_keys, output_object_key):
         self.job_id = str(job_id)
         self.namespace = namespace
         self.image = image
         self.volume_defs = volume_defs
         self.input_object_keys = input_object_keys
+        self.output_object_key = output_object_key
 
         self.volumes = []
         self.volume_mounts = []
@@ -65,11 +66,20 @@ class K8sJob(object):
 
         env_vars = [
             client.V1EnvVar(
+                name="S3_ENDPOINT",
+                value_from=client.V1EnvVarSource(
+                    secret_key_ref=client.V1SecretKeySelector(
+                        name="do-spaces",
+                        key="endpoint"
+                    )
+                )
+            ),
+            client.V1EnvVar(
                 name="S3_ACCESS_KEY",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="eyra-spaces-credentials",
-                        key="s3AccessKey"
+                        name="do-spaces",
+                        key="key"
                     )
                 )
             ),
@@ -77,8 +87,8 @@ class K8sJob(object):
                 name="S3_SECRET_KEY",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="eyra-spaces-credentials",
-                        key="s3SecretKey"
+                        name="do-spaces",
+                        key="secret"
                     )
                 )
             ),
@@ -96,7 +106,7 @@ class K8sJob(object):
             ),
             client.V1EnvVar(
                 name="S3_OBJECT_KEY_OUTPUT",
-                value="test_data/result.zip"
+                value=self.output_object_key
             )
         ]
 
@@ -105,6 +115,7 @@ class K8sJob(object):
             image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
             volume_mounts=self.volume_mounts,
             env=env_vars,
+            resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
             command=[
                 "bash",
                 "-c",
@@ -115,6 +126,7 @@ class K8sJob(object):
         container = client.V1Container(
             name=self.job_id,
             image=self.image,
+            resources=client.V1ResourceRequirements(requests={"cpu": 1.0}),
             volume_mounts=self.volume_mounts,
         )
 
@@ -123,6 +135,7 @@ class K8sJob(object):
             image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
             volume_mounts=self.volume_mounts,
             env=env_vars,
+            resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
             command=[
                 "bash",
                 "-c",
@@ -166,11 +179,16 @@ class K8sJob(object):
 
 
 if __name__ == "__main__":
+    algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
+    #algorithm_id = "algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9"
+    #algorithm_id = "algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9"
+
     kj = K8sJob(
-        "test-rzi-1",
+        f"test-rzi-{algorithm_id.replace('_', '-')}",
         "dev-roel",
-        "docker-registry.roel.dev.eyrabenchmark.net/eyra-demo/algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9",
+        f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
         {"input-volume": "/input", "output-volume": "/output"},
-        ["test_data/X_test.npy"]
+        ["test_data/X_test.npy"],
+        f"test_data/result_{algorithm_id}.zip"
     )
     kj.execute()
