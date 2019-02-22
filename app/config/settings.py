@@ -631,4 +631,3 @@ AWS_STORAGE_BUCKET_NAME = 'eyra-datasets'
 AWS_AUTO_CREATE_BUCKET = True
 AWS_S3_ENDPOINT_URL = 'https://eyra-datasets.' + os.environ.get('S3_ENDPOINT_URL')
 AWS_S3_REGION_NAME = 'ams3'
-pass

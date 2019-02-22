@@ -1,16 +1,26 @@
-# import os, django
-#
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-# django.setup()
+from django.core.management import BaseCommand
+from django.db.models.fields.files import FieldFile
+import hashlib
+from django.core.files import File
+from os.path import basename
+from urllib.request import urlretrieve, urlcleanup
+from urllib.parse import urlsplit
 
 from django.contrib.auth.models import User
-from django.core.files import File
-from django.core.management import BaseCommand
+from grandchallenge.evaluation.models import Method
+from grandchallenge.eyra_algorithms.models import AlgorithmInput, Algorithm
+from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
+from grandchallenge.eyra_data.models import DataFile, DataType
 
 from userena.models import UserenaSignup
-from grandchallenge.evaluation.models import Method
-from grandchallenge.eyra_benchmarks.models import Benchmark
-from grandchallenge.eyra_data.models import DataFile, DataType
+
+
+def download_to_file_field(url, field: FieldFile):
+    try:
+        tempname, _ = urlretrieve(url)
+        field.save(basename(urlsplit(url).path), File(open(tempname, 'rb')))
+    finally:
+        urlcleanup()
 
 
 class Command(BaseCommand):
@@ -57,11 +67,60 @@ class Command(BaseCommand):
 
             test_images.save()
 
-            test_file = File(open('/home/tom/Projects/eyra/grand-challenge.org/app/grandchallenge/eyra_benchmarks/management/commands/X_test.npy', 'rb'))
-            test_images.file.save('filename.png', test_file, save=True)
+            download_to_file_field(
+                'https://github.com/EYRA-Benchmark/demo-algorithm-a/raw/master/preprocessed_data/X_test.npy',
+                test_images.file
+            )
+            test_images.sha = hashlib.sha1(test_images.file.read()).hexdigest()
+            test_images.original_file_name = 'X_test.npy'
+            test_images.save()
+
+            gt_images = DataFile(
+                creator=user,
+                name='Demo challenge ground truth images',
+                description='Demo challenge ground truth images',
+                type=DataType.objects.get(name='GrayScaleImageSet'),
+                is_public=False,
+            )
+
+            gt_images.save()
+
+            download_to_file_field(
+                'https://github.com/EYRA-Benchmark/demo-algorithm-a/raw/master/preprocessed_data/gt_test.npy',
+                gt_images.file)
+            gt_images.sha = hashlib.sha1(gt_images.file.read()).hexdigest()
+            gt_images.original_file_name = 'gt_test.npy'
+            gt_images.save()
+
+            return test_images, gt_images
+
+        def create_evaluator(user: User) -> Algorithm:
+            algo = Algorithm(
+                creator=user,
+                name='Segmentation evaluation',
+                description='Segmentation evaluation',
+                output_type=DataType.objects.get(name='OutputMetrics'),
+                container='segmentation_a_dummy'
+            )
+            algo.save()
+
+            algo_predictions_input = AlgorithmInput(
+                name='predictions',
+                type=DataType.objects.get(name='GrayScaleImageSet'),
+                algorithm=algo
+            )
+            algo_predictions_input.save()
+            algo_ground_truth_input = AlgorithmInput(
+                name='ground_truth',
+                type=DataType.objects.get(name='GrayScaleImageSet'),
+                algorithm=algo
+            )
+            algo_ground_truth_input.save()
+
+            return algo
 
 
-        def create_demo_benchmark(user: User):
+        def create_demo_benchmark(user: User, evaluator: Algorithm, test_data: DataFile, gt_data: DataFile) -> Benchmark:
             demo = Benchmark(
                 name='Demo for tissue segmentation',
                 description='''
@@ -70,75 +129,50 @@ class Command(BaseCommand):
             insight challenge and show that additional analyses can be done beyond the leaderboard.
                         ''',
                 creator=user,
-                # task_types=[TaskType.objects.get_or_create(type='Segmentation')],
+                evaluator=evaluator,
+                test_datafile=test_data,
+                ground_truth_datafile=gt_data
             )
-
             demo.save()
             return demo
+
+        def create_predictor(user: User) -> Algorithm:
+            algo = Algorithm(
+                creator=user,
+                name='Algorithm A',
+                description='Algorithm A is the best algorithm. Even though it takes 24 hours to train',
+                output_type=DataType.objects.get(name='GrayScaleImageSet'),
+                container='algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9'
+            )
+            algo.save()
+
+            algo_input = AlgorithmInput(
+                name='test',
+                type=DataType.objects.get(name='GrayScaleImageSet'),
+                algorithm=algo
+            )
+            algo_input.save()
+
+            return algo
+
+
+        def create_submission(user: User, benchmark: Benchmark, predictor: Algorithm) -> Submission:
+            submission = Submission(
+                creator=user,
+                name='Algo A for tissue demo',
+                benchmark=benchmark,
+                algorithm=predictor,
+            )
+            submission.save()
+            return submission
+
 
         clean()
         demouser = create_user()
         create_test_data_types(demouser)
-        create_data_files(demouser)
-        # demo = create_demo_benchmark(demouser)
+        test_data, gt_data = create_data_files(demouser)
+        evaluator = create_evaluator(demouser)
+        demo_benchmark = create_demo_benchmark(demouser, evaluator, test_data, gt_data)
 
-
-
-        # create_data(demo)
-
-        # demo.add_participant(demoparticipant)
-        # Page.objects.create(
-        #     challenge=demo, title="all", permission_lvl="ALL"
-        # )
-        # Page.objects.create(
-        #     challenge=demo, title="reg", permission_lvl="REG"
-        # )
-        # Page.objects.create(
-        #     challenge=demo, title="adm", permission_lvl="ADM"
-        # )
-
-        # method = Method(challenge=demo, creator=demoadmin)
-        # container = ContentFile(base64.b64decode(b""))
-        # method.image.save("test.tar", container)
-        # method.save()
-        #
-        # submission = Submission(challenge=demo, creator=demoparticipant)
-        # content = ContentFile(base64.b64decode(b""))
-        # submission.file.save("test.csv", content)
-        # submission.save()
-        #
-        # job = Job.objects.create(submission=submission, method=method)
-        #
-        # Result.objects.create(
-        #     challenge=demo,
-        #     metrics={
-        #         "acc": {"mean": 0.5, "std": 0.1},
-        #         "dice": {"mean": 0.71, "std": 0.05},
-        #     },
-        #     job=job,
-        # )
-
-        # demo.evaluation_config.score_title = "Accuracy ± std"
-        # demo.evaluation_config.score_jsonpath = "acc.mean"
-        # demo.evaluation_config.score_error_jsonpath = "acc.std"
-        # demo.evaluation_config.extra_results_columns = [
-        #     {
-        #         "title": "Dice ± std",
-        #         "path": "dice.mean",
-        #         "error_path": "dice.std",
-        #         "order": "desc",
-        #     }
-        # ]
-        #
-        # demo.evaluation_config.save()
-
-        # def create_method(challenge):
-        #     # todo: put in evaluation container
-        #     method = Method(
-        #         challenge=challenge
-        #     )
-        #     method.save()
-        #
-        # create_method(demo)
-
-# todo: create sample algorithms
+        predictor_a = create_predictor(demouser)
+        submission_a = create_submission(demouser, demo_benchmark, predictor_a)
