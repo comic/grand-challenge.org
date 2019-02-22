@@ -1,6 +1,5 @@
 from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes import client
-from urllib.parse import urlparse
 import time
 
 
@@ -17,6 +16,8 @@ class K8sJob(object):
         The algorithm container should have its own command or entrypoint defined (i.e., it should run independently), and
         it should read input data from /input/ and write all output files to /output/. These folder will be provided as
         mounts by the Kubernetes cluster.
+
+        S3 access credentials should be stored in a secret.
 
         Args:
             job_id (str): the ID used as the K8s job name
@@ -36,6 +37,8 @@ class K8sJob(object):
         self.input_object_keys = input_object_keys
         self.output_object_key = output_object_key
         self.s3_bucket = s3_bucket
+        self.s3_credentials_secret = "do-spaces"
+        self.data_io_image = "docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io"
 
         self.volumes = []
         self.volume_mounts = []
@@ -84,7 +87,7 @@ class K8sJob(object):
                 name="S3_ENDPOINT",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="do-spaces",
+                        name=self.s3_credentials_secret,
                         key="endpoint"
                     )
                 )
@@ -93,7 +96,7 @@ class K8sJob(object):
                 name="S3_ACCESS_KEY",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="do-spaces",
+                        name=self.s3_credentials_secret,
                         key="key"
                     )
                 )
@@ -102,7 +105,7 @@ class K8sJob(object):
                 name="S3_SECRET_KEY",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="do-spaces",
+                        name=self.s3_credentials_secret,
                         key="secret"
                     )
                 )
@@ -111,7 +114,7 @@ class K8sJob(object):
                 name="S3_REGION",
                 value_from=client.V1EnvVarSource(
                     secret_key_ref=client.V1SecretKeySelector(
-                        name="do-spaces",
+                        name=self.s3_credentials_secret,
                         key="region"
                     )
                 )
@@ -133,7 +136,7 @@ class K8sJob(object):
         # Define the input container that performs input data provisioning
         input_container = client.V1Container(
             name=self.job_id + "-input",
-            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
+            image=self.data_io_image,
             volume_mounts=self.volume_mounts,
             env=env_vars,
             resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
@@ -155,7 +158,7 @@ class K8sJob(object):
         # Define the output container that uploads all results to the object storage
         output_container = client.V1Container(
             name=self.job_id + "-output",
-            image="docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io",
+            image=self.data_io_image,
             volume_mounts=self.volume_mounts,
             env=env_vars,
             resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
@@ -222,12 +225,12 @@ if __name__ == "__main__":
     #algorithm_id = "algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9"
 
     kj = K8sJob(
-        f"{algorithm_id.replace('_', '-')}",
-        "dev-roel",
-        f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
-        {"input-volume": "/input", "output-volume": "/output"},
-        "eyra-datasets",
-        ["test_data/X_test.npy"],
-        f"test_data/result_{algorithm_id}.zip"
+        job_id=f"{algorithm_id.replace('_', '-')}",
+        namespace="dev-roel",
+        image=f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
+        volume_defs={"input-volume": "/input", "output-volume": "/output"},
+        s3_bucket="eyra-datasets",
+        input_object_keys=["test_data/X_test.npy"],
+        output_object_key=f"test_data/result_{algorithm_id}.zip"
     )
     kj.execute()
