@@ -12,7 +12,8 @@
     "blueimp-file-upload": "9.22.1",
     "jquery.cookie": "1.4.1",
     "mathjax": "2.7.5",
-    "chart.js": "2.7.2"
+    "chart.js": "2.7.2",
+    "lazysizes": "4.1.5"
   },
   "scripts": {
     "build": "mkdir -p dist/js dist/css dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome",
