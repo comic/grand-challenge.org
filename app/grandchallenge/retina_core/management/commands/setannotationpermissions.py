@@ -10,9 +10,7 @@ from grandchallenge.annotations.models import (
     SinglePolygonAnnotation,
     SingleLandmarkAnnotation,
 )
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.conf import settings
 from guardian.shortcuts import assign_perm, remove_perm
 
