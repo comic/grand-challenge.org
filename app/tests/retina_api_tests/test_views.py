@@ -29,7 +29,7 @@ from grandchallenge.annotations.serializers import (
 from grandchallenge.retina_api.views import (
     PolygonAnnotationSetViewSet,
     SinglePolygonViewSet,
-    PolygonListView
+    PolygonListView,
 )
 
 
@@ -335,21 +335,22 @@ batch_test_data_endpoints(TestDataAPIEndpoint)
 
 
 @pytest.mark.django_db
-class TestViewsets(TestCase):
+class TestPolygonAPIListView(TestCase):
     def setUp(self):
         self.annotation_set = generate_annotation_set()
         self.kwargs = {
-                "user_id": self.annotation_set.grader.id,
-                "image_id": self.annotation_set.polygon.image.id,
+            "user_id": self.annotation_set.grader.id,
+            "image_id": self.annotation_set.polygon.image.id,
         }
         self.url = reverse(
-            "retina:api:annotation-api-view",
-            kwargs=self.kwargs,
+            "retina:api:annotation-api-view", kwargs=self.kwargs
         )
         self.view = PolygonListView.as_view()
         self.rf = APIRequestFactory()
         self.request = self.rf.get(self.url)
-        self.serialized_data = PolygonAnnotationSetSerializer(instance=self.annotation_set.polygon)
+        self.serialized_data = PolygonAnnotationSetSerializer(
+            instance=self.annotation_set.polygon
+        )
 
     def test_polygon_list_api_view_non_authenticated(self):
         response = self.view(self.request, **self.kwargs)
@@ -357,14 +358,15 @@ class TestViewsets(TestCase):
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_polygon_list_api_view_non_retina_user(self):
-        self.annotation_set.grader.groups.clear()
         force_authenticate(self.request, user=self.annotation_set.grader)
         response = self.view(self.request, **self.kwargs)
 
-        #TODO fix this failing test (fix authentication check for is_retina_user
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_polygon_list_api_view_owner_authenticated(self):
+        self.annotation_set.grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
         force_authenticate(self.request, user=self.annotation_set.grader)
         response = self.view(self.request, **self.kwargs)
 
@@ -373,7 +375,9 @@ class TestViewsets(TestCase):
 
     def test_polygon_list_api_view_admin_authenticated(self):
         retina_admin = UserFactory()
-        retina_admin.groups.add(Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME))
+        retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
         force_authenticate(self.request, user=retina_admin)
         response = self.view(self.request, **self.kwargs)
 
