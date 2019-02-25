@@ -290,10 +290,9 @@ class AbstractUploadView(generics.CreateAPIView):
 
         if (
             user_created
-            or grader.groups.filter(
+            or not grader.groups.filter(
                 name=settings.RETINA_GRADERS_GROUP_NAME
-            ).count()
-            == 0
+            ).exists()
         ):
             grader_group.user_set.add(grader)
 
