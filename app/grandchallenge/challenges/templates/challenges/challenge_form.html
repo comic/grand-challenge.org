@@ -13,6 +13,9 @@
 
 {% block pagecontent %}
     {% crispy form %}
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

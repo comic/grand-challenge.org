@@ -364,8 +364,10 @@
             </div>
         {% endfor %}
     </div>
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
-
 {% endblock %}

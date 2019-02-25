@@ -46,11 +46,13 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#submissionsTable').DataTable();
         });
     </script>
-
 {% endblock %}
