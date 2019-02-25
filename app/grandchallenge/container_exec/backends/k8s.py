@@ -220,17 +220,23 @@ class K8sJob(object):
 
 
 if __name__ == "__main__":
-    algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
+    #algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
     #algorithm_id = "algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9"
     #algorithm_id = "algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9"
 
+    algorithm_id = "evaluation_a_9d942b7a-35bc-11e9-a52a-00155d544bd9"
+    #input_zip_id = "result_algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9.zip"
+    input_zip_id = "result_algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9.zip"
+    #input_zip_id = "result_algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9.zip"
+
     kj = K8sJob(
         job_id=f"{algorithm_id.replace('_', '-')}",
-        namespace="dev-roel",
+        namespace="dev-maarten",
         image=f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
         volume_defs={"input-volume": "/input", "output-volume": "/output"},
         s3_bucket="eyra-datasets",
-        input_object_keys=["test_data/X_test.npy"],
-        output_object_key=f"test_data/result_{algorithm_id}.zip"
+        input_object_keys=[f"test_data/{input_zip_id}", "test_data/gt_test.npy"],
+        output_object_key=f"test_data/evaluation_{input_zip_id}"
     )
     kj.execute()
+
