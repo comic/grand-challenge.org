@@ -16,11 +16,10 @@ class StudyTable(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Study.objects.all()
-        ids = self.request.query_params.get("ids", None)
+        patient = self.request.query_params.get("patient", None)
 
-        if ids is not None:
-            ids = [int(x) for x in ids.split(",")]
-            queryset = Study.objects.filter(pk__in=ids)
+        if patient is not None:
+            queryset = queryset.filter(patient=patient)
 
         return queryset
 

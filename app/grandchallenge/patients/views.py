@@ -14,11 +14,10 @@ class PatientTable(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Patient.objects.all()
-        ids = self.request.query_params.get("ids", None)
+        worklist = self.request.query_params.get("worklist", None)
 
-        if ids is not None:
-            ids = [int(x) for x in ids.split(",")]
-            queryset = Patient.objects.filter(pk__in=ids)
+        if worklist is not None:
+            queryset = queryset.filter(study__image__worklist=worklist)
 
         return queryset
 

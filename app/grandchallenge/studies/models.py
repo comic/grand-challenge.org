@@ -18,7 +18,7 @@ class Study(UUIDModel):
     name = models.CharField(max_length=255)
 
     def __str__(self):
-        return "<{} {}>".format(self.__class__.__name__, self.name)
+        return "{} <{} {}>".format(self.patient, self.__class__.__name__, self.name)
 
     class Meta(UUIDModel.Meta):
         unique_together = ("patient", "name")

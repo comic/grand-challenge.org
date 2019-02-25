@@ -22,12 +22,7 @@ class WorklistTable(generics.ListCreateAPIView):
     serializer_class = WorklistSerializer
 
     def get_queryset(self):
-        queryset = Worklist.objects.all()
-        set = self.request.query_parmas.get("set", None)
-
-        if set is not None:
-            queryset = queryset.filter(worklist__set=set)
-
+        queryset = Worklist.objects.filter(set__user=self.request.user)
         return queryset
 
 
@@ -43,14 +38,7 @@ class WorklistSetTable(generics.ListCreateAPIView):
     serializer_class = WorklistSetSerializer
 
     def get_queryset(self):
-        queryset = WorklistSet.objects.all()
-        token = self.request.query_parmas.get("token", None)
-
-        if token is not None:
-            queryset = queryset.filter(
-                worklistset__user__auth_token__key=token
-            )
-
+        queryset = WorklistSet.objects.filter(user=self.request.user)
         return queryset
 
 
