@@ -38,9 +38,10 @@
 
         {# Needs to be inline for some forms (summernote) #}
         <script type="text/javascript"
-                src="{% static "jquery-3.2.1/js/jquery-3.2.1.min.js" %}"></script>
+                src="{% static "vendor/js/jquery.min.js" %}"></script>
 
-        <link rel="stylesheet" href="{% static 'vendor/bootstrap.css' %}">
+        <link rel="stylesheet"
+              href="{% static 'vendor/css/bootstrap.min.css' %}">
 
         <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
               rel="stylesheet">
@@ -227,8 +228,13 @@
     </footer>
 {% endblock %}
 
+{# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+        crossorigin="anonymous"></script>
+
 {# Bootstrap first, requires jquery from head #}
-<script src="{% static 'vendor/bootstrap.js' %}"></script>
+<script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
 
 {# DataTables #}
 <script type="text/javascript"

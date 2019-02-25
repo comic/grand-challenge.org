@@ -37,10 +37,9 @@ RUN chown django:django /app /static /opt/static /dbox/Dropbox/media
 FROM node:11-alpine as npm
 RUN mkdir /src
 COPY package.json /src/
-COPY dockerfiles/web/bootstrap.js /src/
 WORKDIR /src
 
-RUN npm install -g parcel-bundler && npm install && parcel build bootstrap.js
+RUN npm install && npm run build
 
 ###################
 #  Test Container #

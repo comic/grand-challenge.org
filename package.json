@@ -13,5 +13,11 @@
     "jquery.cookie": "1.4.1",
     "mathjax": "2.7.5",
     "chart.js": "2.7.2"
-  }
+  },
+  "scripts": {
+    "build": "mkdir -p dist/js dist/css && npm run copy:jquery && npm run copy:bootstrap",
+    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/ ",
+    "copy:jquery": "cp ./node_modules/jquery/dist/jquery*.js ./dist/js/"
+  },
+  "license": "Apache-2.0"
 }
