@@ -1,7 +1,7 @@
 import pytest
 
 from tests.factories import UserFactory
-from tests.worklists_tests import WorklistFactory, WorklistSetFactory
+from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
 from tests.utils import get_view_for_user
 
 from grandchallenge.worklists.forms import (

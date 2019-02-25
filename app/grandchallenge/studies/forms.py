@@ -26,6 +26,7 @@ class StudyCreateForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
+        forms.CharField(widget=forms.TextInput(attrs={'class': 'datepicker'}))
 
 
 class StudyUpdateForm(ModelForm):

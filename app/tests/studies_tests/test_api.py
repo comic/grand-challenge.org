@@ -1,5 +1,5 @@
 import pytest
-from tests.studies_tests import StudyFactory
+from tests.studies_tests.factories import StudyFactory
 from tests.api_utils import assert_api_crud
 
 

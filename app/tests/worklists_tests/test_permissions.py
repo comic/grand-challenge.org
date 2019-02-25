@@ -1,6 +1,6 @@
 import pytest
 
-from tests.worklists_tests import WorklistFactory, WorklistSetFactory
+from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
 from tests.utils import validate_staff_only_view
 
 """" Tests the permission access for Patient Forms """

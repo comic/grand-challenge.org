@@ -4,8 +4,8 @@ import pytz
 import factory.fuzzy
 
 from tests.factories import UserFactory
-from tests.studies_tests import PatientFactory
-from tests.studies_tests import StudyFactory
+from tests.patients_tests.factories import PatientFactory
+from tests.studies_tests.factories import StudyFactory
 from tests.utils import get_view_for_user
 
 from grandchallenge.patients.forms import StudyCreateForm, StudyUpdateForm
