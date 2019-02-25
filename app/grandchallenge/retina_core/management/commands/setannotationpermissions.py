@@ -77,12 +77,11 @@ class Command(BaseCommand):
     This command assigns/removes all model level permissions for annotations to the retina_admins group
     and object level permissions for every annotation owner that is in the retina_grader group.
     This command is probably for one time use only so it would be better to implement as data migration,
-    however the django-guardian permission model don't work nicely with data migrations. As explained
+    however the django-guardian permission model doesn't work nicely with data migrations. As explained
     in https://github.com/django-guardian/django-guardian/issues/281
     """
 
-    help = "Assign/remove model level permissions for annotations to retina_admins group and object level " \
-           "permissions for annotations owned by an user in retina_graders group"
+    help = "Assign/remove model level permissions for annotations to retina_admins group and object level " "permissions for annotations owned by an user in retina_graders group"
 
     def add_arguments(self, parser):
         parser.add_argument(

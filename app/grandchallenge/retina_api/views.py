@@ -742,7 +742,9 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
 
-    def get_queryset(self):  # TODO simplify permissions/combine with singlepolygonviewset
+    def get_queryset(
+        self
+    ):  # TODO simplify permissions/combine with singlepolygonviewset
         if is_in_retina_admins_group(self.request.user):
             if self.request.kwargs.get["user_id"]:
                 queryset = PolygonAnnotationSet.objects.filter(
@@ -758,6 +760,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
             # User is not in graders or admins group, should not have access
             queryset = PolygonAnnotationSet.objects.none()
         return queryset
+
     # TODO: permission for creation... anyone can create a polygon_set and set user_id to what he wants...
 
 

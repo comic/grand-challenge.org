@@ -39,7 +39,9 @@ def annotation_post_save(sender, instance, created):
     else:
         owner = instance.grader
 
-    if not owner.groups.filter(name=settings.RETINA_GRADERS_GROUP_NAME).exists():
+    if not owner.groups.filter(
+        name=settings.RETINA_GRADERS_GROUP_NAME
+    ).exists():
         return
 
     for permission_type in ("view", "add", "change", "delete"):

@@ -61,10 +61,13 @@ def get_response_status_viewset(
 
     # determine url
     if action_name == "list" or action_name == "create":
-        url = reverse(f"{namespace}:{model_name}-list", kwargs=extra_url_kwargs)
+        url = reverse(
+            f"{namespace}:{model_name}-list", kwargs=extra_url_kwargs
+        )
     else:
         url = reverse(
-            f"{namespace}:{model_name}-detail", kwargs={"pk": model.pk, **extra_url_kwargs}
+            f"{namespace}:{model_name}-detail",
+            kwargs={"pk": model.pk, **extra_url_kwargs},
         )
 
     # determine request
@@ -109,7 +112,7 @@ def batch_test_viewset_endpoints(
     test_class,
     required_relations={},
     serializer=None,
-    extra_url_kwargs={}
+    extra_url_kwargs={},
 ):
     for action_name, request_method, authenticated_status in actions:
         for (user, authenticated) in (
@@ -131,7 +134,7 @@ def batch_test_viewset_endpoints(
                 required_relations,
                 authenticated_status,
                 serializer,
-                extra_url_kwargs
+                extra_url_kwargs,
             )
 
             test_method.__name__ = "test_{}_viewset_{}_{}".format(
@@ -154,7 +157,7 @@ def create_test_method(
     required_relations,
     authenticated_status,
     serializer,
-    extra_url_kwargs={}
+    extra_url_kwargs={},
 ):
     # create test method
     def test_method(self, rf):
@@ -169,7 +172,7 @@ def create_test_method(
             user=user,
             required_relations=required_relations,
             serializer=serializer,
-            extra_url_kwargs=extra_url_kwargs
+            extra_url_kwargs=extra_url_kwargs,
         )
         if authenticated:
             assert response_status == authenticated_status
