@@ -1,5 +1,6 @@
 from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 import time
 
 
@@ -191,6 +192,16 @@ class K8sJob(object):
             while True:
                 s = self.status()
                 print(s)
+
+                logs = self.get_logs()
+                for podname, logs in logs.items():
+                    print()
+                    print(podname)
+                    for container, log in logs.items():
+                        print()
+                        print(container)
+                        print(log)
+
                 if not s.active:
                     if s.failed or s.succeeded:
                         break
@@ -217,6 +228,41 @@ class K8sJob(object):
             self.job_id, self.namespace
         )
         return r.status
+
+    def get_logs(self, container=None, previous=False):
+        core_v1 = client.CoreV1Api()
+
+        if container is None:
+            containers = [self.job_id + "-input", self.job_id + "-main", self.job_id + "-output"]
+        else:
+            containers = [container]
+
+        podlist = core_v1.list_namespaced_pod(namespace=self.namespace, label_selector=f"job-name={self.job_id}")
+        podnames = [p.metadata.name for p in podlist.items]
+
+
+        logs = {}
+        for podname in podnames:
+            for container in containers:
+                try:
+                    r = core_v1.read_namespaced_pod_log(
+                        name=podname,
+                        namespace=self.namespace,
+                        container=container,
+                        follow=False,
+                        pretty=True,
+                        previous=previous,
+                        timestamps=True
+                    )
+                except ApiException as m:
+                    print(m)
+                    continue
+
+                if podname not in logs:
+                    logs[podname] = {}
+
+                logs[podname][container] = r
+        return logs
 
 
 if __name__ == "__main__":
