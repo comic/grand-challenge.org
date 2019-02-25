@@ -50,12 +50,8 @@
               content="width=device-width, initial-scale=1">
 
         <link rel="stylesheet" type="text/css"
-              href="{% static "DataTables-1.10.16/css/dataTables.bootstrap4.min.css" %}"
-              crossorigin="anonymous"/>
-
-        <link rel="stylesheet" type="text/css"
-              href="https://cdn.datatables.net/buttons/1.5.4/css/buttons.bootstrap4.min.css"
-              crossorigin="anonymous"/>
+              href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
+              crossorigin="anonymous">
 
         <link href="{% static 'fontawesome-5.0.8/css/fontawesome-all.css' %}"
               rel="stylesheet">
@@ -236,26 +232,9 @@
 {# Bootstrap first, requires jquery from head #}
 <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
 
-{# DataTables #}
+{# DataTables with colvis #}
 <script type="text/javascript"
-        src="{% static "DataTables-1.10.16/js/jquery.dataTables.min.js" %}"
-        crossorigin="anonymous"></script>
-
-<script type="text/javascript"
-        src="{% static "DataTables-1.10.16/js/dataTables.bootstrap4.min.js" %}"
-        crossorigin="anonymous"></script>
-
-{# Bootstrap 4 column visibility #}
-<script type="text/javascript"
-        src="https://cdn.datatables.net/buttons/1.5.4/js/dataTables.buttons.min.js"
-        crossorigin="anonymous"></script>
-
-<script type="text/javascript"
-        src="https://cdn.datatables.net/buttons/1.5.4/js/buttons.bootstrap4.min.js"
-        crossorigin="anonymous"></script>
-
-<script type="text/javascript"
-        src="https://cdn.datatables.net/buttons/1.5.4/js/buttons.colVis.min.js"
+        src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
         crossorigin="anonymous"></script>
 
 {# File uploads #}
