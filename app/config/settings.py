@@ -151,6 +151,8 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "endpoint_url": os.environ.get(
         "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
     ),
+    # Do not overwrite files, we get problems with jqfileupload otherwise
+    "file_overwrite": False,
 }
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),

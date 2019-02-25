@@ -1,13 +1,12 @@
-import os
 import uuid
 from datetime import timedelta
 from io import BytesIO
 
 import pytest
-from django.conf import settings
 from django.core import files
 from django.utils import timezone
 
+from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import (
     StagedAjaxFile,
@@ -169,36 +168,23 @@ def test_file_cleanup():
     assert tested_file.exists
     chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
     assert len(chunks) > 0
-    assert os.path.isdir(
-        os.path.join(
-            settings.MEDIA_ROOT,
-            settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-            str(uploaded_file_uuid),
-        )
-    )
-    file_paths = [
-        os.path.join(settings.MEDIA_ROOT, chunk.file.name) for chunk in chunks
-    ]
-    for path in file_paths:
-        assert os.path.exists(path)
+
+    for chunk in chunks:
+        assert private_s3_storage.exists(name=chunk.file.name)
+
     # Force timeout and clean
     now = timezone.now()
     for chunk in chunks:
         chunk.timeout = now - timedelta(hours=1)
         chunk.save()
+
     cleanup_stale_files()
+
     assert not tested_file.exists
-    chunks = StagedFile.objects.filter(file_id=tested_file.uuid).all()
-    assert len(chunks) == 0
-    assert not os.path.isdir(
-        os.path.join(
-            settings.MEDIA_ROOT,
-            settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-            str(uploaded_file_uuid),
-        )
-    )
-    for path in file_paths:
-        assert not os.path.exists(path)
+    assert len(StagedFile.objects.filter(file_id=tested_file.uuid).all()) == 0
+
+    for chunk in chunks:
+        assert not private_s3_storage.exists(name=chunk.file.name)
 
 
 @pytest.mark.django_db
@@ -310,27 +296,11 @@ def test_file_deletion():
     assert tested_file.is_complete
     assert tested_file.size == len(file_content)
     chunks = StagedFile.objects.filter(file_id=uploaded_file_uuid).all()
-    assert os.path.isdir(
-        os.path.join(
-            settings.MEDIA_ROOT,
-            settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-            str(uploaded_file_uuid),
-        )
-    )
-    file_paths = [
-        os.path.join(settings.MEDIA_ROOT, chunk.file.name) for chunk in chunks
-    ]
+    file_paths = [chunk.file.name for chunk in chunks]
     for path in file_paths:
-        assert os.path.exists(path)
+        assert private_s3_storage.exists(path)
     tested_file.delete()
     assert not tested_file.exists
     assert not tested_file.is_complete
-    assert not os.path.isdir(
-        os.path.join(
-            settings.MEDIA_ROOT,
-            settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-            str(uploaded_file_uuid),
-        )
-    )
     for path in file_paths:
-        assert not os.path.exists(path)
+        assert not private_s3_storage.exists(path)
