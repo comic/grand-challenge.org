@@ -7,10 +7,12 @@ import hashlib
 from collections import Iterable
 from datetime import timedelta
 from io import BufferedIOBase
+from tempfile import TemporaryFile
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
 from django.http import HttpResponse
@@ -41,15 +43,7 @@ def cleanup_stale_files():
     now = timezone.now()
     chunks_to_delete = StagedFile.objects.filter(timeout__lt=now).all()
     for chunk in chunks_to_delete:
-        print(f"Deleting {chunk.id}...")
-        dir_name = os.path.dirname(
-            os.path.join(settings.MEDIA_ROOT, chunk.file.name)
-        )
         chunk.file.delete()
-        try:
-            os.rmdir(dir_name)
-        except IOError:
-            pass
         chunk.delete()
 
 
@@ -316,22 +310,22 @@ class OpenedStagedAjaxFile(BufferedIOBase):
 
     def __init__(self, _uuid):
         super().__init__()
-        self.__uuid = _uuid
-        self.__chunks = list(
-            StagedFile.objects.filter(file_id=self.__uuid).all()
+        self._uuid = _uuid
+        self._chunks = list(
+            StagedFile.objects.filter(file_id=self._uuid).all()
         )
-        self.__chunks.sort(key=lambda x: x.start_byte)
-        self.__chunk_map = IntervalMap()
-        for chunk in self.__chunks:
-            self.__chunk_map.append_interval(
+        self._chunks.sort(key=lambda x: x.start_byte)
+        self._chunk_map = IntervalMap()
+        for chunk in self._chunks:
+            self._chunk_map.append_interval(
                 chunk.end_byte - chunk.start_byte + 1, chunk
             )
-        self.__file_pointer = 0
-        self.__current_chunk = None
+        self._file_pointer = 0
+        self._current_chunk = None
 
     @property
     def closed(self):
-        return self.__chunks is None
+        return self._chunks is None
 
     @property
     def size(self):
@@ -339,7 +333,7 @@ class OpenedStagedAjaxFile(BufferedIOBase):
             return None
 
         else:
-            return len(self.__chunk_map)
+            return len(self._chunk_map)
 
     def readable(self, *args, **kwargs):
         return True
@@ -361,36 +355,36 @@ class OpenedStagedAjaxFile(BufferedIOBase):
         if self.closed:
             raise ValueError("file closed")
 
-        if self.size <= self.__file_pointer:
+        if self.size <= self._file_pointer:
             return b""
 
-        if self.__file_pointer < 0:
+        if self._file_pointer < 0:
             raise IOError("invalid file pointer position")
 
         if size is None:
-            size = self.size - self.__file_pointer
+            size = self.size - self._file_pointer
         result = b""
         while len(result) < size:
-            if self.__file_pointer >= len(self.__chunk_map):
+            if self._file_pointer >= len(self._chunk_map):
                 break
 
-            this_chunk = self.__chunk_map[self.__file_pointer]
-            if this_chunk is not self.__current_chunk:
+            this_chunk = self._chunk_map[self._file_pointer]
+            if this_chunk is not self._current_chunk:
                 # we need to switch to a new chunk
-                if self.__current_chunk is not None:
-                    self.__current_chunk.file.close()
-                    self.__current_chunk = None
+                if self._current_chunk is not None:
+                    self._current_chunk.file.close()
+                    self._current_chunk = None
                 this_chunk.file.open("rb")
                 this_chunk.file.seek(
-                    self.__file_pointer - this_chunk.start_byte
+                    self._file_pointer - this_chunk.start_byte
                 )
-                self.__current_chunk = this_chunk
+                self._current_chunk = this_chunk
             read_size = min(
                 size - len(result),
-                self.__current_chunk.end_byte + 1 - self.__file_pointer,
+                self._current_chunk.end_byte + 1 - self._file_pointer,
             )
-            result += self.__current_chunk.file.read(read_size)
-            self.__file_pointer += read_size
+            result += self._current_chunk.file.read(read_size)
+            self._file_pointer += read_size
         return result
 
     def read1(self, size=-1):
@@ -407,32 +401,32 @@ class OpenedStagedAjaxFile(BufferedIOBase):
         if from_what == 0:
             new_pointer = offset
         elif from_what == 1:
-            new_pointer = self.__file_pointer + offset
+            new_pointer = self._file_pointer + offset
         elif from_what == 2:
             new_pointer = self.size + offset
         if new_pointer < 0:
             raise IOError("invalid file pointer")
 
-        self.__file_pointer = new_pointer
-        if self.__file_pointer < self.__chunk_map.len:
-            if self.__chunk_map[self.__file_pointer] is self.__current_chunk:
-                self.__current_chunk.file.seek(
-                    self.__file_pointer - self.__current_chunk.start_byte
+        self._file_pointer = new_pointer
+        if self._file_pointer < self._chunk_map.len:
+            if self._chunk_map[self._file_pointer] is self._current_chunk:
+                self._current_chunk.file.seek(
+                    self._file_pointer - self._current_chunk.start_byte
                 )
-        return self.__file_pointer
+        return self._file_pointer
 
     def tell(self, *args, **kwargs):
         if self.closed:
             raise ValueError("file closed")
 
-        return self.__file_pointer
+        return self._file_pointer
 
     def close(self):
         if not self.closed:
-            self.__chunks = None
-            if self.__current_chunk is not None:
-                self.__current_chunk.file.close()
-                self.__current_chunk = None
+            self._chunks = None
+            if self._current_chunk is not None:
+                self._current_chunk.file.close()
+                self._current_chunk = None
 
 
 class StagedAjaxFile:
