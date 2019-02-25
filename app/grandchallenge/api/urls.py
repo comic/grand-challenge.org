@@ -9,7 +9,7 @@ app_name = "api"
 
 router = routers.DefaultRouter()
 router.register(r"submissions", SubmissionViewSet)
-router.register(r"cases/images", ImageViewSet)
+router.register(r"cases/images", ImageViewSet, basename="images")
 urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers

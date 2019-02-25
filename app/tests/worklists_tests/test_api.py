@@ -5,7 +5,7 @@ from tests.api_utils import assert_api_crud
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "table_reverse, record_reverse, expected_table, object_factory",
+    "table_reverse, expected_table, object_factory",
     [
         ("worklists:worklists", "Worklist Table", WorklistFactory),
         ("worklists:sets", "Worklist Set Table", WorklistSetFactory),
