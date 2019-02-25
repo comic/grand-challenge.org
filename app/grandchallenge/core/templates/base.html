@@ -14,6 +14,8 @@
               content="{{ site.description }}"/>
         <meta name="keywords"
               content="open, science, medical, image, computing, validated"/>
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1">
 
         {% comment %}
             <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
@@ -46,15 +48,11 @@
         <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
               rel="stylesheet">
 
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1">
-
         <link rel="stylesheet" type="text/css"
               href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
               crossorigin="anonymous">
 
-        <link href="{% static 'fontawesome-5.0.8/css/fontawesome-all.css' %}"
-              rel="stylesheet">
+        <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
 
         {#  Custom CSS, must be included AFTER bootstrap  #}
         <link href="{% static "css/core.css" %}" type="text/css"
