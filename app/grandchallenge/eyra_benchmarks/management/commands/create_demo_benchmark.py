@@ -124,7 +124,7 @@ class Command(BaseCommand):
             interface.save()
 
             test_input = Input(
-                name='test',
+                name='test_data',
                 type=DataType.objects.get(name='GrayScaleImageSet'),
                 interface=interface
             )

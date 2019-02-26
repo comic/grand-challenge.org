@@ -1,8 +1,8 @@
 from rest_framework.permissions import BasePermission, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from grandchallenge.eyra_algorithms.models import Algorithm, Job
-from grandchallenge.eyra_algorithms.serializers import AlgorithmSerializer, JobSerializer
+from grandchallenge.eyra_algorithms.models import Algorithm, Job, Interface
+from grandchallenge.eyra_algorithms.serializers import AlgorithmSerializer, JobSerializer, InterfaceSerializer
 
 
 class AlgorithmViewSet(ModelViewSet):
@@ -19,4 +19,10 @@ class AlgorithmViewSet(ModelViewSet):
 class JobViewSet(ReadOnlyModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+
+class InterfaceViewSet(ReadOnlyModelViewSet):
+    queryset = Interface.objects.all()
+    serializer_class = InterfaceSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
