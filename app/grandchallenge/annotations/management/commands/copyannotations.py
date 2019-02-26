@@ -1,4 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from guardian.shortcuts import assign_perm
+
 from grandchallenge.annotations.models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
@@ -8,10 +12,7 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from guardian.shortcuts import assign_perm
-
+from grandchallenge.retina_core.management.commands.setannotationpermissions import PERMISSION_TYPES
 
 class Command(BaseCommand):
     """
@@ -43,7 +44,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        permission_types = ("view", "add", "change", "delete")
         try:
             user_from = get_user_model().objects.get(
                 username=options["user_from"]
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                 obj.pk = None
                 obj.save()
                 if options["add_permissions"]:
-                    for permission_type in permission_types:
+                    for permission_type in PERMISSION_TYPES:
                         assign_perm(
                             f"annotations.{permission_type}_{model.__name__.lower()}",
                             user_to,
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                     child.annotation_set = obj
                     child.save()
                     if options["add_permissions"]:
-                        for permission_type in permission_types:
+                        for permission_type in PERMISSION_TYPES:
                             assign_perm(
                                 f"annotations.{permission_type}_{child.__class__.__name__.lower()}",
                                 user_to,

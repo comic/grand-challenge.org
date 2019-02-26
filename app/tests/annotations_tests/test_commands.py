@@ -2,19 +2,34 @@ import pytest
 from io import StringIO
 from django.forms.models import model_to_dict
 from django.core.management import call_command, CommandError
+from guardian.core import ObjectPermissionChecker
 from tests.factories import UserFactory
 from grandchallenge.annotations.models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
+    IntegerClassificationAnnotation,
     PolygonAnnotationSet,
     LandmarkAnnotationSet,
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
+from grandchallenge.retina_core.management.commands.setannotationpermissions import (
+    PERMISSION_TYPES
+)
 
 
 @pytest.mark.django_db
 class TestCommands:
+    annotations = (
+        (MeasurementAnnotation, "measurement"),
+        (BooleanClassificationAnnotation, "boolean"),
+        (IntegerClassificationAnnotation, "integer"),
+        (PolygonAnnotationSet, "polygon"),
+        (LandmarkAnnotationSet, "landmark"),
+        (ETDRSGridAnnotation, "etdrs"),
+        (CoordinateListAnnotation, "coordinatelist"),
+    )
+
     def test_copyannotations_command_requires_arguments(self):
         try:
             call_command("copyannotations")
@@ -71,6 +86,10 @@ class TestCommands:
             in output
         )
         assert (
+            f"Copied IntegerClassificationAnnotation({AnnotationSet.integer.pk})"
+            in output
+        )
+        assert (
             f"Copied PolygonAnnotationSet({AnnotationSet.polygon.pk}) with 10 children"
             in output
         )
@@ -85,7 +104,7 @@ class TestCommands:
         assert (
             f"Copied ETDRSGridAnnotation({AnnotationSet.etdrs.pk})" in output
         )
-        assert "Done! Copied 6 annotations/sets and 15 children" in output
+        assert "Done! Copied 7 annotations/sets and 15 children" in output
 
     def test_copyannotations_command_copies_correctly(self, AnnotationSet):
         user_from = AnnotationSet.grader
@@ -110,14 +129,7 @@ class TestCommands:
             "landmarks",
         )
 
-        for model, name in (
-            (MeasurementAnnotation, "measurement"),
-            (BooleanClassificationAnnotation, "boolean"),
-            (PolygonAnnotationSet, "polygon"),
-            (LandmarkAnnotationSet, "landmark"),
-            (ETDRSGridAnnotation, "etdrs"),
-            (CoordinateListAnnotation, "coordinatelist"),
-        ):
+        for model, name in self.annotations:
             models = {
                 "original": model_to_dict(getattr(AnnotationSet, name)),
                 "copy": model_to_dict(model.objects.get(grader=user_to)),
@@ -129,3 +141,70 @@ class TestCommands:
                     models[name][float_field] = None
 
             assert models["original"] == models["copy"]
+
+    def test_copyannotations_command_adds_permissions(self, AnnotationSet):
+        user_from = AnnotationSet.grader
+        user_to = UserFactory()
+
+        call_command(
+            "copyannotations",
+            user_from.username,
+            user_to.username,
+            stdout=None,  # suppress output
+        )
+
+        checker = ObjectPermissionChecker(user_to)
+
+        for model, _ in self.annotations:
+            model_instance = model.objects.get(grader=user_to)
+            children = []
+            if model == PolygonAnnotationSet:
+                child_model_name = "singlepolygonannotation"
+                children = model_instance.singlepolygonannotation_set.all()
+            if model == LandmarkAnnotationSet:
+                child_model_name = "singlelandmarkannotation"
+                children = model_instance.singlelandmarkannotation_set.all()
+
+            perms = checker.get_perms(model_instance)
+            for permission_type in PERMISSION_TYPES:
+                assert f"{permission_type}_{model.__name__.lower()}" in perms
+
+            if children:
+                checker.prefetch_perms(children)
+            for child in children:
+                perms = checker.get_perms(child)
+                for permission_type in PERMISSION_TYPES:
+                    assert f"{permission_type}_{child_model_name}" in perms
+
+    def test_copyannotations_command_doesnt_add_permissions(
+        self, AnnotationSet
+    ):
+        user_from = AnnotationSet.grader
+        user_to = UserFactory()
+
+        call_command(
+            "copyannotations",
+            user_from.username,
+            user_to.username,
+            add_permissions=False,
+            stdout=None,  # suppress output
+        )
+
+        checker = ObjectPermissionChecker(user_to)
+
+        for model, _ in self.annotations:
+            model_instance = model.objects.get(grader=user_to)
+            children = []
+            if model == PolygonAnnotationSet:
+                children = model_instance.singlepolygonannotation_set.all()
+            if model == LandmarkAnnotationSet:
+                children = model_instance.singlelandmarkannotation_set.all()
+
+            perms = checker.get_perms(model_instance)
+            assert len(perms) == 0
+
+            if children:
+                checker.prefetch_perms(children)
+            for child in children:
+                perms = checker.get_perms(child)
+                assert len(perms) == 0

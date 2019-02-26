@@ -21,6 +21,7 @@ from tests.factories import (
 from tests.annotations_tests.factories import (
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
     PolygonAnnotationSetFactory,
     CoordinateListAnnotationFactory,
     LandmarkAnnotationSetFactory,
@@ -217,6 +218,7 @@ class AnnotationSet(NamedTuple):
     grader: UserFactory
     measurement: MeasurementAnnotationFactory
     boolean: BooleanClassificationAnnotationFactory
+    integer: IntegerClassificationAnnotationFactory
     polygon: PolygonAnnotationSetFactory
     coordinatelist: CoordinateListAnnotationFactory
     landmark: LandmarkAnnotationSetFactory
@@ -227,6 +229,7 @@ def generate_annotation_set():
     grader = UserFactory()
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
+    integer = IntegerClassificationAnnotationFactory(grader=grader)
     polygon = PolygonAnnotationSetFactory(grader=grader)
     coordinatelist = CoordinateListAnnotationFactory(grader=grader)
     landmark = LandmarkAnnotationSetFactory(grader=grader)
@@ -248,6 +251,7 @@ def generate_annotation_set():
         coordinatelist=coordinatelist,
         landmark=landmark,
         etdrs=etdrs,
+        integer=integer
     )
 
 
