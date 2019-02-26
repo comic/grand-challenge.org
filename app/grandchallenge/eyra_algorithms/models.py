@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class Interface(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=32, unique=True)
+    name = models.CharField(max_length=64, unique=True)
     output_type = models.ForeignKey(
         DataType,
         on_delete = models.CASCADE,
@@ -30,7 +30,7 @@ class Interface(UUIDModel):
 
 class Input(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=32, unique=True)
+    name = models.CharField(max_length=64, unique=True)
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='inputs')
     type = models.ForeignKey(
         DataType,
@@ -52,7 +52,7 @@ class Algorithm(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=64, unique=True, null=True, blank=True)
     description = models.TextField(
         default="",
         blank=True,

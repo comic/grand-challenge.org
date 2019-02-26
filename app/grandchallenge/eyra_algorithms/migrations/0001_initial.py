@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(blank=True, max_length=32, null=True, unique=True)),
+                ('name', models.CharField(blank=True, max_length=64, null=True, unique=True)),
                 ('description', models.TextField(blank=True, default='', help_text='Description of this algorithm in markdown.')),
                 ('container', models.CharField(max_length=64, unique=True)),
                 ('creator', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='algorithms', to=settings.AUTH_USER_MODEL)),
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
-                ('name', models.CharField(max_length=32, unique=True)),
+                ('name', models.CharField(max_length=64, unique=True)),
             ],
             options={
                 'abstract': False,
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('modified', models.DateTimeField(auto_now=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
-                ('name', models.CharField(max_length=32, unique=True)),
+                ('name', models.CharField(max_length=64, unique=True)),
                 ('output_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='eyra_data.DataType')),
             ],
             options={
