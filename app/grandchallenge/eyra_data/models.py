@@ -8,7 +8,7 @@ from grandchallenge.core.models import UUIDModel
 logger = logging.getLogger(__name__)
 
 
-def get_data_file_name(obj, filename):
+def get_data_file_name(obj, filename=None):
     return 'data_files/'+str(obj.id)
 
 
