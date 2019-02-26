@@ -10,6 +10,7 @@ from django.conf import settings
 
 from grandchallenge.subdomains.utils import reverse
 from tests.conftest import generate_annotation_set
+from tests.viewset_helpers import view_test
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
@@ -26,6 +27,7 @@ from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
 )
+from grandchallenge.annotations.models import PolygonAnnotationSet
 from grandchallenge.retina_api.views import (
     PolygonAnnotationSetViewSet,
     SinglePolygonViewSet,
@@ -334,7 +336,6 @@ class TestDataAPIEndpoint:
 batch_test_data_endpoints(TestDataAPIEndpoint)
 
 
-@pytest.mark.django_db
 class TestPolygonAPIListView(TestCase):
     def setUp(self):
         self.annotation_set = generate_annotation_set()
@@ -384,4 +385,287 @@ class TestPolygonAPIListView(TestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data[0] == self.serialized_data.data
 
-#TODO add tests for polygonAnnotationSetViewset queryset and singlepolygonviewset queryset
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        None,
+        "normal_user",
+        "retina_grader_non_allowed",
+        "retina_grader",
+        "retina_admin",
+    ],
+)
+class TestPolygonAnnotationSetViewSet1:
+    namespace = "retina:api"
+    basename = "polygonannotationset"
+
+    def test_list_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "list",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            serialized_data = PolygonAnnotationSetSerializer(
+                instance=TwoPolygonAnnotationSets.polygonset1
+            ).data
+            assert response_data == [serialized_data]
+
+    def test_create_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        model_build = PolygonAnnotationSetFactory.build()
+        model_serialized = PolygonAnnotationSetSerializer(model_build).data
+        image = ImageFactory()
+        model_serialized["image"] = str(image.id)
+        model_serialized["grader"] = TwoPolygonAnnotationSets.grader1.id
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response_data["id"]
+            response_data["image"] = str(response_data["image"])
+            assert response_data == model_serialized
+
+    def test_retrieve_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "retrieve",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+        )
+        if user_type == "retina_grader" or user_type == "retina_admin":
+            model_serialized = PolygonAnnotationSetSerializer(
+                instance=TwoPolygonAnnotationSets.polygonset1
+            ).data
+            assert response_data == model_serialized
+
+    def test_update_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        model_serialized = PolygonAnnotationSetSerializer(
+            instance=TwoPolygonAnnotationSets.polygonset1
+        ).data
+        image = ImageFactory()
+        model_serialized["image"] = str(image.id)
+        model_serialized["singlepolygonannotation_set"] = []
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            response_data["image"] = str(response_data["image"])
+            response_data["singlepolygonannotation_set"] = []
+            assert response_data == model_serialized
+
+    def test_partial_update_view(
+        self, TwoPolygonAnnotationSets, rf, user_type
+    ):
+        model_serialized = PolygonAnnotationSetSerializer(
+            instance=TwoPolygonAnnotationSets.polygonset1
+        ).data
+        image = ImageFactory()
+        model_serialized["image"] = str(image.id)
+        model_serialized["singlepolygonannotation_set"] = []
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            response_data["image"] = str(response_data["image"])
+            response_data["singlepolygonannotation_set"] = []
+            assert response_data == model_serialized
+
+    def test_destroy_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            assert not PolygonAnnotationSet.objects.filter(
+                id=TwoPolygonAnnotationSets.polygonset1.id
+            ).exists()
+
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        None,
+        "normal_user",
+        "retina_grader_non_allowed",
+        "retina_grader",
+        "retina_admin",
+    ],
+)
+class TestPolygonAnnotationSetViewSet1:
+    namespace = "retina:api"
+    basename = "singlepolygonannotation"
+
+    def test_list_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "list",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            None,
+            rf,
+            SinglePolygonViewSet,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            serialized_data = SinglePolygonAnnotationSerializer(
+                TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.all(),
+                many=True
+            ).data
+            assert response_data == serialized_data
+
+    def test_create_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        model_build = SinglePolygonAnnotationFactory.build()
+        model_serialized = SinglePolygonAnnotationSerializer(model_build).data
+        annotation_set = PolygonAnnotationSetFactory()
+        model_serialized["annotation_set"] = str(annotation_set.id)
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            None,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response_data["id"]
+            response_data["annotation_set"] = str(response_data["annotation_set"])
+            assert response_data == model_serialized
+
+    def test_retrieve_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "retrieve",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            rf,
+            PolygonAnnotationSetViewSet,
+        )
+        if user_type == "retina_grader" or user_type == "retina_admin":
+            model_serialized = SinglePolygonAnnotationSerializer(
+                TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
+            ).data
+            assert response_data == model_serialized
+
+    def test_update_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        model_serialized = SinglePolygonAnnotationSerializer(
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
+        ).data
+        annotation_set = PolygonAnnotationSetFactory()
+        model_serialized["annotation_set"] = str(annotation_set.id)
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            response_data["annotation_set"] = str(response_data["annotation_set"])
+            assert response_data == model_serialized
+
+    def test_partial_update_view(
+        self, TwoPolygonAnnotationSets, rf, user_type
+    ):
+        model_serialized = SinglePolygonAnnotationSerializer(
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
+        ).data
+        annotation_set = PolygonAnnotationSetFactory()
+        model_serialized["annotation_set"] = str(annotation_set.id)
+        model_json = json.dumps(model_serialized)
+
+        response_data = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            response_data["annotation_set"] = str(response_data["annotation_set"])
+            assert response_data == model_serialized
+
+    def test_destroy_view(self, TwoPolygonAnnotationSets, rf, user_type):
+        response_data = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            rf,
+            PolygonAnnotationSetViewSet,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            assert not PolygonAnnotationSet.objects.filter(
+                id=TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first().id
+            ).exists()
