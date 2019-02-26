@@ -178,7 +178,6 @@ class Executor(object):
                 },
                 name=f"{self._job_id}-executor",
                 remove=True,
-                read_only=True,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
