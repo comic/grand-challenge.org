@@ -12,13 +12,7 @@ from grandchallenge.container_exec.backends.k8s import K8sJob
 from django.conf import settings
 
 
-def run_algorithm():
-    # INPUTS
-    submission = Submission.objects.all()[0]
-    namespace = "dev-roel"
-    docker_registry_url = "docker-registry.roel.dev.eyrabenchmark.net"
-    s3_bucket = "eyra-datasets"
-
+def run_algorithm(submission):
     benchmark = submission.benchmark
     algorithm = submission.algorithm
     job_attribute = "algorithm_job"
@@ -28,13 +22,9 @@ def run_algorithm():
     input_file_names = ["test_data_file"]
     inputs = dict(zip(input_file_keys, input_file_names))
     output_file_name = "output_file"
-    # END OF INPUTS
 
     create_and_run_job(
         submission,
-        namespace,
-        docker_registry_url,
-        s3_bucket,
         algorithm,
         job_attribute,
         job_id_template,
@@ -42,29 +32,23 @@ def run_algorithm():
         output_file_name
     )
 
-def run_evaluation():
-    # INPUTS
-    submission = Submission.objects.all()[0]
-    namespace = "dev-roel"
-    docker_registry_url = "docker-registry.roel.dev.eyrabenchmark.net"
-    s3_bucket = "eyra-datasets"
 
+def run_evaluation(submission):
     benchmark = submission.benchmark
     algorithm = benchmark.evaluator
     job_attribute = "evaluation_job"
     job_id_template = "evaluation-job-{}"
 
-    input_file_keys = [get_data_file_name(submission.algorithm_job.output), get_data_file_name(benchmark.test_ground_truth_data_file)]
+    input_file_keys = [
+        get_data_file_name(submission.algorithm_job.output),
+        get_data_file_name(benchmark.test_ground_truth_data_file)
+    ]
     input_file_names = ["prediction", "ground_truth"]
     inputs = dict(zip(input_file_keys, input_file_names))
     output_file_name = "metrics.json"
-    # END OF INPUTS
 
     create_and_run_job(
         submission,
-        namespace,
-        docker_registry_url,
-        s3_bucket,
         algorithm,
         job_attribute,
         job_id_template,
@@ -75,15 +59,15 @@ def run_evaluation():
 
 def create_and_run_job(
         submission,
-        namespace,
-        docker_registry_url,
-        s3_bucket,
         algorithm,
         job_attribute,
         job_id_template,
         inputs,
         output_file_name
     ):
+    s3_bucket = settings.AWS_STORAGE_BUCKET_NAME
+    docker_registry_url = settings.PRIVATE_DOCKER_REGISTRY
+    namespace = settings.K8S_NAMESPACE
 
     # Create an output file object
     output_file = DataFile(
@@ -142,8 +126,7 @@ def create_and_run_job(
     output_file.save()
 
 
-
-
 if __name__ == "__main__":
-    run_algorithm()
-    run_evaluation()
+    submission = Submission.objects.all()[0]
+    run_algorithm(submission)
+    run_evaluation(submission)
