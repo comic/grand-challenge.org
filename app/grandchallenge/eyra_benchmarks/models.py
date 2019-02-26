@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+# from django.core.exceptions import ValidationError
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
@@ -30,16 +30,16 @@ class Benchmark(UUIDModel):
         ),
     )
     evaluator = models.ForeignKey(Algorithm, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
-    training_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    test_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    ground_truth_datafile = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    training_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
     #         raise ValidationError("Training dataset should be public.")
 
     def __str__(self):
-        """ string representation for this object"""
         return self.name
 
     class Meta:
