@@ -54,9 +54,8 @@ class RetinaOwnerAPIPermission(permissions.BasePermission):
         is_retina_user_and_owner = request.user == user and is_in_retina_group(
             request.user
         )
-        return (
-            is_in_retina_admins_group(request.user) or is_retina_user_and_owner
-        )
+        is_admin = is_in_retina_admins_group(request.user)
+        return is_admin or is_retina_user_and_owner
 
 
 class RetinaAPIPermissionMixin(AccessMixin):
