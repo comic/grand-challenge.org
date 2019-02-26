@@ -60,9 +60,14 @@ class Executor(object):
             "labels": {"job_id": self._job_id},
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
+            # Set to the same as mem_limit to avoid using swap
+            "memswap_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
             "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
+            "cap_drop": ["all"],
+            "security_opt": ["no-new-privileges"],
+            "pids_limit": 16,
             "log_config": LogConfig(
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
