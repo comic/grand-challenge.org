@@ -746,9 +746,9 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
         self
     ):  # TODO simplify permissions/combine with singlepolygonviewset
         if is_in_retina_admins_group(self.request.user):
-            if self.request.kwargs.get["user_id"]:
+            if self.kwargs["user_id"]:
                 queryset = PolygonAnnotationSet.objects.filter(
-                    grader=self.request.kwargs.get["user_id"]
+                    grader=self.kwargs["user_id"]
                 )
             else:
                 queryset = SinglePolygonAnnotation.objects.all()
