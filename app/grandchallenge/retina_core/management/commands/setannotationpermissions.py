@@ -30,6 +30,13 @@ ANNOTATION_CODENAMES = (
     (ETDRSGridAnnotation, "etdrsgridannotation"),
 )
 
+WARNING_TEXT = (
+    "Only {} model level permissions {}. No annotation objects found."
+)
+SUCCESS_TEXT = (
+    "Done! {} model level permissions and {} object level permissions {}."
+)
+
 
 def change_retina_permissions(remove=False):
     if remove:
@@ -59,7 +66,7 @@ def change_retina_permissions(remove=False):
                         owner,
                         annotation,
                     )
-                    olp_count += 1
+                olp_count += 1
 
         # Change group level permissions
         for permission_type in PERMISSION_TYPES:
@@ -67,7 +74,7 @@ def change_retina_permissions(remove=False):
                 f"annotations.{permission_type}_{annotation_codename}",
                 retina_admin_group,
             )
-            mlp_count += 1
+        mlp_count += 1
 
     return mlp_count, olp_count
 
@@ -95,8 +102,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         mlp_count, olp_count = change_retina_permissions(options["remove"])
         assigned_text = "removed" if options["remove"] else "assigned"
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Done! {mlp_count} model level permissions and {olp_count} object level permissions {assigned_text}."
+        if mlp_count == len(ANNOTATION_CODENAMES) and olp_count == 0:
+            self.stdout.write(
+                self.style.WARNING(
+                    WARNING_TEXT.format(mlp_count * 4, assigned_text)
+                )
             )
-        )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    SUCCESS_TEXT.format(
+                        mlp_count * 4, olp_count * 4, assigned_text
+                    )
+                )
+            )
