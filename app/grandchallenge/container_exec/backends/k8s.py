@@ -5,7 +5,7 @@ import time
 
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, volume_defs, s3_bucket, input_object_keys, output_object_key, blocking=False):
+    def __init__(self, job_id, namespace, image, s3_bucket, input_object_keys, output_object_key, volume_defs=None, blocking=False):
         """
         Run a Kubernetes job based on a simple algorithm container.
 
@@ -24,17 +24,20 @@ class K8sJob(object):
             job_id (str): the ID used as the K8s job name
             namespace (str): the namespace where the job is to be run
             image (str): the docker image that contains the code to run
-            volume_defs (dict): a dict containing (volume name, mount point) items: all these are mounted in all containers that are part of the job
             s3_bucket (str): the bucket containing the input and output data
             input_object_keys (list): a list of the object storage keys for the input files
             output_object_key (str): the object storage key that is used for storing the algorithm output
+            volume_defs (dict): a dict containing (volume name, mount point) items: all these are mounted in all containers that are part of the job
             blocking (bool): whether to wait for the job to finish
         """
 
         self.job_id = str(job_id)
         self.namespace = namespace
         self.image = image
-        self.volume_defs = volume_defs
+        if volume_defs is None:
+            self.volume_defs = {"input-volume": "/input", "output-volume": "/output"}
+        else:
+            self.volume_defs = volume_defs
         self.input_object_keys = input_object_keys
         self.output_object_key = output_object_key
         self.s3_bucket = s3_bucket
@@ -279,7 +282,6 @@ if __name__ == "__main__":
         job_id=f"{algorithm_id.replace('_', '-')}",
         namespace="dev-maarten",
         image=f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
-        volume_defs={"input-volume": "/input", "output-volume": "/output"},
         s3_bucket="eyra-datasets",
         input_object_keys=["test_data/X_test.npy"],
         output_object_key=f"test_data/result_{algorithm_id}.zip",
