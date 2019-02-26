@@ -12,7 +12,10 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
-from grandchallenge.retina_core.management.commands.setannotationpermissions import PERMISSION_TYPES
+from grandchallenge.retina_core.management.commands.setannotationpermissions import (
+    PERMISSION_TYPES
+)
+
 
 class Command(BaseCommand):
     """

@@ -251,7 +251,7 @@ def generate_annotation_set():
         coordinatelist=coordinatelist,
         landmark=landmark,
         etdrs=etdrs,
-        integer=integer
+        integer=integer,
     )
 
 
