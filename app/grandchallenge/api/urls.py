@@ -28,8 +28,8 @@ router.register(r"jobs", JobViewSet)
 # router.register(r"challenges", ChallengeViewSet)
 
 
-router.register(r"datafiles", DataFileViewSet)
-router.register(r"datatypes", DataTypeViewSet)
+router.register(r"data_files", DataFileViewSet)
+router.register(r"data_ypes", DataTypeViewSet)
 # router.register(r"datasetfiles", DataSetFileViewSet)
 
 router.register(r"users", UserViewSet)
