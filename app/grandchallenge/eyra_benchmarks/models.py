@@ -17,9 +17,12 @@ class Benchmark(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    short_description = models.TextField(
+        default="",
+        help_text="Short description in markdown.",
+    )
     description = models.TextField(
         default="",
-        blank=True,
         help_text="Description of this project in markdown.",
     )
     name = models.CharField(
@@ -56,7 +59,7 @@ class Submission(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=64, unique=True, null=True, blank=True)
     benchmark = models.ForeignKey(Benchmark, on_delete=models.CASCADE)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name='submissions')
     algorithm_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
