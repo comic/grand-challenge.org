@@ -6,7 +6,8 @@ from grandchallenge.eyra_algorithms.serializers import AlgorithmSerializer, JobS
 
 
 class AlgorithmViewSet(ModelViewSet):
-    queryset = Algorithm.objects.exclude(output_type__name__exact='OutputMetrics')
+    # queryset = Algorithm.objects.exclude(output_type__name__exact='OutputMetrics')
+    queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
