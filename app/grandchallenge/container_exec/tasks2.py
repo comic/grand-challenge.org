@@ -6,69 +6,41 @@ import time
 import json
 import datetime
 import pytz
-from grandchallenge.eyra_benchmarks.models import Submission, Job
+from grandchallenge.eyra_benchmarks.models import Submission
+from grandchallenge.eyra_algorithms.models import Job, JobInput, Input
 from grandchallenge.eyra_data.models import DataFile, get_data_file_name
 from grandchallenge.container_exec.backends.k8s import K8sJob
 from django.conf import settings
 
 
-def run_algorithm(submission):
-    benchmark = submission.benchmark
-    algorithm = submission.algorithm
+def create_algorithm_job(submission):
     job_attribute = "algorithm_job"
-    job_id_template = "submission-job-{}"
-
-    input_file_keys = [get_data_file_name(benchmark.test_data_file)]
-    input_file_names = ["test_data_file"]
-    inputs = dict(zip(input_file_keys, input_file_names))
     output_file_name = "output_file"
-
-    create_and_run_job(
-        submission,
-        algorithm,
-        job_attribute,
-        job_id_template,
-        inputs,
-        output_file_name
-    )
-
-
-def run_evaluation(submission):
+    algorithm = submission.algorithm
     benchmark = submission.benchmark
-    algorithm = benchmark.evaluator
+
+    inputs = {
+        "test_data": benchmark.test_data_file
+    }
+
+    return create_job(submission, algorithm, job_attribute, output_file_name, inputs)
+
+
+def create_evaluation_job(submission):
     job_attribute = "evaluation_job"
-    job_id_template = "evaluation-job-{}"
-
-    input_file_keys = [
-        get_data_file_name(submission.algorithm_job.output),
-        get_data_file_name(benchmark.test_ground_truth_data_file)
-    ]
-    input_file_names = ["prediction", "ground_truth"]
-    inputs = dict(zip(input_file_keys, input_file_names))
     output_file_name = "metrics.json"
+    algorithm = submission.evaluator
+    benchmark = submission.benchmark
 
-    create_and_run_job(
-        submission,
-        algorithm,
-        job_attribute,
-        job_id_template,
-        inputs,
-        output_file_name
-    )
+    inputs = {
+        "predictions": submission.algorithm_job.output,
+        "ground_truth": benchmark.test_ground_truth_data_file
+    }
+
+    return create_job(submission, algorithm, job_attribute, output_file_name, inputs)
 
 
-def create_and_run_job(
-        submission,
-        algorithm,
-        job_attribute,
-        job_id_template,
-        inputs,
-        output_file_name
-    ):
-    s3_bucket = settings.AWS_STORAGE_BUCKET_NAME
-    docker_registry_url = settings.PRIVATE_DOCKER_REGISTRY
-    namespace = settings.K8S_NAMESPACE
-
+def create_job(submission, algorithm, job_attribute, output_file_name, inputs):
     # Create an output file object
     output_file = DataFile(
         name=output_file_name,
@@ -79,14 +51,45 @@ def create_and_run_job(
     # Create a job object
     job = Job(algorithm=algorithm, output=output_file, status=Job.PENDING)
     job.save()
+
+    for input_name, data_file in inputs.items():
+        alg_input = algorithm.interface.inputs.get(name=input_name)
+        job_input = JobInput(input=alg_input, data_file=data_file, job=job)
+        job_input.save()
+
     setattr(submission, job_attribute, job)
     submission.save()
+    return job.pk
+
+
+def run_algorithm_job(job_pk):
+    job_id_template = "algorithm-job-{}"
+    run_job(job_pk, job_id_template)
+
+
+def run_evaluation_job(job_pk):
+    job_id_template = "evaluation-job-{}"
+    run_job(job_pk, job_id_template)
+
+
+def run_job(job_pk, job_id_template):
+    s3_bucket = settings.AWS_STORAGE_BUCKET_NAME
+    docker_registry_url = settings.PRIVATE_DOCKER_REGISTRY
+    namespace = settings.K8S_NAMESPACE
+
+    job = Job.objects.get(pk=job_pk)
+    algorithm = job.algorithm
+    output_file = job.output_file
+
+    k8s_inputs = {}
+    for jobinput in job.inputs:
+        k8s_inputs[get_data_file_name(jobinput.data_file.file)] = jobinput.input.name
 
     # Set up input parameters for K8S job
-    output_file_key = get_data_file_name(output_file)
-    job_id = job_id_template.format(job.pk)
+    output_file_key = get_data_file_name(job.output)
+    job_id = job_id_template.format(job_pk)
     image = f"{docker_registry_url}/{algorithm.container}"
-    outputs = {output_file_key: output_file.name}
+    outputs = {output_file_key: "output_data"}  # HARD-CODED!
 
     # Define and execute K8S job
     k8s_job = K8sJob(
@@ -94,7 +97,7 @@ def create_and_run_job(
         namespace=namespace,
         image=image,
         s3_bucket=s3_bucket,
-        inputs=inputs,
+        inputs=k8s_inputs,
         outputs=outputs,
         blocking=False
     )
@@ -128,5 +131,9 @@ def create_and_run_job(
 
 if __name__ == "__main__":
     submission = Submission.objects.all()[0]
-    run_algorithm(submission)
-    run_evaluation(submission)
+
+    job_pk = create_algorithm_job(submission)
+    run_algorithm_job(job_pk)
+
+    job_pk = create_evaluation_job(submission)
+    run_evaluation_job(job_pk)
