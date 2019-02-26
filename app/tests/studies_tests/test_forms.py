@@ -8,7 +8,7 @@ from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.utils import get_view_for_user
 
-from grandchallenge.patients.forms import StudyCreateForm, StudyUpdateForm
+from grandchallenge.studies.forms import StudyCreateForm, StudyUpdateForm
 
 """" Tests the forms available for Study CRUD """
 
