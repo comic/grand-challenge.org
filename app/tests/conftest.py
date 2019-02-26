@@ -261,3 +261,33 @@ def annotation_set():
     BooleanClassification, PolygonAnnotationSet (with 10 child annotations), CoordinateList,
     LandmarkAnnotationSet(with single landmark annotations for 5 images), ETDRSGrid """
     return generate_annotation_set()
+
+
+class TwoPolygonAnnotationSets(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    polygonset1: PolygonAnnotationSetFactory
+    polygonset2: PolygonAnnotationSetFactory
+
+
+def generate_two_polygon_annotation_sets():
+    graders = (UserFactory(), UserFactory())
+    polygonsets = (PolygonAnnotationSetFactory(grader=graders[0]), PolygonAnnotationSetFactory(grader=graders[1]))
+
+    # Create child models for polygon annotation set
+    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygonsets[0])
+    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygonsets[1])
+
+    return TwoPolygonAnnotationSets(
+        grader1=graders[0],
+        grader2=graders[1],
+        polygonset1=polygonsets[0],
+        polygonset2=polygonsets[1],
+    )
+
+
+@pytest.fixture(name="TwoPolygonAnnotationSets")
+def two_polygon_annotation_sets():
+    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
+    two different graders"""
+    return generate_two_polygon_annotation_sets()
