@@ -2,10 +2,11 @@ from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 import time
+import json
 
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, s3_bucket, input_object_keys, output_object_key, volume_defs=None, blocking=False):
+    def __init__(self, job_id, namespace, image, s3_bucket, inputs, outputs, volume_defs=None, blocking=False, delete_old=True):
         """
         Run a Kubernetes job based on a simple algorithm container.
 
@@ -25,8 +26,8 @@ class K8sJob(object):
             namespace (str): the namespace where the job is to be run
             image (str): the docker image that contains the code to run
             s3_bucket (str): the bucket containing the input and output data
-            input_object_keys (list): a list of the object storage keys for the input files
-            output_object_key (str): the object storage key that is used for storing the algorithm output
+            inputs (dict): a dict of (object storage key, filename) pairs for the input files
+            outputs (dict): a dict of (object storage key, filename) pairs that is used for storing the algorithm output
             volume_defs (dict): a dict containing (volume name, mount point) items: all these are mounted in all containers that are part of the job
             blocking (bool): whether to wait for the job to finish
         """
@@ -38,8 +39,8 @@ class K8sJob(object):
             self.volume_defs = {"input-volume": "/input", "output-volume": "/output"}
         else:
             self.volume_defs = volume_defs
-        self.input_object_keys = input_object_keys
-        self.output_object_key = output_object_key
+        self.inputs = inputs
+        self.outputs = outputs
         self.s3_bucket = s3_bucket
         self.s3_credentials_secret = "do-spaces"
         self.data_io_image = "docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io"
@@ -54,6 +55,13 @@ class K8sJob(object):
             load_incluster_config()
         else:
             load_kube_config()
+
+        if delete_old:
+            pass
+            # batch_v1 = client.BatchV1Api()
+            # batch_v1.list_namespaced_job(self.namespace, )
+            # delete_options = client.V1DeleteOptions()
+            # batch_v1.delete_namespaced_job(self.job_id, self.namespace, delete_options)
 
     def __enter__(self):
         return self
@@ -129,11 +137,11 @@ class K8sJob(object):
             ),
             client.V1EnvVar(
                 name="S3_OBJECT_KEYS_INPUT",
-                value=",".join(self.input_object_keys)
+                value=json.dumps(self.inputs)
             ),
             client.V1EnvVar(
                 name="S3_OBJECT_KEY_OUTPUT",
-                value=self.output_object_key
+                value=json.dumps(self.outputs)
             )
         ]
 
@@ -216,6 +224,14 @@ class K8sJob(object):
                 print("Job succeeded!")
 
         return
+
+    @property
+    def failed(self):
+        return self.status().failed
+
+    @property
+    def succeeded(self):
+        return self.status().succeeded
 
     def execute(self):
         """The main entrypoint for running the job.
