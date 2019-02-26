@@ -69,7 +69,7 @@ class Executor(object):
             "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
-            "pids_limit": 16,
+            "pids_limit": 64,
             "log_config": LogConfig(
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
