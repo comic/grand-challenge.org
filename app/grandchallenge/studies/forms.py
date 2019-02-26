@@ -1,7 +1,7 @@
-from django.forms import ModelForm
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Button, Submit
+from django.forms import ModelForm, DateTimeInput
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.studies.models import Study
@@ -26,7 +26,7 @@ class StudyCreateForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
-        forms.CharField(widget=forms.TextInput(attrs={'class': 'datepicker'}))
+        widgets = {"datetime": DateTimeInput(format="%d/%m/%Y %H:%M:%S")}
 
 
 class StudyUpdateForm(ModelForm):
@@ -48,3 +48,4 @@ class StudyUpdateForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
+        widgets = {"datetime": DateTimeInput(format="%d/%m/%Y %H:%M:%S")}
