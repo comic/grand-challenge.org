@@ -25,21 +25,7 @@ def validate_docker_image_async(
         with uploaded_image.open() as f:
             instance.image.save(uploaded_image.name, File(f))
 
-    try:
-        with instance.image.open(mode="rb") as im, tarfile.open(
-            fileobj=im, mode="r"
-        ) as t:
-            member = dict(zip(t.getnames(), t.getmembers()))["manifest.json"]
-            manifest = t.extractfile(member).read()
-    except (KeyError, tarfile.ReadError):
-        model.objects.filter(pk=pk).update(
-            status=(
-                "manifest.json not found at the root of the container image file. "
-                "Was this created with docker save?"
-            )
-        )
-        raise ValidationError("Invalid Dockerfile")
-
+    manifest = _extract_docker_image_file(model, instance, "manifest.json")
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
@@ -51,9 +37,45 @@ def validate_docker_image_async(
         )
         raise ValidationError("Invalid Dockerfile")
 
-    model.objects.filter(pk=pk).update(
-        image_sha256=f"sha256:{manifest[0]['Config'][:64]}", ready=True
+    image_sha256 = manifest[0]["Config"][:64]
+
+    config = _extract_docker_image_file(
+        model, instance, f"{image_sha256}.json"
     )
+    config = json.loads(config)
+
+    if str(config["config"]["User"].lower()) in ["", "root", "0"]:
+        model.objects.filter(pk=pk).update(
+            status=(
+                "The container runs as root. Please add a user, group and USER "
+                "instruction to your Dockerfile, rebuild, test and upload the "
+                "container again, see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
+            )
+        )
+        raise ValidationError("Invalid Dockerfile")
+
+    model.objects.filter(pk=pk).update(
+        image_sha256=f"sha256:{image_sha256}", ready=True
+    )
+
+
+def _extract_docker_image_file(model, instance, filename: str):
+    """ Extracts a file from the root of a tarball """
+    try:
+        with instance.image.open(mode="rb") as im, tarfile.open(
+            fileobj=im, mode="r"
+        ) as t:
+            member = dict(zip(t.getnames(), t.getmembers()))[filename]
+            file = t.extractfile(member).read()
+        return file
+    except (KeyError, tarfile.ReadError):
+        model.objects.filter(pk=instance.pk).update(
+            status=(
+                f"{filename} not found at the root of the container image "
+                f"file. Was this created with docker save?"
+            )
+        )
+        raise ValidationError("Invalid Dockerfile")
 
 
 def retry_if_dropped(func):

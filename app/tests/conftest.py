@@ -185,6 +185,24 @@ def alpine_images(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
+def root_image(tmpdir_factory):
+    client = docker.DockerClient(
+        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+    )
+    client.images.pull("alpine:3.8")
+
+    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
+    image = cli.get_image("alpine:3.8")
+    outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
+
+    with outfile.open("wb") as f:
+        for chunk in image:
+            f.write(chunk)
+
+    return outfile
+
+
+@pytest.fixture(scope="session")
 def submission_file(tmpdir_factory):
     testfile = tmpdir_factory.mktemp("submission").join("submission.zip")
     z = zipfile.ZipFile(testfile, mode="w")

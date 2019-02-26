@@ -82,7 +82,7 @@ def test_method_validation(evaluation_image):
 
 
 @pytest.mark.django_db
-def test_method_validation_invalid_dockefile(alpine_images):
+def test_method_validation_invalid_dockerfile(alpine_images):
     """ Uploading two images in a tar archive should fail """
     method = MethodFactory(image__from_path=alpine_images)
     assert method.ready == False
@@ -97,6 +97,24 @@ def test_method_validation_invalid_dockefile(alpine_images):
     method = Method.objects.get(pk=method.pk)
     assert method.ready == False
     assert "should only have 1 image" in method.status
+
+
+@pytest.mark.django_db
+def test_method_validation_root_dockerfile(root_image):
+    """ Uploading two images in a tar archive should fail """
+    method = MethodFactory(image__from_path=root_image)
+    assert method.ready == False
+
+    with pytest.raises(ValidationError):
+        validate_docker_image_async(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+    method = Method.objects.get(pk=method.pk)
+    assert method.ready == False
+    assert "runs as root" in method.status
 
 
 @pytest.mark.django_db
