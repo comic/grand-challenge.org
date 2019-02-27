@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
@@ -12,6 +13,8 @@ from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
+from rest_framework_guardian import filters
+
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -741,26 +744,8 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
-
-    def get_queryset(
-        self
-    ):  # TODO simplify permissions/combine with singlepolygonviewset
-        if is_in_retina_admins_group(self.request.user):
-            if self.kwargs["user_id"]:
-                queryset = PolygonAnnotationSet.objects.filter(
-                    grader=self.kwargs["user_id"]
-                )
-            else:
-                queryset = SinglePolygonAnnotation.objects.all()
-        elif is_in_retina_graders_group(self.request.user):
-            queryset = PolygonAnnotationSet.objects.filter(
-                grader=self.request.user
-            )
-        else:
-            # User is not in graders or admins group, should not have access
-            queryset = PolygonAnnotationSet.objects.none()
-        return queryset
-
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    queryset = PolygonAnnotationSet.objects.all()
     # TODO: permission for creation... anyone can create a polygon_set and set user_id to what he wants...
 
 
@@ -768,20 +753,5 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
-
-    def get_queryset(self):
-        if is_in_retina_admins_group(self.request.user):
-            if self.kwargs["user_id"]:
-                queryset = SinglePolygonAnnotation.objects.filter(
-                    annotation_set__grader=self.kwargs["user_id"]
-                )
-            else:
-                queryset = SinglePolygonAnnotation.objects.all()
-        elif is_in_retina_graders_group(self.request.user):
-            queryset = SinglePolygonAnnotation.objects.filter(
-                annotation_set__grader=self.request.user
-            )
-        else:
-            # User is not in graders or admins group, should not have access
-            queryset = SinglePolygonAnnotation.objects.none()
-        return queryset
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    queryset = SinglePolygonAnnotation.objects.all()
