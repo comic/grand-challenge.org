@@ -771,9 +771,9 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if is_in_retina_admins_group(self.request.user):
-            if self.request.kwargs.get["user_id"]:
+            if self.kwargs["user_id"]:
                 queryset = SinglePolygonAnnotation.objects.filter(
-                    annotation_set__grader=self.request.kwargs.get["user_id"]
+                    annotation_set__grader=self.kwargs["user_id"]
                 )
             else:
                 queryset = SinglePolygonAnnotation.objects.all()
