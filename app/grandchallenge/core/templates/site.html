@@ -15,13 +15,13 @@
 
 {% block title %} {{ site.short_name }} {% endblock %}
 
-{% block topheader %}
+{% block navbar %}
     {% if site.hide_footer %}
         <!--hidden -->
     {% else %}
         {{ block.super }}
     {% endif %}
-{% endblock topheader %}
+{% endblock %}
 
 {% block headerLink %}""
 {% endblock %}

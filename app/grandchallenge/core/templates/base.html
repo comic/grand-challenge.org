@@ -22,66 +22,12 @@
         {% endblock %}
     {% endblock %}
 </head>
+
 <body class='bg-light'>
-{% block topheader %}
-    <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
-        <div class="container">
-            <a class="navbar-brand mr-md-2 text-capitalize"
-               href="{% url 'home' %}">
-                {{ main_challenge_name }}
-            </a>
-            <!-- Toggler/collapsibe Button -->
-            <button class="navbar-toggler" type="button" data-toggle="collapse"
-                    data-target="#collapsibleNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
 
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="collapsibleNavbar">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item"><a class="nav-link"
-                                            href="{% url 'challenges:list' %}">All
-                        Challenges</a></li>
-                </ul>
-                <ul class="navbar-nav">
-                    {% block loginbutton %}
-                        {% if user.is_authenticated %}
-                            <li class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle"
-                                   data-toggle="dropdown" role="menu"
-                                   aria-haspopup="true"
-                                   aria-expanded="false">
-                                    <img class="mugshot"
-                                         src="{{ user.user_profile.get_mugshot_url }}"
-                                         alt="User Mugshot"
-                                         style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                    <a class="dropdown-item"
-                                       href="{% url 'userena_profile_detail' user.username %}">
-                                        My Profile</a>
-                                    <a class="dropdown-item"
-                                       href="{% url 'challenges:users-list' %}">
-                                        My Challenges</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item"
-                                       href="{% url 'userena_signout' %}?next=/">
-                                        Sign out</a>
-                                </div>
-                            </li>
-                        {% else %}
-                            <li class="nav-item"><a
-                                    class="nav-link metaFooterMenuItem last"
-                                    href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-                                in / Register</a></li>
-
-                        {% endif %}
-                    {% endblock %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-{% endblock topheader %}
+{% block navbar %}
+    {% include "grandchallenge/partials/navbar.html" %}
+{% endblock %}
 
 <main role="main">
 
@@ -104,7 +50,7 @@
                     {% endfor %}
                 </div>
             {% endif %}
-        {% endblock messages %}
+        {% endblock %}
     </div>
 
     <div id="page"
