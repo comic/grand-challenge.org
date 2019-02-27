@@ -61,9 +61,7 @@
         {% placeFavicon %}
 
         {# Challenge specific css #}
-        <style>
             {% block additionalCSS %}{% endblock %}
-        </style>
 
         <title>{% block pageName %}
             {{ main_challenge_name }}{% endblock %} </title>
@@ -75,59 +73,59 @@
 {% block topheader %}
     <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
         <div class="container">
-        <a class="navbar-brand mr-md-2 text-capitalize"
-           href="{% url 'home' %}">
-            {{ main_challenge_name }}
-        </a>
-        <!-- Toggler/collapsibe Button -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#collapsibleNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+            <a class="navbar-brand mr-md-2 text-capitalize"
+               href="{% url 'home' %}">
+                {{ main_challenge_name }}
+            </a>
+            <!-- Toggler/collapsibe Button -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#collapsibleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="collapsibleNavbar">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link"
-                                        href="{% url 'challenges:list' %}">All
-                    Challenges</a></li>
-            </ul>
-            <ul class="navbar-nav">
-                {% block loginbutton %}
-                    {% if user.is_authenticated %}
-                        <li class="dropdown">
-                            <a href="#" class="nav-link dropdown-toggle"
-                               data-toggle="dropdown" role="menu"
-                               aria-haspopup="true"
-                               aria-expanded="false">
-                                <img class="mugshot"
-                                     src="{{ user.user_profile.get_mugshot_url }}"
-                                     alt="User Mugshot"
-                                     style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                <a class="dropdown-item"
-                                   href="{% url 'userena_profile_detail' user.username %}">
-                                    My Profile</a>
-                                <a class="dropdown-item"
-                                   href="{% url 'challenges:users-list' %}">
-                                    My Challenges</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item"
-                                   href="{% url 'userena_signout' %}?next=/">
-                                    Sign out</a>
-                            </div>
-                        </li>
-                    {% else %}
-                        <li class="nav-item"><a
-                                class="nav-link metaFooterMenuItem last"
-                                href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-                            in / Register</a></li>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item"><a class="nav-link"
+                                            href="{% url 'challenges:list' %}">All
+                        Challenges</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% block loginbutton %}
+                        {% if user.is_authenticated %}
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle"
+                                   data-toggle="dropdown" role="menu"
+                                   aria-haspopup="true"
+                                   aria-expanded="false">
+                                    <img class="mugshot"
+                                         src="{{ user.user_profile.get_mugshot_url }}"
+                                         alt="User Mugshot"
+                                         style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                    <a class="dropdown-item"
+                                       href="{% url 'userena_profile_detail' user.username %}">
+                                        My Profile</a>
+                                    <a class="dropdown-item"
+                                       href="{% url 'challenges:users-list' %}">
+                                        My Challenges</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item"
+                                       href="{% url 'userena_signout' %}?next=/">
+                                        Sign out</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item"><a
+                                    class="nav-link metaFooterMenuItem last"
+                                    href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
+                                in / Register</a></li>
 
-                    {% endif %}
-                {% endblock %}
-            </ul>
-        </div>
+                        {% endif %}
+                    {% endblock %}
+                </ul>
+            </div>
         </div>
     </nav>
 {% endblock topheader %}
@@ -245,10 +243,6 @@
         integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
         crossorigin="anonymous"></script>
 
-{# geocharts #}
-<script type="text/javascript"
-        src="https://www.gstatic.com/charts/loader.js"></script>
-
 {# lazy image loading, provides the .lazyload class #}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/4.1.5/lazysizes.min.js"
         integrity="sha256-I3otyfIRoV0atkNQtZLaP4amnmkQOq0YK5R5RFBd5/0="
@@ -262,6 +256,10 @@
     {# For displaying equations on the site, the safe config is important #}
     <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
             async></script>
+
+    {# geocharts #}
+    <script type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"></script>
 
     <script type='text/javascript'>
         $(document).ready(function () {

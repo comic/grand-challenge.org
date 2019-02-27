@@ -73,6 +73,10 @@ urlpatterns = [
         "algorithms/",
         include("grandchallenge.algorithms.urls", namespace="algorithms"),
     ),
+    path(
+        "models/",
+        include("grandchallenge.mlmodels.urls", namespace="mlmodels"),
+    ),
     path("summernote/", include("django_summernote.urls")),
     path(
         "retina/",
