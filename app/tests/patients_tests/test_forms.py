@@ -45,6 +45,7 @@ def test_patient_create(client):
 @pytest.mark.django_db
 def test_patient_update(client):
     staff_user = UserFactory(is_staff=True)
+    patient = PatientFactory()
     data = {"name": "test"}
 
     form = PatientUpdateForm(data=data)
@@ -54,11 +55,11 @@ def test_patient_update(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="patients:patient-update",
         client=client,
         method=client.post,
         data=data,
         user=staff_user,
+        url=reverse("patients:patient-update", patient.id),
     )
     assert response.status_code == 302
 
@@ -76,4 +77,3 @@ def test_patient_delete(client):
     )
 
     assert response.status_code == 302
-    assert patient is None

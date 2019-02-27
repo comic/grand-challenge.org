@@ -3,7 +3,7 @@ from grandchallenge.worklists import views
 
 app_name = "worklists"
 urlpatterns = [
-    path("list/", views.WorklistTable.as_view(), name="list"),
+    path("list/", views.WorklistTable.as_view(), name="lists"),
     path("list/<uuid:pk>/", views.WorklistRecord.as_view(), name="list"),
     path(
         "list/create/", views.WorklistCreateView.as_view(), name="list-create"

@@ -21,7 +21,7 @@ def test_worklist_list(client):
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        client=client, viewname="worklists:worklist-display", user=staff_user
+        client=client, viewname="worklists:list-display", user=staff_user
     )
     assert str(list.id) in response.rendered_content
 
@@ -51,8 +51,8 @@ def test_worklist_create(client):
 @pytest.mark.django_db
 def test_worklist_update(client):
     staff_user = UserFactory(is_staff=True)
-    set = WorklistSetFactory()
-    data = {"name": "test", "set": set.id}
+    worklist = WorklistFactory()
+    data = {"name": "test", "set": worklist.set}
 
     form = WorklistUpdateForm(data=data)
     assert form.is_valid()
@@ -61,11 +61,11 @@ def test_worklist_update(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="worklists:list-update",
         client=client,
         method=client.post,
         data=data,
         user=staff_user,
+        url=reverse("worklists:list-update", worklist.id),
     )
     assert response.status_code == 302
 
@@ -83,7 +83,6 @@ def test_worklist_delete(client):
     )
 
     assert response.status_code == 302
-    assert worklist is None
 
 
 @pytest.mark.django_db
@@ -120,6 +119,7 @@ def test_worklist_set_create(client):
 @pytest.mark.django_db
 def test_worklist_set_update(client):
     staff_user = UserFactory(is_staff=True)
+    set = WorklistFactory()
     data = {"name": "test", "user": staff_user.id}
     form = WorklistSetUpdateForm(data=data)
     assert form.is_valid()
@@ -128,11 +128,11 @@ def test_worklist_set_update(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="worklists:set-update",
         client=client,
         method=client.post,
         data=data,
         user=staff_user,
+        url=reverse("worklists:set-update", set.id),
     )
     assert response.status_code == 302
 
@@ -150,4 +150,3 @@ def test_worklist_set_delete(client):
     )
 
     assert response.status_code == 302
-    assert set is None

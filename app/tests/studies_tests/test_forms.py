@@ -32,7 +32,9 @@ def test_study_create(client):
     data = {
         "name": "test",
         "datetime": factory.fuzzy.FuzzyDateTime(
-            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime("%d/%m/%Y %H:%M:%S")
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
         ),
         "patient": patient.id,
     }
@@ -56,13 +58,15 @@ def test_study_create(client):
 @pytest.mark.django_db
 def test_study_update(client):
     staff_user = UserFactory(is_staff=True)
-    patient = PatientFactory()
+    study = StudyFactory()
     data = {
         "name": "test",
         "datetime": factory.fuzzy.FuzzyDateTime(
-            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime("%d/%m/%Y %H:%M:%S")
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
         ),
-        "patient": patient.id,
+        "patient": study.patient,
     }
 
     form = StudyUpdateForm(data=data)
@@ -72,11 +76,11 @@ def test_study_update(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="studies:study-update",
         client=client,
         method=client.post,
         data=data,
         user=staff_user,
+        url=reverse("studies:study-update", study.id),
     )
     assert response.status_code == 302
 
@@ -94,4 +98,3 @@ def test_study_delete(client):
     )
 
     assert response.status_code == 302
-    assert study is None
