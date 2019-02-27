@@ -7,10 +7,11 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.contrib.auth.models import Group
 from django.conf import settings
+from guardian.shortcuts import get_perms
 
 from grandchallenge.subdomains.utils import reverse
 from tests.conftest import generate_annotation_set
-from tests.viewset_helpers import view_test
+from tests.viewset_helpers import view_test, get_user_from_user_type
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
@@ -400,7 +401,7 @@ class TestPolygonAPIListView(TestCase):
         "retina_admin",
     ],
 )
-class TestPolygonAnnotationSetViewSet1:
+class TestPolygonAnnotationSetViewSet:
     namespace = "retina:api"
     basename = "polygonannotationset"
 
@@ -593,7 +594,7 @@ class TestPolygonAnnotationSetViewSet1:
             TwoPolygonAnnotationSets.grader1,
             None,
             rf,
-            PolygonAnnotationSetViewSet,
+            SinglePolygonViewSet,
             model_json
         )
         if user_type in ("retina_grader", "retina_admin"):
@@ -610,7 +611,7 @@ class TestPolygonAnnotationSetViewSet1:
             TwoPolygonAnnotationSets.grader1,
             TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            PolygonAnnotationSetViewSet,
+            SinglePolygonViewSet,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
             model_serialized = SinglePolygonAnnotationSerializer(
@@ -634,7 +635,7 @@ class TestPolygonAnnotationSetViewSet1:
             TwoPolygonAnnotationSets.grader1,
             TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            PolygonAnnotationSetViewSet,
+            SinglePolygonViewSet,
             model_json
         )
 
@@ -658,9 +659,9 @@ class TestPolygonAnnotationSetViewSet1:
             self.namespace,
             self.basename,
             TwoPolygonAnnotationSets.grader1,
-            TwoPolygonAnnotationSets.polygonset1,
+            TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            PolygonAnnotationSetViewSet,
+            SinglePolygonViewSet,
             model_json
         )
 
@@ -677,7 +678,7 @@ class TestPolygonAnnotationSetViewSet1:
             TwoPolygonAnnotationSets.grader1,
             TwoPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            PolygonAnnotationSetViewSet,
+            SinglePolygonViewSet,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert not PolygonAnnotationSet.objects.filter(
