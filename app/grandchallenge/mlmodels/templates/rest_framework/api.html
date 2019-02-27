@@ -305,7 +305,7 @@
 
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     <script>
         window.drf = {
             csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",

@@ -173,118 +173,27 @@
     </footer>
 {% endblock %}
 
-{# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-        crossorigin="anonymous"></script>
+{% block script %}
+    {% include "grandchallenge/partials/script.html" %}
 
-{# Bootstrap first, requires jquery from head #}
-<script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+    {% block postjs %}
+        {# For displaying equations on the site, the safe config is important #}
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+                async></script>
 
-{# DataTables with colvis #}
-<script type="text/javascript"
-        src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
-        crossorigin="anonymous"></script>
+        {# geocharts #}
+        <script type="text/javascript"
+                src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript"
+                src="{% static "js/render_geocharts.js" %}"></script>
 
-{# File uploads #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.22.1/js/jquery.fileupload.min.js"
-        integrity="sha256-YonB9QyI10SqVq8Gs2VRCYi0iI/h5+KoVHx/G1A3q48="
-        crossorigin="anonymous"></script>
-
-{# jquery cookies #}
-<script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
-        integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
-        crossorigin="anonymous"></script>
-
-{# lazy image loading, provides the .lazyload class #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/4.1.5/lazysizes.min.js"
-        integrity="sha256-I3otyfIRoV0atkNQtZLaP4amnmkQOq0YK5R5RFBd5/0="
-        crossorigin="anonymous"></script>
-
-{% block deferred-js %}
-{% endblock %}
-
-{% block postjs %}
-
-    {# For displaying equations on the site, the safe config is important #}
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
-            async></script>
-
-    {# geocharts #}
-    <script type="text/javascript"
-            src="https://www.gstatic.com/charts/loader.js"></script>
-
-    <script type='text/javascript'>
-        $(document).ready(function () {
-            $('table.sortable').dataTable({
-                "bJQueryUI": false,
-                "sPaginationType": "full_numbers",
-                "bPaginate": false,
-                "bLengthChange": false,
-                "bFilter": false,
-                "bInfo": false,
-                "bAutoWidth": false
-            });
-        });
-
-        var forum = document.getElementById('forum_embed');
-        if (forum) {
-            try {
-                forum.src = 'https://groups.google.com/forum/embed/?place=forum/'
-                    + forum.dataset['groupname']
-                    + '&showsearch=true&showpopout=true&showtabs=false'
-                    + '&parenturl=' + encodeURIComponent(window.location.href);
-            } catch (e) {
-                console.log(e);
-            }
-        }
-
-        google.charts.load('current', {'packages': ['geochart']});
-        google.charts.setOnLoadCallback(drawGeoCharts);
-
-        function drawGeoCharts() {
-            google.visualization.mapsApiKey = '{{ geochart_api_key }}';
-            var charts = document.querySelectorAll('[data-geochart]');
-
-            for (i = 0; i < charts.length; i++) {
-                try {
-                    drawGeoChart(charts[i]);
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-        }
-
-        function drawGeoChart(element) {
-            var array = JSON.parse(element.dataset['geochart']);
-            var data = google.visualization.arrayToDataTable(array);
-            var options = {
-                colorAxis: {
-                    colors: [
-                        '#440154',
-                        '#32658e',
-                        '#20a486',
-                        '#63cb5f',
-                        '#a8db34',
-                        '#d0e11c',
-                        '#e7e419',
-                        '#f1e51d',
-                        '#f8e621',
-                        '#fbe723',
-                        '#fbe723',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725'
-                    ]
-                },
-                backgroundColor: '#c9eeff'
-            };
-            var chart = new google.visualization.GeoChart(element);
-            chart.draw(data, options);
-        }
-    </script>
+        {# make the tables sortable #}
+        <script type="text/javascript"
+                src="{% static "js/sort_tables.js" %}"></script>
+        {# render embeddable google forums #}
+        <script type="text/javascript"
+                src="{% static "js/embed_forums.js" %}"></script>
+    {% endblock %}
 {% endblock %}
 
 </body>
