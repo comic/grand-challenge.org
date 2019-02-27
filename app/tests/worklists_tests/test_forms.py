@@ -30,7 +30,7 @@ def test_worklist_list(client):
 def test_worklist_create(client):
     staff_user = UserFactory(is_staff=True)
     set = WorklistSetFactory()
-    data = {"name": "test", "set": set.id}
+    data = {"name": "test", "set": set.pk}
 
     form = WorklistCreateForm(data=data)
     assert form.is_valid()
@@ -99,7 +99,7 @@ def test_worklist_set_list(client):
 @pytest.mark.django_db
 def test_worklist_set_create(client):
     staff_user = UserFactory(is_staff=True)
-    data = {"name": "test", "user": staff_user.id}
+    data = {"name": "test", "user": staff_user.pk}
     form = WorklistSetCreateForm(data=data)
     assert form.is_valid()
 
@@ -120,7 +120,7 @@ def test_worklist_set_create(client):
 def test_worklist_set_update(client):
     staff_user = UserFactory(is_staff=True)
     set = WorklistFactory()
-    data = {"name": "test", "user": staff_user.id}
+    data = {"name": "test", "user": staff_user.pk}
     form = WorklistSetUpdateForm(data=data)
     assert form.is_valid()
 

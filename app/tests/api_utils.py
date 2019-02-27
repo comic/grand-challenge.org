@@ -20,7 +20,7 @@ def assert_api_crud(client, table_reverse, expected_table, object_factory):
     record_fields = model_to_dict(
         record, fields=[field.name for field in record._meta.fields]
     )
-    assert_record_deletion(client, table_url, token, record.id)
+    assert_record_deletion(client, table_url, token, record.pk)
 
     # Attempts to create a new record through the API
     new_record_id = assert_table_insert(
@@ -36,7 +36,7 @@ def assert_api_crud(client, table_reverse, expected_table, object_factory):
         record, fields=[field.name for field in record._meta.fields]
     )
     assert_record_update(
-        client, table_url, token, dict_to_json(record_fields), record.id
+        client, table_url, token, dict_to_json(record_fields), record.pk
     )
 
 

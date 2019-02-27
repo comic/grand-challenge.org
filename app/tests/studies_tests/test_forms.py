@@ -36,7 +36,7 @@ def test_study_create(client):
                 "%d/%m/%Y %H:%M:%S"
             )
         ),
-        "patient": patient.id,
+        "patient": patient.pk,
     }
 
     form = StudyCreateForm(data=data)
