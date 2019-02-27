@@ -98,25 +98,8 @@
     </div>
 </main>
 
-<!-- page -->
 {% block footer %}
-    <footer class="footer">
-        <div class="container">
-            <hr>
-            <div class="row">
-                <div class="col">
-                    <a class="text-muted"
-                       href="https://github.com/comic/grand-challenge.org"
-                       title="Join us on Github">
-                        <i class="fab fa-github"></i></a>
-                </div>
-                <div class="col small text-muted text-right text-capitalize text-nowrap">
-                    &copy; 2012-{% now "Y" %} {{ main_challenge_name }}
-                </div>
-
-            </div>
-        </div>
-    </footer>
+    {% include "grandchallenge/partials/footer.html" %}
 {% endblock %}
 
 {% block script %}
