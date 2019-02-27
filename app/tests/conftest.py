@@ -10,6 +10,8 @@ import pytest
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
+from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Group
 
 from grandchallenge.challenges.models import Challenge
 from tests.factories import (
@@ -28,6 +30,9 @@ from tests.annotations_tests.factories import (
     ETDRSGridAnnotationFactory,
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
+)
+from grandchallenge.retina_core.management.commands.setannotationpermissions import (
+    PERMISSION_TYPES,
 )
 
 """ Defines fixtures than can be used across all of the tests """
@@ -272,11 +277,35 @@ class TwoPolygonAnnotationSets(NamedTuple):
 
 def generate_two_polygon_annotation_sets():
     graders = (UserFactory(), UserFactory())
-    polygonsets = (PolygonAnnotationSetFactory(grader=graders[0]), PolygonAnnotationSetFactory(grader=graders[1]))
+    polygonsets = (
+        PolygonAnnotationSetFactory(grader=graders[0]),
+        PolygonAnnotationSetFactory(grader=graders[1]),
+    )
 
     # Create child models for polygon annotation set
-    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygonsets[0])
-    SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygonsets[1])
+    singlepolygonbatches = (
+        SinglePolygonAnnotationFactory.create_batch(
+            10, annotation_set=polygonsets[0]
+        ),
+        SinglePolygonAnnotationFactory.create_batch(
+            10, annotation_set=polygonsets[1]
+        ),
+    )
+
+    for permission_type in PERMISSION_TYPES:
+        # Set object-level user permissions
+        for index in (0, 1):
+            polygonset = polygonsets[index]
+            assign_perm(f"{permission_type}_polygonannotationset", polygonset.grader, polygonset)
+            for singlepolygon in singlepolygonbatches[index]:
+                grader = polygonset.grader
+                assign_perm(f"{permission_type}_singlepolygonannotation", grader, singlepolygon)
+
+        # Set group permissions for retina_admins
+        retina_admins = Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        assign_perm(f"annotations.{permission_type}_polygonannotationset", retina_admins)
+        assign_perm(f"annotations.{permission_type}_singlepolygonannotation", retina_admins)
+
 
     return TwoPolygonAnnotationSets(
         grader1=graders[0],
