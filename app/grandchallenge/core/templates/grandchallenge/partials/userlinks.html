@@ -3,7 +3,7 @@
 {% if user.is_authenticated %}
     <li class="dropdown">
         <a href="#" class="nav-link dropdown-toggle"
-           data-toggle="dropdown" role="menu"
+           data-toggle="dropdown" role="button"
            aria-haspopup="true"
            aria-expanded="false">
             <img class="mugshot"
@@ -26,7 +26,7 @@
     </li>
 {% else %}
     <li class="nav-item"><a
-            class="nav-link metaFooterMenuItem last"
+            class="nav-link"
             href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
         in / Register</a></li>
 {% endif %}

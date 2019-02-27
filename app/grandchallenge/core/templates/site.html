@@ -94,37 +94,9 @@
     {% endif %}
 {% endblock %}
 
-{% block sitemenuloginbutton %}
+{% block sidebar_userlinks %}
     {% if site.hide_footer and not site.hide_signin %}
-        {% if user.is_authenticated %}
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle"
-                   data-toggle="dropdown" role="button"
-                   aria-haspopup="true"
-                   aria-expanded="false">
-                    <div style='vertical-align:middle; display:inline;'>
-                        <img class="mugshot"
-                             src="{{ user.user_profile.get_mugshot_url }}"
-                             alt="User Mugshot"
-                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                        <span class="caret"></span>
-                    </div>
-                </a>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item"
-                       href="{% url 'userena_profile_detail' user.username %}">My
-                        profile</a>
-                    <hr/>
-                    <a class="dropdown-item"
-                       href="{% url 'userena_signout' %}?next=/">Signout</a>
-                </div>
-            </li>
-        {% else %}
-            <li class="nav-item"><a class="nav-link"
-                                    href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-                In / Register</a>
-            </li>
-        {% endif %}
+       {% include "grandchallenge/partials/userlinks.html" %}
     {% endif %}
 {% endblock %}
 
