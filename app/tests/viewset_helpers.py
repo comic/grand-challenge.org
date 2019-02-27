@@ -222,18 +222,24 @@ def get_viewset_user_kwargs_url(
     return user, kwargs, url
 
 
-def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, viewset, data=None, check_response_status_code=True):
+def view_test(
+    action,
+    user_type,
+    namespace,
+    basename,
+    grader,
+    polygon_set,
+    rf,
+    viewset,
+    data=None,
+    check_response_status_code=True,
+):
     if action == "list" or action == "create":
         url_name = "list"
     else:
         url_name = "detail"
     user, kwargs, url = get_viewset_user_kwargs_url(
-        user_type,
-        namespace,
-        basename,
-        grader,
-        polygon_set,
-        url_name,
+        user_type, namespace, basename, grader, polygon_set, url_name
     )
 
     method = "get"  # list or retrieve
@@ -248,7 +254,9 @@ def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, v
 
     request = getattr(rf, method)(url)  # list, retrieve, destroy
     if action in ("create", "update", "partial_update"):
-        request = getattr(rf, method)(url, data=data, content_type="application/json")
+        request = getattr(rf, method)(
+            url, data=data, content_type="application/json"
+        )
 
     view = viewset.as_view(actions={method: action})
     force_authenticate(request, user=user)
@@ -258,9 +266,9 @@ def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, v
         return response
 
     if (
-            user_type is None
-            or user_type == "normal_user"
-            or user_type == "retina_grader_non_allowed"
+        user_type is None
+        or user_type == "normal_user"
+        or user_type == "retina_grader_non_allowed"
     ):
         assert response.status_code == status.HTTP_403_FORBIDDEN
     else:

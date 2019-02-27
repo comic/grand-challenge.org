@@ -14,9 +14,7 @@ from grandchallenge.annotations.models import (
     SinglePolygonAnnotation,
     SingleLandmarkAnnotation,
 )
-from .management.commands.setannotationpermissions import (
-    PERMISSION_TYPES,
-)
+from .management.commands.setannotationpermissions import PERMISSION_TYPES
 
 
 @receiver(post_save, sender=MeasurementAnnotation)
