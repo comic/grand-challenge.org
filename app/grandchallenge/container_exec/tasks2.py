@@ -138,13 +138,16 @@ def run_job(job_pk, job_id_template):
 
 if __name__ == "__main__":
     import sys
-    submission = Submission.objects.all()[0]
+    for submission in Submission.objects.all():
+        print()
+        print("Submission", submission.algorithm.name)
+        job_pk = create_algorithm_job(submission)
+        success = run_algorithm_job(job_pk)
+        if not success:
+            sys.exit()
 
-    job_pk = create_algorithm_job(submission)
-    success = run_algorithm_job(job_pk)
-    if not success:
-        sys.exit()
 
-
-    job_pk = create_evaluation_job(submission)
-    success = run_evaluation_job(job_pk)
+        job_pk = create_evaluation_job(submission)
+        success = run_evaluation_job(job_pk)
+        if not success:
+            sys.exit()
