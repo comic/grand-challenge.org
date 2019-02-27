@@ -3,7 +3,7 @@
 {% load grandchallenge_tags %}
 {% load clean from bleach %}
 
-{% block pageName %} {{ currentpage.challenge.short_name }} -
+{% block title %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block pagecontent %}

@@ -1,75 +1,28 @@
 {% load static %}
 {% load grandchallenge_tags %}
-{% load sentry_public_dsn from raven %}
-{% load placeFavicon from favtags %}
-{% load url from grandchallenge_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    {% block html_header %}
-        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-        <meta name="description"
-              content="{{ site.description }}"/>
-        <meta name="keywords"
-              content="open, science, medical, image, computing, validated"/>
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1">
+    {% block head %}
+        {% block meta %}
+            {% include "grandchallenge/partials/meta.html" %}
+        {% endblock %}
 
-        {% comment %}
-            <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
-                    crossorigin="anonymous"></script>
-            <script>Raven.config('{% sentry_public_dsn %}').install()</script>
-        {% endcomment %}
+        <title>
+            {% block title %}{{ main_challenge_name }}{% endblock %}
+        </title>
 
-        <!-- Global Site Tag (gtag.js) - Google Analytics -->
-        <script async
-                src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
+        {% block head_script %}
+            {% include "grandchallenge/partials/head_script.html" %}
+        {% endblock %}
 
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-
-            gtag('js', new Date());
-
-            gtag('config', "{{ google_analytics_id }}");
-        </script>
-
-        {# Needs to be inline for some forms (summernote) #}
-        <script type="text/javascript"
-                src="{% static "vendor/js/jquery.min.js" %}"></script>
-
-        <link rel="stylesheet"
-              href="{% static 'vendor/css/bootstrap.min.css' %}">
-
-        <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
-              rel="stylesheet">
-
-        <link rel="stylesheet" type="text/css"
-              href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
-              crossorigin="anonymous">
-
-        <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
-
-        {#  Custom CSS, must be included AFTER bootstrap  #}
-        <link href="{% static "css/core.css" %}" type="text/css"
-              rel="stylesheet">
-
-        {% placeFavicon %}
-
-        {# Challenge specific css #}
-            {% block additionalCSS %}{% endblock %}
-
-        <title>{% block pageName %}
-            {{ main_challenge_name }}{% endblock %} </title>
+        {% block style %}
+            {% include "grandchallenge/partials/style.html" %}
+        {% endblock %}
     {% endblock %}
 </head>
 <body class='bg-light'>
-
-
 {% block topheader %}
     <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
         <div class="container">

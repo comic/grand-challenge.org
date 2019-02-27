@@ -1,0 +1,20 @@
+{% load static %}
+{% load placeFavicon from favtags %}
+
+<link rel="stylesheet"
+      href="{% static 'vendor/css/bootstrap.min.css' %}">
+
+<link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
+      rel="stylesheet">
+
+<link rel="stylesheet" type="text/css"
+      href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
+      crossorigin="anonymous">
+
+<link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
+
+{#  Custom CSS, must be included AFTER bootstrap  #}
+<link href="{% static "css/core.css" %}" type="text/css"
+      rel="stylesheet">
+
+{% placeFavicon %}

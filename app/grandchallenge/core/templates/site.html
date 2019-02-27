@@ -5,14 +5,15 @@
 
 
 
-{% block additionalCSS %}
+{% block style %}
+    {{ block.super }}
     {% if site.skin %}
         /* custom css for this project */
         <style>{% insert_file site.skin %}</style>
     {% endif %}
 {% endblock %}
 
-{% block pageName %} {{ site.short_name }} {% endblock %}
+{% block title %} {{ site.short_name }} {% endblock %}
 
 {% block topheader %}
     {% if site.hide_footer %}
