@@ -79,7 +79,7 @@ def test_worklist_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("worklists:list-delete", kwargs={"pk": worklist.pk}),
+        url=reverse("worklists:list-remove", kwargs={"pk": worklist.pk}),
     )
 
     assert response.status_code == 302
@@ -146,7 +146,7 @@ def test_worklist_set_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("worklists:set-delete", kwargs={"pk": set.pk}),
+        url=reverse("worklists:set-remove", kwargs={"pk": set.pk}),
     )
 
     assert response.status_code == 302
