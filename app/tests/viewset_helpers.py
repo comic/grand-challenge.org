@@ -222,7 +222,7 @@ def get_viewset_user_kwargs_url(
     return user, kwargs, url
 
 
-def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, viewset, data=None):
+def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, viewset, data=None, check_response_status_code=True):
     if action == "list" or action == "create":
         url_name = "list"
     else:
@@ -254,6 +254,9 @@ def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, v
     force_authenticate(request, user=user)
     response = view(request, **kwargs)
 
+    if not check_response_status_code:
+        return response
+
     if (
             user_type is None
             or user_type == "normal_user"
@@ -267,4 +270,4 @@ def view_test(action, user_type, namespace, basename, grader, polygon_set, rf, v
             assert response.status_code == status.HTTP_201_CREATED
         elif action == "destroy":
             assert response.status_code == status.HTTP_204_NO_CONTENT
-    return response.data
+    return response
