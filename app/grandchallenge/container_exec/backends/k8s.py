@@ -283,6 +283,16 @@ class K8sJob(object):
                 logs[podname][container] = r
         return logs
 
+    def print_logs(self):
+        logs = self.get_logs()
+        for podname, logs in logs.items():
+            print()
+            print(podname)
+            for container, log in logs.items():
+                print()
+                print("\t", container)
+                print("\t", log)
+
 
 if __name__ == "__main__":
     algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"

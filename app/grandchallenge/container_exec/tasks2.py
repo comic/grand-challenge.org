@@ -16,8 +16,8 @@ from django.conf import settings
 def create_algorithm_job(submission):
     job_attribute = "algorithm_job"
     output_file_name = "output_file"
-    algorithm = submission.algorithm
     benchmark = submission.benchmark
+    algorithm = submission.algorithm
 
     inputs = {
         "test_data": benchmark.test_data_file
@@ -29,8 +29,8 @@ def create_algorithm_job(submission):
 def create_evaluation_job(submission):
     job_attribute = "evaluation_job"
     output_file_name = "metrics.json"
-    algorithm = submission.evaluator
     benchmark = submission.benchmark
+    algorithm = benchmark.evaluator
 
     inputs = {
         "predictions": submission.algorithm_job.output,
@@ -64,12 +64,12 @@ def create_job(submission, algorithm, job_attribute, output_file_name, inputs):
 
 def run_algorithm_job(job_pk):
     job_id_template = "algorithm-job-{}"
-    run_job(job_pk, job_id_template)
+    return run_job(job_pk, job_id_template)
 
 
 def run_evaluation_job(job_pk):
     job_id_template = "evaluation-job-{}"
-    run_job(job_pk, job_id_template)
+    return run_job(job_pk, job_id_template)
 
 
 def run_job(job_pk, job_id_template):
@@ -79,11 +79,11 @@ def run_job(job_pk, job_id_template):
 
     job = Job.objects.get(pk=job_pk)
     algorithm = job.algorithm
-    output_file = job.output_file
+    output_file = job.output
 
     k8s_inputs = {}
-    for jobinput in job.inputs:
-        k8s_inputs[get_data_file_name(jobinput.data_file.file)] = jobinput.input.name
+    for jobinput in job.inputs.all():
+        k8s_inputs[get_data_file_name(jobinput.data_file)] = jobinput.input.name
 
     # Set up input parameters for K8S job
     output_file_key = get_data_file_name(job.output)
@@ -114,10 +114,15 @@ def run_job(job_pk, job_id_template):
 
     # Set EYRA Job properties
     job.stopped = datetime.datetime.now(pytz.timezone(settings.TIME_ZONE))
+    job_success = False
     if k8s_job.succeeded:
+        print("Job succeeded")
         job.status = Job.SUCCESS
+        job_success = True
     elif k8s_job.failed:
+        print("Job failed")
         job.status = Job.FAILURE
+        k8s_job.print_logs()
     else:
         print("Unknown job status")
         print(k8s_job.status())
@@ -128,12 +133,18 @@ def run_job(job_pk, job_id_template):
     output_file.file = output_file_key
     output_file.save()
 
+    return job_success
+
 
 if __name__ == "__main__":
+    import sys
     submission = Submission.objects.all()[0]
 
     job_pk = create_algorithm_job(submission)
-    run_algorithm_job(job_pk)
+    success = run_algorithm_job(job_pk)
+    if not success:
+        sys.exit()
+
 
     job_pk = create_evaluation_job(submission)
-    run_evaluation_job(job_pk)
+    success = run_evaluation_job(job_pk)
