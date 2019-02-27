@@ -453,9 +453,35 @@ class TestPolygonAnnotationSetViewSet:
             model_json
         )
         if user_type in ("retina_grader", "retina_admin"):
-            model_serialized["id"] = response_data["id"]
-            response_data["image"] = str(response_data["image"])
-            assert response_data == model_serialized
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+
+    def test_create_view_wrong_user_id(self, TwoPolygonAnnotationSets, rf, user_type):
+        model_build = PolygonAnnotationSetFactory.build()
+        model_serialized = PolygonAnnotationSetSerializer(model_build).data
+        image = ImageFactory()
+        model_serialized["image"] = str(image.id)
+        other_user = UserFactory()
+        model_serialized["grader"] = other_user.id
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoPolygonAnnotationSets.grader1,
+            TwoPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json,
+            check_response_status_code=False
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
 
     def test_retrieve_view(self, TwoPolygonAnnotationSets, rf, user_type):
         response = view_test(
