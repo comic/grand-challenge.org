@@ -1,8 +1,10 @@
 import pytest
+
 from tests.factories import UserFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.utils import get_view_for_user
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
 
 """" Tests the forms available for Patient CRUD """
@@ -21,20 +23,44 @@ def test_patient_display(client):
 
 @pytest.mark.django_db
 def test_patient_create(client):
-    form = PatientCreateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    data = {"name": "test"}
+
+    form = PatientCreateForm(data=data)
     assert form.is_valid()
 
     form = PatientCreateForm()
     assert not form.is_valid()
 
+    response = get_view_for_user(
+        viewname="patients:patient-create",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
+
 
 @pytest.mark.django_db
 def test_patient_update(client):
-    form = PatientUpdateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    data = {"name": "test"}
+
+    form = PatientUpdateForm(data=data)
     assert form.is_valid()
 
     form = PatientUpdateForm()
     assert not form.is_valid()
+
+    response = get_view_for_user(
+        viewname="patients:patient-update",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
 
 
 @pytest.mark.django_db
@@ -44,9 +70,9 @@ def test_patient_delete(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="patients:patient-delete",
+        method=client.post,
         user=staff_user,
-        args=patient.id,
+        url=reverse("patients:patient-delete", patient.id),
     )
 
     assert response.status_code == 302

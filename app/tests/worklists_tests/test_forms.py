@@ -4,6 +4,7 @@ from tests.factories import UserFactory
 from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
 from tests.utils import get_view_for_user
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.worklists.forms import (
     WorklistCreateForm,
     WorklistUpdateForm,
@@ -11,7 +12,7 @@ from grandchallenge.worklists.forms import (
     WorklistSetUpdateForm,
 )
 
-"""" Tests the forms available for Patient CRUD """
+"""" Tests the forms available for Worklist CRUD """
 
 
 @pytest.mark.django_db
@@ -27,36 +28,62 @@ def test_worklist_list(client):
 
 @pytest.mark.django_db
 def test_worklist_create(client):
-    form = WorklistCreateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    set = WorklistSetFactory()
+    data = {"name": "test", "set": set.id}
+
+    form = WorklistCreateForm(data=data)
     assert form.is_valid()
 
     form = WorklistCreateForm()
     assert not form.is_valid()
 
+    response = get_view_for_user(
+        viewname="worklists:list-create",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
+
 
 @pytest.mark.django_db
 def test_worklist_update(client):
-    form = WorklistUpdateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    set = WorklistSetFactory()
+    data = {"name": "test", "set": set.id}
+
+    form = WorklistUpdateForm(data=data)
     assert form.is_valid()
 
     form = WorklistUpdateForm()
     assert not form.is_valid()
 
+    response = get_view_for_user(
+        viewname="worklists:list-update",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
+
 
 @pytest.mark.django_db
 def test_worklist_delete(client):
-    patient = WorklistFactory()
+    worklist = WorklistFactory()
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
         client=client,
-        viewname="patients:patient-delete",
+        method=client.post,
         user=staff_user,
-        args=patient.id,
+        url=reverse("worklists:list-delete", worklist.id),
     )
 
     assert response.status_code == 302
-    assert patient is None
+    assert worklist is None
 
 
 @pytest.mark.django_db
@@ -72,33 +99,55 @@ def test_worklist_set_list(client):
 
 @pytest.mark.django_db
 def test_worklist_set_create(client):
-    form = WorklistSetCreateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    data = {"name": "test", "user": staff_user.id}
+    form = WorklistSetCreateForm(data=data)
     assert form.is_valid()
 
     form = WorklistSetCreateForm()
     assert not form.is_valid()
 
+    response = get_view_for_user(
+        viewname="worklists:set-create",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
+
 
 @pytest.mark.django_db
 def test_worklist_set_update(client):
-    form = WorklistSetUpdateForm(data={"name": "test"})
+    staff_user = UserFactory(is_staff=True)
+    data = {"name": "test", "user": staff_user.id}
+    form = WorklistSetUpdateForm(data=data)
     assert form.is_valid()
 
     form = WorklistSetUpdateForm()
     assert not form.is_valid()
 
+    response = get_view_for_user(
+        viewname="worklists:set-update",
+        client=client,
+        method=client.post,
+        data=data,
+        user=staff_user,
+    )
+    assert response.status_code == 302
+
 
 @pytest.mark.django_db
 def test_worklist_set_delete(client):
-    patient = WorklistSetFactory()
+    set = WorklistSetFactory()
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
         client=client,
-        viewname="patients:patient-delete",
+        method=client.post,
         user=staff_user,
-        args=patient.id,
+        url=reverse("worklists:set-delete", set.id),
     )
 
     assert response.status_code == 302
-    assert patient is None
+    assert set is None

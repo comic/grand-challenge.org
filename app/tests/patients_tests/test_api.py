@@ -8,9 +8,5 @@ from tests.api_utils import assert_api_crud
     "table_reverse, expected_table, object_factory",
     [("patients:patients", "Patient Table", PatientFactory)],
 )
-def test_api_pages(
-    client, table_reverse, expected_table, object_factory
-):
-    assert_api_crud(
-        client, table_reverse, expected_table, object_factory
-    )
+def test_api_pages(client, table_reverse, expected_table, object_factory):
+    assert_api_crud(client, table_reverse, expected_table, object_factory)

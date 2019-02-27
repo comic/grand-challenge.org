@@ -8,6 +8,7 @@ from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 from tests.utils import get_view_for_user
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.studies.forms import StudyCreateForm, StudyUpdateForm
 
 """" Tests the forms available for Study CRUD """
@@ -31,7 +32,7 @@ def test_study_create(client):
     data = {
         "name": "test",
         "datetime": factory.fuzzy.FuzzyDateTime(
-            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime("%d/%m/%Y %H:%M:%S")
         ),
         "patient": patient.id,
     }
@@ -59,12 +60,12 @@ def test_study_update(client):
     data = {
         "name": "test",
         "datetime": factory.fuzzy.FuzzyDateTime(
-            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC).strftime("%d/%m/%Y %H:%M:%S")
         ),
         "patient": patient.id,
     }
 
-    form = StudyCreateForm(data=data)
+    form = StudyUpdateForm(data=data)
     assert form.is_valid()
 
     form = StudyUpdateForm()
@@ -87,9 +88,9 @@ def test_study_delete(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="patients:patient-delete",
+        method=client.post,
         user=staff_user,
-        args=study.id,
+        url=reverse("studies:study-delete", study.id),
     )
 
     assert response.status_code == 302
