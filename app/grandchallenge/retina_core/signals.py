@@ -14,6 +14,9 @@ from grandchallenge.annotations.models import (
     SinglePolygonAnnotation,
     SingleLandmarkAnnotation,
 )
+from .management.commands.setannotationpermissions import (
+    PERMISSION_TYPES,
+)
 
 
 @receiver(post_save, sender=MeasurementAnnotation)
@@ -44,6 +47,6 @@ def annotation_post_save(sender, instance, created):
     ).exists():
         return
 
-    for permission_type in ("view", "add", "change", "delete"):
+    for permission_type in PERMISSION_TYPES:
         permission_name = f"annotation.{permission_type}_{model_name}"
         assign_perm(permission_name, owner, instance)
