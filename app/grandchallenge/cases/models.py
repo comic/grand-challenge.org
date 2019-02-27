@@ -63,18 +63,15 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    algorithm = models.ForeignKey(
-        to="algorithms.Algorithm",
+    mlmodel = models.ForeignKey(
+        to="mlmodels.MLModel",
         null=True,
         default=None,
         on_delete=models.CASCADE,
     )
 
-    algorithm_result = models.OneToOneField(
-        to="algorithms.Result",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
+    mlmodel_result = models.OneToOneField(
+        to="mlmodels.Result", null=True, default=None, on_delete=models.CASCADE
     )
 
     def __str__(self):

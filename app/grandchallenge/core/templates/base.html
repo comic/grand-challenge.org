@@ -74,7 +74,7 @@
 
 {% block topheader %}
     <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
-
+        <div class="container">
         <a class="navbar-brand mr-md-2 text-capitalize"
            href="{% url 'home' %}">
             {{ main_challenge_name }}
@@ -127,6 +127,7 @@
                     {% endif %}
                 {% endblock %}
             </ul>
+        </div>
         </div>
     </nav>
 {% endblock topheader %}
@@ -206,14 +207,13 @@
         <div class="container">
             <hr>
             <div class="row">
-                <div class="col-5"></div>
-                <div class="col-2 text-center">
+                <div class="col">
                     <a class="text-muted"
                        href="https://github.com/comic/grand-challenge.org"
                        title="Join us on Github">
                         <i class="fab fa-github"></i></a>
                 </div>
-                <div class="col-5 small text-muted text-right text-capitalize">
+                <div class="col small text-muted text-right text-capitalize text-nowrap">
                     &copy; 2012-{% now "Y" %} {{ main_challenge_name }}
                 </div>
 
