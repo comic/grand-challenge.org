@@ -59,7 +59,7 @@ def test_patient_update(client):
         method=client.post,
         data=data,
         user=staff_user,
-        url=reverse("patients:patient-update", patient.id),
+        url=reverse("patients:patient-update", kwargs={"pk": patient.pk}),
     )
     assert response.status_code == 302
 
@@ -73,7 +73,7 @@ def test_patient_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("patients:patient-delete", patient.id),
+        url=reverse("patients:patient-delete", kwargs={"pk": patient.pk}),
     )
 
     assert response.status_code == 302

@@ -80,7 +80,7 @@ def test_study_update(client):
         method=client.post,
         data=data,
         user=staff_user,
-        url=reverse("studies:study-update", study.id),
+        url=reverse("studies:study-update", kwargs={"pk": study.pk}),
     )
     assert response.status_code == 302
 
@@ -94,7 +94,7 @@ def test_study_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("studies:study-delete", study.id),
+        url=reverse("studies:study-delete", kwargs={"pk": study.pk}),
     )
 
     assert response.status_code == 302
