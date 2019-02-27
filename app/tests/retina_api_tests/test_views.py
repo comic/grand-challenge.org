@@ -33,6 +33,9 @@ from grandchallenge.retina_api.views import (
     SinglePolygonViewSet,
     PolygonListView,
 )
+from grandchallenge.retina_core.management.commands.setannotationpermissions import (
+    PERMISSION_TYPES,
+)
 
 
 @pytest.mark.django_db
@@ -400,6 +403,17 @@ class TestPolygonAPIListView(TestCase):
 class TestPolygonAnnotationSetViewSet1:
     namespace = "retina:api"
     basename = "polygonannotationset"
+
+    def test_viewset_permissions(self, TwoPolygonAnnotationSets, user_type):
+        if user_type is None:
+            return
+        user = get_user_from_user_type(user_type, grader=TwoPolygonAnnotationSets.grader1)
+        perms = get_perms(user, TwoPolygonAnnotationSets.polygonset1)
+        for permission_type in PERMISSION_TYPES:
+            if user_type == "retina_grader_non_allowed":
+                assert f"{permission_type}_polygonannotationset" not in perms
+            else:
+                assert f"{permission_type}_polygonannotationset" in perms
 
     def test_list_view(self, TwoPolygonAnnotationSets, rf, user_type):
         response = view_test(
