@@ -3,7 +3,8 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block userlinks %}
+{% block navbar %}
+    {% include "grandchallenge/partials/navbar.html" with hide_userlinks=True %}
 {% endblock %}
 
 {% block content %}

@@ -34,7 +34,6 @@
     {% endif %}
 {% endblock %}
 
-
 {% block sidebar_challengelinks %}
     {% block additionalNavItems %}{% endblock %}
     {% for page in pages %}
@@ -78,14 +77,6 @@
                href="{% url 'evaluation:result-list' challenge_short_name=site.short_name %}">Results</a>
         </li>
 
-    {% endif %}
-{% endblock %}
-
-
-{% block userlinks %}
-    {% if site.hide_signin %}
-    {% else %}
-        {{ block.super }}
     {% endif %}
 {% endblock %}
 

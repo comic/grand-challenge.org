@@ -18,9 +18,9 @@
                     Challenges</a></li>
             </ul>
             <ul class="navbar-nav">
-                {% block userlinks %}
+                {% if not hide_userlinks %}
                     {% include "grandchallenge/partials/userlinks.html" %}
-                {% endblock %}
+                {% endif %}
             </ul>
         </div>
     </div>
