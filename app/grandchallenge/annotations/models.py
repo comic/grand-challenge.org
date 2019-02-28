@@ -54,6 +54,39 @@ class AbstractAnnotationModel(UUIDModel):
                 assign_perm(permission_name, admins_group, self)
 
 
+class AbstractSingleAnnotationModel(UUIDModel):
+    def save(self, *args, **kwargs):
+        """ Override save method to enable setting of permissions for retina users """
+        created = False
+        if self._state.adding:
+            created = True
+
+        super(AbstractSingleAnnotationModel, self).save(*args, **kwargs)
+
+        if not created:
+            return
+
+        if (
+            self.annotation_set.grader.groups.filter(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            ).exists()
+            or self.annotation_set.grader.groups.filter(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            ).exists()
+        ):
+            model_name = self.__class__.__name__.lower()
+            admins_group = Group.objects.get(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            )
+            for permission_type in PERMISSION_TYPES:
+                permission_name = f"{permission_type}_{model_name}"
+                assign_perm(permission_name, self.annotation_set.grader, self)
+                assign_perm(permission_name, admins_group, self)
+
+    class Meta:
+        abstract = True
+
+
 class AbstractImageAnnotationModel(AbstractAnnotationModel):
     """
     Abstract model for annotation linking to a single image
@@ -139,7 +172,7 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
 
 
-class SinglePolygonAnnotation(UUIDModel):
+class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
     General model for a single polygon annotation (list of coordinates).
     Belongs to a PolygonAnnotationSet
@@ -163,7 +196,7 @@ class LandmarkAnnotationSet(AbstractAnnotationModel):
         unique_together = ("grader", "created")
 
 
-class SingleLandmarkAnnotation(UUIDModel):
+class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
     """
     Model containing a set of landmarks (coordinates on an image) that represent the same locations as all the other
     LandmarkAnnotations in the LandmarkAnnotationSet it belongs to. This is used for image registration.
