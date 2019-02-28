@@ -23,83 +23,85 @@
     {% endblock %}
 </head>
 
-<body class='bg-light'>
+{% block body %}
+    <body class='{% block bodyclass %}{% endblock %}'>
 
-{% block navbar %}
-    {% include "grandchallenge/partials/navbar.html" with hide_userlinks=site.hide_signin %}
-{% endblock %}
+    {% block navbar %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=site.hide_signin %}
+    {% endblock %}
 
-<main role="main">
-    <div id="page" class="container mt-3">
+    <main role="main">
+        <div id="page" class="container mt-3">
 
-        {% block messages %}
-            {% include "grandchallenge/partials/messages.html" %}
-        {% endblock %}
-
-        {% block jumbotron %}{% endblock %}
-
-        <div class="row">
-
-            {% block sidebar %}
-                <div class="col-12 col-md-3 col-xl-2 mb-3">
-                    <div class="card sidebar">
-                        {% if not site.banner %}
-                            <div class="card-body">
-                                <h1 class="mb-0">
-                                    <a href="{{ site.get_absolute_url }}">
-                                        {% firstof site.title site.short_name %}
-                                    </a>
-                                </h1>
-                            </div>
-                        {% endif %}
-                        <div class="card-body p-0">
-                            <ul class="nav flex-column">
-                                {% block sidebar_challengelinks %}{% endblock %}
-                                {% block sidebar_userlinks %}{% endblock %}
-                                {% block sidebar_adminlinks %}{% endblock %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            {% block messages %}
+                {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
 
-            <div class="col mb-3">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        {% block content %}{% endblock %}
+            {% block jumbotron %}{% endblock %}
+
+            <div class="row">
+
+                {% block sidebar %}
+                    <div class="col-12 col-md-3 col-xl-2 mb-3">
+                        <div class="card sidebar">
+                            {% if not site.banner %}
+                                <div class="card-body">
+                                    <h1 class="mb-0">
+                                        <a href="{{ site.get_absolute_url }}">
+                                            {% firstof site.title site.short_name %}
+                                        </a>
+                                    </h1>
+                                </div>
+                            {% endif %}
+                            <div class="card-body p-0">
+                                <ul class="nav flex-column">
+                                    {% block sidebar_challengelinks %}{% endblock %}
+                                    {% block sidebar_userlinks %}{% endblock %}
+                                    {% block sidebar_adminlinks %}{% endblock %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endblock %}
+
+                <div class="col mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            {% block content %}{% endblock %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</main>
+    </main>
 
-{% block footer %}
-    {% include "grandchallenge/partials/footer.html" %}
-{% endblock %}
-
-{% block script %}
-    {% include "grandchallenge/partials/script.html" %}
-
-    {% block postjs %}
-        {# For displaying equations on the site, the safe config is important #}
-        <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
-                async></script>
-
-        {# geocharts #}
-        <script type="text/javascript"
-                src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type="text/javascript"
-                src="{% static "js/render_geocharts.js" %}"></script>
-
-        {# make the tables sortable #}
-        <script type="text/javascript"
-                src="{% static "js/sort_tables.js" %}"></script>
-        {# render embeddable google forums #}
-        <script type="text/javascript"
-                src="{% static "js/embed_forums.js" %}"></script>
+    {% block footer %}
+        {% include "grandchallenge/partials/footer.html" %}
     {% endblock %}
-{% endblock %}
 
-</body>
+    {% block script %}
+        {% include "grandchallenge/partials/script.html" %}
+
+        {% block postjs %}
+            {# For displaying equations on the site, the safe config is important #}
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+                    async></script>
+
+            {# geocharts #}
+            <script type="text/javascript"
+                    src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript"
+                    src="{% static "js/render_geocharts.js" %}"></script>
+
+            {# make the tables sortable #}
+            <script type="text/javascript"
+                    src="{% static "js/sort_tables.js" %}"></script>
+            {# render embeddable google forums #}
+            <script type="text/javascript"
+                    src="{% static "js/embed_forums.js" %}"></script>
+        {% endblock %}
+    {% endblock %}
+
+    </body>
+{% endblock %}
 </html>
