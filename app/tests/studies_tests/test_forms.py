@@ -31,11 +31,9 @@ def test_study_create(client):
     patient = PatientFactory()
     data = {
         "name": "test",
-        "datetime": str(
-            factory.fuzzy.FuzzyDateTime(
-                datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
-            )
-        ),
+        "datetime": factory.fuzzy.FuzzyDateTime(
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+        ).strftime("%d/%m/%Y %H:%M:%S"),
         "patient": patient.pk,
     }
 
@@ -61,11 +59,9 @@ def test_study_update(client):
     study = StudyFactory()
     data = {
         "name": "test",
-        "datetime": str(
-            factory.fuzzy.FuzzyDateTime(
-                datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
-            )
-        ),
+        "datetime": factory.fuzzy.FuzzyDateTime(
+            datetime.datetime(1950, 1, 1, 0, 0, 0, 0, pytz.UTC)
+        ).strftime("%d/%m/%Y %H:%M:%S"),
         "patient": study.patient,
     }
 

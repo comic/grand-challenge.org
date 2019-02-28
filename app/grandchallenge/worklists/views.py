@@ -27,8 +27,11 @@ class WorklistTable(generics.ListCreateAPIView):
 
 
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
+
+    def get_queryset(self):
+        queryset = Worklist.objects.filter(set__user=self.request.user)
+        return queryset
 
 
 """ WorklistSet API Endpoints """
@@ -43,8 +46,11 @@ class WorklistSetTable(generics.ListCreateAPIView):
 
 
 class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
-    queryset = WorklistSet.objects.all()
     serializer_class = WorklistSetSerializer
+
+    def get_queryset(self):
+        queryset = WorklistSet.objects.filter(user=self.request.user)
+        return queryset
 
 
 """ Worklist Forms Views """
