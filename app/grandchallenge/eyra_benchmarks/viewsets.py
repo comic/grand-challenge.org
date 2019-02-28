@@ -65,7 +65,7 @@ def algorithm_submission(request):
     # - name (for algo? for submission?)
     # - file (with docker image)
     # - benchmark (id of benchmark)
-    asdasd()
+
     benchmark_id = request.data.get('benchmark', None)
     if not benchmark_id:
         raise DRFValidationError("Benchmark UUID required")
@@ -83,15 +83,14 @@ def algorithm_submission(request):
         creator=User.objects.first(),
         interface=benchmark.interface,
         description=request.data.get('description', ''),
+        container=request.data.get('container', ''),
         name=algorithm_name,
     )
     try:
+        algorithm.full_clean(exclude=None)
         algorithm.save()
-    except IntegrityError:
+    except IntegrityError as e:
         raise DRFValidationError("Algorithm name already exists")
-
-    algorithm.container = str(algorithm.pk)
-    algorithm.save()
 
     submission = Submission(
         algorithm=algorithm,
