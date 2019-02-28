@@ -30,13 +30,12 @@
 {% endblock %}
 
 <main role="main">
-
-    {% block messages %}
-        {% include "grandchallenge/partials/messages.html" %}
-    {% endblock %}
-
     <div id="page"
          class="{% block containerType %}container{% endblock %} mt-3">
+
+        {% block messages %}
+            {% include "grandchallenge/partials/messages.html" %}
+        {% endblock %}
 
         {% block jumbotron %}{% endblock %}
 
