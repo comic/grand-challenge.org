@@ -55,23 +55,19 @@
                         {% endif %}
                         <div class="card-body p-0">
                             <ul class="nav flex-column">
-                                {% block sidebar_challengelinks %} {% endblock %}
-                                {% block sidebar_userlinks %} {% endblock %}
-                                {% block sidebar_adminlinks %} {% endblock %}
+                                {% block sidebar_challengelinks %}{% endblock %}
+                                {% block sidebar_userlinks %}{% endblock %}
+                                {% block sidebar_adminlinks %}{% endblock %}
                             </ul>
                         </div>
                     </div>
                 </div>
             {% endblock %}
 
-            <div id="mainContent" class="mb-3 col-12
-            {% block mainContentSizeClasses %}
-                col-md-9 col-xl-10
-            {% endblock %}
-            ">
+            <div class="col mb-3">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        {% block content %} content {% endblock %}
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             </div>
