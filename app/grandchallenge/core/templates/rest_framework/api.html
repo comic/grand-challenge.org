@@ -17,7 +17,10 @@
     {% include "grandchallenge/partials/navbar.html" %}
 {% endblock %}
 
-{% block bodyclass %}bg-light{% endblock %}
+{% block breadcrumbs %}
+    {% include "grandchallenge/partials/messages.html" %}
+    {{ block.super }}
+{% endblock %}
 
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
