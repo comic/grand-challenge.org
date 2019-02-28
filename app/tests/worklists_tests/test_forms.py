@@ -52,7 +52,7 @@ def test_worklist_create(client):
 def test_worklist_update(client):
     staff_user = UserFactory(is_staff=True)
     worklist = WorklistFactory()
-    data = {"title": "test", "set": worklist.set}
+    data = {"title": "test", "set": worklist.set.pk}
 
     form = WorklistUpdateForm(data=data)
     assert form.is_valid()
@@ -119,7 +119,7 @@ def test_worklist_set_create(client):
 @pytest.mark.django_db
 def test_worklist_set_update(client):
     staff_user = UserFactory(is_staff=True)
-    set = WorklistFactory()
+    set = WorklistSetFactory()
     data = {"title": "test", "user": staff_user.pk}
     form = WorklistSetUpdateForm(data=data)
     assert form.is_valid()
