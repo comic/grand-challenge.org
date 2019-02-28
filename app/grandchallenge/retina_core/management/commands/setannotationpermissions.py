@@ -1,4 +1,6 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
+
+from config.settings import PERMISSION_TYPES
 from grandchallenge.annotations.models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
@@ -13,9 +15,6 @@ from grandchallenge.annotations.models import (
 from django.contrib.auth.models import Group
 from django.conf import settings
 from guardian.shortcuts import assign_perm, remove_perm
-
-# Permission types
-PERMISSION_TYPES = ("view", "add", "change", "delete")
 
 # Existing annotation (name, codename) as of annotations.0001_initial
 ANNOTATION_CODENAMES = (

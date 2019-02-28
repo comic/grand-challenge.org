@@ -7,10 +7,10 @@ from guardian.core import ObjectPermissionChecker
 
 from grandchallenge.retina_core.management.commands.setannotationpermissions import (
     ANNOTATION_CODENAMES,
-    PERMISSION_TYPES,
     WARNING_TEXT,
     SUCCESS_TEXT,
 )
+from config.settings import PERMISSION_TYPES
 
 
 @pytest.mark.django_db

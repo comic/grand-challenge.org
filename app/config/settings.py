@@ -678,3 +678,5 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
+# Default permission types that are set for retina users on annotation models
+PERMISSION_TYPES = ("view", "add", "change", "delete")

@@ -34,9 +34,7 @@ from grandchallenge.retina_api.views import (
     SinglePolygonViewSet,
     PolygonListView,
 )
-from grandchallenge.retina_core.management.commands.setannotationpermissions import (
-    PERMISSION_TYPES
-)
+from config.settings import PERMISSION_TYPES
 
 
 @pytest.mark.django_db

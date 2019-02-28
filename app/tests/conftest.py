@@ -31,9 +31,7 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
-from grandchallenge.retina_core.management.commands.setannotationpermissions import (
-    PERMISSION_TYPES
-)
+from config.settings import PERMISSION_TYPES
 
 """ Defines fixtures than can be used across all of the tests """
 
