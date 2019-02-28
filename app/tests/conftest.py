@@ -273,8 +273,14 @@ class TwoPolygonAnnotationSets(NamedTuple):
     polygonset2: PolygonAnnotationSetFactory
 
 
-def generate_two_polygon_annotation_sets():
+def generate_two_polygon_annotation_sets(retina_grader=False):
     graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        # Add to retina_graders group
+        for grader in graders:
+            grader.groups.add(Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME))
+
     polygonsets = (
         PolygonAnnotationSetFactory(grader=graders[0]),
         PolygonAnnotationSetFactory(grader=graders[1]),
@@ -290,36 +296,6 @@ def generate_two_polygon_annotation_sets():
         ),
     )
 
-    for permission_type in PERMISSION_TYPES:
-        # Set object-level user permissions
-        for index in (0, 1):
-            polygonset = polygonsets[index]
-            assign_perm(
-                f"{permission_type}_polygonannotationset",
-                polygonset.grader,
-                polygonset,
-            )
-            for singlepolygon in singlepolygonbatches[index]:
-                grader = polygonset.grader
-                assign_perm(
-                    f"{permission_type}_singlepolygonannotation",
-                    grader,
-                    singlepolygon,
-                )
-
-        # Set group permissions for retina_admins
-        retina_admins = Group.objects.get(
-            name=settings.RETINA_ADMINS_GROUP_NAME
-        )
-        assign_perm(
-            f"annotations.{permission_type}_polygonannotationset",
-            retina_admins,
-        )
-        assign_perm(
-            f"annotations.{permission_type}_singlepolygonannotation",
-            retina_admins,
-        )
-
     return TwoPolygonAnnotationSets(
         grader1=graders[0],
         grader2=graders[1],
@@ -328,8 +304,15 @@ def generate_two_polygon_annotation_sets():
     )
 
 
+@pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
+def two_retina_polygon_annotation_sets():
+    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
+    two different graders that both are in the retina_graders group """
+    return generate_two_polygon_annotation_sets(retina_grader=True)
+
+
 @pytest.fixture(name="TwoPolygonAnnotationSets")
 def two_polygon_annotation_sets():
     """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
-    two different graders"""
-    return generate_two_polygon_annotation_sets()
+    two different graders """
+    return generate_two_polygon_annotation_sets(retina_grader=False)
