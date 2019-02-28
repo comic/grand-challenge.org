@@ -228,8 +228,13 @@ class AnnotationSet(NamedTuple):
     etdrs: ETDRSGridAnnotationFactory
 
 
-def generate_annotation_set():
+def generate_annotation_set(retina_grader=False):
     grader = UserFactory()
+
+    if retina_grader:
+        # Add to retina_graders group
+        grader.groups.add(Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME))
+
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
     integer = IntegerClassificationAnnotationFactory(grader=grader)
