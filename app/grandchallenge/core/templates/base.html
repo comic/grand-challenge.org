@@ -31,27 +31,9 @@
 
 <main role="main">
 
-    <div id="messagescontainer" class="container mt-3">
-        {% block messages %}
-            {% if messages %}
-                <div class="messagelist">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.level_tag }}">
-                            {% if 'safe' in message.tags %}
-                                {{ message | safe }}
-                            {% else %}
-                                {{ message }}
-                            {% endif %}
-                            <button type="button" class="close"
-                                    data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endblock %}
-    </div>
+    {% block messages %}
+        {% include "grandchallenge/partials/messages.html" %}
+    {% endblock %}
 
     <div id="page"
          class="{% block containerType %}container{% endblock %} mt-3">
