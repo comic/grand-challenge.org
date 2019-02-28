@@ -6,14 +6,22 @@ import time
 import json
 import datetime
 import pytz
+from django.conf import settings
+from celery import shared_task
+
 from grandchallenge.eyra_benchmarks.models import Submission
-from grandchallenge.eyra_algorithms.models import Job, JobInput, Input
+from grandchallenge.eyra_algorithms.models import Job, JobInput
 from grandchallenge.eyra_data.models import DataFile, get_data_file_name
 from grandchallenge.container_exec.backends.k8s import K8sJob
-from django.conf import settings
 
 
 def create_algorithm_job(submission):
+    """Convenience function to create a job for running an algorithm container.
+
+    Args:
+        submission (eyra_benchmarks.models.Submission): the submission to create an algorithm job for
+    """
+
     job_attribute = "algorithm_job"
     output_file_name = "output_file"
     benchmark = submission.benchmark
@@ -27,6 +35,12 @@ def create_algorithm_job(submission):
 
 
 def create_evaluation_job(submission):
+    """Convenience function to create a job for running an evaluation container.
+
+    Args:
+        submission (eyra_benchmarks.models.Submission): the submission to create an evaluation job for
+    """
+
     job_attribute = "evaluation_job"
     output_file_name = "metrics.json"
     benchmark = submission.benchmark
@@ -41,6 +55,20 @@ def create_evaluation_job(submission):
 
 
 def create_job(submission, algorithm, job_attribute, output_file_name, inputs):
+    """Create a job used in the submission algorithm/evaluation workflow.
+
+    Starts a job for the given algorithm (either an algorithm or an evaluation).
+
+    Args:
+        submission (eyra_benchmarks.models.Submission): the submission to create a job for.
+        algorithm (eyra_algorithms.models.Algorithm): the algorithm to run in the job
+        job_attribute (string): the submission attribute name of the job that is to be created (either "algorithm_job" or "evaluation_job")
+        output_file_name (string): the file name of the algorithm output, relative to the output folder (/output)
+        inputs (dict): a dict of (filename, FileField) pairs defining the inputs
+
+    Returns:
+        the primary key of the job object that is created
+    """
     # Create an output file object
     output_file = DataFile(
         name=output_file_name,
@@ -63,16 +91,25 @@ def create_job(submission, algorithm, job_attribute, output_file_name, inputs):
 
 
 def run_algorithm_job(job_pk):
-    job_id_template = "algorithm-job-{}"
-    return run_job(job_pk, job_id_template)
+    """Convenience function for running algorithm jobs."""
+    job_id = f"algorithm-job-{job_pk}"
+    return run_job(job_pk, job_id)
 
 
 def run_evaluation_job(job_pk):
-    job_id_template = "evaluation-job-{}"
-    return run_job(job_pk, job_id_template)
+    """Convenience function for running evaluation jobs."""
+    job_id = f"evaluation-job-{job_pk}"
+    return run_job(job_pk, job_id)
 
 
-def run_job(job_pk, job_id_template):
+def run_job(job_pk, job_id):
+    """Creates and executes a K8S job based on the information in the given Job object.
+
+    Args:
+        job_pk: the primary key of the job to execute
+        job_id (str): the name to be used for the K8S job name
+    """
+
     s3_bucket = settings.AWS_STORAGE_BUCKET_NAME
     docker_registry_url = settings.PRIVATE_DOCKER_REGISTRY
     namespace = settings.K8S_NAMESPACE
@@ -87,7 +124,6 @@ def run_job(job_pk, job_id_template):
 
     # Set up input parameters for K8S job
     output_file_key = get_data_file_name(job.output)
-    job_id = job_id_template.format(job_pk)
     image = f"{docker_registry_url}/{algorithm.container}"
     outputs = {output_file_key: "output_data"}  # HARD-CODED!
 
@@ -136,18 +172,60 @@ def run_job(job_pk, job_id_template):
     return job_success
 
 
+@shared_task
+def run_submission_job(job_pk):
+    """Celery task for executing and evaluting algorithm submissions.
+
+    Args:
+        job_pk: the primary key of the Job object that defines the algorithm run
+    """
+    job = Job.objects.get(pk=job_pk)
+    submission = Submission.objects.get(algorithm_job=job)
+
+    print(f"Starting algorithm job {job_pk}")
+    success = run_algorithm_job(job_pk)
+    if not success:
+        # Set task status etc
+        return
+
+    job_pk = create_evaluation_job(submission)
+    print(f"Starting evaluation job {job_pk}")
+    success = run_evaluation_job(job_pk)
+    if not success:
+        # Set task status etc
+        return
+
+    # Write result
+    submission.metrics_json = job.output.file.read()
+    submission.save()
+
+
+def create_submission_job(submission):
+    """Creates a algorithm job for the submission and spawns the Celery task executing it.
+
+    To be run from a view.
+
+    Args:
+        submission (eyra_benchmarks.models.Submission): the submission to create a job for
+
+    Returns:
+        the Celery result object
+    """
+    job_pk = create_algorithm_job(submission)
+    celery_result = run_submission_job.delay(job_pk)
+    return celery_result
+
+
 if __name__ == "__main__":
-    import sys
     for submission in Submission.objects.all():
         print()
         print("Submission", submission.algorithm.name)
-        job_pk = create_algorithm_job(submission)
-        success = run_algorithm_job(job_pk)
-        if not success:
-            sys.exit()
+        celery_result = create_submission_job(submission)
 
+        while True:
+            if celery_result.ready():
+                break
 
-        job_pk = create_evaluation_job(submission)
-        success = run_evaluation_job(job_pk)
-        if not success:
-            sys.exit()
+        print(celery_result.status)
+        print(celery_result.result)
+        break

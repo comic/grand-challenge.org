@@ -3,10 +3,14 @@ from kubernetes import client
 from kubernetes.client.rest import ApiException
 import time
 import json
+from django.conf import settings
+
+
+IN_CLUSTER = False
 
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, s3_bucket, inputs, outputs, volume_defs=None, blocking=False, delete_old=True):
+    def __init__(self, job_id, namespace, image, s3_bucket, inputs, outputs, volume_defs=None, blocking=False):
         """
         Run a Kubernetes job based on a simple algorithm container.
 
@@ -43,25 +47,17 @@ class K8sJob(object):
         self.outputs = outputs
         self.s3_bucket = s3_bucket
         self.s3_credentials_secret = "do-spaces"
-        self.data_io_image = "docker-registry.roel.dev.eyrabenchmark.net/eyra-data-io"
+        self.data_io_image = f"{settings.PRIVATE_DOCKER_REGISTRY}/eyra-data-io"
 
         self.volumes = []
         self.volume_mounts = []
         self.pods = []
         self.blocking = blocking
 
-        incluster = False
-        if incluster:
+        if IN_CLUSTER:
             load_incluster_config()
         else:
             load_kube_config()
-
-        if delete_old:
-            pass
-            # batch_v1 = client.BatchV1Api()
-            # batch_v1.list_namespaced_job(self.namespace, )
-            # delete_options = client.V1DeleteOptions()
-            # batch_v1.delete_namespaced_job(self.job_id, self.namespace, delete_options)
 
     def __enter__(self):
         return self
@@ -145,6 +141,9 @@ class K8sJob(object):
             )
         ]
 
+        # TODO: add cpu limits?
+        # TODO: add affinity/antiaffinity to separate algorithm execution from web application processes?
+
         # Define the input container that performs input data provisioning
         input_container = client.V1Container(
             name=self.job_id + "-input",
@@ -202,27 +201,16 @@ class K8sJob(object):
             print("Executing job...")
             while True:
                 s = self.status()
-                print(s)
+                self.print_logs()
 
-                logs = self.get_logs()
-                for podname, logs in logs.items():
-                    print()
-                    print(podname)
-                    for container, log in logs.items():
-                        print()
-                        print(container)
-                        print(log)
-
-                if not s.active:
-                    if s.failed or s.succeeded:
-                        break
+                if s.failed or s.succeeded:
+                    break
                 time.sleep(1)
 
-            if s.failed:
-                print("Job failed!")
             if s.succeeded:
                 print("Job succeeded!")
-
+            else:
+                print("Job failed!")
         return
 
     @property
@@ -259,7 +247,6 @@ class K8sJob(object):
         podlist = core_v1.list_namespaced_pod(namespace=self.namespace, label_selector=f"job-name={self.job_id}")
         podnames = [p.metadata.name for p in podlist.items]
 
-
         logs = {}
         for podname in podnames:
             for container in containers:
@@ -292,31 +279,4 @@ class K8sJob(object):
                 print()
                 print("\t", container)
                 print("\t", log)
-
-
-if __name__ == "__main__":
-    algorithm_id = "algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9"
-    #algorithm_id = "algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9"
-    #algorithm_id = "algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9"
-
-    evaluation_id = "evaluation_a_9d942b7a-35bc-11e9-a52a-00155d544bd9"
-    #input_zip_id = "result_algorithm_a_0148a9ce-34f6-11e9-b346-00155d544bd9.zip"
-    input_zip_id = "result_algorithm_b_c0d8fb92-35ad-11e9-91d4-00155d544bd9.zip"
-    #input_zip_id = "result_algorithm_c_eea72dc0-34fc-11e9-aa23-00155d544bd9.zip"
-
-    kj = K8sJob(
-        job_id=f"{algorithm_id.replace('_', '-')}",
-        namespace="dev-maarten",
-        image=f"docker-registry.roel.dev.eyrabenchmark.net/{algorithm_id}",
-        s3_bucket="eyra-datasets",
-        input_object_keys=["test_data/X_test.npy"],
-        output_object_key=f"test_data/result_{algorithm_id}.zip",
-        blocking=True
-
-        # Evaluation container stuff
-        # input_object_keys=[f"test_data/{input_zip_id}", "test_data/gt_test.npy"],
-        # output_object_key=f"test_data/evaluation_{input_zip_id}"    )
-    )
-
-    kj.execute()
 

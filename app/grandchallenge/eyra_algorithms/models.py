@@ -4,10 +4,10 @@ from django.conf import settings
 from django.db import models
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
-from grandchallenge.container_exec.models import (
-    ContainerExecJobModel,
-    ContainerImageModel,
-)
+# from grandchallenge.container_exec.models import (
+#     ContainerExecJobModel,
+#     ContainerImageModel,
+# )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.eyra_data.models import DataType, DataFile
 from grandchallenge.jqfileupload.models import StagedFile

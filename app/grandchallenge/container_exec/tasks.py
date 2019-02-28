@@ -9,6 +9,7 @@ from django.core.files import File
 from django.db import OperationalError
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from .tasks2 import run_submission_job
 
 
 @shared_task()
