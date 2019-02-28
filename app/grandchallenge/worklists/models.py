@@ -30,7 +30,9 @@ class Worklist(UUIDModel):
 
     title = CharField(null=False, blank=False, max_length=255)
     set = models.ForeignKey(WorklistSet, null=False, on_delete=models.CASCADE)
-    images = models.ManyToManyField(to=Image, related_name="worklist", null=True)
+    images = models.ManyToManyField(
+        to=Image, related_name="worklist", blank=True
+    )
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
