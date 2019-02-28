@@ -200,10 +200,6 @@ div#resultsTable_wrapper button.btn {
     font-size: 1em;
 }
 
-div#pageContainer {
-    overflow-x: auto;
-}
-
 /* definition lists */
 
 dl.inline dd {
@@ -255,7 +251,7 @@ div.table-responsive .dt-button-collection-title {
 
 .btn-group .btn+.btn, 
 .btn-group .btn+.btn-group, 
-.btn-group .btn-group+.btn
+.btn-group .btn-group+.btn,
 .btn-group .btn-group+.btn-group,
 .btn-group-vertical .btn+.btn,
 .btn-group-vertical .btn+.btn-group,
