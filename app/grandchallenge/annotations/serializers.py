@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import (
     ETDRSGridAnnotation,
     MeasurementAnnotation,
@@ -8,6 +9,7 @@ from .models import (
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
 )
+from .validators import validate_grader_is_current_retina_user
 
 
 class ETDRSGridAnnotationSerializer(serializers.ModelSerializer):
@@ -33,6 +35,13 @@ class SinglePolygonAnnotationSerializer(serializers.ModelSerializer):
         queryset=PolygonAnnotationSet.objects.all()
     )
 
+    def validate(self, data):
+        """
+        Validate that the user that is creating this object equals the annotation_set.grader for retina_graders
+        """
+        validate_grader_is_current_retina_user(data["annotation_set"].grader, self.context)
+        return data
+
     class Meta:
         model = SinglePolygonAnnotation
         fields = ("id", "value", "annotation_set")
@@ -42,6 +51,13 @@ class PolygonAnnotationSetSerializer(serializers.ModelSerializer):
     singlepolygonannotation_set = SinglePolygonAnnotationSerializer(
         many=True, read_only=True
     )
+
+    def validate_grader(self, value):
+        """
+        Validate that grader is the user creating the object for retina_graders group
+        """
+        validate_grader_is_current_retina_user(value, self.context)
+        return value
 
     class Meta:
         model = PolygonAnnotationSet
