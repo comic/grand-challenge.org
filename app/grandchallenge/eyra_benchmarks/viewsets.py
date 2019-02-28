@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import generics
 
 from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 from grandchallenge.eyra_benchmarks.serializers import BenchmarkSerializer, SubmissionSerializer
@@ -39,6 +40,8 @@ class SubmissionViewSet(ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    # filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ['benchmark']
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
