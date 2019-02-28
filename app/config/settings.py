@@ -2,12 +2,15 @@
 import glob
 import os
 import re
+import traceback
 import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+from raven.contrib.django.models import client
+from rest_framework.response import Response
 
 from config.denylist import USERNAME_DENYLIST
 
@@ -19,6 +22,7 @@ def strtobool(val) -> bool:
 
 # Default COMIC settings, to be included by settings.py
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+# DEBUG = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -488,7 +492,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
     ),
-    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    'EXCEPTION_HANDLER': 'grandchallenge.api.errors.custom_exception_handler'
 }
 
 SWAGGER_SETTINGS = {

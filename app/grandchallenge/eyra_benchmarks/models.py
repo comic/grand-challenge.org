@@ -1,12 +1,11 @@
 import logging
 
 from django.conf import settings
-# from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.eyra_algorithms.models import Job, Algorithm
+from grandchallenge.eyra_algorithms.models import Job, Algorithm, Interface
 from grandchallenge.eyra_data.models import DataFile
 
 logger = logging.getLogger(__name__)
@@ -38,7 +37,7 @@ class Benchmark(UUIDModel):
     training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-
+    interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
     #         raise ValidationError("Training dataset should be public.")
