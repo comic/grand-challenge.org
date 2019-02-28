@@ -4,6 +4,11 @@ from django.utils import timezone
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.conf import settings
+from guardian.shortcuts import assign_perm
+
+from config.settings import PERMISSION_TYPES
 
 
 class AbstractAnnotationModel(UUIDModel):
@@ -14,11 +19,39 @@ class AbstractAnnotationModel(UUIDModel):
     """
 
     grader = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    # Override inherited 'created' attribute
+    # Override inherited 'created' attribute to allow setting of value
     created = models.DateTimeField(default=timezone.now)
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        """ Override save method to enable setting of permissions for retina users """
+        created = False
+        if self._state.adding:
+            created = True
+
+        super(AbstractAnnotationModel, self).save(*args, **kwargs)
+
+        if not created:
+            return
+
+        if (
+            self.grader.groups.filter(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            ).exists()
+            or self.grader.groups.filter(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            ).exists()
+        ):
+            model_name = self.__class__.__name__.lower()
+            admins_group = Group.objects.get(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            )
+            for permission_type in PERMISSION_TYPES:
+                permission_name = f"{permission_type}_{model_name}"
+                assign_perm(permission_name, self.grader, self)
+                assign_perm(permission_name, admins_group, self)
 
 
 class AbstractImageAnnotationModel(AbstractAnnotationModel):
