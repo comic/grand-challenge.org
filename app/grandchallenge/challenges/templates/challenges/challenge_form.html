@@ -4,14 +4,11 @@
 
 {% block title %}New Challenge{% endblock %}
 
-{% block contentTitle %}
+{% block pagecontent %}
     <h2>Create A New Challenge</h2>
     <p>
         Please fill out this form if you would like to set up your own challenge.
     </p>
-{% endblock %}
-
-{% block pagecontent %}
     {% crispy form %}
 {% endblock %}
 

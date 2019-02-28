@@ -4,11 +4,8 @@
 
 {% block title %}Update {{ object.short_name }}{% endblock %}
 
-{% block contentTitle %}
-    <h2>Update {{ object.short_name }}</h2>
-{% endblock %}
-
 {% block pagecontent %}
+    <h2>Update {{ object.short_name }}</h2>
     {% crispy form %}
 {% endblock %}
 
