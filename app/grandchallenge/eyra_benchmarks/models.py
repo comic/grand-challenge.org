@@ -38,7 +38,6 @@ class Benchmark(UUIDModel):
     training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    metrics_json = JSONField(null=True, blank=True)
 
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
@@ -66,3 +65,4 @@ class Submission(UUIDModel):
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name='submissions')
     algorithm_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    metrics_json = JSONField(null=True, blank=True)
