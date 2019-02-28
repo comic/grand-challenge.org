@@ -9,7 +9,44 @@ from django.core.files import File
 from django.db import OperationalError
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
-from .tasks2 import run_submission_job
+from grandchallenge.eyra_benchmarks.models import Submission
+from grandchallenge.eyra_algorithms.models import Job
+from grandchallenge.container_exec.backends.k8s_job_submission import (
+    run_algorithm_job, run_evaluation_job, create_evaluation_job
+)
+
+
+@shared_task
+def run_submission_job(algorithm_job_pk):
+    """Celery task for executing and evaluting algorithm submissions.
+
+    Args:
+        job_pk: the primary key of the Job object that defines the algorithm run
+    """
+    algorithm_job = Job.objects.get(pk=algorithm_job_pk)
+    submission = Submission.objects.get(algorithm_job=algorithm_job)
+
+    print(f"Starting algorithm job {algorithm_job_pk}")
+    success = run_algorithm_job(algorithm_job_pk)
+    if not success:
+        # Set task status etc
+        return
+
+    evaluation_job_pk = create_evaluation_job(submission)
+    print(f"Starting evaluation job {evaluation_job_pk}")
+    success = run_evaluation_job(evaluation_job_pk)
+    if not success:
+        # Set task status etc
+        return
+
+    # Make sure we have the evaluation job and an up-to-date version of the submission
+    evaluation_job = Job.objects.get(pk=evaluation_job_pk)
+    submission = Submission.objects.get(evaluation_job=evaluation_job)
+
+    # Retrieve and store the metrics
+    metrics_json = json.load(evaluation_job.output.file)
+    submission.metrics_json = metrics_json
+    submission.save()
 
 
 @shared_task()
