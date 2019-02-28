@@ -208,6 +208,7 @@ def get_user_from_user_type(user_type, grader=None):
         )
     else:  # normal_user
         user = grader if grader else UserFactory()
+        user.groups.clear()
     return user
 
 
