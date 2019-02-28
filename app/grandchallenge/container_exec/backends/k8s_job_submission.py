@@ -1,15 +1,9 @@
-if __name__ == "__main__":
-    from django import setup
-    setup()
-
 import time
 import json
 import datetime
 import pytz
 from django.conf import settings
-from celery import shared_task
 
-from grandchallenge.eyra_benchmarks.models import Submission
 from grandchallenge.eyra_algorithms.models import Job, JobInput
 from grandchallenge.eyra_data.models import DataFile, get_data_file_name
 from grandchallenge.container_exec.backends.k8s import K8sJob
@@ -172,34 +166,6 @@ def run_job(job_pk, job_id):
     return job_success
 
 
-@shared_task
-def run_submission_job(job_pk):
-    """Celery task for executing and evaluting algorithm submissions.
-
-    Args:
-        job_pk: the primary key of the Job object that defines the algorithm run
-    """
-    job = Job.objects.get(pk=job_pk)
-    submission = Submission.objects.get(algorithm_job=job)
-
-    print(f"Starting algorithm job {job_pk}")
-    success = run_algorithm_job(job_pk)
-    if not success:
-        # Set task status etc
-        return
-
-    job_pk = create_evaluation_job(submission)
-    print(f"Starting evaluation job {job_pk}")
-    success = run_evaluation_job(job_pk)
-    if not success:
-        # Set task status etc
-        return
-
-    # Write result
-    submission.metrics_json = job.output.file.read()
-    submission.save()
-
-
 def create_submission_job(submission):
     """Creates a algorithm job for the submission and spawns the Celery task executing it.
 
@@ -211,21 +177,7 @@ def create_submission_job(submission):
     Returns:
         the Celery result object
     """
+    from grandchallenge.container_exec.tasks import run_submission_job
     job_pk = create_algorithm_job(submission)
     celery_result = run_submission_job.delay(job_pk)
     return celery_result
-
-
-if __name__ == "__main__":
-    for submission in Submission.objects.all():
-        print()
-        print("Submission", submission.algorithm.name)
-        celery_result = create_submission_job(submission)
-
-        while True:
-            if celery_result.ready():
-                break
-
-        print(celery_result.status)
-        print(celery_result.result)
-        break
