@@ -267,6 +267,7 @@ THIRD_PARTY_APPS = [
     "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
     "django_extensions",
+    "django_filters",
 ]
 
 LOCAL_APPS = [
@@ -487,6 +488,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
     ),
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
 
 SWAGGER_SETTINGS = {

@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 # from django.core.exceptions import ValidationError
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
@@ -37,6 +38,7 @@ class Benchmark(UUIDModel):
     training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    metrics_json = JSONField(null=True, blank=True)
 
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
