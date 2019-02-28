@@ -62,7 +62,7 @@ def test_study_update(client):
         "datetime": datetime.datetime(
             1950, 1, 1, 0, 0, 0, 0, pytz.UTC
         ).strftime("%d/%m/%Y %H:%M:%S"),
-        "patient": study.patient,
+        "patient": study.patient.pk,
     }
 
     form = StudyUpdateForm(data=data)
