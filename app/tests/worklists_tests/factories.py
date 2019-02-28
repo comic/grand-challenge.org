@@ -7,8 +7,8 @@ class WorklistSetFactory(factory.DjangoModelFactory):
     class Meta:
         model = WorklistSet
 
-    user = factory.SubFactory(UserFactory)
     title = factory.Sequence(lambda n: f"worklist_set_{n}")
+    user = factory.SubFactory(UserFactory)
 
 
 class WorklistFactory(factory.DjangoModelFactory):
