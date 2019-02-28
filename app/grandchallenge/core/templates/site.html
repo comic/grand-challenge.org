@@ -23,9 +23,6 @@
     {% endif %}
 {% endblock %}
 
-{% block headerLink %}""
-{% endblock %}
-
 {% block jumbotron %}
     {% if site.banner %}
         <div class="row mb-3">
@@ -40,7 +37,7 @@
 {% endblock %}
 
 
-{% block topmenu %}
+{% block sidebar_challengelinks %}
     {% block additionalNavItems %}{% endblock %}
     {% for page in pages %}
         {% if not page.hidden %}
@@ -100,7 +97,7 @@
     {% endif %}
 {% endblock %}
 
-{% block adminbutton %}
+{% block sidebar_adminlinks %}
     {% if "change_challenge" in challenge_perms %}
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"

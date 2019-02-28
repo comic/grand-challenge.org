@@ -41,7 +41,7 @@
 
         <div class="row">
 
-            {% block challengeNav %}
+            {% block sidebar %}
                 <div class="col-12 col-md-3 col-xl-2 mb-3">
                     <div class="card sidebar">
                         {% if not site.banner %}
@@ -55,9 +55,9 @@
                         {% endif %}
                         <div class="card-body p-0">
                             <ul class="nav flex-column">
-                                {% block topmenu %} {% endblock %}
+                                {% block sidebar_challengelinks %} {% endblock %}
                                 {% block sidebar_userlinks %} {% endblock %}
-                                {% block adminbutton %} {% endblock %}
+                                {% block sidebar_adminlinks %} {% endblock %}
                             </ul>
                         </div>
                     </div>
