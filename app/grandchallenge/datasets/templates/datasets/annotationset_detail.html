@@ -5,7 +5,7 @@
     Annotations - {{ block.super }}
 {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     {% if object.labels and not object.base.challenge.evaluation_config.submission_join_key %}
         <p class="alert alert-danger">

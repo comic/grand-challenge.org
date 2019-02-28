@@ -6,7 +6,7 @@
 {% block title %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
     {% if site.disclaimer %}
         <div class="disclaimer alert alert-warning" role="alert">
             {{ site.disclaimer|clean }}
