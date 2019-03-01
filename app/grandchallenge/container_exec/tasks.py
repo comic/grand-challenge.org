@@ -17,7 +17,7 @@ from grandchallenge.container_exec.backends.k8s_job_submission import (
 
 
 @shared_task
-def run_submission_job(algorithm_job_pk):
+def run_and_evaluate_algorithm_task(algorithm_job_pk):
     """Celery task for executing and evaluting algorithm submissions.
 
     Args:
@@ -41,7 +41,7 @@ def run_submission_job(algorithm_job_pk):
 
     # Make sure we have the evaluation job and an up-to-date version of the submission
     evaluation_job = Job.objects.get(pk=evaluation_job_pk)
-    submission = Submission.objects.get(evaluation_job=evaluation_job)
+    submission.refresh_from_db()
 
     # Retrieve and store the metrics
     metrics_json = json.load(evaluation_job.output.file)

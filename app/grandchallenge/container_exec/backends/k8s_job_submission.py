@@ -2,6 +2,7 @@ import time
 import json
 import datetime
 import pytz
+
 from django.conf import settings
 
 from grandchallenge.eyra_algorithms.models import Job, JobInput
@@ -10,7 +11,7 @@ from grandchallenge.container_exec.backends.k8s import K8sJob
 
 
 def create_algorithm_job(submission):
-    """Convenience function to create a job for running an algorithm container.
+    """Convenience wrapper around create_job for algorithm containers.
 
     Args:
         submission (eyra_benchmarks.models.Submission): the submission to create an algorithm job for
@@ -29,7 +30,7 @@ def create_algorithm_job(submission):
 
 
 def create_evaluation_job(submission):
-    """Convenience function to create a job for running an evaluation container.
+    """Convenience wrapper around create_job for evaluation containers.
 
     Args:
         submission (eyra_benchmarks.models.Submission): the submission to create an evaluation job for
@@ -63,35 +64,38 @@ def create_job(submission, algorithm, job_attribute, output_file_name, inputs):
     Returns:
         the primary key of the job object that is created
     """
-    # Create an output file object
+    # Create an empty output DataFile object
     output_file = DataFile(
         name=output_file_name,
         type=algorithm.interface.output_type
     )
     output_file.save()
 
-    # Create a job object
+    # Create a pending Job object that links to the empty output FileObject
     job = Job(algorithm=algorithm, output=output_file, status=Job.PENDING)
     job.save()
 
+    # Set up the JobInputs for the Job based on the Algorithm's Interface
     for input_name, data_file in inputs.items():
         alg_input = algorithm.interface.inputs.get(name=input_name)
         job_input = JobInput(input=alg_input, data_file=data_file, job=job)
         job_input.save()
 
+    # Add the Job to the Submission object
     setattr(submission, job_attribute, job)
     submission.save()
+
     return job.pk
 
 
 def run_algorithm_job(job_pk):
-    """Convenience function for running algorithm jobs."""
+    """Convenience wrapper around run_job for running algorithm jobs."""
     job_id = f"algorithm-job-{job_pk}"
     return run_job(job_pk, job_id)
 
 
 def run_evaluation_job(job_pk):
-    """Convenience function for running evaluation jobs."""
+    """Convenience function around run_job for running evaluation jobs."""
     job_id = f"evaluation-job-{job_pk}"
     return run_job(job_pk, job_id)
 
@@ -104,22 +108,26 @@ def run_job(job_pk, job_id):
         job_id (str): the name to be used for the K8S job name
     """
 
+    # Retrieve settings
     s3_bucket = settings.AWS_STORAGE_BUCKET_NAME
     docker_registry_url = settings.PRIVATE_DOCKER_REGISTRY
     namespace = settings.K8S_NAMESPACE
 
+    # Retrieve the Job, Algorithm and output DataFile objects
     job = Job.objects.get(pk=job_pk)
     algorithm = job.algorithm
     output_file = job.output
 
+    # Collect the algorithm input DataFile info into a dict
     k8s_inputs = {}
     for jobinput in job.inputs.all():
         k8s_inputs[get_data_file_name(jobinput.data_file)] = jobinput.input.name
 
-    # Set up input parameters for K8S job
+    # Collect the algorithm output DataFile info into a dict
     output_file_key = get_data_file_name(job.output)
+    outputs = {output_file_key: "output_data"}  # TODO: Local file name in container is hard-coded
+
     image = f"{docker_registry_url}/{algorithm.container}"
-    outputs = {output_file_key: "output_data"}  # HARD-CODED!
 
     # Define and execute K8S job
     k8s_job = K8sJob(
@@ -132,17 +140,19 @@ def run_job(job_pk, job_id):
         blocking=False
     )
     k8s_job.execute()
+
+    # Update the Job object
     job.status = Job.STARTED
     job.started = datetime.datetime.now(pytz.timezone(settings.TIME_ZONE))
     job.save()
 
-    # Poll K8S job for status
+    # Poll K8S job for status until completion
     while True:
         if k8s_job.succeeded or k8s_job.failed:
             break
         time.sleep(1)
 
-    # Set EYRA Job properties
+    # Update the Job object
     job.stopped = datetime.datetime.now(pytz.timezone(settings.TIME_ZONE))
     job_success = False
     if k8s_job.succeeded:
@@ -159,25 +169,9 @@ def run_job(job_pk, job_id):
     job.log = json.dumps(k8s_job.get_logs())
     job.save()
 
-    # Store output file key to django db
+    # Store output file object key in the output DataFile object
     output_file.file = output_file_key
     output_file.save()
 
     return job_success
 
-
-def create_submission_job(submission):
-    """Creates a algorithm job for the submission and spawns the Celery task executing it.
-
-    To be run from a view.
-
-    Args:
-        submission (eyra_benchmarks.models.Submission): the submission to create a job for
-
-    Returns:
-        the Celery result object
-    """
-    from grandchallenge.container_exec.tasks import run_submission_job
-    job_pk = create_algorithm_job(submission)
-    celery_result = run_submission_job.delay(job_pk)
-    return celery_result
