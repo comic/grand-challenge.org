@@ -635,4 +635,9 @@ AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL')
 AWS_S3_REGION_NAME = 'ams3'
 
 PRIVATE_DOCKER_REGISTRY = "docker-registry.roel.dev.eyrabenchmark.net"
+K8S_DATA_IO_IMAGE = "eyra-data-io"
 K8S_NAMESPACE = "dev-roel"
+K8S_S3_CREDENTIALS_SECRET_NAME = "do-spaces"
+
+# Set to True when running in the K8S cluster; for local development, set to False to use your local kubectl config.
+K8S_USE_CLUSTER_CONFIG = False

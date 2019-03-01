@@ -1,12 +1,11 @@
+import time
+import json
+
 from kubernetes.config import load_incluster_config, load_kube_config
 from kubernetes import client
 from kubernetes.client.rest import ApiException
-import time
-import json
+
 from django.conf import settings
-
-
-IN_CLUSTER = False
 
 
 class K8sJob(object):
@@ -23,7 +22,7 @@ class K8sJob(object):
         it should read input data from /input/ and write all output files to /output/. These folder will be provided as
         mounts by the Kubernetes cluster.
 
-        S3 access credentials should be stored in a secret.
+        S3 access credentials should be stored in a secret in the cluster (see settings).
 
         Args:
             job_id (str): the ID used as the K8s job name
@@ -46,15 +45,15 @@ class K8sJob(object):
         self.inputs = inputs
         self.outputs = outputs
         self.s3_bucket = s3_bucket
-        self.s3_credentials_secret = "do-spaces"
-        self.data_io_image = f"{settings.PRIVATE_DOCKER_REGISTRY}/eyra-data-io"
+        self.s3_credentials_secret = settings.K8S_S3_CREDENTIALS_SECRET_NAME
+        self.data_io_image = f"{settings.PRIVATE_DOCKER_REGISTRY}/{settings.K8S_DATA_IO_IMAGE}"
 
         self.volumes = []
         self.volume_mounts = []
         self.pods = []
         self.blocking = blocking
 
-        if IN_CLUSTER:
+        if settings.K8S_USE_CLUSTER_CONFIG:
             load_incluster_config()
         else:
             load_kube_config()
@@ -142,6 +141,7 @@ class K8sJob(object):
         ]
 
         # TODO: add cpu limits?
+        # TODO: get cpu requests/limits information from database? Needs model update for Job (or Algorithm)
         # TODO: add affinity/antiaffinity to separate algorithm execution from web application processes?
 
         # Define the input container that performs input data provisioning
