@@ -11,6 +11,7 @@ from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.eyra_data.models import DataType, DataFile
 from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.eyra_algorithms.validators import IdExistsInDockerRegistryValidator
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +53,14 @@ class Algorithm(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=64, unique=True, null=False, blank=False)
     description = models.TextField(
         default="",
         blank=True,
         help_text="Description of this algorithm in markdown.",
     )
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='algorithms')
-    container = models.CharField(max_length=64, unique=True)
+    container = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
 
     def __str__(self):
         return self.name

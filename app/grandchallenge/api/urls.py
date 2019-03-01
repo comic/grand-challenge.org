@@ -12,7 +12,7 @@ from grandchallenge.api.views import (
     CurrentUserView,
 )
 from grandchallenge.eyra_algorithms.viewsets import AlgorithmViewSet, JobViewSet, InterfaceViewSet
-from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet
+from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet, algorithm_submission
 from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet
 
 app_name = "api"
@@ -45,6 +45,8 @@ urlpatterns = [
     path(
         "v1/auth/", include("rest_framework.urls", namespace="rest_framework")
     ),
+    path("v1/algorithmSubmission/", algorithm_submission),
+
     # path('v1/datasetfiles/<str:uuid>/', upload_file),
     path("v1/me/", CurrentUserView.as_view()),
     path("v1/spec/", get_swagger_view(title="Comic API")),
