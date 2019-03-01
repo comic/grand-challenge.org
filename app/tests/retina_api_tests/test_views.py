@@ -658,7 +658,9 @@ class TestSinglePolygonAnnotationViewSet:
                 TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.all(),
                 many=True,
             ).data
-            assert response.data == serialized_data
+            assert len(response.data) == len(serialized_data)
+            for key, annotation in enumerate(response.data):
+                assert annotation == serialized_data[key]
         elif user_type == "retina_admin":
             serialized_data = SinglePolygonAnnotationSerializer(
                 TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.all()
