@@ -213,12 +213,12 @@ def get_user_from_user_type(user_type, grader=None):
 
 
 def get_viewset_user_kwargs_url(
-    user_type, namespace, basename, grader, polygon_set, url_name
+    user_type, namespace, basename, grader, model, url_name
 ):
     user = get_user_from_user_type(user_type, grader=grader)
     kwargs = {"user_id": grader.id}
     if url_name == "detail":
-        kwargs.update({"pk": polygon_set.pk})
+        kwargs.update({"pk": model.pk})
     url = reverse(f"{namespace}:{basename}-{url_name}", kwargs=kwargs)
     return user, kwargs, url
 
@@ -229,7 +229,7 @@ def view_test(
     namespace,
     basename,
     grader,
-    polygon_set,
+    model,
     rf,
     viewset,
     data=None,
@@ -240,7 +240,7 @@ def view_test(
     else:
         url_name = "detail"
     user, kwargs, url = get_viewset_user_kwargs_url(
-        user_type, namespace, basename, grader, polygon_set, url_name
+        user_type, namespace, basename, grader, model, url_name
     )
 
     method = "get"  # list or retrieve
