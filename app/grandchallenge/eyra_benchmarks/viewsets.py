@@ -63,7 +63,7 @@ def algorithm_submission(request):
     # fields in request.data:
     # - description (for algo)
     # - name (for algo? for submission?)
-    # - file (with docker image)
+    # - container (name of container)
     # - benchmark (id of benchmark)
 
     benchmark_id = request.data.get('benchmark', None)
@@ -79,8 +79,8 @@ def algorithm_submission(request):
         raise DRFValidationError("Name required")
 
     algorithm = Algorithm(
-        # creator=request.user,
-        creator=User.objects.first(),
+        creator=request.user,
+        # creator=User.objects.first(),
         interface=benchmark.interface,
         description=request.data.get('description', ''),
         container=request.data.get('container', ''),
@@ -95,12 +95,11 @@ def algorithm_submission(request):
     submission = Submission(
         algorithm=algorithm,
         benchmark=benchmark,
-        # creator=request.user,
-        creator=User.objects.first(),
+        creator=request.user,
+        # creator=User.objects.first(),
         name=f"{algorithm.name} on {benchmark.name}"
     )
 
     submission.save()
 
     return Response(AlgorithmSerializer(algorithm).data)
-    # return Response({"message": "Hello, world!"})
