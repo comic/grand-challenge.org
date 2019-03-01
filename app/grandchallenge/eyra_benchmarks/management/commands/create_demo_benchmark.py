@@ -227,5 +227,5 @@ class Command(BaseCommand):
         evaluator = create_evaluator(demouser, eval_interface)
         predictor_interface = create_predict_interface()
         demo_benchmark = create_demo_benchmark(demouser, evaluator, test_data, test_gt_data, training_data, test_gt_data, predictor_interface)
-        predictor_a = create_predictor(demouser, predictor_interface)
-        submission_a = create_submission(demouser, demo_benchmark, predictor_a)
+        # predictor_a = create_predictor(demouser, predictor_interface)
+        # submission_a = create_submission(demouser, demo_benchmark, predictor_a)
