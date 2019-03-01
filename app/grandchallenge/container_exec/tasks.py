@@ -21,7 +21,7 @@ def run_and_evaluate_algorithm_task(algorithm_job_pk):
     """Celery task for executing and evaluting algorithm submissions.
 
     Args:
-        job_pk: the primary key of the Job object that defines the algorithm run
+        algorith_job_pk: the primary key of the Job object that defines the algorithm run
     """
     algorithm_job = Job.objects.get(pk=algorithm_job_pk)
     submission = Submission.objects.get(algorithm_job=algorithm_job)
