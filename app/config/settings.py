@@ -485,7 +485,10 @@ LOGGING = {
     },
 }
 
-RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
+if strtobool(os.environ.get('SENTRY_DISABLE', 'False')):
+    RAVEN_CONFIG = {"dsn" : ""}
+else:
+    RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
