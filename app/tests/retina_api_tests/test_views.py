@@ -521,7 +521,9 @@ class TestPolygonAnnotationSetViewSet:
             response.data["singlepolygonannotation_set"] = []
             assert response.data == model_serialized
 
-    def test_update_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+    def test_update_view_wrong_user(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
         model_serialized = PolygonAnnotationSetSerializer(
             instance=TwoRetinaPolygonAnnotationSets.polygonset1
         ).data
@@ -601,7 +603,9 @@ class TestPolygonAnnotationSetViewSet:
                 id=TwoRetinaPolygonAnnotationSets.polygonset1.id
             ).exists()
 
-    def test_destroy_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+    def test_destroy_view_wrong_user(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
         response = view_test(
             "destroy",
             user_type,
@@ -611,7 +615,7 @@ class TestPolygonAnnotationSetViewSet:
             TwoRetinaPolygonAnnotationSets.polygonset2,
             rf,
             PolygonAnnotationSetViewSet,
-            check_response_status_code=False
+            check_response_status_code=False,
         )
         if user_type == "retina_admin":
             assert not PolygonAnnotationSet.objects.filter(
@@ -666,7 +670,9 @@ class TestSinglePolygonAnnotationViewSet:
     def test_create_view(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
         model_build = SinglePolygonAnnotationFactory.build()
         model_serialized = SinglePolygonAnnotationSerializer(model_build).data
-        annotation_set = PolygonAnnotationSetFactory(grader=TwoRetinaPolygonAnnotationSets.grader1)
+        annotation_set = PolygonAnnotationSetFactory(
+            grader=TwoRetinaPolygonAnnotationSets.grader1
+        )
         model_serialized["annotation_set"] = str(annotation_set.id)
         model_json = json.dumps(model_serialized)
 
@@ -748,7 +754,9 @@ class TestSinglePolygonAnnotationViewSet:
         model_serialized = SinglePolygonAnnotationSerializer(
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
         ).data
-        annotation_set = PolygonAnnotationSetFactory(grader=TwoRetinaPolygonAnnotationSets.grader1)
+        annotation_set = PolygonAnnotationSetFactory(
+            grader=TwoRetinaPolygonAnnotationSets.grader1
+        )
         model_serialized["annotation_set"] = str(annotation_set.id)
         model_json = json.dumps(model_serialized)
 
@@ -770,7 +778,9 @@ class TestSinglePolygonAnnotationViewSet:
             )
             assert response.data == model_serialized
 
-    def test_update_view_wrong_user_id(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+    def test_update_view_wrong_user_id(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
         model_serialized = SinglePolygonAnnotationSerializer(
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
         ).data
@@ -788,7 +798,7 @@ class TestSinglePolygonAnnotationViewSet:
             rf,
             SinglePolygonViewSet,
             model_json,
-            check_response_status_code=False
+            check_response_status_code=False,
         )
         if user_type == "retina_admin":
             model_serialized["id"] = response.data["id"]
@@ -811,7 +821,9 @@ class TestSinglePolygonAnnotationViewSet:
         model_serialized = SinglePolygonAnnotationSerializer(
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
         ).data
-        annotation_set = PolygonAnnotationSetFactory(grader=TwoRetinaPolygonAnnotationSets.grader1)
+        annotation_set = PolygonAnnotationSetFactory(
+            grader=TwoRetinaPolygonAnnotationSets.grader1
+        )
         model_serialized["annotation_set"] = str(annotation_set.id)
         model_json = json.dumps(model_serialized)
 
@@ -849,7 +861,9 @@ class TestSinglePolygonAnnotationViewSet:
                 id=TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first().id
             ).exists()
 
-    def test_destroy_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+    def test_destroy_view_wrong_user(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
         response = view_test(
             "destroy",
             user_type,
@@ -859,7 +873,7 @@ class TestSinglePolygonAnnotationViewSet:
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
             rf,
             SinglePolygonViewSet,
-            check_response_status_code=False
+            check_response_status_code=False,
         )
         if user_type == "retina_admin":
             assert not PolygonAnnotationSet.objects.filter(

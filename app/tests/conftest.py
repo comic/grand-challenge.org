@@ -233,7 +233,9 @@ def generate_annotation_set(retina_grader=False):
 
     if retina_grader:
         # Add to retina_graders group
-        grader.groups.add(Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME))
+        grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
 
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
@@ -284,7 +286,9 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     if retina_grader:
         # Add to retina_graders group
         for grader in graders:
-            grader.groups.add(Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME))
+            grader.groups.add(
+                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+            )
 
     polygonsets = (
         PolygonAnnotationSetFactory(grader=graders[0]),

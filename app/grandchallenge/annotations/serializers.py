@@ -29,7 +29,9 @@ class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
         """
         Validate that the user that is creating this object equals the annotation_set.grader for retina_graders
         """
-        validate_grader_is_current_retina_user(data["annotation_set"].grader, self.context)
+        validate_grader_is_current_retina_user(
+            data["annotation_set"].grader, self.context
+        )
         return data
 
     class Meta:
