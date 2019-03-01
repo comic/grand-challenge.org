@@ -648,4 +648,4 @@ K8S_NAMESPACE = os.environ.get("K8S_NAMESPACE")
 K8S_S3_CREDENTIALS_SECRET_NAME = "do-spaces"
 
 # Set to True when running in the K8S cluster; for local development, set to False to use your local kubectl config.
-K8S_USE_CLUSTER_CONFIG = False
+K8S_USE_CLUSTER_CONFIG = True
