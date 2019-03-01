@@ -521,6 +521,42 @@ class TestPolygonAnnotationSetViewSet:
             response.data["singlepolygonannotation_set"] = []
             assert response.data == model_serialized
 
+    def test_update_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+        model_serialized = PolygonAnnotationSetSerializer(
+            instance=TwoRetinaPolygonAnnotationSets.polygonset1
+        ).data
+        image = ImageFactory()
+        model_serialized["image"] = str(image.id)
+        model_serialized["singlepolygonannotation_set"] = []
+        other_user = UserFactory()
+        model_serialized["grader"] = other_user.id
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoRetinaPolygonAnnotationSets.grader1,
+            TwoRetinaPolygonAnnotationSets.polygonset1,
+            rf,
+            PolygonAnnotationSetViewSet,
+            model_json,
+            check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            response.data["singlepolygonannotation_set"] = []
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["grader"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_partial_update_view(
         self, TwoRetinaPolygonAnnotationSets, rf, user_type
     ):
@@ -564,6 +600,27 @@ class TestPolygonAnnotationSetViewSet:
             assert not PolygonAnnotationSet.objects.filter(
                 id=TwoRetinaPolygonAnnotationSets.polygonset1.id
             ).exists()
+
+    def test_destroy_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+        response = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoRetinaPolygonAnnotationSets.grader1,
+            TwoRetinaPolygonAnnotationSets.polygonset2,
+            rf,
+            PolygonAnnotationSetViewSet,
+            check_response_status_code=False
+        )
+        if user_type == "retina_admin":
+            assert not PolygonAnnotationSet.objects.filter(
+                id=TwoRetinaPolygonAnnotationSets.polygonset2.id
+            ).exists()
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.django_db
@@ -631,7 +688,46 @@ class TestSinglePolygonAnnotationViewSet:
             )
             assert response.data == model_serialized
 
-    def test_retrieve_view(self, TwoPolygonAnnotationSets, rf, user_type):
+    def test_create_view_wrong_user_id(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
+        model_build = SinglePolygonAnnotationFactory.build()
+        model_serialized = SinglePolygonAnnotationSerializer(model_build).data
+        other_user = UserFactory()
+        annotation_set = PolygonAnnotationSetFactory(grader=other_user)
+        model_serialized["annotation_set"] = str(annotation_set.id)
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoRetinaPolygonAnnotationSets.grader1,
+            None,
+            rf,
+            SinglePolygonViewSet,
+            model_json,
+            check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            response.data["annotation_set"] = str(
+                response.data["annotation_set"]
+            )
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["non_field_errors"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_view(
+        self, TwoRetinaPolygonAnnotationSets, rf, user_type
+    ):
         response = view_test(
             "retrieve",
             user_type,
@@ -673,6 +769,41 @@ class TestSinglePolygonAnnotationViewSet:
                 response.data["annotation_set"]
             )
             assert response.data == model_serialized
+
+    def test_update_view_wrong_user_id(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+        model_serialized = SinglePolygonAnnotationSerializer(
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
+        ).data
+        annotation_set = PolygonAnnotationSetFactory()
+        model_serialized["annotation_set"] = str(annotation_set.id)
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoRetinaPolygonAnnotationSets.grader1,
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            rf,
+            SinglePolygonViewSet,
+            model_json,
+            check_response_status_code=False
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            response.data["annotation_set"] = str(
+                response.data["annotation_set"]
+            )
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["non_field_errors"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_view(
         self, TwoRetinaPolygonAnnotationSets, rf, user_type
@@ -717,3 +848,24 @@ class TestSinglePolygonAnnotationViewSet:
             assert not PolygonAnnotationSet.objects.filter(
                 id=TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first().id
             ).exists()
+
+    def test_destroy_view_wrong_user(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
+        response = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            TwoRetinaPolygonAnnotationSets.grader2,
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            rf,
+            SinglePolygonViewSet,
+            check_response_status_code=False
+        )
+        if user_type == "retina_admin":
+            assert not PolygonAnnotationSet.objects.filter(
+                id=TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first().id
+            ).exists()
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
