@@ -12,3 +12,9 @@
         <input type="submit" value="Save" class="btn btn-primary"/>
     </form>
 {% endblock %}
+
+{% block deferred-js %}
+    {{ block.super }}
+    {{ form.media }}
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+{% endblock %}

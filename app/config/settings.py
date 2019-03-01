@@ -151,6 +151,8 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "endpoint_url": os.environ.get(
         "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
     ),
+    # Do not overwrite files, we get problems with jqfileupload otherwise
+    "file_overwrite": False,
 }
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
@@ -227,6 +229,9 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
+
+# Vendored static files will be put here
+STATICFILES_DIRS = ["/opt/static/"]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -307,6 +312,8 @@ THIRD_PARTY_APPS = [
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "sorl.thumbnail",  # for dynamic thumbnails
+    "dal",  # for autocompletion of selection fields
+    "dal_select2",  # for autocompletion of selection fields
 ]
 
 LOCAL_APPS = [

@@ -257,15 +257,16 @@
                                    style="display:block;">
                                     <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
 
-                                        <img class="thumbnail rounded-top-left flex-shrink-0"
+                                        <img class="thumbnail lazyload rounded-top-left flex-shrink-0"
                                              alt="{{ challenge.short_name }} logo"
+                                             src="{% static 'images/3697E1-0.8.png' %}"
                                                 {% if challenge.logo %}
                                                     {# Note, thumbnail class is 5rem/80px in core.css #}
                                                     {% thumbnail challenge.logo "80x80" crop="center" as im %}
-                                             src="{{ im.url }}"
+                                             data-src="{{ im.url }}"
                                                     {% endthumbnail %}
                                                 {% else %}
-                                             src="{{ challenge.gravatar_url }}"
+                                             data-src="{{ challenge.gravatar_url }}"
                                                 {% endif %}
                                         >
 
@@ -364,8 +365,10 @@
             </div>
         {% endfor %}
     </div>
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
-
 {% endblock %}

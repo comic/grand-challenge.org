@@ -188,7 +188,10 @@
             participant is
             listed.</p>
     {% endif %}
+{% endblock %}
 
+{% block deferred-js %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             var table = $('#resultsTable').DataTable({
@@ -269,5 +272,4 @@
             $('#resultsTable').DataTable().columns.adjust()
         });
     </script>
-
 {% endblock %}

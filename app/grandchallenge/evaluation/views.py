@@ -180,25 +180,6 @@ class SubmissionCreate(
 class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
     form_class = LegacySubmissionForm
 
-    def get_next_submission(
-        self,
-        *,
-        max_subs: int,
-        period: timedelta = timedelta(days=1),
-        now: datetime = None,
-    ):
-        """
-        Admins should always be able to upload legacy results, so set the
-        remaining submissions to infinite.
-        """
-        if now is None:
-            now = timezone.now()
-
-        return {
-            "remaining_submissions": float("Inf"),
-            "next_submission_at": now,
-        }
-
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Submission

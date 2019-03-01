@@ -1,0 +1,25 @@
+{
+  "name": "grand-challenge",
+  "version": "1.0.0",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "5.7.2",
+    "jquery": "3.2.1",
+    "jquery-ui": "1.12.1",
+    "popper.js": "1.14.3",
+    "bootstrap": "4.3.1",
+    "datatables.net-bs4": "1.10.18",
+    "datatables.net-buttons-bs4": "1.5.4",
+    "blueimp-file-upload": "9.22.1",
+    "jquery.cookie": "1.4.1",
+    "mathjax": "2.7.5",
+    "chart.js": "2.7.2",
+    "lazysizes": "4.1.5"
+  },
+  "scripts": {
+    "build": "mkdir -p dist/js dist/css dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome",
+    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/ ",
+    "copy:jquery": "cp ./node_modules/jquery/dist/jquery*.js ./dist/js/",
+    "copy:fontawesome": "cp ./node_modules/@fortawesome/fontawesome-free/css/*.css ./dist/fa/css/ && cp ./node_modules/@fortawesome/fontawesome-free/webfonts/*.* ./dist/fa/webfonts/"
+  },
+  "license": "Apache-2.0"
+}
