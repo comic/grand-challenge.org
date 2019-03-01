@@ -57,15 +57,13 @@ class SubmissionViewSet(ModelViewSet):
 
 
 @api_view(['POST'])
-# @permission_classes((IsAuthenticated,))
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
 def algorithm_submission(request):
     # fields in request.data:
     # - description (for algo)
     # - name (for algo? for submission?)
     # - container (name of container)
     # - benchmark (id of benchmark)
-
     benchmark_id = request.data.get('benchmark', None)
     if not benchmark_id:
         raise DRFValidationError("Benchmark UUID required")
