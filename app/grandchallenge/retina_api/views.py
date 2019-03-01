@@ -746,7 +746,6 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     serializer_class = PolygonAnnotationSetSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
     queryset = PolygonAnnotationSet.objects.all()
-    # TODO: permission for creation... anyone can create a polygon_set and set user_id to what he wants...
 
 
 class SinglePolygonViewSet(viewsets.ModelViewSet):
