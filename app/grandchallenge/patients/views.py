@@ -18,6 +18,7 @@ class PatientTable(generics.ListCreateAPIView):
 
         if worklist is not None:
             queryset = queryset.filter(study__image__worklist=worklist)
+            queryset = queryset.distinct();
 
         return queryset
 

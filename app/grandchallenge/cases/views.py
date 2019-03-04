@@ -47,7 +47,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         study = self.request.query_params.get("study", None)
 
         if worklist is not None:
-            queryset = queryset.filter(study__image__worklist=worklist)
+            queryset = queryset.filter(worklist=worklist)
 
         if study is not None:
             queryset = queryset.filter(study=study)

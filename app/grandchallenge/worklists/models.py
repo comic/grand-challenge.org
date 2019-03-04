@@ -11,7 +11,7 @@ class WorklistSet(UUIDModel):
     """
 
     title = CharField(null=False, blank=False, max_length=255)
-    user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
 
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
@@ -21,7 +21,6 @@ class WorklistSet(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         unique_together = ("title", "user")
-
 
 class Worklist(UUIDModel):
     """

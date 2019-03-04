@@ -37,6 +37,11 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
 class WorklistSetTable(generics.ListCreateAPIView):
     serializer_class = WorklistSetSerializer
 
+    def create(self, request, *args, **kwargs):
+        kwargs.pop("user")
+        kwargs.append("user", request.user.pk)
+        super().create(self, request, args, kwargs)
+
     def get_queryset(self):
         queryset = WorklistSet.objects.filter(user=self.request.user)
         return queryset
@@ -45,6 +50,11 @@ class WorklistSetTable(generics.ListCreateAPIView):
 class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = WorklistSet.objects.all()
     serializer_class = WorklistSetSerializer
+
+    def update(self, request, *args, **kwargs):
+        kwargs.pop("user")
+        kwargs.append("user", request.user.pk)
+        super().create(self, request, args, kwargs)
 
 
 """ Worklist Forms Views """
