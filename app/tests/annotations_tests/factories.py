@@ -2,6 +2,7 @@ import random
 import factory.fuzzy
 import datetime
 import pytz
+
 from grandchallenge.annotations.models import (
     AbstractImageAnnotationModel,
     AbstractNamedImageAnnotationModel,
@@ -19,13 +20,25 @@ from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory
 
 
-def create_fake_coordinate_list(size=10):
-    c_list = []
-    for i in range(size):
-        c_list.append(
-            [random.uniform(0.0, 1000.0), random.uniform(0.0, 1000.0)]
-        )
-    return c_list
+class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
+    def __init__(self, size=None):
+        self.size = size
+
+    def fuzz(self):
+        if self.size is None:
+            size = factory.fuzzy.random.randgen.randint(1, 30)
+        else:
+            size = self.size
+
+        fuzzy_list = []
+        for i in range(size):
+            fuzzy_list.append(
+                [
+                    factory.fuzzy.random.randgen.uniform(0.0, 1000.0),
+                    factory.fuzzy.random.randgen.uniform(0.0, 1000.0),
+                ]
+            )
+        return fuzzy_list
 
 
 class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
@@ -88,7 +101,7 @@ class CoordinateListAnnotationFactory(DefaultNamedImageAnnotationModelFactory):
     class Meta:
         model = CoordinateListAnnotation
 
-    value = create_fake_coordinate_list()
+    value = FuzzyFloatCoordinatesList()
 
 
 class PolygonAnnotationSetFactory(DefaultNamedImageAnnotationModelFactory):
@@ -102,7 +115,7 @@ class SinglePolygonAnnotationFactory(factory.DjangoModelFactory):
 
     annotation_set = factory.SubFactory(PolygonAnnotationSetFactory)
 
-    value = create_fake_coordinate_list()
+    value = FuzzyFloatCoordinatesList()
 
 
 class LandmarkAnnotationSetFactory(factory.DjangoModelFactory):
@@ -122,7 +135,7 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
     image = factory.SubFactory(ImageFactory)
     annotation_set = factory.SubFactory(LandmarkAnnotationSetFactory)
 
-    landmarks = create_fake_coordinate_list()
+    landmarks = FuzzyFloatCoordinatesList()
 
 
 def create_batch_landmarks():
