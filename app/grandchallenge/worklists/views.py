@@ -1,5 +1,4 @@
-import json
-
+from django.contrib.auth.models import User
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics, status
@@ -42,15 +41,17 @@ class WorklistSetTable(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
+        user = request.user
 
         if "title" not in data or len(data["title"]) == 0:
             return Response(
                 "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
             )
 
-        set = WorklistSet.objects.create(
-            title=data["title"], user=request.user
-        )
+        if "user" in data and len(data["user"]) > 0:
+            user = User.objects.get(pk=data["user"])
+
+        set = WorklistSet.objects.create(title=data["title"], user=user)
         serializer = WorklistSetSerializer(set)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -65,17 +66,19 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         data = request.data
+        user = request.user
 
         if "title" not in data or len(data["title"]) == 0:
             return Response(
                 "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
             )
 
-        set = WorklistSet.objects.create(
-            title=data["title"], user=request.user
-        )
+        if "user" in data and len(data["user"]) > 0:
+            user = User.objects.get(pk=data["user"])
+
+        set = WorklistSet.objects.create(title=data["title"], user=user)
         serializer = WorklistSetSerializer(set)
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 """ Worklist Forms Views """
