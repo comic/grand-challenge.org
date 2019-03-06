@@ -1,6 +1,9 @@
+import json
+
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.worklists.models import Worklist, WorklistSet
@@ -38,9 +41,18 @@ class WorklistSetTable(generics.ListCreateAPIView):
     serializer_class = WorklistSetSerializer
 
     def create(self, request, *args, **kwargs):
-        kwargs.pop("user")
-        kwargs.append("user", request.user.pk)
-        super().create(self, request, args, kwargs)
+        data = request.data
+
+        if "title" not in data or len(data["title"]) == 0:
+            return Response(
+                "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        set = WorklistSet.objects.create(
+            title=data["title"], user=request.user
+        )
+        serializer = WorklistSetSerializer(set)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
         queryset = WorklistSet.objects.filter(user=self.request.user)
@@ -52,9 +64,18 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WorklistSetSerializer
 
     def update(self, request, *args, **kwargs):
-        kwargs.pop("user")
-        kwargs.append("user", request.user.pk)
-        super().create(self, request, args, kwargs)
+        data = request.data
+
+        if "title" not in data or len(data["title"]) == 0:
+            return Response(
+                "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        set = WorklistSet.objects.create(
+            title=data["title"], user=request.user
+        )
+        serializer = WorklistSetSerializer(set)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 """ Worklist Forms Views """

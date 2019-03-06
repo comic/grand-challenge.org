@@ -9,6 +9,7 @@
     <thead>
         <tr>
             <td><b>Title</b></td>
+            <td><b>User</b></td>
             <td><b>Worklists</b></td>
             <td></td>
         </tr>
@@ -17,6 +18,7 @@
         {% for set in object_list %}
             <tr>
                 <td>{{ set.title }}</td>
+                <td>{{ set.user }}</td>
                 <td>{{ set.get_children|length }}</td>
                 <td><a href="{% url 'worklists:list-create' %}">Add Worklist</a></td>
                 <td><a href="{% url 'worklists:set-update' set.id %}">Update</a></td>
