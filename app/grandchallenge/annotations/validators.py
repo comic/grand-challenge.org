@@ -8,7 +8,11 @@ def validate_grader_is_current_retina_user(grader, context):
     Only applies to users that are in the retina_graders group.
     """
     request = context.get("request")
-    if request and request.user.is_authenticated:
+    if (
+        request is not None
+        and request.user is not None
+        and request.user.is_authenticated
+    ):
         user = request.user
         if user.groups.filter(
             name=settings.RETINA_GRADERS_GROUP_NAME
