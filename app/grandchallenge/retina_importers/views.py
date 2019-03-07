@@ -222,9 +222,9 @@ class UploadImage(generics.CreateAPIView):
 
     def save_mhd_and_raw_files(self, request, img):
         # Save MHD and ZRAW files to Image.files model
-        uuid_name_str = str(uuid.uuid4())
+        file_name = "out"
         # Set ElementDataFile in mhd file to correct zraw filename
-        raw_file_name = uuid_name_str + ".zraw"
+        raw_file_name = file_name + ".zraw"
         request.data["image_hd"] = self.set_element_data_file_header(
             request.data["image_hd"], raw_file_name
         )
@@ -234,7 +234,7 @@ class UploadImage(generics.CreateAPIView):
             # Save image fieldfile into ImageFile, also triggers ImageFile model save method
             image_file = File(request.data[image_key])
             extension = "zraw" if image_key == "image_raw" else "mhd"
-            image_name = "{}.{}".format(uuid_name_str, extension)
+            image_name = "{}.{}".format(file_name, extension)
             img_file_model.file.save(image_name, image_file, save=True)
 
 
