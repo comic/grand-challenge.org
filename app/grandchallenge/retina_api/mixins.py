@@ -51,11 +51,12 @@ class RetinaOwnerAPIPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         user_id = view.kwargs.get("user_id")
         user = get_user_model().objects.get(id=user_id)
-        is_retina_user_and_owner = request.user == user and is_in_retina_group(
-            request.user
-        )
-        is_admin = is_in_retina_admins_group(request.user)
-        return is_admin or is_retina_user_and_owner
+        if request.user == user and is_in_retina_group(request.user):
+            return True
+        elif is_in_retina_admins_group(request.user):
+            return True
+        else:
+            return False
 
 
 class RetinaAPIPermissionMixin(AccessMixin):
