@@ -84,7 +84,7 @@ class Command(BaseCommand):
                 if options["add_permissions"]:
                     for permission_type in PERMISSION_TYPES:
                         assign_perm(
-                            f"annotations.{permission_type}_{model.__name__.lower()}",
+                            f"{obj._meta.app_label}.{permission_type}_{obj._meta.model_name}",
                             user_to,
                             obj,
                         )
@@ -97,7 +97,7 @@ class Command(BaseCommand):
                     if options["add_permissions"]:
                         for permission_type in PERMISSION_TYPES:
                             assign_perm(
-                                f"annotations.{permission_type}_{child.__class__.__name__.lower()}",
+                                f"{child._meta.app_label}.{permission_type}_{child._meta.model_name}",
                                 user_to,
                                 child,
                             )
@@ -108,7 +108,7 @@ class Command(BaseCommand):
                     else ""
                 )
                 self.stdout.write(
-                    f"Copied {str(obj.__class__.__name__)}({obj_pk}){with_children_output}"
+                    f"Copied {str(child._meta.model_name)}({obj_pk}){with_children_output}"
                 )
 
                 total_parents_copied += 1

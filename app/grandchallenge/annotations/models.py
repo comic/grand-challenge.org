@@ -44,7 +44,7 @@ class AbstractAnnotationModel(UUIDModel):
                 name=settings.RETINA_ADMINS_GROUP_NAME
             ).exists()
         ):
-            model_name = self.__class__.__name__.lower()
+            model_name = self._meta.model_name
             admins_group = Group.objects.get(
                 name=settings.RETINA_ADMINS_GROUP_NAME
             )
@@ -74,7 +74,7 @@ class AbstractSingleAnnotationModel(UUIDModel):
                 name=settings.RETINA_ADMINS_GROUP_NAME
             ).exists()
         ):
-            model_name = self.__class__.__name__.lower()
+            model_name = self._meta.model_name
             admins_group = Group.objects.get(
                 name=settings.RETINA_ADMINS_GROUP_NAME
             )
@@ -96,7 +96,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
 
     def __str__(self):
         return "<{} by {} on {} for {}>".format(
-            self.__class__.__name__,
+            self._meta.model_name,
             self.grader.username,
             self.created.strftime("%Y-%m-%d at %H:%M:%S"),
             self.image,
