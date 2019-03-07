@@ -6,8 +6,6 @@ from django.conf import settings
 
 app_name = "retina_api"
 
-router = DefaultRouter()
-
 annotation_router = SimpleRouter()
 annotation_router.register(
     "singlepolygonannotation",
@@ -20,7 +18,6 @@ annotation_router.register(
     basename="polygonannotationset",
 )
 urlpatterns = [
-    path("", include(router.urls)),
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
