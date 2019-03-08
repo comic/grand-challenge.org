@@ -66,7 +66,9 @@ class TestPermissions:
             user,
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
         )
-        default_permissions = TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+        default_permissions = (
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+        )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
                 assert (
@@ -82,7 +84,9 @@ class TestPermissions:
             user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
         )
         perms = get_perms(user, TwoRetinaPolygonAnnotationSets.polygonset1)
-        default_permissions = TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+        default_permissions = (
+            TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+        )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
                 assert f"{permission_type}_polygonannotationset" not in perms

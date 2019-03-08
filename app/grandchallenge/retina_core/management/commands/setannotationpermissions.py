@@ -25,7 +25,7 @@ ANNOTATION_MODELS = (
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
     SingleLandmarkAnnotation,
-    SinglePolygonAnnotation
+    SinglePolygonAnnotation,
 )
 
 WARNING_TEXT = (
@@ -58,7 +58,7 @@ def change_retina_permissions(remove=False):
                 owner = annotation.grader
 
             if owner.groups.filter(
-                    name=settings.RETINA_GRADERS_GROUP_NAME
+                name=settings.RETINA_GRADERS_GROUP_NAME
             ).exists():
                 for permission_type in permissions:
                     change_permission_func(
