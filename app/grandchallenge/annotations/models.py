@@ -8,8 +8,6 @@ from django.contrib.auth.models import Group
 from django.conf import settings
 from guardian.shortcuts import assign_perm
 
-from config.settings import PERMISSION_TYPES
-
 
 class AbstractAnnotationModel(UUIDModel):
     """
@@ -48,7 +46,7 @@ class AbstractAnnotationModel(UUIDModel):
             admins_group = Group.objects.get(
                 name=settings.RETINA_ADMINS_GROUP_NAME
             )
-            for permission_type in PERMISSION_TYPES:
+            for permission_type in self._meta.default_permissions:
                 permission_name = f"{permission_type}_{model_name}"
                 assign_perm(permission_name, self.grader, self)
                 assign_perm(permission_name, admins_group, self)
@@ -78,7 +76,7 @@ class AbstractSingleAnnotationModel(UUIDModel):
             admins_group = Group.objects.get(
                 name=settings.RETINA_ADMINS_GROUP_NAME
             )
-            for permission_type in PERMISSION_TYPES:
+            for permission_type in self._meta.default_permissions:
                 permission_name = f"{permission_type}_{model_name}"
                 assign_perm(permission_name, self.annotation_set.grader, self)
                 assign_perm(permission_name, admins_group, self)

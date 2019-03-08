@@ -13,7 +13,6 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
-from config.settings import PERMISSION_TYPES
 
 
 @pytest.mark.django_db
@@ -157,21 +156,20 @@ class TestCommands:
             model_instance = model.objects.get(grader=user_to)
             children = []
             if model == PolygonAnnotationSet:
-                child_model_name = "singlepolygonannotation"
                 children = model_instance.singlepolygonannotation_set.all()
             if model == LandmarkAnnotationSet:
-                child_model_name = "singlelandmarkannotation"
                 children = model_instance.singlelandmarkannotation_set.all()
 
             perms = checker.get_perms(model_instance)
-            for permission_type in PERMISSION_TYPES:
-                assert f"{permission_type}_{model.__name__.lower()}" in perms
+            for permission_type in model._meta.default_permissions:
+                assert f"{permission_type}_{model._meta.model_name}" in perms
 
             if children:
                 checker.prefetch_perms(children)
             for child in children:
                 perms = checker.get_perms(child)
-                for permission_type in PERMISSION_TYPES:
+                child_model_name = children.first()._meta.model_name
+                for permission_type in child._meta.default_permissions:
                     assert f"{permission_type}_{child_model_name}" in perms
 
     def test_copyannotations_command_doesnt_add_permissions(

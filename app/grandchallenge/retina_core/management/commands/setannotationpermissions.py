@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from config.settings import PERMISSION_TYPES
 from grandchallenge.annotations.models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
@@ -17,16 +16,16 @@ from django.conf import settings
 from guardian.shortcuts import assign_perm, remove_perm
 
 # Existing annotation (name, codename) as of annotations.0001_initial
-ANNOTATION_CODENAMES = (
-    (BooleanClassificationAnnotation, "booleanclassificationannotation"),
-    (CoordinateListAnnotation, "coordinatelistannotation"),
-    (IntegerClassificationAnnotation, "integerclassificationannotation"),
-    (LandmarkAnnotationSet, "landmarkannotationset"),
-    (MeasurementAnnotation, "measurementannotation"),
-    (PolygonAnnotationSet, "polygonannotationset"),
-    (SingleLandmarkAnnotation, "singlelandmarkannotation"),
-    (SinglePolygonAnnotation, "singlepolygonannotation"),
-    (ETDRSGridAnnotation, "etdrsgridannotation"),
+ANNOTATION_MODELS = (
+    MeasurementAnnotation,
+    BooleanClassificationAnnotation,
+    IntegerClassificationAnnotation,
+    PolygonAnnotationSet,
+    LandmarkAnnotationSet,
+    ETDRSGridAnnotation,
+    CoordinateListAnnotation,
+    SingleLandmarkAnnotation,
+    SinglePolygonAnnotation
 )
 
 WARNING_TEXT = (
@@ -48,7 +47,9 @@ def change_retina_permissions(remove=False):
     retina_admin_group = Group.objects.get(
         name=settings.RETINA_ADMINS_GROUP_NAME
     )
-    for (annotation_model, annotation_codename) in ANNOTATION_CODENAMES:
+    for annotation_model in ANNOTATION_MODELS:
+        annotation_codename = annotation_model._meta.model_name
+        permissions = annotation_model._meta.default_permissions
         # Change user level object permissions to owners of annotations
         for annotation in annotation_model.objects.all():
             if annotation_codename.startswith("single"):
@@ -57,9 +58,9 @@ def change_retina_permissions(remove=False):
                 owner = annotation.grader
 
             if owner.groups.filter(
-                name=settings.RETINA_GRADERS_GROUP_NAME
+                    name=settings.RETINA_GRADERS_GROUP_NAME
             ).exists():
-                for permission_type in PERMISSION_TYPES:
+                for permission_type in permissions:
                     change_permission_func(
                         f"annotations.{permission_type}_{annotation_codename}",
                         owner,
@@ -68,7 +69,7 @@ def change_retina_permissions(remove=False):
                 olp_count += 1
 
         # Change group level permissions
-        for permission_type in PERMISSION_TYPES:
+        for permission_type in permissions:
             change_permission_func(
                 f"annotations.{permission_type}_{annotation_codename}",
                 retina_admin_group,
@@ -101,7 +102,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         mlp_count, olp_count = change_retina_permissions(options["remove"])
         assigned_text = "removed" if options["remove"] else "assigned"
-        if mlp_count == len(ANNOTATION_CODENAMES) and olp_count == 0:
+        if mlp_count == len(ANNOTATION_MODELS) and olp_count == 0:
             self.stdout.write(
                 self.style.WARNING(
                     WARNING_TEXT.format(mlp_count * 4, assigned_text)

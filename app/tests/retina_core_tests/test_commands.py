@@ -6,19 +6,17 @@ from django.contrib.auth.models import Group, Permission
 from guardian.core import ObjectPermissionChecker
 
 from grandchallenge.retina_core.management.commands.setannotationpermissions import (
-    ANNOTATION_CODENAMES,
+    ANNOTATION_MODELS,
     WARNING_TEXT,
     SUCCESS_TEXT,
 )
-from config.settings import PERMISSION_TYPES
 
 
 @pytest.mark.django_db
 class TestCommand:
-    nr_of_mlps = len(ANNOTATION_CODENAMES) * len(PERMISSION_TYPES)
-    nr_of_olps = 22 * len(
-        PERMISSION_TYPES
-    )  # 22 == nr of annotation models in AnnotationSet fixture
+    nr_of_default_permissions = 4  # nr of default_permissions in each model is fixed right now
+    nr_of_mlps = len(ANNOTATION_MODELS) * nr_of_default_permissions
+    nr_of_olps = 22 * nr_of_default_permissions  # 22 == nr of annotation models in AnnotationSet fixture
 
     def test_setannotationpermissions_no_annotations(self):
         out = StringIO()
@@ -81,13 +79,14 @@ class TestCommand:
             group=admins_group
         ).values_list("codename", flat=True)
 
-        for (annotation_model, annotation_codename) in ANNOTATION_CODENAMES:
+        for annotation_model in ANNOTATION_MODELS:
+            annotation_codename = annotation_model._meta.model_name
             for annotation in annotation_model.objects.all():
                 perms = checker.get_perms(annotation)
-                for permission_type in PERMISSION_TYPES:
+                for permission_type in annotation._meta.default_permissions:
                     assert f"{permission_type}_{annotation_codename}" in perms
 
-                for permission_type in PERMISSION_TYPES:
+                for permission_type in annotation._meta.default_permissions:
                     assert (
                         f"{permission_type}_{annotation_codename}"
                         in group_perms
@@ -113,7 +112,7 @@ class TestCommand:
         ).values_list("codename", flat=True)
         assert len(group_perms) == 0
 
-        for (annotation_model, annotation_codename) in ANNOTATION_CODENAMES:
+        for annotation_model in ANNOTATION_MODELS:
             for annotation in annotation_model.objects.all():
                 perms = checker.get_perms(annotation)
                 assert len(perms) == 0

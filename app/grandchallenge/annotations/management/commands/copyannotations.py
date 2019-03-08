@@ -12,7 +12,6 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
-from config.settings import PERMISSION_TYPES
 
 
 class Command(BaseCommand):
@@ -82,7 +81,7 @@ class Command(BaseCommand):
                 obj.pk = None
                 obj.save()
                 if options["add_permissions"]:
-                    for permission_type in PERMISSION_TYPES:
+                    for permission_type in obj._meta.default_permissions:
                         assign_perm(
                             f"{obj._meta.app_label}.{permission_type}_{obj._meta.model_name}",
                             user_to,
@@ -95,7 +94,7 @@ class Command(BaseCommand):
                     child.annotation_set = obj
                     child.save()
                     if options["add_permissions"]:
-                        for permission_type in PERMISSION_TYPES:
+                        for permission_type in child._meta.default_permissions:
                             assign_perm(
                                 f"{child._meta.app_label}.{permission_type}_{child._meta.model_name}",
                                 user_to,

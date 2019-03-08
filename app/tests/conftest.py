@@ -31,7 +31,6 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
-from config.settings import PERMISSION_TYPES
 
 """ Defines fixtures than can be used across all of the tests """
 

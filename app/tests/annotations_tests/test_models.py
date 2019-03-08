@@ -15,7 +15,6 @@ from tests.annotations_tests.factories import (
 )
 from tests.model_helpers import batch_test_factories
 from tests.viewset_helpers import get_user_from_user_type
-from config.settings import PERMISSION_TYPES
 
 
 @pytest.mark.django_db
@@ -67,7 +66,8 @@ class TestPermissions:
             user,
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
         )
-        for permission_type in PERMISSION_TYPES:
+        default_permissions = TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+        for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
                 assert (
                     f"{permission_type}_singlepolygonannotation" not in perms
@@ -82,7 +82,8 @@ class TestPermissions:
             user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
         )
         perms = get_perms(user, TwoRetinaPolygonAnnotationSets.polygonset1)
-        for permission_type in PERMISSION_TYPES:
+        default_permissions = TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+        for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
                 assert f"{permission_type}_polygonannotationset" not in perms
             else:
