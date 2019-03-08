@@ -96,7 +96,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
 
     def __str__(self):
         return "<{} by {} on {} for {}>".format(
-            self._meta.model_name,
+            self._meta.object_name,
             self.grader.username,
             self.created.strftime("%Y-%m-%d at %H:%M:%S"),
             self.image,
