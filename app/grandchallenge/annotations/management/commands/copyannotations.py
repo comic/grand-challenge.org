@@ -107,7 +107,7 @@ class Command(BaseCommand):
                     else ""
                 )
                 self.stdout.write(
-                    f"Copied {str(obj._meta.model_name)}({obj_pk}){with_children_output}"
+                    f"Copied {str(obj._meta.object_name)}({obj_pk}){with_children_output}"
                 )
 
                 total_parents_copied += 1
