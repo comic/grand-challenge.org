@@ -3,9 +3,8 @@ from django.core.exceptions import (
     ValidationError,
     MultipleObjectsReturned,
 )
-from rest_framework import permissions, generics, parsers, status, serializers
+from rest_framework import generics, parsers, status, serializers
 import datetime
-import uuid
 import sys
 from io import BytesIO
 from django.http.response import JsonResponse
@@ -15,7 +14,6 @@ from django.core.files import File
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm
 from .utils import upperize, exclude_val_from_dict
 from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
@@ -177,6 +175,15 @@ class UploadImage(generics.CreateAPIView):
             modality = settings.MODALITY_IR
         modality, _ = ImagingModality.objects.get_or_create(modality=modality)
 
+        optional_values = {}
+        stereoscopic_choice = request.data.get("image_stereoscopic_choice")
+        if stereoscopic_choice:
+            optional_values.update({"stereoscopic_choice": stereoscopic_choice})
+
+        field_of_view = request.data.get("image_field_of_view")
+        if field_of_view:
+            optional_values.update({"field_of_view": field_of_view})
+
         return {
             "name": request.data.get("image_identifier"),
             "eye_choice": upperize(request.data.get("image_eye_choice")),
@@ -185,6 +192,7 @@ class UploadImage(generics.CreateAPIView):
             "width": request.data.get("image_width"),
             "height": request.data.get("image_height"),
             "depth": request.data.get("image_depth"),
+            **optional_values
         }
 
     @staticmethod
