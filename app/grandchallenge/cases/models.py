@@ -179,6 +179,38 @@ class Image(UUIDModel):
         (EYE_NA, "Not applicable"),
     )
 
+    STEREOSCOPIC_LEFT = "L"
+    STEREOSCOPIC_RIGHT = "R"
+    STEREOSCOPIC_UNKNOWN = "U"
+    STEREOSCOPIC_EMPTY = None
+    STEREOSCOPIC_CHOICES = (
+        (STEREOSCOPIC_LEFT, "Left"),
+        (STEREOSCOPIC_RIGHT, "Right"),
+        (STEREOSCOPIC_UNKNOWN, "Unknown"),
+        (STEREOSCOPIC_EMPTY, "Not applicable"),
+    )
+
+    FOV_1M = "F1M"
+    FOV_2 = "F2"
+    FOV_3M = "F3M"
+    FOV_4 = "F4"
+    FOV_5 = "F5"
+    FOV_6 = "F6"
+    FOV_7 = "F7"
+    FOV_UNKNOWN = "U"
+    FOV_EMPTY = None
+    FOV_CHOICES = (
+        (FOV_1M, FOV_1M),
+        (FOV_2, FOV_2),
+        (FOV_3M, FOV_3M),
+        (FOV_4, FOV_4),
+        (FOV_5, FOV_5),
+        (FOV_6, FOV_6),
+        (FOV_7, FOV_7),
+        (FOV_UNKNOWN, "Unknown"),
+        (FOV_EMPTY, "Not applicable"),
+    )
+
     name = models.CharField(max_length=128)
     study = models.ForeignKey(Study, on_delete=models.PROTECT, null=True)
     origin = models.ForeignKey(
@@ -201,6 +233,20 @@ class Image(UUIDModel):
         choices=EYE_CHOICES,
         default=EYE_NA,
         help_text="Is this (retina) image from the right or left eye?",
+    )
+    stereoscopic_choice = models.CharField(
+        max_length=1,
+        choices=STEREOSCOPIC_CHOICES,
+        default=STEREOSCOPIC_UNKNOWN,
+        null=True,
+        help_text="Is this the left or right image of a stereoscopic pair?",
+    )
+    field_of_view = models.CharField(
+        max_length=3,
+        choices=FOV_CHOICES,
+        default=FOV_EMPTY,
+        null=True,
+        help_text="What is the field of view of this image?",
     )
 
     def __str__(self):
