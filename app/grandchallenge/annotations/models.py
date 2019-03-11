@@ -25,9 +25,7 @@ class AbstractAnnotationModel(UUIDModel):
 
     def save(self, *args, **kwargs):
         """ Override save method to enable setting of permissions for retina users """
-        created = False
-        if self._state.adding:
-            created = True
+        created = self._state.adding
 
         super(AbstractAnnotationModel, self).save(*args, **kwargs)
 
@@ -55,9 +53,7 @@ class AbstractAnnotationModel(UUIDModel):
 class AbstractSingleAnnotationModel(UUIDModel):
     def save(self, *args, **kwargs):
         """ Override save method to enable setting of permissions for retina users """
-        created = False
-        if self._state.adding:
-            created = True
+        created = self._state.adding
 
         super(AbstractSingleAnnotationModel, self).save(*args, **kwargs)
 
