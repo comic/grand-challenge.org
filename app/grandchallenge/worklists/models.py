@@ -22,6 +22,7 @@ class WorklistSet(UUIDModel):
     class Meta(UUIDModel.Meta):
         unique_together = ("title", "user")
 
+
 class Worklist(UUIDModel):
     """
     Represents a collection of images.

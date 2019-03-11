@@ -35,6 +35,8 @@ def assert_api_crud(client, table_reverse, expected_table, object_factory):
     record_fields = model_to_dict(
         record, fields=[field.name for field in record._meta.fields]
     )
+    record.delete()
+
     assert_record_update(
         client, table_url, token, dict_to_json(record_fields), record.pk
     )
