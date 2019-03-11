@@ -19,7 +19,13 @@ class ImageAdmin(admin.ModelAdmin):
         "stereoscopic_choice",
         "study__patient__name",
     )
-    list_filter = ("modality", "color_space", "eye_choice", "field_of_view", "stereoscopic_choice")
+    list_filter = (
+        "modality",
+        "color_space",
+        "eye_choice",
+        "field_of_view",
+        "stereoscopic_choice",
+    )
     inlines = [ImageFileInline]
 
 

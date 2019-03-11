@@ -178,7 +178,9 @@ class UploadImage(generics.CreateAPIView):
         optional_values = {}
         stereoscopic_choice = request.data.get("image_stereoscopic_choice")
         if stereoscopic_choice:
-            optional_values.update({"stereoscopic_choice": stereoscopic_choice})
+            optional_values.update(
+                {"stereoscopic_choice": stereoscopic_choice}
+            )
 
         field_of_view = request.data.get("image_field_of_view")
         if field_of_view:
@@ -192,7 +194,7 @@ class UploadImage(generics.CreateAPIView):
             "width": request.data.get("image_width"),
             "height": request.data.get("image_height"),
             "depth": request.data.get("image_depth"),
-            **optional_values
+            **optional_values,
         }
 
     @staticmethod
