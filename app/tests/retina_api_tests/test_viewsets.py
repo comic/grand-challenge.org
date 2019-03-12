@@ -36,7 +36,7 @@ class TestPolygonAPIListView(TestCase):
             "image_id": self.annotation_set.polygon.image.id,
         }
         self.url = reverse(
-            "retina:api:annotation-api-view", kwargs=self.kwargs
+            "retina:api:polygon-annotation-list-view", kwargs=self.kwargs
         )
         self.view = PolygonListView.as_view()
         self.rf = APIRequestFactory()

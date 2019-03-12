@@ -34,7 +34,7 @@ urlpatterns = [
     path(
         "annotation/polygon/<int:user_id>/<uuid:image_id>/",
         views.PolygonListView.as_view(),
-        name="annotation-api-view",
+        name="polygon-annotation-list-view",
     ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]
