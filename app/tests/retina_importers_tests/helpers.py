@@ -175,4 +175,3 @@ def get_response_status(
     else:
         response = client.post(url, data=data, **auth_header)
     return response.status_code
-
