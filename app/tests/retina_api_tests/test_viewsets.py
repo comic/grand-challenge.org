@@ -351,9 +351,9 @@ class TestSinglePolygonAnnotationViewSet:
                 many=True,
             ).data
             assert len(response.data) == len(serialized_data)
-            assert response.data.sort(
-                key=lambda k: k["id"]
-            ) == serialized_data.sort(key=lambda k: k["id"])
+            response.data.sort(key=lambda k: k["id"])
+            serialized_data.sort(key=lambda k: k["id"])
+            assert response.data == serialized_data
         elif user_type == "retina_admin":
             serialized_data = SinglePolygonAnnotationSerializer(
                 TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.all()
