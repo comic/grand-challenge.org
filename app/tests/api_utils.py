@@ -1,8 +1,8 @@
 import json
 
+from django.forms.models import model_to_dict
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
-from rest_framework.renderers import JSONRenderer
 from grandchallenge.subdomains.utils import reverse
 
 from tests.factories import UserFactory
@@ -16,13 +16,13 @@ def assert_api_crud(
 
     record = factory()
     record_id = str(record.pk)
-    json_record = get_record_as_json(factory, serializer)
+    record_dict = get_record_as_dict(factory)
 
     # Rests record display
     assert_record_display(client, table_url, token, record_id)
 
     # Tests record update
-    assert_record_update(client, table_url, token, json_record, record_id)
+    assert_record_update(client, table_url, token, record_dict, record_id)
 
     # Tests record remove
     assert_record_remove(client, table_url, token, record_id)
@@ -31,7 +31,7 @@ def assert_api_crud(
     assert_table_display(client, table_url, token, expected_table)
 
     # Tests table create
-    assert_table_create(client, table_url, token, json_record)
+    assert_table_create(client, table_url, token, record_dict)
 
 
 def assert_table_display(client, url, token, expected):
@@ -97,19 +97,17 @@ def assert_record_remove(client, url, token, record_id):
 
 
 # Creates a new record and converts it to JSON, removing the original entry afterwards
-def get_record_as_json(factory, serializer):
+def get_record_as_dict(factory):
     new_record = factory()
-    serialized = serializer(new_record)
-    json_record = JSONRenderer().render(serialized.data)
-    data = json.loads(json_record)
+    record_dict = model_to_dict(new_record)
 
     try:
-        del data["id"]
+        del record_dict["id"]
     except KeyError:
         pass
 
     new_record.delete()
-    return json.dumps(data)
+    return record_dict
 
 
 # Acquires a staff account alongside a corresponding user token
