@@ -15,12 +15,12 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from rest_framework_guardian import filters
 
+from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
     RetinaOwnerAPIPermission,
-    is_in_retina_admins_group,
-    is_in_retina_graders_group,
+    RetinaAdminAPIPermission,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
@@ -754,3 +754,21 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     serializer_class = SinglePolygonAnnotationSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
     queryset = SinglePolygonAnnotation.objects.all()
+
+
+class GradersWithPolygonAnnotationsListView(ListAPIView):
+    permission_classes = (RetinaAdminAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        image_id = self.kwargs["image_id"]
+        image = get_object_or_404(Image, id=image_id)
+        polygon_annotation_sets = PolygonAnnotationSet.objects.filter(
+            image=image
+        )
+        graders = get_user_model().objects.filter(
+            polygonannotationset__in=polygon_annotation_sets,
+            groups__name=settings.RETINA_GRADERS_GROUP_NAME,
+        )
+        return graders
