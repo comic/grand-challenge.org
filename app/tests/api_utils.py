@@ -3,17 +3,18 @@ import json
 from django.forms.models import model_to_dict
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
+from rest_framework.renderers import JSONRenderer
 from grandchallenge.subdomains.utils import reverse
 
 from tests.factories import UserFactory
 
 
-def assert_api_crud(client, table_reverse, expected_table, factory):
+def assert_api_crud(client, table_reverse, expected_table, factory, serializer):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
     record = factory()
-    json_record = get_record_as_json(factory)
+    json_record = get_record_as_json(factory, serializer)
 
     # Rests record display
     assert_record_display(client, table_url, token, record.pk)
@@ -94,12 +95,17 @@ def assert_record_remove(client, url, token, record_id):
 
 
 # Creates a new record and converts it to JSON, removing the original entry afterwards
-def get_record_as_json(object_factory):
-    new_record = object_factory()
-    record_dict = model_to_dict(new_record)
-    new_record.delete()
+def get_record_as_json(factory, serializer):
+    new_record = factory()
+    serialized = serializer(new_record)
+    data = serialized.data
 
-    return json.dumps(record_dict)
+    try:
+        del data["id"]
+    except KeyError:
+        pass
+
+    return json.dumps(data)
 
 
 # Acquires a staff account alongside a corresponding user token
