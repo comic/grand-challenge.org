@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group
 from rest_framework.test import force_authenticate, APIRequestFactory
 from grandchallenge.subdomains.utils import reverse
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory
@@ -18,13 +19,18 @@ from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
 )
+from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.annotations.models import PolygonAnnotationSet
 from grandchallenge.retina_api.views import (
     PolygonAnnotationSetViewSet,
     SinglePolygonViewSet,
     PolygonListView,
+    GradersWithPolygonAnnotationsListView,
 )
-from tests.conftest import generate_annotation_set
+from tests.conftest import (
+    generate_annotation_set,
+    generate_two_polygon_annotation_sets,
+)
 from tests.viewset_helpers import view_test
 
 
@@ -578,3 +584,121 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.status_code == status.HTTP_404_NOT_FOUND
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestGradersWithPolygonAnnotationsListView(TestCase):
+    def setUp(self):
+        self.annotation_set = generate_two_polygon_annotation_sets(
+            retina_grader=True
+        )
+        self.kwargs = {"image_id": self.annotation_set.polygonset1.image.id}
+        self.url = reverse(
+            "retina:api:polygon-annotation-users-list-view", kwargs=self.kwargs
+        )
+        self.view = GradersWithPolygonAnnotationsListView.as_view()
+        self.rf = APIRequestFactory()
+        self.request = self.rf.get(self.url)
+        self.retina_admin = UserFactory()
+        self.retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
+
+    def test_non_authenticated(self):
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_non_retina_user(self):
+        self.annotation_set.polygonset1.grader.groups.clear()
+        force_authenticate(
+            self.request, user=self.annotation_set.polygonset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retina_grader(self):
+        force_authenticate(
+            self.request, user=self.annotation_set.polygonset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_admin_authenticated(self):
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.data[0]
+            == UserSerializer(
+                instance=self.annotation_set.polygonset1.grader
+            ).data
+        )
+
+    def test_multiple_graders(self):
+        graders = (
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+        )
+        polygon_sets = [self.annotation_set.polygonset1]
+        for grader in graders:
+            grader.groups.add(
+                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+            )
+            polygon_sets.append(
+                PolygonAnnotationSetFactory(
+                    grader=grader, image=self.annotation_set.polygonset1.image
+                )
+            )
+
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        graders = get_user_model().objects.filter(
+            polygonannotationset__in=polygon_sets
+        )
+        expected_response = UserSerializer(graders, many=True).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+    def test_multiple_graders_some_retina_grader(self):
+        graders = (
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+        )
+        polygon_sets = [self.annotation_set.polygonset1]
+        for index, grader in enumerate(graders):
+            if index % 2 == 0:
+                grader.groups.add(
+                    Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+                )
+            polygon_sets.append(
+                PolygonAnnotationSetFactory(
+                    grader=grader, image=self.annotation_set.polygonset1.image
+                )
+            )
+
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        graders = get_user_model().objects.filter(
+            polygonannotationset__in=polygon_sets,
+            groups__name=settings.RETINA_GRADERS_GROUP_NAME,
+        )
+        expected_response = UserSerializer(graders, many=True).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
