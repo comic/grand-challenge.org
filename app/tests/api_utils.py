@@ -8,12 +8,12 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
-def assert_api_crud(client, table_reverse, expected_table, object_factory):
+def assert_api_crud(client, table_reverse, expected_table, factory):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
-    record = object_factory()
-    json_record = get_record_as_json(object_factory)
+    record = factory()
+    json_record = get_record_as_json(factory)
 
     # Rests record display
     assert_record_display(client, table_url, token, record.pk)
@@ -68,7 +68,7 @@ def assert_record_display(client, url, token, record_id):
     json_response = json.loads(response.content)
 
     assert response.status_code == 200
-    #assert json_response["id"] == str(record_id)
+    # assert json_response["id"] == str(record_id)
 
 
 def assert_record_update(client, url, token, json_record, record_id):
@@ -96,14 +96,13 @@ def assert_record_remove(client, url, token, record_id):
 # Creates a new record and converts it to JSON, removing the original entry afterwards
 def get_record_as_json(object_factory):
     new_record = object_factory()
-    record_json = json.dumps(
-        model_to_dict(
-            new_record,
-            fields=[field.name for field in new_record._meta.fields],
-        )
-    )
+    record_dict = model_to_dict(new_record)
+
+    # Removes the created record and the ID field from the resulting dict
     new_record.delete()
-    return record_json
+    del record_dict["id"]
+
+    return json.dumps(record_dict)
 
 
 # Acquires a staff account alongside a corresponding user token
