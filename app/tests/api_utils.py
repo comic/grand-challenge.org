@@ -15,7 +15,7 @@ def assert_api_crud(
     table_url = reverse(table_reverse)
 
     record = factory()
-    record_id = record.pk.bytes
+    record_id = str(record.pk)
     json_record = get_record_as_json(factory, serializer)
 
     # Rests record display
