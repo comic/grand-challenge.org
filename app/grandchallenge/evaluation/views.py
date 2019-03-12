@@ -214,11 +214,13 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
         queryset = super().get_queryset()
-        queryset = queryset.select_related("result")
+        queryset = queryset.select_related(
+            "result", "submission__creator__user_profile"
+        )
+
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
             return queryset.filter(challenge=self.request.challenge)
-
         else:
             return queryset.filter(
                 Q(challenge=self.request.challenge),
