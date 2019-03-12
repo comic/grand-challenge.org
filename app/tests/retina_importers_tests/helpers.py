@@ -95,6 +95,8 @@ def create_upload_image_test_data(type="default"):
     files = create_test_images()
     if type == "kappa":
         data = read_json_file("upload_image_valid_data_kappa.json")
+    elif type == "areds":
+        data = read_json_file("upload_image_valid_data_areds.json")
     else:
         data = read_json_file("upload_image_valid_data.json")
     # create request payload
@@ -107,6 +109,8 @@ def create_upload_image_invalid_test_data(type="default"):
     files = create_test_images()
     if type == "kappa":
         data = read_json_file("upload_image_invalid_data_kappa.json")
+    elif type == "areds":
+        data = read_json_file("upload_image_invalid_data_areds.json")
     else:
         data = read_json_file("upload_image_invalid_data.json")
     # create request payload

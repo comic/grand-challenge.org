@@ -29,6 +29,11 @@ batch_test_data = {
         "invalid_data": create_upload_image_invalid_test_data(type="kappa"),
         "reverse_name": "retina:importers:upload-image",
     },
+    "upload_image_areds": {
+        "data": create_upload_image_test_data(type="kappa"),
+        "invalid_data": create_upload_image_invalid_test_data(type="kappa"),
+        "reverse_name": "retina:importers:upload-image",
+    },
     "upload_etdrs": {
         "data": read_json_file("upload_etdrs_valid_data.json"),
         "invalid_data": read_json_file("upload_etdrs_invalid_data.json"),
