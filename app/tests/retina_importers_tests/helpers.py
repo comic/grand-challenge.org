@@ -89,7 +89,7 @@ def read_json_file(path_to_file):
     return None
 
 
-def create_upload_image_test_data(data_type="default"):
+def create_upload_image_test_data(data_type="default", with_image=True):
     # create image
     files = create_test_images()
     if data_type == "kappa":
@@ -98,8 +98,10 @@ def create_upload_image_test_data(data_type="default"):
         data = read_json_file("upload_image_valid_data_areds.json")
     else:
         data = read_json_file("upload_image_valid_data.json")
-    # create request payload
-    data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
+
+    if with_image:
+        # create request payload
+        data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
@@ -131,6 +133,7 @@ def get_response_status(
 ):
     auth_header = get_auth_token_header(user)
     url = reverse(reverse_name)
+
     if annotation_data:
         # create objects that need to exist in database before request is made
         patient = PatientFactory(name=data.get("patient_identifier"))
