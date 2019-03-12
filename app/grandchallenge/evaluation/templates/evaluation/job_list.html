@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
+{% load user_profile_link from profiles %}
 {% load guardian_tags %}
 {% load url from grandchallenge_tags %}
 
@@ -12,6 +13,9 @@
             <thead>
             <tr>
                 <th>ID</th>
+                {% if "change_challenge" in challenge_perms %}
+                    <th>User</th>
+                {% endif %}
                 <th>Created</th>
                 <th>Updated</th>
                 <th>Status</th>
@@ -29,6 +33,19 @@
             {% for job in object_list %}
                 <tr>
                     <td>{{ job.id }}</td>
+                    {% if "change_challenge" in challenge_perms %}
+                        <td>
+                            {{ job.submission.creator|user_profile_link }}
+
+                            {% if site.evaluation_config.use_teams %}
+                                {% with job.result|get_team_html as team_html %}
+                                    {% if team_html %}
+                                        ({{ team_html }})
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </td>
+                    {% endif %}
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
                     <td>
