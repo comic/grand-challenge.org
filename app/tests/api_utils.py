@@ -12,37 +12,26 @@ def assert_api_crud(client, table_reverse, expected_table, object_factory):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
-    # Checks the HTML View
-    assert_table_access(client, table_url, token, expected_table)
-
-    # Creates an object and then serializes it into JSON before deleting it from the DB
     record = object_factory()
-    record_fields = model_to_dict(
-        record, fields=[field.name for field in record._meta.fields]
-    )
-    assert_record_deletion(client, table_url, token, record.pk)
+    json_record = get_record_as_json(object_factory)
 
-    # Attempts to create a new record through the API
-    new_record_id = assert_table_insert(
-        client, table_url, token, dict_to_json(record_fields)
-    )
+    # Rests record display
+    assert_record_display(client, table_url, token, record.pk)
 
-    # Attempts to display the object
-    assert_record_display(client, table_url, token, new_record_id)
+    # Tests record update
+    assert_record_update(client, table_url, token, json_record, record.pk)
 
-    # Acquires another object, and attempts to update the current record with the new information
-    record = object_factory()
-    record_fields = model_to_dict(
-        record, fields=[field.name for field in record._meta.fields]
-    )
-    record.delete()
+    # Tests record remove
+    assert_record_remove(client, table_url, token, record.pk)
 
-    assert_record_update(
-        client, table_url, token, dict_to_json(record_fields), record_fields["pk"]
-    )
+    # Tests table display
+    assert_table_display(client, table_url, token, expected_table)
+
+    # Tests table create
+    assert_table_create(client, table_url, token, json_record)
 
 
-def assert_table_access(client, url, token, expected):
+def assert_table_display(client, url, token, expected):
     response = client.get(
         url, HTTP_ACCEPT="text/html", HTTP_AUTHORIZATION="Token " + token
     )
@@ -59,7 +48,7 @@ def assert_table_access(client, url, token, expected):
     assert not json.loads(response.content)
 
 
-def assert_table_insert(client, url, token, json_record):
+def assert_table_create(client, url, token, json_record):
     response = client.post(
         url,
         json_record,
@@ -69,7 +58,6 @@ def assert_table_insert(client, url, token, json_record):
     json_response = json.loads(response.content)
 
     assert response.status_code == 201
-    return json_response["id"]
 
 
 def assert_record_display(client, url, token, record_id):
@@ -96,7 +84,7 @@ def assert_record_update(client, url, token, json_record, record_id):
     assert response.status_code == 200
 
 
-def assert_record_deletion(client, url, token, record_id):
+def assert_record_remove(client, url, token, record_id):
     response = client.delete(
         url + str(record_id) + "/",
         HTTP_ACCEPT="application/json",
@@ -106,16 +94,20 @@ def assert_record_deletion(client, url, token, record_id):
     assert response.status_code == 204
 
 
-def dict_to_json(dict_object):
-    dict_string = "{ "
-    for key, val in dict_object.items():
-        dict_string += '"%s": "%s", ' % (key, val)
+# Creates a new record and converts it to JSON, removing the original entry afterwards
+def get_record_as_json(object_factory):
+    new_record = object_factory()
+    record_json = json.dumps(
+        model_to_dict(
+            new_record,
+            fields=[field.name for field in new_record._meta.fields],
+        )
+    )
+    new_record.delete()
+    return record_json
 
-    dict_string = dict_string[:-2]
-    dict_string += " }"
-    return json.loads(dict_string)
 
-
+# Acquires a staff account alongside a corresponding user token
 def get_staff_user_with_token():
     user = UserFactory(is_staff=True)
     token = Token.objects.create(user=user)
