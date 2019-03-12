@@ -8,7 +8,9 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
-def assert_api_crud(client, table_reverse, expected_table, factory, serializer):
+def assert_api_crud(
+    client, table_reverse, expected_table, factory, serializer
+):
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
@@ -17,13 +19,13 @@ def assert_api_crud(client, table_reverse, expected_table, factory, serializer):
     json_record = get_record_as_json(factory, serializer)
 
     # Rests record display
-    assert_record_display(client, table_url, token, record.pk)
+    assert_record_display(client, table_url, token, record_id)
 
     # Tests record update
-    assert_record_update(client, table_url, token, json_record, record.pk)
+    assert_record_update(client, table_url, token, json_record, record_id)
 
     # Tests record remove
-    assert_record_remove(client, table_url, token, record.pk)
+    assert_record_remove(client, table_url, token, record_id)
 
     # Tests table display
     assert_table_display(client, table_url, token, expected_table)
