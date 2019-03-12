@@ -9,14 +9,16 @@ from tests.factories import UserFactory
 
 
 def assert_api_crud(
-    client, table_reverse, expected_table, factory, serializer
+    client, table_reverse, expected_table, factory, invalid_fields
 ):
+    invalid_fields.append("id")
+
     _, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
     record = factory()
     record_id = str(record.pk)
-    record_dict = get_record_as_dict(factory)
+    record_dict = get_record_as_dict(factory, invalid_fields)
 
     # Rests record display
     assert_record_display(client, table_url, token, record_id)
@@ -97,14 +99,13 @@ def assert_record_remove(client, url, token, record_id):
 
 
 # Creates a new record and converts it to JSON, removing the original entry afterwards
-def get_record_as_dict(factory):
+def get_record_as_dict(factory, invalid_fields):
     new_record = factory()
     record_dict = model_to_dict(new_record)
 
-    try:
-        del record_dict["id"]
-    except KeyError:
-        pass
+    for field in invalid_fields:
+        if field in record_dict:
+            del record_dict[field]
 
     new_record.delete()
     return record_dict
