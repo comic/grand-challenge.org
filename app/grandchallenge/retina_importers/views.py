@@ -51,10 +51,48 @@ from .serializers import (
 from .mixins import RetinaImportPermission
 
 
+class CheckImage(generics.GenericAPIView):
+    queryset = Image.objects.all()
+    permission_classes = (RetinaImportPermission,)
+    parser_classes = (parsers.JSONParser,)
+
+    def post(self, request, *args, **kwargs):
+        return JsonResponse({"exists": self.check_if_already_exists(request)})
+
+    @staticmethod
+    def check_if_already_exists(request):
+        """
+        Method that checks if a image already exists before uploading.
+        """
+        try:
+            archive_name = request.data.get("archive_identifier")
+            if archive_name is not None:
+                Archive.objects.get(name=archive_name)
+
+            patient_name = request.data.get("patient_identifier")
+            patient = None
+            if patient_name is not None:
+                patient = Patient.objects.get(name=patient_name)
+
+            study_name = request.data.get("study_identifier")
+            study = None
+            if study_name is not None and patient is not None:
+                study = Study.objects.get(patient=patient, name=study_name)
+        except ObjectDoesNotExist:
+            return False
+
+        image_dict = UploadImage.create_image_dict(request)
+        try:
+            Image.objects.get(study=study, **image_dict)
+            return True
+        except ObjectDoesNotExist:
+            return False
+
+
 class UploadImage(generics.CreateAPIView):
     queryset = Image.objects.all()
     permission_classes = (RetinaImportPermission,)
-    parser_classes = (parsers.MultiPartParser,)
+    parser_classes = (parsers.MultiPartParser, parsers.JSONParser)
 
     def post(self, request, *args, **kwargs):
         response_obj = {}
@@ -186,14 +224,18 @@ class UploadImage(generics.CreateAPIView):
         if field_of_view:
             optional_values.update({"field_of_view": field_of_view})
 
+        if request.data.get("image_width"):
+            optional_values.update({"width": request.data["image_width"]})
+        if request.data.get("image_height"):
+            optional_values.update({"height": request.data["image_height"]})
+        if request.data.get("image_depth"):
+            optional_values.update({"depth": request.data["image_depth"]})
+
         return {
             "name": request.data.get("image_identifier"),
             "eye_choice": upperize(request.data.get("image_eye_choice")),
             "modality_id": modality.pk,
             "color_space": color_space,
-            "width": request.data.get("image_width"),
-            "height": request.data.get("image_height"),
-            "depth": request.data.get("image_depth"),
             **optional_values,
         }
 
