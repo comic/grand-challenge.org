@@ -97,10 +97,7 @@ def assert_record_remove(client, url, token, record_id):
 def get_record_as_json(object_factory):
     new_record = object_factory()
     record_dict = model_to_dict(new_record)
-
-    # Removes the created record and the ID field from the resulting dict
     new_record.delete()
-    del record_dict["id"]
 
     return json.dumps(record_dict)
 
