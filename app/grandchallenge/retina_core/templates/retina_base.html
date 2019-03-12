@@ -92,6 +92,7 @@
           {% if user.is_authenticated %}
               USER_ID = {{ user.id }};
               USER_NAME = "{{ user.get_username }}";
+              IS_RETINA_ADMIN = {{ IS_RETINA_ADMIN|yesno:"true,false" }};
           {% endif %}
       </script>
     {% endblock javascript %}
