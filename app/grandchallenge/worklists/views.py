@@ -73,7 +73,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
                 "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
             )
 
-        if "user" in data and len(data["user"]) > 0:
+        if "user" in data:
             user = User.objects.get(pk=data["user"])
 
         set = WorklistSet.objects.create(title=data["title"], user=user)
