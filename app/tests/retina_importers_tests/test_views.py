@@ -1,70 +1,91 @@
 import pytest
+
 from rest_framework import status
+
 from .helpers import (
     create_upload_image_test_data,
-    remove_test_image,
-    batch_test_upload_views,
     create_upload_image_invalid_test_data,
     read_json_file,
+    get_response_status,
 )
 
 
 @pytest.mark.django_db
-class TestCustomUploadEndpoints:
-    # test functions are added dynamically to this class
-    def test_empty(self):
-        pass
-
-    pass
-
-
-batch_test_data = {
-    "upload_image": {
-        "data": create_upload_image_test_data(),
-        "invalid_data": create_upload_image_invalid_test_data(),
-        "reverse_name": "retina:importers:upload-image",
-    },
-    "upload_image_kappa": {
-        "data": create_upload_image_test_data(type="kappa"),
-        "invalid_data": create_upload_image_invalid_test_data(type="kappa"),
-        "reverse_name": "retina:importers:upload-image",
-    },
-    "upload_image_areds": {
-        "data": create_upload_image_test_data(type="kappa"),
-        "invalid_data": create_upload_image_invalid_test_data(type="kappa"),
-        "reverse_name": "retina:importers:upload-image",
-    },
-    "upload_etdrs": {
-        "data": read_json_file("upload_etdrs_valid_data.json"),
-        "invalid_data": read_json_file("upload_etdrs_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-etdrs-grid-annotation",
-        "annotation_data": True,
-    },
-    "upload_measurement": {
-        "data": read_json_file("upload_measurement_valid_data.json"),
-        "invalid_data": read_json_file("upload_measurement_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-measurement_annotation",
-        "annotation_data": True,
-    },
-    "upload_boolean_annotation": {
-        "data": read_json_file("upload_boolean_valid_data.json"),
-        "invalid_data": read_json_file("upload_boolean_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-boolean-classification-annotation",
-        "annotation_data": True,
-    },
-    "upload_polygon_annotation": {
-        "data": read_json_file("upload_polygon_valid_data.json"),
-        "invalid_data": read_json_file("upload_polygon_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-polygon-annotation",
-        "annotation_data": True,
-    },
-    "upload_landmark_annotation": {
-        "data": read_json_file("upload_registration_valid_data.json"),
-        "invalid_data": read_json_file(
-            "upload_registration_invalid_data.json"
+@pytest.mark.parametrize("valid", [True, False])
+@pytest.mark.parametrize(
+    "user,status_valid,status_invalid",
+    [
+        (
+            "anonymous",
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_401_UNAUTHORIZED,
         ),
-        "reverse_name": "retina:importers:upload-image-registration-landmarks",
-        "annotation_data": True,
-    },
-}
-batch_test_upload_views(batch_test_data, TestCustomUploadEndpoints)
+        ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+        ("staff", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+        ("import_user", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
+    ],
+)
+@pytest.mark.parametrize(
+    "endpoint_type,reverse_name,annotation_data",
+    [
+        ("upload_image_rsbmes", "retina:importers:upload-image", False),
+        ("upload_image_kappa", "retina:importers:upload-image", False),
+        ("upload_image_areds", "retina:importers:upload-image", False),
+        (
+            "upload_etdrs",
+            "retina:importers:upload-etdrs-grid-annotation",
+            True,
+        ),
+        (
+            "upload_measurement",
+            "retina:importers:upload-measurement_annotation",
+            True,
+        ),
+        (
+            "upload_boolean",
+            "retina:importers:upload-boolean-classification-annotation",
+            True,
+        ),
+        (
+            "upload_polygon",
+            "retina:importers:upload-polygon-annotation",
+            True,
+        ),
+        (
+            "upload_registration",
+            "retina:importers:upload-image-registration-landmarks",
+            True,
+        ),
+    ],
+)
+class TestCustomUploadEndpoints:
+    def test_view(
+        self,
+        client,
+        endpoint_type,
+        reverse_name,
+        annotation_data,
+        user,
+        status_valid,
+        status_invalid,
+        valid,
+    ):
+        if "upload_image" in endpoint_type:
+            data_type = endpoint_type.lstrip("upload_image_")
+            if valid:
+                data = create_upload_image_test_data(data_type=data_type)
+            else:
+                data = create_upload_image_invalid_test_data(
+                    data_type=data_type
+                )
+        else:
+            valid_str = "valid" if valid else "invalid"
+            data = read_json_file(f"{endpoint_type}_{valid_str}_data.json")
+
+        response_status = get_response_status(
+            client, reverse_name, data, user, annotation_data
+        )
+        if valid:
+            assert response_status == status_valid
+        else:
+            assert response_status == status_invalid
