@@ -108,6 +108,7 @@ def get_record_as_json(factory, serializer):
     except KeyError:
         pass
 
+    new_record.delete()
     return json.dumps(data)
 
 
