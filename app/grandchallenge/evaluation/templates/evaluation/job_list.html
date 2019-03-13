@@ -13,11 +13,11 @@
             <thead>
             <tr>
                 <th>ID</th>
+                <th>Created</th>
+                <th>Updated</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
-                <th>Created</th>
-                <th>Updated</th>
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
@@ -33,6 +33,8 @@
             {% for job in object_list %}
                 <tr>
                     <td>{{ job.id }}</td>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ job.submission.creator|user_profile_link }}
@@ -46,8 +48,6 @@
                             {% endif %}
                         </td>
                     {% endif %}
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
                     <td>
                     <span class="badge
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
