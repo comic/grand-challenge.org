@@ -73,7 +73,7 @@
                         <td></td>
                     {% endif %}
 
-                    <td>
+                    <td data-order="{{ job.result.rank }}">
                         {% if job.result and job.result.rank > 0 %}
                             {{ job.result.rank }}
                         {% endif %}
