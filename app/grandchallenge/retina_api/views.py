@@ -770,5 +770,5 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
         graders = get_user_model().objects.filter(
             polygonannotationset__in=polygon_annotation_sets,
             groups__name=settings.RETINA_GRADERS_GROUP_NAME,
-        )
+        ).distinct()
         return graders
