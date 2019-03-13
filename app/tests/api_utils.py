@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
@@ -99,7 +100,7 @@ def assert_record_remove(client, url, token, record_id):
 
 
 # Creates a new record and converts it to JSON, removing the original entry afterwards
-def get_record_as_dict(factory, invalid_fields):
+def get_record_as_dict(factory, invalid_fields) -> dict:
     new_record = factory()
     record_dict = model_to_dict(new_record)
 
@@ -112,7 +113,7 @@ def get_record_as_dict(factory, invalid_fields):
 
 
 # Acquires a staff account alongside a corresponding user token
-def get_staff_user_with_token():
+def get_staff_user_with_token() -> [settings.AUTH_USER_MODEL, str]:
     user = UserFactory(is_staff=True)
     token = Token.objects.create(user=user)
 
