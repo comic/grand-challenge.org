@@ -702,3 +702,36 @@ class TestGradersWithPolygonAnnotationsListView(TestCase):
         assert response.status_code == status.HTTP_200_OK
         response.data.sort(key=lambda k: k["id"])
         assert response.data == expected_response
+
+    def test_multiple_polygonsets_for_one_grader_distinct(self):
+        grader = UserFactory()
+        grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+        polygon_sets = [
+            self.annotation_set.polygonset1,
+            PolygonAnnotationSetFactory(
+                grader=grader, image=self.annotation_set.polygonset1.image
+            ),
+            PolygonAnnotationSetFactory(
+                grader=grader, image=self.annotation_set.polygonset1.image
+            ),
+        ]
+
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        graders = (
+            get_user_model()
+            .objects.filter(
+                polygonannotationset__in=polygon_sets,
+                groups__name=settings.RETINA_GRADERS_GROUP_NAME,
+            )
+            .distinct()
+        )
+        expected_response = UserSerializer(graders, many=True).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
