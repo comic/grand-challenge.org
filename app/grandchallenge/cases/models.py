@@ -237,7 +237,7 @@ class Image(UUIDModel):
     stereoscopic_choice = models.CharField(
         max_length=1,
         choices=STEREOSCOPIC_CHOICES,
-        default=STEREOSCOPIC_UNKNOWN,
+        default=STEREOSCOPIC_EMPTY,
         null=True,
         help_text="Is this the left or right image of a stereoscopic pair?",
     )
