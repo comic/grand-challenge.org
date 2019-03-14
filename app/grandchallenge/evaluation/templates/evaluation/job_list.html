@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load evaluation_extras %}
+{% load user_profile_link from profiles %}
 {% load guardian_tags %}
 {% load url from grandchallenge_tags %}
 
@@ -14,6 +15,9 @@
                 <th>ID</th>
                 <th>Created</th>
                 <th>Updated</th>
+                {% if "change_challenge" in challenge_perms %}
+                    <th>User</th>
+                {% endif %}
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
@@ -31,6 +35,19 @@
                     <td>{{ job.id }}</td>
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
+                    {% if "change_challenge" in challenge_perms %}
+                        <td>
+                            {{ job.submission.creator|user_profile_link }}
+
+                            {% if site.evaluation_config.use_teams %}
+                                {% with job.result|get_team_html as team_html %}
+                                    {% if team_html %}
+                                        ({{ team_html }})
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </td>
+                    {% endif %}
                     <td>
                     <span class="badge
                     {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
@@ -56,7 +73,7 @@
                         <td></td>
                     {% endif %}
 
-                    <td>
+                    <td data-order="{{ job.result.rank }}">
                         {% if job.result and job.result.rank > 0 %}
                             {{ job.result.rank }}
                         {% endif %}

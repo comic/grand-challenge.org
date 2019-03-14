@@ -216,9 +216,9 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
-        queryset = queryset.select_related("result").filter(
-            submission__challenge=challenge
-        )
+        queryset = queryset.select_related(
+            "result", "submission__creator__user_profile"
+        ).filter(submission__challenge=challenge)
 
         if challenge.is_admin(self.request.user):
             return queryset
