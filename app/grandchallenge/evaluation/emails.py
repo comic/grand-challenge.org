@@ -34,15 +34,17 @@ def send_failed_job_email(job):
 
 
 def send_new_result_email(result):
-    recipient_emails = [o.email for o in result.challenge.get_admins()]
+    challenge = result.job.submission.challenge
+
+    recipient_emails = [o.email for o in challenge.get_admins()]
     message = (
-        f"There is a new result for {result.challenge.short_name} from "
+        f"There is a new result for {challenge.short_name} from "
         f"{result.job.submission.creator.username}."
     )
     if result.published:
         leaderboard_url = reverse(
             "evaluation:result-list",
-            kwargs={"challenge_short_name": result.challenge.short_name},
+            kwargs={"challenge_short_name": challenge.short_name},
         )
         message += (
             f"You can view the result on the leaderboard here: "
@@ -58,7 +60,7 @@ def send_new_result_email(result):
         send_mail(
             subject=(
                 f"[{Site.objects.get_current().domain.lower()}] "
-                f"[{result.challenge.short_name.lower()}] "
+                f"[{challenge.short_name.lower()}] "
                 f"New Result"
             ),
             message=message,

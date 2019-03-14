@@ -66,7 +66,7 @@ class StatisticsDetail(TemplateView):
             .annotate(num_submissions_period=Count("submission"))
             .order_by("-num_submissions_period")[:max_num_results],
             "latest_result": Result.objects.filter(
-                published=True, challenge__hidden=False
+                published=True, job__submission__challenge__hidden=False
             )
             .order_by("-created")
             .first(),

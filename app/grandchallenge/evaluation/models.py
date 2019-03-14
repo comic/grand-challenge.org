@@ -459,7 +459,6 @@ class Result(UUIDModel):
     Stores individual results for a challenges
     """
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
     published = models.BooleanField(default=True)
@@ -477,7 +476,7 @@ class Result(UUIDModel):
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
             self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
+                self.job.submission.challenge.evaluation_config.auto_publish_new_results
             )
 
         super().save(*args, **kwargs)
@@ -487,7 +486,7 @@ class Result(UUIDModel):
             "evaluation:result-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.job.submission.challenge.short_name,
             },
         )
 
@@ -513,9 +512,7 @@ class Job(UUIDModel, ContainerExecJobModel):
         return SubmissionEvaluator
 
     def create_result(self, *, result):
-        Result.objects.create(
-            job=self, challenge=self.submission.challenge, metrics=result
-        )
+        Result.objects.create(job=self, metrics=result)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
