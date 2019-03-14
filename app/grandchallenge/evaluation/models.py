@@ -497,7 +497,6 @@ class Job(UUIDModel, ContainerExecJobModel):
     Stores information about a job for a given upload
     """
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
@@ -515,7 +514,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     def create_result(self, *, result):
         Result.objects.create(
-            job=self, challenge=self.challenge, metrics=result
+            job=self, challenge=self.submission.challenge, metrics=result
         )
 
     def clean(self):
@@ -528,10 +527,6 @@ class Job(UUIDModel, ContainerExecJobModel):
             )
 
         super().clean()
-
-    def save(self, *args, **kwargs):
-        self.challenge = self.submission.challenge
-        super().save(*args, **kwargs)
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
@@ -546,12 +541,13 @@ class Job(UUIDModel, ContainerExecJobModel):
             "evaluation:job-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.submission.challenge.short_name,
             },
         )
 
 
 def result_screenshot_path(instance, filename):
+    # Used in a migration so cannot delete
     return (
         f"evaluation/"
         f"{instance.challenge.pk}/"
@@ -560,12 +556,3 @@ def result_screenshot_path(instance, filename):
         f"{instance.pk}/"
         f"{filename}"
     )
-
-
-class ResultScreenshot(UUIDModel):
-    """
-    Stores a screenshot that is generated during an evaluation
-    """
-
-    result = models.ForeignKey("Result", on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=result_screenshot_path)

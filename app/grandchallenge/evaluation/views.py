@@ -103,7 +103,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         )
 
         pending_jobs = Job.objects.filter(
-            challenge=self.request.challenge,
+            submission__challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
@@ -213,16 +213,18 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
-        queryset = super().get_queryset()
-        queryset = queryset.select_related("result")
         challenge = self.request.challenge
-        if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge=self.request.challenge)
 
+        queryset = super().get_queryset()
+        queryset = queryset.select_related("result").filter(
+            submission__challenge=challenge
+        )
+
+        if challenge.is_admin(self.request.user):
+            return queryset
         else:
             return queryset.filter(
-                Q(challenge=self.request.challenge),
-                Q(submission__creator__pk=self.request.user.pk),
+                Q(submission__creator__pk=self.request.user.pk)
             )
 
 
