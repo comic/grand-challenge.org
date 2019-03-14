@@ -10,6 +10,8 @@ import pytest
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
+from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Group
 
 from grandchallenge.challenges.models import Challenge
 from tests.factories import (
@@ -21,6 +23,7 @@ from tests.factories import (
 from tests.annotations_tests.factories import (
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
     PolygonAnnotationSetFactory,
     CoordinateListAnnotationFactory,
     LandmarkAnnotationSetFactory,
@@ -235,16 +238,25 @@ class AnnotationSet(NamedTuple):
     grader: UserFactory
     measurement: MeasurementAnnotationFactory
     boolean: BooleanClassificationAnnotationFactory
+    integer: IntegerClassificationAnnotationFactory
     polygon: PolygonAnnotationSetFactory
     coordinatelist: CoordinateListAnnotationFactory
     landmark: LandmarkAnnotationSetFactory
     etdrs: ETDRSGridAnnotationFactory
 
 
-def generate_annotation_set():
+def generate_annotation_set(retina_grader=False):
     grader = UserFactory()
+
+    if retina_grader:
+        # Add to retina_graders group
+        grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
+    integer = IntegerClassificationAnnotationFactory(grader=grader)
     polygon = PolygonAnnotationSetFactory(grader=grader)
     coordinatelist = CoordinateListAnnotationFactory(grader=grader)
     landmark = LandmarkAnnotationSetFactory(grader=grader)
@@ -266,6 +278,7 @@ def generate_annotation_set():
         coordinatelist=coordinatelist,
         landmark=landmark,
         etdrs=etdrs,
+        integer=integer,
     )
 
 
@@ -275,3 +288,57 @@ def annotation_set():
     BooleanClassification, PolygonAnnotationSet (with 10 child annotations), CoordinateList,
     LandmarkAnnotationSet(with single landmark annotations for 5 images), ETDRSGrid """
     return generate_annotation_set()
+
+
+class TwoPolygonAnnotationSets(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    polygonset1: PolygonAnnotationSetFactory
+    polygonset2: PolygonAnnotationSetFactory
+
+
+def generate_two_polygon_annotation_sets(retina_grader=False):
+    graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        # Add to retina_graders group
+        for grader in graders:
+            grader.groups.add(
+                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+            )
+
+    polygonsets = (
+        PolygonAnnotationSetFactory(grader=graders[0]),
+        PolygonAnnotationSetFactory(grader=graders[1]),
+    )
+
+    # Create child models for polygon annotation set
+    singlepolygonbatches = (
+        SinglePolygonAnnotationFactory.create_batch(
+            10, annotation_set=polygonsets[0]
+        ),
+        SinglePolygonAnnotationFactory.create_batch(
+            10, annotation_set=polygonsets[1]
+        ),
+    )
+
+    return TwoPolygonAnnotationSets(
+        grader1=graders[0],
+        grader2=graders[1],
+        polygonset1=polygonsets[0],
+        polygonset2=polygonsets[1],
+    )
+
+
+@pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
+def two_retina_polygon_annotation_sets():
+    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
+    two different graders that both are in the retina_graders group """
+    return generate_two_polygon_annotation_sets(retina_grader=True)
+
+
+@pytest.fixture(name="TwoPolygonAnnotationSets")
+def two_polygon_annotation_sets():
+    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
+    two different graders """
+    return generate_two_polygon_annotation_sets(retina_grader=False)

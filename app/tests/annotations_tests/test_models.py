@@ -1,4 +1,7 @@
 import pytest
+from django.db import IntegrityError
+from guardian.shortcuts import get_perms
+
 from tests.annotations_tests.factories import (
     ETDRSGridAnnotationFactory,
     MeasurementAnnotationFactory,
@@ -11,13 +14,11 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
 )
 from tests.model_helpers import batch_test_factories
-from django.db import IntegrityError
+from tests.viewset_helpers import get_user_from_user_type
 
 
 @pytest.mark.django_db
 class TestAnnotationModels:
-    # test functions are added dynamically to this class
-
     def test_default_model_str(self):
         etdrs = ETDRSGridAnnotationFactory()
         assert str(etdrs) == "<{} by {} on {} for {}>".format(
@@ -42,6 +43,55 @@ class TestAnnotationModels:
             )
         except IntegrityError:
             pass
+
+
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        "normal_user",
+        "retina_grader_non_allowed",
+        "retina_grader",
+        "retina_admin",
+    ],
+)
+@pytest.mark.django_db
+class TestPermissions:
+    def test_single_model_permissions(
+        self, TwoRetinaPolygonAnnotationSets, user_type
+    ):
+        user = get_user_from_user_type(
+            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+        )
+        perms = get_perms(
+            user,
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+        )
+        default_permissions = (
+            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+        )
+        for permission_type in default_permissions:
+            if user_type == "retina_grader_non_allowed":
+                assert (
+                    f"{permission_type}_singlepolygonannotation" not in perms
+                )
+            else:
+                assert f"{permission_type}_singlepolygonannotation" in perms
+
+    def test_model_permissions(
+        self, TwoRetinaPolygonAnnotationSets, user_type
+    ):
+        user = get_user_from_user_type(
+            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+        )
+        perms = get_perms(user, TwoRetinaPolygonAnnotationSets.polygonset1)
+        default_permissions = (
+            TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+        )
+        for permission_type in default_permissions:
+            if user_type == "retina_grader_non_allowed":
+                assert f"{permission_type}_polygonannotationset" not in perms
+            else:
+                assert f"{permission_type}_polygonannotationset" in perms
 
 
 factories = {

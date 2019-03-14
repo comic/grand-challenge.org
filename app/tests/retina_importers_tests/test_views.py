@@ -1,60 +1,144 @@
 import pytest
+import json
+
 from rest_framework import status
+
+from grandchallenge.subdomains.utils import reverse
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from .helpers import (
     create_upload_image_test_data,
-    remove_test_image,
-    batch_test_upload_views,
     create_upload_image_invalid_test_data,
     read_json_file,
+    get_response_status,
+    get_auth_token_header,
 )
 
 
 @pytest.mark.django_db
-class TestCustomUploadEndpoints:
-    # test functions are added dynamically to this class
-    def test_empty(self):
-        assert True
-
-    pass
-
-
-batch_test_data = {
-    "upload_image": {
-        "data": create_upload_image_test_data(),
-        "invalid_data": create_upload_image_invalid_test_data(),
-        "reverse_name": "retina:importers:upload-image",
-    },
-    "upload_etdrs": {
-        "data": read_json_file("upload_etdrs_valid_data.json"),
-        "invalid_data": read_json_file("upload_etdrs_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-etdrs-grid-annotation",
-        "annotation_data": True,
-    },
-    "upload_measurement": {
-        "data": read_json_file("upload_measurement_valid_data.json"),
-        "invalid_data": read_json_file("upload_measurement_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-measurement_annotation",
-        "annotation_data": True,
-    },
-    "upload_boolean_annotation": {
-        "data": read_json_file("upload_boolean_valid_data.json"),
-        "invalid_data": read_json_file("upload_boolean_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-boolean-classification-annotation",
-        "annotation_data": True,
-    },
-    "upload_polygon_annotation": {
-        "data": read_json_file("upload_polygon_valid_data.json"),
-        "invalid_data": read_json_file("upload_polygon_invalid_data.json"),
-        "reverse_name": "retina:importers:upload-polygon-annotation",
-        "annotation_data": True,
-    },
-    "upload_landmark_annotation": {
-        "data": read_json_file("upload_registration_valid_data.json"),
-        "invalid_data": read_json_file(
-            "upload_registration_invalid_data.json"
+@pytest.mark.parametrize("valid", [True, False])
+@pytest.mark.parametrize(
+    "user,status_valid,status_invalid",
+    [
+        (
+            "anonymous",
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_401_UNAUTHORIZED,
         ),
-        "reverse_name": "retina:importers:upload-image-registration-landmarks",
-        "annotation_data": True,
-    },
-}
-batch_test_upload_views(batch_test_data, TestCustomUploadEndpoints)
+        ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+        ("staff", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
+        ("import_user", status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST),
+    ],
+)
+@pytest.mark.parametrize(
+    "endpoint_type,reverse_name,annotation_data",
+    [
+        ("upload_image_rsbmes", "retina:importers:upload-image", False),
+        ("upload_image_kappa", "retina:importers:upload-image", False),
+        ("upload_image_areds", "retina:importers:upload-image", False),
+        (
+            "upload_etdrs",
+            "retina:importers:upload-etdrs-grid-annotation",
+            True,
+        ),
+        (
+            "upload_measurement",
+            "retina:importers:upload-measurement_annotation",
+            True,
+        ),
+        (
+            "upload_boolean",
+            "retina:importers:upload-boolean-classification-annotation",
+            True,
+        ),
+        ("upload_polygon", "retina:importers:upload-polygon-annotation", True),
+        (
+            "upload_registration",
+            "retina:importers:upload-image-registration-landmarks",
+            True,
+        ),
+    ],
+)
+class TestCustomUploadEndpoints:
+    def test_view(
+        self,
+        client,
+        endpoint_type,
+        reverse_name,
+        annotation_data,
+        user,
+        status_valid,
+        status_invalid,
+        valid,
+    ):
+        if "upload_image" in endpoint_type:
+            data_type = endpoint_type.lstrip("upload_image_")
+            if valid:
+                data = create_upload_image_test_data(data_type=data_type)
+            else:
+                data = create_upload_image_invalid_test_data(
+                    data_type=data_type
+                )
+        else:
+            valid_str = "valid" if valid else "invalid"
+            data = read_json_file(f"{endpoint_type}_{valid_str}_data.json")
+
+        response_status = get_response_status(
+            client, reverse_name, data, user, annotation_data
+        )
+        if valid:
+            assert response_status == status_valid
+        else:
+            assert response_status == status_invalid
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user,expected_status, access",
+    [
+        ("anonymous", status.HTTP_401_UNAUTHORIZED, False),
+        ("normal", status.HTTP_403_FORBIDDEN, False),
+        ("staff", status.HTTP_403_FORBIDDEN, False),
+        ("import_user", status.HTTP_200_OK, True),
+    ],
+)
+class TestCheckImageEndpoint:
+    def test_non_existing_image(self, client, user, expected_status, access):
+        auth_header = get_auth_token_header(user)
+        url = reverse("retina:importers:check-image")
+
+        data = json.dumps(create_upload_image_test_data(with_image=False))
+
+        response = client.post(
+            url, data=data, content_type="application/json", **auth_header
+        )
+
+        assert response.status_code == expected_status
+        if access:
+            data = response.json()
+            assert not data["exists"]
+
+    def test_existing_image(self, client, user, expected_status, access):
+        auth_header = get_auth_token_header(user)
+        url = reverse("retina:importers:check-image")
+
+        image = ImageFactoryWithImageFile()
+        data = json.dumps(
+            {
+                "patient_identifier": image.study.patient.name,
+                "study_identifier": image.study.name,
+                "image_eye_choice": image.eye_choice,
+                "image_stereoscopic_choice": image.stereoscopic_choice,
+                "image_field_of_view": image.field_of_view,
+                "image_identifier": image.name,
+                "image_modality": image.modality.modality,
+            }
+        )
+
+        r = client.post(
+            url, data=data, content_type="application/json", **auth_header
+        )
+
+        assert r.status_code == expected_status
+        if access:
+            response = r.json()
+            assert response["exists"]

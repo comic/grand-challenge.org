@@ -18,6 +18,9 @@ class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["LOGOUT_URL"] = settings.LOGOUT_URL
+        context["IS_RETINA_ADMIN"] = self.request.user.groups.filter(
+            name=settings.RETINA_ADMINS_GROUP_NAME
+        ).exists()
         return context
 
 

@@ -1,8 +1,10 @@
 import json
 import pytest
+
 from rest_framework import status
-from grandchallenge.subdomains.utils import reverse
 from django.core.cache import cache
+
+from grandchallenge.subdomains.utils import reverse
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
@@ -69,10 +71,18 @@ class TestArchiveIndexAPIEndpoints:
                                         datastructures["image_oct"].name: {
                                             "images": {
                                                 "trc_000": "no info",
-                                                "obs_000": "no info",
+                                                "obs_000": str(
+                                                    datastructures[
+                                                        "image_obs"
+                                                    ].id
+                                                ),
                                                 "mot_comp": "no info",
                                                 "trc_001": "no info",
-                                                "oct": "no info",
+                                                "oct": str(
+                                                    datastructures[
+                                                        "image_oct"
+                                                    ].id
+                                                ),
                                             },
                                             "info": {
                                                 "voxel_size": {
@@ -99,9 +109,9 @@ class TestArchiveIndexAPIEndpoints:
                                 datastructures["study"].name: {
                                     "info": "level 5",
                                     "images": {
-                                        datastructures[
-                                            "image_cf"
-                                        ].name: "no tags"
+                                        datastructures["image_cf"].name: str(
+                                            datastructures["image_cf"].id
+                                        )
                                     },
                                     "name": datastructures["study"].name,
                                     "id": str(datastructures["study"].id),
@@ -130,10 +140,14 @@ class TestArchiveIndexAPIEndpoints:
                                 datastructures_aus["image_oct"].name: {
                                     "images": {
                                         "trc_000": "no info",
-                                        "obs_000": "no info",
+                                        "obs_000": str(
+                                            datastructures_aus["image_obs"].id
+                                        ),
                                         "mot_comp": "no info",
                                         "trc_001": "no info",
-                                        "oct": "no info",
+                                        "oct": str(
+                                            datastructures_aus["image_oct"].id
+                                        ),
                                     },
                                     "info": {
                                         "voxel_size": {
@@ -152,7 +166,9 @@ class TestArchiveIndexAPIEndpoints:
                                         },
                                     },
                                 },
-                                datastructures_aus["image_cf"].name: "no tags",
+                                datastructures_aus["image_cf"].name: str(
+                                    datastructures_aus["image_cf"].id
+                                ),
                             },
                         }
                     },
@@ -163,7 +179,7 @@ class TestArchiveIndexAPIEndpoints:
                 },
             },
             "info": "level 2",
-            "name": "GA Archive",
+            "name": "Archives",
             "id": "none",
             "images": {},
         }
