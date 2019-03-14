@@ -77,7 +77,9 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         raise NotImplementedError
 
     valid_results = (
-        Result.objects.filter(Q(challenge=challenge), Q(published=True))
+        Result.objects.filter(
+            Q(job__submission__challenge=challenge), Q(published=True)
+        )
         .order_by("-created")
         .select_related("job__submission")
     )
@@ -96,7 +98,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         results=valid_results, metrics=metrics, score_method=score_method
     )
 
-    for res in Result.objects.filter(Q(challenge=challenge)):
+    for res in Result.objects.filter(Q(job__submission__challenge=challenge)):
         try:
             rank = final_positions.ranks[res.pk]
             rank_score = final_positions.rank_scores[res.pk]

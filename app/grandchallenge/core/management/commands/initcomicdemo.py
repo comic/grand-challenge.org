@@ -105,7 +105,6 @@ class Command(BaseCommand):
             job = Job.objects.create(submission=submission, method=method)
 
             Result.objects.create(
-                challenge=demo,
                 metrics={
                     "acc": {"mean": 0.5, "std": 0.1},
                     "dice": {"mean": 0.71, "std": 0.05},

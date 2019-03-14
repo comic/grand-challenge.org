@@ -9,8 +9,8 @@ from grandchallenge.subdomains.utils import reverse
 def send_failed_job_email(job):
     message = (
         f"Unfortunately the evaluation for the submission to "
-        f"{job.challenge.short_name} failed with an error. The error message "
-        f"is:\n\n"
+        f"{job.submission.challenge.short_name} failed with an error. "
+        f"The error message is:\n\n"
         f"{user_error(job.output)}\n\n"
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
@@ -18,7 +18,7 @@ def send_failed_job_email(job):
         f"Job ID: {job.pk}\n"
         f"Submission ID: {job.submission.pk}"
     )
-    recipient_emails = [o.email for o in job.challenge.get_admins()]
+    recipient_emails = [o.email for o in job.submission.challenge.get_admins()]
     recipient_emails.append(job.submission.creator.email)
     for email in recipient_emails:
         send_mail(
@@ -34,15 +34,17 @@ def send_failed_job_email(job):
 
 
 def send_new_result_email(result):
-    recipient_emails = [o.email for o in result.challenge.get_admins()]
+    challenge = result.job.submission.challenge
+
+    recipient_emails = [o.email for o in challenge.get_admins()]
     message = (
-        f"There is a new result for {result.challenge.short_name} from "
+        f"There is a new result for {challenge.short_name} from "
         f"{result.job.submission.creator.username}."
     )
     if result.published:
         leaderboard_url = reverse(
             "evaluation:result-list",
-            kwargs={"challenge_short_name": result.challenge.short_name},
+            kwargs={"challenge_short_name": challenge.short_name},
         )
         message += (
             f"You can view the result on the leaderboard here: "
@@ -58,7 +60,7 @@ def send_new_result_email(result):
         send_mail(
             subject=(
                 f"[{Site.objects.get_current().domain.lower()}] "
-                f"[{result.challenge.short_name.lower()}] "
+                f"[{challenge.short_name.lower()}] "
                 f"New Result"
             ),
             message=message,
