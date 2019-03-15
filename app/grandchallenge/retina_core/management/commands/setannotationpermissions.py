@@ -88,7 +88,7 @@ class Command(BaseCommand):
     in https://github.com/django-guardian/django-guardian/issues/281
     """
 
-    help = "Assign/remove model level permissions for annotations to retina_admins group and object level " "permissions for annotations owned by an user in retina_graders group"
+    help = "Assign/remove model level permissions for annotations to retina_admins group and object level permissions for annotations owned by an user in retina_graders group"
 
     def add_arguments(self, parser):
         parser.add_argument(
