@@ -7,14 +7,14 @@ from tests.factories import ChallengeFactory, ResultFactory
 def test_public_private_default():
     c = ChallengeFactory()
 
-    r1 = ResultFactory(challenge=c)
+    r1 = ResultFactory(job__submission__challenge=c)
 
     assert r1.published == True
 
     c.evaluation_config.auto_publish_new_results = False
     c.evaluation_config.save()
 
-    r2 = ResultFactory(challenge=c)
+    r2 = ResultFactory(job__submission__challenge=c)
 
     assert r2.published == False
 

@@ -20,16 +20,38 @@ def test_calculate_ranks(settings):
         queryset = (
             # Warning: Do not change this values without updating the
             # expected_ranks below.
-            ResultFactory(challenge=challenge, metrics={"a": 0.0, "b": 0.0}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.5, "b": 0.2}),
-            ResultFactory(challenge=challenge, metrics={"a": 1.0, "b": 0.3}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.7, "b": 0.4}),
-            ResultFactory(challenge=challenge, metrics={"a": 0.5, "b": 0.5}),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.0, "b": 0.0},
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.5, "b": 0.2},
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 1.0, "b": 0.3},
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.7, "b": 0.4},
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.5, "b": 0.5},
+            ),
             # Following two are invalid if relative ranking is used
-            ResultFactory(challenge=challenge, metrics={"a": 1.0}),
-            ResultFactory(challenge=challenge, metrics={"b": 0.3}),
+            ResultFactory(
+                job__submission__challenge=challenge, metrics={"a": 1.0}
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge, metrics={"b": 0.3}
+            ),
             # Add a valid, but unpublished result
-            ResultFactory(challenge=challenge, metrics={"a": 0.1, "b": 0.1}),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.1, "b": 0.1},
+            ),
         )
 
         # Unpublish the result
@@ -138,37 +160,37 @@ def test_results_display(settings):
         user2 = UserFactory()
         queryset = (
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"b": 0.3},  # Invalid result
                 job__submission__creator=user1,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.6},
                 job__submission__creator=user1,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.4},
                 job__submission__creator=user1,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.2},
                 job__submission__creator=user1,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.1},
                 job__submission__creator=user2,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.5},
                 job__submission__creator=user2,
             ),
             ResultFactory(
-                challenge=challenge,
+                job__submission__challenge=challenge,
                 metrics={"a": 0.3},
                 job__submission__creator=user2,
             ),

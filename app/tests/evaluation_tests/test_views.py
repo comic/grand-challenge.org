@@ -343,9 +343,7 @@ def test_result_detail(client, EvalChallengeSet):
         creator=EvalChallengeSet.ChallengeSet.participant,
     )
     job = JobFactory(submission=submission)
-    result = ResultFactory(
-        challenge=EvalChallengeSet.ChallengeSet.challenge, job=job
-    )
+    result = ResultFactory(job=job)
     validate_open_view(
         viewname="evaluation:result-detail",
         challenge_set=EvalChallengeSet.ChallengeSet,
