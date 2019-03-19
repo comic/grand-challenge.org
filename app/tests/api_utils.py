@@ -33,7 +33,7 @@ def assert_api_crud(
     # Tests table display
     assert_table_display(client, table_url, token, expected_table)
 
-    query_result = factory.Meta.model.objects.all()
+    query_result = factory._meta.model.objects.all()
 
     assert 0 == 1
 
