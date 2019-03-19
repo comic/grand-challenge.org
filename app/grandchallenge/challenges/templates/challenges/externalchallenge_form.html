@@ -2,20 +2,17 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}Add Existing Challenge{% endblock %}
+{% block title %}Add Existing Challenge{% endblock %}
 
-{% block contentTitle %}
+{% block content %}
     <h2>Add an Existing Challenge</h2>
     <p>
         Please fill out this form if you would like to add an existing challenge to the overview.
     </p>
-{% endblock %}
-
-{% block pagecontent %}
     {% crispy form %}
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

@@ -3,7 +3,7 @@
 {% load get_obj_perms from guardian_tags %}
 {% load user_profile_link from profiles %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Teams</h2>
 
@@ -108,7 +108,7 @@
     </div>
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {

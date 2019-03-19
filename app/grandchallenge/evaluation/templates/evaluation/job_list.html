@@ -4,7 +4,7 @@
 {% load guardian_tags %}
 {% load url from grandchallenge_tags %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Evaluation Jobs</h2>
 
@@ -122,7 +122,7 @@
     </div>
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {

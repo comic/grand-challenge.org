@@ -1,0 +1,29 @@
+{% load static %}
+
+{# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+        crossorigin="anonymous"></script>
+
+{# Bootstrap first, requires jquery from head_script #}
+<script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+
+{# DataTables with colvis #}
+<script type="text/javascript"
+        src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
+        crossorigin="anonymous"></script>
+
+{# File uploads #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.22.1/js/jquery.fileupload.min.js"
+        integrity="sha256-YonB9QyI10SqVq8Gs2VRCYi0iI/h5+KoVHx/G1A3q48="
+        crossorigin="anonymous"></script>
+
+{# jquery cookies #}
+<script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
+        integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
+        crossorigin="anonymous"></script>
+
+{# lazy image loading, provides the .lazyload class #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/4.1.5/lazysizes.min.js"
+        integrity="sha256-I3otyfIRoV0atkNQtZLaP4amnmkQOq0YK5R5RFBd5/0="
+        crossorigin="anonymous"></script>

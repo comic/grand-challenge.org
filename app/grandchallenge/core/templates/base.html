@@ -1,340 +1,107 @@
 {% load static %}
 {% load grandchallenge_tags %}
-{% load sentry_public_dsn from raven %}
-{% load placeFavicon from favtags %}
-{% load url from grandchallenge_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    {% block html_header %}
-        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-        <meta name="description"
-              content="{{ site.description }}"/>
-        <meta name="keywords"
-              content="open, science, medical, image, computing, validated"/>
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1">
+    {% block head %}
+        {% block meta %}
+            {% include "grandchallenge/partials/meta.html" %}
+        {% endblock %}
 
-        {% comment %}
-            <script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
-                    crossorigin="anonymous"></script>
-            <script>Raven.config('{% sentry_public_dsn %}').install()</script>
-        {% endcomment %}
+        <title>
+            {% block title %}{{ main_challenge_name }}{% endblock %}
+        </title>
 
-        <!-- Global Site Tag (gtag.js) - Google Analytics -->
-        <script async
-                src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
+        {% block head_script %}
+            {% include "grandchallenge/partials/head_script.html" %}
+        {% endblock %}
 
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-
-            gtag('js', new Date());
-
-            gtag('config', "{{ google_analytics_id }}");
-        </script>
-
-        {# Needs to be inline for some forms (summernote) #}
-        <script type="text/javascript"
-                src="{% static "vendor/js/jquery.min.js" %}"></script>
-
-        <link rel="stylesheet"
-              href="{% static 'vendor/css/bootstrap.min.css' %}">
-
-        <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:800|Merriweather:400,400i,700"
-              rel="stylesheet">
-
-        <link rel="stylesheet" type="text/css"
-              href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
-              crossorigin="anonymous">
-
-        <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
-
-        {#  Custom CSS, must be included AFTER bootstrap  #}
-        <link href="{% static "css/core.css" %}" type="text/css"
-              rel="stylesheet">
-
-        {% placeFavicon %}
-
-        {# Challenge specific css #}
-        <style>
-            {% block additionalCSS %}{% endblock %}
-        </style>
-
-        <title>{% block pageName %}
-            {{ main_challenge_name }}{% endblock %} </title>
+        {% block style %}
+            {% include "grandchallenge/partials/style.html" %}
+        {% endblock %}
     {% endblock %}
 </head>
-<body class='bg-light'>
 
+{% block body %}
+    <body class='{% block bodyclass %}{% endblock %}'>
 
-{% block topheader %}
-    <nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark">
+    {% block navbar %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=site.hide_signin %}
+    {% endblock %}
 
-        <a class="navbar-brand mr-md-2 text-capitalize"
-           href="{% url 'home' %}">
-            {{ main_challenge_name }}
-        </a>
-        <!-- Toggler/collapsibe Button -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#collapsibleNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <main role="main">
+        <div id="page" class="container">
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="collapsibleNavbar">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link"
-                                        href="{% url 'challenges:list' %}">All
-                    Challenges</a></li>
-            </ul>
-            <ul class="navbar-nav">
-                {% block loginbutton %}
-                    {% if user.is_authenticated %}
-                        <li class="dropdown">
-                            <a href="#" class="nav-link dropdown-toggle"
-                               data-toggle="dropdown" role="menu"
-                               aria-haspopup="true"
-                               aria-expanded="false">
-                                <img class="mugshot"
-                                     src="{{ user.user_profile.get_mugshot_url }}"
-                                     alt="User Mugshot"
-                                     style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                <a class="dropdown-item"
-                                   href="{% url 'userena_profile_detail' user.username %}">
-                                    My Profile</a>
-                                <a class="dropdown-item"
-                                   href="{% url 'challenges:users-list' %}">
-                                    My Challenges</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item"
-                                   href="{% url 'userena_signout' %}?next=/">
-                                    Sign out</a>
-                            </div>
-                        </li>
-                    {% else %}
-                        <li class="nav-item"><a
-                                class="nav-link metaFooterMenuItem last"
-                                href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-                            in / Register</a></li>
-
-                    {% endif %}
-                {% endblock %}
-            </ul>
-        </div>
-    </nav>
-{% endblock topheader %}
-
-<main role="main">
-
-    <div id="messagescontainer" class="container mt-3">
-        {% block messages %}
-            {% if messages %}
-                <div class="messagelist">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.level_tag }}">
-                            {% if 'safe' in message.tags %}
-                                {{ message | safe }}
-                            {% else %}
-                                {{ message }}
-                            {% endif %}
-                            <button type="button" class="close"
-                                    data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endblock messages %}
-    </div>
-
-    <div id="page"
-         class="{% block containerType %}container{% endblock %} mt-3">
-
-        {% block jumbotron %}{% endblock %}
-
-        <div class="row">
-
-            {% block challengeNav %}
-                <div class="col-12 col-md-3 col-xl-2 mb-3">
-                    <div class="card sidebar">
-                        {% if not site.banner %}
-                            <div class="card-body">
-                                <h1 class="mb-0">
-                                    <a href="{{ site.get_absolute_url }}">
-                                        {% firstof site.title site.short_name %}
-                                    </a>
-                                </h1>
-                            </div>
-                        {% endif %}
-                        <div class="card-body p-0">
-                            <ul class="nav flex-column">
-                                {% block topmenu %} {% endblock %}
-                                {% block sitemenuloginbutton %} {% endblock %}
-                                {% block adminbutton %} {% endblock %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            {% block messages %}
+                {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
 
-            <div id="mainContent" class="mb-3 col-12
-            {% block mainContentSizeClasses %}
-                col-md-9 col-xl-10
-            {% endblock %}
-            ">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        {% block content %} content {% endblock %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</main>
+            {% block jumbotron %}{% endblock %}
 
-<!-- page -->
-{% block footer %}
-    <footer class="footer">
-        <div class="container">
-            <hr>
             <div class="row">
-                <div class="col-5"></div>
-                <div class="col-2 text-center">
-                    <a class="text-muted"
-                       href="https://github.com/comic/grand-challenge.org"
-                       title="Join us on Github">
-                        <i class="fab fa-github"></i></a>
-                </div>
-                <div class="col-5 small text-muted text-right text-capitalize">
-                    &copy; 2012-{% now "Y" %} {{ main_challenge_name }}
-                </div>
 
+                {% block sidebar %}
+                    <div class="col-12 col-md-3 col-xl-2 mb-3">
+                        <div class="card sidebar">
+                            {% if not site.banner %}
+                                <div class="card-body">
+                                    <h1 class="mb-0">
+                                        <a href="{{ site.get_absolute_url }}">
+                                            {% firstof site.title site.short_name %}
+                                        </a>
+                                    </h1>
+                                </div>
+                            {% endif %}
+                            <div class="card-body p-0">
+                                <ul class="nav flex-column">
+                                    {% block sidebar_challengelinks %}{% endblock %}
+                                    {% block sidebar_userlinks %}{% endblock %}
+                                    {% block sidebar_adminlinks %}{% endblock %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endblock %}
+
+                <div class="col mb-3 overflow-auto">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            {% block content %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </footer>
+    </main>
+
+    {% block footer %}
+        {% include "grandchallenge/partials/footer.html" %}
+    {% endblock %}
+
+    {% block script %}
+        {% include "grandchallenge/partials/script.html" %}
+
+        {% block postjs %}
+            {# For displaying equations on the site, the safe config is important #}
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+                    async></script>
+
+            {# geocharts #}
+            <script type="text/javascript"
+                    src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript"
+                    src="{% static "js/render_geocharts.js" %}"></script>
+
+            {# make the tables sortable #}
+            <script type="text/javascript"
+                    src="{% static "js/sort_tables.js" %}"></script>
+            {# render embeddable google forums #}
+            <script type="text/javascript"
+                    src="{% static "js/embed_forums.js" %}"></script>
+        {% endblock %}
+    {% endblock %}
+
+    </body>
 {% endblock %}
-
-{# jquery ui must be before bootstrap, but is required by blueimp-file-upload #}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-        crossorigin="anonymous"></script>
-
-{# Bootstrap first, requires jquery from head #}
-<script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
-
-{# DataTables with colvis #}
-<script type="text/javascript"
-        src="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.js"
-        crossorigin="anonymous"></script>
-
-{# File uploads #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.22.1/js/jquery.fileupload.min.js"
-        integrity="sha256-YonB9QyI10SqVq8Gs2VRCYi0iI/h5+KoVHx/G1A3q48="
-        crossorigin="anonymous"></script>
-
-{# jquery cookies #}
-<script src="https://cdn.jsdelivr.net/npm/jquery.cookie@1.4.1/jquery.cookie.js"
-        integrity="sha256-uEFhyfv3UgzRTnAZ+SEgvYepKKB0FW6RqZLrqfyUNug="
-        crossorigin="anonymous"></script>
-
-{# geocharts #}
-<script type="text/javascript"
-        src="https://www.gstatic.com/charts/loader.js"></script>
-
-{# lazy image loading, provides the .lazyload class #}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/4.1.5/lazysizes.min.js"
-        integrity="sha256-I3otyfIRoV0atkNQtZLaP4amnmkQOq0YK5R5RFBd5/0="
-        crossorigin="anonymous"></script>
-
-{% block deferred-js %}
-{% endblock %}
-
-{% block postjs %}
-
-    {# For displaying equations on the site, the safe config is important #}
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
-            async></script>
-
-    <script type='text/javascript'>
-        $(document).ready(function () {
-            $('table.sortable').dataTable({
-                "bJQueryUI": false,
-                "sPaginationType": "full_numbers",
-                "bPaginate": false,
-                "bLengthChange": false,
-                "bFilter": false,
-                "bInfo": false,
-                "bAutoWidth": false
-            });
-        });
-
-        var forum = document.getElementById('forum_embed');
-        if (forum) {
-            try {
-                forum.src = 'https://groups.google.com/forum/embed/?place=forum/'
-                    + forum.dataset['groupname']
-                    + '&showsearch=true&showpopout=true&showtabs=false'
-                    + '&parenturl=' + encodeURIComponent(window.location.href);
-            } catch (e) {
-                console.log(e);
-            }
-        }
-
-        google.charts.load('current', {'packages': ['geochart']});
-        google.charts.setOnLoadCallback(drawGeoCharts);
-
-        function drawGeoCharts() {
-            google.visualization.mapsApiKey = '{{ geochart_api_key }}';
-            var charts = document.querySelectorAll('[data-geochart]');
-
-            for (i = 0; i < charts.length; i++) {
-                try {
-                    drawGeoChart(charts[i]);
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-        }
-
-        function drawGeoChart(element) {
-            var array = JSON.parse(element.dataset['geochart']);
-            var data = google.visualization.arrayToDataTable(array);
-            var options = {
-                colorAxis: {
-                    colors: [
-                        '#440154',
-                        '#32658e',
-                        '#20a486',
-                        '#63cb5f',
-                        '#a8db34',
-                        '#d0e11c',
-                        '#e7e419',
-                        '#f1e51d',
-                        '#f8e621',
-                        '#fbe723',
-                        '#fbe723',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725',
-                        '#fde725'
-                    ]
-                },
-                backgroundColor: '#c9eeff'
-            };
-            var chart = new google.visualization.GeoChart(element);
-            chart.draw(data, options);
-        }
-    </script>
-{% endblock %}
-
-</body>
 </html>

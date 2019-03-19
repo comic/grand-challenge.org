@@ -1,0 +1,27 @@
+{% load grandchallenge_tags %}
+
+<nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark mb-3">
+    <div class="container">
+        <a class="navbar-brand mr-md-2 text-capitalize"
+           href="{% url 'home' %}">
+            {{ main_challenge_name }}
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link"
+                                        href="{% url 'challenges:list' %}">All
+                    Challenges</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if not hide_userlinks %}
+                    {% include "grandchallenge/partials/userlinks.html" %}
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

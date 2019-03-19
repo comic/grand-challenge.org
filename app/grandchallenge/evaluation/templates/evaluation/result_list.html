@@ -4,7 +4,7 @@
 {% load humanize %}
 {% load remove_whitespace %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Results</h2>
 
@@ -190,7 +190,7 @@
     {% endif %}
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {

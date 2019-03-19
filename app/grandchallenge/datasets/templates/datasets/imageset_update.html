@@ -3,18 +3,18 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}
+{% block title %}
     Update Dataset - {{ block.super }}
 {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Update a Dataset</h2>
 
     {% crispy form %}
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>

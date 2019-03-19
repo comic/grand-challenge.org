@@ -4,7 +4,7 @@
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
-{% block pageName %}
+{% block title %}
     {{ object.title }} - {{ block.super }}
 {% endblock %}
 
@@ -74,7 +74,7 @@
     </div>
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {

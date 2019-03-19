@@ -1,0 +1,26 @@
+{% load static %}
+{% load sentry_public_dsn from raven %}
+
+{% comment %}
+<script src="https://cdn.ravenjs.com/3.23.2/raven.min.js"
+        crossorigin="anonymous"></script>
+<script>Raven.config('{% sentry_public_dsn %}').install()</script>
+{% endcomment %}
+
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async
+        src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+    gtag('config', "{{ google_analytics_id }}");
+</script>
+
+{# Needs to be inline for some forms (summernote) #}
+<script type="text/javascript"
+        src="{% static "vendor/js/jquery.min.js" %}"></script>

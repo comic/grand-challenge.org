@@ -8,7 +8,7 @@
 {# Do not run js actions on the page as this breaks with SummernoteInplaceWidget #}
 {% block postjs %}{% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>
         {% block pageHeading %}
@@ -19,7 +19,7 @@
     {% crispy form %}
 {% endblock %}
 
-{% block deferred-js %}
+{% block script %}
     {{ block.super }}
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}
