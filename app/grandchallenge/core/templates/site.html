@@ -35,8 +35,8 @@
     {% endif %}
 {% endblock %}
 
-{% block sidebar_challengelinks %}
-    {% block additionalNavItems %}{% endblock %}
+{% block sidebar_links %}
+
     {% for page in pages %}
         {% if not page.hidden %}
             <li class="nav-item">
@@ -58,9 +58,7 @@
     {% endif %}
 
     {% if site.use_evaluation %}
-
         {% if "change_challenge" in challenge_perms or user_is_participant %}
-
             {% if site.evaluation_config.use_teams %}
                 <li class="nav-item">
                     <a class="nav-link"
@@ -71,23 +69,17 @@
                 <a class="nav-link"
                    href="{% url 'evaluation:submission-create' challenge_short_name=site.short_name %}">Submit</a>
             </li>
-
         {% endif %}
         <li class="nav-item">
             <a class="nav-link"
                href="{% url 'evaluation:result-list' challenge_short_name=site.short_name %}">Results</a>
         </li>
-
     {% endif %}
-{% endblock %}
 
-{% block sidebar_userlinks %}
     {% if site.hide_footer and not site.hide_signin %}
        {% include "grandchallenge/partials/userlinks.html" %}
     {% endif %}
-{% endblock %}
 
-{% block sidebar_adminlinks %}
     {% if "change_challenge" in challenge_perms %}
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"
@@ -131,6 +123,7 @@
             </div>
         </li>
     {% endif %}
+
 {% endblock %}
 
 {% block footer %}
