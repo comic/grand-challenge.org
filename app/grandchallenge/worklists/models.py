@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import CharField
+from guardian.shortcuts import assign_perm
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
 
@@ -11,10 +12,14 @@ class WorklistSet(UUIDModel):
     """
 
     title = CharField(max_length=255)
-    user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
 
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
+
+    def save(self, *args, **kwargs):
+        super(WorklistSet, self).save(*args, **kwargs)
+        assign_perm("view_worklistset", self.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
@@ -30,6 +35,12 @@ class Worklist(UUIDModel):
     images = models.ManyToManyField(
         to=Image, related_name="worklist", blank=True
     )
+
+    def save(self, *args, **kwargs):
+        super(Worklist, self).save(*args, **kwargs)
+        assign_perm("view_worklist", self.user, self)
+        assign_perm("change_worklist", self.user, self)
+        assign_perm("delete_worklist", self.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
