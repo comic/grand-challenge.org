@@ -3,7 +3,7 @@ import pytest
 from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
 from tests.utils import validate_staff_only_view
 
-"""" Tests the permission access for Patient Forms """
+"""" Tests the permission access for Worklist Forms """
 
 
 @pytest.mark.django_db
@@ -25,6 +25,9 @@ def test_worklist_form_access(view, client):
     validate_staff_only_view(
         viewname=view, client=client, reverse_kwargs=reverse_kwargs
     )
+
+
+"""" Tests the permission access for Worklist Set Forms """
 
 
 @pytest.mark.django_db
