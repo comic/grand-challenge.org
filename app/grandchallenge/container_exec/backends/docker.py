@@ -58,6 +58,7 @@ class Executor(object):
 
         self._run_kwargs = {
             "labels": {"job_id": self._job_id},
+            "init": True,
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             # Set to the same as mem_limit to avoid using swap
