@@ -4,6 +4,9 @@ from django.utils import timezone
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.conf import settings
+from guardian.shortcuts import assign_perm
 
 
 class AbstractAnnotationModel(UUIDModel):
@@ -14,8 +17,65 @@ class AbstractAnnotationModel(UUIDModel):
     """
 
     grader = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    # Override inherited 'created' attribute
+    # Override inherited 'created' attribute to allow setting of value
     created = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        """ Override save method to enable setting of permissions for retina users """
+        created = self._state.adding
+
+        super(AbstractAnnotationModel, self).save(*args, **kwargs)
+
+        if not created:
+            return
+
+        if (
+            self.grader.groups.filter(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            ).exists()
+            or self.grader.groups.filter(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            ).exists()
+        ):
+            model_name = self._meta.model_name
+            admins_group = Group.objects.get(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            )
+            for permission_type in self._meta.default_permissions:
+                permission_name = f"{permission_type}_{model_name}"
+                assign_perm(permission_name, self.grader, self)
+                assign_perm(permission_name, admins_group, self)
+
+
+class AbstractSingleAnnotationModel(UUIDModel):
+    def save(self, *args, **kwargs):
+        """ Override save method to enable setting of permissions for retina users """
+        created = self._state.adding
+
+        super(AbstractSingleAnnotationModel, self).save(*args, **kwargs)
+
+        if not created:
+            return
+
+        if (
+            self.annotation_set.grader.groups.filter(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            ).exists()
+            or self.annotation_set.grader.groups.filter(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            ).exists()
+        ):
+            model_name = self._meta.model_name
+            admins_group = Group.objects.get(
+                name=settings.RETINA_ADMINS_GROUP_NAME
+            )
+            for permission_type in self._meta.default_permissions:
+                permission_name = f"{permission_type}_{model_name}"
+                assign_perm(permission_name, self.annotation_set.grader, self)
+                assign_perm(permission_name, admins_group, self)
 
     class Meta:
         abstract = True
@@ -30,7 +90,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
 
     def __str__(self):
         return "<{} by {} on {} for {}>".format(
-            self.__class__.__name__,
+            self._meta.object_name,
             self.grader.username,
             self.created.strftime("%Y-%m-%d at %H:%M:%S"),
             self.image,
@@ -106,7 +166,7 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
 
 
-class SinglePolygonAnnotation(UUIDModel):
+class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
     General model for a single polygon annotation (list of coordinates).
     Belongs to a PolygonAnnotationSet
@@ -130,7 +190,7 @@ class LandmarkAnnotationSet(AbstractAnnotationModel):
         unique_together = ("grader", "created")
 
 
-class SingleLandmarkAnnotation(UUIDModel):
+class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
     """
     Model containing a set of landmarks (coordinates on an image) that represent the same locations as all the other
     LandmarkAnnotations in the LandmarkAnnotationSet it belongs to. This is used for image registration.

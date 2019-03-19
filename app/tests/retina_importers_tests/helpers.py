@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
-from rest_framework import status
 from tests.factories import UserFactory
 from tests.cases_tests.factories import ImageFactory
 from tests.studies_tests.factories import StudyFactory
@@ -90,19 +89,31 @@ def read_json_file(path_to_file):
     return None
 
 
-def create_upload_image_test_data():
+def create_upload_image_test_data(data_type="default", with_image=True):
     # create image
     files = create_test_images()
-    data = read_json_file("upload_image_valid_data.json")
-    # create request payload
-    data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
+    if data_type == "kappa":
+        data = read_json_file("upload_image_valid_data_kappa.json")
+    elif data_type == "areds":
+        data = read_json_file("upload_image_valid_data_areds.json")
+    else:
+        data = read_json_file("upload_image_valid_data.json")
+
+    if with_image:
+        # create request payload
+        data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
-def create_upload_image_invalid_test_data():
+def create_upload_image_invalid_test_data(data_type="default"):
     # create image
     files = create_test_images()
-    data = read_json_file("upload_image_invalid_data.json")
+    if data_type == "kappa":
+        data = read_json_file("upload_image_invalid_data_kappa.json")
+    elif data_type == "areds":
+        data = read_json_file("upload_image_invalid_data_areds.json")
+    else:
+        data = read_json_file("upload_image_invalid_data.json")
     # create request payload
     data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
@@ -122,6 +133,7 @@ def get_response_status(
 ):
     auth_header = get_auth_token_header(user)
     url = reverse(reverse_name)
+
     if annotation_data:
         # create objects that need to exist in database before request is made
         patient = PatientFactory(name=data.get("patient_identifier"))
@@ -163,57 +175,3 @@ def get_response_status(
     else:
         response = client.post(url, data=data, **auth_header)
     return response.status_code
-
-
-def create_test_method(
-    reverse_name, data, user, expected_status, annotation_data=None
-):
-    def test_method(self, client):
-        response_status = get_response_status(
-            client, reverse_name, data, user, annotation_data
-        )
-        assert response_status == expected_status
-
-    return test_method
-
-
-def batch_test_upload_views(batch_test_data, test_class):
-    for name, test_data in batch_test_data.items():
-        user_status_tuple = (
-            (
-                "anonymous",
-                status.HTTP_401_UNAUTHORIZED,
-                status.HTTP_401_UNAUTHORIZED,
-            ),
-            ("normal", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
-            ("staff", status.HTTP_403_FORBIDDEN, status.HTTP_403_FORBIDDEN),
-            (
-                "import_user",
-                status.HTTP_201_CREATED,
-                status.HTTP_400_BAD_REQUEST,
-            ),
-        )
-        for (
-            user,
-            expected_status_valid,
-            expected_status_invalid,
-        ) in user_status_tuple:
-            for valid_data in (False, True):
-                post_data = (
-                    test_data["data"]
-                    if valid_data
-                    else test_data["invalid_data"]
-                )
-                test_method = create_test_method(
-                    test_data["reverse_name"],
-                    post_data,
-                    user,
-                    expected_status_valid
-                    if valid_data
-                    else expected_status_invalid,
-                    annotation_data=test_data.get("annotation_data"),
-                )
-                test_method.__name__ = "test_{}_view_{}_{}_data".format(
-                    name, user, "valid" if valid_data else "invalid"
-                )
-                setattr(test_class, test_method.__name__, test_method)

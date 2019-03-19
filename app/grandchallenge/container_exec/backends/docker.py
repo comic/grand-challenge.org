@@ -107,7 +107,7 @@ class Executor(object):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
-        self._chmod_output()
+        self._chmod_volumes()
         self._execute_container()
         return self._get_result()
 
@@ -152,16 +152,17 @@ class Executor(object):
                 dest=f"/input/{Path(file.name).name}",
             )
 
-    def _chmod_output(self):
-        """ Ensure that the output is writable """
+    def _chmod_volumes(self):
+        """ Ensure that the i/o directories are writable """
         try:
             self._client.containers.run(
                 image=self._io_image,
                 volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "rw"}
+                    self._input_volume: {"bind": "/input/", "mode": "rw"},
+                    self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_id}-chmod-output",
-                command="chmod 777 /output/",
+                name=f"{self._job_id}-chmod-volumes",
+                command=f"chmod -R 0777 /input/ /output/",
                 remove=True,
                 **self._run_kwargs,
             )

@@ -1,27 +1,47 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from guardian.shortcuts import assign_perm
+
 from grandchallenge.annotations.models import (
     MeasurementAnnotation,
     BooleanClassificationAnnotation,
+    IntegerClassificationAnnotation,
     PolygonAnnotationSet,
     LandmarkAnnotationSet,
     ETDRSGridAnnotation,
     CoordinateListAnnotation,
 )
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class Command(BaseCommand):
     """
     This command copies all annotations that belong to one user to another user.
-    Currently, it is used for debugging purposes to copy the (imported) annotations of a certain user to the demo user
+    Currently, it is used for debugging purposes to copy the (imported) annotations of a certain user to the demo user.
+    This function will also be used to copy the imported annotations of the old workstation to the new grader accounts.
     """
 
     help = "Copy annotations from one user to another"
 
     def add_arguments(self, parser):
-        parser.add_argument("user_from")
-        parser.add_argument("user_to")
+        parser.add_argument(
+            "user_from",
+            type=str,
+            help="Username of user where annotations will be copied from",
+        )
+        parser.add_argument(
+            "user_to",
+            type=str,
+            help="Username of user where annotations will be copied to",
+        )
+
+        parser.add_argument(
+            "-p",
+            "--add_permissions",
+            type=bool,
+            default=True,
+            help="Adds object level permissions to user_to for the each of the annotation instances",
+        )
 
     def handle(self, *args, **options):
         try:
@@ -41,6 +61,7 @@ class Command(BaseCommand):
         for model in (
             MeasurementAnnotation,
             BooleanClassificationAnnotation,
+            IntegerClassificationAnnotation,
             PolygonAnnotationSet,
             LandmarkAnnotationSet,
             ETDRSGridAnnotation,
@@ -59,12 +80,26 @@ class Command(BaseCommand):
                 obj.grader_id = user_to.id
                 obj.pk = None
                 obj.save()
+                if options["add_permissions"]:
+                    for permission_type in obj._meta.default_permissions:
+                        assign_perm(
+                            f"{obj._meta.app_label}.{permission_type}_{obj._meta.model_name}",
+                            user_to,
+                            obj,
+                        )
 
                 # Save child model copies
                 for child in children:
                     child.pk = None
                     child.annotation_set = obj
                     child.save()
+                    if options["add_permissions"]:
+                        for permission_type in child._meta.default_permissions:
+                            assign_perm(
+                                f"{child._meta.app_label}.{permission_type}_{child._meta.model_name}",
+                                user_to,
+                                child,
+                            )
 
                 with_children_output = (
                     f" with {str(len(children))} children"
@@ -72,7 +107,7 @@ class Command(BaseCommand):
                     else ""
                 )
                 self.stdout.write(
-                    f"Copied {str(obj.__class__.__name__)}({obj_pk}){with_children_output}"
+                    f"Copied {str(obj._meta.object_name)}({obj_pk}){with_children_output}"
                 )
 
                 total_parents_copied += 1

@@ -17,8 +17,8 @@
         </dd>
 
         <dt>Challenge</dt>
-        <dd><a href="{{ object.challenge.get_absolute_url }}">
-            {{ object.challenge.short_name }}</a></dd>
+        <dd><a href="{{ object.job.submission.challenge.get_absolute_url }}">
+            {{ object.job.submission.challenge.short_name }}</a></dd>
 
         <dt>Submission created</dt>
         <dd>{{ object.job.submission.created }}</dd>

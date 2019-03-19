@@ -80,7 +80,7 @@
 
         <dt>Latest public result</dt>
         <dd><a href="{{ latest_result.get_absolute_url }}">Result
-            for {{ latest_result.challenge }},
+            for {{ latest_result.job.submission.challenge }},
             created {{ latest_result.created|naturaltime }},
             {{ latest_result.rank|ordinal }} position on leaderboard.</a></dd>
 
