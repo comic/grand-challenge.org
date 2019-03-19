@@ -6,8 +6,9 @@
 {% block style %}
     {{ block.super }}
     {% if site.skin %}
-        /* custom css for this project */
-        {% insert_file site.skin %}
+        <style>
+            {% insert_file site.skin %}
+        </style>
     {% endif %}
 {% endblock %}
 
