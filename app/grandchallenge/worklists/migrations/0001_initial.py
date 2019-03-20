@@ -12,43 +12,69 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('cases', '0009_auto_20190204_1517'),
+        ("cases", "0009_auto_20190204_1517"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Worklist',
+            name="Worklist",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('title', models.CharField(max_length=255)),
-                ('images', models.ManyToManyField(blank=True, related_name='worklist', to='cases.Image')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=255)),
+                (
+                    "images",
+                    models.ManyToManyField(
+                        blank=True, related_name="worklist", to="cases.Image"
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.CreateModel(
-            name='WorklistSet',
+            name="WorklistSet",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('modified', models.DateTimeField(auto_now=True)),
-                ('title', models.CharField(max_length=255)),
-                ('user', models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=255)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.AddField(
-            model_name='worklist',
-            name='set',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='worklists.WorklistSet'),
+            model_name="worklist",
+            name="set",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="worklists.WorklistSet",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='worklist',
-            unique_together={('title', 'set')},
+            name="worklist", unique_together={("title", "set")}
         ),
     ]

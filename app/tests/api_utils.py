@@ -33,10 +33,6 @@ def assert_api_crud(
     # Tests table display
     assert_table_display(client, table_url, token, expected_table)
 
-    query_result = factory._meta.model.objects.all()
-
-    assert 0 == 1
-
     # Tests table create
     assert_table_create(client, table_url, token, record_dict)
 
@@ -108,11 +104,14 @@ def get_record_as_dict(factory, invalid_fields) -> dict:
     new_record = factory()
     record_dict = model_to_dict(new_record)
 
+    count = factory._meta.model.objects.all().count()
+
     for field in invalid_fields:
         if field in record_dict:
             del record_dict[field]
 
-    factory._meta.model.objects.filter(id=new_record.pk).delete()
+    new_record.delete()
+    assert factory._meta.model.objects.all().count() == count - 1
     return record_dict
 
 
