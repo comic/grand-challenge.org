@@ -112,7 +112,7 @@ def get_record_as_dict(factory, invalid_fields) -> dict:
         if field in record_dict:
             del record_dict[field]
 
-    factory._meta.objects.filter(id=new_record.pk).delete()
+    factory._meta.model.objects.filter(id=new_record.pk).delete()
     return record_dict
 
 
