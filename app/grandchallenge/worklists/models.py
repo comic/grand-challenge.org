@@ -20,9 +20,8 @@ class WorklistSet(UUIDModel):
     def save(self, *args, **kwargs):
         super(WorklistSet, self).save(*args, **kwargs)
 
-        user = User.objects.get(pk=self.user)
-        if user is not None:
-            assign_perm("view_worklistset", user, self)
+        if self.user is not None:
+            assign_perm("view_worklistset", self.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
