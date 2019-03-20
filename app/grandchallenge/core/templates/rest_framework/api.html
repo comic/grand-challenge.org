@@ -1,0 +1,33 @@
+{% extends "rest_framework/base.html" %}
+
+{% block meta %}
+    {% include "grandchallenge/partials/meta.html" %}
+    {% include "grandchallenge/partials/head_script.html" %}
+{% endblock %}
+
+{% block bootstrap_theme %}
+{% endblock %}
+
+{% block style %}
+    {% include "grandchallenge/partials/style.html" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block navbar %}
+    {% include "grandchallenge/partials/navbar.html" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% include "grandchallenge/partials/messages.html" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block script %}
+    {% include "grandchallenge/partials/script.html" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block body %}
+    {{ block.super }}
+    {% include "grandchallenge/partials/footer.html" %}
+{% endblock %}

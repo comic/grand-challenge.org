@@ -7,6 +7,7 @@ from django.db import models
 
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
+from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.models import StagedFile
 
@@ -122,6 +123,7 @@ class ContainerImageModel(models.Model):
             "'docker save IMAGE > IMAGE.tar | gzip'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
+        storage=private_s3_storage,
     )
 
     image_sha256 = models.CharField(editable=False, max_length=71)

@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 
+from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
@@ -26,24 +27,26 @@ def validate_docker_image_async(
             instance.image.save(uploaded_image.name, File(f))
 
     try:
-        with instance.image.open(mode="rb") as im, tarfile.open(
-            fileobj=im, mode="r"
-        ) as t:
-            member = dict(zip(t.getnames(), t.getmembers()))["manifest.json"]
-            manifest = t.extractfile(member).read()
-    except (KeyError, tarfile.ReadError):
-        model.objects.filter(pk=pk).update(
-            status=(
-                "manifest.json not found at the root of the container image file. "
-                "Was this created with docker save?"
-            )
+        image_sha256 = _validate_docker_image_manifest(
+            model=model, instance=instance
         )
-        raise ValidationError("Invalid Dockerfile")
+    except ValidationError:
+        send_invalid_dockerfile_email(container_image=instance)
+        raise
 
+    model.objects.filter(pk=instance.pk).update(
+        image_sha256=f"sha256:{image_sha256}", ready=True
+    )
+
+
+def _validate_docker_image_manifest(*, model, instance) -> str:
+    manifest = _extract_docker_image_file(
+        model=model, instance=instance, filename="manifest.json"
+    )
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
-        model.objects.filter(pk=pk).update(
+        model.objects.filter(pk=instance.pk).update(
             status=(
                 f"The container image file should only have 1 image. "
                 f"This file contains {len(manifest)}."
@@ -51,9 +54,44 @@ def validate_docker_image_async(
         )
         raise ValidationError("Invalid Dockerfile")
 
-    model.objects.filter(pk=pk).update(
-        image_sha256=f"sha256:{manifest[0]['Config'][:64]}", ready=True
+    image_sha256 = manifest[0]["Config"][:64]
+
+    config = _extract_docker_image_file(
+        model=model, instance=instance, filename=f"{image_sha256}.json"
     )
+    config = json.loads(config)
+
+    if str(config["config"]["User"].lower()) in ["", "root", "0"]:
+        model.objects.filter(pk=instance.pk).update(
+            status=(
+                "The container runs as root. Please add a user, group and "
+                "USER instruction to your Dockerfile, rebuild, test and "
+                "upload the container again, see "
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
+            )
+        )
+        raise ValidationError("Invalid Dockerfile")
+
+    return image_sha256
+
+
+def _extract_docker_image_file(*, model, instance, filename: str):
+    """ Extracts a file from the root of a tarball """
+    try:
+        with instance.image.open(mode="rb") as im, tarfile.open(
+            fileobj=im, mode="r"
+        ) as t:
+            member = dict(zip(t.getnames(), t.getmembers()))[filename]
+            file = t.extractfile(member).read()
+        return file
+    except (KeyError, tarfile.ReadError):
+        model.objects.filter(pk=instance.pk).update(
+            status=(
+                f"{filename} not found at the root of the container image "
+                f"file. Was this created with docker save?"
+            )
+        )
+        raise ValidationError("Invalid Dockerfile")
 
 
 def retry_if_dropped(func):

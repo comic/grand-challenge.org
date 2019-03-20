@@ -4,7 +4,7 @@
 {% load humanize %}
 {% load remove_whitespace %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Results</h2>
 
@@ -188,7 +188,10 @@
             participant is
             listed.</p>
     {% endif %}
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             var table = $('#resultsTable').DataTable({
@@ -269,5 +272,4 @@
             $('#resultsTable').DataTable().columns.adjust()
         });
     </script>
-
 {% endblock %}

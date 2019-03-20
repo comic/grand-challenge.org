@@ -1,11 +1,11 @@
 {% extends "site.html" %}
 {% load grandchallenge_tags %}
 
-{% block pageName %}
+{% block title %}
     Annotations - {{ block.super }}
 {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     {% if object.labels and not object.base.challenge.evaluation_config.submission_join_key %}
         <p class="alert alert-danger">
@@ -216,7 +216,10 @@
             </table>
         </div>
     {% endif %}
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('.table').DataTable({
@@ -227,5 +230,4 @@
 
         });
     </script>
-
 {% endblock %}

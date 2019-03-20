@@ -3,17 +3,19 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}
+{% block title %}
     Add images to the {{ phase_display }} dataset - {{ block.super }}
 {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Add images to the {{ phase_display }} dataset</h2>
 
     {% crispy form %}
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/unsavedform.js" %}"></script>
-
 {% endblock %}

@@ -17,37 +17,52 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/pipenv /app /static /dbox/Dropbox/media
+RUN mkdir -p /opt/pipenv /app /static /opt/static /dbox/Dropbox/media
 RUN python -m pip install -U pip
 RUN python -m pip install -U pipenv
 
 # Install base python packages
 WORKDIR /opt/pipenv
-ADD Pipfile /opt/pipenv
-ADD Pipfile.lock /opt/pipenv
+COPY Pipfile /opt/pipenv
+COPY Pipfile.lock /opt/pipenv
 RUN pipenv install --system
 
-RUN chown 2001:2001 /static /dbox/Dropbox/media
+RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
+
+RUN chown django:django /app /static /opt/static /dbox/Dropbox/media
+
+###################
+#  Webpack        #
+###################
+FROM node:11-alpine as npm
+RUN mkdir /src
+COPY package.json /src/
+WORKDIR /src
+
+RUN npm install && npm run build
 
 ###################
 #  Test Container #
 ###################
 FROM base as test
 
-USER root
 WORKDIR /opt/pipenv
 RUN pipenv install --system --dev
 
-USER 2001:2001
+USER django:django
 WORKDIR /app
-ADD --chown=2001:2001 ./app/ /app/
-ADD --chown=2001:2001 pyproject.toml /tmp/pyproject.toml
+COPY --chown=django:django ./app/ /app/
+COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
+RUN python manage.py collectstatic --noinput
+COPY --chown=django:django pyproject.toml /tmp/pyproject.toml
 
 ##################
 # Dist Container #
 ##################
 FROM base as dist
 
-USER 2001:2001
+USER django:django
 WORKDIR /app
-ADD --chown=2001:2001 ./app/ /app/
+COPY --chown=django:django ./app/ /app/
+COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
+RUN python manage.py collectstatic --noinput

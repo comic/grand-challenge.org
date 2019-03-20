@@ -34,4 +34,4 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
         current_app=current_app,
     )
 
-    return urljoin(domain, path)
+    return urljoin(domain.lower(), path)

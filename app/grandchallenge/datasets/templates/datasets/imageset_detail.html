@@ -1,11 +1,11 @@
 {% extends "site.html" %}
 {% load grandchallenge_tags %}
 
-{% block pageName %}
+{% block title %}
     Dataset - {{ block.super }}
 {% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Dataset</h2>
 
@@ -73,7 +73,10 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('.table').DataTable({
@@ -84,5 +87,4 @@
 
         });
     </script>
-
 {% endblock %}

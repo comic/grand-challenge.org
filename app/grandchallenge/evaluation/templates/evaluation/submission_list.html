@@ -1,7 +1,7 @@
 {% extends "site.html" %}
 {% load url from grandchallenge_tags %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Submissions</h2>
 
@@ -46,11 +46,13 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#submissionsTable').DataTable();
         });
     </script>
-
 {% endblock %}

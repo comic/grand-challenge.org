@@ -92,3 +92,5 @@ app/celerybeat-schedule
 # Local postgres data
 postgres_data/
 
+node_modules/
+dist/

@@ -1,3 +1,5 @@
+from dal import autocomplete
+from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
@@ -23,6 +25,18 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
     def get_queryset(self):
         challenge = self.request.challenge
         return challenge.get_admins().select_related("user_profile")
+
+
+class AdminsUpdateAutocomplete(
+    UserIsChallengeAdminMixin, autocomplete.Select2QuerySetView
+):
+    def get_queryset(self):
+        qs = get_user_model().objects.all().order_by("username")
+
+        if self.q:
+            qs = qs.filter(username__istartswith=self.q)
+
+        return qs
 
 
 class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):

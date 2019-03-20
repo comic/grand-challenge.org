@@ -2,7 +2,7 @@
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
-{% block pageName %}
+{% block title %}
     Algorithms - {{ block.super }}
 {% endblock %}
 
@@ -41,7 +41,10 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('.table').DataTable({
@@ -51,5 +54,4 @@
             });
         });
     </script>
-
 {% endblock %}

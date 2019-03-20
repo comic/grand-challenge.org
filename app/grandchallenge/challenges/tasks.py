@@ -3,6 +3,7 @@ from django.core.mail import mail_managers
 from requests import get, exceptions
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.evaluation.models import Result
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -22,23 +23,22 @@ def update_filter_classes():
                     }
                 )
 
+                challenge_results = Result.objects.filter(
+                    job__submission__challenge=c, published=True
+                ).order_by("-created")
+
                 try:
                     kwargs.update(
                         {
-                            "cached_num_results": c.result_set.filter(
-                                published=True
-                            ).count(),
-                            "cached_latest_result": c.result_set.filter(
-                                published=True
-                            )
-                            .order_by("-created")
-                            .first()
-                            .created,
+                            "cached_num_results": challenge_results.count(),
+                            "cached_latest_result": challenge_results.first().created,
                         }
                     )
                 except AttributeError:
-                    # This will fail if there are no results
-                    pass
+                    # No results for this challenge
+                    kwargs.update(
+                        {"cached_num_results": 0, "cached_latest_result": None}
+                    )
 
             obj.objects.filter(pk=c.pk).update(**kwargs)
 

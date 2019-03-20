@@ -13,7 +13,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import (
     MimeTypeValidator,
     ExtensionValidator,
@@ -21,6 +21,7 @@ from grandchallenge.core.validators import (
     JSONSchemaValidator,
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
+from grandchallenge.subdomains.utils import reverse
 
 # Example Schema
 """
@@ -311,7 +312,7 @@ class Config(UUIDModel):
 def method_image_path(instance, filename):
     """ Deprecated: only used in a migration """
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"methods/"
         f"{instance.pk}/"
@@ -337,8 +338,9 @@ class Method(UUIDModel, ContainerImageModel):
 
 
 def submission_file_path(instance, filename):
+    # Must match the protected serving url
     return (
-        f"evaluation/"
+        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"submissions/"
         f"{instance.creator.pk}/"
@@ -366,15 +368,13 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
-    # Limitation for now: only accept zip files as these are expanded in
-    # evaluation.tasks.Evaluation. We could extend this first to csv file
-    # submission with some validation
     file = models.FileField(
         upload_to=submission_file_path,
         validators=[
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
+        storage=protected_s3_storage,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
@@ -459,7 +459,6 @@ class Result(UUIDModel):
     Stores individual results for a challenges
     """
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
     published = models.BooleanField(default=True)
@@ -477,7 +476,7 @@ class Result(UUIDModel):
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
             self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
+                self.job.submission.challenge.evaluation_config.auto_publish_new_results
             )
 
         super().save(*args, **kwargs)
@@ -487,7 +486,7 @@ class Result(UUIDModel):
             "evaluation:result-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.job.submission.challenge.short_name,
             },
         )
 
@@ -497,7 +496,6 @@ class Job(UUIDModel, ContainerExecJobModel):
     Stores information about a job for a given upload
     """
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
@@ -514,9 +512,7 @@ class Job(UUIDModel, ContainerExecJobModel):
         return SubmissionEvaluator
 
     def create_result(self, *, result):
-        Result.objects.create(
-            job=self, challenge=self.challenge, metrics=result
-        )
+        Result.objects.create(job=self, metrics=result)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
@@ -528,10 +524,6 @@ class Job(UUIDModel, ContainerExecJobModel):
             )
 
         super().clean()
-
-    def save(self, *args, **kwargs):
-        self.challenge = self.submission.challenge
-        super().save(*args, **kwargs)
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
@@ -546,12 +538,13 @@ class Job(UUIDModel, ContainerExecJobModel):
             "evaluation:job-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.submission.challenge.short_name,
             },
         )
 
 
 def result_screenshot_path(instance, filename):
+    # Used in a migration so cannot delete
     return (
         f"evaluation/"
         f"{instance.challenge.pk}/"
@@ -560,12 +553,3 @@ def result_screenshot_path(instance, filename):
         f"{instance.pk}/"
         f"{filename}"
     )
-
-
-class ResultScreenshot(UUIDModel):
-    """
-    Stores a screenshot that is generated during an evaluation
-    """
-
-    result = models.ForeignKey("Result", on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=result_screenshot_path)

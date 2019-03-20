@@ -72,6 +72,7 @@ class AlgorithmExecutor(Executor):
                     volumes={
                         self._output_volume: {"bind": "/output/", "mode": "ro"}
                     },
+                    name=f"{self._job_id}-reader",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,

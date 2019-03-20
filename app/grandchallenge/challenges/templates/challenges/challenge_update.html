@@ -5,17 +5,14 @@
 {# Do not show the footer as this is broken with SummernoteInplaceWidget #}
 {% block footer %}{% endblock %}
 
-{# Do not run js actions on the page as this breaks with SummernoteInplaceWidget #}
-{% block postjs %}{% endblock %}
+{% block title %}Update {{ site.short_name }}{% endblock %}
 
-{% block pageName %}Update {{ site.short_name }}{% endblock %}
-
-{% block contentTitle %}
+{% block content %}
     <h2>Update {{ site.short_name }}</h2>
+    {% crispy form %}
 {% endblock %}
 
-{% block pagecontent %}
-    {% crispy form %}
-
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

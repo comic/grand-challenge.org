@@ -1,4 +1,6 @@
+from dal import autocomplete
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
@@ -20,7 +22,16 @@ class AdminsForm(forms.Form):
             "pages, etc."
         ),
         required=True,
+        widget=autocomplete.ModelSelect2(
+            url="/admins/update-autocomplete",
+            attrs={
+                "data-placeholder": "Search for a user ...",
+                "data-minimum-input-length": 3,
+                "data-theme": settings.CRISPY_TEMPLATE_PACK,
+            },
+        ),
     )
+
     action = forms.ChoiceField(
         choices=CHOICES, required=True, widget=forms.HiddenInput(), initial=ADD
     )

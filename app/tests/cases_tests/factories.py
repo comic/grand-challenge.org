@@ -34,6 +34,10 @@ class ImageFactoryWithImageFile(ImageFactory):
             ImageFileFactoryWithRAWFile(image=self)
 
     eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
+    stereoscopic_choice = factory.Iterator(
+        [x[0] for x in Image.STEREOSCOPIC_CHOICES]
+    )
+    field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
     study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: "RetinaImage {}".format(n))
     modality = factory.SubFactory(

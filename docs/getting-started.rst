@@ -60,7 +60,7 @@ You can also run the tests locally by
     $ docker-compose run --rm web pytest
 
 If you want to add a new test please add them to the ``app/tests`` folder.
-If you only want to run the tests for a particular app, eg. for `teams`, you can do
+If you only want to run the tests for a particular app, eg. for ``teams``, you can do
 
 .. code-block:: console
 
@@ -85,10 +85,10 @@ Running through docker-compose
 You will need the Professional edition to use the docker-compose integration.
 To set up the environment in Pycharm Professional 2018.1:
 
-1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Cog wheel (top right) -> Add -> Docker Compose
+1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> ``Cog`` wheel (top right) -> ``Add`` -> ``Docker Compose``
 2. Then select the docker server (usually the unix socket)
 3. Set the service to ``web``
-4. Click OK in both windows
+4. Click `OK` in both windows
 
 Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
 If you edit any template files these will be updated on the fly. 
@@ -100,7 +100,7 @@ Running locally
 Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
 not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
 ``docker-compose`` stack, except for the web service. Though this service is running, a separate Django dev server is
-started in PyCharm (or from the terminal). As the dev server is running on port 8000 by default, there is no port conflict
+started in PyCharm (or from the terminal). As the dev server is running on port ``8000`` by default, there is no port conflict
 with the service running in the docker container.
 
 1. Run the ``docker-compose`` stack for the database and celery task handling
@@ -131,12 +131,12 @@ with the service running in the docker container.
 
 8. To setup PyCharm:
 
-   1. File -> Settings -> Project: grand-challenge.org -> Project Interpreter -> Select your created pipenv environment
+   1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> Select your created pipenv environment
    2. For each run/debug configuration, make sure the environmental variables are loaded,
       the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
-      the folder icon in the `Environmental variables` field.
+      the folder icon in the ``Environmental variables`` field.
    3. Useful to setup: the built-in python/django console in Pycharm:
-      Settings -> Build, execution, deployment -> Console -> Python/Django console.
+      ``Settings`` -> ``Build``, ``execution``, ``deployment`` -> ``Console`` -> Python/Django console.
       Choose the same python interpreter here, and make sure to load the environmental variables
       (the .env plugin cannot be used here, the variables can only be pasted).
 

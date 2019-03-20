@@ -3,11 +3,9 @@
 {% load user_profile_link from profiles %}
 {% load humanize %}
 
-{% block pageName %}External Challenges{% endblock %}
+{% block title %}External Challenges{% endblock %}
 
-{% block containerType %}container-fluid{% endblock %}
-
-{% block pagecontent %}
+{% block content %}
 
     <h2>External Challenges</h2>
 
@@ -116,7 +114,10 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#challengesTable').DataTable({
@@ -125,5 +126,4 @@
             });
         });
     </script>
-
 {% endblock %}

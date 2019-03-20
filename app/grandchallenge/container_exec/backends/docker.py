@@ -14,8 +14,9 @@ import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError, APIError
+from docker.errors import ContainerError, APIError, NotFound
 from docker.tls import TLSConfig
+from docker.types import LogConfig
 from requests import HTTPError
 
 
@@ -57,10 +58,22 @@ class Executor(object):
 
         self._run_kwargs = {
             "labels": {"job_id": self._job_id},
+            "init": True,
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
+            # Set to the same as mem_limit to avoid using swap
+            "memswap_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
+            # Use the default weight
+            "cpu_shares": 1024,
+            "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
+            "cap_drop": ["all"],
+            "security_opt": ["no-new-privileges"],
+            "pids_limit": 64,
+            "log_config": LogConfig(
+                type=LogConfig.types.JSON, config={"max-size": "1g"}
+            ),
         }
 
     def __enter__(self):
@@ -69,11 +82,18 @@ class Executor(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         flt = {"label": f"job_id={self._job_id}"}
 
-        for container in self._client.containers.list(filters=flt):
-            container.stop()
+        try:
+            for c in self._client.containers.list(filters=flt):
+                c.stop()
 
-        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
+            self.__retry_docker_obj_prune(
+                obj=self._client.containers, filters=flt
+            )
+            self.__retry_docker_obj_prune(
+                obj=self._client.volumes, filters=flt
+            )
+        except ConnectionError:
+            raise RuntimeError("Could not connect to worker.")
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -95,7 +115,7 @@ class Executor(object):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
-        self._chmod_output()
+        self._chmod_volumes()
         self._execute_container()
         return self._get_result()
 
@@ -122,6 +142,7 @@ class Executor(object):
                     volumes={
                         self._input_volume: {"bind": "/input/", "mode": "rw"}
                     },
+                    name=f"{self._job_id}-writer",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,
@@ -139,15 +160,17 @@ class Executor(object):
                 dest=f"/input/{Path(file.name).name}",
             )
 
-    def _chmod_output(self):
-        """ Ensure that the output is writable """
+    def _chmod_volumes(self):
+        """ Ensure that the i/o directories are writable """
         try:
             self._client.containers.run(
                 image=self._io_image,
                 volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "rw"}
+                    self._input_volume: {"bind": "/input/", "mode": "rw"},
+                    self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                command="chmod 777 /output/",
+                name=f"{self._job_id}-chmod-volumes",
+                command=f"chmod -R 0777 /input/ /output/",
                 remove=True,
                 **self._run_kwargs,
             )
@@ -162,6 +185,7 @@ class Executor(object):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
+                name=f"{self._job_id}-executor",
                 remove=True,
                 **self._run_kwargs,
             )
@@ -181,12 +205,22 @@ class Executor(object):
                     volumes={
                         self._output_volume: {"bind": "/output/", "mode": "ro"}
                     },
+                    name=f"{self._job_id}-reader",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,
                 )
             ) as reader:
                 result = get_file(container=reader, src=self._results_file)
+        except NotFound:
+            # The container exited without error, but no results file was
+            # produced. This shouldn't happen, but does with poorly programmed
+            # evaluation containers.
+            raise RuntimeError(
+                "The evaluation failed for an unknown reason as no results "
+                "file was produced. Please contact the organisers for "
+                "assistance."
+            )
         except Exception as e:
             raise RuntimeError(str(e))
 

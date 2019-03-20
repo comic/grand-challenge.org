@@ -1,7 +1,7 @@
 {% extends "site.html" %}
 {% load url from grandchallenge_tags %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Evaluation Methods</h2>
 
@@ -42,11 +42,13 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#methodsTable').DataTable();
         });
     </script>
-
 {% endblock %}

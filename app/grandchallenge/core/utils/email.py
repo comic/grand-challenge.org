@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 from django.utils.html import strip_tags
@@ -45,12 +46,15 @@ def send_templated_email(
     template = loader.get_template(email_template_name)
     text_part = strip_tags(template.render(email_context, request=request))
     html_part = template.render(email_context, request=request)
+    subject = f"[{Site.objects.get_current().domain.lower()}] {subject}"
+
     if type(recipients) == str:
         if recipients.find(","):
             recipients = recipients.split(",")
     elif type(recipients) != list:
         recipients = [recipients]
     recipients = remove_empty(recipients)
+
     msg = EmailMultiAlternatives(
         subject, text_part, sender, recipients, bcc=bcc
     )

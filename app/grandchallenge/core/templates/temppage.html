@@ -6,20 +6,13 @@
 {% load admin_urls %}
 {% load clean from bleach %}
 
-{% block pageName %} {{ currentpage.challenge.short_name }} -
+{% block title %} {{ currentpage.challenge.short_name }} -
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 
-{% block challengeNav %}
+{% block sidebar %}
 {% endblock %}
 
 {% block content %}
-
-
-    {% block pagecontent %}
-
-        <div>{{ currentpage.html|clean }}</div>
-
-    {% endblock %}
-
+    <div>{{ currentpage.html|clean }}</div>
 {% endblock %}

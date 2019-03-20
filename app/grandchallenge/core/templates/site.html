@@ -3,26 +3,23 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-
-
-{% block additionalCSS %}
+{% block style %}
+    {{ block.super }}
     {% if site.skin %}
-        /* custom css for this project */
-        {% insert_file site.skin %}
+        <style>
+            {% insert_file site.skin %}
+        </style>
     {% endif %}
 {% endblock %}
 
-{% block pageName %} {{ site.short_name }} {% endblock %}
+{% block title %} {{ site.short_name }} {% endblock %}
 
-{% block topheader %}
+{% block navbar %}
     {% if site.hide_footer %}
         <!--hidden -->
     {% else %}
         {{ block.super }}
     {% endif %}
-{% endblock topheader %}
-
-{% block headerLink %}""
 {% endblock %}
 
 {% block jumbotron %}
@@ -31,16 +28,16 @@
             <div class="col-12">
                 <a style="width: 100%;"
                    href="{% url 'challenge-homepage' challenge_short_name=site.short_name %}">
-                    <img src="{{ site.banner.url }}" class="headerImage">
+                    <img alt="{% firstof site.title site.short_name %} Banner"
+                         src="{{ site.banner.url }}" class="headerImage">
                 </a>
             </div>
         </div>
     {% endif %}
 {% endblock %}
 
+{% block sidebar_links %}
 
-{% block topmenu %}
-    {% block additionalNavItems %}{% endblock %}
     {% for page in pages %}
         {% if not page.hidden %}
             <li class="nav-item">
@@ -62,9 +59,7 @@
     {% endif %}
 
     {% if site.use_evaluation %}
-
         {% if "change_challenge" in challenge_perms or user_is_participant %}
-
             {% if site.evaluation_config.use_teams %}
                 <li class="nav-item">
                     <a class="nav-link"
@@ -75,59 +70,17 @@
                 <a class="nav-link"
                    href="{% url 'evaluation:submission-create' challenge_short_name=site.short_name %}">Submit</a>
             </li>
-
         {% endif %}
         <li class="nav-item">
             <a class="nav-link"
                href="{% url 'evaluation:result-list' challenge_short_name=site.short_name %}">Results</a>
         </li>
-
     {% endif %}
-{% endblock %}
 
-
-{% block loginbutton %}
-    {% if site.hide_signin %}
-    {% else %}
-        {{ block.super }}
-    {% endif %}
-{% endblock %}
-
-{% block sitemenuloginbutton %}
     {% if site.hide_footer and not site.hide_signin %}
-        {% if user.is_authenticated %}
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle"
-                   data-toggle="dropdown" role="button"
-                   aria-haspopup="true"
-                   aria-expanded="false">
-                    <div style='vertical-align:middle; display:inline;'>
-                        <img class="mugshot"
-                             src="{{ user.user_profile.get_mugshot_url }}"
-                             alt="User Mugshot"
-                             style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
-                        <span class="caret"></span>
-                    </div>
-                </a>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item"
-                       href="{% url 'userena_profile_detail' user.username %}">My
-                        profile</a>
-                    <hr/>
-                    <a class="dropdown-item"
-                       href="{% url 'userena_signout' %}?next=/">Signout</a>
-                </div>
-            </li>
-        {% else %}
-            <li class="nav-item"><a class="nav-link"
-                                    href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-                In / Register</a>
-            </li>
-        {% endif %}
+       {% include "grandchallenge/partials/userlinks.html" %}
     {% endif %}
-{% endblock %}
 
-{% block adminbutton %}
     {% if "change_challenge" in challenge_perms %}
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"
@@ -171,17 +124,6 @@
             </div>
         </li>
     {% endif %}
-{% endblock %}
-
-
-{% block content %}
-
-    {% block contentTitle %}
-    {% endblock %}
-
-    {% block pagecontent %}
-        <p>redirect to first page here.</p>
-    {% endblock %}
 
 {% endblock %}
 
@@ -191,4 +133,3 @@
         {{ block.super }}
     {% endif %}
 {% endblock %}
-

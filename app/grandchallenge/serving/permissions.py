@@ -3,6 +3,7 @@ from django.conf import settings
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ComicSiteModel, Challenge
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.evaluation.models import Submission
 
 
 def can_access(user, path, *, challenge: Challenge):
@@ -103,3 +104,7 @@ def user_can_download_image(*, user, image: Image) -> bool:
             return True
 
     return False
+
+
+def user_can_download_submission(*, user, submission: Submission) -> bool:
+    return submission.challenge.is_admin(user=user)

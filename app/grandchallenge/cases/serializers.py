@@ -25,6 +25,8 @@ class ImageSerializer(serializers.ModelSerializer):
             "color_space",
             "modality",
             "eye_choice",
+            "stereoscopic_choice",
+            "field_of_view",
             "shape_without_color",
             "shape",
             "cirrus_link",

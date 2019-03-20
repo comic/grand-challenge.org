@@ -2,9 +2,9 @@
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
-{% block pageName %}My Challenges{% endblock %}
+{% block title %}My Challenges{% endblock %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>My Challenges</h2>
 
@@ -61,7 +61,10 @@
             </tbody>
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#challengesTable').DataTable({
@@ -70,5 +73,4 @@
             });
         });
     </script>
-
 {% endblock %}

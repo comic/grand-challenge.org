@@ -1,18 +1,19 @@
-from typing import List
-from pathlib import Path
-import SimpleITK as sitk
 import logging
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import List
 
+import SimpleITK as sitk
 from django.conf import settings
-from django.db import models
 from django.contrib.auth.models import Group
+from django.db import models
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.models import UUIDModel
-from grandchallenge.studies.models import Study
 from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
-
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +138,9 @@ class RawImageFile(UUIDModel):
 
 
 def image_file_path(instance, filename):
-    return f"images/{instance.image.pk}/{filename}"
+    return (
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{filename}"
+    )
 
 
 def case_file_path(instance, filename):
@@ -146,7 +149,6 @@ def case_file_path(instance, filename):
 
 
 class Image(UUIDModel):
-
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
     COLOR_SPACE_RGBA = "RGBA"
@@ -177,6 +179,38 @@ class Image(UUIDModel):
         (EYE_NA, "Not applicable"),
     )
 
+    STEREOSCOPIC_LEFT = "L"
+    STEREOSCOPIC_RIGHT = "R"
+    STEREOSCOPIC_UNKNOWN = "U"
+    STEREOSCOPIC_EMPTY = None
+    STEREOSCOPIC_CHOICES = (
+        (STEREOSCOPIC_LEFT, "Left"),
+        (STEREOSCOPIC_RIGHT, "Right"),
+        (STEREOSCOPIC_UNKNOWN, "Unknown"),
+        (STEREOSCOPIC_EMPTY, "Not applicable"),
+    )
+
+    FOV_1M = "F1M"
+    FOV_2 = "F2"
+    FOV_3M = "F3M"
+    FOV_4 = "F4"
+    FOV_5 = "F5"
+    FOV_6 = "F6"
+    FOV_7 = "F7"
+    FOV_UNKNOWN = "U"
+    FOV_EMPTY = None
+    FOV_CHOICES = (
+        (FOV_1M, FOV_1M),
+        (FOV_2, FOV_2),
+        (FOV_3M, FOV_3M),
+        (FOV_4, FOV_4),
+        (FOV_5, FOV_5),
+        (FOV_6, FOV_6),
+        (FOV_7, FOV_7),
+        (FOV_UNKNOWN, "Unknown"),
+        (FOV_EMPTY, "Not applicable"),
+    )
+
     name = models.CharField(max_length=128)
     study = models.ForeignKey(Study, on_delete=models.PROTECT, null=True)
     origin = models.ForeignKey(
@@ -199,6 +233,20 @@ class Image(UUIDModel):
         choices=EYE_CHOICES,
         default=EYE_NA,
         help_text="Is this (retina) image from the right or left eye?",
+    )
+    stereoscopic_choice = models.CharField(
+        max_length=1,
+        choices=STEREOSCOPIC_CHOICES,
+        default=STEREOSCOPIC_EMPTY,
+        null=True,
+        help_text="Is this the left or right image of a stereoscopic pair?",
+    )
+    field_of_view = models.CharField(
+        max_length=3,
+        choices=FOV_CHOICES,
+        default=FOV_EMPTY,
+        null=True,
+        help_text="What is the field of view of this image?",
     )
 
     def __str__(self):
@@ -238,12 +286,11 @@ class Image(UUIDModel):
 
         file_size = 0
         for file in (mhd_file, raw_file):
-            image_path = Path(file.file.path)
-            if not Path.is_file(image_path):
-                raise FileNotFoundError(f"No file found in {image_path}")
+            if not file.file.storage.exists(name=file.file.name):
+                raise FileNotFoundError(f"No file found for {file.file}")
 
             # Add up file sizes of mhd and raw file to get total file size
-            file_size += image_path.stat().st_size
+            file_size += file.file.size
 
         # Check file size to guard for out of memory error
         if file_size > settings.MAX_SITK_FILE_SIZE:
@@ -251,11 +298,31 @@ class Image(UUIDModel):
                 f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
             )
 
-        try:
-            sitk_image = sitk.ReadImage(str(Path(mhd_file.file.path)))
-        except RuntimeError as e:
-            logging.error(f"Failed to load SimpleITK image with error: {e}")
-            raise
+        with TemporaryDirectory() as tempdirname:
+            for file in (mhd_file, raw_file):
+                infile = file.file.open("rb")
+                try:
+                    with open(
+                        Path(tempdirname) / Path(file.file.name).name, "wb"
+                    ) as outfile:
+                        buffer = True
+                        while buffer:
+                            buffer = infile.read(1024)
+                            outfile.write(buffer)
+                except:
+                    infile.close()
+                    raise
+
+            try:
+                sitk_image = sitk.ReadImage(
+                    str(Path(tempdirname) / Path(mhd_file.file.name).name)
+                )
+            except RuntimeError as e:
+                logging.error(
+                    f"Failed to load SimpleITK image with error: {e}"
+                )
+                raise
+
         return sitk_image
 
     def permit_viewing_by_retina_users(self):
@@ -285,4 +352,6 @@ class ImageFile(UUIDModel):
     image_type = models.CharField(
         max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
     )
-    file = models.FileField(upload_to=image_file_path, blank=False)
+    file = models.FileField(
+        upload_to=image_file_path, blank=False, storage=protected_s3_storage
+    )

@@ -83,7 +83,7 @@ def json_dumps(obj: dict):
 def get_team_html(obj):
     try:
         team = Team.objects.get(
-            challenge=obj.challenge,
+            challenge=obj.job.submission.challenge,
             teammember__user=obj.job.submission.creator,
         )
         return format_html(

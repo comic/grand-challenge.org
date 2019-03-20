@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
@@ -17,7 +18,7 @@ def send_challenge_created_email(challenge: Challenge):
 
     for s in staff:
         send_mail(
-            subject="New Challenge Created",
+            subject=f"[{Site.objects.get_current().domain.lower()}] New Challenge Created",
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[s.email],
@@ -41,7 +42,7 @@ def send_external_challenge_created_email(challenge: ExternalChallenge):
 
     for s in staff:
         send_mail(
-            subject="New External Challenge",
+            subject=f"[{Site.objects.get_current().domain.lower()}] New External Challenge",
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[s.email],

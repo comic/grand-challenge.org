@@ -103,7 +103,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         )
 
         pending_jobs = Job.objects.filter(
-            challenge=self.request.challenge,
+            submission__challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Job.PENDING, Job.STARTED),
         ).count()
@@ -180,25 +180,6 @@ class SubmissionCreate(
 class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
     form_class = LegacySubmissionForm
 
-    def get_next_submission(
-        self,
-        *,
-        max_subs: int,
-        period: timedelta = timedelta(days=1),
-        now: datetime = None,
-    ):
-        """
-        Admins should always be able to upload legacy results, so set the
-        remaining submissions to infinite.
-        """
-        if now is None:
-            now = timezone.now()
-
-        return {
-            "remaining_submissions": float("Inf"),
-            "next_submission_at": now,
-        }
-
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Submission
@@ -232,16 +213,18 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
     def get_queryset(self):
         """ Admins see everything, participants just their jobs """
-        queryset = super().get_queryset()
-        queryset = queryset.select_related("result")
         challenge = self.request.challenge
-        if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge=self.request.challenge)
 
+        queryset = super().get_queryset()
+        queryset = queryset.select_related(
+            "result", "submission__creator__user_profile"
+        ).filter(submission__challenge=challenge)
+
+        if challenge.is_admin(self.request.user):
+            return queryset
         else:
             return queryset.filter(
-                Q(challenge=self.request.challenge),
-                Q(submission__creator__pk=self.request.user.pk),
+                Q(submission__creator__pk=self.request.user.pk)
             )
 
 
@@ -272,7 +255,7 @@ class ResultList(ListView):
             "job__submission__creator__user_profile"
         )
         return queryset.filter(
-            Q(challenge=self.request.challenge),
+            Q(job__submission__challenge=self.request.challenge),
             Q(published=True),
             ~Q(rank=0),  # Exclude results without a rank
         )

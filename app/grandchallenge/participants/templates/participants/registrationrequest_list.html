@@ -2,7 +2,7 @@
 {% load user_profile_link from profiles %}
 {% load url from grandchallenge_tags %}
 
-{% block pagecontent %}
+{% block content %}
 
     <h2>Registration Requests for {{ site.short_name }}</h2>
 
@@ -86,7 +86,10 @@
 
         </table>
     </div>
+{% endblock %}
 
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
             $('#participantsTable').DataTable({
@@ -100,5 +103,4 @@
             });
         });
     </script>
-
 {% endblock %}

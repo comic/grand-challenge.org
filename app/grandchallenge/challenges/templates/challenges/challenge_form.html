@@ -2,17 +2,17 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-{% block pageName %}New Challenge{% endblock %}
+{% block title %}New Challenge{% endblock %}
 
-{% block contentTitle %}
+{% block content %}
     <h2>Create A New Challenge</h2>
     <p>
         Please fill out this form if you would like to set up your own challenge.
     </p>
+    {% crispy form %}
 {% endblock %}
 
-{% block pagecontent %}
-    {% crispy form %}
-
+{% block script %}
+    {{ block.super }}
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

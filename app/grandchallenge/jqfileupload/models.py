@@ -3,6 +3,8 @@ import os
 from django.conf import settings
 from django.db import models
 
+from grandchallenge.core.storage import private_s3_storage
+
 
 def generate_upload_filename(instance, filename):
     return os.path.join(
@@ -23,7 +25,10 @@ class StagedFile(models.Model):
     file_id = models.UUIDField(blank=False)
     timeout = models.DateTimeField(blank=False)
     file = models.FileField(
-        blank=False, max_length=256, upload_to=generate_upload_filename
+        blank=False,
+        max_length=256,
+        upload_to=generate_upload_filename,
+        storage=private_s3_storage,
     )
     start_byte = models.BigIntegerField(blank=False)
     end_byte = models.BigIntegerField(blank=False)

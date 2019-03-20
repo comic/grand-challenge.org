@@ -105,7 +105,6 @@ class JobFactory(factory.DjangoModelFactory):
     class Meta:
         model = Job
 
-    challenge = factory.SubFactory(ChallengeFactory)
     method = factory.SubFactory(MethodFactory)
     submission = factory.SubFactory(SubmissionFactory)
 

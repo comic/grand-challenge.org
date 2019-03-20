@@ -5,6 +5,7 @@ from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
 from userena.models import UserenaSignup
+from django.contrib.auth.models import Group
 
 from grandchallenge.challenges.models import (
     Challenge,
@@ -32,7 +33,7 @@ class Command(BaseCommand):
             short_name=settings.MAIN_PROJECT_NAME,
             description="main project",
             use_registration_page=False,
-            disclaimer="You <b>must</b> delete the admin, demo, and demop users before deploying to production!",
+            disclaimer="You <b>must</b> delete the admin, demo, demop, and retina_demo users before deploying to production!",
         )
         if created:
             Page.objects.create(
@@ -104,7 +105,6 @@ class Command(BaseCommand):
             job = Job.objects.create(submission=submission, method=method)
 
             Result.objects.create(
-                challenge=demo,
                 metrics={
                     "acc": {"mean": 0.5, "std": 0.1},
                     "dice": {"mean": 0.71, "std": 0.05},
@@ -178,3 +178,14 @@ class Command(BaseCommand):
             mr_modality = ImagingModality.objects.get(modality="MR")
             ex_challenge.modalities.add(mr_modality)
             ex_challenge.save()
+
+            retina_demo = UserenaSignup.objects.create_user(
+                username="retina_demo",
+                email="retina@example.com",
+                password="retina",
+                active=True,
+            )
+            retina_group = Group.objects.get(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            )
+            retina_demo.groups.add(retina_group)
