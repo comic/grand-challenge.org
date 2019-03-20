@@ -23,6 +23,8 @@ class WorklistSet(UUIDModel):
 
         if created and self.user is not None:
             assign_perm("view_worklistset", self.user, self)
+            assign_perm("change_worklistset", self.user, self)
+            assign_perm("delete_worklistset", self.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
