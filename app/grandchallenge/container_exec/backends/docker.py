@@ -14,7 +14,7 @@ import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError, APIError
+from docker.errors import ContainerError, APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
@@ -82,11 +82,18 @@ class Executor(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         flt = {"label": f"job_id={self._job_id}"}
 
-        for container in self._client.containers.list(filters=flt):
-            container.stop()
+        try:
+            for c in self._client.containers.list(filters=flt):
+                c.stop()
 
-        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
+            self.__retry_docker_obj_prune(
+                obj=self._client.containers, filters=flt
+            )
+            self.__retry_docker_obj_prune(
+                obj=self._client.volumes, filters=flt
+            )
+        except ConnectionError:
+            raise RuntimeError("Could not connect to worker.")
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -205,6 +212,15 @@ class Executor(object):
                 )
             ) as reader:
                 result = get_file(container=reader, src=self._results_file)
+        except NotFound:
+            # The container exited without error, but no results file was
+            # produced. This shouldn't happen, but does with poorly programmed
+            # evaluation containers.
+            raise RuntimeError(
+                "The evaluation failed for an unknown reason as no results "
+                "file was produced. Please contact the organisers for "
+                "assistance."
+            )
         except Exception as e:
             raise RuntimeError(str(e))
 
