@@ -82,11 +82,18 @@ class Executor(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         flt = {"label": f"job_id={self._job_id}"}
 
-        for container in self._client.containers.list(filters=flt):
-            container.stop()
+        try:
+            for c in self._client.containers.list(filters=flt):
+                c.stop()
 
-        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
+            self.__retry_docker_obj_prune(
+                obj=self._client.containers, filters=flt
+            )
+            self.__retry_docker_obj_prune(
+                obj=self._client.volumes, filters=flt
+            )
+        except ConnectionError:
+            raise RuntimeError("Could not connect to worker.")
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
