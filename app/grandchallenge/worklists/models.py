@@ -19,7 +19,10 @@ class WorklistSet(UUIDModel):
 
     def save(self, *args, **kwargs):
         super(WorklistSet, self).save(*args, **kwargs)
-        assign_perm("view_worklistset", self.user, self)
+
+        user = User.objects.get(pk=self.user)
+        if user is not None:
+            assign_perm("view_worklistset", user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
@@ -38,9 +41,12 @@ class Worklist(UUIDModel):
 
     def save(self, *args, **kwargs):
         super(Worklist, self).save(*args, **kwargs)
-        assign_perm("view_worklist", self.user, self)
-        assign_perm("change_worklist", self.user, self)
-        assign_perm("delete_worklist", self.user, self)
+
+        set = WorklistSet.objects.get(pk=self.set)
+        if set.user is not None:
+            assign_perm("view_worklist", set.user, self)
+            assign_perm("change_worklist", set.user, self)
+            assign_perm("delete_worklist", set.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
