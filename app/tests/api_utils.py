@@ -13,7 +13,6 @@ def assert_api_crud(
     client, table_reverse, expected_table, factory, invalid_fields
 ):
     # Ensures there are no entries present of the current model
-    factory._meta.model.objects.all().delete()
     assert factory._meta.model.objects.all().count() == 0
 
     invalid_fields.append("id")
@@ -37,9 +36,9 @@ def assert_api_crud(
     # Tests table display
     assert_table_display(client, table_url, token, expected_table)
 
-    queryset = factory._meta.model.objects.all()
-    queryset.delete()
-    assert factory._meta.model.objects.all().count() == 0
+    # Ensures no records are left while testing the creation view
+    factory._meta.model.objects.all().delete()
+
     # Tests table create
     assert_table_create(client, table_url, token, record_dict)
 
