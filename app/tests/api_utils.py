@@ -37,6 +37,7 @@ def assert_api_crud(
     # Tests table display
     assert_table_display(client, table_url, token, expected_table)
 
+    queryset = factory._meta.model.objects.all()
     assert factory._meta.model.objects.all().count() == 0
     # Tests table create
     assert_table_create(client, table_url, token, record_dict)
