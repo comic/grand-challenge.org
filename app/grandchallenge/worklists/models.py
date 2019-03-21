@@ -41,15 +41,15 @@ class Worklist(UUIDModel):
         to=Image, related_name="worklist", blank=True
     )
 
-    # def save(self, *args, **kwargs):
-    #     created = self._state.adding
-    #     super(Worklist, self).save(*args, **kwargs)
-    #
-    #     set = WorklistSet.objects.get(pk=self.set)
-    #     if created and set.user is not None:
-    #         assign_perm("view_worklist", set.user, self)
-    #         assign_perm("change_worklist", set.user, self)
-    #         assign_perm("delete_worklist", set.user, self)
+    def save(self, *args, **kwargs):
+        created = self._state.adding
+        super(Worklist, self).save(*args, **kwargs)
+
+        set = WorklistSet.objects.get(pk=self.set)
+        if created and set.user is not None:
+            assign_perm("view_worklist", set.user, self)
+            assign_perm("change_worklist", set.user, self)
+            assign_perm("delete_worklist", set.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
