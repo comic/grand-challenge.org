@@ -14,6 +14,7 @@ def assert_api_crud(
 ):
     # Ensures there are no entries present of the current model
     factory._meta.model.objects.all().delete()
+    assert factory._meta.model.objects.all().count() == 0
 
     invalid_fields.append("id")
 

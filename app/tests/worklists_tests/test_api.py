@@ -7,13 +7,13 @@ from tests.api_utils import assert_api_crud
 @pytest.mark.parametrize(
     "table_reverse, expected_table, factory, invalid_fields",
     [
-        ("worklists:lists", "Worklist Table", WorklistFactory, []),
         (
             "worklists:sets",
             "Worklist Set Table",
             WorklistSetFactory,
             ["user_id"],
         ),
+        ("worklists:lists", "Worklist Table", WorklistFactory, []),
     ],
 )
 def test_api_pages(
