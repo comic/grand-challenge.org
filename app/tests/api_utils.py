@@ -12,6 +12,9 @@ from tests.factories import UserFactory
 def assert_api_crud(
     client, table_reverse, expected_table, factory, invalid_fields
 ):
+    # Ensures there are no entries present of the current model
+    factory._meta.model.objects.all().delete()
+
     invalid_fields.append("id")
 
     _, token = get_staff_user_with_token()
