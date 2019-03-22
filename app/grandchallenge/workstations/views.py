@@ -12,7 +12,15 @@ class FormTemplateHTMLRenderer(TemplateHTMLRenderer):
         context = super().get_template_context(
             data=data, renderer_context=renderer_context
         )
-        context.update({"form": renderer_context["form_class"]})
+        form = renderer_context["form_class"]
+
+        try:
+            context.update({"form": form})
+        except AttributeError:
+            # The context is not a dictionary, a list instead. This happens
+            # if no pagination class is used.
+            context = {"results": context, "form": form}
+
         return context
 
 
