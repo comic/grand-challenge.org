@@ -1,0 +1,12 @@
+{% extends "nobanner.html" %}
+{# 401 Unauthorized - the user must sign in to see this #}
+
+{% block content %}
+    <h2>Unauthorized</h2>
+    <p>
+        Only authorized users can access this page, please
+        <a href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">
+            sign in or register</a>
+        to continue.
+    </p>
+{% endblock %}
