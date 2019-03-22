@@ -1,7 +1,11 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-from grandchallenge.workstations.views import WorkstationsList
+from grandchallenge.workstations.views import WorkstationsViewSet
 
 app_name = "workstations"
 
-urlpatterns = [path("", WorkstationsList.as_view(), name="list")]
+router = DefaultRouter()
+router.register("", WorkstationsViewSet)
+
+urlpatterns = [path("", include(router.urls))]

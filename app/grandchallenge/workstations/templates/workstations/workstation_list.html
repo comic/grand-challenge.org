@@ -1,11 +1,35 @@
 {% extends "nobanner.html" %}
+{% load crispy from crispy_forms_tags %}
 
 {% block title %}Workstations - {{ block.super }}{% endblock %}
 
 {% block content %}
     <h2>Workstations</h2>
 
-    {% for workstation in results %}
+    <p>
+        <button type="button" class="btn btn-primary" data-toggle="modal"
+                data-target="#formModal">
+            Add a new workstation
+        </button>
+    </p>
 
+    <div class="modal" id="formModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Add a new workstation</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% crispy form %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for workstation in results %}
+        {{ workstation }}
     {% endfor %}
 {% endblock %}

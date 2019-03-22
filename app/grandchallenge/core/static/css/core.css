@@ -4,6 +4,11 @@ html {
     min-height: 100%;
 }
 
+/* fix modal display with overflow-y: scroll on html */
+.modal, .modal-open {
+    padding-right: 0 !important;
+}
+
 body {
     margin-bottom: 60px; /* Margin bottom by footer height */
     font-family: 'Merriweather', serif;
