@@ -56,3 +56,7 @@ class Worklist(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         unique_together = ("title", "set")
+        permissions = (("view_worklist", "View worklists"),
+                       ("add_worklist", "View worklists"),
+                       ("change_worklist", "View worklists"),
+                       ("delete_worklist", "View worklists"),)
