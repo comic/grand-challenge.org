@@ -8,10 +8,22 @@
 
     <p>{{ object.description }}</p>
 
+    <ul>
+        {% for image in object.workstationimage_set.all %}
+            <li><a href="{{ image.get_absolute_url }}">{{ image.pk }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
     <p>
         <a class="btn btn-primary"
            href="{% url 'workstations:update' slug=object.slug %}">
-            <i class="fa fa-edit"></i>Edit this workstation
+            <i class="fa fa-edit"></i> Edit this workstation
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:image-create' slug=object.slug %}">
+            <i class="fa fa-plus"></i> Upload a new container image for this
+            workstation
         </a>
     </p>
 

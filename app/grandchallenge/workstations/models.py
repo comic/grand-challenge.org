@@ -13,3 +13,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
 class WorkstationImage(UUIDModel, ContainerImageModel):
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+
+    def get_absolute_url(self):
+        return reverse(
+            "workstations:image-detail",
+            kwargs={"slug": self.workstation.slug, "pk": self.pk},
+        )

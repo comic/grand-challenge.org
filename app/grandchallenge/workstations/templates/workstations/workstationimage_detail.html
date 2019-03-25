@@ -1,0 +1,40 @@
+{% extends "nobanner.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Workstation Container Image - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Workstation Container Image</h2>
+
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Workstation</dt>
+        <dd><a href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a></dd>
+
+        <dt>Creator</dt>
+        <dd><a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a></dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        <dt>Image</dt>
+        <dd>
+            {% if object.image %}
+                {{ object.image.name }}
+            {% endif %}
+        </dd>
+
+        <dt>Image SHA256</dt>
+        <dd>{{ object.image_sha256 }}</dd>
+
+        <dt>Ready</dt>
+        <dd>{{ object.ready }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.status }}</dd>
+
+    </dl>
+
+{% endblock %}
