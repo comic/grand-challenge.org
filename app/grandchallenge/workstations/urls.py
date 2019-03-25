@@ -1,11 +1,17 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-from grandchallenge.workstations.views import WorkstationsViewSet
+from grandchallenge.workstations.views import (
+    WorkstationList,
+    WorkstationCreate,
+    WorkstationDetail,
+    WorkstationUpdate,
+)
 
 app_name = "workstations"
 
-router = DefaultRouter()
-router.register("", WorkstationsViewSet)
-
-urlpatterns = [path("", include(router.urls))]
+urlpatterns = [
+    path("", WorkstationList.as_view(), name="list"),
+    path("create/", WorkstationCreate.as_view(), name="create"),
+    path("<slug>/", WorkstationDetail.as_view(), name="detail"),
+    path("<slug>/update/", WorkstationUpdate.as_view(), name="update"),
+]

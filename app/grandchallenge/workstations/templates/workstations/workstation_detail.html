@@ -1,0 +1,18 @@
+{% extends "nobanner.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}{{ object.slug }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>{{ object.title }}</h2>
+
+    <p>{{ object.description }}</p>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:update' slug=object.slug %}">
+            <i class="fa fa-edit"></i>Edit this workstation
+        </a>
+    </p>
+
+{% endblock %}
