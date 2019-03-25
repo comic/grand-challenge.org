@@ -231,6 +231,39 @@ def test_results_display(settings):
     assert_ranks(queryset, expected_ranks)
 
 
+@pytest.mark.django_db
+def test_null_results(settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.broker_url = ("memory://",)
+    settings.backend = "memory"
+
+    challenge = ChallengeFactory()
+
+    with mute_signals(post_save):
+        user1 = UserFactory()
+        queryset = (
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": 0.6},
+                job__submission__creator=user1,
+            ),
+            ResultFactory(
+                job__submission__challenge=challenge,
+                metrics={"a": None},
+                job__submission__creator=user1,
+            ),
+        )
+
+    challenge.evaluation_config.score_jsonpath = "a"
+    challenge.evaluation_config.result_display_choice = Config.ALL
+    challenge.evaluation_config.save()
+
+    expected_ranks = [1, 0]
+    assert_ranks(queryset, expected_ranks)
+
+
 def assert_ranks(queryset, expected_ranks, expected_rank_scores=None):
     for r in queryset:
         r.refresh_from_db()
