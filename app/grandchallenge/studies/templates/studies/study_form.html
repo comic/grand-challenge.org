@@ -3,12 +3,9 @@
 {% load static %}
 {% load url from grandchallenge_tags %}
 
-{% block pageName %}Study{% endblock %}
+{% block title %}Study{% endblock %}
 
-{% block contentTitle %}
+{% block content %}
     <h2>Study</h2>
-{% endblock %}
-
-{% block pagecontent %}
     {% crispy form %}
 {% endblock %}

@@ -3,12 +3,9 @@
 {% load static %}
 {% load url from grandchallenge_tags %}
 
-{% block pageName %}Patient{% endblock %}
+{% block title %}Patient{% endblock %}
 
-{% block contentTitle %}
+{% block content %}
     <h2>Patient</h2>
-{% endblock %}
-
-{% block pagecontent %}
     {% crispy form %}
 {% endblock %}

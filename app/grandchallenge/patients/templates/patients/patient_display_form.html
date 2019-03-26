@@ -1,27 +1,29 @@
 {% extends "nobanner.html" %}
 {% load url from grandchallenge_tags %}
 
-{% block content %}
-<h2>Patients</h2>
-{% csrf_token %}
+{% block title %}Patients overview{% endblock %}
 
-<table class="table table-sm">
-    <thead>
-        <tr>
-            <td>Name</td>
-        </tr>
-    </thead>
-    <tbody>
-        {% for patient in object_list %}
+{% block content %}
+    <h2>Patients</h2>
+    {% csrf_token %}
+
+    <table class="table table-sm">
+        <thead>
             <tr>
-                <td>{{ patient.name }}</td>
-                <td><a href="{% url 'patients:patient-update' patient.id %}">Update</a></td>
-                <td><a href="{% url 'patients:patient-remove' patient.id %}">Delete</a></td>
+                <td>Name</td>
             </tr>
-        {% empty %}
-        <td>No patients have been inserted.</td>
-        {% endfor %}
-   </tbody>
-</table>
-<a href="{% url 'patients:patient-create' %}">Add Patient</a>
+        </thead>
+        <tbody>
+            {% for patient in object_list %}
+                <tr>
+                    <td>{{ patient.name }}</td>
+                    <td><a href="{% url 'patients:patient-update' patient.id %}">Update</a></td>
+                    <td><a href="{% url 'patients:patient-remove' patient.id %}">Delete</a></td>
+                </tr>
+            {% empty %}
+            <td>No patients have been inserted.</td>
+            {% endfor %}
+       </tbody>
+    </table>
+    <a href="{% url 'patients:patient-create' %}">Add Patient</a>
 {% endblock %}

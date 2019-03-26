@@ -3,12 +3,9 @@
 {% load static %}
 {% load url from grandchallenge_tags %}
 
-{% block pageName %}Worklist Set{% endblock %}
+{% block title %}Worklist Set{% endblock %}
 
-{% block contentTitle %}
+{% block content %}
     <h2>Worklist Set</h2>
-{% endblock %}
-
-{% block pagecontent %}
     {% crispy form %}
 {% endblock %}
