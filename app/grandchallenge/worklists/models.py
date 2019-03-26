@@ -45,7 +45,7 @@ class Worklist(UUIDModel):
         created = self._state.adding
         super(Worklist, self).save(*args, **kwargs)
 
-        set = WorklistSet.objects.get(pk=self.set)
+        set = WorklistSet.objects.get(pk=self.set.id)
         if created and set.user is not None:
             assign_perm("view_worklist", set.user, self)
             assign_perm("change_worklist", set.user, self)
@@ -56,7 +56,3 @@ class Worklist(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         unique_together = ("title", "set")
-        permissions = (("view_worklist", "View worklists"),
-                       ("add_worklist", "View worklists"),
-                       ("change_worklist", "View worklists"),
-                       ("delete_worklist", "View worklists"),)
