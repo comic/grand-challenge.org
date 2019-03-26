@@ -601,7 +601,8 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation"
+    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.cases.tasks.build_images": "images",
 }
 
 # Set which template pack to use for forms
