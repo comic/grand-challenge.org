@@ -12,19 +12,19 @@ class WorklistSet(UUIDModel):
     """
 
     title = CharField(max_length=255)
-    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, blank=True, null=True, on_delete=models.CASCADE)
 
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
 
-    # def save(self, *args, **kwargs):
-    #     created = self._state.adding
-    #     super(WorklistSet, self).save(*args, **kwargs)
-    #
-    #     if created and self.user is not None:
-    #         assign_perm("view_worklistset", self.user, self)
-    #         assign_perm("change_worklistset", self.user, self)
-    #         assign_perm("delete_worklistset", self.user, self)
+    def save(self, *args, **kwargs):
+        created = self._state.adding
+        super(WorklistSet, self).save(*args, **kwargs)
+
+        if created and self.user is not None:
+            assign_perm("view_worklistset", self.user, self)
+            assign_perm("change_worklistset", self.user, self)
+            assign_perm("delete_worklistset", self.user, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
