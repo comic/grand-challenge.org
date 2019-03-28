@@ -73,7 +73,7 @@
                     {% if job.result.images.all %}
                         <td>
                             {% for image in job.result.images.all %}
-                                <a href="{{ job.image.cirrus_link }}&{{ settings.CIRRUS_ANNOATION_QUERY_PARAM }}={{ image.pk }}">
+                                <a href="{{ job.image.cirrus_link }}&amp;{{ CIRRUS_ANNOTATION_QUERY_PARAM }}={{ image.pk }}">
                                     {{ image }}
                                 </a>
                             {% endfor %}
