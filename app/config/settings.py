@@ -686,3 +686,6 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
+
+# Worklist specific settings
+WORKLIST_ACCESS_GROUP_NAME = "worklist_users"

@@ -25,7 +25,9 @@ class WorklistTable(generics.ListCreateAPIView):
     serializer_class = WorklistSerializer
 
     def get_queryset(self):
-        queryset = Worklist.objects.filter(set__user=self.request.user)
+        queryset = get_objects_for_user(
+            self.request.user, "worklists.view_worklist"
+        )
         return queryset
 
 
@@ -35,25 +37,30 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         user = request.user
+        instance = Worklist.objects.get(pk=kwargs["pk"])
 
-        if not user.has_perm("view_worklist", self.Worklist):
+        if not user.has_perm("view_worklist", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        serialized = WorklistSetSerializer(self.Worklist)
-        return Response(serialized.data, status=status.HTTP_200_OK)
+        return super.retrieve(self, request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        # assign_perm("change_worklist", set.user, self)
+        user = request.user
+        instance = Worklist.objects.get(pk=kwargs["pk"])
+
+        if not user.has_perm("delete_worklist", instance):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         return super.update(self, request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         user = request.user
+        instance = Worklist.objects.get(pk=kwargs["pk"])
 
-        if not user.has_perm("delete_worklist", self.Worklist):
+        if not user.has_perm("delete_worklist", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        self.Worklist.delete()
-        return Response(status=status.HTTP_200_OK)
+        return super.destroy(self, request, *args, **kwargs)
 
 
 """ WorklistSet API Endpoints """
@@ -75,11 +82,13 @@ class WorklistSetTable(generics.ListCreateAPIView):
             user = User.objects.get(pk=data["user"])
 
         set = WorklistSet.objects.create(title=data["title"], user=user)
-        serializer = WorklistSetSerializer(set)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serialized = WorklistSetSerializer(set)
+        return Response(serialized.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        queryset = WorklistSet.objects.filter(user=self.request.user)
+        queryset = get_objects_for_user(
+            self.request.user, "worklists.view_worklistset"
+        )
         return queryset
 
 
@@ -87,25 +96,32 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = WorklistSet.objects.all()
     serializer_class = WorklistSetSerializer
 
-    def update(self, request, *args, **kwargs):
-        data = request.data
+    def retrieve(self, request, *args, **kwargs):
         user = request.user
+        instance = WorklistSet.objects.get(pk=kwargs["pk"])
 
-        if "title" not in data or len(data["title"]) == 0:
-            return Response(
-                "Title field is not set.", status=status.HTTP_400_BAD_REQUEST
-            )
+        if not user.has_perm("view_worklistset", instance):
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
-        if "user" in data:
-            user = User.objects.get(pk=data["user"])
+        return super.retrieve(self, request, *args, **kwargs)
 
-        set = WorklistSet.objects.get(pk=self.WorklistSet.pk)
-        set.title = data["title"]
-        set.user = user
-        set.save()
+    def update(self, request, *args, **kwargs):
+        user = request.user
+        instance = WorklistSet.objects.get(pk=kwargs["pk"])
 
-        serialized = WorklistSetSerializer(set)
-        return Response(serialized.data, status=status.HTTP_200_OK)
+        if not user.has_perm("delete_worklistset", instance):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        return super.update(self, request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        instance = WorklistSet.objects.get(pk=kwargs["pk"])
+
+        if not user.has_perm("delete_worklistset", instance):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        return super.destroy(self, request, *args, **kwargs)
 
 
 """ Worklist Forms Views """
@@ -120,7 +136,8 @@ class WorklistCreateView(CreateView):
         return reverse("worklists:list-display")
 
 
-class WorklistRemoveView(UserIsStaffMixin, DeleteView):
+# class WorklistRemoveView(UserIsStaffMixin, DeleteView):
+class WorklistRemoveView(DeleteView):
     model = Worklist
     template_name = "worklists/worklist_remove_form.html"
 
@@ -128,7 +145,8 @@ class WorklistRemoveView(UserIsStaffMixin, DeleteView):
         return reverse("worklists:list-display")
 
 
-class WorklistUpdateView(UserIsStaffMixin, UpdateView):
+# class WorklistUpdateView(UserIsStaffMixin, UpdateView):
+class WorklistUpdateView(UpdateView):
     model = Worklist
     form_class = WorklistUpdateForm
 
@@ -136,7 +154,8 @@ class WorklistUpdateView(UserIsStaffMixin, UpdateView):
         return reverse("worklists:list-display")
 
 
-class WorklistDisplayView(UserIsStaffMixin, ListView):
+# class WorklistDisplayView(UserIsStaffMixin, ListView):
+class WorklistDisplayView(ListView):
     model = Worklist
     paginate_by = 100
     template_name = "worklists/worklist_display_form.html"
@@ -148,6 +167,7 @@ class WorklistDisplayView(UserIsStaffMixin, ListView):
 class WorklistSetCreateView(UserIsStaffMixin, CreateView):
     model = WorklistSet
     form_class = WorklistSetCreateForm
+    template_name = "worklists/worklistset_form.html"
 
     def get_success_url(self):
         return reverse("worklists:set-display")
