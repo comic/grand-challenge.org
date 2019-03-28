@@ -42,6 +42,9 @@
                 <th>Image</th>
                 <th>Status</th>
                 <th>Result</th>
+                {% if job.result.images.all %}
+                    <th>Annotation</th>
+                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -67,6 +70,15 @@
                     </span>
                     </td>
                     <td>{{ job.result.output }}</td>
+                    {% if job.result.images.all %}
+                        <td>
+                            {% for image in job.result.images.all %}
+                                <a href="{{ job.image.cirrus_link }}&{{ settings.CIRRUS_ANNOATION_QUERY_PARAM }}={{ image.pk }}">
+                                    {{ image }}
+                                </a>
+                            {% endfor %}
+                        </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
