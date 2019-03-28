@@ -27,4 +27,13 @@
         </a>
     </p>
 
+    <form method="post"
+          action="{% url 'workstations:session-create' slug=object.slug %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-primary">
+            Start a new session
+        </button>
+    </form>
+
 {% endblock %}

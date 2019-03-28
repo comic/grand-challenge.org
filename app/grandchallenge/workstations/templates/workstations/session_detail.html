@@ -1,0 +1,11 @@
+{% extends "nobanner.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}{{ object.workstation.slug }} Session - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>{{ object.workstation.slug }} Session</h2>
+
+    <p>{{ object.creator }}</p>
+
+{% endblock %}

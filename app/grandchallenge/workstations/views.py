@@ -5,7 +5,11 @@ from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
 )
-from grandchallenge.workstations.models import Workstation, WorkstationImage
+from grandchallenge.workstations.models import (
+    Workstation,
+    WorkstationImage,
+    Session,
+)
 
 
 class WorkstationList(UserIsStaffMixin, ListView):
@@ -44,3 +48,19 @@ class WorkstationImageCreate(UserIsStaffMixin, CreateView):
 
 class WorkstationImageDetail(UserIsStaffMixin, DetailView):
     model = WorkstationImage
+
+
+class SessionCreate(UserIsStaffMixin, CreateView):
+    model = Session
+    fields = []
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.workstation = Workstation.objects.get(
+            slug=self.kwargs["slug"]
+        )
+        return super().form_valid(form)
+
+
+class SessionDetail(UserIsStaffMixin, DetailView):
+    model = Session

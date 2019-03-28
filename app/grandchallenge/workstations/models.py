@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
@@ -17,5 +18,18 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
     def get_absolute_url(self):
         return reverse(
             "workstations:image-detail",
+            kwargs={"slug": self.workstation.slug, "pk": self.pk},
+        )
+
+
+class Session(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+
+    def get_absolute_url(self):
+        return reverse(
+            "workstations:session-detail",
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
