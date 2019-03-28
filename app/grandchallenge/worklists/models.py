@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth.models import User, Group
 from django.db import models
 from django.db.models import CharField
 from guardian.shortcuts import assign_perm
@@ -12,7 +13,9 @@ class WorklistSet(UUIDModel):
     """
 
     title = CharField(max_length=255)
-    user = models.OneToOneField(User, blank=True, null=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, blank=True, null=True, on_delete=models.CASCADE
+    )
 
     def get_children(self):
         return Worklist.objects.filter(set=self.pk)
@@ -21,10 +24,18 @@ class WorklistSet(UUIDModel):
         created = self._state.adding
         super(WorklistSet, self).save(*args, **kwargs)
 
-        if created and self.user is not None:
-            assign_perm("view_worklistset", self.user, self)
-            assign_perm("change_worklistset", self.user, self)
-            assign_perm("delete_worklistset", self.user, self)
+        if created:
+            worklist_group = Group.objects.get(
+                name=settings.WORKLIST_ACCESS_GROUP_NAME
+            )
+
+            if self.user is not None:
+                self.user.groups.add(worklist_group)
+                assign_perm("view_worklistset", self.user, self)
+                assign_perm("change_worklistset", self.user, self)
+                assign_perm("delete_worklistset", self.user, self)
+            else:
+                assign_perm("view_worklistset", worklist_group, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
@@ -45,11 +56,17 @@ class Worklist(UUIDModel):
         created = self._state.adding
         super(Worklist, self).save(*args, **kwargs)
 
-        set = WorklistSet.objects.get(pk=self.set.id)
-        if created and set.user is not None:
-            assign_perm("view_worklist", set.user, self)
-            assign_perm("change_worklist", set.user, self)
-            assign_perm("delete_worklist", set.user, self)
+        if created:
+            if set.user is not None:
+                set = WorklistSet.objects.get(pk=self.set.id)
+                assign_perm("view_worklist", set.user, self)
+                assign_perm("change_worklist", set.user, self)
+                assign_perm("delete_worklist", set.user, self)
+            else:
+                worklist_group = Group.objects.get(
+                    name=settings.WORKLIST_ACCESS_GROUP_NAME
+                )
+                assign_perm("view_worklist", worklist_group, self)
 
     def __str__(self):
         return "%s (%s)" % (self.title, str(self.id))
