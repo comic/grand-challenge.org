@@ -20,23 +20,19 @@ from docker.types import LogConfig
 from requests import HTTPError
 
 
-class Executor(object):
+class DockerConnection:
+    """
+    Provides a client with a connection to a docker host, provisioned for
+    running the container exec_image.
+    """
+
     def __init__(
-        self,
-        *,
-        job_id: uuid.UUID,
-        input_files: Tuple[File, ...],
-        exec_image: File,
-        exec_image_sha256: str,
-        results_file: Path,
+        self, *, job_id: uuid.UUID, exec_image: File, exec_image_sha256: str
     ):
         super().__init__()
         self._job_id = str(job_id)
-        self._input_files = input_files
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
-        self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
-        self._results_file = results_file
 
         client_kwargs = {"base_url": settings.CONTAINER_EXEC_DOCKER_BASE_URL}
 
@@ -52,9 +48,6 @@ class Executor(object):
             client_kwargs.update({"tls": tlsconfig})
 
         self._client = docker.DockerClient(**client_kwargs)
-
-        self._input_volume = f"{self._job_id}-input"
-        self._output_volume = f"{self._job_id}-output"
 
         self._run_kwargs = {
             "labels": {"job_id": self._job_id},
@@ -76,6 +69,22 @@ class Executor(object):
             ),
         }
 
+    @staticmethod
+    def __retry_docker_obj_prune(*, obj, filters: dict):
+        # Retry and exponential backoff of the prune command as only 1 prune
+        # operation can occur at a time on a docker host
+        num_retries = 0
+        e = APIError
+        while num_retries < 3:
+            try:
+                obj.prune(filters=filters)
+                break
+            except (APIError, HTTPError) as e:
+                num_retries += 1
+                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
+        else:
+            raise e
+
     def __enter__(self):
         return self
 
@@ -95,21 +104,29 @@ class Executor(object):
         except ConnectionError:
             raise RuntimeError("Could not connect to worker.")
 
-    @staticmethod
-    def __retry_docker_obj_prune(*, obj, filters: dict):
-        # Retry and exponential backoff of the prune command as only 1 prune
-        # operation can occur at a time on a docker host
-        num_retries = 0
-        e = APIError
-        while num_retries < 3:
-            try:
-                obj.prune(filters=filters)
-                break
-            except (APIError, HTTPError) as e:
-                num_retries += 1
-                sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
-        else:
-            raise e
+    def _pull_images(self):
+        if self._exec_image_sha256 not in [
+            img.id for img in self._client.images.list()
+        ]:
+            with self._exec_image.open("rb") as f:
+                self._client.images.load(f)
+
+
+class Executor(DockerConnection):
+    def __init__(
+        self,
+        *args,
+        input_files: Tuple[File, ...],
+        results_file: Path,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._input_files = input_files
+        self._results_file = results_file
+        self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
+
+        self._input_volume = f"{self._job_id}-input"
+        self._output_volume = f"{self._job_id}-output"
 
     def execute(self) -> dict:
         self._pull_images()
@@ -120,13 +137,8 @@ class Executor(object):
         return self._get_result()
 
     def _pull_images(self):
+        super()._pull_images()
         self._client.images.pull(repository=self._io_image)
-
-        if self._exec_image_sha256 not in [
-            img.id for img in self._client.images.list()
-        ]:
-            with self._exec_image.open("rb") as f:
-                self._client.images.load(f)
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
