@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import generics, status
 from rest_framework.response import Response
 from grandchallenge.subdomains.utils import reverse
@@ -31,6 +32,28 @@ class WorklistTable(generics.ListCreateAPIView):
 class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
     queryset = Worklist.objects.all()
     serializer_class = WorklistSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+
+        if not user.has_perm("view_worklist", self.Worklist):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        serialized = WorklistSetSerializer(self.Worklist)
+        return Response(serialized.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        # assign_perm("change_worklist", set.user, self)
+        return super.update(self, request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+
+        if not user.has_perm("delete_worklist", self.Worklist):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        self.Worklist.delete()
+        return Response(status=status.HTTP_200_OK)
 
 
 """ WorklistSet API Endpoints """
@@ -76,15 +99,20 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
         if "user" in data:
             user = User.objects.get(pk=data["user"])
 
-        set = WorklistSet.objects.create(title=data["title"], user=user)
-        serializer = WorklistSetSerializer(set)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        set = WorklistSet.objects.get(pk=self.WorklistSet.pk)
+        set.title = data["title"]
+        set.user = user
+        set.save()
+
+        serialized = WorklistSetSerializer(set)
+        return Response(serialized.data, status=status.HTTP_200_OK)
 
 
 """ Worklist Forms Views """
 
 
-class WorklistCreateView(UserIsStaffMixin, CreateView):
+# class WorklistCreateView(UserIsStaffMixin, CreateView):
+class WorklistCreateView(CreateView):
     model = Worklist
     form_class = WorklistCreateForm
 
