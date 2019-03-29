@@ -8,8 +8,9 @@ from grandchallenge.profiles.utils import signin_redirect
 
 
 def login_redirect(request):
-    next = request.GET.get("next", "/")
-    return redirect(next)
+    next_uri = request.GET.get("next")
+    redirect_uri = signin_redirect(redirect=next_uri, user=request.user)
+    return redirect(redirect_uri)
 
 
 def profile(request):
