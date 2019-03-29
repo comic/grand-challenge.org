@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.utils.encoding import force_text
+from guardian.shortcuts import assign_perm
 from rest_framework.authtoken.models import Token
 from grandchallenge.subdomains.utils import reverse
 
@@ -17,12 +18,18 @@ def assert_api_crud(
 
     invalid_fields.append("id")
 
-    _, token = get_staff_user_with_token()
+    user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
     record = factory()
     record_id = str(record.pk)
     record_dict = get_record_as_dict(factory, invalid_fields)
+
+    # Assigns permissions to token user
+    model_name = factory._meta.model._meta.model_name
+    for permission_type in factory._meta.model._meta.default_permissions:
+        permission_name = f"{permission_type}_{model_name}"
+        assign_perm(permission_name, user, record)
 
     # Rests record display
     assert_record_display(client, table_url, token, record_id)
