@@ -127,8 +127,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
 """ Worklist Forms Views """
 
 
-# class WorklistCreateView(UserIsStaffMixin, CreateView):
-class WorklistCreateView(CreateView):
+class WorklistCreateView(UserIsStaffMixin, CreateView):
     model = Worklist
     form_class = WorklistCreateForm
 
@@ -136,8 +135,7 @@ class WorklistCreateView(CreateView):
         return reverse("worklists:list-display")
 
 
-# class WorklistRemoveView(UserIsStaffMixin, DeleteView):
-class WorklistRemoveView(DeleteView):
+class WorklistRemoveView(UserIsStaffMixin, DeleteView):
     model = Worklist
     template_name = "worklists/worklist_remove_form.html"
 
@@ -145,8 +143,7 @@ class WorklistRemoveView(DeleteView):
         return reverse("worklists:list-display")
 
 
-# class WorklistUpdateView(UserIsStaffMixin, UpdateView):
-class WorklistUpdateView(UpdateView):
+class WorklistUpdateView(UserIsStaffMixin, UpdateView):
     model = Worklist
     form_class = WorklistUpdateForm
 
@@ -154,8 +151,7 @@ class WorklistUpdateView(UpdateView):
         return reverse("worklists:list-display")
 
 
-# class WorklistDisplayView(UserIsStaffMixin, ListView):
-class WorklistDisplayView(ListView):
+class WorklistDisplayView(UserIsStaffMixin, ListView):
     model = Worklist
     paginate_by = 100
     template_name = "worklists/worklist_display_form.html"
