@@ -27,13 +27,6 @@ Inputs to an algorithm are made a available to the processor in the directory ``
 
 The processor specification must describe which formats are supported.
 
-DICOM image files
------------------
-
-DICOM files should not be placed in a subdirectory the ``/input`` directory itself, but should be placed into a sub directory of the ``/input`` directory. DICOM files placed together in single directory are must form a single logical image, like a CT volume or a time series. If a DICOM file does not contain image data the contents of DICOM files placed together in a directory must be related to each other, with regards to the operation an algorithm implements.
-
-DICOM files placed directly in the ``/input`` may be ignored by an algorithm.
-
 MetaIO MHD/MHA files
 --------------------
 
