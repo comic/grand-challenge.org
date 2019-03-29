@@ -25,7 +25,7 @@ Inputs to an algorithm are made a available to the processor in the directory ``
 * TIFF Images
 
 
-The processor specification must describe which formats are supported. Algorithms must be published with an explanation on the structure of required JSON files and the expected contents of DICOM files used as input.
+The processor specification must describe which formats are supported.
 
 DICOM image files
 -----------------
