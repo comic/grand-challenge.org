@@ -20,7 +20,6 @@ Processor Inputs
 
 Inputs to an algorithm are made a available to the processor in the directory ``/input``.  Valid inputs to an algorithm are files containing:
 
-* Algorithm-specified JSON files
 
 * MetaIO MHD/MHA files with accompanying zraw or raw files
 
