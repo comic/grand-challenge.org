@@ -34,7 +34,7 @@ class PatientUpdateForm(ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout.append(
             FormActions(
-                Submit("create", "Create"),
+                Submit("update", "Update"),
                 Button(
                     "cancel",
                     "Cancel",
