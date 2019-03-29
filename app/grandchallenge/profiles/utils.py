@@ -18,7 +18,7 @@ def signin_redirect(redirect=None, user=None):
     """
     if redirect and settings.LOGOUT_URL not in redirect:
         return redirect
-    elif user is not None:
+    elif user is not None and not user.is_authenticated:
         return reverse("profile_redirect")
     else:
         return reverse("home")
