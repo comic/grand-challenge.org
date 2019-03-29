@@ -49,7 +49,7 @@ Execution
 
 A processor is a program that runs as main executable inside a Linux-based docker container implemented in any language. The algorithm must terminate by itself when it has finished processing data from the ``/input`` directory.
 
-If an algorithm fails to process any items from the ``/input`` directory, it must terminate with and exitcode != 0. The algorithm should use stdout and stderr streams to explain the failure state. The contents of the ``/output`` directory shall be considered to be invalid in such a case. In all other cases, the algorithm must produce a valid ``/output/``results.json file and finish with errorcode == 0.
+If an algorithm fails to process any items from the ``/input`` directory, it must terminate with and exitcode != 0. The algorithm should use stdout and stderr streams to explain the failure state. The contents of the ``/output`` directory shall be considered to be invalid in such a case. In all other cases, the algorithm must produce a valid ``/output/results.json`` file and finish with errorcode == 0.
 
 If the algorithm fails to process some items from the ``/input`` directory, it must produce error messages for the given set of inputs as part of the results.json file that is described in the next section. Successful processing of input items must produce results that are written into the results.json for the given input items.
 
