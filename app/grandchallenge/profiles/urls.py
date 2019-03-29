@@ -7,6 +7,7 @@ from grandchallenge.profiles.views import (
     profile_edit_redirect,
     profile,
     signup,
+    signin,
     signup_complete,
     profile_edit,
 )
@@ -18,6 +19,7 @@ urlpatterns = [
         {"signup_form": SignupFormExtra},
         name="profile_signup",
     ),
+    path("signin/", signin, name="profile_signin"),
     path("signup_complete/", signup_complete, name="profile_signup_complete"),
     path("login-redirect/", login_redirect, name="login_redirect"),
     path("profile/edit/", profile_edit_redirect, name="profile_redirect_edit"),
