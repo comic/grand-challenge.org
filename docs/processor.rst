@@ -11,7 +11,7 @@ This documents follows the definitions for keywords layed out in `RFC 2119 <http
 What is a processor?
 ====================
 
-A processor is a single or group of algorithms packaged in a docker container that can be applied to a set of files and produces some sort of output. Typically, this would be a medical image analysis algorithm developed at DIAG.
+A processor is a single or group of algorithms packaged in a docker container that can be applied to a set of files and produces some sort of output.
 
 The processor container can be uploaded to the `algorithms page <https://grand-challenge.org/algorithms>`__. Then, it will be possible to upload some input files and the algorithm will be run on those files and produce an output.
 
