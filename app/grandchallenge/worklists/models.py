@@ -57,8 +57,8 @@ class Worklist(UUIDModel):
         super(Worklist, self).save(*args, **kwargs)
 
         if created:
+            set = WorklistSet.objects.get(pk=self.set.id)
             if set.user is not None:
-                set = WorklistSet.objects.get(pk=self.set.id)
                 assign_perm("view_worklist", set.user, self)
                 assign_perm("change_worklist", set.user, self)
                 assign_perm("delete_worklist", set.user, self)
