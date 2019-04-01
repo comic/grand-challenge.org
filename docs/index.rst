@@ -11,6 +11,7 @@ Welcome to grand-challenge.org's documentation!
     :caption: Contents:
 
     getting-started
+    processor
     evaluation
 
 
