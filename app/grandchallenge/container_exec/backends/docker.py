@@ -247,7 +247,6 @@ def cleanup(container: ContainerApiMixin):
         yield container
 
     finally:
-        container.stop()
         container.remove(force=True)
 
 
