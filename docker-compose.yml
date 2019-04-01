@@ -4,12 +4,20 @@ services:
 
   postgres:
     image: postgres:10.7
+    command: "postgres -c 'config_file=/etc/postgresql/postgresql.conf'"
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: comic
       POSTGRES_DB: comic
     ports:
       - "5432:5432" # Only required for running django locally
+    volumes:
+      # Use a non-durable postgres configuration
+      # https://www.postgresql.org/docs/current/non-durability.html
+      # USE ONLY FOR DEVELOPMENT!
+      - type: bind
+        source: ./dockerfiles/db/postgres.test.conf
+        target: /etc/postgresql/postgresql.conf
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
