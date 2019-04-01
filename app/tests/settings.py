@@ -15,3 +15,9 @@ WHITENOISE_AUTOREFRESH = True
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+# Disable debugging in tests
+DEBUG = False
+TEMPLATE_DEBUG = False
+DEBUG_LOGGING = False
+THUMBNAIL_DEBUG = False
