@@ -11,10 +11,7 @@ from tests.utils import get_view_for_user, validate_staff_only_view
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view, factory",
-    [
-        "worklists:list",
-        "worklists:set",
-    ],
+    [("worklists:list", WorklistFactory)("worklists:set", WorklistSetFactory)],
 )
 def test_worklist_api_access(view, factory, client):
     permitted_user = UserFactory()
@@ -40,7 +37,7 @@ def test_worklist_api_access(view, factory, client):
         client=client,
         method=client.get,
         user=blocked_user,
-        kwargs={"pk": instance.pk}
+        kwargs={"pk": instance.pk},
     )
 
     assert permitted_response.status_code == 200
