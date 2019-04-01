@@ -44,7 +44,10 @@ You can also run the tests locally by
 
 .. code-block:: console
 
-    $ docker-compose run --rm web pytest
+    $ docker-compose run --rm web pytest -n 2
+
+Replace 2 with the number of CPUs that you have on your system, this runs
+the tests in parallel.
 
 If you want to add a new test please add them to the ``app/tests`` folder.
 If you only want to run the tests for a particular app, eg. for ``teams``, you can do
