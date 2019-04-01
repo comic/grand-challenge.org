@@ -87,9 +87,6 @@ def is_subset(listA, listB):
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
 )
-@override_settings(
-    PASSWORD_HASHERS=("django.contrib.auth.hashers.SHA1PasswordHasher",)
-)
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
 class ComicframeworkTestCase(TestCase):
     """ Contains methods for creating users using comicframework interface
