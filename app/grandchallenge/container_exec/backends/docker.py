@@ -27,10 +27,16 @@ class DockerConnection:
     """
 
     def __init__(
-        self, *, job_id: str, exec_image: File, exec_image_sha256: str
+        self,
+        *,
+        job_id: str,
+        job_model: str,
+        exec_image: File,
+        exec_image_sha256: str,
     ):
         super().__init__()
         self._job_id = job_id
+        self._job_label = f"{job_model}-{job_id}"
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
 
@@ -50,7 +56,7 @@ class DockerConnection:
         self._client = docker.DockerClient(**client_kwargs)
 
         self._run_kwargs = {
-            "labels": {"job_id": self._job_id},
+            "labels": {"job": f"{self._job_label}"},
             "init": True,
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
@@ -89,7 +95,7 @@ class DockerConnection:
         """
         Stops and prunes all containers and volumes associated with this job
         """
-        flt = {"label": f"job_id={self._job_id}"}
+        flt = {"label": f"job={self._job_label}"}
 
         try:
             for c in self._client.containers.list(filters=flt):
@@ -131,8 +137,8 @@ class Executor(DockerConnection):
         self._results_file = results_file
         self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
 
-        self._input_volume = f"{self._job_id}-input"
-        self._output_volume = f"{self._job_id}-output"
+        self._input_volume = f"{self._job_label}-input"
+        self._output_volume = f"{self._job_label}-output"
 
     def execute(self) -> dict:
         self._pull_images()
@@ -160,7 +166,7 @@ class Executor(DockerConnection):
                     volumes={
                         self._input_volume: {"bind": "/input/", "mode": "rw"}
                     },
-                    name=f"{self._job_id}-writer",
+                    name=f"{self._job_label}-writer",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,
@@ -187,7 +193,7 @@ class Executor(DockerConnection):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_id}-chmod-volumes",
+                name=f"{self._job_label}-chmod-volumes",
                 command=f"chmod -R 0777 /input/ /output/",
                 remove=True,
                 **self._run_kwargs,
@@ -203,7 +209,7 @@ class Executor(DockerConnection):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_id}-executor",
+                name=f"{self._job_label}-executor",
                 remove=True,
                 **self._run_kwargs,
             )
@@ -223,7 +229,7 @@ class Executor(DockerConnection):
                     volumes={
                         self._output_volume: {"bind": "/output/", "mode": "ro"}
                     },
-                    name=f"{self._job_id}-reader",
+                    name=f"{self._job_label}-reader",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,

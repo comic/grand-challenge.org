@@ -66,7 +66,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
                     volumes={
                         self._input_volume: {"bind": base_dir, "mode": "ro"}
                     },
-                    name=f"{self._job_id}-reader",
+                    name=f"{self._job_label}-reader",
                     detach=True,
                     tty=True,
                     **self._run_kwargs,
