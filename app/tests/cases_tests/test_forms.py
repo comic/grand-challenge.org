@@ -17,8 +17,6 @@ def test_upload_some_images(client: Client, ChallengeSet, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     response = client.get("/cases/uploads/")
     assert response.status_code != 200

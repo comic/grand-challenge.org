@@ -13,10 +13,11 @@ black = "==18.6b4"
 sphinx-autobuild = "*"
 sphinx = "*"
 pyupgrade = "*"
+pytest-xdist = "*"
 
 [packages]
 "beautifulsoup4" = "*"
-celery = "*"
+celery = "<4.3"
 redis = "*"
 django = "<2.2"
 django-countries = "*"

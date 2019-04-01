@@ -14,8 +14,6 @@ def test_submission_conversion(capsys, submission_file, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     challenge = ChallengeFactory()
 
