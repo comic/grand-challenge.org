@@ -42,7 +42,7 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("view_worklist", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.retrieve(self, request, *args, **kwargs)
+        return super().retrieve(self, request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         user = request.user
@@ -51,7 +51,7 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("delete_worklist", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.update(self, request, *args, **kwargs)
+        return super().update(self, request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         user = request.user
@@ -60,7 +60,7 @@ class WorklistRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("delete_worklist", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.destroy(self, request, *args, **kwargs)
+        return super().destroy(self, request, *args, **kwargs)
 
 
 """ WorklistSet API Endpoints """
@@ -103,7 +103,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("view_worklistset", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.retrieve(self, request, *args, **kwargs)
+        return super().retrieve(self, request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         user = request.user
@@ -112,7 +112,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("delete_worklistset", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.update(self, request, *args, **kwargs)
+        return super().update(self, request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         user = request.user
@@ -121,7 +121,7 @@ class WorklistSetRecord(generics.RetrieveUpdateDestroyAPIView):
         if not user.has_perm("delete_worklistset", instance):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        return super.destroy(self, request, *args, **kwargs)
+        return super().destroy(self, request, *args, **kwargs)
 
 
 """ Worklist Forms Views """
