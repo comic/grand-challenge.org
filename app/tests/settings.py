@@ -1,3 +1,4 @@
+import logging
 import os
 
 # Set environment variables before importing settings
@@ -21,3 +22,6 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 DEBUG_LOGGING = False
 THUMBNAIL_DEBUG = False
+
+# Disable non-critical logging in tests
+logging.disable(logging.CRITICAL)
