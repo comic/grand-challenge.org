@@ -59,8 +59,6 @@ def test_image_file_creation(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     # with replace_var(signals, "build_images", task_collector):
     images = [
@@ -99,8 +97,6 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     images = ["image10x10x10.zraw", "image10x10x10.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
@@ -117,8 +113,6 @@ def test_no_convertible_file(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
     session, uploaded_images = create_raw_upload_image_session(images)
@@ -145,8 +139,6 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     images = [
         "image10x10x10.zraw",
@@ -172,8 +164,6 @@ def test_mhd_file_annotation_creation(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
     session, uploaded_images = create_raw_upload_image_session(images)

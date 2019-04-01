@@ -1,6 +1,6 @@
 USER_ID = $(shell id -u)
 
-build:
+build_web:
 	docker build \
 		--target test \
 		-t grandchallenge/web-test:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH) \
@@ -13,14 +13,22 @@ build:
 		-t grandchallenge/web:latest \
 		-f dockerfiles/web/Dockerfile \
 		.
+
+build_http:
 	docker build \
 		-t grandchallenge/http:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH) \
 		-t grandchallenge/http:latest \
 		dockerfiles/http
 
-push:
-	docker push grandchallenge/http:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH)
+build: build_web build_http
+
+push_web:
 	docker push grandchallenge/web:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH)
+
+push_http:
+	docker push grandchallenge/http:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH)
+
+push: push_web push_http
 
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations

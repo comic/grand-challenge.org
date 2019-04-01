@@ -19,8 +19,6 @@ def test_imageset_add_images(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     user = UserFactory(is_staff=True)
     client.login(username=user.username, password=SUPER_SECURE_TEST_PASSWORD)
@@ -55,8 +53,6 @@ def test_annotationset_creation(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     user = UserFactory(is_staff=True)
     client.login(username=user.username, password=SUPER_SECURE_TEST_PASSWORD)
