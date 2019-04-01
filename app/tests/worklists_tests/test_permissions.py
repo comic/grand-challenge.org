@@ -35,7 +35,7 @@ def test_worklist_api_access(view, factory, client):
         user=permitted_user,
     )
 
-    blocked_response = permitted_response = get_view_for_user(
+    blocked_response = get_view_for_user(
         viewname="worklists:list-create",
         client=client,
         method=client.get,
