@@ -11,7 +11,10 @@ from tests.utils import get_view_for_user, validate_staff_only_view
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view, factory",
-    [("worklists:list", WorklistFactory)("worklists:set", WorklistSetFactory)],
+    [
+        ("worklists:list", WorklistFactory),
+        ("worklists:set", WorklistSetFactory),
+    ],
 )
 def test_worklist_api_access(view, factory, client):
     permitted_user = UserFactory()
