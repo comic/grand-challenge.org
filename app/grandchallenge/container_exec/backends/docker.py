@@ -85,10 +85,10 @@ class DockerConnection:
         else:
             raise e
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def cleanup(self):
+        """
+        Stops and prunes all containers and volumes associated with this job
+        """
         flt = {"label": f"job_id={self._job_id}"}
 
         try:
@@ -103,6 +103,12 @@ class DockerConnection:
             )
         except ConnectionError:
             raise RuntimeError("Could not connect to worker.")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
 
     def _pull_images(self):
         if self._exec_image_sha256 not in [
