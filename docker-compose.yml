@@ -18,6 +18,8 @@ services:
       - type: bind
         source: ./dockerfiles/db/postgres.test.conf
         target: /etc/postgresql/postgresql.conf
+    tmpfs:
+      - /var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "comic"]
       interval: 10s
