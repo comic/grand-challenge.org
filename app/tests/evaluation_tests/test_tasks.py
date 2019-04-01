@@ -16,8 +16,6 @@ def test_submission_evaluation(
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     # Upload a submission and create a job
     dockerclient = docker.DockerClient(

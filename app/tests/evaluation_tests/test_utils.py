@@ -11,8 +11,6 @@ def test_calculate_ranks(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     challenge = ChallengeFactory()
 
@@ -150,8 +148,6 @@ def test_results_display(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     challenge = ChallengeFactory()
 
@@ -236,8 +232,6 @@ def test_null_results(settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    settings.broker_url = ("memory://",)
-    settings.backend = "memory"
 
     challenge = ChallengeFactory()
 
