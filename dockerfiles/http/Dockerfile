@@ -6,7 +6,6 @@ RUN apt-get update && \
 
 RUN useradd -u 2001 cwww
 
-RUN openssl dhparam -out /etc/ssl/private/dhparams.pem 2048
-
+COPY dhparams.pem /etc/ssl/private/dhparams.pem
 COPY mime.types /etc/nginx/mime.types
 COPY nginx.conf.template /tmp/nginx.conf.template
