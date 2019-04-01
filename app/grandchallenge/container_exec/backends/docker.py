@@ -27,10 +27,10 @@ class DockerConnection:
     """
 
     def __init__(
-        self, *, job_id: uuid.UUID, exec_image: File, exec_image_sha256: str
+        self, *, job_id: str, exec_image: File, exec_image_sha256: str
     ):
         super().__init__()
-        self._job_id = str(job_id)
+        self._job_id = job_id
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
 

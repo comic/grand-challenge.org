@@ -145,7 +145,7 @@ def execute_job(
 
     try:
         with job.executor_cls(
-            job_id=job.pk,
+            job_id=f"{job_app_label}-{job_model_name}-{job.pk}",
             input_files=job.input_files,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
