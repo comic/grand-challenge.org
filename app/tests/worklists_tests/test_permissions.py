@@ -1,6 +1,8 @@
 import pytest
 
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
+from grandchallenge.subdomains.utils import reverse
+from rest_framework.authtoken.models import Token
 from tests.factories import UserFactory
 from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
 from tests.utils import get_view_for_user, validate_staff_only_view
@@ -17,30 +19,34 @@ from tests.utils import get_view_for_user, validate_staff_only_view
     ],
 )
 def test_worklist_api_access(view, factory, client):
-    permitted_user = UserFactory()
-    blocked_user = UserFactory()
+    user = UserFactory(is_staff=True)
+    token = Token.objects.create(user=user).key
     instance = factory()
+
+    # Asserts whether or not both users have access
+    url = reverse(view, kwargs={"pk": instance.pk})
 
     # Assigns permissions to user
     model_name = factory._meta.model._meta.model_name
     for permission_type in factory._meta.model._meta.default_permissions:
         permission_name = f"{permission_type}_{model_name}"
-        assign_perm(permission_name, permitted_user, instance)
+        assign_perm(permission_name, user, instance)
 
-    # Asserts whether or not both users have access
-    permitted_response = get_view_for_user(
-        viewname="worklists:list-create",
-        client=client,
-        method=client.get,
-        user=permitted_user,
+    permitted_response = client.get(
+        url,
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token,
     )
 
-    blocked_response = get_view_for_user(
-        viewname="worklists:list-create",
-        client=client,
-        method=client.get,
-        user=blocked_user,
-        kwargs={"pk": instance.pk},
+    # Removes permissions from user
+    for permission_type in factory._meta.model._meta.default_permissions:
+        permission_name = f"{permission_type}_{model_name}"
+        remove_perm(permission_name, user, instance)
+
+    blocked_response = client.get(
+        url,
+        HTTP_ACCEPT="application/json",
+        HTTP_AUTHORIZATION="Token " + token,
     )
 
     assert permitted_response.status_code == 200
