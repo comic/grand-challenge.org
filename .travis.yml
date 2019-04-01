@@ -26,7 +26,7 @@ before_install:
   - sudo service redis-server stop
 
 install:
-  - make build
+  - make -j2 build
   - docker-compose run --rm web python manage.py migrate
   - docker-compose up -d
 

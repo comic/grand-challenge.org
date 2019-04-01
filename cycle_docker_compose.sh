@@ -7,7 +7,7 @@ sleep 1
 export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
 export TRAVIS_BRANCH=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//")
 
-make build
+make -j2 build
 
 trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
 
