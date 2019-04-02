@@ -102,7 +102,7 @@ class RawImageUploadSession(UUIDModel):
                 processing_task=self.pk,
             )
 
-            build_images.apply_async(task_id=str(self.pk), args=(self.pk,))
+            build_images.apply_async(args=(self.pk,))
 
         except Exception as e:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
