@@ -3,6 +3,7 @@ from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
 from grandchallenge.container_exec.models import ContainerImageModel
+from grandchallenge.container_exec.tasks import start_service
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
@@ -33,3 +34,17 @@ class Session(UUIDModel):
             "workstations:session-detail",
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
+
+    def save(self, *args, **kwargs):
+        created = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if created:
+            start_service.apply_async(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            )

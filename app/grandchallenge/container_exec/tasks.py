@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 
+from grandchallenge.container_exec.backends.docker import Service
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -167,3 +168,27 @@ def execute_job(
     job.update_status(status=job.SUCCESS)
 
     return result
+
+
+@shared_task
+def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    session = get_model_instance(
+        pk=pk, app_label=app_label, model_name=model_name
+    )
+
+    workstation_image = (
+        session.workstation.workstationimage_set.filter(ready=True)
+        .order_by("-created")
+        .first()
+    )
+
+    s = Service(
+        job_id=pk,
+        job_model=f"{app_label}-{model_name}",
+        exec_image=workstation_image.image,
+        exec_image_sha256=workstation_image.image_sha256,
+        ports=[4114, 8080],
+    )
+    s.start()
+
+    return str(workstation_image.pk)
