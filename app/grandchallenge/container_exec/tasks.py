@@ -191,4 +191,13 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     )
     s.start()
 
-    return str(workstation_image.pk)
+
+@shared_task
+def cleanup_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    s = Service(
+        job_id=pk,
+        job_model=f"{app_label}-{model_name}",
+        exec_image=None,
+        exec_image_sha256=None,
+    )
+    s.cleanup()

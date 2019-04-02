@@ -10,6 +10,7 @@ from grandchallenge.workstations.views import (
     WorkstationImageDetail,
     SessionCreate,
     SessionDetail,
+    SessionUpdate,
 )
 
 app_name = "workstations"
@@ -43,5 +44,10 @@ urlpatterns = [
         "<slug>/session/<uuid:pk>/",
         SessionDetail.as_view(),
         name="session-detail",
+    ),
+    path(
+        "<slug>/session/<uuid:pk>/update/",
+        SessionUpdate.as_view(),
+        name="session-update",
     ),
 ]

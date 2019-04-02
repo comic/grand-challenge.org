@@ -3,7 +3,7 @@ from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
 from grandchallenge.container_exec.models import ContainerImageModel
-from grandchallenge.container_exec.tasks import start_service
+from grandchallenge.container_exec.tasks import start_service, cleanup_service
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
@@ -29,6 +29,9 @@ class Session(UUIDModel):
     )
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
+    # Is the user done with this session?
+    user_finished = models.BooleanField(default=False)
+
     def get_absolute_url(self):
         return reverse(
             "workstations:session-detail",
@@ -42,6 +45,14 @@ class Session(UUIDModel):
 
         if created:
             start_service.apply_async(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            )
+        elif self.user_finished:
+            cleanup_service.apply_async(
                 kwargs={
                     "app_label": self._meta.app_label,
                     "model_name": self._meta.model_name,

@@ -62,5 +62,10 @@ class SessionCreate(UserIsStaffMixin, CreateView):
         return super().form_valid(form)
 
 
+class SessionUpdate(UserIsStaffMixin, UpdateView):
+    model = Session
+    fields = ["user_finished"]
+
+
 class SessionDetail(UserIsStaffMixin, DetailView):
     model = Session
