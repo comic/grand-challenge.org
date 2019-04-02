@@ -91,7 +91,7 @@ class DockerConnection:
         else:
             raise e
 
-    def cleanup(self):
+    def cleanup(self, timeout: int = 10):
         """
         Stops and prunes all containers and volumes associated with this job
         """
@@ -99,7 +99,7 @@ class DockerConnection:
 
         try:
             for c in self._client.containers.list(filters=flt):
-                c.stop()
+                c.stop(timeout=timeout)
 
             self.__retry_docker_obj_prune(
                 obj=self._client.containers, filters=flt
@@ -257,6 +257,27 @@ class Executor(DockerConnection):
             raise RuntimeError(exc.msg)
 
         return result
+
+
+class Service(DockerConnection):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """ Do not cleanup the containers for this job, leave them running """
+        pass
+
+    def start(self):
+        self._pull_images()
+
+        try:
+            self._client.containers.run(
+                image=self._exec_image_sha256,
+                name=f"{self._job_label}-service",
+                remove=True,
+                detach=True,
+                tty=True,
+                **self._run_kwargs,
+            )
+        except ContainerError as exc:
+            raise RuntimeError(exc.stderr.decode())
 
 
 @contextmanager
