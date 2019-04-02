@@ -8,7 +8,7 @@ from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from time import sleep
-from typing import Tuple
+from typing import Tuple, List
 
 import docker
 from django.conf import settings
@@ -260,6 +260,14 @@ class Executor(DockerConnection):
 
 
 class Service(DockerConnection):
+    def __init__(self, *args, ports: List[int] = None, **kwargs):
+        self._ports = {p: p for p in ports} if ports is not None else {}
+
+        super().__init__(*args, **kwargs)
+
+        # Allow networking for service containers
+        self._run_kwargs.update({"network_disabled": False})
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ Do not cleanup the containers for this job, leave them running """
         pass
@@ -273,7 +281,7 @@ class Service(DockerConnection):
                 name=f"{self._job_label}-service",
                 remove=True,
                 detach=True,
-                tty=True,
+                ports=self._ports,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
