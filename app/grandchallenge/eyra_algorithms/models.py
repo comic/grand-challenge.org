@@ -43,7 +43,30 @@ class Input(UUIDModel):
         return self.name
 
 
-# An algorithm
+# A solution represents a group of (benchmark solving) algorithms. E.g. different
+# versions of an algorithm belong to the same Solution.
+class Solution(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="solutions",
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=255, unique=True, null=False, blank=False)
+    description = models.TextField(
+        default="",
+        blank=True,
+        help_text="Description of this solution in markdown.",
+    )
+
+    def __str__(self):
+        return self.name
+
+
+# An algorithm represents a (container) that implements an interface (produces
+# specific output type from specific input types)
 class Algorithm(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -53,7 +76,7 @@ class Algorithm(UUIDModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=64, unique=True, null=False, blank=False)
+    name = models.CharField(max_length=255, unique=True, null=False, blank=False)
     description = models.TextField(
         default="",
         blank=True,
@@ -61,6 +84,12 @@ class Algorithm(UUIDModel):
     )
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='algorithms')
     container = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
+
+    solution = models.ForeignKey(Solution, on_delete=models.CASCADE, blank=True, null=True, related_name='algorithms')
+    version = models.CharField(
+        max_length=64,
+        help_text="The version of this algorithm (within a Solution)",
+    )
 
     def __str__(self):
         return self.name
