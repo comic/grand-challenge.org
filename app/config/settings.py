@@ -614,7 +614,7 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 # CIRRUS Is an external application that can view images
 CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
+CIRRUS_ANNOTATION_QUERY_PARAM = "grand_challenge_overlay"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [

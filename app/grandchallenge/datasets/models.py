@@ -222,7 +222,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
         ]
 
     def create_cirrus_annotation_link(self, *, base: Image, annotation: Image):
-        return f"{base.cirrus_link}&{settings.CIRRUS_ANNOATION_QUERY_PARAM}={annotation.pk}"
+        return f"{base.cirrus_link}&{settings.CIRRUS_ANNOTATION_QUERY_PARAM}={annotation.pk}"
 
     def get_absolute_url(self):
         return reverse(
