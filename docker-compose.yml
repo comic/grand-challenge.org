@@ -149,6 +149,7 @@ services:
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
+    hostname: "celery-worker"
     depends_on:
       web:
         condition: service_healthy
@@ -172,6 +173,7 @@ services:
     restart: always
     command: "celery -A config worker -l info -Q evaluation,images -c 1"
     scale: 1
+    hostname: "celery-worker-evaluation"
     depends_on:
       web:
         condition: service_healthy
@@ -201,6 +203,7 @@ services:
     restart: always
     command: "celery -A config worker -l info -Q gpu -c 1"
     scale: 1
+    hostname: "celery-worker-gpu"
     depends_on:
       web:
         condition: service_healthy
