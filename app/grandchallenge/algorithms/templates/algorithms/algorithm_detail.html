@@ -42,9 +42,7 @@
                 <th>Image</th>
                 <th>Status</th>
                 <th>Result</th>
-                {% if job.result.images.all %}
-                    <th>Annotation</th>
-                {% endif %}
+                <th>Overlay</th>
             </tr>
             </thead>
             <tbody>
@@ -70,15 +68,15 @@
                     </span>
                     </td>
                     <td>{{ job.result.output }}</td>
-                    {% if job.result.images.all %}
-                        <td>
+                    <td>
+                        {% if job.result.images.all %}
                             {% for image in job.result.images.all %}
                                 <a href="{{ job.image.cirrus_link }}&amp;{{ CIRRUS_ANNOTATION_QUERY_PARAM }}={{ image.pk }}">
                                     {{ image }}
                                 </a>
                             {% endfor %}
-                        </td>
-                    {% endif %}
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
