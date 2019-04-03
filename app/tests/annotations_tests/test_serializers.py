@@ -70,7 +70,7 @@ serializers = {
         "unique": True,
         "factory": LandmarkAnnotationSetFactory,
         "serializer": LandmarkAnnotationSetSerializer,
-        "fields": ("grader", "created", "singlelandmarkannotation_set"),
+        "fields": ("id", "grader", "created", "singlelandmarkannotation_set"),
     },
     "single_landmark": {
         "unique": True,

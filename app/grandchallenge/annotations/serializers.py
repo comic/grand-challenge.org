@@ -96,4 +96,4 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
 
     class Meta:
         model = LandmarkAnnotationSet
-        fields = ("grader", "created", "singlelandmarkannotation_set")
+        fields = ("id", "grader", "created", "singlelandmarkannotation_set")
