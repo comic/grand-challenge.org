@@ -344,16 +344,18 @@ def two_polygon_annotation_sets():
     return generate_two_polygon_annotation_sets(retina_grader=False)
 
 
-class TwoLandmarkAnnotationSets(NamedTuple):
+class MultipleLandmarkAnnotationSets(NamedTuple):
     grader1: UserFactory
     grader2: UserFactory
     landmarkset1: LandmarkAnnotationSetFactory
     landmarkset1images: List
     landmarkset2: LandmarkAnnotationSetFactory
     landmarkset2images: List
+    landmarkset3: LandmarkAnnotationSetFactory
+    landmarkset3images: List
 
 
-def generate_two_landmark_annotation_sets(retina_grader=False):
+def generate_multiple_landmark_annotation_sets(retina_grader=False):
     graders = (UserFactory(), UserFactory())
 
     if retina_grader:
@@ -363,45 +365,60 @@ def generate_two_landmark_annotation_sets(retina_grader=False):
                 Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
             )
 
-    landmarksets = (
+    landmarksets = [
         LandmarkAnnotationSetFactory(grader=graders[0]),
         LandmarkAnnotationSetFactory(grader=graders[1]),
-    )
+        LandmarkAnnotationSetFactory(grader=graders[0]),
+    ]
 
     # Create child models for landmark annotation set
-    singlelandmarkbatches = (
+    singlelandmarkbatches = [
         SingleLandmarkAnnotationFactory.create_batch(
             2, annotation_set=landmarksets[0]
         ),
         SingleLandmarkAnnotationFactory.create_batch(
             5, annotation_set=landmarksets[1]
         ),
-    )
+        []
+    ]
 
-    images = [[], []]
+    images = [[], [], []]
     for set in [0, 1]:
         for singlelandmarkbatch in singlelandmarkbatches[set]:
             images[set].append(singlelandmarkbatch.image)
 
-    return TwoLandmarkAnnotationSets(
+    # Create some more singlelandmarkannotations with some of the same images as landmarkset1
+    for image in images[0]:
+        singlelandmarkbatches[2].append(
+            SingleLandmarkAnnotationFactory.create(annotation_set=landmarksets[2], image=image)
+        )
+        images[2].append(image)
+    singlelandmarkbatches[2].append(
+        SingleLandmarkAnnotationFactory.create(annotation_set=landmarksets[2])
+    )
+    images[2].append(singlelandmarkbatches[2][-1].image)
+
+    return MultipleLandmarkAnnotationSets(
         grader1=graders[0],
         grader2=graders[1],
         landmarkset1=landmarksets[0],
         landmarkset1images=images[0],
         landmarkset2=landmarksets[1],
         landmarkset2images=images[1],
+        landmarkset3=landmarksets[2],
+        landmarkset3images=images[2],
     )
 
 
-@pytest.fixture(name="TwoRetinaLandmarkAnnotationSets")
-def two_retina_landmark_annotation_sets():
-    """ Creates two LandmarkAnnotationSets with 2 and 5 SingleLandmarkAnnotations belonging to
-    two different graders that both are in the retina_graders group """
-    return generate_two_landmark_annotation_sets(retina_grader=True)
+@pytest.fixture(name="MultipleRetinaLandmarkAnnotationSets")
+def multiple_retina_landmark_annotation_sets():
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5 SingleLandmarkAnnotations belonging to
+    multiple different graders that both are in the retina_graders group """
+    return generate_multiple_landmark_annotation_sets(retina_grader=True)
 
 
-@pytest.fixture(name="TwoLandmarkAnnotationSets")
-def two_landmark_annotation_sets():
-    """ Creates two LandmarkAnnotationSets with 2 and 5 SingleLandmarkAnnotations belonging to
-    two different graders """
-    return generate_two_landmark_annotation_sets(retina_grader=False)
+@pytest.fixture(name="MultipleLandmarkAnnotationSets")
+def multiple_landmark_annotation_sets():
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5 SingleLandmarkAnnotations belonging to
+    multiple different graders """
+    return generate_multiple_landmark_annotation_sets(retina_grader=False)
