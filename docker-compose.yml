@@ -158,7 +158,7 @@ services:
       redis:
         condition: service_started
     volumes:
-        # Bind the app directory for live reloading in development
+      # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
@@ -238,6 +238,27 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+
+  workstation-proxy:
+    image: traefik:1.7
+    ports:
+      - "8000:80"     # The HTTP port
+      - "8080:8080"   # The Web UI (enabled by --api)
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: bind
+        source: ./dockerfiles/workstation-proxy/traefik.toml
+        target: /etc/traefik/traefik.toml
+        read_only: true
+
+  whoami:
+    image: containous/whoami # A container that exposes an API to show its IP address
+    labels:
+      traefik.enable: true
+      traefik.frontend.rule: Host:whoami.docker.localhost
 
   flower:
     image: mher/flower
