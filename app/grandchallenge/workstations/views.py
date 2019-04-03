@@ -74,7 +74,7 @@ class SessionDetail(UserIsStaffMixin, DetailView):
 
 
 def workstation_proxy(request, *, path):
-    path = safe_join("/workstation-proxy/", path)
+    path = safe_join("/", "workstation-proxy", "whoami.docker.localhost", path)
 
     response = HttpResponse()
     response["X-Accel-Redirect"] = path

@@ -122,6 +122,8 @@ services:
     depends_on:
       web:
         condition: service_healthy
+      workstation-proxy:
+        condition: service_started
     volumes:
       - type: volume
         source: media
