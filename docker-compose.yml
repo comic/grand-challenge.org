@@ -242,8 +242,6 @@ services:
   workstation-proxy:
     image: traefik:1.7
     ports:
-      - "8000:80"     # The HTTP port
-      - "4114:4114"   # The websocket port
       - "8080:8080"   # The Web UI (enabled by --api)
     volumes:
       # So that Traefik can listen to the Docker events

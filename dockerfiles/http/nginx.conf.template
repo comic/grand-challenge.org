@@ -120,6 +120,34 @@ http {
       return 301 $scheme://${SERVER_NAME}/challenges/;
     }
 
+    location =/Settings/webSocketPort {
+      return 200 '443';
+      add_header Content-Type text/plain;
+    }
+
+    location /mlab4d4c4142 {
+      # Redirect all HTTP traffic
+      proxy_pass http://workstation-proxy:4114;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header Host whoami.docker.localhost;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+      # Websocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+
+      # Disable proxy caching
+      proxy_cache off;
+    }
+
+    location /traefik/ {
+      rewrite ^/traefik/(.+)$ /$1 break;
+      proxy_buffering off;
+      proxy_set_header Host whoami.docker.localhost;
+      proxy_pass http://workstation-proxy:80;
+    }
+
     location /${PROTECTED_S3_STORAGE_BUCKET_NAME}/ {
       internal;
 
