@@ -83,6 +83,10 @@ http {
     server workstation-proxy:80;
   }
 
+  upstream workstations_ws {
+    server workstation-proxy:4114;
+  }
+
   server {
     # Redirect everything to https
     listen 80;
@@ -125,15 +129,20 @@ http {
     }
 
     location =/Settings/webSocketPort {
-      return 200 '443';
+      set $ref "/";
+      if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/session/[^/]*)/.*$) {
+			set $ref $1;
+	  }
+      return 200 '443$ref';
       add_header Content-Type text/plain;
+      expires epoch;
     }
 
-    location /mlab4d4c4142 {
+    location ~ ^/workstations/([^/]*)/session/([^/]*)/mlab4d4c4142/(.*)$ {
       # Redirect all HTTP traffic
-      proxy_pass http://workstation-proxy:4114;
+      proxy_pass http://workstations_ws/mlab4d4c4142/$3;
       proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header Host whoami.docker.localhost;
+      proxy_set_header Host $2.workstation;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
       # Websocket support
