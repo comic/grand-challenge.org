@@ -73,8 +73,9 @@ class SessionDetail(UserIsStaffMixin, DetailView):
     model = Session
 
 
-def workstation_proxy(request, *, path):
-    path = safe_join("/", "workstation-proxy", "whoami.docker.localhost", path)
+def workstation_proxy(request, *, slug, pk, path):
+    # TODO: pk.workstation is duplicated
+    path = safe_join("/", "workstation-proxy", f"{pk}.workstation", path)
 
     response = HttpResponse()
     response["X-Accel-Redirect"] = path

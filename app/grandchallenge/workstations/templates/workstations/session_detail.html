@@ -6,7 +6,7 @@
 {% block content %}
     <h2>{{ object.workstation.slug }} Session</h2>
 
-    <p><a href="http://localhost:8080/Applications/GrandChallengeViewer/index.html">Open the workstation</a></p>
+    <p><a href="Applications/GrandChallengeViewer/index.html">Open the workstation</a></p>
 
     <form method="post"
           action="{% url 'workstations:session-update' slug=object.workstation.slug pk=object.pk %}">

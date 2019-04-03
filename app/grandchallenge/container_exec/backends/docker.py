@@ -265,10 +265,11 @@ class Service(DockerConnection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # TODO: pk.workstation is duplicated
         self._labels.update(
             {
                 "traefik.enable": "true",
-                "traefik.frontend.rule": "Host:whoami.docker.localhost",
+                "traefik.frontend.rule": f"Host:{self._job_id}.workstation",
                 "traefik.http.port": str(8080),
                 "traefik.http.frontend.entryPoints": "http",
                 "traefik.ws.port": str(4114),
