@@ -146,7 +146,7 @@ http {
     }
 
     location ~ ^/workstation-proxy/([^/]*)/(.*)$ {
-      # internal;
+      internal;
       proxy_buffering off;
       proxy_set_header Host $1;
       proxy_pass http://workstations_http/$2;
