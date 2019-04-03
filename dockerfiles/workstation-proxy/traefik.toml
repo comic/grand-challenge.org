@@ -19,3 +19,4 @@ endpoint = "unix:///var/run/docker.sock"
 domain = "docker.localhost"
 watch = true
 exposedByDefault = false
+network = "workstations"

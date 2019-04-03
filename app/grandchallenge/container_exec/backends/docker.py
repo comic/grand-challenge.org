@@ -54,7 +54,7 @@ class DockerConnection:
 
         self._client = docker.DockerClient(**client_kwargs)
 
-        self._labels = {"job": f"{self._job_label}"}
+        self._labels = {"job": f"{self._job_label}", "traefik.enable": "false"}
 
         self._run_kwargs = {
             "init": True,
@@ -262,13 +262,27 @@ class Executor(DockerConnection):
 
 
 class Service(DockerConnection):
-    def __init__(self, *args, ports: List[int] = None, **kwargs):
-        self._ports = {p: p for p in ports} if ports is not None else {}
-
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._labels.update(
+            {
+                "traefik.enable": "true",
+                "traefik.frontend.rule": "Host:whoami.docker.localhost",
+                "traefik.http.port": str(8080),
+                "traefik.http.frontend.entryPoints": "http",
+                "traefik.ws.port": str(4114),
+                "traefik.ws.frontend.entryPoints": "ws",
+            }
+        )
+
         # Allow networking for service containers
-        self._run_kwargs.update({"network_disabled": False})
+        self._run_kwargs.update(
+            {
+                "network_disabled": False,
+                "network": "grand-challengeorg_workstations",  # TODO: Hardcoded
+            }
+        )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """ Do not cleanup the containers for this job, leave them running """
@@ -283,7 +297,6 @@ class Service(DockerConnection):
                 name=f"{self._job_label}-service",
                 remove=True,
                 detach=True,
-                ports=self._ports,
                 labels=self._labels,
                 **self._run_kwargs,
             )

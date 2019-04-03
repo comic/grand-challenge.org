@@ -187,7 +187,6 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         job_model=f"{app_label}-{model_name}",
         exec_image=workstation_image.image,
         exec_image_sha256=workstation_image.image_sha256,
-        ports=[4114, 8080],
     )
     s.start()
 

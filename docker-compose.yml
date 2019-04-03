@@ -254,16 +254,9 @@ services:
         source: ./dockerfiles/workstation-proxy/traefik.toml
         target: /etc/traefik/traefik.toml
         read_only: true
-
-  workstation:
-    image: workstation:latest # A container that exposes an API to show its IP address
-    labels:
-      traefik.enable: true
-      traefik.frontend.rule: Host:whoami.docker.localhost
-      traefik.http.port: 8080
-      traefik.http.frontend.entryPoints: http
-      traefik.ws.port: 4114
-      traefik.ws.frontend.entryPoints: ws
+    networks:
+      - default
+      - workstations
 
   flower:
     image: mher/flower
@@ -280,3 +273,7 @@ volumes:
   media:
   minio-private-data:
   minio-protected-data:
+
+networks:
+  default:
+  workstations:
