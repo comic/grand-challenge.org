@@ -2,7 +2,6 @@ import io
 import json
 import os
 import tarfile
-import uuid
 from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
@@ -55,8 +54,9 @@ class DockerConnection:
 
         self._client = docker.DockerClient(**client_kwargs)
 
+        self._labels = {"job": f"{self._job_label}"}
+
         self._run_kwargs = {
-            "labels": {"job": f"{self._job_label}"},
             "init": True,
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
@@ -154,9 +154,7 @@ class Executor(DockerConnection):
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
-            self._client.volumes.create(
-                name=volume, labels=self._run_kwargs["labels"]
-            )
+            self._client.volumes.create(name=volume, labels=self._labels)
 
     def _provision_input_volume(self):
         try:
@@ -169,6 +167,7 @@ class Executor(DockerConnection):
                     name=f"{self._job_label}-writer",
                     detach=True,
                     tty=True,
+                    labels=self._labels,
                     **self._run_kwargs,
                 )
             ) as writer:
@@ -196,6 +195,7 @@ class Executor(DockerConnection):
                 name=f"{self._job_label}-chmod-volumes",
                 command=f"chmod -R 0777 /input/ /output/",
                 remove=True,
+                labels=self._labels,
                 **self._run_kwargs,
             )
         except Exception as exc:
@@ -211,6 +211,7 @@ class Executor(DockerConnection):
                 },
                 name=f"{self._job_label}-executor",
                 remove=True,
+                labels=self._labels,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
@@ -232,6 +233,7 @@ class Executor(DockerConnection):
                     name=f"{self._job_label}-reader",
                     detach=True,
                     tty=True,
+                    labels=self._labels,
                     **self._run_kwargs,
                 )
             ) as reader:
@@ -282,6 +284,7 @@ class Service(DockerConnection):
                 remove=True,
                 detach=True,
                 ports=self._ports,
+                labels=self._labels,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
