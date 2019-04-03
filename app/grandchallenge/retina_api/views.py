@@ -732,8 +732,8 @@ class PolygonListView(ListAPIView):
     serializer_class = PolygonAnnotationSetSerializer
 
     def get_queryset(self):
-        user_id = self.request.query_params.get("user_id")
-        image_id = self.request.query_params.get("image_id")
+        user_id = self.kwargs["user_id"]
+        image_id = self.kwargs["image_id"]
         image = get_object_or_404(Image, id=image_id)
         return image.polygonannotationset_set.prefetch_related(
             "singlepolygonannotation_set"
@@ -762,7 +762,7 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        image_id = self.request.query_params.get("image_id")
+        image_id = self.kwargs["image_id"]
         image = get_object_or_404(Image, id=image_id)
         polygon_annotation_sets = PolygonAnnotationSet.objects.filter(
             image=image
