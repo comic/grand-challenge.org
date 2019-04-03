@@ -141,8 +141,9 @@ http {
       proxy_cache off;
     }
 
-    location /traefik/ {
-      rewrite ^/traefik/(.+)$ /$1 break;
+    location /workstation-proxy/ {
+      internal;
+      rewrite ^/workstation-proxy/(.+)$ /$1 break;
       proxy_buffering off;
       proxy_set_header Host whoami.docker.localhost;
       proxy_pass http://workstation-proxy:80;

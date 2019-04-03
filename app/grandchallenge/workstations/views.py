@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+from django.utils._os import safe_join
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
@@ -69,3 +71,12 @@ class SessionUpdate(UserIsStaffMixin, UpdateView):
 
 class SessionDetail(UserIsStaffMixin, DetailView):
     model = Session
+
+
+def workstation_proxy(request, *, path):
+    path = safe_join("/workstation-proxy/", path)
+
+    response = HttpResponse()
+    response["X-Accel-Redirect"] = path
+
+    return response

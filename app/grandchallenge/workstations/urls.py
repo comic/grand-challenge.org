@@ -11,6 +11,7 @@ from grandchallenge.workstations.views import (
     SessionCreate,
     SessionDetail,
     SessionUpdate,
+    workstation_proxy,
 )
 
 app_name = "workstations"
@@ -18,6 +19,7 @@ app_name = "workstations"
 urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
     path("create/", WorkstationCreate.as_view(), name="create"),
+    path("test/<path:path>", workstation_proxy),
     path("<slug>/", WorkstationDetail.as_view(), name="detail"),
     path("<slug>/update/", WorkstationUpdate.as_view(), name="update"),
     path(
