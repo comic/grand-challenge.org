@@ -41,5 +41,10 @@ urlpatterns = [
         views.GradersWithPolygonAnnotationsListView.as_view(),
         name="polygon-annotation-users-list-view",
     ),
+    path(
+        "annotation/landmark/users/<int:user_id>",
+        views.LandmarkAnnotationSetForImageList.as_view(),
+        name="landmark-annotation-images-list-view",
+    ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]

@@ -14,6 +14,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from rest_framework_guardian import filters
+from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.retina_api.mixins import (
@@ -33,6 +34,7 @@ from grandchallenge.annotations.models import (
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 
@@ -776,3 +778,24 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
             .distinct()
         )
         return graders
+
+
+class LandmarkAnnotationSetForImageList(ListAPIView):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        image_ids = self.request.query_params.get("image_ids")
+        if image_ids is None:
+            raise NotFound()
+        image_ids = image_ids.split(",")
+        user = get_object_or_404(get_user_model(), id=user_id)
+        queryset = user.landmarkannotationset_set.filter(
+            singlelandmarkannotation__image__id__in=image_ids
+        ).distinct()
+        if len(queryset) == 0:
+            raise NotFound()
+        return queryset
