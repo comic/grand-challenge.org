@@ -1,3 +1,11 @@
+defaultEntryPoints = ["http", "ws"]
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+  [entryPoints.ws]
+    address = ":4114"
+
 [api]
 dashboard = true
 

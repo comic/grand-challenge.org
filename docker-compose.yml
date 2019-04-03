@@ -243,6 +243,7 @@ services:
     image: traefik:1.7
     ports:
       - "8000:80"     # The HTTP port
+      - "4114:4114"   # The websocket port
       - "8080:8080"   # The Web UI (enabled by --api)
     volumes:
       # So that Traefik can listen to the Docker events
@@ -254,11 +255,15 @@ services:
         target: /etc/traefik/traefik.toml
         read_only: true
 
-  whoami:
-    image: containous/whoami # A container that exposes an API to show its IP address
+  workstation:
+    image: workstation:latest # A container that exposes an API to show its IP address
     labels:
       traefik.enable: true
       traefik.frontend.rule: Host:whoami.docker.localhost
+      traefik.http.port: 8080
+      traefik.http.frontend.entryPoints: http
+      traefik.ws.port: 4114
+      traefik.ws.frontend.entryPoints: ws
 
   flower:
     image: mher/flower
