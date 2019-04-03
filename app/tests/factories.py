@@ -16,7 +16,6 @@ from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 
-
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
 

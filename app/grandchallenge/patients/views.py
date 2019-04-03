@@ -14,12 +14,18 @@ class PatientTable(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Patient.objects.all()
+        image_type = self.request.query_params.get("image_type", None)
         worklist = self.request.query_params.get("worklist", None)
 
         if worklist is not None:
             queryset = queryset.filter(study__image__worklist=worklist)
-            queryset = queryset.distinct()
 
+        if image_type is not None:
+            queryset = queryset.filter(
+                study__image__files__image_type=image_type
+            )
+
+        queryset = queryset.distinct()
         return queryset
 
 
