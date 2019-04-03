@@ -342,3 +342,57 @@ def two_polygon_annotation_sets():
     """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
     two different graders """
     return generate_two_polygon_annotation_sets(retina_grader=False)
+
+
+class TwoLandmarkAnnotationSets(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    landmarkset1: LandmarkAnnotationSetFactory
+    landmarkset2: LandmarkAnnotationSetFactory
+
+
+def generate_two_landmark_annotation_sets(retina_grader=False):
+    graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        # Add to retina_graders group
+        for grader in graders:
+            grader.groups.add(
+                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+            )
+
+    landmarksets = (
+        LandmarkAnnotationSetFactory(grader=graders[0]),
+        LandmarkAnnotationSetFactory(grader=graders[1]),
+    )
+
+    # Create child models for landmark annotation set
+    singlelandmarkbatches = (
+        SingleLandmarkAnnotationFactory.create_batch(
+            2, annotation_set=landmarksets[0]
+        ),
+        SingleLandmarkAnnotationFactory.create_batch(
+            5, annotation_set=landmarksets[1]
+        ),
+    )
+
+    return TwoLandmarkAnnotationSets(
+        grader1=graders[0],
+        grader2=graders[1],
+        landmarkset1=landmarksets[0],
+        landmarkset2=landmarksets[1],
+    )
+
+
+@pytest.fixture(name="TwoRetinaLandmarkAnnotationSets")
+def two_retina_landmark_annotation_sets():
+    """ Creates two LandmarkAnnotationSets with 2 and 5 SingleLandmarkAnnotations belonging to
+    two different graders that both are in the retina_graders group """
+    return generate_two_landmark_annotation_sets(retina_grader=True)
+
+
+@pytest.fixture(name="TwoLandmarkAnnotationSets")
+def two_landmark_annotation_sets():
+    """ Creates two LandmarkAnnotationSets with 2 and 5 SingleLandmarkAnnotations belonging to
+    two different graders """
+    return generate_two_landmark_annotation_sets(retina_grader=False)
