@@ -3,7 +3,7 @@ import zipfile
 from collections import namedtuple
 from pathlib import Path
 from subprocess import call
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 import docker
 import pytest
@@ -348,7 +348,9 @@ class TwoLandmarkAnnotationSets(NamedTuple):
     grader1: UserFactory
     grader2: UserFactory
     landmarkset1: LandmarkAnnotationSetFactory
+    landmarkset1images: List
     landmarkset2: LandmarkAnnotationSetFactory
+    landmarkset2images: List
 
 
 def generate_two_landmark_annotation_sets(retina_grader=False):
@@ -376,11 +378,18 @@ def generate_two_landmark_annotation_sets(retina_grader=False):
         ),
     )
 
+    images = [[], []]
+    for set in [0, 1]:
+        for singlelandmarkbatch in singlelandmarkbatches[set]:
+            images[set].append(singlelandmarkbatch.image)
+
     return TwoLandmarkAnnotationSets(
         grader1=graders[0],
         grader2=graders[1],
         landmarkset1=landmarksets[0],
+        landmarkset1images=images[0],
         landmarkset2=landmarksets[1],
+        landmarkset2images=images[1],
     )
 
 
