@@ -18,6 +18,7 @@ from tests.annotations_tests.factories import (
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.annotations.models import PolygonAnnotationSet
@@ -26,10 +27,12 @@ from grandchallenge.retina_api.views import (
     SinglePolygonViewSet,
     PolygonListView,
     GradersWithPolygonAnnotationsListView,
+    LandmarkAnnotationSetForImageList,
 )
 from tests.conftest import (
     generate_annotation_set,
     generate_two_polygon_annotation_sets,
+    generate_multiple_landmark_annotation_sets,
 )
 from tests.viewset_helpers import view_test
 
@@ -730,6 +733,126 @@ class TestGradersWithPolygonAnnotationsListView(TestCase):
             .distinct()
         )
         expected_response = UserSerializer(graders, many=True).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+
+class TestLandmarkAnnotationSetForImageListListView(TestCase):
+    def setUp(self):
+        self.annotation_set = generate_multiple_landmark_annotation_sets(
+            retina_grader=True
+        )
+        self.kwargs = {"user_id": self.annotation_set.landmarkset1.grader.id}
+        list_of_image_ids = list(
+            map(lambda x: str(x.id), self.annotation_set.landmarkset1images)
+        )
+        self.url_no_params = reverse(
+            "retina:api:landmark-annotation-images-list-view",
+            kwargs=self.kwargs,
+        )
+        self.url = "{}?image_ids={}".format(
+            self.url_no_params, ",".join(list_of_image_ids)
+        )
+        self.view = LandmarkAnnotationSetForImageList.as_view()
+        self.rf = APIRequestFactory()
+        self.request = self.rf.get(self.url)
+        self.retina_admin = UserFactory()
+        self.retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
+
+    def test_non_authenticated(self):
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_non_retina_user(self):
+        self.annotation_set.landmarkset1.grader.groups.clear()
+        force_authenticate(
+            self.request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retina_grader_no_params(self):
+        request = self.rf.get(self.url_no_params)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_grader_wrong_params(self):
+        list_of_image_ids = list(
+            map(lambda x: str(x.id), self.annotation_set.landmarkset2images)
+        )
+        url = "{}?image_ids={}".format(
+            self.url_no_params, ",".join(list_of_image_ids)
+        )
+        request = self.rf.get(url)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_grader_one_set(self):
+        kwargs = {"user_id": self.annotation_set.landmarkset2.grader.id}
+        url_no_params = reverse(
+            "retina:api:landmark-annotation-images-list-view", kwargs=kwargs
+        )
+        url = "{}?image_ids={}".format(
+            url_no_params, self.annotation_set.landmarkset2images[0].id
+        )
+        request = self.rf.get(url)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset2.grader
+        )
+        response = self.view(request, **kwargs)
+        expected_response = [
+            LandmarkAnnotationSetSerializer(
+                instance=self.annotation_set.landmarkset2
+            ).data
+        ]
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_retina_grader_both_sets(self):
+        force_authenticate(
+            self.request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+        expected_response = LandmarkAnnotationSetSerializer(
+            [
+                self.annotation_set.landmarkset1,
+                self.annotation_set.landmarkset3,
+            ],
+            many=True,
+        ).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+    def test_admin_authenticated(self):
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = LandmarkAnnotationSetSerializer(
+            [
+                self.annotation_set.landmarkset1,
+                self.annotation_set.landmarkset3,
+            ],
+            many=True,
+        ).data
         expected_response.sort(key=lambda k: k["id"])
 
         assert response.status_code == status.HTTP_200_OK
