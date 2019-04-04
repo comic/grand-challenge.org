@@ -138,11 +138,14 @@ http {
       expires epoch;
     }
 
-    location ~ ^/workstations/([^/]*)/session/([^/]*)/mlab4d4c4142/(.*)$ {
-      # Redirect all HTTP traffic
-      proxy_pass http://workstations_ws/mlab4d4c4142/$3;
+    location ~ ^/workstation-proxy/([^/]*)/mlab4d4c4142/(.*)$ {
+      internal;
+
+      proxy_buffering off;
+      proxy_set_header Host $1;
+      proxy_pass http://workstations_ws/mlab4d4c4142/$2;
+
       proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header Host $2.workstation;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
       # Websocket support
@@ -156,6 +159,7 @@ http {
 
     location ~ ^/workstation-proxy/([^/]*)/(.*)$ {
       internal;
+
       proxy_buffering off;
       proxy_set_header Host $1;
       proxy_pass http://workstations_http/$2;
@@ -166,7 +170,6 @@ http {
 
       # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
       proxy_buffering off;
-
       proxy_set_header Host $http_host;
       proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
