@@ -91,7 +91,7 @@ class DockerConnection:
         else:
             raise e
 
-    def cleanup(self, timeout: int = 10):
+    def stop_and_cleanup(self, timeout: int = 10):
         """
         Stops and prunes all containers and volumes associated with this job
         """
@@ -114,7 +114,7 @@ class DockerConnection:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
+        self.stop_and_cleanup()
 
     def _pull_images(self):
         if self._exec_image_sha256 not in [

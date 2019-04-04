@@ -90,7 +90,7 @@ class Session(UUIDModel):
         self.update_status(status=self.STARTED)
 
     def stop(self):
-        self.service.cleanup()
+        self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
     def update_status(self, *, status: STATUS_CHOICES):

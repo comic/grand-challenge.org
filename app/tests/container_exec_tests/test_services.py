@@ -44,5 +44,5 @@ def test_service_start_cleanup():
 
         assert labels == expected_labels
     finally:
-        s.cleanup()
+        s.stop_and_cleanup()
         assert len(dockerclient.containers.list(filters=filters)) == 0
