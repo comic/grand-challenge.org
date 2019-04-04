@@ -269,7 +269,7 @@ class Service(DockerConnection):
         self._run_kwargs.update(
             {
                 "network_disabled": False,
-                "network": "grand-challengeorg_workstations",  # TODO: Hardcoded
+                "network": settings.WORKSTATIONS_NETWORK_NAME,
             }
         )
 

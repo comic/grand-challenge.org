@@ -619,6 +619,11 @@ CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master
 CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
 
+# The name of the network that the workstations will be attached to
+WORKSTATIONS_NETWORK_NAME = os.environ.get(
+    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
+)
+
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
     "m",
