@@ -1,6 +1,7 @@
 import hashlib
 
 import factory
+import factory.fuzzy
 from django.conf import settings
 
 from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
@@ -172,3 +173,24 @@ class ImagingModalityFactory(factory.DjangoModelFactory):
         django_get_or_create = ("modality",)
 
     modality = factory.sequence(lambda n: f"Modality {n}")
+
+
+class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
+    def __init__(self, size=None):
+        self.size = size
+
+    def fuzz(self):
+        if self.size is None:
+            size = factory.fuzzy.random.randgen.randint(1, 30)
+        else:
+            size = self.size
+
+        fuzzy_list = []
+        for i in range(size):
+            fuzzy_list.append(
+                [
+                    round(factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12),
+                    round(factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12),
+                ]
+            )
+        return fuzzy_list
