@@ -332,15 +332,16 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
 
 @pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
 def two_retina_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
-    two different graders that both are in the retina_graders group """
+    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
+    belonging to two different graders that both are in the retina_graders
+    group """
     return generate_two_polygon_annotation_sets(retina_grader=True)
 
 
 @pytest.fixture(name="TwoPolygonAnnotationSets")
 def two_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
-    two different graders """
+    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
+    belonging to two different graders """
     return generate_two_polygon_annotation_sets(retina_grader=False)
 
 
@@ -387,7 +388,7 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
         for singlelandmarkbatch in singlelandmarkbatches[set]:
             images[set].append(singlelandmarkbatch.image)
 
-    # Create some more singlelandmarkannotations with some of the same images as landmarkset1
+    # Create singlelandmarkannotations with the images of landmarkset1
     for image in images[0]:
         singlelandmarkbatches[2].append(
             SingleLandmarkAnnotationFactory.create(
@@ -414,13 +415,14 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
 
 @pytest.fixture(name="MultipleRetinaLandmarkAnnotationSets")
 def multiple_retina_landmark_annotation_sets():
-    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5 SingleLandmarkAnnotations belonging to
-    multiple different graders that both are in the retina_graders group """
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
+    SingleLandmarkAnnotations belonging to multiple different graders that
+    both are in the retina_graders group """
     return generate_multiple_landmark_annotation_sets(retina_grader=True)
 
 
 @pytest.fixture(name="MultipleLandmarkAnnotationSets")
 def multiple_landmark_annotation_sets():
-    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5 SingleLandmarkAnnotations belonging to
-    multiple different graders """
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
+    SingleLandmarkAnnotations belonging to multiple different graders """
     return generate_multiple_landmark_annotation_sets(retina_grader=False)
