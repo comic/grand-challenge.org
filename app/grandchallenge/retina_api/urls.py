@@ -46,5 +46,10 @@ urlpatterns = [
         views.LandmarkAnnotationSetForImageList.as_view(),
         name="landmark-annotation-images-list-view",
     ),
+    path(
+        "registration/octobs/<uuid:image_id>",
+        views.OctObsRegistrationRetrieve.as_view(),
+        name="octobs-registration-detail-view",
+    ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]

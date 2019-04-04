@@ -4,7 +4,7 @@ from enum import Enum
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication, viewsets
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -17,6 +17,7 @@ from rest_framework_guardian import filters
 from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.registrations.serializers import OctObsRegistrationSerializer
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -799,3 +800,23 @@ class LandmarkAnnotationSetForImageList(ListAPIView):
         if len(queryset) == 0:
             raise NotFound()
         return queryset
+
+
+class OctObsRegistrationRetrieve(RetrieveAPIView):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = OctObsRegistrationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    lookup_url_kwarg = "image_id"
+
+    def get_object(self):
+        image_id = self.kwargs.get("image_id")
+        if image_id is None:
+            raise NotFound()
+        image = get_object_or_404(Image.objects.prefetch_related('oct_image', 'obs_image'), id=image_id)
+        if image.oct_image.exists():
+            return image.oct_image.get()
+        elif image.obs_image.exists():
+            return image.obs_image.get()
+        else:
+            raise NotFound()
