@@ -290,9 +290,10 @@ def generate_annotation_set(retina_grader=False):
 
 @pytest.fixture(name="AnnotationSet")
 def annotation_set():
-    """ Creates a user with the one of each of the following annotations: Measurement,
-    BooleanClassification, PolygonAnnotationSet (with 10 child annotations), CoordinateList,
-    LandmarkAnnotationSet(with single landmark annotations for 5 images), ETDRSGrid """
+    """ Creates a user with the one of each of the following annotations:
+    Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
+    annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
+    annotations for 5 images), ETDRSGrid """
     return generate_annotation_set()
 
 
