@@ -26,10 +26,23 @@ def test_service_start_cleanup():
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
-        s.start(http_port=80, websocket_port=81)
+        s.start(http_port=80, websocket_port=81, hostname="test.local")
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
-        # TODO: Test that the labels are correctly set
+
+        labels = containers[0].labels
+
+        expected_labels = {
+            "job": f"{job_model}-{job_id}",
+            "traefik.enable": "true",
+            "traefik.frontend.rule": f"Host:test.local",
+            "traefik.http.port": "80",
+            "traefik.http.frontend.entryPoints": "http",
+            "traefik.websocket.port": "81",
+            "traefik.websocket.frontend.entryPoints": "websocket",
+        }
+
+        assert labels == expected_labels
     finally:
         s.cleanup()
         assert len(dockerclient.containers.list(filters=filters)) == 0
