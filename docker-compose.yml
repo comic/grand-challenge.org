@@ -122,6 +122,8 @@ services:
     depends_on:
       web:
         condition: service_healthy
+      workstation-proxy:
+        condition: service_started
     volumes:
       - type: volume
         source: media
@@ -158,7 +160,7 @@ services:
       redis:
         condition: service_started
     volumes:
-        # Bind the app directory for live reloading in development
+      # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
@@ -239,6 +241,36 @@ services:
       redis:
         condition: service_started
 
+  workstation-proxy:
+    image: traefik:1.7
+    ports:
+      - "8080:8080"
+    command:
+      - "--defaultEntryPoints=http,ws"
+      - "--entrypoints=Name:traefik Address::8080"
+      - "--entrypoints=Name:ping Address::8082"
+      - "--entrypoints=Name:http Address::8000"
+      - "--entrypoints=Name:ws Address::8001"
+      - "--api"
+      - "--api.dashboard=true"
+      - "--api.entryPoint=traefik"
+      - "--ping"
+      - "--ping.entryPoint=traefik"
+      - "--docker"
+      - "--docker.domain=docker.localhost"
+      - "--docker.endpoint=unix:///var/run/docker.sock"
+      - "--docker.exposedbydefault=false"
+      - "--docker.watch=true"
+      - "--docker.network=workstations"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    networks:
+      - default
+      - workstations
+
   flower:
     image: mher/flower
     environment:
@@ -254,3 +286,7 @@ volumes:
   media:
   minio-private-data:
   minio-protected-data:
+
+networks:
+  default:
+  workstations:

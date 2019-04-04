@@ -22,7 +22,6 @@ def test_service_start_cleanup():
         job_model=job_model,
         exec_image=None,
         exec_image_sha256=exec_sha256,
-        ports=[8000],
     )
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
@@ -30,7 +29,6 @@ def test_service_start_cleanup():
         s.start()
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
-        assert "8000/tcp" in containers[0].attrs["NetworkSettings"]["Ports"]
     finally:
         s.cleanup()
         assert len(dockerclient.containers.list(filters=filters)) == 0

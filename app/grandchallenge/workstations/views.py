@@ -1,3 +1,5 @@
+from django.http import HttpResponse, Http404
+from django.utils._os import safe_join
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
@@ -69,3 +71,22 @@ class SessionUpdate(UserIsStaffMixin, UpdateView):
 
 class SessionDetail(UserIsStaffMixin, DetailView):
     model = Session
+
+
+def workstation_proxy(request, *, pk, path, **_):
+    # TODO: pk.workstation is duplicated
+    path = safe_join(f"/workstation-proxy/{pk}.workstation", path)
+    user = request.user
+
+    try:
+        session = Session.objects.get(pk=pk)
+    except Session.DoesNotExist:
+        raise Http404("Session not found")
+
+    if session.creator != user:
+        raise Http404("Session not found")
+
+    response = HttpResponse()
+    response["X-Accel-Redirect"] = path
+
+    return response

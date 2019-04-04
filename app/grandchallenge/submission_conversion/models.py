@@ -69,6 +69,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
                     name=f"{self._job_label}-reader",
                     detach=True,
                     tty=True,
+                    labels=self._labels,
                     **self._run_kwargs,
                 )
             ) as reader:
