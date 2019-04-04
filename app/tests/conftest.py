@@ -366,14 +366,14 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
                 Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
             )
 
-    landmarksets = [
+    landmarksets = (
         LandmarkAnnotationSetFactory(grader=graders[0]),
         LandmarkAnnotationSetFactory(grader=graders[1]),
         LandmarkAnnotationSetFactory(grader=graders[0]),
-    ]
+    )
 
     # Create child models for landmark annotation set
-    singlelandmarkbatches = [
+    singlelandmarkbatches = (
         SingleLandmarkAnnotationFactory.create_batch(
             2, annotation_set=landmarksets[0]
         ),
@@ -381,12 +381,17 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
             5, annotation_set=landmarksets[1]
         ),
         [],
-    ]
+    )
 
-    images = [[], [], []]
-    for set in [0, 1]:
-        for singlelandmarkbatch in singlelandmarkbatches[set]:
-            images[set].append(singlelandmarkbatch.image)
+    images = [
+        Image.objects.filter(
+            singlelandmarkannotation__annotation_set=landmarksets[0].id
+        ),
+        Image.objects.filter(
+            singlelandmarkannotation__annotation_set=landmarksets[1].id
+        ),
+        [],
+    ]
 
     # Create singlelandmarkannotations with the images of landmarkset1
     for image in images[0]:
