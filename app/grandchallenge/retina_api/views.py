@@ -17,7 +17,9 @@ from rest_framework_guardian import filters
 from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
-from grandchallenge.registrations.serializers import OctObsRegistrationSerializer
+from grandchallenge.registrations.serializers import (
+    OctObsRegistrationSerializer
+)
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -813,7 +815,10 @@ class OctObsRegistrationRetrieve(RetrieveAPIView):
         image_id = self.kwargs.get("image_id")
         if image_id is None:
             raise NotFound()
-        image = get_object_or_404(Image.objects.prefetch_related('oct_image', 'obs_image'), id=image_id)
+        image = get_object_or_404(
+            Image.objects.prefetch_related("oct_image", "obs_image"),
+            id=image_id,
+        )
         if image.oct_image.exists():
             return image.oct_image.get()
         elif image.obs_image.exists():

@@ -379,7 +379,7 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
         SingleLandmarkAnnotationFactory.create_batch(
             5, annotation_set=landmarksets[1]
         ),
-        []
+        [],
     ]
 
     images = [[], [], []]
@@ -390,7 +390,9 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
     # Create some more singlelandmarkannotations with some of the same images as landmarkset1
     for image in images[0]:
         singlelandmarkbatches[2].append(
-            SingleLandmarkAnnotationFactory.create(annotation_set=landmarksets[2], image=image)
+            SingleLandmarkAnnotationFactory.create(
+                annotation_set=landmarksets[2], image=image
+            )
         )
         images[2].append(image)
     singlelandmarkbatches[2].append(

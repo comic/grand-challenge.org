@@ -189,8 +189,12 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
         for i in range(size):
             fuzzy_list.append(
                 [
-                    round(factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12),
-                    round(factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12),
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
                 ]
             )
         return fuzzy_list
