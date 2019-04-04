@@ -101,7 +101,7 @@ def serve_folder(request, *, challenge_name=None, folder=None, path):
 
 
 def serve_images(request, *, pk, path):
-    document_root = safe_join("/", settings.IMAGE_FILES_SUBDIRECTORY, pk)
+    document_root = safe_join(f"/{settings.IMAGE_FILES_SUBDIRECTORY}", pk)
     path = posixpath.normpath(path).lstrip("/")
     name = safe_join(document_root, path)
 
