@@ -50,6 +50,12 @@ class Session(UUIDModel):
     # Is the user done with this session?
     user_finished = models.BooleanField(default=False)
 
+    @property
+    def hostname(self):
+        return (
+            f"{self.pk}.{self._meta.model_name}.{self._meta.app_label}".lower()
+        )
+
     def get_absolute_url(self):
         return reverse(
             "workstations:session-detail",

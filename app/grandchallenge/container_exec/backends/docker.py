@@ -277,13 +277,12 @@ class Service(DockerConnection):
         """ Do not cleanup the containers for this job, leave them running """
         pass
 
-    def start(self, http_port: int, websocket_port: int):
+    def start(self, http_port: int, websocket_port: int, hostname: str):
         self._pull_images()
 
-        # TODO: pk.workstation is duplicated
         traefik_labels = {
             "traefik.enable": "true",
-            "traefik.frontend.rule": f"Host:{self._job_id}.workstation",
+            "traefik.frontend.rule": f"Host:{hostname}",
             "traefik.http.port": str(http_port),
             "traefik.http.frontend.entryPoints": "http",
             "traefik.websocket.port": str(websocket_port),

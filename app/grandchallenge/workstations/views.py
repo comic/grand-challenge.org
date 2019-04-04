@@ -77,15 +77,14 @@ class SessionDetail(UserIsStaffMixin, DetailView):
 
 
 def workstation_proxy(request, *, pk, path, **_):
-    # TODO: pk.workstation is duplicated
-    path = safe_join(f"/workstation-proxy/{pk}.workstation", path)
-    user = request.user
-
     try:
         session = Session.objects.get(pk=pk)
     except Session.DoesNotExist:
         raise Http404("Session not found")
 
+    path = safe_join(f"/workstation-proxy/{session.hostname}", path)
+
+    user = request.user
     if session.creator != user:
         raise Http404("Session not found")
 

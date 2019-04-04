@@ -185,6 +185,7 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     s.start(
         http_port=session.workstation_image.http_port,
         websocket_port=session.workstation_image.websocket_port,
+        hostname=session.hostname,
     )
 
 
