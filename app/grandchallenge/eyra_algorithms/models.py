@@ -43,9 +43,8 @@ class Input(UUIDModel):
         return self.name
 
 
-# A solution represents a group of (benchmark solving) algorithms. E.g. different
-# versions of an algorithm belong to the same Solution.
-class Solution(UUIDModel):
+# An Algorithm represents a group (different versions) of (benchmark solving) implementations.
+class Algorithm(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -65,14 +64,14 @@ class Solution(UUIDModel):
         return self.name
 
 
-# An algorithm represents a (container) that implements an interface (produces
+# An implementation represents a (container) that implements an interface (produces
 # specific output type from specific input types)
-class Algorithm(UUIDModel):
+class Implementation(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
         on_delete=models.SET_NULL,
-        related_name="algorithms",
+        related_name="implementations",
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -80,15 +79,17 @@ class Algorithm(UUIDModel):
     description = models.TextField(
         default="",
         blank=True,
-        help_text="Description of this algorithm in markdown.",
+        help_text="Description of this implementation in markdown.",
     )
-    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='algorithms')
+    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='implementations')
     container = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
 
-    solution = models.ForeignKey(Solution, on_delete=models.CASCADE, blank=True, null=True, related_name='algorithms')
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, blank=True, null=True, related_name='implementations')
     version = models.CharField(
         max_length=64,
-        help_text="The version of this algorithm (within a Solution)",
+        help_text="The Algorithm version",
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -120,7 +121,7 @@ class Job(UUIDModel):
     started = models.DateTimeField(blank=True, null=True)
     stopped = models.DateTimeField(blank=True, null=True)
     log = models.TextField(blank=True, null=True)
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE)
     output = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='output_of_job', null=True)
 
 

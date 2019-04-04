@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from grandchallenge.eyra_algorithms.models import Algorithm, Input, Job, JobInput, Interface
+from grandchallenge.eyra_algorithms.models import Implementation, Input, Job, JobInput, Interface
 
 
 class AlgorithmAdmin(admin.ModelAdmin):
@@ -25,6 +25,6 @@ class JobAdmin(admin.ModelAdmin):
     inlines = [JobInputsInline]
 
 
-admin.site.register(Algorithm, AlgorithmAdmin)
+admin.site.register(Implementation, AlgorithmAdmin)
 admin.site.register(Interface, InterfaceAdmin)
 admin.site.register(Job, JobAdmin)

@@ -1,43 +1,26 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.contrib.auth.models import User
 from django.db import IntegrityError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.permissions import BasePermission, AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework import generics
 
-from grandchallenge.eyra_algorithms.models import Algorithm
-from grandchallenge.eyra_algorithms.serializers import AlgorithmSerializer
+from grandchallenge.eyra_algorithms.models import Implementation
+from grandchallenge.eyra_algorithms.serializers import ImplementationSerializer
 from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 from grandchallenge.eyra_benchmarks.serializers import BenchmarkSerializer, SubmissionSerializer
 
 
-class BenchmarkAccessPermission(BasePermission):
-    def has_permission(self, request, view):
-        if request.method == "GET":
-            # List
-            return True
-        elif request.method == "POST":
-            # Create: only authenticated users
-            return request.user and request.user.is_authenticated
-        elif request.method == "PUT":
-            # Update: only authenticated users (object permission is checked next)
-            return request.user and request.user.is_authenticated
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        if request.method == "PUT":
-            # Update: only challenge admins
-            return obj.is_admin(request.user)
-        return True
+# uses per ObjectPermissions (guardian), but with anonymous read-only.
+class AnonDjangoObjectPermissions(DjangoObjectPermissions):
+    authenticated_users_only = False
 
 
 class BenchmarkViewSet(ModelViewSet):
     queryset = Benchmark.objects.all()
     serializer_class = BenchmarkSerializer
-    permission_classes = (BenchmarkAccessPermission,)
+    permission_classes = (AnonDjangoObjectPermissions,)
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
@@ -47,7 +30,7 @@ class BenchmarkViewSet(ModelViewSet):
 class SubmissionViewSet(ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (AnonDjangoObjectPermissions,)
     # filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ['benchmark']
 
@@ -76,7 +59,7 @@ def algorithm_submission(request):
     if not algorithm_name:
         raise DRFValidationError("Name required")
 
-    algorithm = Algorithm(
+    implementation = Implementation(
         creator=request.user,
         # creator=User.objects.first(),
         interface=benchmark.interface,
@@ -85,19 +68,19 @@ def algorithm_submission(request):
         name=algorithm_name,
     )
     try:
-        algorithm.full_clean(exclude=None)
-        algorithm.save()
+        implementation.full_clean(exclude=None)
+        implementation.save()
     except IntegrityError as e:
-        raise DRFValidationError("Algorithm name already exists")
+        raise DRFValidationError("Implementation name already exists")
 
     submission = Submission(
-        algorithm=algorithm,
+        implementation=implementation,
         benchmark=benchmark,
         creator=request.user,
         # creator=User.objects.first(),
-        name=f"{algorithm.name} on {benchmark.name}"
+        name=f"{implementation.name} on {benchmark.name}"
     )
 
     submission.save()
 
-    return Response(AlgorithmSerializer(algorithm).data)
+    return Response(ImplementationSerializer(implementation).data)

@@ -328,6 +328,7 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.user.get_username",
     "social_core.pipeline.user.create_user",
     "grandchallenge.profiles.social_auth.pipeline.profile.create_profile",
+    "grandchallenge.profiles.social_auth.pipeline.profile.add_to_default_group",
     "social_core.pipeline.social_auth.associate_user",
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",

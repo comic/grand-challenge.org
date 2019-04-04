@@ -1,11 +1,12 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.eyra_algorithms.models import Job, Algorithm, Interface
+from grandchallenge.eyra_algorithms.models import Job, Implementation, Interface
 from grandchallenge.eyra_data.models import DataFile
 
 logger = logging.getLogger(__name__)
@@ -31,13 +32,21 @@ class Benchmark(UUIDModel):
         help_text=(
             "The name of the benchmark"
         ),
+        unique=True,
     )
-    evaluator = models.ForeignKey(Algorithm, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
+    evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     training_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
+    admin_group = models.OneToOneField(
+        Group,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="benchmark",
+    )
+
     # def clean(self):
     #     if self.training_datafile and not self.training_datafile.is_public:
     #         raise ValidationError("Training dataset should be public.")
@@ -61,7 +70,7 @@ class Submission(UUIDModel):
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     benchmark = models.ForeignKey(Benchmark, on_delete=models.CASCADE)
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, related_name='submissions')
+    implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE, related_name='submissions')
     algorithm_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     metrics_json = JSONField(null=True, blank=True)
