@@ -265,18 +265,6 @@ class Service(DockerConnection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # TODO: pk.workstation is duplicated
-        self._labels.update(
-            {
-                "traefik.enable": "true",
-                "traefik.frontend.rule": f"Host:{self._job_id}.workstation",
-                "traefik.http.port": str(8080),
-                "traefik.http.frontend.entryPoints": "http",
-                "traefik.ws.port": str(4114),
-                "traefik.ws.frontend.entryPoints": "ws",
-            }
-        )
-
         # Allow networking for service containers
         self._run_kwargs.update(
             {
@@ -289,8 +277,18 @@ class Service(DockerConnection):
         """ Do not cleanup the containers for this job, leave them running """
         pass
 
-    def start(self):
+    def start(self, http_port: int, websocket_port: int):
         self._pull_images()
+
+        # TODO: pk.workstation is duplicated
+        traefik_labels = {
+            "traefik.enable": "true",
+            "traefik.frontend.rule": f"Host:{self._job_id}.workstation",
+            "traefik.http.port": str(http_port),
+            "traefik.http.frontend.entryPoints": "http",
+            "traefik.ws.port": str(websocket_port),
+            "traefik.ws.frontend.entryPoints": "ws",
+        }
 
         try:
             self._client.containers.run(
@@ -298,7 +296,7 @@ class Service(DockerConnection):
                 name=f"{self._job_label}-service",
                 remove=True,
                 detach=True,
-                labels=self._labels,
+                labels={**self._labels, **traefik_labels},
                 **self._run_kwargs,
             )
         except ContainerError as exc:

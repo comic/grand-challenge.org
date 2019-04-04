@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
@@ -15,6 +16,22 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
 class WorkstationImage(UUIDModel, ContainerImageModel):
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+    http_port = models.PositiveIntegerField(
+        default=8080, validators=[MaxValueValidator(2 ** 16 - 1)]
+    )
+    websocket_port = models.PositiveIntegerField(
+        default=4114, validators=[MaxValueValidator(2 ** 16 - 1)]
+    )
+    initial_path = models.CharField(
+        max_length=256,
+        default="Applications/GrandChallengeViewer/index.html",
+        validators=[
+            RegexValidator(
+                regex=r"^(?:[^/][^\s]*)\Z",
+                message="This path is invalid, it must not start with a /",
+            )
+        ],
+    )
 
     def get_absolute_url(self):
         return reverse(
@@ -27,15 +44,19 @@ class Session(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
-
+    workstation_image = models.ForeignKey(
+        WorkstationImage, on_delete=models.CASCADE
+    )
     # Is the user done with this session?
     user_finished = models.BooleanField(default=False)
 
     def get_absolute_url(self):
         return reverse(
             "workstations:session-detail",
-            kwargs={"slug": self.workstation.slug, "pk": self.pk},
+            kwargs={
+                "slug": self.workstation_image.workstation.slug,
+                "pk": self.pk,
+            },
         )
 
     def save(self, *args, **kwargs):

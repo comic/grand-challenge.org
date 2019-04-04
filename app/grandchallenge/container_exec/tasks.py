@@ -176,19 +176,16 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         pk=pk, app_label=app_label, model_name=model_name
     )
 
-    workstation_image = (
-        session.workstation.workstationimage_set.filter(ready=True)
-        .order_by("-created")
-        .first()
-    )
-
     s = Service(
         job_id=pk,
         job_model=f"{app_label}-{model_name}",
-        exec_image=workstation_image.image,
-        exec_image_sha256=workstation_image.image_sha256,
+        exec_image=session.workstation_image.image,
+        exec_image_sha256=session.workstation_image.image_sha256,
     )
-    s.start()
+    s.start(
+        http_port=session.workstation_image.http_port,
+        websocket_port=session.workstation_image.websocket_port,
+    )
 
 
 @shared_task

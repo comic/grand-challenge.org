@@ -58,8 +58,11 @@ class SessionCreate(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.workstation = Workstation.objects.get(
-            slug=self.kwargs["slug"]
+        workstation = Workstation.objects.get(slug=self.kwargs["slug"])
+        form.instance.workstation_image = (
+            workstation.workstationimage_set.filter(ready=True)
+            .order_by("-created")
+            .first()
         )
         return super().form_valid(form)
 

@@ -26,9 +26,10 @@ def test_service_start_cleanup():
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
-        s.start()
+        s.start(http_port=80, websocket_port=81)
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
+        # TODO: Test that the labels are correctly set
     finally:
         s.cleanup()
         assert len(dockerclient.containers.list(filters=filters)) == 0
