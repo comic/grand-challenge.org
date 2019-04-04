@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group
 
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from tests.factories import (
     UserFactory,
@@ -234,6 +235,14 @@ def submission_file(tmpdir_factory):
     return testfile
 
 
+def add_to_graders_group(users):
+    # Add to retina_graders group
+    for grader in users:
+        grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+
+
 class AnnotationSet(NamedTuple):
     grader: UserFactory
     measurement: MeasurementAnnotationFactory
@@ -249,10 +258,7 @@ def generate_annotation_set(retina_grader=False):
     grader = UserFactory()
 
     if retina_grader:
-        # Add to retina_graders group
-        grader.groups.add(
-            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-        )
+        add_to_graders_group([grader])
 
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
@@ -301,11 +307,7 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     graders = (UserFactory(), UserFactory())
 
     if retina_grader:
-        # Add to retina_graders group
-        for grader in graders:
-            grader.groups.add(
-                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-            )
+        add_to_graders_group(graders)
 
     polygonsets = (
         PolygonAnnotationSetFactory(grader=graders[0]),
@@ -360,11 +362,7 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
     graders = (UserFactory(), UserFactory())
 
     if retina_grader:
-        # Add to retina_graders group
-        for grader in graders:
-            grader.groups.add(
-                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-            )
+        add_to_graders_group(graders)
 
     landmarksets = (
         LandmarkAnnotationSetFactory(grader=graders[0]),
