@@ -20,10 +20,10 @@ class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
         fields = "__all__"
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    groups = serializers.HyperlinkedRelatedField(
-        many=True, view_name="api:group-detail", read_only=True
-    )
+class UserSerializer(serializers.ModelSerializer):
+    # groups = serializers.HyperlinkedRelatedField(
+    #     many=True, view_name="api:group-detail", read_only=True
+    # )
 
     class Meta:
         model = User

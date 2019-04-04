@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
@@ -26,3 +26,10 @@ def setup_benchmark_admin_group(
         except AttributeError:
             # No creator set
             pass
+
+
+@receiver(post_delete, sender=Benchmark)
+def delete_benchmark_admin_group(
+    sender, instance, *args, **kwargs
+):
+    pass
