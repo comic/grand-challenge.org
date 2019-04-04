@@ -1,0 +1,13 @@
+{% extends "nobanner.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Update the workstation image settings - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Update the workstation image settings</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="Save" class="btn btn-primary"/>
+    </form>
+{% endblock %}

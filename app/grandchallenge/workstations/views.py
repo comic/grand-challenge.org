@@ -52,6 +52,12 @@ class WorkstationImageDetail(UserIsStaffMixin, DetailView):
     model = WorkstationImage
 
 
+class WorkstationImageUpdate(UserIsStaffMixin, UpdateView):
+    model = WorkstationImage
+    fields = ("initial_path", "http_port", "websocket_port")
+    template_name_suffix = "_update"
+
+
 class SessionCreate(UserIsStaffMixin, CreateView):
     model = Session
     fields = []

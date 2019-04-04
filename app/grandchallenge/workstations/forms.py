@@ -43,4 +43,9 @@ class WorkstationImageForm(ModelForm):
 
     class Meta:
         model = WorkstationImage
-        fields = ("chunked_upload",)
+        fields = (
+            "initial_path",
+            "http_port",
+            "websocket_port",
+            "chunked_upload",
+        )
