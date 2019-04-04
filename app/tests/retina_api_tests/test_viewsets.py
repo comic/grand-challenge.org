@@ -5,6 +5,10 @@ from rest_framework import status
 from django.test import TestCase
 from django.contrib.auth.models import Group
 from rest_framework.test import force_authenticate, APIRequestFactory
+
+from grandchallenge.registrations.serializers import (
+    OctObsRegistrationSerializer
+)
 from grandchallenge.subdomains.utils import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -28,12 +32,14 @@ from grandchallenge.retina_api.views import (
     PolygonListView,
     GradersWithPolygonAnnotationsListView,
     LandmarkAnnotationSetForImageList,
+    OctObsRegistrationRetrieve,
 )
 from tests.conftest import (
     generate_annotation_set,
     generate_two_polygon_annotation_sets,
     generate_multiple_landmark_annotation_sets,
 )
+from tests.registrations_tests.factories import OctObsRegistrationFactory
 from tests.viewset_helpers import view_test
 
 
@@ -589,6 +595,7 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.django_db
 class TestGradersWithPolygonAnnotationsListView(TestCase):
     def setUp(self):
         self.annotation_set = generate_two_polygon_annotation_sets(
@@ -740,6 +747,7 @@ class TestGradersWithPolygonAnnotationsListView(TestCase):
         assert response.data == expected_response
 
 
+@pytest.mark.django_db
 class TestLandmarkAnnotationSetForImageListListView(TestCase):
     def setUp(self):
         self.annotation_set = generate_multiple_landmark_annotation_sets(
@@ -857,4 +865,101 @@ class TestLandmarkAnnotationSetForImageListListView(TestCase):
 
         assert response.status_code == status.HTTP_200_OK
         response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+
+@pytest.mark.django_db
+class TestOctObsRegistrationRetrieveView(TestCase):
+    def setUp(self):
+        self.octobsregistration = OctObsRegistrationFactory()
+        self.kwargs = {"image_id": self.octobsregistration.obs_image.id}
+        self.url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=self.kwargs
+        )
+        self.view = OctObsRegistrationRetrieve.as_view()
+        self.rf = APIRequestFactory()
+        self.request = self.rf.get(self.url)
+
+        self.retina_user = UserFactory()
+        self.retina_user.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+
+    def test_non_authenticated(self):
+        response = self.view(self.request, **self.kwargs)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_non_retina_user(self):
+        user = UserFactory()
+        force_authenticate(self.request, user=user)
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retina_user_non_existant_image(self):
+        image = self.octobsregistration.obs_image
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        image.delete()
+        response = self.view(request, **kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_user_no_registration(self):
+        image = ImageFactory()
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        response = self.view(request, **kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_user_get_via_obs_image(self):
+        force_authenticate(self.request, user=self.retina_user)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_retina_user_get_via_oct_image(self):
+        image = self.octobsregistration.oct_image
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        response = self.view(request, **kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_admin_user_get_via_obs_image(self):
+        retina_admin = UserFactory()
+        retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
+        force_authenticate(self.request, user=retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
         assert response.data == expected_response
