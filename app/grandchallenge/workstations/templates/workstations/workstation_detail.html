@@ -8,6 +8,36 @@
 
     <p>{{ object.description }}</p>
 
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:update' slug=object.slug %}">
+            <i class="fa fa-edit"></i> Edit this workstation
+        </a>
+    </p>
+
+    <h3>Sessions</h3>
+
+    <ul>
+        {% for image in object.workstationimage_set.all %}
+            {% for session in image.session_set.all %}
+                <li>
+                    <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                </li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+
+    <form method="post"
+          action="{% url 'workstations:session-create' slug=object.slug %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-primary">
+            <i class="fas fa-flask"></i> Start a new session
+        </button>
+    </form>
+
+    <h3>Container Images</h3>
+
     <ul>
         {% for image in object.workstationimage_set.all %}
             <li><a href="{{ image.get_absolute_url }}">{{ image.pk }}</a>
@@ -17,23 +47,10 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'workstations:update' slug=object.slug %}">
-            <i class="fa fa-edit"></i> Edit this workstation
-        </a>
-        <a class="btn btn-primary"
            href="{% url 'workstations:image-create' slug=object.slug %}">
             <i class="fa fa-plus"></i> Upload a new container image for this
             workstation
         </a>
     </p>
-
-    <form method="post"
-          action="{% url 'workstations:session-create' slug=object.slug %}">
-        {% csrf_token %}
-        <button type="submit"
-                class="btn btn-primary">
-            Start a new session
-        </button>
-    </form>
 
 {% endblock %}
