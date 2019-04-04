@@ -80,11 +80,11 @@ http {
   }
 
   upstream workstations_http {
-    server workstation-proxy:80;
+    server workstation-proxy:8000;
   }
 
   upstream workstations_ws {
-    server workstation-proxy:4114;
+    server workstation-proxy:8001;
   }
 
   server {

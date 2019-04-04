@@ -244,16 +244,29 @@ services:
   workstation-proxy:
     image: traefik:1.7
     ports:
-      - "8080:8080"   # The Web UI (enabled by --api)
+      - "8080:8080"
+    command:
+      - "--defaultEntryPoints=http,ws"
+      - "--entrypoints=Name:traefik Address::8080"
+      - "--entrypoints=Name:ping Address::8082"
+      - "--entrypoints=Name:http Address::8000"
+      - "--entrypoints=Name:ws Address::8001"
+      - "--api"
+      - "--api.dashboard=true"
+      - "--api.entryPoint=traefik"
+      - "--ping"
+      - "--ping.entryPoint=traefik"
+      - "--docker"
+      - "--docker.domain=docker.localhost"
+      - "--docker.endpoint=unix:///var/run/docker.sock"
+      - "--docker.exposedbydefault=false"
+      - "--docker.watch=true"
+      - "--docker.network=workstations"
     volumes:
       # So that Traefik can listen to the Docker events
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
-      - type: bind
-        source: ./dockerfiles/workstation-proxy/traefik.toml
-        target: /etc/traefik/traefik.toml
-        read_only: true
     networks:
       - default
       - workstations
