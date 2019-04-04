@@ -129,16 +129,26 @@ http {
     }
 
     location =/Settings/webSocketPort {
+      # MeVisLab will query this endpoint to find out how to connect to the
+      # websocket. It assumes that each worker gets its own host, which is
+      # not the case on grand challenge, so we need to return a relative path
+      # which we get from the http_referer
+
       set $ref "/";
+
       if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/session/[^/]*)/.*$) {
-			set $ref $1;
+	    set $ref $1;
 	  }
-      return 200 '443$ref';
-      add_header Content-Type text/plain;
+
       expires epoch;
+      add_header Content-Type text/plain;
+      return 200 '443$ref';
     }
 
     location ~ ^/workstation-proxy/([^/]*)/mlab4d4c4142/(.*)$ {
+      # MeVisLab uses a magic string to determine if this should
+      # be routed to the websocket handler, this is handled here
+
       internal;
 
       proxy_buffering off;
