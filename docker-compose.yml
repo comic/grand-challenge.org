@@ -246,11 +246,11 @@ services:
     ports:
       - "8080:8080"
     command:
-      - "--defaultEntryPoints=http,ws"
+      - "--defaultEntryPoints=http,websocket"
       - "--entrypoints=Name:traefik Address::8080"
       - "--entrypoints=Name:ping Address::8082"
       - "--entrypoints=Name:http Address::8000"
-      - "--entrypoints=Name:ws Address::8001"
+      - "--entrypoints=Name:websocket Address::8001"
       - "--api"
       - "--api.dashboard=true"
       - "--api.entryPoint=traefik"

@@ -286,8 +286,8 @@ class Service(DockerConnection):
             "traefik.frontend.rule": f"Host:{self._job_id}.workstation",
             "traefik.http.port": str(http_port),
             "traefik.http.frontend.entryPoints": "http",
-            "traefik.ws.port": str(websocket_port),
-            "traefik.ws.frontend.entryPoints": "ws",
+            "traefik.websocket.port": str(websocket_port),
+            "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
         try:
