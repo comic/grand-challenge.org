@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 
-from grandchallenge.container_exec.backends.docker import Service
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -175,26 +174,12 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     session = get_model_instance(
         pk=pk, app_label=app_label, model_name=model_name
     )
-
-    s = Service(
-        job_id=pk,
-        job_model=f"{app_label}-{model_name}",
-        exec_image=session.workstation_image.image,
-        exec_image_sha256=session.workstation_image.image_sha256,
-    )
-    s.start(
-        http_port=session.workstation_image.http_port,
-        websocket_port=session.workstation_image.websocket_port,
-        hostname=session.hostname,
-    )
+    session.start()
 
 
 @shared_task
-def cleanup_service(*, pk: uuid.UUID, app_label: str, model_name: str):
-    s = Service(
-        job_id=pk,
-        job_model=f"{app_label}-{model_name}",
-        exec_image=None,
-        exec_image_sha256=None,
+def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    session = get_model_instance(
+        pk=pk, app_label=app_label, model_name=model_name
     )
-    s.cleanup()
+    session.stop()

@@ -21,7 +21,7 @@
         {% for image in object.workstationimage_set.all %}
             {% for session in image.session_set.all %}
                 <li>
-                    <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                    <a href="{{ session.get_absolute_url }}">{{ session }}, {{ session.get_status_display }}</a>
                 </li>
             {% endfor %}
         {% endfor %}

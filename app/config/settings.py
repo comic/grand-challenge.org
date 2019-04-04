@@ -604,7 +604,7 @@ CELERY_BEAT_SCHEDULE = {
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation",
     "grandchallenge.container_exec.tasks.start_service": "workstations",
-    "grandchallenge.container_exec.tasks.cleanup_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_service": "workstations",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
