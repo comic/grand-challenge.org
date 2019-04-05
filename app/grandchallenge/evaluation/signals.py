@@ -15,7 +15,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.submission_conversion.models import (
-    SubmissionToAnnotationSetJob
+    SubmissionToAnnotationSetJob,
 )
 
 
