@@ -15,26 +15,30 @@
         </a>
     </p>
 
-    <h3>Sessions</h3>
+    {% if object.workstationimage_set.count != 0 %}
 
-    <ul>
-        {% for image in object.workstationimage_set.all %}
-            {% for session in image.session_set.all %}
-                <li>
-                    <a href="{{ session.get_absolute_url }}">{{ session }}, {{ session.get_status_display }}</a>
-                </li>
+        <h3>Sessions</h3>
+
+        <ul>
+            {% for image in object.workstationimage_set.all %}
+                {% for session in image.session_set.all %}
+                    <li>
+                        <a href="{{ session.get_absolute_url }}">{{ session }}, {{ session.get_status_display }}</a>
+                    </li>
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
-    </ul>
+        </ul>
 
-    <form method="post"
-          action="{% url 'workstations:session-create' slug=object.slug %}">
-        {% csrf_token %}
-        <button type="submit"
-                class="btn btn-primary">
-            <i class="fas fa-flask"></i> Start a new session
-        </button>
-    </form>
+        <form method="post"
+              action="{% url 'workstations:session-create' slug=object.slug %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="btn btn-primary">
+                <i class="fas fa-flask"></i> Start a new session
+            </button>
+        </form>
+
+    {% endif %}
 
     <h3>Container Images</h3>
 
