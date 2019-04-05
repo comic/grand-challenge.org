@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
@@ -63,6 +65,7 @@ class Session(UUIDModel):
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
+    maximum_duration = models.DurationField(default=timedelta(minutes=10))
     # Is the user done with this session?
     user_finished = models.BooleanField(default=False)
 
@@ -71,6 +74,10 @@ class Session(UUIDModel):
         return (
             f"{self.pk}.{self._meta.model_name}.{self._meta.app_label}".lower()
         )
+
+    @property
+    def expires_at(self):
+        return self.created + self.maximum_duration
 
     @property
     def service(self):

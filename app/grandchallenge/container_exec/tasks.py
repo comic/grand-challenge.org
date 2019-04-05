@@ -7,6 +7,8 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
+from django.db.models import ExpressionWrapper, F, DateTimeField
+from django.utils import timezone
 
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -183,3 +185,25 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         pk=pk, app_label=app_label, model_name=model_name
     )
     session.stop()
+
+
+@shared_task
+def stop_expired_services(*, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    now = timezone.now()
+
+    services_to_stop = (
+        model.objects.annotate(
+            expires=ExpressionWrapper(
+                F("created") + F("maximum_duration"),
+                output_field=DateTimeField(),
+            )
+        )
+        .filter(expires__lt=now)
+        .exclude(status=model.STOPPED)
+    )
+
+    for service in services_to_stop:
+        service.stop()
+
+    return [str(s) for s in services_to_stop]

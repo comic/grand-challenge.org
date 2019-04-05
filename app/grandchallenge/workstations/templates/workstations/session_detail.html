@@ -10,6 +10,9 @@
     <dl>
         <dt>Status</dt>
         <dd>{{ object.get_status_display }}</dd>
+
+        <dt>Expiry</dt>
+        <dd>This session will expire in {{ object.expires_at|timeuntil }}.</dd>
     </dl>
 
     {% if object.status != object.STOPPED and object.status != object.QUEUED and not object.user_finished %}

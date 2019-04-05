@@ -599,12 +599,18 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
     },
+    "stop_expired_services": {
+        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+        "kwargs": {"app_label": "workstations", "model_name": "session"},
+        "schedule": timedelta(minutes=5),
+    },
 }
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation",
     "grandchallenge.container_exec.tasks.start_service": "workstations",
     "grandchallenge.container_exec.tasks.stop_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
