@@ -3,7 +3,7 @@ from typing import Tuple, NamedTuple, List, Callable, Iterable, Dict
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
-    get_jsonpath
+    get_jsonpath,
 )
 
 

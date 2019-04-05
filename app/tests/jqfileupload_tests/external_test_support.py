@@ -11,7 +11,7 @@ from django.test import Client, RequestFactory
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.jqfileupload_tests.test_widgets_uploaded_file import (
-    create_uploaded_file
+    create_uploaded_file,
 )
 from tests.jqfileupload_tests.utils import (
     create_upload_file_request,
@@ -97,7 +97,11 @@ class UploadSession:
 
     def __init__(self, sender):
         self.__upload_counter = 0
-        self.__csrf_token = f"{__file__}" f"-{id(sender)}" f"-{hex(random.randint(0, 1000000000000000000))[2:]}"
+        self.__csrf_token = (
+            f"{__file__}"
+            f"-{id(sender)}"
+            f"-{hex(random.randint(0, 1000000000000000000))[2:]}"
+        )
 
     @overload
     def single_chunk_upload(

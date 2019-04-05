@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.test_background_tasks import (
-    create_raw_upload_image_session
+    create_raw_upload_image_session,
 )
 from tests.factories import (
     UserFactory,
