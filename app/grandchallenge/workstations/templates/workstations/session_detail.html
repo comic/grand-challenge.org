@@ -10,10 +10,9 @@
     <dl>
         <dt>Status</dt>
         <dd>{{ object.get_status_display }}</dd>
-
     </dl>
 
-    {% if object.status != object.STOPPED and object.status != object.QUEUED %}
+    {% if object.status != object.STOPPED and object.status != object.QUEUED and not object.user_finished %}
         <p>
             <a class="btn btn-primary"
                href="{{ object.workstation_image.initial_path }}">View the
