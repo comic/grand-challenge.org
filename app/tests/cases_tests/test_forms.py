@@ -8,7 +8,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 from tests.jqfileupload_tests.external_test_support import (
-    create_file_from_filepath
+    create_file_from_filepath,
 )
 
 

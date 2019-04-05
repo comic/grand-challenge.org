@@ -343,7 +343,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
 def get_file(*, container: ContainerApiMixin, src: Path):
     tarstrm, info = container.get_archive(src)
 
-    if info["size"] > 2E9:
+    if info["size"] > 2e9:
         raise ValueError(f"File {src} is too big to be decompressed.")
 
     file_obj = io.BytesIO()

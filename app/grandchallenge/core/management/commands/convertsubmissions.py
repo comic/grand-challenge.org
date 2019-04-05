@@ -4,7 +4,7 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.submission_conversion.models import (
-    SubmissionToAnnotationSetJob
+    SubmissionToAnnotationSetJob,
 )
 
 

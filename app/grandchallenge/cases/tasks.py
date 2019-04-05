@@ -11,7 +11,7 @@ from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd
+    image_builder_mhd,
 )
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
