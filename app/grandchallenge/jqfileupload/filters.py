@@ -4,7 +4,7 @@ from django.http import HttpRequest
 
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import (
-    generate_upload_path_hash
+    generate_upload_path_hash,
 )
 
 

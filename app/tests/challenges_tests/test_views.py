@@ -1,4 +1,3 @@
-
 import pytest
 
 from grandchallenge.subdomains.utils import reverse

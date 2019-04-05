@@ -208,7 +208,9 @@ class TestArchiveIndexAPIEndpoints:
                 .get("info")
             )
 
-            floats_to_compare = []  # list of (response_float, expected_float, name) tuples
+            floats_to_compare = (
+                []
+            )  # list of (response_float, expected_float, name) tuples
             for archive, response_info, ds, oor in (
                 (
                     "Rotterdam",

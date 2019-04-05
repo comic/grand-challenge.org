@@ -11,7 +11,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
 from tests.jqfileupload_tests.external_test_support import (
-    create_file_from_filepath
+    create_file_from_filepath,
 )
 
 
