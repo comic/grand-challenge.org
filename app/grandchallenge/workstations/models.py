@@ -93,7 +93,9 @@ class Session(UUIDModel):
             http_port=self.workstation_image.http_port,
             websocket_port=self.workstation_image.websocket_port,
             hostname=self.hostname,
+            user=self.creator,
         )
+        # TODO: handle failed start
         self.update_status(status=self.STARTED)
 
     def stop(self):

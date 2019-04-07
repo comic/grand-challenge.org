@@ -2,6 +2,7 @@ import docker
 from django.conf import settings
 
 from grandchallenge.container_exec.backends.docker import Service
+from tests.factories import UserFactory
 
 
 def test_service_start_cleanup():
@@ -26,7 +27,12 @@ def test_service_start_cleanup():
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
-        s.start(http_port=80, websocket_port=81, hostname="test.local")
+        s.start(
+            http_port=80,
+            websocket_port=81,
+            hostname="test.local",
+            user=UserFactory(),
+        )
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
 

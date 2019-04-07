@@ -7,7 +7,8 @@ from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from time import sleep
-from typing import Tuple, List
+from typing import Tuple
+from urllib.parse import unquote
 
 import docker
 from django.conf import settings
@@ -17,6 +18,9 @@ from docker.errors import ContainerError, APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
+from rest_framework.authtoken.models import Token
+
+from grandchallenge.subdomains.utils import reverse
 
 
 class DockerConnection:
@@ -277,7 +281,7 @@ class Service(DockerConnection):
         """ Do not cleanup the containers for this job, leave them running """
         pass
 
-    def start(self, http_port: int, websocket_port: int, hostname: str):
+    def start(self, http_port: int, websocket_port: int, hostname: str, user):
         self._pull_images()
 
         traefik_labels = {
@@ -289,6 +293,26 @@ class Service(DockerConnection):
             "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
+        image_query_url = reverse(
+            "api:image-detail", kwargs={"pk": "{key}"}
+        )  # TODO: ensure that this is a full url
+
+        env = {
+            # rewrite to //grand-challenge.org to target //10.2.1.33:20080/grand_challenge
+            "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
+            # Query given URL to obtain images, where {key} will be subsituted by the grand-challenge image key
+            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(image_query_url),
+            # Set, for example, to "TOKEN abcde" to let cirrus embed the authentication token into the request
+            # omitting the need to use add in from NGINX
+            "GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {Token.objects.get_or_create(user=user)[0].key}",
+            # Set to "true" to omit SSL verification
+            "GRAND_CHALLENGE_UNSAFE": "True",  # TODO: Debug only
+        }
+
+        network = self._client.networks.list(
+            names=[self._run_kwargs["network"]]
+        )[0]
+
         try:
             self._client.containers.run(
                 image=self._exec_image_sha256,
@@ -296,6 +320,12 @@ class Service(DockerConnection):
                 remove=True,
                 detach=True,
                 labels={**self._labels, **traefik_labels},
+                environment=env,
+                extra_hosts={
+                    "gc.localhost": network.attrs.get("IPAM")["Config"][0][
+                        "Gateway"
+                    ]
+                },  # TODO: debug only
                 **self._run_kwargs,
             )
         except ContainerError as exc:
