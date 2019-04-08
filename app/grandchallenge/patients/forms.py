@@ -18,8 +18,7 @@ class PatientForm(ModelForm):
                     "cancel",
                     "Cancel",
                     onclick=(
-                        f"location.href="
-                        f'"{reverse("patients:patient-display")}";'
+                        f"location.href=" f'"{reverse("patients:list")}";'
                     ),
                 ),
             )

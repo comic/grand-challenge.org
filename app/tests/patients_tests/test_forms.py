@@ -15,7 +15,7 @@ def test_patient_display(client):
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        client=client, viewname="patients:patient-display", user=staff_user
+        client=client, viewname="patients:list", user=staff_user
     )
     assert str(patient.id) in response.rendered_content
 
@@ -32,7 +32,7 @@ def test_patient_create(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="patients:patient-create",
+        viewname="patients:create",
         client=client,
         method=client.post,
         data=data,
@@ -58,7 +58,7 @@ def test_patient_update(client):
         method=client.post,
         data=data,
         user=staff_user,
-        url=reverse("patients:patient-update", kwargs={"pk": patient.pk}),
+        url=reverse("patients:update", kwargs={"pk": patient.pk}),
     )
     assert response.status_code == 302
 
@@ -72,7 +72,7 @@ def test_patient_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("patients:patient-remove", kwargs={"pk": patient.pk}),
+        url=reverse("patients:delete", kwargs={"pk": patient.pk}),
     )
 
     assert response.status_code == 302

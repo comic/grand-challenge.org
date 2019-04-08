@@ -5,24 +5,12 @@ app_name = "patients"
 urlpatterns = [
     path("patient/", views.PatientTable.as_view(), name="patients"),
     path("patient/<uuid:pk>/", views.PatientRecord.as_view(), name="patient"),
+    path("", views.PatientListView.as_view(), name="list"),
+    path("create/", views.PatientCreateView.as_view(), name="create"),
     path(
-        "patient/create/",
-        views.PatientCreateView.as_view(),
-        name="patient-create",
+        "<uuid:pk>/update/", views.PatientUpdateView.as_view(), name="update"
     ),
     path(
-        "patient/remove/<uuid:pk>/",
-        views.PatientRemoveView.as_view(),
-        name="patient-remove",
-    ),
-    path(
-        "patient/update/<uuid:pk>/",
-        views.PatientUpdateView.as_view(),
-        name="patient-update",
-    ),
-    path(
-        "patient/display/",
-        views.PatientDisplayView.as_view(),
-        name="patient-display",
+        "<uuid:pk>/delete/", views.PatientDeleteView.as_view(), name="delete"
     ),
 ]

@@ -39,15 +39,14 @@ class PatientCreateView(UserIsStaffMixin, CreateView):
     form_class = PatientForm
 
     def get_success_url(self):
-        return reverse("patients:patient-display")
+        return reverse("patients:list")
 
 
-class PatientRemoveView(UserIsStaffMixin, DeleteView):
+class PatientDeleteView(UserIsStaffMixin, DeleteView):
     model = Patient
-    template_name = "patients/patient_remove_form.html"
 
     def get_success_url(self):
-        return reverse("patients:patient-display")
+        return reverse("patients:list")
 
 
 class PatientUpdateView(UserIsStaffMixin, UpdateView):
@@ -55,10 +54,9 @@ class PatientUpdateView(UserIsStaffMixin, UpdateView):
     form_class = PatientForm
 
     def get_success_url(self):
-        return reverse("patients:patient-display")
+        return reverse("patients:list")
 
 
-class PatientDisplayView(UserIsStaffMixin, ListView):
+class PatientListView(UserIsStaffMixin, ListView):
     model = Patient
     paginate_by = 100
-    template_name = "patients/patient_display_form.html"
