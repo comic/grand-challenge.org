@@ -799,8 +799,8 @@ class LandmarkAnnotationSetForImageList(ListAPIView):
         queryset = user.landmarkannotationset_set.filter(
             singlelandmarkannotation__image__id__in=image_ids
         ).distinct()
-        if len(queryset) == 0:
-            raise NotFound()
+        # if len(queryset) == 0:
+        #     raise NotFound()
         return queryset
 
 

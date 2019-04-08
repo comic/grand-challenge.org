@@ -795,7 +795,7 @@ class TestLandmarkAnnotationSetForImageListListView(TestCase):
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retina_grader_wrong_params(self):
+    def test_retina_grader_empty(self):
         list_of_image_ids = list(
             map(lambda x: str(x.id), self.annotation_set.landmarkset2images)
         )
@@ -808,7 +808,8 @@ class TestLandmarkAnnotationSetForImageListListView(TestCase):
         )
         response = self.view(request, **self.kwargs)
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
 
     def test_retina_grader_one_set(self):
         kwargs = {"user_id": self.annotation_set.landmarkset2.grader.id}
