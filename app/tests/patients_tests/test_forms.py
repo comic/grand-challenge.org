@@ -1,11 +1,10 @@
 import pytest
 
+from grandchallenge.patients.forms import PatientForm
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.utils import get_view_for_user
-
-from grandchallenge.subdomains.utils import reverse
-from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
 
 """" Tests the forms available for Patient CRUD """
 
@@ -26,10 +25,10 @@ def test_patient_create(client):
     staff_user = UserFactory(is_staff=True)
     data = {"name": "test"}
 
-    form = PatientCreateForm(data=data)
+    form = PatientForm(data=data)
     assert form.is_valid()
 
-    form = PatientCreateForm()
+    form = PatientForm()
     assert not form.is_valid()
 
     response = get_view_for_user(
@@ -48,10 +47,10 @@ def test_patient_update(client):
     patient = PatientFactory()
     data = {"name": "test"}
 
-    form = PatientUpdateForm(data=data)
+    form = PatientForm(data=data)
     assert form.is_valid()
 
-    form = PatientUpdateForm()
+    form = PatientForm()
     assert not form.is_valid()
 
     response = get_view_for_user(

@@ -7,36 +7,13 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.subdomains.utils import reverse
 
 
-class PatientCreateForm(ModelForm):
+class PatientForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(
             FormActions(
-                Submit("create", "Create"),
-                Button(
-                    "cancel",
-                    "Cancel",
-                    onclick=(
-                        f"location.href="
-                        f'"{reverse("patients:patient-display")}";'
-                    ),
-                ),
-            )
-        )
-
-    class Meta:
-        model = Patient
-        fields = ["name"]
-
-
-class PatientUpdateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(
-            FormActions(
-                Submit("update", "Update"),
+                Submit("save", "Save"),
                 Button(
                     "cancel",
                     "Cancel",

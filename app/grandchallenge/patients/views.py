@@ -2,11 +2,11 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from rest_framework import generics
 
+from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.patients.forms import PatientForm
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
-from grandchallenge.patients.forms import PatientCreateForm, PatientUpdateForm
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
 class PatientTable(generics.ListCreateAPIView):
@@ -36,7 +36,7 @@ class PatientRecord(generics.RetrieveUpdateDestroyAPIView):
 
 class PatientCreateView(UserIsStaffMixin, CreateView):
     model = Patient
-    form_class = PatientCreateForm
+    form_class = PatientForm
 
     def get_success_url(self):
         return reverse("patients:patient-display")
@@ -52,7 +52,7 @@ class PatientRemoveView(UserIsStaffMixin, DeleteView):
 
 class PatientUpdateView(UserIsStaffMixin, UpdateView):
     model = Patient
-    form_class = PatientUpdateForm
+    form_class = PatientForm
 
     def get_success_url(self):
         return reverse("patients:patient-display")
