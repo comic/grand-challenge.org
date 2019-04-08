@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from rest_framework.test import force_authenticate, APIRequestFactory
 
 from grandchallenge.registrations.serializers import (
-    OctObsRegistrationSerializer
+    OctObsRegistrationSerializer,
 )
 from grandchallenge.subdomains.utils import reverse
 from django.conf import settings

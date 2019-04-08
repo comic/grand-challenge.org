@@ -18,7 +18,7 @@ from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.registrations.serializers import (
-    OctObsRegistrationSerializer
+    OctObsRegistrationSerializer,
 )
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
