@@ -26,7 +26,11 @@ class StudyCreateForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
-        widgets = {"datetime": DateTimeInput(format="%d/%m/%Y %H:%M:%S")}
+        widgets = {
+            "datetime": DateTimeInput(
+                format="%d/%m/%Y %H:%M:%S", attrs={"type": "datetime-local"}
+            )
+        }
 
 
 class StudyUpdateForm(ModelForm):
@@ -48,4 +52,8 @@ class StudyUpdateForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
-        widgets = {"datetime": DateTimeInput(format="%d/%m/%Y %H:%M:%S")}
+        widgets = {
+            "datetime": DateTimeInput(
+                format="%d/%m/%Y %H:%M:%S", attrs={"type": "datetime-local"}
+            )
+        }
