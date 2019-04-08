@@ -1,10 +1,10 @@
-from django.forms import ModelForm
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Button, Submit
+from django.forms import ModelForm
 
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.patients.models import Patient
+from grandchallenge.subdomains.utils import reverse
 
 
 class PatientCreateForm(ModelForm):
@@ -17,8 +17,10 @@ class PatientCreateForm(ModelForm):
                 Button(
                     "cancel",
                     "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("patients:patient-display"),
+                    onclick=(
+                        f"location.href="
+                        f'"{reverse("patients:patient-display")}";'
+                    ),
                 ),
             )
         )
@@ -38,8 +40,10 @@ class PatientUpdateForm(ModelForm):
                 Button(
                     "cancel",
                     "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("patients:patient-display"),
+                    onclick=(
+                        f"location.href="
+                        f'"{reverse("patients:patient-display")}";'
+                    ),
                 ),
             )
         )
