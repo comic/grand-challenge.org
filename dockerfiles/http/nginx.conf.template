@@ -80,11 +80,11 @@ http {
   }
 
   upstream workstations_http {
-    server workstation-proxy:8000;
+    server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_HTTP_PORT};
   }
 
   upstream workstations_websocket {
-    server workstation-proxy:8001;
+    server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_WEBSOCKET_PORT};
   }
 
   server {
