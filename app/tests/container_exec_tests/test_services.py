@@ -1,9 +1,11 @@
 import docker
+import pytest
 from django.conf import settings
 
 from grandchallenge.container_exec.backends.docker import Service
 
 
+@pytest.mark.django_db
 def test_service_start_cleanup():
     job_id = "12345"
     job_model = "test"
