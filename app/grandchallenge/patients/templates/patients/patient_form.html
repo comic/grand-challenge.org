@@ -1,0 +1,11 @@
+{% extends "nobanner.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Patient{% endblock %}
+
+{% block content %}
+    <h2>Patient</h2>
+    {% crispy form %}
+{% endblock %}

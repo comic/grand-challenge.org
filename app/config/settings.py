@@ -342,6 +342,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
+    "grandchallenge.worklists",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -686,3 +687,6 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
+
+# Worklist specific settings
+WORKLIST_ACCESS_GROUP_NAME = "worklist_users"

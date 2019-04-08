@@ -1,0 +1,24 @@
+{% extends "nobanner.html" %}
+{% load grandchallenge_tags %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Patient remove{% endblock %}
+
+{% block content %}
+    <h2>Patient</h2>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure you want to delete this Patient?</p>
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td>{{ patient.id }}</td>
+                    <td>{{ patient.name }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <input type="submit" value="Delete">
+        <a href="{% url 'patients:patient-display' %}">Cancel</a>
+    </form>
+{% endblock %}

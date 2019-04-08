@@ -1,0 +1,10 @@
+{% extends "nobanner.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Worklist{% endblock %}
+
+{% block content %}
+    <h2>Worklist</h2>
+    {% crispy form %}
+{% endblock %}
