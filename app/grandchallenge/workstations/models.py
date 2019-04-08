@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from rest_framework.authtoken.models import Token
 
 from grandchallenge.container_exec.backends.docker import Service
 from grandchallenge.container_exec.models import ContainerImageModel
@@ -93,7 +94,7 @@ class Session(UUIDModel):
             http_port=self.workstation_image.http_port,
             websocket_port=self.workstation_image.websocket_port,
             hostname=self.hostname,
-            user=self.creator,
+            token=Token.objects.get_or_create(user=self.creator)[0].key,
         )
         # TODO: handle failed start
         self.update_status(status=self.STARTED)

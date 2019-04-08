@@ -18,7 +18,6 @@ from docker.errors import ContainerError, APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
-from rest_framework.authtoken.models import Token
 
 from grandchallenge.subdomains.utils import reverse
 
@@ -281,7 +280,13 @@ class Service(DockerConnection):
         """ Do not cleanup the containers for this job, leave them running """
         pass
 
-    def start(self, http_port: int, websocket_port: int, hostname: str, user):
+    def start(
+        self,
+        http_port: int,
+        websocket_port: int,
+        hostname: str,
+        token: str = "",
+    ):
         self._pull_images()
 
         traefik_labels = {
@@ -293,25 +298,33 @@ class Service(DockerConnection):
             "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
-        image_query_url = reverse(
-            "api:image-detail", kwargs={"pk": "{key}"}
-        )  # TODO: ensure that this is a full url
-
         env = {
-            # rewrite to //grand-challenge.org to target //10.2.1.33:20080/grand_challenge
             "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
-            # Query given URL to obtain images, where {key} will be subsituted by the grand-challenge image key
-            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(image_query_url),
-            # Set, for example, to "TOKEN abcde" to let cirrus embed the authentication token into the request
-            # omitting the need to use add in from NGINX
-            "GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {Token.objects.get_or_create(user=user)[0].key}",
-            # Set to "true" to omit SSL verification
-            "GRAND_CHALLENGE_UNSAFE": "True",  # TODO: Debug only
+            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(
+                reverse("api:image-detail", kwargs={"pk": "{key}"})
+            ),
         }
 
-        network = self._client.networks.list(
-            names=[self._run_kwargs["network"]]
-        )[0]
+        if token:
+            env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {token}"})
+
+        extra_hosts = {}
+
+        if settings.DEBUG:
+            # Allow the container to communicate with the dev environment
+            env.update({"GRAND_CHALLENGE_UNSAFE": "True"})
+
+            network = self._client.networks.list(
+                names=[settings.WORKSTATIONS_NETWORK_NAME]
+            )[0]
+
+            extra_hosts.update(
+                {
+                    "gc.localhost": network.attrs.get("IPAM")["Config"][0][
+                        "Gateway"
+                    ]
+                }
+            )
 
         try:
             self._client.containers.run(
@@ -321,11 +334,7 @@ class Service(DockerConnection):
                 detach=True,
                 labels={**self._labels, **traefik_labels},
                 environment=env,
-                extra_hosts={
-                    "gc.localhost": network.attrs.get("IPAM")["Config"][0][
-                        "Gateway"
-                    ]
-                },  # TODO: debug only
+                extra_hosts=extra_hosts,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
