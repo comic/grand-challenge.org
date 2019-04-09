@@ -18,7 +18,7 @@
     {% if object.status != object.STOPPED and object.status != object.QUEUED and not object.user_finished %}
         <p>
             <a class="btn btn-primary"
-               href="{{ object.workstation_image.initial_path }}">View the
+               href="{{ object.workstation_url }}">View the
                 workstation</a>
         </p>
 

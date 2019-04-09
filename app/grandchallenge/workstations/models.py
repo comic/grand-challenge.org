@@ -1,5 +1,5 @@
 from datetime import timedelta
-from urllib.parse import unquote
+from urllib.parse import unquote, urljoin
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, RegexValidator
@@ -121,6 +121,12 @@ class Session(UUIDModel):
             job_model=f"{self._meta.app_label}-{self._meta.model_name}",
             exec_image=self.workstation_image.image,
             exec_image_sha256=self.workstation_image.image_sha256,
+        )
+
+    @property
+    def workstation_url(self):
+        return urljoin(
+            self.get_absolute_url(), self.workstation_image.initial_path
         )
 
     def start(self):

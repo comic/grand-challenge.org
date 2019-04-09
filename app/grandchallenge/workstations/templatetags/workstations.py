@@ -29,6 +29,8 @@ def update_url(*, url: str, query: dict) -> str:
 
 @register.simple_tag(takes_context=True)
 def workstation_url(context, image, overlay=None):
+    """ Generate a url to view this image and overlay in a workstation """
+
     user = context.request.user
     session = (
         Session.objects.filter(creator=user)
@@ -38,9 +40,7 @@ def workstation_url(context, image, overlay=None):
     )
 
     if session:
-        url = parse.urljoin(
-            session.get_absolute_url(), session.workstation_image.initial_path
-        )
+        url = session.workstation_url
     else:
         url = settings.CIRRUS_APPLICATION
 
