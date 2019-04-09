@@ -1,11 +1,9 @@
 import docker
-import pytest
 from django.conf import settings
 
 from grandchallenge.container_exec.backends.docker import Service
 
 
-@pytest.mark.django_db
 def test_service_start_cleanup():
     job_id = "12345"
     job_model = "test"
@@ -28,12 +26,8 @@ def test_service_start_cleanup():
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
-        s.start(
-            http_port=80,
-            websocket_port=81,
-            hostname="test.local",
-            token="ABC123",
-        )
+        s.start(http_port=80, websocket_port=81, hostname="test.local")
+
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
 

@@ -8,7 +8,6 @@ from pathlib import Path
 from random import randint
 from time import sleep
 from typing import Tuple
-from urllib.parse import unquote
 
 import docker
 from django.conf import settings
@@ -18,8 +17,6 @@ from docker.errors import ContainerError, APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
-
-from grandchallenge.subdomains.utils import reverse
 
 
 class DockerConnection:
@@ -280,12 +277,32 @@ class Service(DockerConnection):
         """ Do not cleanup the containers for this job, leave them running """
         pass
 
+    @property
+    def extra_hosts(self):
+        if settings.DEBUG:
+            # The workstation needs to communicate with the django api. In
+            # production this happens automatically via the external DNS, but
+            # when running in debug mode we need to pass through the developers
+            # host via the workstations network gateway
+
+            network = self._client.networks.list(
+                names=[settings.WORKSTATIONS_NETWORK_NAME]
+            )[0]
+
+            return {
+                "gc.localhost": network.attrs.get("IPAM")["Config"][0][
+                    "Gateway"
+                ]
+            }
+        else:
+            return {}
+
     def start(
         self,
         http_port: int,
         websocket_port: int,
         hostname: str,
-        token: str = "",
+        environment: dict = None,
     ):
         self._pull_images()
 
@@ -298,34 +315,6 @@ class Service(DockerConnection):
             "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
-        env = {
-            "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
-            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(
-                reverse("api:image-detail", kwargs={"pk": "{key}"})
-            ),
-        }
-
-        if token:
-            env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {token}"})
-
-        extra_hosts = {}
-
-        if settings.DEBUG:
-            # Allow the container to communicate with the dev environment
-            env.update({"GRAND_CHALLENGE_UNSAFE": "True"})
-
-            network = self._client.networks.list(
-                names=[settings.WORKSTATIONS_NETWORK_NAME]
-            )[0]
-
-            extra_hosts.update(
-                {
-                    "gc.localhost": network.attrs.get("IPAM")["Config"][0][
-                        "Gateway"
-                    ]
-                }
-            )
-
         try:
             self._client.containers.run(
                 image=self._exec_image_sha256,
@@ -333,8 +322,8 @@ class Service(DockerConnection):
                 remove=True,
                 detach=True,
                 labels={**self._labels, **traefik_labels},
-                environment=env,
-                extra_hosts=extra_hosts,
+                environment=environment or {},
+                extra_hosts=self.extra_hosts,
                 **self._run_kwargs,
             )
         except ContainerError as exc:

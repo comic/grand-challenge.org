@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.admin.utils import unquote
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -81,6 +82,28 @@ class Session(UUIDModel):
         return self.created + self.maximum_duration
 
     @property
+    def environment(self):
+        env = {
+            "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
+            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(
+                reverse("api:image-detail", kwargs={"pk": "{key}"})
+            ),
+        }
+
+        if self.creator:
+            env.update(
+                {
+                    "GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {Token.objects.get_or_create(user=self.creator)[0].key}"
+                }
+            )
+
+        if settings.DEBUG:
+            # Allow the container to communicate with the dev environment
+            env.update({"GRAND_CHALLENGE_UNSAFE": "True"})
+
+        return env
+
+    @property
     def service(self):
         return Service(
             job_id=self.pk,
@@ -94,7 +117,7 @@ class Session(UUIDModel):
             http_port=self.workstation_image.http_port,
             websocket_port=self.workstation_image.websocket_port,
             hostname=self.hostname,
-            token=Token.objects.get_or_create(user=self.creator)[0].key,
+            environment=self.environment,
         )
         # TODO: handle failed start
         self.update_status(status=self.STARTED)
