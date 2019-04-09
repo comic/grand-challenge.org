@@ -59,6 +59,8 @@ class Algorithm(UUIDModel):
         blank=True,
         help_text="Description of this solution in markdown.",
     )
+    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='implementations')
+
 
     def __str__(self):
         return self.name
@@ -81,7 +83,6 @@ class Implementation(UUIDModel):
         blank=True,
         help_text="Description of this implementation in markdown.",
     )
-    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='implementations')
     container = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
 
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, blank=True, null=True, related_name='implementations')

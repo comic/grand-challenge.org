@@ -1,5 +1,7 @@
 from django.core.management import BaseCommand
 
+from grandchallenge.eyra_data.models import DataType
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -13,3 +15,10 @@ class Command(BaseCommand):
 
         assign_perm('eyra_benchmarks.add_benchmark', group)
         assign_perm('eyra_benchmarks.change_benchmark', group)
+
+        output_metrics_type = DataType(
+            name='OutputMetrics',
+            description='Metrics (.json)'
+        )
+        output_metrics_type.save()
+

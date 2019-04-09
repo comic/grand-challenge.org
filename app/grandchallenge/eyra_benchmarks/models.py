@@ -34,6 +34,15 @@ class Benchmark(UUIDModel):
         ),
         unique=True,
     )
+    image = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+        help_text=(
+            "Benchmark image"
+        ),
+    )
     evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     training_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
@@ -43,6 +52,7 @@ class Benchmark(UUIDModel):
     admin_group = models.OneToOneField(
         Group,
         null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="benchmark",
     )

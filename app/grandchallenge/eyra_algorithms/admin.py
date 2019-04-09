@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from grandchallenge.eyra_algorithms.models import Implementation, Input, Job, JobInput, Interface
+from grandchallenge.eyra_algorithms.models import Implementation, Input, Job, JobInput, Interface, Algorithm
+
+
+class ImplementationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'creator', 'created')
 
 
 class AlgorithmAdmin(admin.ModelAdmin):
@@ -25,6 +29,7 @@ class JobAdmin(admin.ModelAdmin):
     inlines = [JobInputsInline]
 
 
-admin.site.register(Implementation, AlgorithmAdmin)
+admin.site.register(Implementation, ImplementationAdmin)
+admin.site.register(Algorithm, AlgorithmAdmin)
 admin.site.register(Interface, InterfaceAdmin)
 admin.site.register(Job, JobAdmin)
