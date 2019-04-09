@@ -30,14 +30,7 @@ def update_url(*, url: str, query: dict) -> str:
 @register.simple_tag(takes_context=True)
 def workstation_url(context, image, overlay=None):
     """ Generate a url to view this image and overlay in a workstation """
-
-    user = context.request.user
-    session = (
-        Session.objects.filter(creator=user)
-        .exclude(status__in=[Session.QUEUED, Session.STOPPED])
-        .order_by("-created")
-        .first()
-    )
+    session = context.get("workstation_session")
 
     if session:
         url = session.workstation_url

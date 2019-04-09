@@ -257,6 +257,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
                 "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
+                "grandchallenge.workstations.context_processors.workstation_session",
             ]
         },
     }
@@ -662,7 +663,10 @@ if DEBUG:
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
 
-        MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)
+        MIDDLEWARE = (
+            "debug_toolbar.middleware.DebugToolbarMiddleware",
+            *MIDDLEWARE,
+        )
 
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
