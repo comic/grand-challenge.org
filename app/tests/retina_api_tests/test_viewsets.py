@@ -1,3 +1,4 @@
+import copy
 import json
 import pytest
 
@@ -522,11 +523,12 @@ class TestSinglePolygonAnnotationViewSet:
         model_serialized = SinglePolygonAnnotationSerializer(
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
         ).data
-        annotation_set = PolygonAnnotationSetFactory(
-            grader=TwoRetinaPolygonAnnotationSets.grader1
-        )
-        model_serialized["annotation_set"] = str(annotation_set.id)
-        model_json = json.dumps(model_serialized)
+        annotation_set = SinglePolygonAnnotationFactory()
+        model_serialized["value"] = annotation_set.value
+        partial_model = copy.deepcopy(model_serialized)
+        del partial_model["annotation_set"]
+        del partial_model["id"]
+        model_json = json.dumps(partial_model)
 
         response = view_test(
             "partial_update",
@@ -541,9 +543,6 @@ class TestSinglePolygonAnnotationViewSet:
         )
 
         if user_type in ("retina_grader", "retina_admin"):
-            response.data["annotation_set"] = str(
-                response.data["annotation_set"]
-            )
             assert response.data == model_serialized
 
     def test_destroy_view(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
