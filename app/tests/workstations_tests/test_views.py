@@ -261,3 +261,33 @@ def test_session_detail(client):
     assert response.status_code == 200
     assert str(s1.pk) in response.rendered_content
     assert str(s2.pk) not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_workstation_proxy(client):
+    u1, u2 = UserFactory(), UserFactory()
+    session = SessionFactory(creator=u1)
+
+    url = reverse(
+        "workstations:session-proxy",
+        kwargs={
+            "slug": session.workstation_image.workstation.slug,
+            "pk": session.pk,
+            "path": "foo/../bar/test",
+        },
+    )
+
+    response = get_view_for_user(client=client, url=url, user=u1)
+
+    assert response.status_code == 200
+    assert response.has_header("X-Accel-Redirect")
+
+    redirect_url = response.get("X-Accel-Redirect")
+
+    assert redirect_url.endswith("bar/test")
+    assert redirect_url.startswith("/workstation-proxy/")
+    assert session.hostname in redirect_url
+
+    # try as another user
+    response = get_view_for_user(client=client, url=url, user=u2)
+    assert response.status_code == 403

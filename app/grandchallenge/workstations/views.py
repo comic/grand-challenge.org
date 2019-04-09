@@ -1,4 +1,6 @@
-from django.http import HttpResponse, Http404
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
@@ -82,17 +84,14 @@ class SessionDetail(UserIsStaffMixin, DetailView):
     model = Session
 
 
-def workstation_proxy(request, *, pk, path, **_):
-    try:
-        session = Session.objects.get(pk=pk)
-    except Session.DoesNotExist:
-        raise Http404("Session not found")
-
+def session_proxy(request, *, pk, path, **_):
+    """ Returns an internal redirect to the session instance if authorised """
+    session = get_object_or_404(Session, pk=pk)
     path = safe_join(f"/workstation-proxy/{session.hostname}", path)
 
     user = request.user
     if session.creator != user:
-        raise Http404("Session not found")
+        raise PermissionDenied
 
     response = HttpResponse()
     response["X-Accel-Redirect"] = path

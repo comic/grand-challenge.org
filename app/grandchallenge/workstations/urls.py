@@ -11,7 +11,7 @@ from grandchallenge.workstations.views import (
     SessionCreate,
     SessionDetail,
     SessionUpdate,
-    workstation_proxy,
+    session_proxy,
     WorkstationImageUpdate,
 )
 
@@ -57,5 +57,9 @@ urlpatterns = [
         SessionUpdate.as_view(),
         name="session-update",
     ),
-    path("<slug>/session/<uuid:pk>/<path:path>", workstation_proxy),
+    path(
+        "<slug>/session/<uuid:pk>/<path:path>",
+        session_proxy,
+        name="session-proxy",
+    ),
 ]
