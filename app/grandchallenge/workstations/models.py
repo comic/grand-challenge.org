@@ -49,12 +49,14 @@ class Session(UUIDModel):
     QUEUED = 0
     STARTED = 1
     RUNNING = 2
-    STOPPED = 3
+    FAILED = 3
+    STOPPED = 4
 
     STATUS_CHOICES = (
         (QUEUED, "Queued"),
         (STARTED, "Started"),
         (RUNNING, "Running"),
+        (FAILED, "Failed"),
         (STOPPED, "Stopped"),
     )
 
@@ -113,14 +115,16 @@ class Session(UUIDModel):
         )
 
     def start(self):
-        self.service.start(
-            http_port=self.workstation_image.http_port,
-            websocket_port=self.workstation_image.websocket_port,
-            hostname=self.hostname,
-            environment=self.environment,
-        )
-        # TODO: handle failed start
-        self.update_status(status=self.STARTED)
+        try:
+            self.service.start(
+                http_port=self.workstation_image.http_port,
+                websocket_port=self.workstation_image.websocket_port,
+                hostname=self.hostname,
+                environment=self.environment,
+            )
+            self.update_status(status=self.STARTED)
+        except RuntimeError:
+            self.update_status(status=self.FAILED)
 
     def stop(self):
         self.service.stop_and_cleanup()
