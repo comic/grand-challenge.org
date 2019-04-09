@@ -86,13 +86,17 @@ class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
         )
 
 
-class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
-    class Meta:
-        model = LandmarkAnnotationSet
-        fields = ("grader", "created")
-
-
 class SingleLandmarkAnnotationSerializer(AbstractSingleAnnotationSerializer):
     class Meta:
         model = SingleLandmarkAnnotation
         fields = ("image", "annotation_set", "landmarks")
+
+
+class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
+    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializer(
+        many=True, read_only=True
+    )
+
+    class Meta:
+        model = LandmarkAnnotationSet
+        fields = ("id", "grader", "created", "singlelandmarkannotation_set")

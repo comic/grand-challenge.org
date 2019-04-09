@@ -17,6 +17,7 @@ from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     LandmarkAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    SingleLandmarkAnnotationSerializer,
 )
 from tests.serializer_helpers import batch_test_serializers
 
@@ -69,7 +70,13 @@ serializers = {
         "unique": True,
         "factory": LandmarkAnnotationSetFactory,
         "serializer": LandmarkAnnotationSetSerializer,
-        "fields": ("grader", "created"),
+        "fields": ("id", "grader", "created", "singlelandmarkannotation_set"),
+    },
+    "single_landmark": {
+        "unique": True,
+        "factory": SingleLandmarkAnnotationFactory,
+        "serializer": SingleLandmarkAnnotationSerializer,
+        "fields": ("image", "annotation_set", "landmarks"),
     },
 }
 
