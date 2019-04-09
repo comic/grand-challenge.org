@@ -15,6 +15,11 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.workstations.models import (
+    Session,
+    Workstation,
+    WorkstationImage,
+)
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -172,3 +177,27 @@ class ImagingModalityFactory(factory.DjangoModelFactory):
         django_get_or_create = ("modality",)
 
     modality = factory.sequence(lambda n: f"Modality {n}")
+
+
+class WorkstationFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Workstation
+
+    title = factory.sequence(lambda n: f"Workstation {n}")
+
+
+class WorkstationImageFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorkstationImage
+
+    workstation = factory.SubFactory(WorkstationFactory)
+    image = factory.django.FileField()
+    image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
+
+
+class SessionFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Session
+
+    creator = factory.SubFactory(UserFactory)
+    workstation_image = factory.SubFactory(WorkstationImageFactory)
