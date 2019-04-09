@@ -620,11 +620,10 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-# CIRRUS Is an external application that can view images
-CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
-CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-CIRRUS_ANNOTATION_QUERY_PARAM = "grand_challenge_overlay"
-
+# The workstation that is accessible by all authorised users
+WORKSTATIONS_GLOBAL_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"

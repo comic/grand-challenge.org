@@ -42,10 +42,10 @@ def workstation_url(context, image, overlay=None):
     if session:
         url = session.workstation_url
     else:
-        url = settings.CIRRUS_APPLICATION
+        url = settings.WORKSTATIONS_GLOBAL_APPLICATION
 
-    query = {settings.CIRRUS_BASE_IMAGE_QUERY_PARAM: image.pk}
+    query = {settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: image.pk}
     if overlay is not None:
-        query.update({settings.CIRRUS_ANNOTATION_QUERY_PARAM: overlay.pk})
+        query.update({settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: overlay.pk})
 
     return update_url(url=url, query=query)
