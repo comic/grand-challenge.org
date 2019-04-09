@@ -8,6 +8,9 @@
     <h2>{{ object.workstation.slug }} Session</h2>
 
     <dl>
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
         <dt>Status</dt>
         <dd>{{ object.get_status_display }}</dd>
 

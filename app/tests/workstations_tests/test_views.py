@@ -2,12 +2,13 @@ import pytest
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.models import Workstation
+from grandchallenge.workstations.models import Workstation, Session
 from tests.factories import (
     UserFactory,
     WorkstationFactory,
     StagedFileFactory,
     WorkstationImageFactory,
+    SessionFactory,
 )
 from tests.utils import get_view_for_user
 
@@ -181,3 +182,82 @@ def test_workstationimage_update(client):
     assert wsi.initial_path == ""
     assert wsi.websocket_port == 1337
     assert wsi.http_port == 1234
+
+
+@pytest.mark.django_db
+def test_session_create(client):
+    user = UserFactory(is_staff=True)
+    ws = WorkstationFactory()
+
+    # Create some workstations and pretend that they're ready
+    wsi_old = WorkstationImageFactory(workstation=ws, ready=True)
+    wsi_new = WorkstationImageFactory(workstation=ws, ready=True)
+    wsi_not_ready = WorkstationImageFactory(workstation=ws)
+    wsi_other_ws = WorkstationImageFactory(ready=True)
+
+    assert Session.objects.count() == 0
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:session-create",
+        reverse_kwargs={"slug": ws.slug},
+        user=user,
+    )
+
+    assert response.status_code == 302
+
+    sessions = Session.objects.all()
+
+    assert len(sessions) == 1
+
+    # Should select the most recent workstation
+    assert sessions[0].workstation_image == wsi_new
+    assert sessions[0].creator == user
+
+
+@pytest.mark.django_db
+def test_session_update(client):
+    user = UserFactory(is_staff=True)
+    session = SessionFactory()
+
+    assert session.user_finished == False
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:session-update",
+        reverse_kwargs={
+            "slug": session.workstation_image.workstation.slug,
+            "pk": session.pk,
+        },
+        user=user,
+        data={"user_finished": True},
+    )
+
+    assert response.status_code == 302
+    assert response.url == session.get_absolute_url()
+
+    session.refresh_from_db()
+
+    assert session.user_finished == True
+
+
+@pytest.mark.django_db
+def test_session_detail(client):
+    user = UserFactory(is_staff=True)
+    s1, s2 = SessionFactory(), SessionFactory()
+
+    response = get_view_for_user(
+        client=client,
+        viewname="workstations:session-detail",
+        reverse_kwargs={
+            "slug": s1.workstation_image.workstation.slug,
+            "pk": s1.pk,
+        },
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert str(s1.pk) in response.rendered_content
+    assert str(s2.pk) not in response.rendered_content
