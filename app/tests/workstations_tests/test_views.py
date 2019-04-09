@@ -153,3 +153,31 @@ def test_workstationimage_detail(client):
     assert response.status_code == 200
     assert str(wsi1.pk) in response.rendered_content
     assert str(wsi2.pk) not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_workstationimage_update(client):
+    user = UserFactory(is_staff=True)
+    wsi = WorkstationImageFactory()
+
+    assert wsi.initial_path != ""
+    assert wsi.websocket_port != 1337
+    assert wsi.http_port != 1234
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:image-update",
+        reverse_kwargs={"slug": wsi.workstation.slug, "pk": wsi.pk},
+        user=user,
+        data={"initial_path": "", "websocket_port": 1337, "http_port": 1234},
+    )
+
+    assert response.status_code == 302
+    assert response.url == wsi.get_absolute_url()
+
+    wsi.refresh_from_db()
+
+    assert wsi.initial_path == ""
+    assert wsi.websocket_port == 1337
+    assert wsi.http_port == 1234
