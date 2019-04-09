@@ -269,15 +269,6 @@ class Image(UUIDModel):
             result.append(color_components)
         return result
 
-    @property
-    def query_string(self):
-        return f"{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
-
-    @property
-    def cirrus_link(self) -> str:
-        # TODO: Remove this and rely on the template tag instead
-        return f"{settings.CIRRUS_APPLICATION}&{self.query_string}"
-
     def get_sitk_image(self):
         """
         This function returns the image that belongs to this model as an SimpleITK image. It requires that exactly one

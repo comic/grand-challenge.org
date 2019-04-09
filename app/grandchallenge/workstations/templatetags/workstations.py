@@ -1,4 +1,4 @@
-from urllib.parse import urljoin, urlparse, parse_qs, urlencode, urlunparse
+from urllib import parse
 
 from django import template
 from django.conf import settings
@@ -8,8 +8,27 @@ from grandchallenge.workstations.models import Session
 register = template.Library()
 
 
+def update_url(*, url: str, query: dict) -> str:
+    """
+    Updates a url with new params. If the url contains a fragment then the
+    params will be added to the fragment, otherwise they will be added to
+    the query.
+    """
+
+    url_parts = list(parse.urlparse(url))
+
+    # If a fragment exists, update the fragment, else update the query
+    idx = 5 if url_parts[5] else 4
+
+    old_query = parse.parse_qs(url_parts[idx])
+    old_query.update(query)
+    url_parts[idx] = parse.unquote(parse.urlencode(old_query, doseq=True))
+
+    return parse.urlunparse(url_parts)
+
+
 @register.simple_tag(takes_context=True)
-def workstation_link(context, image):
+def workstation_url(context, image, overlay=None):
     user = context.request.user
     session = (
         Session.objects.filter(creator=user)
@@ -19,15 +38,14 @@ def workstation_link(context, image):
     )
 
     if session:
-        url = urljoin(
+        url = parse.urljoin(
             session.get_absolute_url(), session.workstation_image.initial_path
         )
     else:
         url = settings.CIRRUS_APPLICATION
 
-    url_parts = list(urlparse(url))
-    query = parse_qs(url_parts[4])
-    query.update(parse_qs(image.query_string))
-    url_parts[4] = urlencode(query, doseq=True)
+    query = {settings.CIRRUS_BASE_IMAGE_QUERY_PARAM: image.pk}
+    if overlay is not None:
+        query.update({settings.CIRRUS_ANNOTATION_QUERY_PARAM: overlay.pk})
 
-    return f"{urlunparse(url_parts)}"
+    return update_url(url=url, query=query)

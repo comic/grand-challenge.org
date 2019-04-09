@@ -1,7 +1,7 @@
 from datetime import timedelta
+from urllib.parse import unquote
 
 from django.conf import settings
-from django.contrib.admin.utils import unquote
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel

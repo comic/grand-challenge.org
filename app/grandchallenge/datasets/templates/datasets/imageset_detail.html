@@ -1,5 +1,6 @@
 {% extends "site.html" %}
 {% load grandchallenge_tags %}
+{% load workstations %}
 
 {% block title %}
     Dataset - {{ block.super }}
@@ -66,7 +67,7 @@
             {% for im in object.images_with_keys %}
                 <tr>
                     <td>{{ im.key }}</td>
-                    <td><a href="{{ im.image.cirrus_link }}"
+                    <td><a href="{% workstation_url image=im.image %}"
                            title="View Image">{{ im.image }}</a></td>
                 </tr>
             {% endfor %}
