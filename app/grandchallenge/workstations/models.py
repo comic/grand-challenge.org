@@ -30,6 +30,7 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
     initial_path = models.CharField(
         max_length=256,
         default="Applications/GrandChallengeViewer/index.html",
+        blank=True,
         validators=[
             RegexValidator(
                 regex=r"^(?:[^/][^\s]*)\Z",

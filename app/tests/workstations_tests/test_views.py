@@ -3,7 +3,12 @@ from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
-from tests.factories import UserFactory, WorkstationFactory
+from tests.factories import (
+    UserFactory,
+    WorkstationFactory,
+    StagedFileFactory,
+    WorkstationImageFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -70,7 +75,7 @@ def test_workstation_update_view(client):
     description = "my AWESOME workstation"
 
     assert w.title != title
-    assert w.description == None
+    assert w.description is None
 
     response = get_view_for_user(
         client=client,
@@ -86,3 +91,65 @@ def test_workstation_update_view(client):
     assert response.status_code == 302
     assert w.title == title
     assert w.description == description
+
+
+@pytest.mark.django_db
+def test_workstationimage_create(client):
+    UserFactory()
+    u2 = UserFactory(is_staff=True)
+    w1 = WorkstationFactory()
+    w2 = WorkstationFactory()
+    staged_file = StagedFileFactory(file__filename="example.tar.gz")
+
+    assert w1.workstationimage_set.count() == 0
+    assert w2.workstationimage_set.count() == 0
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:image-create",
+        reverse_kwargs={"slug": w2.slug},
+        user=u2,
+        data={
+            "chunked_upload": staged_file.file_id,
+            "initial_path": "",
+            "websocket_port": 1337,
+            "http_port": 1234,
+        },
+    )
+
+    assert response.status_code == 302
+
+    w1.refresh_from_db()
+    w2.refresh_from_db()
+
+    assert w1.workstationimage_set.count() == 0
+
+    w2_images = w2.workstationimage_set.all()
+    assert len(w2_images) == 1
+    assert w2_images[0].creator == u2
+    assert w2_images[0].websocket_port == 1337
+    assert w2_images[0].http_port == 1234
+    assert w2_images[0].staged_image_uuid == staged_file.file_id
+    assert w2_images[0].initial_path == ""
+
+
+@pytest.mark.django_db
+def test_workstationimage_detail(client):
+    user = UserFactory(is_staff=True)
+    ws = WorkstationFactory()
+    wsi1, wsi2 = (
+        WorkstationImageFactory(workstation=ws),
+        WorkstationImageFactory(workstation=ws),
+    )
+
+    response = get_view_for_user(
+        viewname="workstations:image-detail",
+        reverse_kwargs={"slug": ws.slug, "pk": wsi1.pk},
+        client=client,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert str(wsi1.pk) in response.rendered_content
+    assert str(wsi2.pk) not in response.rendered_content
