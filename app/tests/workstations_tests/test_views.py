@@ -290,4 +290,5 @@ def test_workstation_proxy(client):
 
     # try as another user
     response = get_view_for_user(client=client, url=url, user=u2)
+    assert not response.has_header("X-Accel-Redirect")
     assert response.status_code == 403
