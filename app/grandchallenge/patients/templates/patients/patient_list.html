@@ -1,11 +1,10 @@
 {% extends "nobanner.html" %}
 {% load url from grandchallenge_tags %}
 
-{% block title %}Patients overview{% endblock %}
+{% block title %}{{ object.title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
     <h2>Patients</h2>
-
     <table class="table table-sm">
         <thead>
             <tr>
