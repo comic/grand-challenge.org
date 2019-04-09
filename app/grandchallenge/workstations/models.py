@@ -74,6 +74,15 @@ class Session(UUIDModel):
     user_finished = models.BooleanField(default=False)
 
     @property
+    def task_kwargs(self):
+        # The kwargs that need to be passed to celery to get this object
+        return {
+            "app_label": self._meta.app_label,
+            "model_name": self._meta.model_name,
+            "pk": self.pk,
+        }
+
+    @property
     def hostname(self):
         return (
             f"{self.pk}.{self._meta.model_name}.{self._meta.app_label}".lower()
@@ -149,18 +158,6 @@ class Session(UUIDModel):
         super().save(*args, **kwargs)
 
         if created:
-            start_service.apply_async(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "pk": self.pk,
-                }
-            )
+            start_service.apply_async(kwargs=self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
-            stop_service.apply_async(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "pk": self.pk,
-                }
-            )
+            stop_service.apply_async(kwargs=self.task_kwargs)
