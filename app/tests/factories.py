@@ -3,6 +3,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import factory
+import factory.fuzzy
 from django.conf import settings
 from django.utils import timezone
 
@@ -17,7 +18,6 @@ from grandchallenge.evaluation.models import Submission, Job, Method, Result
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
-from grandchallenge.profiles.models import UserProfile
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 from grandchallenge.workstations.models import (
@@ -219,3 +219,28 @@ class SessionFactory(factory.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     workstation_image = factory.SubFactory(WorkstationImageFactory)
+
+
+class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
+    def __init__(self, size=None):
+        self.size = size
+
+    def fuzz(self):
+        if self.size is None:
+            size = factory.fuzzy.random.randgen.randint(1, 30)
+        else:
+            size = self.size
+
+        fuzzy_list = []
+        for i in range(size):
+            fuzzy_list.append(
+                [
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
+                ]
+            )
+        return fuzzy_list

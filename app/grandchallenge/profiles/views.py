@@ -4,11 +4,13 @@ from userena import views as userena_views
 
 from grandchallenge.profiles.forms import EditProfileForm
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.profiles.utils import signin_redirect
 
 
 def login_redirect(request):
-    next = request.GET.get("next", "/")
-    return redirect(next)
+    next_uri = request.GET.get("next")
+    redirect_uri = signin_redirect(redirect=next_uri, user=request.user)
+    return redirect(redirect_uri)
 
 
 def profile(request):
@@ -53,6 +55,16 @@ def signup(request, extra_context=None, **kwargs):
         request=request,
         extra_context=extra_context,
         success_url=success,
+        **kwargs,
+    )
+    return response
+
+
+def signin(request, **kwargs):
+    redirect_signin_function = signin_redirect
+    response = userena_views.signin(
+        request=request,
+        redirect_signin_function=redirect_signin_function,
         **kwargs,
     )
     return response

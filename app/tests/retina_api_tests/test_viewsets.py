@@ -1,3 +1,4 @@
+import copy
 import json
 import pytest
 
@@ -5,6 +6,10 @@ from rest_framework import status
 from django.test import TestCase
 from django.contrib.auth.models import Group
 from rest_framework.test import force_authenticate, APIRequestFactory
+
+from grandchallenge.registrations.serializers import (
+    OctObsRegistrationSerializer,
+)
 from grandchallenge.subdomains.utils import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -18,6 +23,7 @@ from tests.annotations_tests.factories import (
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.annotations.models import PolygonAnnotationSet
@@ -26,11 +32,15 @@ from grandchallenge.retina_api.views import (
     SinglePolygonViewSet,
     PolygonListView,
     GradersWithPolygonAnnotationsListView,
+    LandmarkAnnotationSetForImageList,
+    OctObsRegistrationRetrieve,
 )
 from tests.conftest import (
     generate_annotation_set,
     generate_two_polygon_annotation_sets,
+    generate_multiple_landmark_annotation_sets,
 )
+from tests.registrations_tests.factories import OctObsRegistrationFactory
 from tests.viewset_helpers import view_test
 
 
@@ -522,11 +532,12 @@ class TestSinglePolygonAnnotationViewSet:
         model_serialized = SinglePolygonAnnotationSerializer(
             TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()
         ).data
-        annotation_set = PolygonAnnotationSetFactory(
-            grader=TwoRetinaPolygonAnnotationSets.grader1
-        )
-        model_serialized["annotation_set"] = str(annotation_set.id)
-        model_json = json.dumps(model_serialized)
+        annotation_set = SinglePolygonAnnotationFactory()
+        model_serialized["value"] = annotation_set.value
+        partial_model = copy.deepcopy(model_serialized)
+        del partial_model["annotation_set"]
+        del partial_model["id"]
+        model_json = json.dumps(partial_model)
 
         response = view_test(
             "partial_update",
@@ -541,9 +552,6 @@ class TestSinglePolygonAnnotationViewSet:
         )
 
         if user_type in ("retina_grader", "retina_admin"):
-            response.data["annotation_set"] = str(
-                response.data["annotation_set"]
-            )
             assert response.data == model_serialized
 
     def test_destroy_view(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
@@ -586,6 +594,7 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.django_db
 class TestGradersWithPolygonAnnotationsListView(TestCase):
     def setUp(self):
         self.annotation_set = generate_two_polygon_annotation_sets(
@@ -734,4 +743,223 @@ class TestGradersWithPolygonAnnotationsListView(TestCase):
 
         assert response.status_code == status.HTTP_200_OK
         response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+
+@pytest.mark.django_db
+class TestLandmarkAnnotationSetForImageListListView(TestCase):
+    def setUp(self):
+        self.annotation_set = generate_multiple_landmark_annotation_sets(
+            retina_grader=True
+        )
+        self.kwargs = {"user_id": self.annotation_set.landmarkset1.grader.id}
+        list_of_image_ids = list(
+            map(lambda x: str(x.id), self.annotation_set.landmarkset1images)
+        )
+        self.url_no_params = reverse(
+            "retina:api:landmark-annotation-images-list-view",
+            kwargs=self.kwargs,
+        )
+        self.url = "{}?image_ids={}".format(
+            self.url_no_params, ",".join(list_of_image_ids)
+        )
+        self.view = LandmarkAnnotationSetForImageList.as_view()
+        self.rf = APIRequestFactory()
+        self.request = self.rf.get(self.url)
+        self.retina_admin = UserFactory()
+        self.retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
+
+    def test_non_authenticated(self):
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_non_retina_user(self):
+        self.annotation_set.landmarkset1.grader.groups.clear()
+        force_authenticate(
+            self.request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retina_grader_no_params(self):
+        request = self.rf.get(self.url_no_params)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_grader_empty(self):
+        list_of_image_ids = list(
+            map(lambda x: str(x.id), self.annotation_set.landmarkset2images)
+        )
+        url = "{}?image_ids={}".format(
+            self.url_no_params, ",".join(list_of_image_ids)
+        )
+        request = self.rf.get(url)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 0
+
+    def test_retina_grader_one_set(self):
+        kwargs = {"user_id": self.annotation_set.landmarkset2.grader.id}
+        url_no_params = reverse(
+            "retina:api:landmark-annotation-images-list-view", kwargs=kwargs
+        )
+        url = "{}?image_ids={}".format(
+            url_no_params, self.annotation_set.landmarkset2images[0].id
+        )
+        request = self.rf.get(url)
+        force_authenticate(
+            request, user=self.annotation_set.landmarkset2.grader
+        )
+        response = self.view(request, **kwargs)
+        expected_response = [
+            LandmarkAnnotationSetSerializer(
+                instance=self.annotation_set.landmarkset2
+            ).data
+        ]
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_retina_grader_both_sets(self):
+        force_authenticate(
+            self.request, user=self.annotation_set.landmarkset1.grader
+        )
+        response = self.view(self.request, **self.kwargs)
+        expected_response = LandmarkAnnotationSetSerializer(
+            [
+                self.annotation_set.landmarkset1,
+                self.annotation_set.landmarkset3,
+            ],
+            many=True,
+        ).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+    def test_admin_authenticated(self):
+        force_authenticate(self.request, user=self.retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = LandmarkAnnotationSetSerializer(
+            [
+                self.annotation_set.landmarkset1,
+                self.annotation_set.landmarkset3,
+            ],
+            many=True,
+        ).data
+        expected_response.sort(key=lambda k: k["id"])
+
+        assert response.status_code == status.HTTP_200_OK
+        response.data.sort(key=lambda k: k["id"])
+        assert response.data == expected_response
+
+
+@pytest.mark.django_db
+class TestOctObsRegistrationRetrieveView(TestCase):
+    def setUp(self):
+        self.octobsregistration = OctObsRegistrationFactory()
+        self.kwargs = {"image_id": self.octobsregistration.obs_image.id}
+        self.url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=self.kwargs
+        )
+        self.view = OctObsRegistrationRetrieve.as_view()
+        self.rf = APIRequestFactory()
+        self.request = self.rf.get(self.url)
+
+        self.retina_user = UserFactory()
+        self.retina_user.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+
+    def test_non_authenticated(self):
+        response = self.view(self.request, **self.kwargs)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_non_retina_user(self):
+        user = UserFactory()
+        force_authenticate(self.request, user=user)
+        response = self.view(self.request, **self.kwargs)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retina_user_non_existant_image(self):
+        image = self.octobsregistration.obs_image
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        image.delete()
+        response = self.view(request, **kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_user_no_registration(self):
+        image = ImageFactory()
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        response = self.view(request, **kwargs)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retina_user_get_via_obs_image(self):
+        force_authenticate(self.request, user=self.retina_user)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_retina_user_get_via_oct_image(self):
+        image = self.octobsregistration.oct_image
+        kwargs = {"image_id": image.id}
+        url = reverse(
+            "retina:api:octobs-registration-detail-view", kwargs=kwargs
+        )
+        request = self.rf.get(url)
+        force_authenticate(request, user=self.retina_user)
+        response = self.view(request, **kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_response
+
+    def test_admin_user_get_via_obs_image(self):
+        retina_admin = UserFactory()
+        retina_admin.groups.add(
+            Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME)
+        )
+        force_authenticate(self.request, user=retina_admin)
+        response = self.view(self.request, **self.kwargs)
+
+        expected_response = OctObsRegistrationSerializer(
+            instance=self.octobsregistration
+        ).data
+
+        assert response.status_code == status.HTTP_200_OK
         assert response.data == expected_response
