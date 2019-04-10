@@ -297,6 +297,10 @@ class Service(DockerConnection):
         else:
             return {}
 
+    @property
+    def container(self):
+        return self._client.containers.get(f"{self._job_label}-service")
+
     def start(
         self,
         http_port: int,

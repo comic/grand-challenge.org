@@ -132,6 +132,9 @@ class Session(UUIDModel):
 
     def start(self):
         try:
+            if not self.workstation_image.ready:
+                raise RuntimeError("Workstation image was not ready")
+
             self.service.start(
                 http_port=self.workstation_image.http_port,
                 websocket_port=self.workstation_image.websocket_port,

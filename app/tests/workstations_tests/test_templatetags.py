@@ -33,6 +33,8 @@ def test_workstation_url_session(settings):
     assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in url
 
     session = SessionFactory()
+    # This will be set by
+    # grandchallenge.workstations.context_processors.workstation_session
     context = {"workstation_session": session}
 
     url = workstation_url(context=context, image=image, overlay=overlay)
