@@ -7,6 +7,7 @@ from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from rest_framework.authtoken.models import Token
 
+from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import Service
 from grandchallenge.container_exec.models import ContainerImageModel
 from grandchallenge.container_exec.tasks import start_service, stop_service
@@ -29,6 +30,8 @@ The user is able to stop the container, otherwise it will be terminated after ``
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """ This model holds the title and description of a workstation. """
+
+    logo = models.ImageField(upload_to=get_logo_path)
 
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})

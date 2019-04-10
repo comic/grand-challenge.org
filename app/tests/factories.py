@@ -201,6 +201,7 @@ class WorkstationFactory(factory.DjangoModelFactory):
         model = Workstation
 
     title = factory.sequence(lambda n: f"Workstation {n}")
+    logo = factory.django.ImageField()
 
 
 class WorkstationImageFactory(factory.DjangoModelFactory):

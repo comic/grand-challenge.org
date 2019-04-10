@@ -7,16 +7,47 @@
 {% block content %}
     <h2>Workstations</h2>
 
-    <p>
+    <div class="card-columns">
+        {% for workstation in workstation_list %}
+            <div class="card">
+                <img class="card-img-top img-fluid"
+                     src="{{ workstation.logo.url }}" alt="Card image cap">
+                <div class="card-body">
+                    <h5 class="card-title">{{ workstation.title }}</h5>
+                    <p class="card-text">{{ workstation.description }}</p>
+                    <a href="{{ workstation.get_absolute_url }}"
+                       class="btn btn-primary"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="View Workstation">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                    <a href="{% url 'workstations:update' slug=workstation.slug %}"
+                       class="btn btn-primary"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="Edit Workstation">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p class="mt-3">
         <a class="btn btn-primary"
-           href="{% url 'workstations:create'%}">
+           href="{% url 'workstations:create' %}">
             <i class="fas fa-plus"></i> Add a new workstation
         </a>
     </p>
+{% endblock %}
 
-    <ul>
-    {% for workstation in workstation_list %}
-        <li><a href="{{ workstation.get_absolute_url }}">{{ workstation.title }}</a></li>
-    {% endfor %}
-    </ul>
+{% block script %}
+    {{ block.super }}
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 {% endblock %}

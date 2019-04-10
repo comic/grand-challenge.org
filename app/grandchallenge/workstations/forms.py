@@ -15,7 +15,7 @@ class WorkstationForm(ModelForm):
 
     class Meta:
         model = Workstation
-        fields = ("title", "description")
+        fields = ("title", "logo", "description")
 
 
 workstation_image_upload_widget = uploader.AjaxUploadWidget(

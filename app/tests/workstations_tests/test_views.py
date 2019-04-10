@@ -1,4 +1,8 @@
+from io import BytesIO
+
 import pytest
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
@@ -11,6 +15,20 @@ from tests.factories import (
     SessionFactory,
 )
 from tests.utils import get_view_for_user, validate_staff_only_view
+
+
+def get_temporary_image():
+    """ Quick hack, credit to https://stackoverflow.com/questions/43135771/ """
+    io = BytesIO()
+    size = (200, 200)
+    color = (255, 0, 0)
+    image = Image.new("RGB", size, color)
+    image.save(io, format="JPEG")
+    image_file = InMemoryUploadedFile(
+        io, None, "foo.jpg", "jpeg", image.size, None
+    )
+    image_file.seek(0)
+    return image_file
 
 
 @pytest.mark.django_db
@@ -30,7 +48,11 @@ def test_workstation_create_detail(client):
         method=client.post,
         viewname="workstations:create",
         user=user,
-        data={"title": title, "description": description},
+        data={
+            "title": title,
+            "description": description,
+            "logo": get_temporary_image(),
+        },
     )
     assert response.status_code == 302
     assert response.url == reverse(
