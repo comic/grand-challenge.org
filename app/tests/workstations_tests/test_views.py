@@ -10,7 +10,7 @@ from tests.factories import (
     WorkstationImageFactory,
     SessionFactory,
 )
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, validate_staff_only_view
 
 
 @pytest.mark.django_db
@@ -273,7 +273,7 @@ def test_workstation_proxy(client):
         kwargs={
             "slug": session.workstation_image.workstation.slug,
             "pk": session.pk,
-            "path": "foo/../bar/test",
+            "path": "foo/bar/../baz/test",
         },
     )
 
@@ -284,7 +284,7 @@ def test_workstation_proxy(client):
 
     redirect_url = response.get("X-Accel-Redirect")
 
-    assert redirect_url.endswith("bar/test")
+    assert redirect_url.endswith("foo/baz/test")
     assert redirect_url.startswith("/workstation-proxy/")
     assert session.hostname in redirect_url
 
@@ -292,3 +292,46 @@ def test_workstation_proxy(client):
     response = get_view_for_user(client=client, url=url, user=u2)
     assert not response.has_header("X-Accel-Redirect")
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "view",
+    [
+        "workstations:list",
+        "workstations:create",
+        "workstations:update",
+        "workstations:detail",
+        "workstations:image-create",
+        "workstations:image-detail",
+        "workstations:image-update",
+        "workstations:session-create",
+        "workstations:session-update",
+    ],
+)
+def test_workstations_staff_views(client, view):
+    if view in [
+        "workstations:update",
+        "workstations:detail",
+        "workstations:image-create",
+        "workstations:session-create",
+    ]:
+        reverse_kwargs = {"slug": WorkstationFactory().slug}
+    elif view in ["workstations:image-detail", "workstations:image-update"]:
+        wsi = WorkstationImageFactory()
+        reverse_kwargs = {"slug": wsi.workstation.slug, "pk": wsi.pk}
+    elif view in [
+        "workstations:session-detail",
+        "workstations:session-update",
+    ]:
+        session = SessionFactory()
+        reverse_kwargs = {
+            "slug": session.workstation_image.workstation.slug,
+            "pk": session.pk,
+        }
+    else:
+        reverse_kwargs = {}
+
+    validate_staff_only_view(
+        client=client, viewname=view, reverse_kwargs=reverse_kwargs
+    )
