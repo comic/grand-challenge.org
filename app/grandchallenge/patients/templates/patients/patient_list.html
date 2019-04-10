@@ -1,7 +1,7 @@
 {% extends "nobanner.html" %}
 {% load url from grandchallenge_tags %}
 
-{% block title %}{{ object.title }} - {{ block.super }}{% endblock %}
+{% block title %}Patients - {{ block.super }}{% endblock %}
 
 {% block content %}
     <h2>Patients</h2>
@@ -15,6 +15,7 @@
             {% for patient in object_list %}
                 <tr>
                     <td>{{ patient.name }}</td>
+                    <td><a href="{% url 'patients:detail' patient.id %}">Details</a></td>
                     <td><a href="{% url 'patients:update' patient.id %}">Update</a></td>
                     <td><a href="{% url 'patients:delete' patient.id %}">Delete</a></td>
                 </tr>
