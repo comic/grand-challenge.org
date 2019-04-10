@@ -230,6 +230,14 @@ class Session(UUIDModel):
             if not self.workstation_image.ready:
                 raise RuntimeError("Workstation image was not ready")
 
+            if (
+                Session.objects.all()
+                .filter(status__in=[Session.RUNNING, Session.STARTED])
+                .count()
+                >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
+            ):
+                raise RuntimeError("Too many sessions are running")
+
             self.service.start(
                 http_port=self.workstation_image.http_port,
                 websocket_port=self.workstation_image.websocket_port,

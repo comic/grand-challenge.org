@@ -5,7 +5,14 @@ from docker.errors import NotFound
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.container_exec.tasks import stop_expired_services
+from grandchallenge.workstations.models import Session
 from tests.factories import SessionFactory, WorkstationImageFactory
+
+
+def stop_all_sessions():
+    sessions = Session.objects.all()
+    for s in sessions:
+        s.stop()
 
 
 @pytest.mark.django_db
@@ -88,12 +95,12 @@ def test_correct_session_stopped(http_image, docker_client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    s1, s2 = (
-        SessionFactory(workstation_image=wsi),
-        SessionFactory(workstation_image=wsi),
-    )
-
     try:
+        s1, s2 = (
+            SessionFactory(workstation_image=wsi),
+            SessionFactory(workstation_image=wsi),
+        )
+
         assert s1.service.container
         assert s2.service.container
 
@@ -105,8 +112,7 @@ def test_correct_session_stopped(http_image, docker_client, settings):
             # noinspection PyStatementEffect
             s2.service.container
     finally:
-        s1.stop()
-        s2.stop()
+        stop_all_sessions()
 
 
 @pytest.mark.django_db
@@ -121,14 +127,14 @@ def test_session_cleanup(http_image, docker_client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    s1, s2 = (
-        SessionFactory(workstation_image=wsi),
-        SessionFactory(
-            workstation_image=wsi, maximum_duration=timedelta(seconds=0)
-        ),
-    )
-
     try:
+        s1, s2 = (
+            SessionFactory(workstation_image=wsi),
+            SessionFactory(
+                workstation_image=wsi, maximum_duration=timedelta(seconds=0)
+            ),
+        )
+
         assert s1.service.container
         assert s2.service.container
 
@@ -139,8 +145,7 @@ def test_session_cleanup(http_image, docker_client, settings):
             # noinspection PyStatementEffect
             s2.service.container
     finally:
-        s1.stop()
-        s2.stop()
+        stop_all_sessions()
 
 
 @pytest.mark.django_db
@@ -159,3 +164,34 @@ def test_workstation_ready(http_image, docker_client, settings):
     s.refresh_from_db()
 
     assert s.status == s.FAILED
+
+
+@pytest.mark.django_db
+def test_session_limit(http_image, docker_client, settings):
+    path, sha256 = http_image
+
+    wsi = WorkstationImageFactory(
+        image__from_path=path, image_sha256=sha256, ready=True
+    )
+
+    # Execute the celery in place
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
+
+    try:
+        s1 = SessionFactory(workstation_image=wsi)
+        s1.refresh_from_db()
+        assert s1.status == s1.STARTED
+
+        s2 = SessionFactory(workstation_image=wsi)
+        s2.refresh_from_db()
+        assert s2.status == s2.FAILED
+
+        s1.stop()
+
+        s3 = SessionFactory(workstation_image=wsi)
+        s3.refresh_from_db()
+        assert s3.status == s3.STARTED
+    finally:
+        stop_all_sessions()
