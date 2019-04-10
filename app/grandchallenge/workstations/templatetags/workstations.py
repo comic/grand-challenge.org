@@ -3,8 +3,6 @@ from urllib import parse
 from django import template
 from django.conf import settings
 
-from grandchallenge.workstations.models import Session
-
 register = template.Library()
 
 
