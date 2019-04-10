@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
@@ -13,13 +13,46 @@ from grandchallenge.container_exec.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
+__doc__ = """
+Workstations are used to view, annotate and upload images to grand challenge.
+A `workstation admin` is able to upload a ``WorkstationImage``, which is a docker container image.
+A ``WorkstationImage`` expose a http and, optionally, a websocket port.
+A `workstation user` can then launch a workstation ``Session`` for a particular ``WorkstationImage``.
+
+When a new session is started, a new container instance of the selected ``WorkstationImage`` is lauched on the docker host.
+The connection to the container will be proxied, and only accessible to the user that created the session.
+The proxy will map the http and websocket connections from the user to the running instance, which is mapped by the container hostname.
+The container instance will have the users API token set in the environment, so that it is able to interact with the grand challenge API as this user.
+The user is able to stop the container, otherwise it will be terminated after ``maxmium_duration`` is reached.
+"""
+
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
+    """ This model holds the title and description of a workstation. """
+
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})
 
 
 class WorkstationImage(UUIDModel, ContainerImageModel):
+    """
+    A ``WorkstationImage`` is a docker container image of a workstation.
+
+    Parameters
+    ----------
+    workstation
+        A ``Workstation`` can have multiple ``WorkstationImage``, that
+        represent different versions of a workstation
+    http_port
+        This container will expose a http server on this port
+    websocket_port
+        This container will expose a websocket on this port. Any relative url
+        that starts with ``/mlab4d4c4142`` will be proxied to this port.
+    initial_path
+        The initial path that users will navigate to in order to load the
+        workstation
+    """
+
     workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
     http_port = models.PositiveIntegerField(
         default=8080, validators=[MaxValueValidator(2 ** 16 - 1)]
@@ -47,6 +80,27 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
 
 
 class Session(UUIDModel):
+    """
+    Tracks who has launched workstation images. The ``WorkstationImage`` will
+    be launched as a ``Service``. The ``Session`` is responsible for starting
+    and stopping the ``Service``.
+
+    Parameters
+    ----------
+
+    status
+        Stores what has happened with the service, is it running, errored, etc?
+    creator
+        Who created the session? This is also the only user that should be able
+        to access the launched service.
+    workstation_image
+        The container image that will be launched by this ``Session``.
+    maximum_duration
+        The maximum time that the service can be active before it is terminated
+    user_finished
+        Indicates if the user has chosen to end the session early
+    """
+
     QUEUED = 0
     STARTED = 1
     RUNNING = 2
@@ -71,12 +125,15 @@ class Session(UUIDModel):
         WorkstationImage, on_delete=models.CASCADE
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
-    # Is the user done with this session?
     user_finished = models.BooleanField(default=False)
 
     @property
-    def task_kwargs(self):
-        # The kwargs that need to be passed to celery to get this object
+    def task_kwargs(self) -> dict:
+        """
+        Returns
+        -------
+            The kwargs that need to be passed to celery to get this object
+        """
         return {
             "app_label": self._meta.app_label,
             "model_name": self._meta.model_name,
@@ -84,17 +141,32 @@ class Session(UUIDModel):
         }
 
     @property
-    def hostname(self):
+    def hostname(self) -> str:
+        """
+        Returns
+        -------
+            The unique hostname for this session
+        """
         return (
             f"{self.pk}.{self._meta.model_name}.{self._meta.app_label}".lower()
         )
 
     @property
-    def expires_at(self):
+    def expires_at(self) -> datetime:
+        """
+        Returns
+        -------
+            The time when this session expires.
+        """
         return self.created + self.maximum_duration
 
     @property
-    def environment(self):
+    def environment(self) -> dict:
+        """
+        Returns
+        -------
+            The environment variables that should be set on the container.
+        """
         env = {
             "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
             "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(
@@ -116,7 +188,12 @@ class Session(UUIDModel):
         return env
 
     @property
-    def service(self):
+    def service(self) -> Service:
+        """
+        Returns
+        -------
+            The service for this session, could be active or inactive.
+        """
         return Service(
             job_id=self.pk,
             job_model=f"{self._meta.app_label}-{self._meta.model_name}",
@@ -125,12 +202,30 @@ class Session(UUIDModel):
         )
 
     @property
-    def workstation_url(self):
+    def workstation_url(self) -> str:
+        """
+        Returns
+        -------
+            The url that users will use to access the workstation instance.
+        """
         return urljoin(
             self.get_absolute_url(), self.workstation_image.initial_path
         )
 
-    def start(self):
+    def start(self) -> None:
+        """
+        Starts the service for this session, ensuring that the
+        ``workstation_image`` is ready to be used and that
+        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached.
+
+        Raises
+        ------
+        RunTimeError
+            If the service cannot be started.
+
+        Returns
+        -------
+        """
         try:
             if not self.workstation_image.ready:
                 raise RuntimeError("Workstation image was not ready")
@@ -145,11 +240,28 @@ class Session(UUIDModel):
         except RuntimeError:
             self.update_status(status=self.FAILED)
 
-    def stop(self):
+    def stop(self) -> None:
+        """
+        Stops the service for this session, cleaning up all of the containers.
+
+        Returns
+        -------
+        """
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
-    def update_status(self, *, status: STATUS_CHOICES):
+    def update_status(self, *, status: STATUS_CHOICES) -> None:
+        """
+        Updates the status of this session.
+
+        Parameters
+        ----------
+        status
+            The new status for this session.
+
+        Returns
+        -------
+        """
         self.status = status
         self.save()
 
@@ -162,7 +274,13 @@ class Session(UUIDModel):
             },
         )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
+        """
+        Saves the session instance, starting or stopping the service if needed.
+
+        Returns
+        -------
+        """
         created = self._state.adding
 
         super().save(*args, **kwargs)

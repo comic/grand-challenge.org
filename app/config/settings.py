@@ -629,6 +629,10 @@ WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
 )
+# The total limit on the number of sessions
+WORKSTATIONS_MAXIMUM_SESSIONS = int(
+    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
