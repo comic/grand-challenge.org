@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from rest_framework.authtoken.models import Token
+from simple_history.models import HistoricalRecords
 
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import Service
@@ -108,6 +109,8 @@ class Session(UUIDModel):
         The maximum time that the service can be active before it is terminated
     user_finished
         Indicates if the user has chosen to end the session early
+    history
+        The history of this Session
     """
 
     QUEUED = 0
@@ -135,6 +138,7 @@ class Session(UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
+    history = HistoricalRecords()
 
     def __str__(self):
         return f"Session {self.pk}"

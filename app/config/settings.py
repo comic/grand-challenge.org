@@ -275,6 +275,7 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
@@ -315,6 +316,8 @@ THIRD_PARTY_APPS = [
     "sorl.thumbnail",  # for dynamic thumbnails
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
+    "django_extensions",  # custom extensions
+    "simple_history",  # for object history
 ]
 
 LOCAL_APPS = [
