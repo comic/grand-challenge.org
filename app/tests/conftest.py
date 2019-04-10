@@ -151,7 +151,7 @@ def challenge_set_with_evaluation(ChallengeSet):
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory, docker_client):
+def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
     """
     Creates the example evaluation container
     """
