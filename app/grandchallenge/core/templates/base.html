@@ -37,6 +37,11 @@
                 {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
 
+            <nav aria-label="breadcrumb">
+                {% block breadcrumbs %}
+                {% endblock %}
+            </nav>
+
             {% block jumbotron %}{% endblock %}
 
             <div class="row">

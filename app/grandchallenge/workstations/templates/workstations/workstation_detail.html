@@ -3,6 +3,16 @@
 
 {% block title %}{{ object.slug }} - {{ block.super }}{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>{{ object.title }}</h2>
 
@@ -44,7 +54,7 @@
 
     <ul>
         {% for image in object.workstationimage_set.all %}
-            <li><a href="{{ image.get_absolute_url }}">{{ image.pk }}</a>
+            <li><a href="{{ image.get_absolute_url }}">{{ image }}</a>
             </li>
         {% endfor %}
     </ul>

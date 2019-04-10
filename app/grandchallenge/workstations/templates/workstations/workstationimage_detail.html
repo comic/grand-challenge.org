@@ -3,6 +3,19 @@
 
 {% block title %}Workstation Container Image - {{ block.super }}{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.workstation.get_absolute_url }}">{{ object.workstation }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>Workstation Container Image</h2>
 
@@ -57,4 +70,15 @@
         </a>
     </p>
 
+    <h3>Sessions For This Image</h3>
+
+    <ul>
+        {% for session in object.session_set.all %}
+            <li>
+                <a href="{{ session.get_absolute_url }}">{{ session }}, {{ session.get_status_display }}</a>
+            </li>
+        {% empty %}
+            <li>No sessions yet</li>
+        {% endfor %}
+    </ul>
 {% endblock %}

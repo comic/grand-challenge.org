@@ -33,6 +33,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     logo = models.ImageField(upload_to=get_logo_path)
 
+    def __str__(self):
+        return f"Workstation {self.title}"
+
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})
 
@@ -74,6 +77,9 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
             )
         ],
     )
+
+    def __str__(self):
+        return f"Workstation Image {self.pk}"
 
     def get_absolute_url(self):
         return reverse(
@@ -129,6 +135,9 @@ class Session(UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Session {self.pk}"
 
     @property
     def task_kwargs(self) -> dict:

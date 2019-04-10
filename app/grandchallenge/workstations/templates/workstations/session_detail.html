@@ -4,6 +4,16 @@
 {% block title %}{{ object.workstation.slug }} Session -
     {{ block.super }}{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.workstation_image.get_absolute_url }}">{{ object.workstation_image }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>{{ object.workstation.slug }} Session</h2>
 

@@ -4,14 +4,25 @@
 
 {% block title %}Workstations - {{ block.super }}{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Workstations
+        </li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>Workstations</h2>
 
     <div class="card-columns">
         {% for workstation in workstation_list %}
             <div class="card">
-                <img class="card-img-top img-fluid"
-                     src="{{ workstation.logo.url }}" alt="Card image cap">
+                <a href="{{ workstation.get_absolute_url }}">
+                    <img class="card-img-top img-fluid"
+                         src="{{ workstation.logo.url }}"
+                         alt="{{ workstation }} Logo">
+                </a>
                 <div class="card-body">
                     <h5 class="card-title">{{ workstation.title }}</h5>
                     <p class="card-text">{{ workstation.description }}</p>

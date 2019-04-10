@@ -1,9 +1,19 @@
 {% extends "nobanner.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Upload a new workstation image - {{ block.super }}{% endblock %}
+{% block title %}New Workstation Image - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{% firstof object.title "New Workstation Image" %}</li>
+    </ol>
+{% endblock %}
 
 {% block content %}
-    <h2>Upload a new workstation image</h2>
+    <h2>New Workstation Image</h2>
     {% crispy form %}
 {% endblock %}
