@@ -15,11 +15,15 @@ def run_job(job_pk):
         job_pk: the primary key of the Job object that defines the algorithm run
     """
     job = Job.objects.get(pk=job_pk)
+    if job.status != Job.PENDING:
+        raise Exception(f"Can't start job with status '{Job.STATUS_CHOICES[job.status][1]}'")
+
+    job.status = Job.STARTED
+    job.started = datetime.now()
+    job.save()
+
     with K8sJob(job) as k8s_job:
         k8s_job.run()
-        job.status = Job.STARTED
-        job.started = datetime.now()
-        job.save()
         while True:
             s = k8s_job.status()
             job.log = k8s_job.get_text_logs()
