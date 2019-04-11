@@ -64,12 +64,11 @@ class DockerConnection:
             "memswap_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
-            # Use the default weight
-            "cpu_shares": 1024,
+            "cpu_shares": settings.CONTAINER_EXEC_CPU_SHARES,
             "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
-            "pids_limit": 128,
+            "pids_limit": settings.CONTAINER_EXEC_PIDS_LIMIT,
             "log_config": LogConfig(
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
