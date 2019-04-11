@@ -1,0 +1,49 @@
+{% extends "nobanner.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}{{ object.workstation.slug }} Session -
+    {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.workstation_image.get_absolute_url }}">{{ object.workstation_image }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ object.workstation.slug }} Session</h2>
+
+    <dl>
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.get_status_display }}</dd>
+
+        <dt>Expiry</dt>
+        <dd>This session will expire in {{ object.expires_at|timeuntil }}.</dd>
+    </dl>
+
+    {% if object.status != object.STOPPED and object.status != object.QUEUED and not object.user_finished %}
+        <p>
+            <a class="btn btn-primary"
+               href="{{ object.workstation_url }}">View the
+                workstation</a>
+        </p>
+
+        <form method="post"
+              action="{% url 'workstations:session-update' slug=object.workstation_image.workstation.slug pk=object.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="user_finished" value="true">
+            <button type="submit"
+                    class="btn btn-danger">
+                Stop this session
+            </button>
+        </form>
+    {% endif %}
+
+{% endblock %}

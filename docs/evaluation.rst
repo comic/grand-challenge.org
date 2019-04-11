@@ -115,7 +115,10 @@ is one number per evaluation. For example::
 Evaluation Options
 ~~~~~~~~~~~~~~~~~~
 
-.. py:class:: grandchallenge.evaluation.models.Config
+.. automodule:::: grandchallenge.evaluation.models.Config
+
+.. autoclass:: grandchallenge.evaluation.models.Config
+    :members:
 
 
 Template Tags

@@ -1,6 +1,7 @@
 {% extends "nobanner.html" %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
+{% load workstations %}
 
 {% block content %}
 
@@ -43,7 +44,7 @@
                         <td style="padding-right:1cm;">{{ image.name }}</td>
                         <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
                         <td style="padding-right:1cm;">
-                            <a href="{{ image.cirrus_link }}">
+                            <a href="{% workstation_url image=image %}">
                                 Show image
                             </a>
                         </td>

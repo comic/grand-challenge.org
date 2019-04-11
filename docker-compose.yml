@@ -110,9 +110,12 @@ services:
     environment:
       SERVER_NAME: gc.localhost
       SENDFILE_STATUS: 'off'
+      WORKSTATION_PROXY_HOSTNAME: 'workstation-proxy'
+      WORKSTATION_PROXY_HTTP_PORT: '8000'
+      WORKSTATION_PROXY_WEBSOCKET_PORT: '8001'
       <<: *protected_storage_connections
     command: >-
-        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+        bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
         && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always
@@ -122,6 +125,8 @@ services:
     depends_on:
       web:
         condition: service_healthy
+      workstation-proxy:
+        condition: service_started
     volumes:
       - type: volume
         source: media
@@ -149,6 +154,7 @@ services:
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
+    hostname: "celery-worker"
     depends_on:
       web:
         condition: service_healthy
@@ -157,7 +163,7 @@ services:
       redis:
         condition: service_started
     volumes:
-        # Bind the app directory for live reloading in development
+      # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
         target: /app/
@@ -170,8 +176,9 @@ services:
       <<: *protected_storage_credentials
       <<: *protected_storage_connections
     restart: always
-    command: "celery -A config worker -l info -Q evaluation,images -c 1"
+    command: "celery -A config worker -l info -Q evaluation,images,workstations -c 1"
     scale: 1
+    hostname: "celery-worker-evaluation"
     depends_on:
       web:
         condition: service_healthy
@@ -201,6 +208,7 @@ services:
     restart: always
     command: "celery -A config worker -l info -Q gpu -c 1"
     scale: 1
+    hostname: "celery-worker-gpu"
     depends_on:
       web:
         condition: service_healthy
@@ -236,6 +244,36 @@ services:
       redis:
         condition: service_started
 
+  workstation-proxy:
+    image: traefik:1.7
+    ports:
+      - "8080:8080"
+    command:
+      - "--defaultEntryPoints=http,websocket"
+      - "--entrypoints=Name:traefik Address::8080"
+      - "--entrypoints=Name:ping Address::8082"
+      - "--entrypoints=Name:http Address::8000"
+      - "--entrypoints=Name:websocket Address::8001"
+      - "--api"
+      - "--api.dashboard=true"
+      - "--api.entryPoint=traefik"
+      - "--ping"
+      - "--ping.entryPoint=traefik"
+      - "--docker"
+      - "--docker.domain=docker.localhost"
+      - "--docker.endpoint=unix:///var/run/docker.sock"
+      - "--docker.exposedbydefault=false"
+      - "--docker.watch=true"
+      - "--docker.network=workstations"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    networks:
+      - default
+      - workstations
+
   flower:
     image: mher/flower
     environment:
@@ -251,3 +289,7 @@ volumes:
   media:
   minio-private-data:
   minio-protected-data:
+
+networks:
+  default:
+  workstations:

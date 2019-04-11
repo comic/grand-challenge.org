@@ -10,7 +10,6 @@ import pytest
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group
 
 from grandchallenge.cases.models import Image
@@ -47,6 +46,18 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
         # The main project should always exist
         Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
+
+
+@pytest.fixture(scope="session")
+def docker_client():
+    return docker.DockerClient(
+        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+    )
+
+
+@pytest.fixture(scope="session")
+def docker_api_client():
+    return docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
 
 
 class ChallengeSet(NamedTuple):
@@ -140,14 +151,11 @@ def challenge_set_with_evaluation(ChallengeSet):
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory):
+def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
     """
     Creates the example evaluation container
     """
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    im, _ = client.images.build(
+    im, _ = docker_client.images.build(
         path=os.path.join(
             os.path.split(__file__)[0],
             "evaluation_tests",
@@ -156,47 +164,43 @@ def evaluation_image(tmpdir_factory):
         ),
         tag="test_evaluation:latest",
     )
-    assert im.id in [x.id for x in client.images.list()]
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
-    image = cli.get_image("test_evaluation:latest")
+    assert im.id in [x.id for x in docker_client.images.list()]
+    image = docker_api_client.get_image("test_evaluation:latest")
     outfile = tmpdir_factory.mktemp("docker").join("evaluation-latest.tar")
+
     with outfile.open(mode="wb") as f:
         for chunk in image:
             f.write(chunk)
-    client.images.remove(image=im.id)
+
+    docker_client.images.remove(image=im.id)
 
     call(["gzip", outfile])
 
-    assert im.id not in [x.id for x in client.images.list()]
+    assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
 
 
 @pytest.fixture(scope="session")
-def alpine_images(tmpdir_factory):
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    client.images.pull("alpine:3.7")
-    client.images.pull("alpine:3.8")
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
+def alpine_images(tmpdir_factory, docker_client, docker_api_client):
+    docker_client.images.pull("alpine:3.7")
+    docker_client.images.pull("alpine:3.8")
+
     # get all images and put them in a tar archive
-    image = cli.get_image("alpine")
-    outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
+    image = docker_api_client.get_image("alpine")
+    outfile = tmpdir_factory.mktemp("alpine").join("alpine_multi.tar")
+
     with outfile.open("wb") as f:
         for chunk in image:
             f.write(chunk)
+
     return outfile
 
 
 @pytest.fixture(scope="session")
-def root_image(tmpdir_factory):
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    client.images.pull("alpine:3.8")
+def root_image(tmpdir_factory, docker_client, docker_api_client):
+    docker_client.images.pull("alpine:3.8")
 
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
-    image = cli.get_image("alpine:3.8")
+    image = docker_api_client.get_image("alpine:3.8")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
 
     with outfile.open("wb") as f:
@@ -204,6 +208,23 @@ def root_image(tmpdir_factory):
             f.write(chunk)
 
     return outfile
+
+
+@pytest.fixture(scope="session")
+def http_image(tmpdir_factory, docker_client, docker_api_client):
+    image_name = "crccheck/hello-world"
+
+    docker_client.images.pull(image_name)
+    sha_256 = docker_client.images.get(image_name).id
+
+    image = docker_api_client.get_image(image_name)
+    outfile = tmpdir_factory.mktemp("http").join("http.tar")
+
+    with outfile.open("wb") as f:
+        for chunk in image:
+            f.write(chunk)
+
+    return outfile, sha_256
 
 
 @pytest.fixture(scope="session")

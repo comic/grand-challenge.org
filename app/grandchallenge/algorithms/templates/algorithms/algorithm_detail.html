@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
+{% load workstations %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -51,7 +52,7 @@
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td>{{ job.image.origin.creator|user_profile_link }}</td>
                     <td>
-                        <a href="{{ job.image.cirrus_link }}">{{ job.image }}</a>
+                        <a href="{% workstation_url image=job.image %}">{{ job.image }}</a>
                     </td>
                     <td>
                     <span class="badge
@@ -71,7 +72,7 @@
                     <td>
                         {% if job.result.images.all %}
                             {% for image in job.result.images.all %}
-                                <a href="{{ job.image.cirrus_link }}&amp;{{ CIRRUS_ANNOTATION_QUERY_PARAM }}={{ image.pk }}">
+                                <a href="{% workstation_url image=job.image overlay=image %}">
                                     {{ image }}
                                 </a>
                             {% endfor %}

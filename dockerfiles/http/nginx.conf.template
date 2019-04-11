@@ -79,6 +79,14 @@ http {
     server web:8000;
   }
 
+  upstream workstations_http {
+    server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_HTTP_PORT};
+  }
+
+  upstream workstations_websocket {
+    server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_WEBSOCKET_PORT};
+  }
+
   server {
     # Redirect everything to https
     listen 80;
@@ -120,12 +128,58 @@ http {
       return 301 $scheme://${SERVER_NAME}/challenges/;
     }
 
+    location =/Settings/webSocketPort {
+      # MeVisLab will query this endpoint to find out how to connect to the
+      # websocket. It assumes that each worker gets its own host, which is
+      # not the case on grand challenge, so we need to return a relative path
+      # which we get from the http_referer
+
+      set $ref "/";
+
+      if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/session/[^/]*)/.*$) {
+	    set $ref $1;
+	  }
+
+      expires epoch;
+      add_header Content-Type text/plain;
+      return 200 '443$ref';
+    }
+
+    location ~ ^/workstation-proxy/([^/]*)/mlab4d4c4142/(.*)$ {
+      # MeVisLab uses a magic string to determine if this should
+      # be routed to the websocket handler, this is handled here
+
+      internal;
+
+      proxy_buffering off;
+      proxy_set_header Host $1;
+      proxy_pass http://workstations_websocket/mlab4d4c4142/$2;
+
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+      # Websocket support
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+
+      # Disable proxy caching
+      proxy_cache off;
+    }
+
+    location ~ ^/workstation-proxy/([^/]*)/(.*)$ {
+      internal;
+
+      proxy_buffering off;
+      proxy_set_header Host $1;
+      proxy_pass http://workstations_http/$2;
+    }
+
     location /${PROTECTED_S3_STORAGE_BUCKET_NAME}/ {
       internal;
 
       # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
       proxy_buffering off;
-
       proxy_set_header Host $http_host;
       proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }

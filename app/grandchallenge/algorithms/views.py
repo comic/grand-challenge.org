@@ -4,7 +4,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.views.generic import ListView, CreateView, DetailView
 from nbconvert import HTMLExporter
-from django.conf import settings
 
 from grandchallenge.algorithms.forms import AlgorithmForm
 from grandchallenge.algorithms.models import Algorithm
@@ -53,13 +52,6 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
 
 class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context[
-            "CIRRUS_ANNOTATION_QUERY_PARAM"
-        ] = settings.CIRRUS_ANNOTATION_QUERY_PARAM
-        return context
 
 
 class AlgorithmExecutionSessionCreate(

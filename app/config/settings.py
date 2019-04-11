@@ -255,8 +255,9 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
+                "grandchallenge.core.context_processors.comic_site",
+                "grandchallenge.core.context_processors.google_analytics_id",
+                "grandchallenge.workstations.context_processors.workstation_session",
             ]
         },
     }
@@ -274,6 +275,7 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
@@ -314,6 +316,8 @@ THIRD_PARTY_APPS = [
     "sorl.thumbnail",  # for dynamic thumbnails
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
+    "django_extensions",  # custom extensions
+    "simple_history",  # for object history
 ]
 
 LOCAL_APPS = [
@@ -342,6 +346,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
+    "grandchallenge.workstations",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -598,10 +603,18 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
     },
+    "stop_expired_services": {
+        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+        "kwargs": {"app_label": "workstations", "model_name": "session"},
+        "schedule": timedelta(minutes=5),
+    },
 }
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.container_exec.tasks.start_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
@@ -611,10 +624,18 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-# CIRRUS Is an external application that can view images
-CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
-CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-CIRRUS_ANNOTATION_QUERY_PARAM = "grand_challenge_overlay"
+# The workstation that is accessible by all authorised users
+WORKSTATIONS_GLOBAL_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+# The name of the network that the workstations will be attached to
+WORKSTATIONS_NETWORK_NAME = os.environ.get(
+    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
+)
+# The total limit on the number of sessions
+WORKSTATIONS_MAXIMUM_SESSIONS = int(
+    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
@@ -649,7 +670,10 @@ if DEBUG:
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
 
-        MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)
+        MIDDLEWARE = (
+            "debug_toolbar.middleware.DebugToolbarMiddleware",
+            *MIDDLEWARE,
+        )
 
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"

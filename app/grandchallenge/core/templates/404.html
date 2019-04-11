@@ -1,15 +1,10 @@
 {% extends "nobanner.html" %}
-{% load grandchallenge_tags %}
-{% load guardian_tags %}
-{% load admin_urls %}
 
-{% block navbar %}
-    {% include "grandchallenge/partials/navbar.html" with hide_userlinks=True %}
-{% endblock %}
+{% block title %}Not Found - {{ block.super }}{% endblock %}
 
 {% block content %}
-
-    <h2>404</h2>
-    The requested URL '{{ request_path }}' was not found on this server.
-
+    <h2>Not Found</h2>
+    <p>
+        This content was not found.
+    </p>
 {% endblock %}

@@ -180,9 +180,6 @@ class AnnotationSet(UUIDModel, IndexMixin):
                 "key": key,
                 "base": base_index[key],
                 "annotation": annotation_index[key],
-                "annotation_cirrus_link": self.create_cirrus_annotation_link(
-                    base=base_index[key], annotation=annotation_index[key]
-                ),
             }
             for key in sorted(matches)
         ]
@@ -220,9 +217,6 @@ class AnnotationSet(UUIDModel, IndexMixin):
             {"key": key, "base": base_index[key], "label": label_index[key]}
             for key in sorted(matches)
         ]
-
-    def create_cirrus_annotation_link(self, *, base: Image, annotation: Image):
-        return f"{base.cirrus_link}&{settings.CIRRUS_ANNOTATION_QUERY_PARAM}={annotation.pk}"
 
     def get_absolute_url(self):
         return reverse(

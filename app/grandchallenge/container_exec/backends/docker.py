@@ -2,7 +2,6 @@ import io
 import json
 import os
 import tarfile
-import uuid
 from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
@@ -20,23 +19,25 @@ from docker.types import LogConfig
 from requests import HTTPError
 
 
-class Executor(object):
+class DockerConnection:
+    """
+    Provides a client with a connection to a docker host, provisioned for
+    running the container exec_image.
+    """
+
     def __init__(
         self,
         *,
-        job_id: uuid.UUID,
-        input_files: Tuple[File, ...],
+        job_id: str,
+        job_model: str,
         exec_image: File,
         exec_image_sha256: str,
-        results_file: Path,
     ):
         super().__init__()
-        self._job_id = str(job_id)
-        self._input_files = input_files
+        self._job_id = job_id
+        self._job_label = f"{job_model}-{job_id}"
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
-        self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
-        self._results_file = results_file
 
         client_kwargs = {"base_url": settings.CONTAINER_EXEC_DOCKER_BASE_URL}
 
@@ -53,11 +54,9 @@ class Executor(object):
 
         self._client = docker.DockerClient(**client_kwargs)
 
-        self._input_volume = f"{self._job_id}-input"
-        self._output_volume = f"{self._job_id}-output"
+        self._labels = {"job": f"{self._job_label}", "traefik.enable": "false"}
 
         self._run_kwargs = {
-            "labels": {"job_id": self._job_id},
             "init": True,
             "network_disabled": True,
             "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
@@ -70,30 +69,11 @@ class Executor(object):
             "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
-            "pids_limit": 64,
+            "pids_limit": 128,
             "log_config": LogConfig(
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
         }
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        flt = {"label": f"job_id={self._job_id}"}
-
-        try:
-            for c in self._client.containers.list(filters=flt):
-                c.stop()
-
-            self.__retry_docker_obj_prune(
-                obj=self._client.containers, filters=flt
-            )
-            self.__retry_docker_obj_prune(
-                obj=self._client.volumes, filters=flt
-            )
-        except ConnectionError:
-            raise RuntimeError("Could not connect to worker.")
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -111,6 +91,55 @@ class Executor(object):
         else:
             raise e
 
+    def stop_and_cleanup(self, timeout: int = 10):
+        """
+        Stops and prunes all containers and volumes associated with this job
+        """
+        flt = {"label": f"job={self._job_label}"}
+
+        try:
+            for c in self._client.containers.list(filters=flt):
+                c.stop(timeout=timeout)
+
+            self.__retry_docker_obj_prune(
+                obj=self._client.containers, filters=flt
+            )
+            self.__retry_docker_obj_prune(
+                obj=self._client.volumes, filters=flt
+            )
+        except ConnectionError:
+            raise RuntimeError("Could not connect to worker.")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_and_cleanup()
+
+    def _pull_images(self):
+        if self._exec_image_sha256 not in [
+            img.id for img in self._client.images.list()
+        ]:
+            with self._exec_image.open("rb") as f:
+                self._client.images.load(f)
+
+
+class Executor(DockerConnection):
+    def __init__(
+        self,
+        *args,
+        input_files: Tuple[File, ...],
+        results_file: Path,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._input_files = input_files
+        self._results_file = results_file
+        self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
+
+        self._input_volume = f"{self._job_label}-input"
+        self._output_volume = f"{self._job_label}-output"
+
     def execute(self) -> dict:
         self._pull_images()
         self._create_io_volumes()
@@ -120,19 +149,12 @@ class Executor(object):
         return self._get_result()
 
     def _pull_images(self):
+        super()._pull_images()
         self._client.images.pull(repository=self._io_image)
-
-        if self._exec_image_sha256 not in [
-            img.id for img in self._client.images.list()
-        ]:
-            with self._exec_image.open("rb") as f:
-                self._client.images.load(f)
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
-            self._client.volumes.create(
-                name=volume, labels=self._run_kwargs["labels"]
-            )
+            self._client.volumes.create(name=volume, labels=self._labels)
 
     def _provision_input_volume(self):
         try:
@@ -142,9 +164,10 @@ class Executor(object):
                     volumes={
                         self._input_volume: {"bind": "/input/", "mode": "rw"}
                     },
-                    name=f"{self._job_id}-writer",
+                    name=f"{self._job_label}-writer",
                     detach=True,
                     tty=True,
+                    labels=self._labels,
                     **self._run_kwargs,
                 )
             ) as writer:
@@ -169,9 +192,10 @@ class Executor(object):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_id}-chmod-volumes",
+                name=f"{self._job_label}-chmod-volumes",
                 command=f"chmod -R 0777 /input/ /output/",
                 remove=True,
+                labels=self._labels,
                 **self._run_kwargs,
             )
         except Exception as exc:
@@ -185,8 +209,9 @@ class Executor(object):
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_id}-executor",
+                name=f"{self._job_label}-executor",
                 remove=True,
+                labels=self._labels,
                 **self._run_kwargs,
             )
         except ContainerError as exc:
@@ -205,9 +230,10 @@ class Executor(object):
                     volumes={
                         self._output_volume: {"bind": "/output/", "mode": "ro"}
                     },
-                    name=f"{self._job_id}-reader",
+                    name=f"{self._job_label}-reader",
                     detach=True,
                     tty=True,
+                    labels=self._labels,
                     **self._run_kwargs,
                 )
             ) as reader:
@@ -233,6 +259,79 @@ class Executor(object):
             raise RuntimeError(exc.msg)
 
         return result
+
+
+class Service(DockerConnection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Allow networking for service containers
+        self._run_kwargs.update(
+            {
+                "network_disabled": False,
+                "network": settings.WORKSTATIONS_NETWORK_NAME,
+            }
+        )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """ Do not cleanup the containers for this job, leave them running """
+        pass
+
+    @property
+    def extra_hosts(self):
+        if settings.DEBUG:
+            # The workstation needs to communicate with the django api. In
+            # production this happens automatically via the external DNS, but
+            # when running in debug mode we need to pass through the developers
+            # host via the workstations network gateway
+
+            network = self._client.networks.list(
+                names=[settings.WORKSTATIONS_NETWORK_NAME]
+            )[0]
+
+            return {
+                "gc.localhost": network.attrs.get("IPAM")["Config"][0][
+                    "Gateway"
+                ]
+            }
+        else:
+            return {}
+
+    @property
+    def container(self):
+        return self._client.containers.get(f"{self._job_label}-service")
+
+    def start(
+        self,
+        http_port: int,
+        websocket_port: int,
+        hostname: str,
+        environment: dict = None,
+    ):
+        self._pull_images()
+
+        traefik_labels = {
+            "traefik.enable": "true",
+            "traefik.frontend.rule": f"Host:{hostname}",
+            "traefik.http.port": str(http_port),
+            "traefik.http.frontend.entryPoints": "http",
+            "traefik.websocket.port": str(websocket_port),
+            "traefik.websocket.frontend.entryPoints": "websocket",
+        }
+
+        try:
+            self._client.containers.run(
+                image=self._exec_image_sha256,
+                name=f"{self._job_label}-service",
+                remove=True,
+                detach=True,
+                labels={**self._labels, **traefik_labels},
+                environment=environment or {},
+                extra_hosts=self.extra_hosts,
+                **self._run_kwargs,
+            )
+        except ContainerError as exc:
+            raise RuntimeError(exc.stderr.decode())
 
 
 @contextmanager
