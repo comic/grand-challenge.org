@@ -236,9 +236,9 @@ echo "Done"
         text_log = ""
         for podname, logs in logs.items():
             text_log += "\n"
-            text_log += f"Pod: {podname}"
+            text_log += f"Pod: {podname}\n"
             for container, log in logs.items():
                 text_log += "\n"
-                text_log += f"Container: container"
+                text_log += f"Container: {container}"
                 text_log += log
         return text_log
