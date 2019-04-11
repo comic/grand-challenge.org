@@ -1,6 +1,7 @@
 {% extends "nobanner.html" %}
 {% load humanize %}
 {% load grandchallenge_tags %}
+{% load static %}
 
 {% block title %}Statistics{% endblock %}
 
@@ -97,6 +98,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"
             integrity="sha256-CfcERD4Ov4+lKbWbYqXD6aFM9M51gN4GUEtDhkWABMo="
             crossorigin="anonymous"></script>
+
+    <script type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript"
+            src="{% static "js/render_geocharts.js" %}"></script>
 
     <script>
         var ctx = document.getElementById("registrationsChart");
