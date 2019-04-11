@@ -8,15 +8,18 @@ from django.conf import settings
 
 from grandchallenge.eyra_algorithms.models import Job
 
+# override service token mounts when running with telepresence
 if settings.K8S_USE_CLUSTER_CONFIG:
     kubernetes_config.SERVICE_TOKEN_FILENAME = \
         os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_TOKEN_FILENAME
     kubernetes_config.SERVICE_CERT_FILENAME = \
         os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_CERT_FILENAME
 
+# the capacity of the PVC volume used for in/output.
 IO_PVC_CAPACITY = '1Gi'
 
-
+# https://github.com/s3tools/s3cmd
+# used for up- & downloading data from s3
 s3cmd_prefix = f"""
 s3cmd --access_key={settings.AWS_ACCESS_KEY_ID}\
  --secret_key={settings.AWS_SECRET_ACCESS_KEY}\
@@ -24,6 +27,7 @@ s3cmd --access_key={settings.AWS_ACCESS_KEY_ID}\
  --host-bucket="%(bucket).{settings.AWS_S3_HOST}" """
 
 
+# Use on Eyra Job, executes job on K8S cluster
 class K8sJob(object):
     def __init__(self, job: Job, namespace: str=os.environ.get('K8S_NAMESPACE')):
         self.job = job
@@ -42,6 +46,7 @@ class K8sJob(object):
     def job_name(self):
         return f'job-{self.job.pk}'
 
+    # create persistent volume claim for IO (data input/output)
     def create_io_pvc(self):
         self.io_pvc = client.CoreV1Api().create_namespaced_persistent_volume_claim(
             os.environ.get('K8S_NAMESPACE'),
@@ -55,6 +60,7 @@ class K8sJob(object):
         )
         return self.io_pvc
 
+    # the sh script that runs in the init container (downloads input data from S3)
     def input_script(self):
         s3cmd = "\n".join([
             f"{s3cmd_prefix} get s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{data_file_pk} /data/input/{input_name}"
@@ -70,6 +76,7 @@ pip install s3cmd --quiet
 echo "done"
 """
 
+    # the sh script that runs in the init container (uploads output data to S3)
     def output_script(self):
         s3cmd = s3cmd_prefix + f"put /data/output s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{self.job.output.pk}"
         return f"""
@@ -80,6 +87,7 @@ pip install s3cmd --quiet
 echo "Done"
 """
 
+    # run this job on K8S. Does not wait for completion
     def run(self):
         self.load_kubeconfig()
         self.create_io_pvc()
@@ -139,6 +147,7 @@ echo "Done"
     def __enter__(self):
         return self
 
+    # cleanup when `with K8SJob` block goes out of scope
     def __exit__(self, exc_type, exc_val, exc_tb):
         for pod in self.get_pod_names():
             client.CoreV1Api().delete_namespaced_pod(
@@ -159,14 +168,17 @@ echo "Done"
             body={}
         )
 
+    # has the job failed?
     @property
     def failed(self):
         return self.status().failed
 
+    # has the job succeeded?
     @property
     def succeeded(self):
         return self.status().succeeded
 
+    # get status dict.
     def status(self):
         """Get the status of the job
         """
@@ -176,6 +188,7 @@ echo "Done"
         )
         return r.status
 
+    # get pod names for this Job (should be a single pod, unless we enable retries (e.g. using backoffLimit)
     def get_pod_names(self):
         podlist = client.CoreV1Api().list_namespaced_pod(
             namespace=self.namespace,
@@ -184,6 +197,7 @@ echo "Done"
 
         return [pod.metadata.name for pod in podlist.items]
 
+    # get logs dict as { pod_name: { container_name: log } }
     def get_logs(self, container=None, previous=False):
         if container is None:
             containers = ["input", "main", "output"]
@@ -216,6 +230,7 @@ echo "Done"
     def print_logs(self):
         print(self.get_text_logs())
 
+    # flatten logs dict into text structure
     def get_text_logs(self):
         logs = self.get_logs()
         text_log = ""
