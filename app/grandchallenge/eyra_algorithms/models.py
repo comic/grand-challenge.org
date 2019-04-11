@@ -61,7 +61,6 @@ class Algorithm(UUIDModel):
     )
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='implementations')
 
-
     def __str__(self):
         return self.name
 
@@ -123,7 +122,10 @@ class Job(UUIDModel):
     stopped = models.DateTimeField(blank=True, null=True)
     log = models.TextField(blank=True, null=True)
     implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE)
-    output = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='output_of_job', null=True)
+    output = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='output_of_job', null=False, blank=False)
+
+    def input_name_data_file_pk_map(self):
+        return {job_input.input.name: job_input.data_file.pk for job_input in self.inputs.all()}
 
 
 class JobInput(UUIDModel):

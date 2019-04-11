@@ -1,217 +1,163 @@
-import time
-import json
+import os
 
-from kubernetes.config import load_incluster_config, load_kube_config
+from kubernetes.config import load_incluster_config, load_kube_config, incluster_config as kubernetes_config
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from django.conf import settings
 
+from grandchallenge.eyra_algorithms.models import Job
+
+if settings.K8S_USE_CLUSTER_CONFIG:
+    kubernetes_config.SERVICE_TOKEN_FILENAME = \
+        os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_TOKEN_FILENAME
+    kubernetes_config.SERVICE_CERT_FILENAME = \
+        os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_CERT_FILENAME
+
+IO_PVC_CAPACITY = '1Gi'
+
+
+s3cmd_prefix = f"""
+s3cmd --access_key={settings.AWS_ACCESS_KEY_ID}\
+ --secret_key={settings.AWS_SECRET_ACCESS_KEY}\
+ --host={settings.AWS_S3_HOST}\
+ --host-bucket="%(bucket).{settings.AWS_S3_HOST}" """
+
 
 class K8sJob(object):
-    def __init__(self, job_id, namespace, image, s3_bucket, inputs, outputs, volume_defs=None, blocking=False):
-        """
-        Run a Kubernetes job based on a simple algorithm container.
-
-        The job runs three containers:
-        - init: downloads the input files from the object storage into the input volume.
-        - main: runs the algorithm container
-        - exit: uploads the output files from the output volume to the object storage, as a single zip file.
-
-        The algorithm container should have its own command or entrypoint defined (i.e., it should run independently), and
-        it should read input data from /input/ and write all output files to /output/. These folder will be provided as
-        mounts by the Kubernetes cluster.
-
-        S3 access credentials should be stored in a secret in the cluster (see settings).
-
-        Args:
-            job_id (str): the ID used as the K8s job name
-            namespace (str): the namespace where the job is to be run
-            image (str): the docker image that contains the code to run
-            s3_bucket (str): the bucket containing the input and output data
-            inputs (dict): a dict of (object storage key, filename) pairs for the input files
-            outputs (dict): a dict of (object storage key, filename) pairs that is used for storing the algorithm output
-            volume_defs (dict): a dict containing (volume name, mount point) items: all these are mounted in all containers that are part of the job
-            blocking (bool): whether to wait for the job to finish
-        """
-
-        self.job_id = str(job_id)
+    def __init__(self, job: Job, namespace: str=os.environ.get('K8S_NAMESPACE')):
+        self.job = job
         self.namespace = namespace
-        self.image = image
-        if volume_defs is None:
-            self.volume_defs = {"input-volume": "/input", "output-volume": "/output"}
-        else:
-            self.volume_defs = volume_defs
-        self.inputs = inputs
-        self.outputs = outputs
-        self.s3_bucket = s3_bucket
-        self.s3_credentials_secret = settings.K8S_S3_CREDENTIALS_SECRET_NAME
-        self.data_io_image = f"{settings.PRIVATE_DOCKER_REGISTRY}/{settings.K8S_DATA_IO_IMAGE}"
+        self.io_pvc = None
 
-        self.volumes = []
-        self.volume_mounts = []
-        self.pods = []
-        self.blocking = blocking
-
+    def load_kubeconfig(self):
         if settings.K8S_USE_CLUSTER_CONFIG:
             load_incluster_config()
         else:
             load_kube_config()
 
+    def io_pvc_name(self):
+        return f'pvc-job-{self.job.pk}'
+
+    def job_name(self):
+        return f'job-{self.job.pk}'
+
+    def create_io_pvc(self):
+        self.io_pvc = client.CoreV1Api().create_namespaced_persistent_volume_claim(
+            os.environ.get('K8S_NAMESPACE'),
+            client.V1PersistentVolumeClaim(
+                metadata=client.V1ObjectMeta(name=self.io_pvc_name()),
+                spec=client.V1PersistentVolumeClaimSpec(
+                    access_modes=['ReadWriteOnce'],
+                    resources=client.V1ResourceRequirements(requests={'storage': IO_PVC_CAPACITY})
+                )
+            )
+        )
+        return self.io_pvc
+
+    def input_script(self):
+        s3cmd = "\n".join([
+            f"{s3cmd_prefix} get s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{data_file_pk} /data/input/{input_name}"
+            for input_name, data_file_pk in self.job.input_name_data_file_pk_map().items()
+        ])
+
+        return f"""
+set -e
+echo "Preparing data volume..."
+mkdir /data/input
+pip install s3cmd --quiet
+{s3cmd}
+echo "done"
+"""
+
+    def output_script(self):
+        s3cmd = s3cmd_prefix + f"put /data/output s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{self.job.output.pk}"
+        return f"""
+set -e
+echo "Uploading output data..."
+pip install s3cmd --quiet
+{s3cmd}
+echo "Done"
+"""
+
+    def run(self):
+        self.load_kubeconfig()
+        self.create_io_pvc()
+
+        input_container = client.V1Container(
+            name=f"input",
+            image='python:2-alpine',
+            volume_mounts=[client.V1VolumeMount(mount_path='/data', name='io')],
+            resources=client.V1ResourceRequirements(requests={
+                # "cpu": 0.5
+            }),
+            command=["sh", "-c", self.input_script()],
+        )
+
+        # Define the main algorithm running container
+        main_container = client.V1Container(
+            name="main",
+            image=self.job.implementation.container,
+            resources=client.V1ResourceRequirements(requests={
+                # "cpu": 1.0
+            }),
+            volume_mounts=[client.V1VolumeMount(mount_path='/data', name='io')],
+        )
+
+        output_container = client.V1Container(
+            name=f"output",
+            image='python:2-alpine',
+            volume_mounts=[client.V1VolumeMount(mount_path='/data', name='io')],
+            resources=client.V1ResourceRequirements(requests={
+                # "cpu": 0.5
+            }),
+            command=["sh", "-c", self.output_script()],
+        )
+
+        # Define the pod running the job. As there are no exit containers possible,
+        template = client.V1PodTemplateSpec(
+            metadata=client.V1ObjectMeta(name=self.job_name()),
+            spec=client.V1PodSpec(
+                restart_policy="Never",
+                init_containers=[input_container, main_container],
+                containers=[output_container],
+                volumes=[client.V1Volume(
+                    name='io',
+                    persistent_volume_claim={'claimName': self.io_pvc_name()}
+                )],
+            )
+        )
+
+        job = client.V1Job(
+            metadata=client.V1ObjectMeta(name=self.job_name()),
+            spec=client.V1JobSpec(template=template, backoff_limit=0),
+        )
+
+        r = client.BatchV1Api().create_namespaced_job(self.namespace, job)
+
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Clean up all resources, if required
-        pass
-
-    def _create_io_volumes(self):
-        """Creates the Kubernetes volumes for input and output data. These are normal volumes, whose life cycle is tied
-        to the pod they live in.
-        """
-
-        self.volumes = []
-        self.volume_mounts = []
-
-        for volume_name, mount_point in self.volume_defs.items():
-            self.volumes.append(
-                client.V1Volume(name=volume_name)
-            )
-            self.volume_mounts.append(
-                client.V1VolumeMount(mount_path=mount_point, name=volume_name)
+        for pod in self.get_pod_names():
+            client.CoreV1Api().delete_namespaced_pod(
+                name=pod,
+                namespace=self.namespace,
+                body={}
             )
 
-    def _run_pod(self):
-        """Defines a Kubernetes job using the python API and runs it.
-        """
-
-        batch_v1 = client.BatchV1Api()
-        meta = client.V1ObjectMeta(name=self.job_id)
-
-        # Set up all environment variables for s3 object storage access
-        env_vars = [
-            client.V1EnvVar(
-                name="S3_ENDPOINT",
-                value_from=client.V1EnvVarSource(
-                    secret_key_ref=client.V1SecretKeySelector(
-                        name=self.s3_credentials_secret,
-                        key="endpoint"
-                    )
-                )
-            ),
-            client.V1EnvVar(
-                name="S3_ACCESS_KEY",
-                value_from=client.V1EnvVarSource(
-                    secret_key_ref=client.V1SecretKeySelector(
-                        name=self.s3_credentials_secret,
-                        key="key"
-                    )
-                )
-            ),
-            client.V1EnvVar(
-                name="S3_SECRET_KEY",
-                value_from=client.V1EnvVarSource(
-                    secret_key_ref=client.V1SecretKeySelector(
-                        name=self.s3_credentials_secret,
-                        key="secret"
-                    )
-                )
-            ),
-            client.V1EnvVar(
-                name="S3_REGION",
-                value_from=client.V1EnvVarSource(
-                    secret_key_ref=client.V1SecretKeySelector(
-                        name=self.s3_credentials_secret,
-                        key="region"
-                    )
-                )
-            ),
-            client.V1EnvVar(
-                name="S3_BUCKET",
-                value=self.s3_bucket
-            ),
-            client.V1EnvVar(
-                name="S3_OBJECT_KEYS_INPUT",
-                value=json.dumps(self.inputs)
-            ),
-            client.V1EnvVar(
-                name="S3_OBJECT_KEY_OUTPUT",
-                value=json.dumps(self.outputs)
-            )
-        ]
-
-        # TODO: add cpu limits?
-        # TODO: get cpu requests/limits information from database? Needs model update for Job (or Algorithm)
-        # TODO: add affinity/antiaffinity to separate algorithm execution from web application processes?
-
-        # Define the input container that performs input data provisioning
-        input_container = client.V1Container(
-            name=self.job_id + "-input",
-            image=self.data_io_image,
-            volume_mounts=self.volume_mounts,
-            env=env_vars,
-            resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
-            command=[
-                "bash",
-                "-c",
-                "python /tmp/data_io.py load",
-            ],
+        client.BatchV1Api().delete_namespaced_job(
+            name=self.job_name(),
+            namespace=self.namespace,
+            body={}
         )
 
-        # Define the main algorithm running container
-        container = client.V1Container(
-            name=self.job_id + "-main",
-            image=self.image,
-            resources=client.V1ResourceRequirements(requests={"cpu": 1.0}),
-            volume_mounts=self.volume_mounts,
+        client.CoreV1Api().delete_namespaced_persistent_volume_claim(
+            name=self.io_pvc_name(),
+            namespace=self.namespace,
+            body={}
         )
-
-        # Define the output container that uploads all results to the object storage
-        output_container = client.V1Container(
-            name=self.job_id + "-output",
-            image=self.data_io_image,
-            volume_mounts=self.volume_mounts,
-            env=env_vars,
-            resources=client.V1ResourceRequirements(requests={"cpu": 0.5}),
-            command=[
-                "bash",
-                "-c",
-                "python /tmp/data_io.py store",
-            ],
-        )
-
-        # Define the pod running the job. As there are no exit containers possible,
-        podspec = client.V1PodSpec(
-            restart_policy="Never",
-            init_containers=[input_container, container],
-            containers=[output_container],
-            volumes=self.volumes,
-        )
-
-        template = client.V1PodTemplateSpec(metadata=meta, spec=podspec)
-
-        # Define the job
-        jobspec = client.V1JobSpec(template=template, backoff_limit=1)
-        job = client.V1Job(metadata=meta, spec=jobspec)
-
-        # Schedule the job on the cluster
-        r = batch_v1.create_namespaced_job(self.namespace, job)
-
-        if self.blocking:
-            print("Executing job...")
-            while True:
-                s = self.status()
-                self.print_logs()
-
-                if s.failed or s.succeeded:
-                    break
-                time.sleep(1)
-
-            if s.succeeded:
-                print("Job succeeded!")
-            else:
-                print("Job failed!")
-        return
 
     @property
     def failed(self):
@@ -221,37 +167,34 @@ class K8sJob(object):
     def succeeded(self):
         return self.status().succeeded
 
-    def execute(self):
-        """The main entrypoint for running the job.
-        """
-        self._create_io_volumes()
-        self._run_pod()
-
     def status(self):
         """Get the status of the job
         """
-        batch_v1 = client.BatchV1Api()
-        r = batch_v1.read_namespaced_job_status(
-            self.job_id, self.namespace
+        r = client.BatchV1Api().read_namespaced_job_status(
+            name=self.job_name(),
+            namespace=self.namespace,
         )
         return r.status
 
-    def get_logs(self, container=None, previous=False):
-        core_v1 = client.CoreV1Api()
+    def get_pod_names(self):
+        podlist = client.CoreV1Api().list_namespaced_pod(
+            namespace=self.namespace,
+            label_selector=f"job-name={self.job_name()}"
+        )
 
+        return [pod.metadata.name for pod in podlist.items]
+
+    def get_logs(self, container=None, previous=False):
         if container is None:
-            containers = [self.job_id + "-input", self.job_id + "-main", self.job_id + "-output"]
+            containers = ["input", "main", "output"]
         else:
             containers = [container]
 
-        podlist = core_v1.list_namespaced_pod(namespace=self.namespace, label_selector=f"job-name={self.job_id}")
-        podnames = [p.metadata.name for p in podlist.items]
-
         logs = {}
-        for podname in podnames:
+        for podname in self.get_pod_names():
             for container in containers:
                 try:
-                    r = core_v1.read_namespaced_pod_log(
+                    r = client.CoreV1Api().read_namespaced_pod_log(
                         name=podname,
                         namespace=self.namespace,
                         container=container,
@@ -261,7 +204,7 @@ class K8sJob(object):
                         timestamps=True
                     )
                 except ApiException as m:
-                    print(m)
+                    # print(m)
                     continue
 
                 if podname not in logs:
@@ -271,12 +214,16 @@ class K8sJob(object):
         return logs
 
     def print_logs(self):
-        logs = self.get_logs()
-        for podname, logs in logs.items():
-            print()
-            print(podname)
-            for container, log in logs.items():
-                print()
-                print("\t", container)
-                print("\t", log)
+        print(self.get_text_logs())
 
+    def get_text_logs(self):
+        logs = self.get_logs()
+        text_log = ""
+        for podname, logs in logs.items():
+            text_log += "\n"
+            text_log += f"Pod: {podname}"
+            for container, log in logs.items():
+                text_log += "\n"
+                text_log += f"Container: container"
+                text_log += log
+        return text_log

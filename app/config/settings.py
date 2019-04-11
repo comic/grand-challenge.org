@@ -635,17 +635,19 @@ CORS_ORIGIN_REGEX_WHITELIST = (
 # CORS_ORIGIN_ALLOW_ALL = True
 
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = 'eyra-datasets'
 AWS_AUTO_CREATE_BUCKET = True
-AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL')
+AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL', 's3')
+# todo: fix naming
+AWS_S3_HOST = os.environ.get('S3_ENDPOINT_URL')
 AWS_S3_REGION_NAME = 'ams3'
 
-PRIVATE_DOCKER_REGISTRY = os.environ.get("PRIVATE_DOCKER_REGISTRY")
+PRIVATE_DOCKER_REGISTRY = os.environ.get("PRIVATE_DOCKER_REGISTRY", 'private-docker')
 K8S_DATA_IO_IMAGE = "eyra-data-io"
-K8S_NAMESPACE = os.environ.get("K8S_NAMESPACE")
+K8S_NAMESPACE = os.environ.get("K8S_NAMESPACE", 'k8s-namespace')
 K8S_S3_CREDENTIALS_SECRET_NAME = "do-spaces"
 
 # Set to True when running in the K8S cluster; for local development, set to False to use your local kubectl config.
