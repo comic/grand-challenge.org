@@ -22,22 +22,32 @@ def run_job(job_pk):
     job.started = datetime.now()
     job.save()
 
-    with K8sJob(job) as k8s_job:
-        k8s_job.run()
-        while True:
-            s = k8s_job.status()
+    try:
+        with K8sJob(job) as k8s_job:
+            k8s_job.run()
+
+            # keep probing until failure or success
+            while True:
+                s = k8s_job.status()
+                job.log = k8s_job.get_text_logs()
+                job.save()
+
+                if s.failed or s.succeeded:
+                    break
+
+                time.sleep(5)
+
+            job.status = Job.SUCCESS if s.succeeded else Job.FAILURE
             job.log = k8s_job.get_text_logs()
-            job.save()
 
-            if s.failed or s.succeeded:
-                break
+    except Exception as e:
+        job.status = Job.FAILURE
+        job.log += '\n Error in job executor: \n' + str(e)
+        raise e
 
-            time.sleep(5)
-
-        job.status = Job.SUCCESS if s.succeeded else Job.FAILURE
-        job.log = k8s_job.get_text_logs()
+    finally:
         job.stopped = datetime.now()
         job.save()
 
-    if not s.succeeded:
+    if job.status == Job.FAILURE:
         raise Exception("Job failed")
