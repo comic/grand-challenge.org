@@ -10,7 +10,7 @@ def filter_queryset_field(field, value, model=None, queryset=None) -> QuerySet:
 
     if value is not None:
         filter_argument = {field: value}
-        queryset = queryset.filter(filter_argument)
+        queryset = queryset.filter(**filter_argument)
 
     return queryset
 
@@ -22,8 +22,8 @@ def filter_queryset_fields(field_filters, model=None, queryset=None) -> QuerySet
     if model is not None:
         queryset = model.objects.all()
 
-    for field_filter in field_filters:
-        if field_filter[1] is not None:
-            queryset = queryset.filter(field_filter)
+    for field, value in field_filters.items():
+        if value is not None:
+            queryset = queryset.filter(**{field: value})
 
     return queryset
