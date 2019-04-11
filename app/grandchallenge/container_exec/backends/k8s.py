@@ -133,7 +133,7 @@ echo "Done"
             spec=client.V1JobSpec(template=template, backoff_limit=0),
         )
 
-        r = client.BatchV1Api().create_namespaced_job(self.namespace, job)
+        client.BatchV1Api().create_namespaced_job(self.namespace, job)
 
 
     def __enter__(self):
