@@ -19,6 +19,7 @@ def create_implementation_job_for_submission(submission: Submission):
         output=job_output,
         implementation=submission.implementation,
     )
+    submission.save()
 
     job_input = JobInput.objects.create(
         job=submission.implementation_job,
@@ -42,7 +43,8 @@ def create_evaluation_job_for_submission(submission: Submission):
         output=job_output,
         implementation=submission.benchmark.evaluator,
     )
-        
+    submission.save()
+
     job_implementation_output_input = JobInput.objects.create(
         job=submission.evaluation_job,
         input=interface.inputs.get(name='implementation_output'),
@@ -62,5 +64,12 @@ def run_submission(submission_pk):
     create_implementation_job_for_submission(submission)
     create_evaluation_job_for_submission(submission)
 
-    run_job(submission.implementation_job.pk)
+    try:
+        run_job(submission.implementation_job.pk)
+    except Exception as e:
+        submission.evaluation_job.status = Job.FAILURE
+        submission.evaluation_job.log = 'Cannot evaluate, since the implementation job failed.'
+        submission.evaluation_job.save()
+        raise e
+
     run_job(submission.evaluation_job.pk)
