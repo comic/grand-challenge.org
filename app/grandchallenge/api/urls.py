@@ -11,7 +11,8 @@ from grandchallenge.api.views import (
     rest_api_auth,
     CurrentUserView,
 )
-from grandchallenge.eyra_algorithms.viewsets import ImplementationViewSet, JobViewSet, InterfaceViewSet
+from grandchallenge.eyra_algorithms.viewsets import ImplementationViewSet, JobViewSet, InterfaceViewSet, \
+    AlgorithmViewSet
 from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet, algorithm_submission
 from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet
 
@@ -23,7 +24,8 @@ router = routers.DefaultRouter()
 
 router.register(r"benchmarks", BenchmarkViewSet)
 router.register(r"submissions", SubmissionViewSet)
-router.register(r"algorithms", ImplementationViewSet)
+router.register(r"implementations", ImplementationViewSet)
+router.register(r"algorithms", AlgorithmViewSet)
 router.register(r"interfaces", InterfaceViewSet)
 router.register(r"jobs", JobViewSet)
 # router.register(r"challenges", ChallengeViewSet)

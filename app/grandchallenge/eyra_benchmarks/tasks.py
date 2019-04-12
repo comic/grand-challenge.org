@@ -1,0 +1,66 @@
+from celery import shared_task
+
+from grandchallenge.eyra_algorithms.models import Job, JobInput
+from grandchallenge.eyra_algorithms.tasks import run_job
+from grandchallenge.eyra_benchmarks.models import Submission
+from grandchallenge.eyra_data.models import DataFile, DataType
+
+
+def create_implementation_job_for_submission(submission: Submission):
+    if submission.implementation_job:
+        raise Exception('Job already exists for submission')
+
+    job_output = DataFile.objects.create(
+        name='output',
+        type=submission.benchmark.interface.output_type,
+    )
+
+    submission.implementation_job = Job.objects.create(
+        output=job_output,
+        implementation=submission.implementation,
+    )
+
+    job_input = JobInput.objects.create(
+        job=submission.implementation_job,
+        input=submission.benchmark.interface.inputs.first(),
+        data_file=submission.benchmark.test_data_file,
+    )
+
+
+def create_evaluation_job_for_submission(submission: Submission):
+    if submission.evaluation_job:
+        raise Exception('Job already exists for submission')
+
+    interface = submission.benchmark.evaluator.algorithm.interface
+    
+    job_output = DataFile.objects.create(
+        name='output',
+        type=interface.output_type,
+    )
+
+    submission.evaluation_job = Job.objects.create(
+        output=job_output,
+        implementation=submission.benchmark.evaluator,
+    )
+        
+    job_implementation_output_input = JobInput.objects.create(
+        job=submission.evaluation_job,
+        input=interface.inputs.get(name='implementation_output'),
+        data_file=submission.implementation_job.output,
+    )
+
+    job_ground_truth_input = JobInput.objects.create(
+        job=submission.evaluation_job,
+        input=interface.inputs.get(name='ground_truth'),
+        data_file=submission.benchmark.test_ground_truth_data_file,
+    )
+
+
+@shared_task
+def run_submission(submission_pk):
+    submission = Submission.objects.get(pk=submission_pk)
+    create_implementation_job_for_submission(submission)
+    create_evaluation_job_for_submission(submission)
+
+    run_job(submission.implementation_job.pk)
+    run_job(submission.evaluation_job.pk)

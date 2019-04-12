@@ -3,14 +3,8 @@ import logging
 from django.conf import settings
 from django.db import models
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
-# from grandchallenge.container_exec.models import (
-#     ContainerExecJobModel,
-#     ContainerImageModel,
-# )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.eyra_data.models import DataType, DataFile
-from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.eyra_algorithms.validators import IdExistsInDockerRegistryValidator
 
 logger = logging.getLogger(__name__)
@@ -49,7 +43,7 @@ class Algorithm(UUIDModel):
         settings.AUTH_USER_MODEL,
         null=True,
         on_delete=models.SET_NULL,
-        related_name="solutions",
+        related_name="algorithms",
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -59,7 +53,7 @@ class Algorithm(UUIDModel):
         blank=True,
         help_text="Description of this solution in markdown.",
     )
-    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='implementations')
+    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='algorithms')
 
     def __str__(self):
         return self.name
