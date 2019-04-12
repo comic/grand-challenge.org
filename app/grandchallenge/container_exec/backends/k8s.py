@@ -105,7 +105,7 @@ echo "Done"
         # Define the main algorithm running container
         main_container = client.V1Container(
             name="main",
-            image=self.job.implementation.container,
+            image=f"{settings.PRIVATE_DOCKER_REGISTRY}/{self.job.implementation.container}",
             resources=client.V1ResourceRequirements(requests={
                 # "cpu": 1.0
             }),
