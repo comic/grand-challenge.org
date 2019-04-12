@@ -636,14 +636,14 @@ CORS_ORIGIN_REGEX_WHITELIST = (
 
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = 'eyra-datasets'
-AWS_AUTO_CREATE_BUCKET = True
-AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL', 's3')
+# AWS_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET', 'eyra-datasets')
+# AWS_AUTO_CREATE_BUCKET = True
+# AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL', 's3')
 # todo: fix naming
-AWS_S3_HOST = os.environ.get('S3_ENDPOINT_URL')
-AWS_S3_REGION_NAME = 'ams3'
+# AWS_S3_ENDPOINT_URL = os.environ.get('S3_HOST', None)
+AWS_S3_REGION_NAME = os.environ.get('S3_REGION', 'eu-central-1')
 
 PRIVATE_DOCKER_REGISTRY = os.environ.get("PRIVATE_DOCKER_REGISTRY", 'private-docker')
 K8S_DATA_IO_IMAGE = "eyra-data-io"
