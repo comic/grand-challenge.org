@@ -20,12 +20,12 @@ IO_PVC_CAPACITY = '1Gi'
 
 # https://github.com/s3tools/s3cmd
 # used for up- & downloading data from s3
-s3cmd_prefix = f"""
-s3cmd --access_key={settings.AWS_ACCESS_KEY_ID}\
- --secret_key={settings.AWS_SECRET_ACCESS_KEY}\
- --host={settings.AWS_S3_HOST}\
- --host-bucket="%(bucket).{settings.AWS_S3_HOST}" """
-
+# s3cmd_prefix = f"""
+# s3cmd --access_key={settings.AWS_ACCESS_KEY_ID}\
+#  --secret_key={settings.AWS_SECRET_ACCESS_KEY}\
+#  --host={settings.AWS_S3_HOST}\
+#  --host-bucket="%(bucket).{settings.AWS_S3_HOST}" """
+s3cmd_prefix = f"s3cmd --region={settings.AWS_S3_REGION_NAME}"
 
 # Use on Eyra Job, executes job on K8S cluster
 class K8sJob(object):
