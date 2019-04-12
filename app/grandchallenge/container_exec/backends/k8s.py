@@ -107,7 +107,7 @@ echo "Done"
             name="main",
             image=f"{settings.PRIVATE_DOCKER_REGISTRY}/{self.job.implementation.container}",
             resources=client.V1ResourceRequirements(requests={
-                # "cpu": 1.0
+                "nvidia.com/gpu": "1"
             }),
             volume_mounts=[client.V1VolumeMount(mount_path='/data', name='io')],
         )
@@ -132,6 +132,11 @@ echo "Done"
                 volumes=[client.V1Volume(
                     name='io',
                     persistent_volume_claim={'claimName': self.io_pvc_name()}
+                )],
+                tolerations=[client.V1Toleration(
+                    key='nvidia.com/gpu',
+                    operator='Exists',
+                    effect='NoSchedule'
                 )],
             )
         )
