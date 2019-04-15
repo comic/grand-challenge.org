@@ -15,7 +15,6 @@ from grandchallenge.evaluation.models import Submission
 
 from django.contrib.auth import REDIRECT_FIELD_NAME, logout
 from django.contrib.auth.models import User, Group
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
@@ -24,6 +23,8 @@ from rest_framework.authtoken.models import Token
 from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
 from social_django.views import _do_login
+
+from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoObjectPermissions
 
 
 class CurrentUserView(APIView):
@@ -34,10 +35,10 @@ class CurrentUserView(APIView):
         return Response(serializer.data)
 
 
-class UserViewSet(ReadOnlyModelViewSet):
-    queryset = User.objects.filter(~Q(username="AnonymousUser"))
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all() # filter(~Q(username="AnonymousUser"))
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (EyraDjangoModelPermissions & EyraDjangoObjectPermissions,)
 
 
 class GroupViewSet(ReadOnlyModelViewSet):

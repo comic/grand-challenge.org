@@ -1,5 +1,6 @@
 from django.conf.urls import include
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
@@ -15,6 +16,7 @@ from grandchallenge.eyra_algorithms.viewsets import ImplementationViewSet, JobVi
     AlgorithmViewSet
 from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet, algorithm_submission
 from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet
+from grandchallenge.eyra_users.viewsets import RegisterViewSet, LoginView
 
 app_name = "api"
 
@@ -44,9 +46,8 @@ urlpatterns_social = [
 ]
 
 urlpatterns = [
-    path(
-        "v1/auth/", include("rest_framework.urls", namespace="rest_framework")
-    ),
+    path("v1/auth/register/", RegisterViewSet.as_view({'post': 'create'})),
+    path("v1/auth/login/", LoginView.as_view()),
     path("v1/algorithmSubmission/", algorithm_submission),
 
     # path('v1/datasetfiles/<str:uuid>/', upload_file),

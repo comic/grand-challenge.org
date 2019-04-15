@@ -295,6 +295,7 @@ LOCAL_APPS = [
     "grandchallenge.eyra_benchmarks",
     "grandchallenge.eyra_algorithms",
     "grandchallenge.eyra_data",
+    "grandchallenge.eyra_users",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

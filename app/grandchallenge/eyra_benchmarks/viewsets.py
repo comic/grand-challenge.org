@@ -10,26 +10,14 @@ from grandchallenge.eyra_algorithms.models import Implementation
 from grandchallenge.eyra_algorithms.serializers import ImplementationSerializer
 from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 from grandchallenge.eyra_benchmarks.serializers import BenchmarkSerializer, SubmissionSerializer
-
-
-# uses per ObjectPermissions (guardian), but with anonymous read-only.
-class AnonDjangoObjectPermissions(DjangoObjectPermissions):
-    perms_map = {
-        'GET': [],
-        'OPTIONS': [],
-        'HEAD': [],
-        'POST': ['%(app_label)s.add_%(model_name)s'],
-        'PUT': ['%(app_label)s.change_%(model_name)s'],
-        'PATCH': ['%(app_label)s.change_%(model_name)s'],
-        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
-    }
-    authenticated_users_only = False
+from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoObjectPermissions, \
+    EyraPermissions
 
 
 class BenchmarkViewSet(ModelViewSet):
     queryset = Benchmark.objects.all()
     serializer_class = BenchmarkSerializer
-    permission_classes = (AnonDjangoObjectPermissions,)
+    permission_classes = (EyraPermissions,)
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
@@ -39,7 +27,7 @@ class BenchmarkViewSet(ModelViewSet):
 class SubmissionViewSet(ModelViewSet):
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
-    permission_classes = (AnonDjangoObjectPermissions,)
+    permission_classes = (EyraPermissions,)
     # filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ['benchmark']
 

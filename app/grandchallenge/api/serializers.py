@@ -27,14 +27,14 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "first_name", "last_name", "email", "groups")
+        fields = ('id', 'first_name', 'last_name', 'email', 'groups')
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
-    user_set = serializers.HyperlinkedRelatedField(
-        many=True, view_name="api:user-detail", read_only=True
-    )
+class GroupSerializer(serializers.ModelSerializer):
+    # user_set = serializers.PrimaryKeyRelatedField(
+    #     many=True, view_name="api:user-detail", read_only=True
+    # )
 
     class Meta:
         model = Group
-        fields = ("name", "user_set")
+        fields = ("name",)
