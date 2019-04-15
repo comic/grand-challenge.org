@@ -16,7 +16,6 @@ class RegisterViewSet(mixins.CreateModelMixin, GenericViewSet):
 
 class LoginView(APIView):
     permission_classes = (AllowAny,)
-    
     def post(self, request):
         user = User.objects.get(email=request.data.get('email'))
         if user.check_password(request.data.get('password')):

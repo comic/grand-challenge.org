@@ -24,7 +24,7 @@ def create_implementation_job_for_submission(submission: Submission):
     job_input = JobInput.objects.create(
         job=submission.implementation_job,
         input=submission.benchmark.interface.inputs.first(),
-        data_file=submission.benchmark.test_data_file,
+        data_file=submission.benchmark.data_set.test_data_file,
     )
 
 
@@ -54,7 +54,7 @@ def create_evaluation_job_for_submission(submission: Submission):
     job_ground_truth_input = JobInput.objects.create(
         job=submission.evaluation_job,
         input=interface.inputs.get(name='ground_truth'),
-        data_file=submission.benchmark.test_ground_truth_data_file,
+        data_file=submission.benchmark.data_set.test_ground_truth_data_file,
     )
 
 

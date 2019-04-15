@@ -1,7 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 
-from grandchallenge.eyra_data.models import DataFile, DataType
-from grandchallenge.eyra_data.serializers import DataFileSerializer, DataTypeSerializer
+from grandchallenge.eyra_data.models import DataFile, DataType, DataSet
+from grandchallenge.eyra_data.serializers import DataFileSerializer, DataTypeSerializer, DataSetSerializer
 from grandchallenge.eyra_users.permissions import EyraPermissions
 
 
@@ -24,3 +24,12 @@ class DataTypeViewSet(ModelViewSet):
     queryset = DataType.objects.all()
     serializer_class = DataTypeSerializer
     permission_classes = (EyraPermissions,)
+
+
+class DataSetViewSet(ModelViewSet):
+    queryset = DataSet.objects.all()
+    serializer_class = DataSetSerializer
+    permission_classes = (EyraPermissions,)
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)

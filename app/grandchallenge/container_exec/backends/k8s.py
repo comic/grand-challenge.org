@@ -27,6 +27,7 @@ IO_PVC_CAPACITY = '1Gi'
 #  --host-bucket="%(bucket).{settings.AWS_S3_HOST}" """
 s3cmd_prefix = f"s3cmd --region={settings.AWS_S3_REGION_NAME}"
 
+
 # Use on Eyra Job, executes job on K8S cluster
 class K8sJob(object):
     def __init__(self, job: Job, namespace: str=os.environ.get('K8S_NAMESPACE')):

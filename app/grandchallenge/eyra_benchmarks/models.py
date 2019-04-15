@@ -8,7 +8,7 @@ from django.db import models
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.eyra_algorithms.models import Job, Implementation, Interface
-from grandchallenge.eyra_data.models import DataFile
+from grandchallenge.eyra_data.models import DataFile, DataSet
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +45,7 @@ class Benchmark(UUIDModel):
         ),
     )
     evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
-    training_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    training_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    test_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    test_ground_truth_data_file = models.ForeignKey(DataFile, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    data_set = models.ForeignKey(DataSet, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     admin_group = models.OneToOneField(
         Group,
@@ -77,8 +74,8 @@ class Benchmark(UUIDModel):
         if self.interface:
             if self.interface.inputs.count() != 1:
                 raise ValidationError('Benchmark interface should have a single input.')
-            if self.test_data_file and self.test_data_file.type != self.interface.inputs.first().type:
-                raise ValidationError('The types of test_data_file and benchmark interface input should match.')
+            if self.data_set and self.data_set.test_data_file.type != self.interface.inputs.first().type:
+                raise ValidationError('The types of data_set.test_data_file and benchmark interface input should match.')
 
     def __str__(self):
         return self.name

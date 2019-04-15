@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from grandchallenge.eyra_data.models import DataFile, DataType
+from grandchallenge.eyra_data.models import DataFile, DataType, DataSet
 
 
 class DataTypeSerializer(serializers.ModelSerializer):
@@ -37,3 +37,10 @@ class DataFileSerializer(serializers.ModelSerializer):
             })
 
         return super().update(instance, validated_data)
+
+
+class DataSetSerializer(serializers.ModelSerializer):
+    # files = DataSetTypeFilesSerializer(many=True)
+    class Meta:
+        model = DataSet
+        fields = '__all__'

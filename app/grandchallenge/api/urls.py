@@ -15,7 +15,7 @@ from grandchallenge.api.views import (
 from grandchallenge.eyra_algorithms.viewsets import ImplementationViewSet, JobViewSet, InterfaceViewSet, \
     AlgorithmViewSet
 from grandchallenge.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet, algorithm_submission
-from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet
+from grandchallenge.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet, DataSetViewSet
 from grandchallenge.eyra_users.viewsets import RegisterViewSet, LoginView
 
 app_name = "api"
@@ -35,6 +35,7 @@ router.register(r"jobs", JobViewSet)
 
 router.register(r"data_files", DataFileViewSet)
 router.register(r"data_types", DataTypeViewSet)
+router.register(r"data_sets", DataSetViewSet)
 # router.register(r"datasetfiles", DataSetFileViewSet)
 
 router.register(r"users", UserViewSet)
