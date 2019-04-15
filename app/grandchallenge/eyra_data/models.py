@@ -65,6 +65,15 @@ class DataSet(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255, null=False, blank=False)
+    image = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+        help_text=(
+            "DataSet image"
+        ),
+    )
     description = models.TextField(
         default="",
         blank=True,
@@ -89,7 +98,6 @@ class DataSet(UUIDModel):
         DataFile,
         related_name='data_sets',
         blank=True,
-        null=True,
     )
 
     def __str__(self):
