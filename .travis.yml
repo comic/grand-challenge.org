@@ -5,15 +5,15 @@ language: python
 python:
   - 3.6
 
-services:
-  - postgresql
-
 addons:
   postgresql: "10"
   apt:
     packages:
     - postgresql-10
     - postgresql-client-10
+
+services:
+  - postgresql
 
 cache:
   directories:
@@ -23,7 +23,7 @@ cache:
 env:
   global:
     - POSTGRES_DB=comic
-    - POSTGRES_HOST=localhost
+    - POSTGRES_HOST=127.0.0.1
     - POSTGRES_PASSWORD=
     - POSTGRES_USER=postgres
 
