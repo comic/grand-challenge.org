@@ -22,7 +22,7 @@ env:
     - POSTGRES_PORT=5432
 
 before_install:
-  - sudo service stop postgres
+  - sudo service stop postgresql
   - docker run -d -p $POSTGRES_PORT:5432 -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:10.4
   - pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER
   - pip install codecov pytest-cov
