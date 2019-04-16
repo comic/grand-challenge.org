@@ -1,9 +1,7 @@
 {% extends "nobanner.html" %}
 {% load crispy_forms_tags %}
-{% load static %}
-{% load url from grandchallenge_tags %}
 
-{% block title %}Study{% endblock %}
+{% block title %}Study - {{ block.super }}{% endblock %}
 
 {% block content %}
     <h2>Study</h2>

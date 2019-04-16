@@ -1,0 +1,23 @@
+{% extends "nobanner.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Study Details - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Study</h2>
+    <table class="table">
+        <tbody>
+            <tr>
+                <td><b>Name</b></td>
+                <td><b>Date</b></td>
+                <td><b>Patient</b></td>
+            </tr>
+            <tr>
+                <td>{{ study.name }}</td>
+                <td>{{ study.datetime }}</td>
+                <td>{{ study.patient }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <a href="{% url 'studies:list' %}">Cancel</a>
+{% endblock %}
