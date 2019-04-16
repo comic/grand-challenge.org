@@ -28,6 +28,7 @@ env:
     - POSTGRES_USER=postgres
 
 before_install:
+  - pg_isready -h $POSTGRES_HOST --username=$POSTGRES_USER
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage
