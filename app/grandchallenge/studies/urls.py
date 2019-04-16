@@ -1,26 +1,17 @@
 from django.urls import path
-from grandchallenge.studies import views
+from grandchallenge.studies.views_forms import (
+    StudyListView,
+    StudyCreateView,
+    StudyDetailView,
+    StudyUpdateView,
+    StudyDeleteView,
+)
 
 app_name = "studies"
 urlpatterns = [
-    path("study/", views.StudyTable.as_view(), name="studies"),
-    path("study/<uuid:pk>/", views.StudyRecord.as_view(), name="study"),
-    path(
-        "study/create/", views.StudyCreateView.as_view(), name="study-create"
-    ),
-    path(
-        "study/remove/<uuid:pk>/",
-        views.StudyRemoveView.as_view(),
-        name="study-remove",
-    ),
-    path(
-        "study/update/<uuid:pk>/",
-        views.StudyUpdateView.as_view(),
-        name="study-update",
-    ),
-    path(
-        "study/display/",
-        views.StudyDisplayView.as_view(),
-        name="study-display",
-    ),
+    path("", StudyListView.as_view(), name="list"),
+    path("create/", StudyCreateView.as_view(), name="create"),
+    path("<uuid:pk>/detail/", StudyDetailView.as_view(), name="detail"),
+    path("<uuid:pk>/delete/", StudyDeleteView.as_view(), name="delete"),
+    path("<uuid:pk>/update/", StudyUpdateView.as_view(), name="update"),
 ]
