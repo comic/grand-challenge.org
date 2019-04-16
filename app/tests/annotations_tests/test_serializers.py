@@ -33,7 +33,7 @@ serializers = {
         "unique": True,
         "factory": ETDRSGridAnnotationFactory,
         "serializer": ETDRSGridAnnotationSerializer,
-        "fields": ("grader", "created", "image", "fovea", "optic_disk"),
+        "fields": ("id", "grader", "created", "image", "fovea", "optic_disk"),
     },
     "measurement": {
         "unique": True,
