@@ -1,7 +1,7 @@
 sudo: required
 
 services:
-  - docker
+  - postgresql
 
 language: python
 
@@ -9,34 +9,38 @@ python:
   - 3.6
 
 env:
-  - DOCKER_COMPOSE_VERSION=1.21.2
+  - POSTGRES_DB=comic
+  - POSTGRES_HOST=localhost
+  - POSTGRES_PASSWORD=
+  - POSTGRES_USER=postgres
+
 
 before_install:
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage
-  - sudo service postgresql stop
-  - sudo service redis-server stop
 
 install:
-  - make build
-  - docker-compose up -d
+  - pip install pipenv
+  - pipenv install --dev
+
+#install:
+#  - make build
+#  - docker-compose up -d
 
 script:
-  - docker-compose run -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
+#  - docker-compose run -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
+  - cd app
+  - pytest
 
 after_success:
-  - mv /tmp/coverage/.coverage .coverage.docker
-  - coverage combine
-  - codecov
+#  - mv /tmp/coverage/.coverage .coverage.docker
+#  - coverage combine
+#  - codecov
 
 deploy:
-  - provider: script
-    script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
-    on:
-      all_branches: true
-      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
+#  - provider: script
+#    script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
+#    on:
+#      all_branches: true
+#      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
