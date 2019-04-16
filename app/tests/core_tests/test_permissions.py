@@ -1,168 +1,47 @@
-import pytest
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+from guardian.shortcuts import assign_perm
+
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.http import HttpResponse
-from django.test import RequestFactory
-from django.views.generic import View
 
-from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
-    UserIsChallengeParticipantOrAdminMixin,
-    UserIsStaffMixin,
-)
-from tests.factories import ChallengeFactory, UserFactory
-from tests.utils import assert_redirect, assert_status
+from tests.factories import BenchmarkFactory
 
 
-class EmptyResponseView(View):
-    def get(self, request, *args, **kwargs):
-        return HttpResponse()
+class AnonymousUserTest(APITestCase):
+    def test_anonymous_user_exists(self):
+        # should be created by guardian
+        anon_user = User.objects.get(username=settings.ANONYMOUS_USER_NAME)
 
+    def test_anon_list_benchmarks_no_permission_gives_401(self):
+        url = '/api/v1/benchmarks/'
+        response = self.client.get(url, format="json")
+        self.assertEqual(401, response.status_code)
 
-class AdminOnlyView(UserIsChallengeAdminMixin, EmptyResponseView):
-    pass
+    def test_anon_list_benchmarks_with_permission_gives_200(self):
+        anon_user = User.get_anonymous()
+        assign_perm('eyra_benchmarks.view_benchmark', anon_user)
+        url = '/api/v1/benchmarks/'
+        response = self.client.get(url, format="json")
+        self.assertEqual(200, response.status_code)
 
+    def test_anon_get_benchmark_no_permission_gives_401(self):
+        benchmark = BenchmarkFactory()
+        url = f'/api/v1/benchmarks/{benchmark.pk}/'
+        response = self.client.get(url, format="json")
+        self.assertEqual(401, response.status_code)
 
-class ParticipantOrAdminOnlyView(
-    UserIsChallengeParticipantOrAdminMixin, EmptyResponseView
-):
-    pass
+    def test_anon_get_benchmark_model_permission_gives_200(self):
+        benchmark = BenchmarkFactory()
+        anon_user=User.get_anonymous()
+        assign_perm('eyra_benchmarks.view_benchmark', anon_user)
+        url = f'/api/v1/benchmarks/{benchmark.pk}/'
+        response = self.client.get(url, format="json")
+        self.assertEqual(200, response.status_code)
 
-
-class StaffOnlyView(UserIsStaffMixin, EmptyResponseView):
-    pass
-
-
-@pytest.mark.django_db
-def test_staff_view(rf: RequestFactory, ChallengeSet, admin_user, mocker):
-    # admin_user is a superuser, not a challenge admin
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
-
-    # Messages need to be mocked when using request factory
-    mock_messages = mocker.patch(
-        "grandchallenge.core.permissions.mixins.messages"
-    ).start()
-    mock_messages.INFO = "INFO"
-
-    assert_redirect(
-        settings.LOGIN_URL, AnonymousUser(), StaffOnlyView, challenge, rf
-    )
-    assert_status(403, participant, StaffOnlyView, challenge, rf)
-    assert_status(403, non_participant, StaffOnlyView, challenge, rf)
-    assert_status(403, creator, StaffOnlyView, challenge, rf)
-    assert_status(200, admin_user, StaffOnlyView, challenge, rf)
-
-    participant.is_staff = True
-    participant.save()
-
-    assert_status(200, participant, StaffOnlyView, challenge, rf)
-
-
-@pytest.mark.django_db
-def test_permissions_mixin(
-    rf: RequestFactory, admin_user, mocker, ChallengeSet
-):
-    # admin_user is a superuser, not a challenge admin
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
-
-    # Messages need to be mocked when using request factory
-    mock_messages = mocker.patch(
-        "grandchallenge.core.permissions.mixins.messages"
-    ).start()
-
-    mock_messages.INFO = "INFO"
-    assert_status(200, admin_user, AdminOnlyView, challenge, rf)
-    assert_status(200, creator, AdminOnlyView, challenge, rf)
-    assert_status(403, participant, AdminOnlyView, challenge, rf)
-    assert_status(403, non_participant, AdminOnlyView, challenge, rf)
-    assert_redirect(
-        settings.LOGIN_URL, AnonymousUser(), AdminOnlyView, challenge, rf
-    )
-    assert_status(200, admin_user, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, creator, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, participant, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(
-        403, non_participant, ParticipantOrAdminOnlyView, challenge, rf
-    )
-    assert_redirect(
-        settings.LOGIN_URL,
-        AnonymousUser(),
-        ParticipantOrAdminOnlyView,
-        challenge,
-        rf,
-    )
-    # Make a 2nd challenge and make sure that the admins and participants
-    # here cannot see the first
-    creator2 = UserFactory()
-    challenge2 = ChallengeFactory(creator=creator2)
-    participant2 = UserFactory()
-    challenge2.add_participant(participant2)
-    assert_status(403, creator2, AdminOnlyView, challenge, rf)
-    assert_status(403, participant2, AdminOnlyView, challenge, rf)
-    assert_status(403, creator2, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(403, participant2, ParticipantOrAdminOnlyView, challenge, rf)
-
-
-@pytest.mark.django_db
-def test_permissions_after_challenge_rename(
-    rf: RequestFactory, admin_user, mocker, ChallengeSet
-):
-    """ Check that we can rename challenges.
-    Admin_user is superuser """
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
-    # Messages need to be mocked when using request factory
-    mock_messages = mocker.patch(
-        "grandchallenge.core.permissions.mixins.messages"
-    ).start()
-    mock_messages.INFO = "INFO"
-    assert_status(200, admin_user, AdminOnlyView, challenge, rf)
-    assert_status(200, creator, AdminOnlyView, challenge, rf)
-    assert_status(403, participant, AdminOnlyView, challenge, rf)
-    assert_status(403, non_participant, AdminOnlyView, challenge, rf)
-    assert_redirect(
-        settings.LOGIN_URL, AnonymousUser(), AdminOnlyView, challenge, rf
-    )
-    assert_status(200, admin_user, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, creator, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, participant, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(
-        403, non_participant, ParticipantOrAdminOnlyView, challenge, rf
-    )
-    assert_redirect(
-        settings.LOGIN_URL,
-        AnonymousUser(),
-        ParticipantOrAdminOnlyView,
-        challenge,
-        rf,
-    )
-    challenge.short_name += "appendedname"
-    challenge.save()
-    assert_status(200, admin_user, AdminOnlyView, challenge, rf)
-    assert_status(200, creator, AdminOnlyView, challenge, rf)
-    assert_status(403, participant, AdminOnlyView, challenge, rf)
-    assert_status(403, non_participant, AdminOnlyView, challenge, rf)
-    assert_redirect(
-        settings.LOGIN_URL, AnonymousUser(), AdminOnlyView, challenge, rf
-    )
-    assert_status(200, admin_user, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, creator, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(200, participant, ParticipantOrAdminOnlyView, challenge, rf)
-    assert_status(
-        403, non_participant, ParticipantOrAdminOnlyView, challenge, rf
-    )
-    assert_redirect(
-        settings.LOGIN_URL,
-        AnonymousUser(),
-        ParticipantOrAdminOnlyView,
-        challenge,
-        rf,
-    )
+    def test_anon_get_benchmark_object_permission_gives_200(self):
+        benchmark = BenchmarkFactory()
+        anon_user=User.get_anonymous()
+        assign_perm('eyra_benchmarks.view_benchmark', anon_user, benchmark)
+        url = f'/api/v1/benchmarks/{benchmark.pk}/'
+        response = self.client.get(url, format="json")
+        self.assertEqual(200, response.status_code)

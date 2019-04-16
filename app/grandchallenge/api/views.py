@@ -24,7 +24,7 @@ from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
 from social_django.views import _do_login
 
-from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoObjectPermissions
+from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoModelOrObjectPermissions
 
 
 class CurrentUserView(APIView):
@@ -38,7 +38,7 @@ class CurrentUserView(APIView):
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all() # filter(~Q(username="AnonymousUser"))
     serializer_class = UserSerializer
-    permission_classes = (EyraDjangoModelPermissions & EyraDjangoObjectPermissions,)
+    permission_classes = (EyraDjangoModelPermissions & EyraDjangoModelOrObjectPermissions,)
 
 
 class GroupViewSet(ReadOnlyModelViewSet):

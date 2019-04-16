@@ -10,7 +10,7 @@ from grandchallenge.eyra_algorithms.models import Implementation
 from grandchallenge.eyra_algorithms.serializers import ImplementationSerializer
 from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 from grandchallenge.eyra_benchmarks.serializers import BenchmarkSerializer, SubmissionSerializer
-from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoObjectPermissions, \
+from grandchallenge.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoModelOrObjectPermissions, \
     EyraPermissions
 
 
