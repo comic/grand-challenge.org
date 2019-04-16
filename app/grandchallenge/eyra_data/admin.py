@@ -8,7 +8,7 @@ class DataTypeAdmin(admin.ModelAdmin):
 
 
 class DataFileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'original_file_name', 'creator', 'created')
+    list_display = ('name', 'size', 'creator', 'created')
 
 
 admin.site.register(DataFile, DataFileAdmin)

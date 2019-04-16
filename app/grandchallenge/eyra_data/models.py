@@ -53,9 +53,9 @@ class DataFile(UUIDModel):
         null=True,
         help_text="Description of this file in markdown.",
     )
-    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
-    data_format = models.CharField(max_length=50, null=True, blank=True)
-    data_size = models.CharField(max_length=50, null=True, blank=True)
+    type = models.ForeignKey(DataType, on_delete=models.CASCADE)
+    format = models.CharField(max_length=50, null=True, blank=True)
+    size = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -111,9 +111,10 @@ class DataSet(UUIDModel):
     )
     banner_image_alttext = models.CharField(max_length=255, null=True, blank=True)
 
-    related_datasets =  models.ManyToManyField(
-        "grandchallenge.eyra_data.models.DataSet",
+    related_datasets = models.ManyToManyField(
+        "eyra_data.DataSet",
         blank = True,
+        related_name='related_data_sets'
     )
 
     additional_data_files = models.ManyToManyField(
