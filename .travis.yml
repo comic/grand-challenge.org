@@ -26,9 +26,10 @@ env:
     - POSTGRES_HOST=127.0.0.1
     - POSTGRES_PASSWORD=
     - POSTGRES_USER=postgres
+    - POSTGRES_PORT=5433
 
 before_install:
-  - pg_isready -h $POSTGRES_HOST --username=$POSTGRES_USER
+  - pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
   - sudo chmod a+w /tmp/coverage

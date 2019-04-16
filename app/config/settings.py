@@ -50,7 +50,7 @@ DATABASES = {
         "USER": os.environ.get("POSTGRES_USER", "comic"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
-        "PORT": "",
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 
