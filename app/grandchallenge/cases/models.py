@@ -102,7 +102,7 @@ class RawImageUploadSession(UUIDModel):
                 processing_task=self.pk,
             )
 
-            build_images.apply_async(task_id=str(self.pk), args=(self.pk,))
+            build_images.apply_async(args=(self.pk,))
 
         except Exception as e:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
@@ -268,10 +268,6 @@ class Image(UUIDModel):
         if color_components > 1:
             result.append(color_components)
         return result
-
-    @property
-    def cirrus_link(self) -> str:
-        return f"{settings.CIRRUS_APPLICATION}&{settings.CIRRUS_BASE_IMAGE_QUERY_PARAM}={self.pk}"
 
     def get_sitk_image(self):
         """

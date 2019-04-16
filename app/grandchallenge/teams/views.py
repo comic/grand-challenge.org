@@ -11,7 +11,7 @@ from django.views.generic import (
 )
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeParticipantOrAdminMixin
+    UserIsChallengeParticipantOrAdminMixin,
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.teams.models import Team, TeamMember

@@ -7,6 +7,8 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
+from django.db.models import ExpressionWrapper, F, DateTimeField
+from django.utils import timezone
 
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -145,7 +147,8 @@ def execute_job(
 
     try:
         with job.executor_cls(
-            job_id=job.pk,
+            job_id=str(job.pk),
+            job_model=f"{job_app_label}-{job_model_name}",
             input_files=job.input_files,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
@@ -166,3 +169,41 @@ def execute_job(
     job.update_status(status=job.SUCCESS)
 
     return result
+
+
+@shared_task
+def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    session = get_model_instance(
+        pk=pk, app_label=app_label, model_name=model_name
+    )
+    session.start()
+
+
+@shared_task
+def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    session = get_model_instance(
+        pk=pk, app_label=app_label, model_name=model_name
+    )
+    session.stop()
+
+
+@shared_task
+def stop_expired_services(*, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    now = timezone.now()
+
+    services_to_stop = (
+        model.objects.annotate(
+            expires=ExpressionWrapper(
+                F("created") + F("maximum_duration"),
+                output_field=DateTimeField(),
+            )
+        )
+        .filter(expires__lt=now)
+        .exclude(status=model.STOPPED)
+    )
+
+    for service in services_to_stop:
+        service.stop()
+
+    return [str(s) for s in services_to_stop]

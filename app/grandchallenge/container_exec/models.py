@@ -78,7 +78,7 @@ class ContainerExecJobModel(models.Model):
 
     def schedule_job(self):
 
-        kwargs = {"task_id": str(self.pk)}
+        kwargs = {}
 
         if self.container.requires_gpu:
             kwargs.update({"queue": "gpu"})
