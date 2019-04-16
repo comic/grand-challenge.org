@@ -98,7 +98,10 @@ class EyraDjangoObjectPermissions(EyraDjangoModelPermissions):
 
         return user.has_perms(perms, obj)
 
+    def has_permission(self, request, view):
+        return True
 
+    
 # EyraPermissions:
 # A user has permission if he has permissions on the whole model, OR specific permissions
 # for an object (a model instance).
