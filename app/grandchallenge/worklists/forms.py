@@ -6,24 +6,20 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.worklists.models import Worklist, WorklistSet
+from grandchallenge.worklists.models import Worklist
 
 
-""" Worklist """
-
-
-class WorklistCreateForm(ModelForm):
+class WorklistForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(
             FormActions(
-                Submit("create", "Create"),
+                Submit("save", "Save"),
                 Button(
                     "cancel",
                     "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("worklists:list-display"),
+                    onclick="location.href='%s';" % reverse("worklists:list"),
                 ),
             )
         )
@@ -33,75 +29,5 @@ class WorklistCreateForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "set", "images"]
+        fields = ["title", "user", "images"]
         widgets = {"images": Select2MultipleWidget}
-
-
-class WorklistUpdateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(
-            FormActions(
-                Submit("update", "Update"),
-                Button(
-                    "cancel",
-                    "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("worklists:list-display"),
-                ),
-            )
-        )
-        self.fields["images"].queryset = Image.objects.filter(
-            study__isnull=False, files__image_type=ImageFile.IMAGE_TYPE_TIFF
-        )
-
-    class Meta:
-        model = Worklist
-        fields = ["title", "set", "images"]
-        widgets = {"images": Select2MultipleWidget}
-
-
-""" WorklistSet """
-
-
-class WorklistSetCreateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(
-            FormActions(
-                Submit("create", "Create"),
-                Button(
-                    "cancel",
-                    "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("worklists:set-display"),
-                ),
-            )
-        )
-
-    class Meta:
-        model = WorklistSet
-        fields = ["title", "user"]
-
-
-class WorklistSetUpdateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(
-            FormActions(
-                Submit("update", "Update"),
-                Button(
-                    "cancel",
-                    "Cancel",
-                    onclick="location.href='%s';"
-                    % reverse("worklists:set-display"),
-                ),
-            )
-        )
-
-    class Meta:
-        model = WorklistSet
-        fields = ["title", "user"]
