@@ -38,17 +38,24 @@ class DataFile(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=50, null=False, blank=False)
-    description = models.TextField(
+    file = models.FileField(blank=True, null=True, upload_to=get_data_file_name)
+    sha = models.CharField(max_length=40, null=True, blank=True)
+
+    short_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Short description of this file in plain text.",
+    )
+    long_description = models.TextField(
         default="",
         blank=True,
         null=True,
         help_text="Description of this file in markdown.",
     )
-    type = models.ForeignKey(DataType, on_delete=models.CASCADE)
-    frozen = models.BooleanField(default=False)
-    file = models.FileField(blank=True, null=True, upload_to=get_data_file_name)
-    sha = models.CharField(max_length=40, null=True, blank=True)
-    original_file_name = models.CharField(null=True, blank=True, max_length=150)
+    data_type = models.ForeignKey(DataType, on_delete=models.CASCADE)
+    data_format = models.CharField(max_length=50, null=True, blank=True)
+    data_size = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -62,10 +69,28 @@ class DataSet(UUIDModel):
         on_delete=models.SET_NULL,
         related_name="data_sets",
     )
+    version = models.CharField(
+        max_length=64,
+        help_text="The Dataset version",
+        blank=True,
+        null=True,
+    )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255, null=False, blank=False)
-    image = models.CharField(
+    short_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Short description of this data set in plaintext.",
+    )
+    long_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Long description of this data set in markdown.",
+    )
+    card_image_url = models.CharField(
         max_length=255,
         blank=False,
         null=False,
@@ -74,11 +99,27 @@ class DataSet(UUIDModel):
             "DataSet image"
         ),
     )
-    description = models.TextField(
-        default="",
+    card_image_alttext = models.CharField(max_length=255, null=True, blank=True)
+    banner_image_url = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+        help_text=(
+            "DataSet image"
+        ),
+    )
+    banner_image_alttext = models.CharField(max_length=255, null=True, blank=True)
+
+    related_datasets =  models.ManyToManyField(
+        "grandchallenge.eyra_data.models.DataSet",
+        blank = True,
+    )
+
+    additional_data_files = models.ManyToManyField(
+        DataFile,
+        related_name='data_sets',
         blank=True,
-        null=True,
-        help_text="Description of this data set in markdown.",
     )
     test_data_file = models.ForeignKey(
         DataFile,
@@ -93,11 +134,6 @@ class DataSet(UUIDModel):
         null=True,
         blank=True,
         related_name='+'
-    )
-    data_files = models.ManyToManyField(
-        DataFile,
-        related_name='data_sets',
-        blank=True,
     )
 
     def __str__(self):
