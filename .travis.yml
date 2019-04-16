@@ -29,8 +29,8 @@ env:
     - POSTGRES_PORT=5433
 
 before_install:
-  - sudo -u postgres psql -c "CREATE DATABASE $POSTGRES_DB;" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres
-  - sudo -u postgres psql -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres
+  - sudo -u postgres psql -c "CREATE DATABASE $POSTGRES_DB;" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres --no-password
+  - sudo -u postgres psql -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres --no-password
   - pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
