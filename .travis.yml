@@ -5,15 +5,8 @@ language: python
 python:
   - 3.6
 
-addons:
-  postgresql: "10"
-  apt:
-    packages:
-    - postgresql-10
-    - postgresql-client-10
-
 services:
-  - postgresql
+  - docker
 
 cache:
   directories:
@@ -26,11 +19,11 @@ env:
     - POSTGRES_HOST=127.0.0.1
     - POSTGRES_PASSWORD=comic
     - POSTGRES_USER=comic
-    - POSTGRES_PORT=5433
+    - POSTGRES_PORT=5432
 
 before_install:
-  - sudo -u postgres psql -c "CREATE DATABASE $POSTGRES_DB;" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres --no-password
-  - sudo -u postgres psql -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" --host=$POSTGRES_HOST --port=$POSTGRES_PORT -U postgres --no-password
+  - sudo service stop postgres
+  - docker run -d -p $POSTGRES_PORT:5432 -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:10.4
   - pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
