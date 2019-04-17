@@ -36,16 +36,16 @@ class ETDRSGridAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
         model = ETDRSGridAnnotation
 
-    fovea = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
-    optic_disk = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
+    fovea = FuzzyFloatCoordinatesList(1)
+    optic_disk = FuzzyFloatCoordinatesList(1)
 
 
 class MeasurementAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
         model = MeasurementAnnotation
 
-    start_voxel = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
-    end_voxel = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
+    start_voxel = FuzzyFloatCoordinatesList(1)
+    end_voxel = FuzzyFloatCoordinatesList(1)
 
 
 class DefaultNamedImageAnnotationModelFactory(
