@@ -451,3 +451,39 @@ def multiple_landmark_annotation_sets():
     """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
     SingleLandmarkAnnotations belonging to multiple different graders """
     return generate_multiple_landmark_annotation_sets(retina_grader=False)
+
+
+class MultipleETDRSAnnotations(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    etdrss1: List
+    etdrss2: List
+
+
+def generate_multiple_etdrs_annotations(retina_grader=False):
+    graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        add_to_graders_group(graders)
+
+    etdrss1 = ETDRSGridAnnotationFactory.create_batch(10, grader=graders[0])
+    etdrss2 = ETDRSGridAnnotationFactory.create_batch(5, grader=graders[1])
+
+    return MultipleETDRSAnnotations(
+        grader1=graders[0],
+        grader2=graders[1],
+        etdrss1=etdrss1,
+        etdrss2=etdrss2,
+    )
+
+
+@pytest.fixture(name="MultipleRetinaETDRSAnnotations")
+def multiple_retina_etdrs_annotations():
+    """ Creates 2 retina_grader users with 10 and 5 etdrs annotations"""
+    return generate_multiple_etdrs_annotations(retina_grader=True)
+
+
+@pytest.fixture(name="MultipleETDRSAnnotations")
+def multiple_etdrs_annotations():
+    """ Creates 2 users with 10 and 5 etdrs annotations"""
+    return generate_multiple_etdrs_annotations(retina_grader=False)
