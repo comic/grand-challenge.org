@@ -244,4 +244,8 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
                     ),
                 ]
             )
+
+        if size == 1:
+            return fuzzy_list[0]
+
         return fuzzy_list
