@@ -10,15 +10,16 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "studies:study-create",
-        "studies:study-remove",
-        "studies:study-update",
-        "studies:study-display",
+        "studies:create",
+        "studies:detail",
+        "studies:delete",
+        "studies:update",
+        "studies:display",
     ],
 )
 def test_study_form_access(view, client):
     reverse_kwargs = {}
-    if view in ("studies:study-update", "studies:study-remove"):
+    if view in ("studies:update", "studies:detail", "studies:delete"):
         study = StudyFactory()
         reverse_kwargs.update({"pk": study.pk})
 
