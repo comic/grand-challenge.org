@@ -27,4 +27,8 @@ class StudyForm(ModelForm):
     class Meta:
         model = Study
         fields = ["name", "datetime", "patient"]
-        widgets = {"datetime": DateTimeInput(format="%d-%m-%Y %H%M",attrs={"type": "datetime"})}
+        widgets = {
+            "datetime": DateTimeInput(
+                format="%d-%m-%Y %H%M", attrs={"type": "datetime"}
+            )
+        }

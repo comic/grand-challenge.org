@@ -15,7 +15,9 @@ def filter_queryset_field(field, value, model=None, queryset=None) -> QuerySet:
     return queryset
 
 
-def filter_queryset_fields(field_filters, model=None, queryset=None) -> QuerySet:
+def filter_queryset_fields(
+    field_filters, model=None, queryset=None
+) -> QuerySet:
     if queryset is None and model is None:
         raise ValueError("Unable to initialize or utilize queryset.")
 
