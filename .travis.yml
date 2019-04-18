@@ -24,6 +24,8 @@ env:
 before_install:
   - sudo service postgresql stop
   - docker run -d -p $POSTGRES_PORT:5432 -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:10.4
+  - sleep 30
+  - docker ps -a
   - pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --timeout=120
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
