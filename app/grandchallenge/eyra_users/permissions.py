@@ -58,7 +58,7 @@ class EyraDjangoModelOrObjectPermissions(EyraDjangoModelPermissions):
     def has_permission(self, request, view):
         handler = getattr(view, request.method.lower(), None)
 
-        if handler and handler.__name__ == 'list':
+        if handler and handler.__name__ in ['list', 'create']:
             return EyraDjangoModelPermissions.has_permission(self, request, view)
 
         return True
