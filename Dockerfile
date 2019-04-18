@@ -28,20 +28,20 @@ ADD Pipfile.lock /opt/pipenv
 RUN pipenv install --system
 
 RUN chown 2001:2001 /static /dbox/Dropbox/media
-
-###################
-#  Test Container #
-###################
-FROM base as test
-
-USER root
-WORKDIR /opt/pipenv
-RUN pipenv install --system --dev
-
-USER 2001:2001
-WORKDIR /app
-ADD --chown=2001:2001 ./app/ /app/
-ADD --chown=2001:2001 pyproject.toml /tmp/pyproject.toml
+#
+####################
+##  Test Container #
+####################
+#FROM base as test
+#
+#USER root
+#WORKDIR /opt/pipenv
+#RUN pipenv install --system --dev
+#
+#USER 2001:2001
+#WORKDIR /app
+#ADD --chown=2001:2001 ./app/ /app/
+#ADD --chown=2001:2001 pyproject.toml /tmp/pyproject.toml
 
 ##################
 # Dist Container #

@@ -32,10 +32,6 @@ install:
   - pip install pipenv
   - pipenv install --dev
 
-#install:
-#  - make build
-#  - docker-compose up -d
-
 before_script:
   - |
     RETRIES=10
@@ -46,17 +42,14 @@ before_script:
   - cd app
 
 script:
-#  - docker-compose run -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
   - pytest
 
 after_success:
-#  - mv /tmp/coverage/.coverage .coverage.docker
-#  - coverage combine
-#  - codecov
+  - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
 
 deploy:
-#  - provider: script
-#    script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
-#    on:
-#      all_branches: true
-#      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
+  - provider: script
+    script: bash -c "docker login -u eyrabenchmark -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
+    on:
+      all_branches: true
+      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
