@@ -39,10 +39,9 @@ before_script:
         RETRIES=$((RETRIES-1))
         sleep 1
     done
-  - cd app
 
 script:
-  - pytest
+  - pytest app
 
 after_success:
   - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
