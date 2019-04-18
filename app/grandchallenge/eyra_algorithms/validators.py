@@ -4,6 +4,7 @@ import requests
 from django.conf import settings
 
 def IdExistsInDockerRegistryValidator(value):
+    return True
     resp = requests.get(f"https://{settings.PRIVATE_DOCKER_REGISTRY}/v2/_catalog")
 
     if not value in resp.json()['repositories']:

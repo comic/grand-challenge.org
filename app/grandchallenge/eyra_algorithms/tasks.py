@@ -22,6 +22,7 @@ def run_job(job_pk):
     job.started = datetime.now()
     job.save()
 
+    job.log = ''
     try:
         with K8sJob(job) as k8s_job:
             k8s_job.run()

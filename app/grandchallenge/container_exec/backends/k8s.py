@@ -104,12 +104,20 @@ echo "Done"
         )
 
         # Define the main algorithm running container
+        implementation = self.job.implementation
         main_container = client.V1Container(
             name="main",
-            image=f"{settings.PRIVATE_DOCKER_REGISTRY}/{self.job.implementation.container}",
-            resources=client.V1ResourceRequirements(requests={
-                "nvidia.com/gpu": "1"
-            }),
+            image=implementation.container,
+            command=['sh'] if implementation.command else None,
+            args=['-c', implementation.command] if implementation.command else None,
+            resources=client.V1ResourceRequirements(
+                requests = {
+                    "nvidia.com/gpu": "1"
+                },
+                limits = {
+                    "nvidia.com/gpu": "1"
+                }
+            ),
             volume_mounts=[client.V1VolumeMount(mount_path='/data', name='io')],
         )
 

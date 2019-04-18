@@ -77,7 +77,7 @@ class Implementation(UUIDModel):
         help_text="Description of this implementation in markdown.",
     )
     container = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
-
+    command = models.CharField(max_length=255, blank=True, null=True)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, blank=True, null=True, related_name='implementations')
     version = models.CharField(
         max_length=64,
@@ -117,6 +117,11 @@ class Job(UUIDModel):
     log = models.TextField(blank=True, null=True)
     implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE)
     output = models.ForeignKey(DataFile, on_delete=models.CASCADE, related_name='output_of_job', null=False, blank=False)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.output:
+            self.output.delete()
+        super().delete(using, keep_parents)
 
     def input_name_data_file_pk_map(self):
         return {job_input.input.name: job_input.data_file.pk for job_input in self.inputs.all()}
