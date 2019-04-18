@@ -16,7 +16,7 @@ def test_worklist_list(client):
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        client=client, viewname="worklists:list-display", user=staff_user
+        client=client, viewname="worklists:list", user=staff_user
     )
     assert str(worklist.id) in response.rendered_content
 
@@ -33,7 +33,7 @@ def test_worklist_create(client):
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="worklists:list-create",
+        viewname="worklists:create",
         client=client,
         method=client.post,
         data=data,

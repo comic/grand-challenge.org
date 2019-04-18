@@ -10,6 +10,26 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
+def assert_api_read_only(client, table_reverse, expected_table, factory):
+    user, token = get_staff_user_with_token()
+    table_url = reverse(table_reverse)
+
+    record = factory()
+    record_id = str(record.pk)
+
+    # Assigns permissions to token user
+    model_name = factory._meta.model._meta.model_name
+    for permission_type in factory._meta.model._meta.default_permissions:
+        permission_name = f"{permission_type}_{model_name}"
+        assign_perm(permission_name, user, record)
+
+    # Rests record display
+    assert_record_display(client, table_url, token, record_id)
+
+    # Tests table display
+    assert_table_list(client, table_url, token, expected_table)
+
+
 def assert_api_crud(
     client, table_reverse, expected_table, factory, invalid_fields
 ):
@@ -41,7 +61,7 @@ def assert_api_crud(
     assert_record_remove(client, table_url, token, record_id)
 
     # Tests table display
-    assert_table_display(client, table_url, token, expected_table)
+    assert_table_list(client, table_url, token, expected_table)
 
     # Ensures no records are left while testing the creation view
     factory._meta.model.objects.all().delete()
@@ -50,7 +70,7 @@ def assert_api_crud(
     assert_table_create(client, table_url, token, record_dict)
 
 
-def assert_table_display(client, url, token, expected):
+def assert_table_list(client, url, token, expected):
     response = client.get(
         url, HTTP_ACCEPT="text/html", HTTP_AUTHORIZATION="Token " + token
     )

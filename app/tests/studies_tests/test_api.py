@@ -1,16 +1,12 @@
 import pytest
 from tests.studies_tests.factories import StudyFactory
-from tests.api_utils import assert_api_crud
+from tests.api_utils import assert_api_read_only
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "table_reverse, expected_table, factory, invalid_fields",
-    [("api:studies", "Study Table", StudyFactory, [])],
+    "table_reverse, expected_table, factory",
+    [("api:studies", "Study Table", StudyFactory)],
 )
-def test_api_pages(
-    client, table_reverse, expected_table, factory, invalid_fields
-):
-    assert_api_crud(
-        client, table_reverse, expected_table, factory, invalid_fields
-    )
+def test_api_pages(client, table_reverse, expected_table, factory):
+    assert_api_read_only(client, table_reverse, expected_table, factory)
