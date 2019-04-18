@@ -1,23 +1,6 @@
 from rest_framework import serializers
 
 from django.contrib.auth.models import User, Group
-from grandchallenge.evaluation.models import Submission
-
-
-class SubmissionSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name="api:submission-detail"
-    )
-    creator = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
-    challenge = serializers.SlugRelatedField(
-        read_only=True, slug_field="short_name"
-    )
-
-    class Meta:
-        model = Submission
-        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):

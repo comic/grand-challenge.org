@@ -13,7 +13,9 @@ from raven.contrib.django.models import client
 from rest_framework.response import Response
 
 from config.denylist import USERNAME_DENYLIST
+import environ
 
+env = environ.Env()
 
 def strtobool(val) -> bool:
     """ Returns disutils.util.strtobool as a boolean """
@@ -21,25 +23,13 @@ def strtobool(val) -> bool:
 
 
 # Default COMIC settings, to be included by settings.py
-DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+DEBUG = env.bool("DEBUG", default=True)
 # DEBUG = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
-# Who gets the 404 notifications?
-manager_email = os.environ.get("MANAGER_EMAIL", None)
-if manager_email:
-    MANAGERS = [("Manager", manager_email)]
-
-IGNORABLE_404_URLS = [
-    re.compile(r"\.(php|cgi|asp)/"),
-    re.compile(r"^/phpmyadmin/"),
-]
-
-# Used as starting points for various other paths. realpath(__file__) starts in
-# the "Comic" app dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 
@@ -68,17 +58,11 @@ SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 ANONYMOUS_USER_NAME = "AnonymousUser"
 
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
-USERENA_USE_HTTPS = False
-USERENA_DEFAULT_PRIVACY = "open"
 LOGIN_URL = "/accounts/signin/"
 LOGOUT_URL = "/accounts/signout/"
 
 LOGIN_REDIRECT_URL = "/accounts/login-redirect/"
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
-
-# Do not give message popups saying "you have been logged out". Users are expected
-# to know they have been logged out when they click the logout button
-USERENA_USE_MESSAGES = (False,)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -93,15 +77,15 @@ TIME_ZONE = "UTC"
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = "en-us"
 
-SITE_ID = int(os.environ.get("SITE_ID", "1"))
+# SITE_ID = int(os.environ.get("SITE_ID", "1"))
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale.
-USE_L10N = True
+USE_L10N = False
 
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
@@ -129,26 +113,8 @@ CACHES = {
     }
 }
 
-# In each project there can be a single directory out of which files can be downloaded
-# without logging in. In this folder you can put website header images etc.
-# for security, only MEDIA_ROOT/<project_name>/COMIC_PUBLIC_FOLDER_NAME are served
-# without checking credentials.
-COMIC_PUBLIC_FOLDER_NAME = "public_html"
-
-# Transient solution for server content from certain folders publicly. This will be removed
-# When a full configurable permissions system is in place, see ticket #244
-COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
-
-# In each project there can be a single directory from which files can only be
-# downloaded by registered members of that project
-COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
-
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
-
 ROOT_URLCONF = "config.urls"
-SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
+
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 SESSION_COOKIE_DOMAIN = os.environ.get(
@@ -174,9 +140,6 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
-
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
 
 # Serve files using django (debug only)
 STATIC_URL = "/static/"
@@ -232,9 +195,9 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "grandchallenge.subdomains.middleware.subdomain_middleware",
-    "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
-    "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    # "grandchallenge.subdomains.middleware.subdomain_middleware",
+    # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
+    # "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
 
@@ -258,40 +221,41 @@ THIRD_PARTY_APPS = [
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
-    "userena",  # user profiles
+    # "userena",  # user profiles
     "guardian",  # userena dependency, per object permissions
-    "easy_thumbnails",  # userena dependency
+    # "easy_thumbnails",  # userena dependency
     "social_django",  # social authentication with oauth2
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
-    "crispy_forms",  # bootstrap forms
-    "favicon",  # favicon management
-    "django_select2",  # for multiple choice widgets
-    "django_summernote",  # for WYSIWYG page editing
-    "rest_framework_swagger",  # REST API Swagger spec
+    # "crispy_forms",  # bootstrap forms
+    # "favicon",  # favicon management
+    # "django_select2",  # for multiple choice widgets
+    # "django_summernote",  # for WYSIWYG page editing
+    # "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
     "django_extensions",
     "django_filters",
+    "drf_yasg",
 ]
 
 LOCAL_APPS = [
-    "grandchallenge.admins",
+    # "grandchallenge.admins",
     "grandchallenge.api",
-    "grandchallenge.challenges",
+    # "grandchallenge.challenges",
     "grandchallenge.core",
-    "grandchallenge.evaluation",
-    "grandchallenge.jqfileupload",
-    "grandchallenge.pages",
-    "grandchallenge.participants",
+    # "grandchallenge.evaluation",
+    # "grandchallenge.jqfileupload",
+    # "grandchallenge.pages",
+    # "grandchallenge.participants",
     "grandchallenge.profiles",
-    "grandchallenge.teams",
-    "grandchallenge.uploads",
-    "grandchallenge.cases",
-    "grandchallenge.algorithms",
-    "grandchallenge.container_exec",
-    "grandchallenge.datasets",
-    "grandchallenge.submission_conversion",
-    "grandchallenge.statistics",
+    # "grandchallenge.teams",
+    # "grandchallenge.uploads",
+    # "grandchallenge.cases",
+    # "grandchallenge.algorithms",
+    # "grandchallenge.container_exec",
+    # "grandchallenge.datasets",
+    # "grandchallenge.submission_conversion",
+    # "grandchallenge.statistics",
     "grandchallenge.eyra_benchmarks",
     "grandchallenge.eyra_algorithms",
     "grandchallenge.eyra_data",
@@ -304,13 +268,10 @@ ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.google.GoogleOAuth2",
-    "userena.backends.UserenaAuthenticationBackend",
+    # "userena.backends.UserenaAuthenticationBackend",
     "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 )
-
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
@@ -342,84 +303,6 @@ SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 # Django 1.6 introduced a new test runner, use it
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
-
-# WYSIWYG editing with Summernote
-SUMMERNOTE_THEME = "bs4"
-SUMMERNOTE_CONFIG = {
-    "attachment_model": "uploads.SummernoteAttachment",
-    "attachment_require_authentication": True,
-    "summernote": {
-        "width": "100%",
-        "toolbar": [
-            ["style", ["style"]],
-            [
-                "font",
-                ["bold", "italic", "underline", "strikethrough", "clear"],
-            ],
-            ["para", ["ul", "ol", "paragraph"]],
-            ["insert", ["link", "picture", "hr"]],
-            ["view", ["fullscreen", "codeview"]],
-            ["help", ["help"]],
-        ],
-    },
-}
-
-# Settings for allowed HTML
-BLEACH_ALLOWED_TAGS = [
-    "a",
-    "abbr",
-    "acronym",
-    "b",
-    "blockquote",
-    "br",
-    "code",
-    "col",
-    "div",
-    "em",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "hr",
-    "i",
-    "iframe",  # Allowed for now for continuous registration challenge
-    "img",
-    "li",
-    "ol",
-    "p",
-    "pre",
-    "span",
-    "strike",
-    "strong",
-    "table",
-    "tbody",
-    "thead",
-    "td",
-    "th",
-    "tr",
-    "u",
-    "ul",
-]
-BLEACH_ALLOWED_ATTRIBUTES = {
-    "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title"],
-    "abbr": ["title"],
-    "acronym": ["title"],
-    "div": ["data-geochart"],  # Required for geocharts
-    "iframe": [
-        "src",
-        "sandbox",
-        "data-groupname",
-        "scrolling",
-        "height",
-    ],  # For continuous registration challenge and google group
-    "img": ["height", "src", "width"],
-}
-BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
-BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
-BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -501,92 +384,34 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'grandchallenge.api.errors.custom_exception_handler'
 }
 
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "api_key": {"type": "apiKey", "in": "header", "name": "Authorization"}
-    }
-}
-
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
 
-CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
-)
-CONTAINER_EXEC_DOCKER_TLSVERIFY = strtobool(
-    os.environ.get("CONTAINER_EXEC_DOCKER_TLSVERIFY", "False")
-)
-CONTAINER_EXEC_DOCKER_TLSCACERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCACERT", ""
-)
-CONTAINER_EXEC_DOCKER_TLSCERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCERT", ""
-)
-CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSKEY", ""
-)
-CONTAINER_EXEC_MEMORY_LIMIT = "4g"
-CONTAINER_EXEC_IO_IMAGE = "alpine:3.8"
-CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:3f53bb00af943dfdf815650be70c0fa7b426e56a66f5e3362b47a129d57d5991"
-)
-CONTAINER_EXEC_CPU_QUOTA = 100000
-CONTAINER_EXEC_CPU_PERIOD = 100000
-
-CELERY_BEAT_SCHEDULE = {
-    "cleanup_stale_uploads": {
-        "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
-        "schedule": timedelta(hours=1),
-    },
-    "clear_sessions": {
-        "task": "grandchallenge.core.tasks.clear_sessions",
-        "schedule": timedelta(days=1),
-    },
-    "update_filter_classes": {
-        "task": "grandchallenge.challenges.tasks.update_filter_classes",
-        "schedule": timedelta(minutes=5),
-    },
-    "validate_external_challenges": {
-        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
-        "schedule": timedelta(days=1),
-    },
-}
+# CELERY_BEAT_SCHEDULE = {
+#     "cleanup_stale_uploads": {
+#         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
+#         "schedule": timedelta(hours=1),
+#     },
+#     "clear_sessions": {
+#         "task": "grandchallenge.core.tasks.clear_sessions",
+#         "schedule": timedelta(days=1),
+#     },
+#     "update_filter_classes": {
+#         "task": "grandchallenge.challenges.tasks.update_filter_classes",
+#         "schedule": timedelta(minutes=5),
+#     },
+#     "validate_external_challenges": {
+#         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
+#         "schedule": timedelta(days=1),
+#     },
+# }
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation"
 }
-
-# Set which template pack to use for forms
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-
-# When using bootstrap error messages need to be renamed to danger
-MESSAGE_TAGS = {messages.ERROR: "danger"}
-
-JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
-
-# CIRRUS Is an external application that can view images
-CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
-CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-CIRRUS_ANNOATION_QUERY_PARAM = "grand_challenge_overlay"
-
-# Disallow some challenge names due to subdomain or media folder clashes
-DISALLOWED_CHALLENGE_NAMES = [
-    "m",
-    "images",
-    "logos",
-    "banners",
-    "mugshots",
-    "docker",
-    "evaluation",
-    "evaluation-supplementary",
-    "favicon",
-    "i",
-    JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
-    *USERNAME_DENYLIST,
-]
 
 if MEDIA_ROOT[-1] != "/":
     msg = (
@@ -613,43 +438,18 @@ if DEBUG:
 if strtobool(os.environ.get("WHITENOISE", "False")):
     MIDDLEWARE += ("whitenoise.middleware.WhiteNoiseMiddleware",)
 
-if not COMIC_PUBLIC_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving publiv files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
-        " to your .conf file."
-    )
-
-if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving protected files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
-        " to your .conf file."
-    )
-
 CORS_ORIGIN_REGEX_WHITELIST = (
     r"^.*\.eyrabenchmark.net",
     r"https?://localhost:3000",
 )
+
 # CORS_ORIGIN_ALLOW_ALL = True
-
-
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# AWS_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('S3_BUCKET', 'eyra-data01')
-# AWS_AUTO_CREATE_BUCKET = True
-# AWS_S3_ENDPOINT_URL = 'https://' + os.environ.get('S3_ENDPOINT_URL', 's3')
-# todo: fix naming
-# AWS_S3_ENDPOINT_URL = os.environ.get('S3_HOST', None)
 AWS_S3_REGION_NAME = os.environ.get('S3_REGION', 'eu-central-1')
 
 PRIVATE_DOCKER_REGISTRY = os.environ.get("PRIVATE_DOCKER_REGISTRY", 'private-docker')
-K8S_DATA_IO_IMAGE = "eyra-data-io"
 K8S_NAMESPACE = os.environ.get("K8S_NAMESPACE", 'k8s-namespace')
-K8S_S3_CREDENTIALS_SECRET_NAME = "do-spaces"
 
 # Set to True when running in the K8S cluster; for local development, set to False to use your local kubectl config.
 K8S_USE_CLUSTER_CONFIG = True
