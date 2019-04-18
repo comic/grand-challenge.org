@@ -43,10 +43,10 @@ before_script:
         RETRIES=$((RETRIES-1))
         sleep 1
     done
+  - cd app
 
 script:
 #  - docker-compose run -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=."
-  - cd app
   - pytest
 
 after_success:
