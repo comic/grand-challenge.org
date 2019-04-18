@@ -1,5 +1,5 @@
 import pytest
-from tests.worklists_tests.factories import WorklistFactory, WorklistSetFactory
+from tests.worklists_tests.factories import WorklistFactory
 from tests.api_utils import assert_api_crud
 
 
@@ -7,13 +7,7 @@ from tests.api_utils import assert_api_crud
 @pytest.mark.parametrize(
     "table_reverse, expected_table, factory, invalid_fields",
     [
-        (
-            "worklists:sets",
-            "Worklist Set Table",
-            WorklistSetFactory,
-            ["user_id"],
-        ),
-        ("worklists:lists", "Worklist Table", WorklistFactory, []),
+        ("api:worklists", "Worklist Table", WorklistFactory, ["user_id"]),
     ],
 )
 def test_api_pages(

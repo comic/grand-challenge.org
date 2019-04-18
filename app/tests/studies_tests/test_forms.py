@@ -9,7 +9,7 @@ from tests.studies_tests.factories import StudyFactory
 from tests.utils import get_view_for_user
 
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.studies.forms import StudyCreateForm, StudyUpdateForm
+from grandchallenge.studies.forms import StudyForm
 
 """" Tests the forms available for Study CRUD """
 
@@ -37,14 +37,14 @@ def test_study_create(client):
         "patient": patient.pk,
     }
 
-    form = StudyCreateForm(data=data)
+    form = StudyForm(data=data)
     assert form.is_valid()
 
-    form = StudyCreateForm()
+    form = StudyForm()
     assert not form.is_valid()
 
     response = get_view_for_user(
-        viewname="studies:study-create",
+        viewname="studies:create",
         client=client,
         method=client.post,
         data=data,
@@ -65,10 +65,10 @@ def test_study_update(client):
         "patient": study.patient.pk,
     }
 
-    form = StudyUpdateForm(data=data)
+    form = StudyForm(data=data)
     assert form.is_valid()
 
-    form = StudyUpdateForm()
+    form = StudyForm()
     assert not form.is_valid()
 
     response = get_view_for_user(
@@ -76,7 +76,7 @@ def test_study_update(client):
         method=client.post,
         data=data,
         user=staff_user,
-        url=reverse("studies:study-update", kwargs={"pk": study.pk}),
+        url=reverse("studies:update", kwargs={"pk": study.pk}),
     )
     assert response.status_code == 302
 
@@ -90,7 +90,7 @@ def test_study_delete(client):
         client=client,
         method=client.post,
         user=staff_user,
-        url=reverse("studies:study-remove", kwargs={"pk": study.pk}),
+        url=reverse("studies:delete", kwargs={"pk": study.pk}),
     )
 
     assert response.status_code == 302
