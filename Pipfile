@@ -13,7 +13,6 @@ black = "==18.6b4"
 sphinx-autobuild = "*"
 sphinx = "*"
 pydot = "*"
-django-extensions = "*"
 
 [packages]
 boto3 = "==1.9.97"
@@ -39,3 +38,4 @@ swagger_spec_validator = "*"
 whitenoise = "*"
 django-guardian = "*"
 django-environ = "*"
+django-extensions = "*"
