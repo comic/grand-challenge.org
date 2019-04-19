@@ -26,7 +26,7 @@ router = routers.DefaultRouter()
 # router.register(r"submissions", SubmissionViewSet)
 # router.register(r"cases/images", ImageViewSet)
 
-# router.register(r"benchmarks", BenchmarkViewSet)
+router.register(r"benchmarks", BenchmarkViewSet)
 router.register(r"submissions", SubmissionViewSet)
 router.register(r"implementations", ImplementationViewSet)
 router.register(r"algorithms", AlgorithmViewSet)

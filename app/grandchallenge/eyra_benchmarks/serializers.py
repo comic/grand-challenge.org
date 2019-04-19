@@ -5,10 +5,16 @@ from rest_framework.relations import PrimaryKeyRelatedField
 from grandchallenge.eyra_benchmarks.models import Benchmark, Submission
 
 
-class Permissions(serializers.SerializerMethodField):
+class Permissions(serializers.Field):
     def to_representation(self, instance):
         user = self.context['request'].user
         return get_perms(user, instance)
+
+    class Meta:
+        swagger_schema_fields = {
+            'type': 'array',
+            'items': {'type': 'integer'}
+        }
 
 
 class BenchmarkSerializer(serializers.ModelSerializer):
