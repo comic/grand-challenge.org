@@ -19,7 +19,7 @@ class Permissions(serializers.Field):
 
 class BenchmarkSerializer(serializers.ModelSerializer):
     creator = PrimaryKeyRelatedField(read_only=True)
-    permissions = Permissions()
+    permissions = Permissions(source="*")
 
     class Meta:
         model = Benchmark
