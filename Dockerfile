@@ -51,3 +51,4 @@ FROM base as dist
 USER 2001:2001
 WORKDIR /app
 ADD --chown=2001:2001 ./app/ /app/
+RUN python manage.py collectstatic
