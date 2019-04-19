@@ -208,10 +208,10 @@ DJANGO_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
-    "django.contrib.sites",
-    "django.contrib.messages",
+    # "django.contrib.sites",
+    # "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.humanize",
+    # "django.contrib.humanize",
     "django.contrib.admin",
     "django.contrib.postgres",
 ]
