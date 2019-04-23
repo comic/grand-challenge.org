@@ -286,7 +286,7 @@ class UploadImage(generics.CreateAPIView):
             # Save image fieldfile into ImageFile, also triggers ImageFile model save method
             image_file = File(request.data[image_key])
             extension = "zraw" if image_key == "image_raw" else "mhd"
-            image_name = "{}.{}".format(file_name, extension)
+            image_name = f"{file_name}.{extension}"
             img_file_model.file.save(image_name, image_file, save=True)
 
 
@@ -378,7 +378,7 @@ class AbstractUploadView(generics.CreateAPIView):
                     name=data["image_identifier"], study=study
                 )
         except ObjectDoesNotExist:
-            error = "Non-existant object. Data: {}".format(data)
+            error = f"Non-existant object. Data: {data}"
             self.response.update({"errors": error})
             return None
 
@@ -409,7 +409,7 @@ class AbstractUploadView(generics.CreateAPIView):
         except (IntegrityError, serializers.ValidationError):
             args_arr = []
             for key, item in unique_args.items():
-                args_arr.append("{}: {}".format(key, item))
+                args_arr.append(f"{key}: {item}")
 
             class_name = model.__class__.__name__
 
@@ -609,3 +609,74 @@ class UploadPolygonAnnotationSet(AbstractUploadView):
     child_serializer_class = PolygonAnnotationSetSerializer
     parent_model_class = None
     child_model_class = PolygonAnnotationSet
+
+
+class SetElementSpacingForImage(generics.GenericAPIView):
+    queryset = Image.objects.all()
+    permission_classes = (RetinaImportPermission,)
+    parser_classes = (parsers.JSONParser,)
+
+    def post(self, request, *args, **kwargs):
+        response = self.set_element_spacing(request)
+        response_status = status.HTTP_200_OK
+        if "errors" in response:
+            response_status = status.HTTP_400_BAD_REQUEST
+        return JsonResponse(response, status=response_status)
+
+    def set_element_spacing(self, request):
+        """
+        Method that checks if a image already exists before uploading.
+        """
+        try:
+            image_name = request.data.get("image_identifier")
+            study_name = request.data.get("study_identifier")
+            if study_name is not None:
+                image = Image.objects.get(
+                    name=image_name, study__name=study_name
+                )
+            else:
+                image = Image.objects.get(name=image_name)
+        except MultipleObjectsReturned:
+            return {
+                "errors": "Image identifiers returns multiple images. (not unique)"
+            }
+        except ObjectDoesNotExist:
+            return {"errors": "Image does not exist"}
+
+        es_x = request.data.get("element_spacing_x", 1)
+        es_y = request.data.get("element_spacing_y", 1)
+
+        try:
+            old_mhd = image.files.get(file__endswith=".mhd")
+            new_mhd = self.set_mhd_element_spacing_header(
+                old_mhd.file, es_x, es_y
+            )
+
+            old_mhd.file.save("out.mhd", new_mhd, save=True)
+
+            return {"success": True}
+        except Exception as e:
+            return {"errors": str(e)}
+
+    @staticmethod
+    def set_mhd_element_spacing_header(mhd_file, x, y):
+        # Read file lines into list
+        f_content = mhd_file.readlines()
+
+        # Remove ElementSize and ElementSpacing lines from file and find suitable index for new line
+        new_index = len(f_content) - 3
+        for i, line in enumerate(f_content):
+            if b"ElementSize" in line or b"ElementSpacing" in line:
+                del f_content[i]
+            if b"DimSize" in line:
+                new_index = i
+
+        # Add new line in file on new_index
+        hdr_line = f"ElementSize = {x} {y}\n"
+        f_content.insert(new_index, hdr_line.encode())
+
+        # Write lines into new file and return
+        new_file = BytesIO()
+        new_file.writelines(f_content)
+        new_file.seek(0)
+        return new_file
