@@ -195,7 +195,7 @@ def comicmain(request, page_title=""):
         pages = [p for p in pages if p.title.lower() == page_title.lower()]
 
         if len(pages) != 1:
-            raise ValueError(
+            raise Http404(
                 f"{len(pages)} pages with title {page_title} were found for {site}"
             )
 

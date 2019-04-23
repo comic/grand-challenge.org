@@ -14,6 +14,7 @@ sphinx-autobuild = "*"
 sphinx = "*"
 pyupgrade = "*"
 pytest-xdist = "*"
+sphinx-autodoc-typehints = "*"
 
 [packages]
 "beautifulsoup4" = "*"
@@ -39,7 +40,7 @@ simpleitk = "*"
 django-celery-beat = "*"
 django-favicon-plus = "*"
 "psycopg2" = "<2.8"  # v2.8 is broken in Django 2.1, fixed in Django 2.2
-"django-select2" = "*"
+"django-select2" = "<7.0"  # v7.0 supports Django 2.2 but is currently borked on PyPi
 django-celery-results = "*"
 django-summernote = "*"
 bleach = "*"
@@ -53,3 +54,5 @@ boto3 = "*"
 whitenoise = "*"
 brotli = "*"
 djangorestframework-guardian = "*"
+django-extensions = "*"
+django-simple-history = "*"

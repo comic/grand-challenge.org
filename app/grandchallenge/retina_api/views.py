@@ -4,7 +4,7 @@ from enum import Enum
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication, viewsets
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -14,8 +14,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from rest_framework_guardian import filters
+from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.registrations.serializers import (
+    OctObsRegistrationSerializer,
+)
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -29,10 +33,13 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     PolygonAnnotationSet,
     SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    ETDRSGridAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 
@@ -776,3 +783,53 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
             .distinct()
         )
         return graders
+
+
+class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ETDRSGridAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    queryset = ETDRSGridAnnotation.objects.all()
+
+
+class LandmarkAnnotationSetForImageList(ListAPIView):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        image_ids = self.request.query_params.get("image_ids")
+        if image_ids is None:
+            raise NotFound()
+        image_ids = image_ids.split(",")
+        user = get_object_or_404(get_user_model(), id=user_id)
+        queryset = user.landmarkannotationset_set.filter(
+            singlelandmarkannotation__image__id__in=image_ids
+        ).distinct()
+        return queryset
+
+
+class OctObsRegistrationRetrieve(RetrieveAPIView):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = OctObsRegistrationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    lookup_url_kwarg = "image_id"
+
+    def get_object(self):
+        image_id = self.kwargs.get("image_id")
+        if image_id is None:
+            raise NotFound()
+        image = get_object_or_404(
+            Image.objects.prefetch_related("oct_image", "obs_image"),
+            id=image_id,
+        )
+        if image.oct_image.exists():
+            return image.oct_image.get()
+        elif image.obs_image.exists():
+            return image.obs_image.get()
+        else:
+            raise NotFound()

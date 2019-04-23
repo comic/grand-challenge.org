@@ -3,8 +3,7 @@ import re
 
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
-from django.http import HttpResponseRedirect, Http404
-from django.urls import resolve, Resolver404
+from django.http import HttpResponseRedirect
 
 from grandchallenge.challenges.models import Challenge
 
