@@ -8,7 +8,7 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.subdomains.utils import reverse
 
 
-class PatientCreateView(UserIsStaffMixin, CreateView):
+class PatientCreate(UserIsStaffMixin, CreateView):
     model = Patient
     form_class = PatientForm
 
@@ -16,18 +16,18 @@ class PatientCreateView(UserIsStaffMixin, CreateView):
         return reverse("patients:list")
 
 
-class PatientDetailView(UserIsStaffMixin, DetailView):
+class PatientDetail(UserIsStaffMixin, DetailView):
     model = Patient
 
 
-class PatientDeleteView(UserIsStaffMixin, DeleteView):
+class PatientDelete(UserIsStaffMixin, DeleteView):
     model = Patient
 
     def get_success_url(self):
         return reverse("patients:list")
 
 
-class PatientUpdateView(UserIsStaffMixin, UpdateView):
+class PatientUpdate(UserIsStaffMixin, UpdateView):
     model = Patient
     form_class = PatientForm
 
@@ -35,6 +35,5 @@ class PatientUpdateView(UserIsStaffMixin, UpdateView):
         return reverse("patients:list")
 
 
-class PatientListView(UserIsStaffMixin, ListView):
+class PatientList(UserIsStaffMixin, ListView):
     model = Patient
-    paginate_by = 100
