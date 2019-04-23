@@ -19,14 +19,19 @@ from tests.factories import UserFactory
 from tests.annotations_tests.factories import (
     PolygonAnnotationSetFactory,
     SinglePolygonAnnotationFactory,
+    ETDRSGridAnnotationFactory,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
+    ETDRSGridAnnotationSerializer,
 )
 from grandchallenge.core.serializers import UserSerializer
-from grandchallenge.annotations.models import PolygonAnnotationSet
+from grandchallenge.annotations.models import (
+    PolygonAnnotationSet,
+    ETDRSGridAnnotation,
+)
 from grandchallenge.retina_api.views import (
     PolygonAnnotationSetViewSet,
     SinglePolygonViewSet,
@@ -34,6 +39,7 @@ from grandchallenge.retina_api.views import (
     GradersWithPolygonAnnotationsListView,
     LandmarkAnnotationSetForImageList,
     OctObsRegistrationRetrieve,
+    ETDRSGridAnnotationViewSet,
 )
 from tests.conftest import (
     generate_annotation_set,
@@ -963,3 +969,287 @@ class TestOctObsRegistrationRetrieveView(TestCase):
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data == expected_response
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type",
+    [
+        None,
+        "normal_user",
+        "retina_grader_non_allowed",
+        "retina_grader",
+        "retina_admin",
+    ],
+)
+class TestETDRSAnnotationViewSet:
+    namespace = "retina:api"
+    basename = "etdrsgridannotation"
+
+    def test_list_view(self, MultipleRetinaETDRSAnnotations, rf, user_type):
+        response = view_test(
+            "list",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            None,
+            rf,
+            ETDRSGridAnnotationViewSet,
+        )
+        if user_type == "retina_grader":
+            serialized_data = ETDRSGridAnnotationSerializer(
+                MultipleRetinaETDRSAnnotations.etdrss1, many=True
+            ).data
+            assert len(response.data) == len(serialized_data)
+            response.data.sort(key=lambda k: k["id"])
+            serialized_data.sort(key=lambda k: k["id"])
+            assert response.data == serialized_data
+        elif user_type == "retina_admin":
+            serialized_data = ETDRSGridAnnotationSerializer(
+                [
+                    *MultipleRetinaETDRSAnnotations.etdrss1,
+                    *MultipleRetinaETDRSAnnotations.etdrss2,
+                ],
+                many=True,
+            ).data
+            assert response.data == serialized_data
+
+    def test_create_view(self, MultipleRetinaETDRSAnnotations, rf, user_type):
+        model_build = ETDRSGridAnnotationFactory.build(
+            grader=MultipleRetinaETDRSAnnotations.grader1,
+            image=MultipleRetinaETDRSAnnotations.etdrss1[0].image,
+        )
+        model_serialized = ETDRSGridAnnotationSerializer(model_build).data
+        model_serialized["grader"] = MultipleRetinaETDRSAnnotations.grader1.id
+        model_serialized["image"] = str(model_serialized["image"])
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            None,
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+
+    def test_create_view_no_od(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        model_build = ETDRSGridAnnotationFactory.build(
+            grader=MultipleRetinaETDRSAnnotations.grader1,
+            image=MultipleRetinaETDRSAnnotations.etdrss1[0].image,
+        )
+        model_serialized = ETDRSGridAnnotationSerializer(model_build).data
+        model_serialized["grader"] = MultipleRetinaETDRSAnnotations.grader1.id
+        model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["optic_disk"] = []
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            None,
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+
+    def test_create_view_wrong_user_id(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        other_user = UserFactory()
+        model_build = ETDRSGridAnnotationFactory.build(
+            grader=other_user,
+            image=MultipleRetinaETDRSAnnotations.etdrss1[0].image,
+        )
+        model_serialized = ETDRSGridAnnotationSerializer(model_build).data
+        model_serialized["grader"] = MultipleRetinaETDRSAnnotations.grader2.id
+        model_serialized["image"] = str(model_serialized["image"])
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            None,
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+            check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["grader"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_view(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        response = view_test(
+            "retrieve",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+        )
+        if user_type == "retina_grader" or user_type == "retina_admin":
+            model_serialized = ETDRSGridAnnotationSerializer(
+                MultipleRetinaETDRSAnnotations.etdrss1[0]
+            ).data
+            assert response.data == model_serialized
+
+    def test_update_view(self, MultipleRetinaETDRSAnnotations, rf, user_type):
+        model_serialized = ETDRSGridAnnotationSerializer(
+            MultipleRetinaETDRSAnnotations.etdrss1[0]
+        ).data
+        model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["fovea"] = [123, 456]
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+
+    def test_update_view_wrong_user_id(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        model_serialized = ETDRSGridAnnotationSerializer(
+            MultipleRetinaETDRSAnnotations.etdrss1[0]
+        ).data
+        other_user = UserFactory()
+        model_serialized["grader"] = other_user.id
+        model_serialized["image"] = str(model_serialized["image"])
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+            check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["grader"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_partial_update_view(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        model_serialized = ETDRSGridAnnotationSerializer(
+            MultipleRetinaETDRSAnnotations.etdrss1[0]
+        ).data
+        partial_model = copy.deepcopy(model_serialized)
+        del partial_model["image"]
+        del partial_model["id"]
+        del partial_model["grader"]
+        del partial_model["optic_disk"]
+        model_json = json.dumps(partial_model)
+
+        response = view_test(
+            "partial_update",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+            model_json,
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            assert response.data == model_serialized
+
+    def test_destroy_view(self, MultipleRetinaETDRSAnnotations, rf, user_type):
+        view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader1,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            assert not ETDRSGridAnnotation.objects.filter(
+                id=MultipleRetinaETDRSAnnotations.etdrss1[0].id
+            ).exists()
+
+    def test_destroy_view_wrong_user(
+        self, MultipleRetinaETDRSAnnotations, rf, user_type
+    ):
+        response = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            self.basename,
+            MultipleRetinaETDRSAnnotations.grader2,
+            MultipleRetinaETDRSAnnotations.etdrss1[0],
+            rf,
+            ETDRSGridAnnotationViewSet,
+            check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            assert not ETDRSGridAnnotation.objects.filter(
+                id=MultipleRetinaETDRSAnnotations.etdrss1[0].id
+            ).exists()
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN

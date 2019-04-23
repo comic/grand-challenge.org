@@ -44,7 +44,7 @@ class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
 class ETDRSGridAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ETDRSGridAnnotation
-        fields = ("grader", "created", "image", "fovea", "optic_disk")
+        fields = ("id", "grader", "created", "image", "fovea", "optic_disk")
 
 
 class MeasurementAnnotationSerializer(AbstractAnnotationSerializer):

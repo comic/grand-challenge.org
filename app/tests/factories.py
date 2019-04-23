@@ -228,7 +228,7 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
 
     def fuzz(self):
         if self.size is None:
-            size = factory.fuzzy.random.randgen.randint(1, 30)
+            size = factory.fuzzy.random.randgen.randint(2, 30)
         else:
             size = self.size
 
@@ -244,4 +244,8 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
                     ),
                 ]
             )
+
+        if size == 1:
+            return fuzzy_list[0]
+
         return fuzzy_list

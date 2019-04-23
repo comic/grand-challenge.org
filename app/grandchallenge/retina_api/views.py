@@ -33,10 +33,12 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     PolygonAnnotationSet,
     SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    ETDRSGridAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
@@ -781,6 +783,14 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
             .distinct()
         )
         return graders
+
+
+class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ETDRSGridAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    queryset = ETDRSGridAnnotation.objects.all()
 
 
 class LandmarkAnnotationSetForImageList(ListAPIView):
