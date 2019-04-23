@@ -14,7 +14,7 @@ from tests.utils import validate_staff_only_view
         "studies:detail",
         "studies:delete",
         "studies:update",
-        "studies:display",
+        "studies:list",
     ],
 )
 def test_study_form_access(view, client):

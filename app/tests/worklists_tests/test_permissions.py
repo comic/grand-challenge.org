@@ -12,7 +12,7 @@ from tests.utils import get_view_for_user, validate_staff_only_view
         "worklists:detail",
         "worklists:delete",
         "worklists:update",
-        "worklists:display",
+        "worklists:list",
     ],
 )
 def test_worklist_form_access(view, client):
