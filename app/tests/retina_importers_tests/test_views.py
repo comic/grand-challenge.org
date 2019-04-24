@@ -202,3 +202,33 @@ class TestSetElementSpacingEndpointErrors:
         r = response.json()
         assert "errors" in r
         assert r["errors"] == "Image identifiers returns multiple images."
+
+
+@pytest.mark.django_db
+class TestSetElementSpacingEndpoint:
+    def test_spacing_changes(self, client):
+        image = ImageFactoryWithImageFile()
+        element_spacing = (1.5, 0.5)
+        sitk_image = image.get_sitk_image()
+        original_spacing = sitk_image.GetSpacing()
+        assert element_spacing != original_spacing
+
+        response = create_element_spacing_request(
+            client, image_name=image.name, es=element_spacing
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]
+
+        assert element_spacing == image.get_sitk_image().GetSpacing()
+
+    def test_image_with_study(self, client):
+        image = ImageFactoryWithImageFile()
+        ImageFactoryWithImageFile(name=image.name)
+        response = create_element_spacing_request(
+            client, image_name=image.name, study=image.study
+        )
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]
