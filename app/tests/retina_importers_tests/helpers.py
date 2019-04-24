@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from tests.factories import UserFactory
-from tests.cases_tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactory, ImageFactoryWithImageFile
 from tests.studies_tests.factories import StudyFactory
 from tests.patients_tests.factories import PatientFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -62,7 +62,7 @@ def create_test_images():
     files = {}
     for file_type in ("mhd", "zraw"):
         files[file_type] = BytesIO()
-        fh = open(RESOURCE_PATH / "image5x6x7.{}".format(file_type), "rb")
+        fh = open(RESOURCE_PATH / f"image5x6x7.{file_type}", "rb")
         files[file_type].name = fh.name
         files[file_type].write(fh.read())
         fh.close()
@@ -85,7 +85,7 @@ def read_json_file(path_to_file):
         else:
             raise FileNotFoundError()
     except FileNotFoundError:
-        print("Warning: No json file in {}".format(path_to_file))
+        print(f"Warning: No json file in {path_to_file}")
     return None
 
 
@@ -175,3 +175,33 @@ def get_response_status(
     else:
         response = client.post(url, data=data, **auth_header)
     return response.status_code
+
+
+def create_element_spacing_request(
+    client, image_name=None, user="import_user", study=None, es=None
+):
+    auth_header = get_auth_token_header(user)
+    url = reverse("retina:importers:set-element-spacing-for-image")
+    request_data = {}
+
+    if image_name is not None:
+        request_data["image_identifier"] = image_name
+    else:
+        image = ImageFactoryWithImageFile()
+        request_data["image_identifier"] = image.name
+
+    if es is not None:
+        request_data["element_spacing_x"] = es[0]
+        request_data["element_spacing_y"] = es[1]
+    else:
+        request_data["element_spacing_x"] = 10
+        request_data["element_spacing_y"] = 10
+
+    if study is not None:
+        request_data["study_identifier"] = study.name
+
+    data = json.dumps(request_data)
+
+    return client.post(
+        url, data=data, content_type="application/json", **auth_header
+    )
