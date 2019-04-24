@@ -5,6 +5,7 @@ from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.factories import ImageFactory
 from .helpers import (
     create_upload_image_test_data,
     create_upload_image_invalid_test_data,
@@ -162,3 +163,42 @@ class TestSetElementSpacingEndpointAuthentication:
         if access:
             data = response.json()
             assert data["success"]
+
+
+@pytest.mark.django_db
+class TestSetElementSpacingEndpointErrors:
+    def test_non_existing_image_error(self, client):
+        image = ImageFactoryWithImageFile()
+        image_name = image.name
+        image.delete()
+        response = create_element_spacing_request(
+            client, image_name=image_name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "Image does not exist"
+
+    def test_non_existing_imagefile_error(self, client):
+        image = ImageFactory()
+        response = create_element_spacing_request(
+            client, image_name=image.name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "ImageFile matching query does not exist."
+
+    def test_multiple_images_error(self, client):
+        image = ImageFactoryWithImageFile()
+        ImageFactoryWithImageFile(name=image.name)
+        response = create_element_spacing_request(
+            client, image_name=image.name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "Image identifiers returns multiple images."

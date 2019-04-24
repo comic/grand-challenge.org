@@ -637,9 +637,7 @@ class SetElementSpacingForImage(generics.GenericAPIView):
             else:
                 image = Image.objects.get(name=image_name)
         except MultipleObjectsReturned:
-            return {
-                "errors": "Image identifiers returns multiple images. (not unique)"
-            }
+            return {"errors": "Image identifiers returns multiple images."}
         except ObjectDoesNotExist:
             return {"errors": "Image does not exist"}
 
