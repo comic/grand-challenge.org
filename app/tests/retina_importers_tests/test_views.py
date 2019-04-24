@@ -142,3 +142,36 @@ class TestCheckImageEndpoint:
         if access:
             response = r.json()
             assert response["exists"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user,expected_status, access",
+    [
+        ("anonymous", status.HTTP_401_UNAUTHORIZED, False),
+        ("normal", status.HTTP_403_FORBIDDEN, False),
+        ("staff", status.HTTP_403_FORBIDDEN, False),
+        ("import_user", status.HTTP_200_OK, True),
+    ],
+)
+class TestSetElementSpacingEndpointAuthentication:
+    def test_authentication(self, client, user, expected_status, access):
+        auth_header = get_auth_token_header(user)
+        url = reverse("retina:importers:set-element-spacing-for-image")
+        image = ImageFactoryWithImageFile()
+        data = json.dumps(
+            {
+                "image_identifier": image.name,
+                "element_spacing_x": 0.5,
+                "element_spacing_y": 0.5,
+            }
+        )
+
+        response = client.post(
+            url, data=data, content_type="application/json", **auth_header
+        )
+
+        assert response.status_code == expected_status
+        if access:
+            data = response.json()
+            assert data["success"]
