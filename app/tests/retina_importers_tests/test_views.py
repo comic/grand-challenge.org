@@ -11,6 +11,7 @@ from .helpers import (
     read_json_file,
     get_response_status,
     get_auth_token_header,
+    create_element_spacing_request,
 )
 
 
@@ -156,21 +157,7 @@ class TestCheckImageEndpoint:
 )
 class TestSetElementSpacingEndpointAuthentication:
     def test_authentication(self, client, user, expected_status, access):
-        auth_header = get_auth_token_header(user)
-        url = reverse("retina:importers:set-element-spacing-for-image")
-        image = ImageFactoryWithImageFile()
-        data = json.dumps(
-            {
-                "image_identifier": image.name,
-                "element_spacing_x": 0.5,
-                "element_spacing_y": 0.5,
-            }
-        )
-
-        response = client.post(
-            url, data=data, content_type="application/json", **auth_header
-        )
-
+        response = create_element_spacing_request(client, user=user)
         assert response.status_code == expected_status
         if access:
             data = response.json()
