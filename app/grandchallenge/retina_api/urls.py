@@ -56,5 +56,10 @@ urlpatterns = [
         views.OctObsRegistrationRetrieve.as_view(),
         name="octobs-registration-detail-view",
     ),
+    path(
+        "image/<uuid:image_id>/spacing/",
+        views.ImageElementSpacingView.as_view(),
+        name="image-element-spacing-view",
+    ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]
