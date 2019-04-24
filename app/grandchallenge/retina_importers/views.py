@@ -628,9 +628,6 @@ class SetElementSpacingForImage(generics.GenericAPIView):
         return JsonResponse(response, status=response_status)
 
     def set_element_spacing(self, request):
-        """
-        Method that checks if a image already exists before uploading.
-        """
         try:
             image_name = request.data.get("image_identifier")
             study_name = request.data.get("study_identifier")
