@@ -1,3 +1,7 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import SimpleITK as sitk
 from django.core.exceptions import (
     ObjectDoesNotExist,
     ValidationError,
@@ -643,38 +647,30 @@ class SetElementSpacingForImage(generics.GenericAPIView):
 
         es_x = request.data.get("element_spacing_x", 1)
         es_y = request.data.get("element_spacing_y", 1)
+        spacing = (es_x, es_y)
 
         try:
-            old_mhd = image.files.get(file__endswith=".mhd")
-            new_mhd = self.set_mhd_element_spacing_header(
-                old_mhd.file, es_x, es_y
-            )
-
-            old_mhd.file.save("out.mhd", new_mhd, save=True)
-
+            self.set_mhd_element_spacing_header(image, spacing)
             return {"success": True}
         except Exception as e:
             return {"errors": str(e)}
 
     @staticmethod
-    def set_mhd_element_spacing_header(mhd_file, x, y):
-        # Read file lines into list
-        f_content = mhd_file.readlines()
+    def set_mhd_element_spacing_header(image, spacing):
+        sitk_image = image.get_sitk_image()
+        old_mhd = image.files.get(file__endswith=".mhd")
+        old_raw = image.files.get(file__endswith="raw")
 
-        # Remove ElementSize and ElementSpacing lines from file and find suitable index for new line
-        new_index = len(f_content) - 3
-        for i, line in enumerate(f_content):
-            if b"ElementSize" in line or b"ElementSpacing" in line:
-                del f_content[i]
-            if b"DimSize" in line:
-                new_index = i
-
-        # Add new line in file on new_index
-        hdr_line = f"ElementSize = {x} {y}\n"
-        f_content.insert(new_index, hdr_line.encode())
-
-        # Write lines into new file and return
-        new_file = BytesIO()
-        new_file.writelines(f_content)
-        new_file.seek(0)
-        return new_file
+        sitk_image.SetSpacing(spacing)
+        with TemporaryDirectory() as tempdirname:
+            sitk.WriteImage(
+                sitk_image, str(Path(tempdirname) / Path("out.mhd")), True
+            )
+            for file in (("out.mhd", old_mhd), ("out.zraw", old_raw)):
+                fh = open(str(Path(tempdirname) / Path(file[0])), "rb")
+                bio = BytesIO()
+                bio.name = fh.name
+                bio.write(fh.read())
+                fh.close()
+                bio.seek(0)
+                file[1].file.save(file[0], bio, save=True)
