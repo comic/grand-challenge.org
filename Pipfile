@@ -13,6 +13,8 @@ black = "==18.6b4"
 sphinx-autobuild = "*"
 sphinx = "*"
 pydot = "*"
+sphinx-rtd-theme = "*"
+recommonmark = "*"
 
 [packages]
 boto3 = "==1.9.97"

@@ -13,6 +13,7 @@ def get_data_file_name(obj, filename=None):
 
 
 class DataType(UUIDModel):
+    """Docstring for class DataType."""
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=40)
@@ -28,6 +29,7 @@ class DataType(UUIDModel):
 
 
 class DataFile(UUIDModel):
+    """ DataFiasdle """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         blank=True,
@@ -35,6 +37,7 @@ class DataFile(UUIDModel):
         on_delete=models.SET_NULL,
         related_name="data_files",
     )
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=50, null=False, blank=False)

@@ -1,18 +1,13 @@
-grand-challenge.org
+COMIC
 ===================
+backend for the EYRA Benchmark platform.
 
-.. image:: https://travis-ci.org/comic/grand-challenge.org.svg?branch=master
-   :target: https://travis-ci.org/comic/grand-challenge.org
-.. image:: https://api.codeclimate.com/v1/badges/b056e3bb28f145fa1bde/maintainability
-   :target: https://codeclimate.com/github/comic/grand-challenge.org/maintainability
-   :alt: Maintainability
-.. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/comic/grand-challenge.org
-.. image:: https://readthedocs.org/projects/grand-challengeorg/badge/?version=latest
-   :target: http://grand-challengeorg.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+[![TravisCIBadge](https://travis-ci.org/EYRA-Benchmark/comic.svg?branch=master)](https://travis-ci.org/EYRA-Benchmark/comic)
+
+Forked from [grand-challenge.org](https://github.com/comic/grand-challenge.org).
+
+# Models
+[![Models](https://github.com/EYRA-Benchmark/comic/raw/master/erd.png)](https://github.com/EYRA-Benchmark/comic/raw/master/erd.png)
 
 Fair and objective comparisons of machine learning algorithms improves the
 quality of research outputs in both academia and industry. This repo

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Interface(UUIDModel):
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, help_text="Moment of creation")
     name = models.CharField(max_length=64, unique=True)
     output_type = models.ForeignKey(
         DataType,
@@ -37,8 +37,10 @@ class Input(UUIDModel):
         return self.name
 
 
-# An Algorithm represents a group (different versions) of (benchmark solving) implementations.
 class Algorithm(UUIDModel):
+    """
+    An Algorithm represents a group (different versions) of (benchmark solving) implementations.
+    """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -59,9 +61,11 @@ class Algorithm(UUIDModel):
         return self.name
 
 
-# An implementation represents a (container) that implements an interface (produces
-# specific output type from specific input types)
 class Implementation(UUIDModel):
+    """
+    An implementation represents a (container) that implements an interface (produces
+    specific output type from specific input types).
+    """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
