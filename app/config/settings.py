@@ -466,6 +466,9 @@ BLEACH_ALLOWED_ATTRIBUTES = {
         "height",
     ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
+    # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
+    "th": ["scope", "colspan"],
+    "td": ["colspan"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
