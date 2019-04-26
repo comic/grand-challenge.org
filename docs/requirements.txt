@@ -3,3 +3,4 @@ django-filter
 djangorestframework
 django-storages
 celery
+raven
