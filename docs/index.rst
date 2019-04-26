@@ -5,16 +5,31 @@ EYRA documentation
 .. include:: ../README.rst
 
 .. toctree::
-   :caption: fsd
-   :maxdepth: 2
+   :caption: Platform
+   :maxdepth: 1
 
-   api.rst
+   platform/overview
+   platform/installation
+
 
 .. toctree::
-   :caption: Models
+   :caption: Development
    :maxdepth: 2
 
-   models/index
+   development/local
 
-.. image:: ../erd.png
-   :target: _images/erd.png
+
+.. toctree::
+   :caption: REST API
+   :maxdepth: 2
+
+   api/api
+   api/authentication
+
+
+.. toctree::
+   :caption: References
+   :maxdepth: 3
+
+   references/references
+

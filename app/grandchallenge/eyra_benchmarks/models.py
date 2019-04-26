@@ -44,6 +44,7 @@ class Benchmark(UUIDModel):
             "Benchmark image"
         ),
     )
+
     evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     data_set = models.ForeignKey(DataSet, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
     interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
