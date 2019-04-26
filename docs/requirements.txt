@@ -4,6 +4,6 @@ djangorestframework
 django-storages
 celery
 raven
-environ
+django-environ
 sphinx-rtd-theme
 recommonmark
