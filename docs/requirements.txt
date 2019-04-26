@@ -1,0 +1,4 @@
+django<2.2
+django-filter
+djangorestframework
+django-storages
