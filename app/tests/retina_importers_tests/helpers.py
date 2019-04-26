@@ -62,10 +62,9 @@ def create_test_images():
     files = {}
     for file_type in ("mhd", "zraw"):
         files[file_type] = BytesIO()
-        fh = open(RESOURCE_PATH / f"image5x6x7.{file_type}", "rb")
-        files[file_type].name = fh.name
-        files[file_type].write(fh.read())
-        fh.close()
+        with open(RESOURCE_PATH / f"image5x6x7.{file_type}", "rb") as fh:
+            files[file_type].name = fh.name
+            files[file_type].write(fh.read())
         files[file_type].seek(0)
 
     return files

@@ -664,10 +664,9 @@ class SetElementSpacingForImage(generics.GenericAPIView):
                 sitk_image, str(Path(tempdirname) / Path("out.mhd")), True
             )
             for file in (("out.mhd", old_mhd), ("out.zraw", old_raw)):
-                fh = open(str(Path(tempdirname) / Path(file[0])), "rb")
                 bio = BytesIO()
-                bio.name = fh.name
-                bio.write(fh.read())
-                fh.close()
+                with open(str(Path(tempdirname) / Path(file[0])), "rb") as fh:
+                    bio.name = fh.name
+                    bio.write(fh.read())
                 bio.seek(0)
                 file[1].file.save(file[0], bio, save=True)
