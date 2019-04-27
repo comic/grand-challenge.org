@@ -37,6 +37,14 @@
 {% endblock %}
 
 {% block sidebar_links %}
+    {% if not site.banner %}
+        <li class="nav-item">
+            <a class="nav-link"
+                    href="{{ site.get_absolute_url }}">
+                {% firstof site.title site.short_name %}
+            </a>
+        </li>
+    {% endif %}
 
     {% for page in pages %}
         {% if not page.hidden %}
@@ -80,7 +88,7 @@
     {% endif %}
 
     {% if site.hide_footer and not site.hide_signin %}
-       {% include "grandchallenge/partials/userlinks.html" %}
+        {% include "grandchallenge/partials/userlinks.html" %}
     {% endif %}
 
     {% if "change_challenge" in challenge_perms %}
