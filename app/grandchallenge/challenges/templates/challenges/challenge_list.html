@@ -6,183 +6,7 @@
 
 {% block title %}All Challenges{% endblock %}
 
-{% block sidebar %}
-    <div class="col-lg-3 mb-3">
-        <h2>Filters</h2>
-
-        <div id="projectfilterbuttons">
-
-            <div id="accordion">
-
-                <form class="d-none">
-                    <!--Hidden checkbox to display all projectlinks by default -->
-                    <label class="checkbox-inline font-weight-bold">
-                        <input type="checkbox" class="include"
-                               checked disabled
-                               id="projectlink">
-                    </label>
-                </form>
-
-                <div class="card mb-3">
-                    <a class="collapsed"
-                       data-toggle="collapse"
-                       href="#collapseHost">
-                        <div class="card-body">
-                            <i class="fas fa-chevron-circle-right"
-                               id="host-chevron">
-                            </i>
-                            <b>Host</b></div>
-                    </a>
-
-                    <div id="collapseHost" class="collapse"
-                         data-parent="#accordion">
-                        <div class="card-body">
-                            <form>
-                                {% for host in hosts %}
-                                    {# Note that the host filter works slightly differently as we have no filter_tag attribute #}
-                                    <label id="{{ host.filter_tag }}"
-                                           class="checkbox-inline font-weight-bold">
-                                        <input type="checkbox"
-                                               class="filter"
-                                               value="{{ host.host }}"
-                                               id="{{ host.filter_tag }}">
-                                        <span>{{ host.host }}</span><span
-                                            class="counter ml-1 badge badge-pill badge-info"
-                                            id="{{ host.filter_tag }}"></span>
-                                    </label><br>
-                                {% endfor %}
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-3">
-                    <a class="collapsed"
-                       data-toggle="collapse"
-                       href="#collapseModality">
-                        <div class="card-body">
-                            <i class="fas fa-chevron-circle-right"
-                               id="modality-chevron">
-                            </i>
-                            <b>Modality</b></div>
-                    </a>
-
-                    <div id="collapseModality" class="collapse"
-                         data-parent="#accordion">
-                        <div class="card-body">
-                            <form>
-                                {% for modality in modalities %}
-                                    <label id="{{ modality.filter_tag }}"
-                                           class="checkbox-inline font-weight-bold">
-                                        <input type="checkbox"
-                                               class="filter"
-                                               value="{{ modality.modality }}"
-                                               id="{{ modality.filter_tag }}">
-                                        <span>{{ modality.modality }}</span><span
-                                            class="counter ml-1 badge badge-pill badge-info"
-                                            id="{{ modality.filter_tag }}"></span>
-                                    </label><br>
-                                {% endfor %}
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-3">
-                    <a class="collapsed"
-                       data-toggle="collapse"
-                       href="#collapseTask">
-                        <div class="card-body">
-                            <i class="fas fa-chevron-circle-right"
-                               id="task-chevron">
-                            </i>
-                            <b>Task type</b></div>
-                    </a>
-
-                    <div id="collapseTask" class="collapse"
-                         data-parent="#accordion">
-                        <div class="card-body">
-                            <form>
-                                {% for task in task_types %}
-                                    <label id="{{ task.filter_tag }}"
-                                           class="checkbox-inline font-weight-bold">
-                                        <input type="checkbox"
-                                               class="filter"
-                                               id="{{ task.filter_tag }}"
-                                               value="{{ task.type }}">
-                                        <span>{{ task.type }}</span>
-                                        <span
-                                                class="counter ml-1 badge badge-pill badge-info"
-                                                id="{{ task.filter_tag }}"></span>
-                                    </label><br>
-                                {% endfor %}
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="card mb-3">
-                    <a class="collapsed"
-                       data-toggle="collapse"
-                       href="#collapseStructure"
-                       id="headingStructure">
-                        <div class="card-body"><i
-                                class="fas fa-chevron-circle-right"
-                                id="structure-chevron">
-                        </i>
-                            <b>Structure</b></div>
-                    </a>
-
-                    <div id="collapseStructure" class="collapse"
-                         data-parent="#accordion">
-                        <div class="card-body">
-                            {% for r in body_regions %}
-
-                                <label id="{{ r.filter_tag }}"
-                                       class="checkbox-inline font-weight-bold">
-                                    <input type="checkbox"
-                                           class="filter"
-                                           id="{{ r.filter_tag }}"
-                                           value="{{ r.region }}">
-                                    <span>{{ r.region }}</span>
-                                    <span
-                                            class="counter ml-1 badge badge-pill badge-info"
-                                            id="{{ r.filter_tag }}"></span>
-                                </label>
-                                <div class="ml-3">
-                                    <form>
-                                        {% for s in r.bodystructure_set.all %}
-                                            <label id="{{ s.filter_tag }}"
-                                                   class="checkbox-inline font-weight-bold">
-                                                <input type="checkbox"
-                                                       class="filter"
-                                                       id="{{ s.filter_tag }}"
-                                                       value="{{ s.structure }}">
-                                                <span>{{ s.structure }}</span>
-                                                <span
-                                                        class="counter ml-1 badge badge-pill badge-info"
-                                                        id="{{ s.filter_tag }}"></span>
-                                            </label>
-                                            <br>
-                                        {% endfor %}
-                                    </form>
-                                </div>
-                            {% endfor %}
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <span id="info"
-                  class="badge badge-info">Displaying <span
-                    class="counter" id="projectlink"></span>
-                    of <span id="counter-total"></span></span>
-
-        </div>
-    </div>
-{% endblock %}
+{% block sidebar %}{% endblock %}
 
 {% block content %}
 
@@ -225,134 +49,312 @@
         <p></p>
     </div>
 
+    <div class="row">
+        <div class="col-lg-3 mb-3">
+            <h2>Filters</h2>
 
-    <div>
+            <div id="projectfilterbuttons">
 
-        {% for year, challenges in challenges_by_year.items %}
+                <div id="accordion">
 
-            <div>
+                    <form class="d-none">
+                        <!--Hidden checkbox to display all projectlinks by default -->
+                        <label class="checkbox-inline font-weight-bold">
+                            <input type="checkbox" class="include"
+                                   checked disabled
+                                   id="projectlink">
+                        </label>
+                    </form>
 
-                <div class='yearHeader' id='{{ year }}'>
-                    <h2>{{ year }}</h2>
-                </div>
+                    <div class="card mb-3">
+                        <a class="collapsed"
+                           data-toggle="collapse"
+                           href="#collapseHost">
+                            <div class="card-body">
+                                <i class="fas fa-chevron-circle-right"
+                                   id="host-chevron">
+                                </i>
+                                <b>Host</b></div>
+                        </a>
 
-                <div class='row'>
-                    {% for challenge in challenges %}
-                        <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
-                            <div class="card" style="height:400px">
-                                <a id="{{ challenge.short_name }}"
-                                   title="{% firstof challenge.title challenge.short_name %}"
-                                   href="{{ challenge.get_absolute_url }}"
-                                   style="display:block;">
-                                    <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
-
-                                        <img class="thumbnail lazyload rounded-top-left flex-shrink-0"
-                                             alt="{{ challenge.short_name }} logo"
-                                             src="{% static 'images/3697E1-0.8.png' %}"
-                                                {% if challenge.logo %}
-                                                    {# Note, thumbnail class is 5rem/80px in core.css #}
-                                                    {% thumbnail challenge.logo "80x80" crop="center" as im %}
-                                             data-src="{{ im.url }}"
-                                                    {% endthumbnail %}
-                                                {% else %}
-                                             data-src="{{ challenge.gravatar_url }}"
-                                                {% endif %}
-                                        >
-
-                                        <h6 class="m-0 px-3 flex-shrink-1">
-                                            {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
-                                        </h6>
-                                    </div>
-                                </a>
-
-                                <div class="card-body small"
-                                     style="overflow: hidden; height:250px; line-height:1.5em">
-                                    {{ challenge.description|truncatewords:35 }}
-                                </div>
-
-                                <div class="card-footer small"
-                                     style="line-height:1.5em">
-
-                                    <dl class="inline mb-0">
-
-                                        {% if challenge.educational %}
-                                            <dd>
-                                                <i class="fas fa-university fa-2x"></i>
-                                            </dd>
-                                        {% endif %}
-
-                                        {% if challenge.cached_num_participants %}
-                                            <dt>Participants</dt>
-                                            <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
-                                        {% endif %}
-
-                                        {% if challenge.use_evaluation and challenge.cached_num_results %}
-                                            <dt>Results</dt>
-                                            <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_num_results }}</a>
-                                            </dd>
-                                            <dt>Latest Result</dt>
-                                            <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
-                                            </dd>
-                                        {% endif %}
-
-                                        {% if challenge.upcoming_workshop_date %}
-                                            <dt>Workshop</dt>
-                                            <dd>
-                                                {{ challenge.upcoming_workshop_date }}
-                                            </dd>
-                                        {% endif %}
-
-                                        {% if challenge.event_name %}
-                                            <dt>Associated with</dt>
-                                            <dd>
-                                                <a
-                                                        href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
-                                            </dd>
-                                        {% endif %}
-
-
-                                        {% if challenge.publication_journal_name or challenge.publication_url %}
-                                            <dt>Article</dt>
-                                            <dd>
-                                                <a
-                                                        href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
-                                            </dd>
-                                        {% endif %}
-
-                                        {% if challenge.host_link %}
-                                            <dt>Hosted on</dt>
-                                            <dd>
-                                                {{ challenge.host_link|safe }}
-                                            </dd>
-                                        {% endif %}
-
-                                    </dl>
-
-                                    {% if not challenge.hosted_on_comic %}
-                                        {% if request.user.is_staff %}
-                                            <div>
-                                                <a class="btn btn-primary btn-sm"
-                                                   href="{% url 'challenges:external-update' challenge.short_name %}">
-                                                    <i class="fas fa-edit"></i>
-                                                    Edit
-                                                </a>
-                                                <a class="btn btn-danger btn-sm"
-                                                   href="{% url 'challenges:external-delete' challenge.short_name %}">
-                                                    <i class="fas fa-trash"></i>
-                                                    Delete
-                                                </a>
-                                            </div>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
+                        <div id="collapseHost" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form>
+                                    {% for host in hosts %}
+                                        {# Note that the host filter works slightly differently as we have no filter_tag attribute #}
+                                        <label id="{{ host.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   value="{{ host.host }}"
+                                                   id="{{ host.filter_tag }}">
+                                            <span>{{ host.host }}</span><span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="{{ host.filter_tag }}"></span>
+                                        </label><br>
+                                    {% endfor %}
+                                </form>
                             </div>
                         </div>
-                    {% endfor %}
+                    </div>
+
+                    <div class="card mb-3">
+                        <a class="collapsed"
+                           data-toggle="collapse"
+                           href="#collapseModality">
+                            <div class="card-body">
+                                <i class="fas fa-chevron-circle-right"
+                                   id="modality-chevron">
+                                </i>
+                                <b>Modality</b></div>
+                        </a>
+
+                        <div id="collapseModality" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form>
+                                    {% for modality in modalities %}
+                                        <label id="{{ modality.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   value="{{ modality.modality }}"
+                                                   id="{{ modality.filter_tag }}">
+                                            <span>{{ modality.modality }}</span><span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="{{ modality.filter_tag }}"></span>
+                                        </label><br>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <a class="collapsed"
+                           data-toggle="collapse"
+                           href="#collapseTask">
+                            <div class="card-body">
+                                <i class="fas fa-chevron-circle-right"
+                                   id="task-chevron">
+                                </i>
+                                <b>Task type</b></div>
+                        </a>
+
+                        <div id="collapseTask" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form>
+                                    {% for task in task_types %}
+                                        <label id="{{ task.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   id="{{ task.filter_tag }}"
+                                                   value="{{ task.type }}">
+                                            <span>{{ task.type }}</span>
+                                            <span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ task.filter_tag }}"></span>
+                                        </label><br>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="card mb-3">
+                        <a class="collapsed"
+                           data-toggle="collapse"
+                           href="#collapseStructure"
+                           id="headingStructure">
+                            <div class="card-body"><i
+                                    class="fas fa-chevron-circle-right"
+                                    id="structure-chevron">
+                            </i>
+                                <b>Structure</b></div>
+                        </a>
+
+                        <div id="collapseStructure" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                {% for r in body_regions %}
+
+                                    <label id="{{ r.filter_tag }}"
+                                           class="checkbox-inline font-weight-bold">
+                                        <input type="checkbox"
+                                               class="filter"
+                                               id="{{ r.filter_tag }}"
+                                               value="{{ r.region }}">
+                                        <span>{{ r.region }}</span>
+                                        <span
+                                                class="counter ml-1 badge badge-pill badge-info"
+                                                id="{{ r.filter_tag }}"></span>
+                                    </label>
+                                    <div class="ml-3">
+                                        <form>
+                                            {% for s in r.bodystructure_set.all %}
+                                                <label id="{{ s.filter_tag }}"
+                                                       class="checkbox-inline font-weight-bold">
+                                                    <input type="checkbox"
+                                                           class="filter"
+                                                           id="{{ s.filter_tag }}"
+                                                           value="{{ s.structure }}">
+                                                    <span>{{ s.structure }}</span>
+                                                    <span
+                                                            class="counter ml-1 badge badge-pill badge-info"
+                                                            id="{{ s.filter_tag }}"></span>
+                                                </label>
+                                                <br>
+                                            {% endfor %}
+                                        </form>
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <span id="info"
+                      class="badge badge-info">Displaying <span
+                        class="counter" id="projectlink"></span>
+                    of <span id="counter-total"></span></span>
+
             </div>
-        {% endfor %}
+        </div>
+
+
+        <div class="col">
+
+            {% for year, challenges in challenges_by_year.items %}
+
+                <div>
+
+                    <div class='yearHeader' id='{{ year }}'>
+                        <h2>{{ year }}</h2>
+                    </div>
+
+                    <div class='row'>
+                        {% for challenge in challenges %}
+                            <div class="col-12 col-md-6 col-lg-4 mb-3 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
+                                <div class="card" style="height:400px">
+                                    <a id="{{ challenge.short_name }}"
+                                       title="{% firstof challenge.title challenge.short_name %}"
+                                       href="{{ challenge.get_absolute_url }}"
+                                       style="display:block;">
+                                        <div class="card-header small p-0 d-flex flex-row flex-nowrap align-items-center">
+
+                                            <img class="thumbnail lazyload rounded-top-left flex-shrink-0"
+                                                 alt="{{ challenge.short_name }} logo"
+                                                 src="{% static 'images/3697E1-0.8.png' %}"
+                                                    {% if challenge.logo %}
+                                                        {# Note, thumbnail class is 5rem/80px in core.css #}
+                                                        {% thumbnail challenge.logo "80x80" crop="center" as im %}
+                                                 data-src="{{ im.url }}"
+                                                        {% endthumbnail %}
+                                                    {% else %}
+                                                 data-src="{{ challenge.gravatar_url }}"
+                                                    {% endif %}
+                                            >
+
+                                            <h6 class="m-0 px-3 flex-shrink-1">
+                                                {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
+                                            </h6>
+                                        </div>
+                                    </a>
+
+                                    <div class="card-body small"
+                                         style="overflow: hidden; height:250px; line-height:1.5em">
+                                        {{ challenge.description|truncatewords:35 }}
+                                    </div>
+
+                                    <div class="card-footer small"
+                                         style="line-height:1.5em">
+
+                                        <dl class="inline mb-0">
+
+                                            {% if challenge.educational %}
+                                                <dd>
+                                                    <i class="fas fa-university fa-2x"></i>
+                                                </dd>
+                                            {% endif %}
+
+                                            {% if challenge.cached_num_participants %}
+                                                <dt>Participants</dt>
+                                                <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
+                                            {% endif %}
+
+                                            {% if challenge.use_evaluation and challenge.cached_num_results %}
+                                                <dt>Results</dt>
+                                                <dd>
+                                                    <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_num_results }}</a>
+                                                </dd>
+                                                <dt>Latest Result</dt>
+                                                <dd>
+                                                    <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
+                                                </dd>
+                                            {% endif %}
+
+                                            {% if challenge.upcoming_workshop_date %}
+                                                <dt>Workshop</dt>
+                                                <dd>
+                                                    {{ challenge.upcoming_workshop_date }}
+                                                </dd>
+                                            {% endif %}
+
+                                            {% if challenge.event_name %}
+                                                <dt>Associated with</dt>
+                                                <dd>
+                                                    <a
+                                                            href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
+                                                </dd>
+                                            {% endif %}
+
+
+                                            {% if challenge.publication_journal_name or challenge.publication_url %}
+                                                <dt>Article</dt>
+                                                <dd>
+                                                    <a
+                                                            href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
+                                                </dd>
+                                            {% endif %}
+
+                                            {% if challenge.host_link %}
+                                                <dt>Hosted on</dt>
+                                                <dd>
+                                                    {{ challenge.host_link|safe }}
+                                                </dd>
+                                            {% endif %}
+
+                                        </dl>
+
+                                        {% if not challenge.hosted_on_comic %}
+                                            {% if request.user.is_staff %}
+                                                <div>
+                                                    <a class="btn btn-primary btn-sm"
+                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                        <i class="fas fa-edit"></i>
+                                                        Edit
+                                                    </a>
+                                                    <a class="btn btn-danger btn-sm"
+                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                        <i class="fas fa-trash"></i>
+                                                        Delete
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
 
