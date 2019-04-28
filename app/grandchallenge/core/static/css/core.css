@@ -14,7 +14,7 @@ h1, .h1, h2, .h2 {
     display: inline-block;
 }
 
-nav.navbar-top li.nav-item {
+nav.navbar-top .nav-item {
     position: relative;
     top: 1px;
 }
