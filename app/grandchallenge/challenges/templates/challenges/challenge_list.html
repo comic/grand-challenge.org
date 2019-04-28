@@ -21,12 +21,18 @@
     {% if request.user.is_staff %}
         <p>
             <a class="btn btn-primary"
-               href="{% url 'challenges:external-create' %}">
-                <i class="fas fa-plus"></i> Add an external challenge
+               href="{% url 'challenges:external-create' %}"
+               data-toggle="tooltip"
+               data-placement="bottom"
+               title="Add an External Challenge">
+                <i class="fas fa-plus"></i>
             </a>
             <a class="btn btn-primary"
-               href="{% url 'challenges:external-list' %}">
-                <i class="fas fa-edit"></i> Edit external challenges
+               href="{% url 'challenges:external-list' %}"
+               data-toggle="tooltip"
+               data-placement="bottom"
+               title="Edit External Challenges">
+                <i class="fas fa-edit"></i>
             </a>
         </p>
     {% endif %}
@@ -323,14 +329,18 @@
                                             {% if request.user.is_staff %}
                                                 <div>
                                                     <a class="btn btn-primary btn-sm"
-                                                       href="{% url 'challenges:external-update' challenge.short_name %}">
+                                                       href="{% url 'challenges:external-update' challenge.short_name %}"
+                                                       data-toggle="tooltip"
+                                                       data-placement="bottom"
+                                                       title="Edit Challenge">
                                                         <i class="fas fa-edit"></i>
-                                                        Edit
                                                     </a>
                                                     <a class="btn btn-danger btn-sm"
-                                                       href="{% url 'challenges:external-delete' challenge.short_name %}">
+                                                       href="{% url 'challenges:external-delete' challenge.short_name %}"
+                                                       data-toggle="tooltip"
+                                                       data-placement="bottom"
+                                                       title="Delete Challenge">
                                                         <i class="fas fa-trash"></i>
-                                                        Delete
                                                     </a>
                                                 </div>
                                             {% endif %}
@@ -350,4 +360,11 @@
     {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
+
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 {% endblock %}
