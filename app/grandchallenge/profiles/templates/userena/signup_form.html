@@ -6,7 +6,7 @@
 {% block title %}{% trans "Signup" %}{% endblock %}
 
 {% block content %}
-    <h2>Create an account on {{ main_challenge_name }}</h2>
+    <h2>Create an account on {{ request.site.name }}</h2>
     <br/>
     <form action="" method="post">
         {% csrf_token %}

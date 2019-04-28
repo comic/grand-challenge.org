@@ -4,8 +4,6 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.challenges.models import Challenge
-
 logger = logging.getLogger(__name__)
 
 
@@ -13,6 +11,7 @@ def challenge(request):
     try:
         challenge = request.challenge
     except AttributeError:
+        challenge = None
 
         # build_absolute_uri does not exist in some cases (eg, in tests)
         try:
@@ -21,33 +20,25 @@ def challenge(request):
             warning_url = request.path
 
         logger.warning(f"Could not get challenge for request: {warning_url}")
-        challenge = None
 
     if challenge is None:
-        # Use the main challenge if there is no challenge associated with
-        # this request
-        challenge = Challenge.objects.get(
-            short_name__iexact=settings.MAIN_PROJECT_NAME
-        )
+        return {}
+    else:
+        try:
+            user = request.user
+        except AttributeError:
+            user = get_anonymous_user()
 
-    try:
-        user = request.user
-    except AttributeError:
-        user = get_anonymous_user()
+        return {
+            "challenge": challenge,
+            "challenge_perms": get_perms(user, challenge),
+            "user_is_participant": challenge.is_participant(user),
+            "pages": challenge.page_set.all(),
+        }
 
-    permissions = get_perms(user, challenge)
-    pages = challenge.page_set.all()
-    is_participant = challenge.is_participant(user)
 
+def google_keys(*_, **__):
     return {
-        "challenge": challenge,
-        "challenge_perms": permissions,
-        "user_is_participant": is_participant,
-        "pages": pages,
-        "main_challenge_name": settings.MAIN_PROJECT_NAME,
+        "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
         "geochart_api_key": settings.GOOGLE_MAPS_API_KEY,
     }
-
-
-def google_analytics_id(*_, **__):
-    return {"google_analytics_id": settings.GOOGLE_ANALYTICS_ID}

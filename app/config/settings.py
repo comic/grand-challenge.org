@@ -105,10 +105,6 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
-
 ##############################################################################
 #
 # Storage
@@ -256,7 +252,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
-                "grandchallenge.core.context_processors.google_analytics_id",
+                "grandchallenge.core.context_processors.google_keys",
             ]
         },
     }
@@ -273,8 +269,10 @@ MIDDLEWARE = (
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    # Subdomain after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",

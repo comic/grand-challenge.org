@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
-from grandchallenge.core.views import comicmain
+from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.views import FaviconView
 
 admin.autodiscover()
@@ -18,7 +18,7 @@ def handler500(request):
 
 
 urlpatterns = [
-    path("", comicmain, name="home"),
+    path("", HomeTemplate.as_view(), name="home"),
     path(
         "robots.txt/",
         TemplateView.as_view(
@@ -92,7 +92,6 @@ urlpatterns = [
     # when all other urls have been checked, try to load page from main project
     # keep this url at the bottom of this list, because urls are checked in
     # order
-    path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
