@@ -31,7 +31,7 @@
         </p>
     {% endif %}
 
-    <div>
+    <div class="mb-3">
         <span class="badge badge-info">
             Active filters:
             <span class="counter" id="active_filter_count"></span>
@@ -45,12 +45,10 @@
                 style="display:none;">
             Reset filters
         </button>
-
-        <p></p>
     </div>
 
     <div class="row">
-        <div class="col-lg-3 mb-3">
+        <div class="col-lg-3">
             <h2>Filters</h2>
 
             <div id="projectfilterbuttons">
@@ -66,15 +64,13 @@
                         </label>
                     </form>
 
-                    <div class="card mb-3">
+                    <div class="card">
                         <a class="collapsed"
                            data-toggle="collapse"
                            href="#collapseHost">
-                            <div class="card-body">
-                                <i class="fas fa-chevron-circle-right"
-                                   id="host-chevron">
-                                </i>
-                                <b>Host</b></div>
+                            <div class="card-header">
+                                <h5 class="mb-0">Host</h5>
+                            </div>
                         </a>
 
                         <div id="collapseHost" class="collapse"
@@ -99,15 +95,13 @@
                         </div>
                     </div>
 
-                    <div class="card mb-3">
+                    <div class="card">
                         <a class="collapsed"
                            data-toggle="collapse"
                            href="#collapseModality">
-                            <div class="card-body">
-                                <i class="fas fa-chevron-circle-right"
-                                   id="modality-chevron">
-                                </i>
-                                <b>Modality</b></div>
+                            <div class="card-header">
+                                <h5 class="mb-0">Modality</h5>
+                            </div>
                         </a>
 
                         <div id="collapseModality" class="collapse"
@@ -131,15 +125,13 @@
                         </div>
                     </div>
 
-                    <div class="card mb-3">
+                    <div class="card">
                         <a class="collapsed"
                            data-toggle="collapse"
                            href="#collapseTask">
-                            <div class="card-body">
-                                <i class="fas fa-chevron-circle-right"
-                                   id="task-chevron">
-                                </i>
-                                <b>Task type</b></div>
+                            <div class="card-header">
+                                <h5 class="mb-0">Task type</h5>
+                            </div>
                         </a>
 
                         <div id="collapseTask" class="collapse"
@@ -164,17 +156,14 @@
                         </div>
                     </div>
 
-
-                    <div class="card mb-3">
+                    <div class="card">
                         <a class="collapsed"
                            data-toggle="collapse"
                            href="#collapseStructure"
                            id="headingStructure">
-                            <div class="card-body"><i
-                                    class="fas fa-chevron-circle-right"
-                                    id="structure-chevron">
-                            </i>
-                                <b>Structure</b></div>
+                            <div class="card-header">
+                                <h5 class="mb-0">Structure</h5>
+                            </div>
                         </a>
 
                         <div id="collapseStructure" class="collapse"
@@ -225,7 +214,6 @@
 
             </div>
         </div>
-
 
         <div class="col">
 
