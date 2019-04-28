@@ -473,7 +473,7 @@ class Challenge(ChallengeBase):
 
     def is_admin(self, user) -> bool:
         """
-        is user in the admins group for the comicsite to which this object
+        is user in the admins group for the challenge to which this object
         belongs? superuser always passes
         """
         return (
@@ -483,7 +483,7 @@ class Challenge(ChallengeBase):
 
     def is_participant(self, user) -> bool:
         """
-        is user in the participants group for the comicsite to which this
+        is user in the participants group for the challenge to which this
         object belong? superuser always passes
         """
         return (
@@ -492,7 +492,7 @@ class Challenge(ChallengeBase):
         )
 
     def get_admins(self):
-        """ Return all users that are in this comicsites admin group """
+        """ Return all users that are in this challenges admin group """
         return self.admins_group.user_set.all()
 
     def get_participants(self):
@@ -548,7 +548,7 @@ class ExternalChallenge(ChallengeBase):
 
 class ComicSiteModel(models.Model):
     """
-    An object which can be shown or used in the comicsite framework.
+    An object which can be shown or used in the ComicSite framework.
     This base class should handle common functions such as authorization.
     """
 

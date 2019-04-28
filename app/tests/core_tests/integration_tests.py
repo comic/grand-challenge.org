@@ -37,15 +37,12 @@ def create_page(challenge, title, content="testcontent", permission_lvl=None):
 
 
 def get_first_page(challenge):
-    """ Get the first page of comicsite, saves some typing..
-    """
     return Page.objects.filter(challenge=challenge)[0]
 
 
 def extract_form_errors(html):
     """ If something in post to a form url fails, I want to know what the
     problem was.
-    
     """
     errors = re.findall(
         '<ul class="errorlist"(.*)</ul>', html.decode(), re.IGNORECASE
@@ -360,7 +357,7 @@ class ComicframeworkTestCase(TestCase):
     def _try_create_challenge(
         self, user, short_name, description="test project"
     ):
-        """ split this off from create_comicsite because sometimes you just
+        """ split this off from create_challenge because sometimes you just
         want to assert that creation fails
         """
         url = reverse("challenges:create")
@@ -386,16 +383,9 @@ class ComicframeworkTestCase(TestCase):
     def _create_challenge_in_admin(
         self, user, short_name, description="test project"
     ):
-        """ Create a comicsite object as if created through django admin interface.
-        
         """
-        # project = ComicSite.objects.create(short_name=short_name,
-        # description=description,
-        # header_image=settings.COMIC_PUBLIC_FOLDER_NAME+"fakefile2.jpg")
-        # project.save()
-        # because we are creating a comicsite directly, some methods from admin
-        # are not being called as they should. Do this manually
-        # ad = ComicSiteAdmin(project,admin.site)
+        Create a challenge object as if created through django admin interface.
+        """
         response = self._try_create_challenge(user, short_name, description)
         errors = self._find_errors_in_page(response)
         if errors:
@@ -464,7 +454,6 @@ class CreateProjectTest(ComicframeworkTestCase):
         # to maximize test coverage.
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin")
-        # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
         challenge_short_name = "under_score"
         response = self._try_create_challenge(
             self.projectadmin, challenge_short_name
@@ -587,7 +576,7 @@ class ViewsTest(ComicframeworkTestCase):
         # robots.txt for each project, which by bots can be seen as seperate
         # domain beacuse we use dubdomains to designate projects
         robots_url_project = reverse(
-            "comicsite_robots_txt",
+            "subdomain_robots_txt",
             kwargs={"challenge_short_name": self.testproject.short_name},
         )
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in
