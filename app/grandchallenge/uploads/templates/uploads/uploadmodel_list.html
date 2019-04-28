@@ -1,9 +1,9 @@
-{% extends 'site.html' %}
+{% extends 'challenge.html' %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
 {% block content %}
-    <h2>Uploads for {{ site.short_name }}</h2>
+    <h2>Uploads for {{ challenge.short_name }}</h2>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="uploadsTable">

@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load grandchallenge_tags %}
 {% load workstations %}
 
@@ -20,15 +20,15 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'datasets:annotationset-add-images' challenge_short_name=site.short_name pk=object.pk %}">
+           href="{% url 'datasets:annotationset-add-images' challenge_short_name=challenge.short_name pk=object.pk %}">
             <i class="fas fa-plus"></i> Add images to this annotation set
         </a>
         <a class="btn btn-primary"
-           href="{% url 'datasets:annotationset-update-labels' challenge_short_name=site.short_name pk=object.pk %}">
+           href="{% url 'datasets:annotationset-update-labels' challenge_short_name=challenge.short_name pk=object.pk %}">
             <i class="fas fa-plus"></i> Set the labels on this annotation set
         </a>
         <a class="btn btn-primary"
-           href="{% url 'datasets:annotationset-update' challenge_short_name=site.short_name pk=object.pk %}">
+           href="{% url 'datasets:annotationset-update' challenge_short_name=challenge.short_name pk=object.pk %}">
             <i class="fas fa-edit"></i> Update the images used in this
             annotation set
         </a>

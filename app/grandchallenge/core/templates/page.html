@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load guardian_tags %}
 {% load grandchallenge_tags %}
 {% load clean from bleach %}
@@ -8,9 +8,9 @@
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block content %}
-    {% if site.disclaimer %}
+    {% if challenge.disclaimer %}
         <div class="disclaimer alert alert-warning" role="alert">
-            {{ site.disclaimer|clean }}
+            {{ challenge.disclaimer|clean }}
         </div>
     {% endif %}
 

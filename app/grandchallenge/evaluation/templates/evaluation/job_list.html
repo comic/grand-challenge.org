@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load guardian_tags %}
@@ -21,7 +21,7 @@
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
-                {% if site.evaluation_config.allow_submission_comments %}
+                {% if challenge.evaluation_config.allow_submission_comments %}
                     <th>Comment</th>
                 {% endif %}
                 {% if "change_challenge" in challenge_perms %}
@@ -39,7 +39,7 @@
                         <td>
                             {{ job.submission.creator|user_profile_link }}
 
-                            {% if site.evaluation_config.use_teams %}
+                            {% if challenge.evaluation_config.use_teams %}
                                 {% with job.result|get_team_html as team_html %}
                                     {% if team_html %}
                                         ({{ team_html }})
@@ -84,7 +84,7 @@
                         {% endif %}
                     </td>
 
-                    {% if site.evaluation_config.allow_submission_comments %}
+                    {% if challenge.evaluation_config.allow_submission_comments %}
                         <td>{{ job.submission.comment }}</td>
                     {% endif %}
 
@@ -92,7 +92,7 @@
                         <td>
                             {% if job.result %}
                                 <form method="post"
-                                      action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=job.result.pk %}">
+                                      action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=job.result.pk %}">
                                     {% csrf_token %}
                                     {% if job.result.published %}
                                         <input type="hidden" name="published"

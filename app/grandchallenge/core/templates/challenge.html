@@ -5,17 +5,17 @@
 
 {% block style %}
     {{ block.super }}
-    {% if site.skin %}
+    {% if challenge.skin %}
         <style>
-            {% insert_file site.skin %}
+            {% insert_file challenge.skin %}
         </style>
     {% endif %}
 {% endblock %}
 
-{% block title %} {{ site.short_name }} {% endblock %}
+{% block title %} {{ challenge.short_name }} {% endblock %}
 
 {% block navbar %}
-    {% if site.hide_footer %}
+    {% if challenge.hide_footer %}
         <!--hidden -->
     {% else %}
         {{ block.super }}
@@ -23,13 +23,13 @@
 {% endblock %}
 
 {% block jumbotron %}
-    {% if site.banner %}
+    {% if challenge.banner %}
         <div class="row mb-3">
             <div class="col-12">
                 <a style="width: 100%;"
-                   href="{% url 'challenge-homepage' challenge_short_name=site.short_name %}">
-                    <img alt="{% firstof site.title site.short_name %} Banner"
-                         src="{{ site.banner.url }}" class="rounded w-100">
+                   href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">
+                    <img alt="{% firstof challenge.title challenge.short_name %} Banner"
+                         src="{{ challenge.banner.url }}" class="rounded w-100">
                 </a>
             </div>
         </div>
@@ -37,11 +37,11 @@
 {% endblock %}
 
 {% block sidebar_links %}
-    {% if not site.banner %}
+    {% if not challenge.banner %}
         <li class="nav-item">
             <a class="nav-link"
-                    href="{{ site.get_absolute_url }}">
-                {% firstof site.title site.short_name %}
+                    href="{{ challenge.get_absolute_url }}">
+                {% firstof challenge.title challenge.short_name %}
             </a>
         </li>
     {% endif %}
@@ -59,35 +59,35 @@
         {% endif %}
     {% endfor %}
 
-    {% if site.use_registration_page %}
+    {% if challenge.use_registration_page %}
         <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.view_name == 'participants:registration-create' %}active{% endif %}"
-               href="{% url 'participants:registration-create' challenge_short_name=site.short_name %}">
+               href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}">
                 Join
             </a>
         </li>
     {% endif %}
 
-    {% if site.use_evaluation %}
+    {% if challenge.use_evaluation %}
         {% if "change_challenge" in challenge_perms or user_is_participant %}
-            {% if site.evaluation_config.use_teams %}
+            {% if challenge.evaluation_config.use_teams %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
-                       href="{% url 'teams:list' challenge_short_name=site.short_name %}">Teams</a>
+                       href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
                 </li>
             {% endif %}
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' %}active{% endif %}"
-                   href="{% url 'evaluation:submission-create' challenge_short_name=site.short_name %}">Submit</a>
+                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name %}">Submit</a>
             </li>
         {% endif %}
         <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:result-list' %}active{% endif %}"
-               href="{% url 'evaluation:result-list' challenge_short_name=site.short_name %}">Results</a>
+               href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">Results</a>
         </li>
     {% endif %}
 
-    {% if site.hide_footer and not site.hide_signin %}
+    {% if challenge.hide_footer and not challenge.hide_signin %}
         {% include "grandchallenge/partials/userlinks.html" %}
     {% endif %}
 
@@ -98,36 +98,36 @@
                aria-expanded="false">Admin</a>
             <div class="dropdown-menu">
                 <a class="dropdown-item"
-                   href="{% url 'update' challenge_short_name=site.short_name %}">Challenge
+                   href="{% url 'update' challenge_short_name=challenge.short_name %}">Challenge
                     Settings</a>
                 <a class="dropdown-item"
-                   href="{% url 'pages:list' challenge_short_name=site.short_name %}">Pages</a>
+                   href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
                 <a class="dropdown-item"
-                   href="{% url 'admins:list' challenge_short_name=site.short_name %}">Admins</a>
+                   href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">Admins</a>
                 <a class="dropdown-item"
-                   href="{% url 'participants:list' challenge_short_name=site.short_name %}">Participants</a>
+                   href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">Participants</a>
                 <a class="dropdown-item"
-                   href="{% url 'participants:registration-list' challenge_short_name=site.short_name %}">Participation
+                   href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">Participation
                     Requests</a>
                 <a class="dropdown-item"
-                   href="{% url 'uploads:list' challenge_short_name=site.short_name %}">Uploaded
+                   href="{% url 'uploads:list' challenge_short_name=challenge.short_name %}">Uploaded
                     Files</a>
-                {% if site.use_evaluation %}
+                {% if challenge.use_evaluation %}
                     <hr/>
                     <a class="dropdown-item"
-                       href="{% url 'evaluation:config-update' challenge_short_name=site.short_name %}">
+                       href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
                         Evaluation Settings
                     </a>
                     <a class="dropdown-item"
-                       href="{% url 'evaluation:method-list' challenge_short_name=site.short_name %}">
+                       href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
                         Evaluation Methods
                     </a>
                     <a class="dropdown-item"
-                       href="{% url 'evaluation:submission-list' challenge_short_name=site.short_name %}">
+                       href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
                         Evaluation Submissions
                     </a>
                     <a class="dropdown-item"
-                       href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">
+                       href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">
                         Evaluation Jobs
                     </a>
                 {% endif %}
@@ -138,7 +138,7 @@
 {% endblock %}
 
 {% block footer %}
-    {% if site.hide_footer %}
+    {% if challenge.hide_footer %}
     {% else %}
         {{ block.super }}
     {% endif %}

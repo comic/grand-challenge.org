@@ -1,13 +1,13 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load crispy_forms_tags %}
 {% load clean from bleach %}
 
 {% block content %}
 
-    <h2>Join {{ site.short_name }}</h2>
+    <h2>Join {{ challenge.short_name }}</h2>
 
     <p>
-        {{ site.registration_page_text|clean }}
+        {{ challenge.registration_page_text|clean }}
     </p>
 
     {% if existing_status %}
@@ -16,7 +16,7 @@
 
     {% elif user_is_participant %}
 
-        <p><b>You are already participating in {{ site.short_name }}.</b></p>
+        <p><b>You are already participating in {{ challenge.short_name }}.</b></p>
 
     {% else %}
 
@@ -24,7 +24,7 @@
             {% csrf_token %}
             {{ form | crispy }}
             <input type="submit"
-                   value="Click here to join {{ site.short_name }}"
+                   value="Click here to join {{ challenge.short_name }}"
                    class="btn btn-primary"/>
         </form>
 

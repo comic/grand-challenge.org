@@ -2,10 +2,10 @@ from django.urls import path, include
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.challenges.views import ChallengeUpdate
-from grandchallenge.core.views import site
+from grandchallenge.core.views import challenge_homepage
 
 urlpatterns = [
-    path("", site, name="challenge-homepage"),
+    path("", challenge_homepage, name="challenge-homepage"),
     path(
         "robots.txt/",
         TemplateView.as_view(

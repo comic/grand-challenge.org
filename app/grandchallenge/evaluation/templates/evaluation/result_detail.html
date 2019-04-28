@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load evaluation_extras %}
 {% load guardian_tags %}
 {% load user_profile_link from profiles %}
@@ -40,7 +40,7 @@
                 leaderboard
                 {% if "change_challenge" in challenge_perms %}
                     <form method="post"
-                          action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
+                          action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=object.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="false">
@@ -55,7 +55,7 @@
                 {% if "change_challenge" in challenge_perms %}
                     <br>
                     <form method="post"
-                          action="{% url 'evaluation:result-update' challenge_short_name=site.short_name pk=object.pk %}">
+                          action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=object.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="true">
@@ -77,8 +77,8 @@
             </dd>
         {% endif %}
 
-        {% if site.evaluation_config.show_supplementary_file_link %}
-            <dt>{{ site.evaluation_config.supplementary_file_label }}:</dt>
+        {% if challenge.evaluation_config.show_supplementary_file_link %}
+            <dt>{{ challenge.evaluation_config.supplementary_file_label }}:</dt>
             <dd>
                 {% if object.job.submission.supplementary_file %}
                     <a href="{{ object.job.submission.supplementary_file.url }}">
@@ -88,7 +88,7 @@
             </dd>
         {% endif %}
 
-        {% if site.evaluation_config.show_publication_url %}
+        {% if challenge.evaluation_config.show_publication_url %}
             <dt>Publication:</dt>
             <dd>
                 {% if object.job.submission.publication_url %}

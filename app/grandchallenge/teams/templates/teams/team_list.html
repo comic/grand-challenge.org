@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load url from grandchallenge_tags %}
 {% load get_obj_perms from guardian_tags %}
 {% load user_profile_link from profiles %}
@@ -23,11 +23,11 @@
                 {% get_obj_perms user for tm.team as "team_perms" %}
                 {% if "change_team" in team_perms %}
                     <dd>
-                        <a href="{% url 'teams:update' challenge_short_name=site.short_name pk=tm.team.pk %}"
+                        <a href="{% url 'teams:update' challenge_short_name=challenge.short_name pk=tm.team.pk %}"
                            class="btn btn-primary">Edit
                             Team</a>
                         <form method="post"
-                              action="{% url 'teams:delete' challenge_short_name=site.short_name pk=tm.team.pk %}">
+                              action="{% url 'teams:delete' challenge_short_name=challenge.short_name pk=tm.team.pk %}">
                             {% csrf_token %}
                             <button type="submit"
                                     class="btn btn-danger">
@@ -38,7 +38,7 @@
                 {% else %}
                     <dd>
                         <form method="post"
-                              action="{% url 'teams:member-delete' challenge_short_name=site.short_name pk=tm.pk %}">
+                              action="{% url 'teams:member-delete' challenge_short_name=challenge.short_name pk=tm.pk %}">
                             {% csrf_token %}
                             <button type="submit"
                                     class="btn btn-danger">
@@ -51,14 +51,14 @@
         </dl>
 
         <p>You must leave these teams before you can join another team. The
-            teams competing in {{ site.short_name }} are: </p>
+            teams competing in {{ challenge.short_name }} are: </p>
 
     {% else %}
 
         <p>
             <a class="btn btn-primary"
-               href="{% url 'teams:create' challenge_short_name=site.short_name %}">Create a new
-                team for {{ site.short_name }}</a>
+               href="{% url 'teams:create' challenge_short_name=challenge.short_name %}">Create a new
+                team for {{ challenge.short_name }}</a>
         </p>
 
         <p>Or, you can request to join an existing team: </p>
@@ -91,7 +91,7 @@
                     {% if not users_teams %}
                         <td>
                             <form method="post"
-                                  action="{% url 'teams:member-create' challenge_short_name=site.short_name pk=team.pk %}">
+                                  action="{% url 'teams:member-create' challenge_short_name=challenge.short_name pk=team.pk %}">
                                 {% csrf_token %}
                                 <button type="submit"
                                         class="btn btn-xs btn-primary">

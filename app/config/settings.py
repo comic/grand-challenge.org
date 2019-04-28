@@ -255,7 +255,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                "grandchallenge.core.context_processors.comic_site",
+                "grandchallenge.core.context_processors.challenge",
                 "grandchallenge.core.context_processors.google_analytics_id",
                 "grandchallenge.workstations.context_processors.workstation_session",
             ]
