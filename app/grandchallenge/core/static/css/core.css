@@ -40,11 +40,6 @@ body {
     line-height: 4rem; /* Vertically center the text there */
 }
 
-.headerImage {
-    width: 100%;
-    border-radius: 6px;
-}
-
 .rounded-top-left {
     border-top-left-radius: 3px;
 }
