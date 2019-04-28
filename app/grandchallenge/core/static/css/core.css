@@ -10,13 +10,8 @@ html {
 }
 
 h1, .h1, h2, .h2 {
-    border-bottom: 3px solid #DBEDFF;
+    box-shadow: inset 0 -6px 0 rgb(219, 237, 255);
     display: inline-block;
-}
-
-h1 a:hover, h2 a:hover {
-    text-decoration: none;
-    border-bottom: 3px solid #0056b3;
 }
 
 nav.navbar-top li.nav-item {
