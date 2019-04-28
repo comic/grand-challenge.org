@@ -9,7 +9,7 @@ from grandchallenge.challenges.models import Challenge
 logger = logging.getLogger(__name__)
 
 
-def comic_site(request):
+def challenge(request):
     try:
         challenge = request.challenge
     except AttributeError:
@@ -40,7 +40,7 @@ def comic_site(request):
     is_participant = challenge.is_participant(user)
 
     return {
-        "site": challenge,
+        "challenge": challenge,
         "challenge_perms": permissions,
         "user_is_participant": is_participant,
         "pages": pages,

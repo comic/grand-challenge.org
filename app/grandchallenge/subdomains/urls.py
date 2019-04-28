@@ -2,16 +2,16 @@ from django.urls import path, include
 from django.views.generic import TemplateView, RedirectView
 
 from grandchallenge.challenges.views import ChallengeUpdate
-from grandchallenge.core.views import site
+from grandchallenge.core.views import challenge_homepage
 
 urlpatterns = [
-    path("", site, name="challenge-homepage"),
+    path("", challenge_homepage, name="challenge-homepage"),
     path(
         "robots.txt/",
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
-        name="comicsite_robots_txt",
+        name="subdomain_robots_txt",
     ),
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
     path(

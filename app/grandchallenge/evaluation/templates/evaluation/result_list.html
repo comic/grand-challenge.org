@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load humanize %}
@@ -9,8 +9,8 @@
     <h2>Results</h2>
 
     <div class="table-responsive">
-        <table class="table table-sm" id="resultsTable">
-            <thead>
+        <table class="table table-hover table-borderless table-sm" id="resultsTable">
+            <thead class="thead-light">
             <tr>
                 <th>#</th>
                 <th>
@@ -22,21 +22,21 @@
                 <th>Created</th>
 
                 {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
-                    <th class="table-active">Mean #</th>
+                    <th class="table-info">Mean Position</th>
                 {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
-                    <th class="table-active">Median #</th>
+                    <th class="table-info">Median Position</th>
                 {% endif %}
 
                 <th
                         {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                            class="table-active"
+                            class="table-info"
                         {% else %}
                             class="toggable"
                         {% endif %}
                 >
                     {{ evaluation_config.score_title }}
                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                        (#)
+                        (Position)
                     {% endif %}
                 </th>
 
@@ -90,7 +90,7 @@
                         </td>
 
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            <td class="table-active">
+                            <td class="table-info">
                                 <a href="{{ result_url }}">
                                     <b>{{ result.rank_score|floatformat }}</b>
                                 </a>
@@ -100,7 +100,7 @@
                         {% with result.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
                             <td data-order="{{ metric }}"
                                     {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                class="table-active"
+                                class="table-info"
                                     {% else %}
                                 class="toggable"
                                     {% endif %}
