@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.sites.middleware import CurrentSiteMiddleware
 
 from grandchallenge.subdomains.middleware import (
     subdomain_middleware,
@@ -23,7 +24,8 @@ SITE_DOMAIN = "testserver"
 )
 def test_subdomain_attribute(settings, rf, host, subdomain):
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
-    request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    request = CurrentSiteMiddleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    request = subdomain_middleware(lambda x: x)(request)
     assert request.subdomain == subdomain
 
 
@@ -40,7 +42,8 @@ def test_subdomain_attribute(settings, rf, host, subdomain):
 def test_invalid_domain(settings, rf, host, subdomain):
     # Other domains will get the main challenge by setting subdomain = None
     settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}", f".not{SITE_DOMAIN}"]
-    request = subdomain_middleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    request = CurrentSiteMiddleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    request = subdomain_middleware(lambda x: x)(request)
     assert request.subdomain == subdomain
 
 
@@ -64,6 +67,7 @@ def test_challenge_attribute(settings, rf, subdomain):
 
     assert not hasattr(request, "challenge")
 
+    request = CurrentSiteMiddleware(lambda x: x)(request)
     request = challenge_subdomain_middleware(lambda x: x)(request)
 
     if subdomain is None:
