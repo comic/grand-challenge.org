@@ -48,7 +48,7 @@ after_success:
 
 deploy:
   - provider: script
-    script: bash -c "docker login -u eyrabenchmark -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
+    script: bash -c "docker login -u eyrabenchmark1 -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
     on:
       all_branches: true
       condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
