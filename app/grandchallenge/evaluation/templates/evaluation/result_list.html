@@ -197,7 +197,8 @@
                     set up.
                 {% endcomment %}
                 order: [[0, "asc"]],
-                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "pageLength": 50,
                 "columnDefs": [{
                     {%  if evaluation_config.show_supplementary_file_link %}
                         "targets": [-1],
@@ -219,7 +220,7 @@
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
                 {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                    dom: "<'row'<'col-5'l><'col-7'f>>" +
+                    dom: "<'row'<'col-md-5'l><'col-md-7'f>>" +
                         "<'row'<'col-sm-12'Btr>>" +
                         "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                     buttons: [
