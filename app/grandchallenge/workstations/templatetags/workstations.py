@@ -4,6 +4,7 @@ from django.conf import settings
 register = template.Library()
 
 
+@register.simple_tag()
 def workstation_query(image, overlay=None):
     """ Generate the workstation query string for this image and overlay """
     query = {settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: image.pk}
