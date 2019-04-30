@@ -218,7 +218,7 @@ class Session(UUIDModel):
         )
 
     @property
-    def workstation_url(self) -> str:
+    def workstation_query(self) -> str:
         """
         Returns
         -------

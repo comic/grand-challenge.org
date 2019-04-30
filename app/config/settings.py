@@ -634,7 +634,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The workstation that is accessible by all authorised users
-WORKSTATIONS_GLOBAL_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
 # The name of the network that the workstations will be attached to

@@ -52,7 +52,7 @@
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td>{{ job.image.origin.creator|user_profile_link }}</td>
                     <td>
-                        <a href="{% workstation_url image=job.image %}">{{ job.image }}</a>
+                        <a href="{% workstation_query image=job.image %}">{{ job.image }}</a>
                     </td>
                     <td>
                     <span class="badge
@@ -72,7 +72,7 @@
                     <td>
                         {% if job.result.images.all %}
                             {% for image in job.result.images.all %}
-                                <a href="{% workstation_url image=job.image overlay=image %}">
+                                <a href="{% workstation_query image=job.image overlay=image %}">
                                     {{ image }}
                                 </a>
                             {% endfor %}
