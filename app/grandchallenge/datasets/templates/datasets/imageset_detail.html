@@ -67,7 +67,7 @@
             {% for im in object.images_with_keys %}
                 <tr>
                     <td>{{ im.key }}</td>
-                    <td><a href="{% workstation_query image=im.image %}"
+                    <td><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=im.image %}"
                            title="View Image">{{ im.image }}</a></td>
                 </tr>
             {% endfor %}

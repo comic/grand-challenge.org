@@ -69,10 +69,10 @@
             {% for match in object.matched_images %}
                 <tr>
                     <td>{{ match.key }}</td>
-                    <td><a href="{% workstation_query image=match.base overlay=match.annotation %}"
+                    <td><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=match.base overlay=match.annotation %}"
                            title="View Image and Annotation">{{ match.base }}</a>
                     </td>
-                    <td><a href="{% workstation_query image=match.base overlay=match.annotation %}"
+                    <td><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=match.base overlay=match.annotation %}"
                            title="View Image and Annotation">{{ match.annotation }}</a>
                     </td>
                 </tr>
@@ -152,7 +152,7 @@
             {% for match in object.matched_labels %}
                 <tr>
                     <td>{{ match.key }}</td>
-                    <td><a href="{% workstation_query image=match.base %}"
+                    <td><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=match.base %}"
                            title="View Image">{{ match.base }}</a>
                     </td>
                     <td><{{ match.label }}</td>

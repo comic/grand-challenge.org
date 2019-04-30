@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.utils.http import urlencode
 
 register = template.Library()
 
@@ -12,4 +13,4 @@ def workstation_query(image, overlay=None):
     if overlay is not None:
         query.update({settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: overlay.pk})
 
-    return "&".join([f"{k}={v}" for k, v in query.items()])
+    return urlencode(query)
