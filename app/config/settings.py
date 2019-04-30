@@ -257,7 +257,6 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
                 "grandchallenge.core.context_processors.google_analytics_id",
-                "grandchallenge.workstations.context_processors.workstation_session",
             ]
         },
     }
@@ -634,6 +633,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The workstation that is accessible by all authorised users
+DEFAULT_WORKSTATION_SLUG = os.environ.get(
+    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
+)
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
 # The name of the network that the workstations will be attached to

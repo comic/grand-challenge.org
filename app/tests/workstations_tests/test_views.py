@@ -266,6 +266,26 @@ def test_session_update(client):
 
 
 @pytest.mark.django_db
+def test_session_redirect(client):
+    user = UserFactory(is_staff=True)
+    ws = WorkstationFactory()
+    WorkstationImageFactory(workstation=ws, ready=True)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="workstations:session-redirect",
+        reverse_kwargs={"slug": ws.slug},
+        user=user,
+    )
+
+    assert response.status_code == 302
+
+    response = get_view_for_user(client=client, user=user, url=response.url)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_session_detail(client):
     user = UserFactory(is_staff=True)
     s1, s2 = SessionFactory(), SessionFactory()
