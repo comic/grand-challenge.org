@@ -247,7 +247,9 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
         )
 
 
-def validate_staff_only_view(*, client: Client, **kwargs):
+def validate_staff_only_view(
+    *, client: Client, should_redirect=False, **kwargs
+):
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL, client=client, **kwargs
     )
@@ -255,11 +257,16 @@ def validate_staff_only_view(*, client: Client, **kwargs):
     user = UserFactory()
     staff_user = UserFactory(is_staff=True)
 
-    tests = [(200, staff_user), (403, user)]
+    assert_viewname_status(code=403, client=client, user=user, **kwargs)
 
-    for test in tests:
+    if should_redirect:
+        staff_response = assert_viewname_status(
+            code=302, client=client, user=staff_user, **kwargs
+        )
+        assert settings.LOGIN_URL not in staff_response.url
+    else:
         assert_viewname_status(
-            code=test[0], client=client, user=test[1], **kwargs
+            code=200, client=client, user=staff_user, **kwargs
         )
 
 
