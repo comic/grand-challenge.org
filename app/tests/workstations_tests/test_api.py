@@ -48,7 +48,7 @@ def test_session_detail_api(client):
     assert response.status_code == 200
     assert all([k in response.json() for k in ["pk", "status"]])
     assert response.json()["pk"] == str(s.pk)
-    assert response.json()["status"] == s.status
+    assert response.json()["status"] == s.get_status_display()
 
 
 @pytest.mark.django_db
