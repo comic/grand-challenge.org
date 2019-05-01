@@ -59,7 +59,7 @@
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
-                "{{ object.workstation_url }}?{{ request.GET.urlencode }}",
+                "{{ object.workstation_url }}?{{ request.GET.urlencode|safe }}",
             );
         })();
     </script>
