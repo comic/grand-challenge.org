@@ -35,6 +35,11 @@
                 workstation</a>
         </p>
 
+        <button class="btn btn-primary" type="button" disabled>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Loading...
+        </button>
+
         <form method="post"
               action="{% url 'workstations:session-update' slug=object.workstation_image.workstation.slug pk=object.pk %}">
             {% csrf_token %}
