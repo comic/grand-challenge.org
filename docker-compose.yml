@@ -72,12 +72,14 @@ services:
         PROTECTED_S3_STORAGE_BUCKET_NAME: grand-challenge-protected
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
+    # Use werkzeug debugger in dev, this should never be used in production!
+    # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
     command: >-
       bash -c "
       python manage.py migrate
       && python manage.py check_permissions
       && python manage.py initcomicdemo
-      && gunicorn -w 1 -b 0.0.0.0 config.wsgi
+      && python manage.py runserver_plus 0.0.0.0:8000 --nopin
       "
     restart: always
     depends_on:
