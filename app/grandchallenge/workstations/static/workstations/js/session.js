@@ -23,7 +23,7 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
             setButtonLoadingMessage(statusButton, "Waiting for the workstation to respond...");
             redirectWhenReady(workstationUrl, statusButton);
             break;
-        case "errored":
+        case "failed":
         case "stopped":
             setButtonError(statusButton, "Workstation " + status);
             break;
