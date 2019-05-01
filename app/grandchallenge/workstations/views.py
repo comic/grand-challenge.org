@@ -9,6 +9,8 @@ from django.views.generic import (
     UpdateView,
     RedirectView,
 )
+from rest_framework.permissions import IsAdminUser
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.workstations.forms import (
@@ -20,10 +22,17 @@ from grandchallenge.workstations.models import (
     WorkstationImage,
     Session,
 )
+from grandchallenge.workstations.serializers import SessionSerializer
 from grandchallenge.workstations.utils import (
     get_workstation_image_or_404,
     get_or_create_active_session,
 )
+
+
+class SessionViewSet(ReadOnlyModelViewSet):
+    queryset = Session.objects.all()
+    serializer_class = SessionSerializer
+    permission_classes = (IsAdminUser,)
 
 
 class WorkstationList(UserIsStaffMixin, ListView):
