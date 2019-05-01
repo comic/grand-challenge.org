@@ -15,6 +15,7 @@ sphinx = "*"
 pyupgrade = "*"
 pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
+werkzeug = "*"
 
 [packages]
 "beautifulsoup4" = "*"
