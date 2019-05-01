@@ -1,6 +1,6 @@
 "use strict";
 
-var timeout = 1000;
+const timeout = 1000;
 
 function getSessionStatus(statusUrl, statusButton, workstationUrl) {
     // Checks on the status of the Session (queued, running, started, etc)
