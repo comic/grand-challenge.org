@@ -25,10 +25,10 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
             break;
         case "failed":
         case "stopped":
-            setButtonError(statusButton, "Workstation " + status);
+            setButtonError(statusButton, "This session has " + status.toLowerCase() + ".");
             break;
         default:
-            setButtonError(statusButton, "Workstation is in an unknown state");
+            setButtonError(statusButton, "Workstation is in an unknown state.");
     }
 }
 
@@ -62,7 +62,6 @@ function setButtonLoadingMessage(statusButton, msg) {
 }
 
 function setButtonError(statusButton, msg) {
-    statusButton.innerHTML = msg;
-    statusButton.classList.add("btn-danger");
-    statusButton.classList.remove("btn-primary");
+    statusButton.querySelector("#sessionStateBody").innerHTML = "<b>" + msg + "</b>";
+    statusButton.querySelector("#sessionStateFooter").classList.remove("d-none");
 }

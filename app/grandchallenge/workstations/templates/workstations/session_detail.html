@@ -22,29 +22,36 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ object.workstation_image.workstation.slug }} Session</h2>
+    <h2>Workstation Session</h2>
 
-    <dl>
-        <dt>Expiry</dt>
-        <dd>This session will expire in {{ object.expires_at|timeuntil }}.</dd>
-    </dl>
-
-    <button id="sessionState" class="btn btn-primary" type="button" disabled>
-        <span class="spinner-border spinner-border-sm" role="status"
-              aria-hidden="true"></span> <span id="sessionStateMsg">Loading Workstation...</span>
-    </button>
-
-    {% if object.status != object.STOPPED and object.status != object.QUEUED and not object.user_finished %}
-        <form method="post"
-              action="{% url 'workstations:session-update' slug=object.workstation_image.workstation.slug pk=object.pk %}">
-            {% csrf_token %}
-            <input type="hidden" name="user_finished" value="true">
-            <button type="submit"
-                    class="btn btn-danger">
-                Stop this session
-            </button>
-        </form>
+    {% if object.status != object.STOPPED and object.status != object.FAILED %}
+        <p>
+            This session will expire in {{ object.expires_at|timeuntil }}.
+        </p>
     {% endif %}
+
+    <div class="modal fade" id="exampleModal" tabindex="-1"
+         data-keyboard="false" data-backdrop="static" role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" id="sessionState">
+                <div class="modal-body" id="sessionStateBody">
+                    <div class="d-flex align-items-center">
+                        <span class="spinner-border"
+                              role="status"
+                              aria-hidden="true"></span>
+                        <b class="ml-3" id="sessionStateMsg">Loading
+                            Workstation...</b>
+                    </div>
+                </div>
+                <div class="modal-footer d-none" id="sessionStateFooter">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}
 
@@ -56,6 +63,8 @@
     </script>
     <script type="text/javascript">
         (function () {
+            $('#exampleModal').modal({show: true});
+
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
