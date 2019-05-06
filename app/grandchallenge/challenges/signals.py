@@ -37,7 +37,7 @@ def setup_challenge_groups(
         ImageSet.objects.create(phase=ImageSet.TESTING, challenge=instance)
         ImageSet.objects.create(phase=ImageSet.TRAINING, challenge=instance)
 
-        # add current user to admins for this site
+        # add current user to admins for this challenge
         try:
             instance.creator.groups.add(admins_group)
         except AttributeError:

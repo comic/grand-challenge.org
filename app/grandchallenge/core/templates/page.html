@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load guardian_tags %}
 {% load grandchallenge_tags %}
 {% load clean from bleach %}
@@ -8,9 +8,9 @@
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 {% block content %}
-    {% if site.disclaimer %}
+    {% if challenge.disclaimer %}
         <div class="disclaimer alert alert-warning" role="alert">
-            {{ site.disclaimer|clean }}
+            {{ challenge.disclaimer|clean }}
         </div>
     {% endif %}
 
@@ -21,10 +21,14 @@
             {% if currentpage.pk %}
                 {% if "change_challenge" in challenge_perms %}
                     <br>
-                    <a class="editPageLink"
-                       href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}">Edit
-                        this
-                        page</a>
+                    <a class="btn btn-primary"
+                       href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="Edit this page"
+                    >
+                        <i class="fas fa-edit"></i>
+                    </a>
                 {% endif %}
             {% endif %}
         {% endblock %}
@@ -49,4 +53,11 @@
     {# render embeddable google forums #}
     <script type="text/javascript"
             src="{% static "js/embed_forums.js" %}"></script>
+
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
 {% endblock %}

@@ -31,4 +31,9 @@ urlpatterns = [
         views.UploadPolygonAnnotationSet.as_view(),
         name="upload-polygon-annotation",
     ),
+    path(
+        "set_element_spacing_for_image/",
+        views.SetElementSpacingForImage.as_view(),
+        name="set-element-spacing-for-image",
+    ),
 ]

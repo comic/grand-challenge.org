@@ -7,6 +7,7 @@ from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.patients.views_api import PatientsViewSet
 from grandchallenge.studies.views_api import StudyViewSet
 from grandchallenge.worklists.views_api import WorklistViewSet
+from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"
 
@@ -16,6 +17,8 @@ router.register(r"patients", PatientsViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(r"cases/images", ImageViewSet, basename="image")
+router.register(r"workstations/sessions", SessionViewSet)
+
 urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers

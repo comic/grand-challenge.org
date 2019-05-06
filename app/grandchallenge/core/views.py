@@ -10,13 +10,13 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 
-def site(request):
-    site = request.challenge
-    pages = site.page_set.all()
+def challenge_homepage(request):
+    challenge = request.challenge
+    pages = challenge.page_set.all()
 
     if len(pages) == 0:
         currentpage = ErrorPage(
-            challenge=site,
+            challenge=challenge,
             title="no_pages_found",
             html="No pages found for this site. Please log in and add some pages.",
         )
@@ -28,7 +28,7 @@ def site(request):
     return render(
         request,
         "page.html",
-        {"site": site, "currentpage": currentpage, "pages": pages},
+        {"challenge": challenge, "currentpage": currentpage, "pages": pages},
     )
 
 
@@ -148,7 +148,9 @@ def comicmain(request, page_title=""):
     challenge_short_name = settings.MAIN_PROJECT_NAME
 
     try:
-        site = Challenge.objects.get(short_name__iexact=challenge_short_name)
+        challenge = Challenge.objects.get(
+            short_name__iexact=challenge_short_name
+        )
     except Challenge.DoesNotExist:
         link = reverse("challenges:create")
         link = link + "?short_name=%s" % challenge_short_name
@@ -166,10 +168,10 @@ def comicmain(request, page_title=""):
         return render(
             request,
             "temppage.html",
-            {"site": page.challenge, "currentpage": page},
+            {"challenge": page.challenge, "currentpage": page},
         )
 
-    pages = site.page_set.all()
+    pages = challenge.page_set.all()
 
     if len(pages) == 0:
         link = reverse(
@@ -188,7 +190,7 @@ def comicmain(request, page_title=""):
         return render(
             request,
             "temppage.html",
-            {"site": page.challenge, "currentpage": page},
+            {"challenge": page.challenge, "currentpage": page},
         )
 
     if page_title:
@@ -196,7 +198,7 @@ def comicmain(request, page_title=""):
 
         if len(pages) != 1:
             raise Http404(
-                f"{len(pages)} pages with title {page_title} were found for {site}"
+                f"{len(pages)} pages with title {page_title} were found for {challenge }"
             )
 
     page = pages[0]
@@ -222,12 +224,12 @@ def copy_page(page):
 
 
 def create_temp_page(title="temp_page", html=""):
-    """ Create a quick mockup page which you can show, without needing to read 
-    anything from database
-    
     """
-    site = Challenge()  # any page requires a site, create on the fly here.
-    site.short_name = "Temp"
-    site.name = "Temporary page"
-    site.skin = ""
-    return Page(challenge=site, title=title, html=html)
+    Create a quick mockup page which you can show, without needing to read
+    anything from database
+    """
+    challenge = Challenge()  # any page requires a challenge
+    challenge.short_name = "Temp"
+    challenge.name = "Temporary page"
+    challenge.skin = ""
+    return Page(challenge=challenge, title=title, html=html)

@@ -1,3 +1,7 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import SimpleITK as sitk
 from django.core.exceptions import (
     ObjectDoesNotExist,
     ValidationError,
@@ -286,7 +290,7 @@ class UploadImage(generics.CreateAPIView):
             # Save image fieldfile into ImageFile, also triggers ImageFile model save method
             image_file = File(request.data[image_key])
             extension = "zraw" if image_key == "image_raw" else "mhd"
-            image_name = "{}.{}".format(file_name, extension)
+            image_name = f"{file_name}.{extension}"
             img_file_model.file.save(image_name, image_file, save=True)
 
 
@@ -378,7 +382,7 @@ class AbstractUploadView(generics.CreateAPIView):
                     name=data["image_identifier"], study=study
                 )
         except ObjectDoesNotExist:
-            error = "Non-existant object. Data: {}".format(data)
+            error = f"Non-existant object. Data: {data}"
             self.response.update({"errors": error})
             return None
 
@@ -409,7 +413,7 @@ class AbstractUploadView(generics.CreateAPIView):
         except (IntegrityError, serializers.ValidationError):
             args_arr = []
             for key, item in unique_args.items():
-                args_arr.append("{}: {}".format(key, item))
+                args_arr.append(f"{key}: {item}")
 
             class_name = model.__class__.__name__
 
@@ -609,3 +613,60 @@ class UploadPolygonAnnotationSet(AbstractUploadView):
     child_serializer_class = PolygonAnnotationSetSerializer
     parent_model_class = None
     child_model_class = PolygonAnnotationSet
+
+
+class SetElementSpacingForImage(generics.GenericAPIView):
+    queryset = Image.objects.all()
+    permission_classes = (RetinaImportPermission,)
+    parser_classes = (parsers.JSONParser,)
+
+    def post(self, request, *args, **kwargs):
+        response = self.set_element_spacing(request)
+        response_status = status.HTTP_200_OK
+        if "errors" in response:
+            response_status = status.HTTP_400_BAD_REQUEST
+        return JsonResponse(response, status=response_status)
+
+    def set_element_spacing(self, request):
+        try:
+            image_name = request.data.get("image_identifier")
+            study_name = request.data.get("study_identifier")
+            if study_name is not None:
+                image = Image.objects.get(
+                    name=image_name, study__name=study_name
+                )
+            else:
+                image = Image.objects.get(name=image_name)
+        except MultipleObjectsReturned:
+            return {"errors": "Image identifiers returns multiple images."}
+        except ObjectDoesNotExist:
+            return {"errors": "Image does not exist"}
+
+        es_x = request.data.get("element_spacing_x", 1)
+        es_y = request.data.get("element_spacing_y", 1)
+        spacing = (es_x, es_y)
+
+        try:
+            self.set_mhd_element_spacing_header(image, spacing)
+            return {"success": True}
+        except Exception as e:
+            return {"errors": str(e)}
+
+    @staticmethod
+    def set_mhd_element_spacing_header(image, spacing):
+        sitk_image = image.get_sitk_image()
+        old_mhd = image.files.get(file__endswith=".mhd")
+        old_raw = image.files.get(file__endswith="raw")
+
+        sitk_image.SetSpacing(spacing)
+        with TemporaryDirectory() as tempdirname:
+            sitk.WriteImage(
+                sitk_image, str(Path(tempdirname) / Path("out.mhd")), True
+            )
+            for file in (("out.mhd", old_mhd), ("out.zraw", old_raw)):
+                bio = BytesIO()
+                with open(str(Path(tempdirname) / Path(file[0])), "rb") as fh:
+                    bio.name = fh.name
+                    bio.write(fh.read())
+                bio.seek(0)
+                file[1].file.save(file[0], bio, save=True)

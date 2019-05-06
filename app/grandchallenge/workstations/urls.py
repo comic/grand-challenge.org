@@ -13,6 +13,7 @@ from grandchallenge.workstations.views import (
     SessionUpdate,
     session_proxy,
     WorkstationImageUpdate,
+    SessionRedirectView,
 )
 
 app_name = "workstations"
@@ -20,6 +21,19 @@ app_name = "workstations"
 urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
     path("create/", WorkstationCreate.as_view(), name="create"),
+    path(
+        "load/", SessionRedirectView.as_view(), name="default-session-redirect"
+    ),
+    path(
+        "<slug>/load/",
+        SessionRedirectView.as_view(),
+        name="workstation-session-redirect",
+    ),
+    path(
+        "<slug>/images/<uuid:pk>/load/",
+        SessionRedirectView.as_view(),
+        name="workstation-image-session-redirect",
+    ),
     path("<slug>/", WorkstationDetail.as_view(), name="detail"),
     path("<slug>/update/", WorkstationUpdate.as_view(), name="update"),
     path(

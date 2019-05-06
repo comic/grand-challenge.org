@@ -255,9 +255,8 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                "grandchallenge.core.context_processors.comic_site",
+                "grandchallenge.core.context_processors.challenge",
                 "grandchallenge.core.context_processors.google_analytics_id",
-                "grandchallenge.workstations.context_processors.workstation_session",
             ]
         },
     }
@@ -467,6 +466,9 @@ BLEACH_ALLOWED_ATTRIBUTES = {
         "height",
     ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
+    # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
+    "th": ["scope", "colspan"],
+    "td": ["colspan"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
@@ -535,6 +537,11 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
+        "werkzeug": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 
@@ -544,6 +551,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
 }
 
@@ -632,7 +640,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The workstation that is accessible by all authorised users
-WORKSTATIONS_GLOBAL_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
+DEFAULT_WORKSTATION_SLUG = os.environ.get(
+    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
+)
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
 # The name of the network that the workstations will be attached to

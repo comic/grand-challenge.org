@@ -27,11 +27,11 @@
     <body class='{% block bodyclass %}{% endblock %}'>
 
     {% block navbar %}
-        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=site.hide_signin %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=challenge.hide_signin %}
     {% endblock %}
 
     <main role="main">
-        <div id="page" class="container">
+        <div id="page" class="container pb-3">
 
             {% block messages %}
                 {% include "grandchallenge/partials/messages.html" %}
@@ -44,34 +44,17 @@
 
             {% block jumbotron %}{% endblock %}
 
-            <div class="row">
-
-                {% block sidebar %}
-                    <div class="col-12 col-md-3 col-xl-2 mb-3">
-                        <div class="card sidebar">
-                            {% if not site.banner %}
-                                <div class="card-body">
-                                    <h1 class="mb-0">
-                                        <a href="{{ site.get_absolute_url }}">
-                                            {% firstof site.title site.short_name %}
-                                        </a>
-                                    </h1>
-                                </div>
-                            {% endif %}
-                            <div class="card-body p-0">
-                                <ul class="nav flex-column">
-                                    {% block sidebar_links %}{% endblock %}
-                                </ul>
-                            </div>
+            <div class="my-3 p-3 bg-white rounded shadow-sm">
+                <div class="row">
+                    {% block sidebar %}
+                        <div class="col-12 col-md-3 mb-3">
+                            <ul class="nav nav-pills flex-column">
+                                {% block sidebar_links %}{% endblock %}
+                            </ul>
                         </div>
-                    </div>
-                {% endblock %}
-
-                <div class="col mb-3 overflow-auto">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            {% block content %}{% endblock %}
-                        </div>
+                    {% endblock %}
+                    <div class="col overflow-auto">
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             </div>

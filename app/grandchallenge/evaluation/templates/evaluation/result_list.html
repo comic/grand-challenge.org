@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 {% load humanize %}
@@ -9,8 +9,9 @@
     <h2>Results</h2>
 
     <div class="table-responsive">
-        <table class="table table-sm" id="resultsTable">
-            <thead>
+        <table class="table table-hover table-borderless table-sm"
+               id="resultsTable">
+            <thead class="thead-light">
             <tr>
                 <th>#</th>
                 <th>
@@ -22,21 +23,19 @@
                 <th>Created</th>
 
                 {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
-                    <th class="table-active">Mean #</th>
+                    <th>Mean Position</th>
                 {% elif evaluation_config.scoring_method_choice == evaluation_config.MEDIAN %}
-                    <th class="table-active">Median #</th>
+                    <th>Median Position</th>
                 {% endif %}
 
                 <th
-                        {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                            class="table-active"
-                        {% else %}
+                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                             class="toggable"
                         {% endif %}
                 >
                     {{ evaluation_config.score_title }}
                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                        (#)
+                        (Position)
                     {% endif %}
                 </th>
 
@@ -44,7 +43,7 @@
                     <th class="toggable">
                         {{ col.title }}
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            (#)
+                            (Position)
                         {% endif %}
                     </th>
                 {% endfor %}
@@ -90,7 +89,7 @@
                         </td>
 
                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            <td class="table-active">
+                            <td>
                                 <a href="{{ result_url }}">
                                     <b>{{ result.rank_score|floatformat }}</b>
                                 </a>
@@ -99,9 +98,7 @@
 
                         {% with result.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
                             <td data-order="{{ metric }}"
-                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                class="table-active"
-                                    {% else %}
+                                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                 class="toggable"
                                     {% endif %}
                             >
@@ -200,7 +197,8 @@
                     set up.
                 {% endcomment %}
                 order: [[0, "asc"]],
-                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "pageLength": 50,
                 "columnDefs": [{
                     {%  if evaluation_config.show_supplementary_file_link %}
                         "targets": [-1],
@@ -222,8 +220,8 @@
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
                 {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                    dom: "<'row'<'col-5'l><'col-7'f>>" +
-                        "<'row'<'col-sm-12'Btr>>" +
+                    dom: "<'row'<'col-md-5'l><'col-md-7'f>>" +
+                        "<'row'<'col-12'Btr>>" +
                         "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                     buttons: [
                         {
@@ -249,11 +247,11 @@
                 {% endif %}
                 scrollX: true
             });
-            $('#resultsTable').on( 'column-visibility.dt', function ( e, settings, column, state ) {
+            $('#resultsTable').on('column-visibility.dt', function (e, settings, column, state) {
                 var button = table.button(1).node();
                 visibility_columns = table.columns('.toggable').visible();
                 var not_all_visible = false;
-                visibility_columns.each(function(value) {
+                visibility_columns.each(function (value) {
                     if (value === false) {
                         not_all_visible = true;
                         return false;
@@ -266,7 +264,7 @@
                     button.removeClass('metrics-hidden');
                     button.text('Show all metrics');
                 }
-            } );
+            });
         });
         $(window).resize(function () {
             $('#resultsTable').DataTable().columns.adjust()

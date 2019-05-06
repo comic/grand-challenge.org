@@ -387,7 +387,7 @@ class InsertFileNode(template.Node):
         except PathResolutionException as e:
             return self.make_error_msg(f"Path Resolution failed: {e}")
 
-        challenge = context["site"]
+        challenge = context["challenge"]
 
         try:
             filepath = safe_join(challenge.get_project_data_folder(), filename)

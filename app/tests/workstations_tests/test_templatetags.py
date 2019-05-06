@@ -1,43 +1,23 @@
 import pytest
 
 from grandchallenge.workstations.templatetags.workstations import (
-    update_url,
-    workstation_url,
+    workstation_query,
 )
-from tests.factories import ImageFactory, SessionFactory
-
-
-@pytest.mark.parametrize(
-    "orig_url",
-    [
-        "https://example.com/#!/?workstation=Basic",
-        "https://example.com/?workstation=Basic",
-        "https://example.com/?query=here#!/?workstation=Basic",
-    ],
-)
-def test_update_url(orig_url):
-    foo_bar = {"foo": "bar"}
-
-    url = update_url(url=orig_url, query=foo_bar)
-    assert url == f"{orig_url}&foo=bar"
+from tests.factories import ImageFactory
 
 
 @pytest.mark.django_db
-def test_workstation_url_session(settings):
+def test_workstation_query(settings):
     image, overlay = ImageFactory(), ImageFactory()
-    context = {}
 
-    url = workstation_url(context=context, image=image, overlay=overlay)
-    assert url.startswith(settings.WORKSTATIONS_GLOBAL_APPLICATION)
-    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in url
-    assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in url
+    qs = workstation_query(image=image)
+    assert "&" not in qs
+    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
+    assert (
+        f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" not in qs
+    )
 
-    session = SessionFactory()
-    # This will be set by
-    # grandchallenge.workstations.context_processors.workstation_session
-    context = {"workstation_session": session}
-
-    url = workstation_url(context=context, image=image, overlay=overlay)
-    assert url.startswith(session.workstation_url)
-    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in url
-    assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in url
+    qs = workstation_query(image=image, overlay=overlay)
+    assert "&" in qs
+    assert f"{settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM}={image.pk}" in qs
+    assert f"{settings.WORKSTATIONS_OVERLAY_QUERY_PARAM}={overlay.pk}" in qs

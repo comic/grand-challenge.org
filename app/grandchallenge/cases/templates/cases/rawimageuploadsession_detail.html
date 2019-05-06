@@ -16,7 +16,7 @@
         <h2>Processed files</h2>
 
         <div class="table-responsive">
-            <table class="table table-sm">
+            <table class="table table-hover table-borderless table-sm">
                 <tbody>
                 {% for raw_file in raw_files %}
                     <tr>
@@ -37,14 +37,14 @@
         <h2>Images</h2>
 
         <div class="table-responsive">
-            <table class="table table-sm">
+            <table class="table table-hover table-borderless table-sm">
                 <tbody>
                 {% for image in images %}
                     <tr>
                         <td style="padding-right:1cm;">{{ image.name }}</td>
                         <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
                         <td style="padding-right:1cm;">
-                            <a href="{% workstation_url image=image %}">
+                            <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">
                                 Show image
                             </a>
                         </td>

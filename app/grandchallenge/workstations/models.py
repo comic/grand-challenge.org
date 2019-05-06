@@ -34,6 +34,19 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     logo = models.ImageField(upload_to=get_logo_path)
 
+    @property
+    def latest_ready_image(self):
+        """
+        Returns
+        -------
+            The most recent container image for this workstation
+        """
+        return (
+            self.workstationimage_set.filter(ready=True)
+            .order_by("-created")
+            .first()
+        )
+
     def __str__(self):
         return f"Workstation {self.title}"
 
@@ -119,6 +132,7 @@ class Session(UUIDModel):
     FAILED = 3
     STOPPED = 4
 
+    # These should match the values in session.js
     STATUS_CHOICES = (
         (QUEUED, "Queued"),
         (STARTED, "Started"),
