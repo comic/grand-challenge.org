@@ -23,8 +23,9 @@ class WorklistViewSet(viewsets.ModelViewSet):
         # Creates worklist, then iterates over the list to add the image relations
         try:
             worklist = Worklist.objects.create(title=title, user=user)
-            for image in images.split():
-                worklist.images.add(Image.objects.get(pk=image))
+            if images:
+                for image in images.split():
+                    worklist.images.add(Image.objects.get(pk=image))
             worklist.save()
 
             serialized = WorklistSerializer(worklist)
