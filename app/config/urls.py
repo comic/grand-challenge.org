@@ -88,16 +88,6 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-    # ========== catch all ====================
-    # when all other urls have been checked, try to load page from main project
-    # keep this url at the bottom of this list, because urls are checked in
-    # order
-    path("<slug:page_title>/", comicmain, name="mainproject-home"),
-    path(
-        "media/",
-        include("grandchallenge.serving.urls", namespace="root-serving"),
-    ),
-    # Pathology support namespaces
     path(
         "patients/",
         include("grandchallenge.patients.urls", namespace="patients"),
@@ -108,6 +98,15 @@ urlpatterns = [
     path(
         "worklists/",
         include("grandchallenge.worklists.urls", namespace="worklists"),
+    ),
+    # ========== catch all ====================
+    # when all other urls have been checked, try to load page from main project
+    # keep this url at the bottom of this list, because urls are checked in
+    # order
+    path("<slug:page_title>/", comicmain, name="mainproject-home"),
+    path(
+        "media/",
+        include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
