@@ -10,6 +10,7 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.queryset_filter import filter_queryset_fields
 
 
 class UploadRawFiles(UserIsStaffMixin, CreateView):
@@ -42,14 +43,13 @@ class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = ImageSerializer
 
     def get_queryset(self):
-        queryset = Image.objects.all()
-        worklist = self.request.query_params.get("worklist", None)
-        study = self.request.query_params.get("study", None)
+        filters = {
+            "worklist": self.request.query_params.get(
+                "worklist", None
+            ),
+            "study": self.request.query_params.get(
+                "study", None
+            ),
+        }
 
-        if worklist is not None:
-            queryset = queryset.filter(worklist=worklist)
-
-        if study is not None:
-            queryset = queryset.filter(study=study)
-
-        return queryset
+        return filter_queryset_fields(filters, model=Image)
