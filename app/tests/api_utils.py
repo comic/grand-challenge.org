@@ -51,6 +51,13 @@ def assert_api_crud(
         permission_name = f"{permission_type}_{model_name}"
         assign_perm(permission_name, user, record)
 
+    try:
+        instance = factory._meta.model.objects.get(pk=record_id)
+    except factory._meta.model.DoesNotExist:
+        instance = None
+
+    assert instance is not None
+
     # Rests record display
     assert_record_display(client, table_url, token, record_id)
 
