@@ -1,5 +1,5 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from grandchallenge.queryset_filter import filter_queryset_fields
+from grandchallenge.core.utils.query import filter_queryset_fields
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
 

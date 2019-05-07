@@ -10,7 +10,7 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.queryset_filter import filter_queryset_fields
+from grandchallenge.core.utils.query import filter_queryset_fields
 
 
 class UploadRawFiles(UserIsStaffMixin, CreateView):
