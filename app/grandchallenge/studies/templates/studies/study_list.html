@@ -21,7 +21,7 @@
                     <td>{{ study.patient }}</td>
                     <td><a href="{% url 'studies:detail' study.id %}">Details</a></td>
                     <td><a href="{% url 'studies:update' study.id %}">Update</a></td>
-                    <td><a href="{% url 'studies:remove' study.id %}">Delete</a></td>
+                    <td><a href="{% url 'studies:delete' study.id %}">Delete</a></td>
                 </tr>
             {% empty %}
             <td>No studies have been inserted.</td>
