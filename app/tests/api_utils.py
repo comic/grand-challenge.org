@@ -14,6 +14,9 @@ def assert_api_read_only(client, table_reverse, expected_table, factory):
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
+    # Tests table display
+    assert_table_list(client, table_url, token, expected_table)
+
     record = factory()
     record_id = str(record.pk)
 
@@ -25,9 +28,6 @@ def assert_api_read_only(client, table_reverse, expected_table, factory):
 
     # Rests record display
     assert_record_display(client, table_url, token, record_id)
-
-    # Tests table display
-    assert_table_list(client, table_url, token, expected_table)
 
 
 def assert_api_crud(
