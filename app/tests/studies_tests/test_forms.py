@@ -20,7 +20,7 @@ def test_study_display(client):
     staff_user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        client=client, viewname="studies:study-display", user=staff_user
+        client=client, viewname="studies:list", user=staff_user
     )
     assert str(study.id) in response.rendered_content
 
