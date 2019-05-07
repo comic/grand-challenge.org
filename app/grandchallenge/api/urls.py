@@ -4,7 +4,7 @@ from rest_framework import routers
 
 from grandchallenge.api.views import SubmissionViewSet
 from grandchallenge.cases.views import ImageViewSet
-from grandchallenge.patients.views_api import PatientsViewSet
+from grandchallenge.patients.views_api import PatientViewSet
 from grandchallenge.studies.views_api import StudyViewSet
 from grandchallenge.worklists.views_api import WorklistViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -13,7 +13,7 @@ app_name = "api"
 
 router = routers.DefaultRouter()
 router.register(r"submissions", SubmissionViewSet)
-router.register(r"patients", PatientsViewSet, basename="patient")
+router.register(r"patients", PatientViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(r"cases/images", ImageViewSet, basename="image")

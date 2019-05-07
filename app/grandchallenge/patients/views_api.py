@@ -4,7 +4,7 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
 
 
-class PatientsViewSet(ReadOnlyModelViewSet):
+class PatientViewSet(ReadOnlyModelViewSet):
     serializer_class = PatientSerializer
 
     def get_queryset(self):
