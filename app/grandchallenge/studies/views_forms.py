@@ -23,7 +23,7 @@ class StudyDeleteView(UserIsStaffMixin, DeleteView):
     model = Study
 
     def get_success_url(self):
-        return reverse("studies:")
+        return reverse("studies:list")
 
 
 class StudyUpdateView(UserIsStaffMixin, UpdateView):
