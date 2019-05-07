@@ -31,7 +31,9 @@ class WorklistViewSet(viewsets.ModelViewSet):
             serialized = WorklistSerializer(worklist)
             return Response(serialized.data, status=status.HTTP_201_CREATED)
         except IntegrityError:
-            return Response(serialized.data, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serialized.data, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def get_queryset(self):
         queryset = Worklist.objects.filter(
