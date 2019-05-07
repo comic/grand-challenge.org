@@ -44,12 +44,8 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         filters = {
-            "worklist": self.request.query_params.get(
-                "worklist", None
-            ),
-            "study": self.request.query_params.get(
-                "study", None
-            ),
+            "worklist": self.request.query_params.get("worklist", None),
+            "study": self.request.query_params.get("study", None),
         }
 
         return filter_queryset_fields(filters, model=Image)
