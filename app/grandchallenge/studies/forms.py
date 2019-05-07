@@ -18,7 +18,7 @@ class StudyForm(ModelForm):
                     "cancel",
                     "Cancel",
                     onclick=(
-                        f"location.href=" f'"{reverse("patients:list")}";'
+                        f"location.href=" f'"{reverse("studies:list")}";'
                     ),
                 ),
             )
