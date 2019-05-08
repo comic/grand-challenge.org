@@ -11,7 +11,9 @@ class Worklist(UUIDModel):
     """
 
     title = CharField(max_length=255)
-    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.CASCADE
+    )
     images = models.ManyToManyField(
         to=Image, related_name="worklist", blank=True
     )
