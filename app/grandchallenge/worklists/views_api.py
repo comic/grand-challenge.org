@@ -37,6 +37,6 @@ class WorklistViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Worklist.objects.filter(
-            Q(user=self.request.user.pk) | Q(user_isnull=True)
+            Q(user=self.request.user.pk) | Q(user__isnull=True)
         )
         return queryset
