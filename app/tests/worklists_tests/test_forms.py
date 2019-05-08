@@ -46,7 +46,7 @@ def test_worklist_create(client):
 def test_worklist_update(client):
     staff_user = UserFactory(is_staff=True)
     worklist = WorklistFactory()
-    data = {"title": "test", "user": worklist.user.pk}
+    data = {"title": "test"}
 
     form = WorklistForm(data=data)
     assert form.is_valid()
