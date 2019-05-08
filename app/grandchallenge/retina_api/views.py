@@ -49,6 +49,7 @@ from grandchallenge.serving.permissions import user_can_download_image
 class ArchiveView(APIView):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
 
     @staticmethod
     def create_response_object():
@@ -237,6 +238,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
 class DataView(APIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
 
     class DataType(Enum):
         REGISTRATION = "Registration"
@@ -739,6 +741,7 @@ class PolygonListView(ListAPIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
+    pagination_class = None
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]
@@ -754,6 +757,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
     queryset = PolygonAnnotationSet.objects.all()
 
 
@@ -762,12 +766,14 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
     queryset = SinglePolygonAnnotation.objects.all()
 
 
 class GradersWithPolygonAnnotationsListView(ListAPIView):
     permission_classes = (RetinaAdminAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
     serializer_class = UserSerializer
 
     def get_queryset(self):
@@ -792,6 +798,7 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = ETDRSGridAnnotationSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
     queryset = ETDRSGridAnnotation.objects.all()
 
 
@@ -800,6 +807,7 @@ class LandmarkAnnotationSetForImageList(ListAPIView):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = LandmarkAnnotationSetSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]

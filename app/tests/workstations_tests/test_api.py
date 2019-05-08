@@ -16,7 +16,7 @@ def test_session_list_api(client):
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 0
+    assert response.json()["count"] == 0
 
     s, _ = SessionFactory(), SessionFactory()
 
@@ -28,7 +28,7 @@ def test_session_list_api(client):
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    assert response.json()["count"] == 2
 
 
 @pytest.mark.django_db

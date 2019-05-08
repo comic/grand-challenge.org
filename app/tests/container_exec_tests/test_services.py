@@ -43,7 +43,8 @@ def test_service_start_cleanup():
             "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
-        assert labels == expected_labels
+        for k, v in expected_labels.items():
+            assert labels[k] == v
     finally:
         s.stop_and_cleanup()
         assert len(dockerclient.containers.list(filters=filters)) == 0
