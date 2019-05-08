@@ -41,7 +41,7 @@ def test_api_pages(client, test_input, expected):
         HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 200
-    assert not json.loads(response.content)
+    assert json.loads(response.content)["count"] == 0
 
 
 @pytest.mark.django_db
