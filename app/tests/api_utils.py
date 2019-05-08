@@ -84,7 +84,7 @@ def assert_table_list(client, url, token, expected):
         HTTP_AUTHORIZATION="Token " + token,
     )
     assert response.status_code == 200
-    assert not json.loads(response.content)
+    assert json.loads(response.content)
 
 
 def assert_table_create(client, url, token, json_record):
