@@ -5,11 +5,13 @@ from pathlib import Path
 
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.utils.text import slugify
+from django_extensions.db.models import TitleSlugDescriptionModel
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import (
     Executor,
     cleanup,
@@ -27,16 +29,8 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 logger = logging.getLogger(__name__)
 
 
-class Algorithm(UUIDModel, ContainerImageModel):
-    title = models.CharField(max_length=32, unique=True, null=True)
-    slug = models.SlugField(
-        max_length=32, editable=False, unique=True, null=True
-    )
-    description_html = models.TextField(blank=True)
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
+class Algorithm(UUIDModel, ContainerImageModel, TitleSlugDescriptionModel):
+    logo = models.ImageField(upload_to=get_logo_path, null=True)
 
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
