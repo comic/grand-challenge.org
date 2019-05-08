@@ -9,15 +9,21 @@
     {{ object.title }} - {{ block.super }}
 {% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h2>{{ object.title }}</h2>
 
-    {% if object.description_html %}
-        <iframe srcdoc="{{ object.description_html }}"
-                style="width: 100%; height: 600px;">
-        </iframe>
-    {% endif %}
+    <p>{{ object.description }}</p>
 
     {% if object.ready %}
         <p>
