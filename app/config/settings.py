@@ -275,6 +275,8 @@ MIDDLEWARE = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
+    # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
@@ -295,6 +297,7 @@ DJANGO_APPS = [
     "django.contrib.humanize",
     "django.contrib.admin",
     "django.contrib.postgres",
+    "django.contrib.flatpages",
 ]
 
 THIRD_PARTY_APPS = [
