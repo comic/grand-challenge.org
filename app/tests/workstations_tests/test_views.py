@@ -2,6 +2,7 @@ from io import BytesIO
 
 import pytest
 from PIL import Image
+from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.text import slugify
 
@@ -14,7 +15,7 @@ from tests.factories import (
     WorkstationImageFactory,
     SessionFactory,
 )
-from tests.utils import get_view_for_user, validate_staff_only_view
+from tests.utils import get_view_for_user
 
 
 def get_temporary_image():
@@ -266,6 +267,26 @@ def test_session_update(client):
 
 
 @pytest.mark.django_db
+def test_session_redirect(client):
+    user = UserFactory(is_staff=True)
+    WorkstationImageFactory(
+        workstation__title=settings.DEFAULT_WORKSTATION_SLUG, ready=True
+    )
+
+    response = get_view_for_user(
+        client=client,
+        viewname="workstations:default-session-redirect",
+        user=user,
+    )
+
+    assert response.status_code == 302
+
+    response = get_view_for_user(client=client, user=user, url=response.url)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_session_detail(client):
     user = UserFactory(is_staff=True)
     s1, s2 = SessionFactory(), SessionFactory()
@@ -314,46 +335,3 @@ def test_workstation_proxy(client):
     response = get_view_for_user(client=client, url=url, user=u2)
     assert not response.has_header("X-Accel-Redirect")
     assert response.status_code == 403
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view",
-    [
-        "workstations:list",
-        "workstations:create",
-        "workstations:update",
-        "workstations:detail",
-        "workstations:image-create",
-        "workstations:image-detail",
-        "workstations:image-update",
-        "workstations:session-create",
-        "workstations:session-update",
-    ],
-)
-def test_workstations_staff_views(client, view):
-    if view in [
-        "workstations:update",
-        "workstations:detail",
-        "workstations:image-create",
-        "workstations:session-create",
-    ]:
-        reverse_kwargs = {"slug": WorkstationFactory().slug}
-    elif view in ["workstations:image-detail", "workstations:image-update"]:
-        wsi = WorkstationImageFactory()
-        reverse_kwargs = {"slug": wsi.workstation.slug, "pk": wsi.pk}
-    elif view in [
-        "workstations:session-detail",
-        "workstations:session-update",
-    ]:
-        session = SessionFactory()
-        reverse_kwargs = {
-            "slug": session.workstation_image.workstation.slug,
-            "pk": session.pk,
-        }
-    else:
-        reverse_kwargs = {}
-
-    validate_staff_only_view(
-        client=client, viewname=view, reverse_kwargs=reverse_kwargs
-    )

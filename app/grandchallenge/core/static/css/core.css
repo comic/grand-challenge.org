@@ -9,149 +9,22 @@ html {
     padding-right: 0 !important;
 }
 
-body {
-    margin-bottom: 60px; /* Margin bottom by footer height */
-    font-family: 'Merriweather', serif;
-    font-size: 15px;
-    line-height: 1.82em;
-}
-
-/* Make headers have Sans font */
-
-h1, h2, h3, h4, h5, h6, a.navbar-brand {
-    font-weight: 800;
-    font-family: 'Merriweather Sans', serif;
-}
-
-/* Nice color for brand */
-
-.navbar-light .navbar-brand {
-    color: #9A0000;
-}
-
-nav a.nav-link {
-    color: white !important;
-}
-
-/* vertical rhythm */
-html, .root {
-    font-size: 16px;
-    line-height: 26px;
-}
-
-body, .article {
-    font-family: sans-serif;
-    font-size: 1em;
-    line-height: 1.625em;
-}
-
 h1, .h1, h2, .h2 {
-    font-size: 1.625em;
-    line-height: 1.57575758em;
-    margin-top: 1em;
-    margin-bottom: 1em;
-
-    border-bottom: 3px solid #DBEDFF;
+    box-shadow: inset 0 -6px 0 rgb(219, 237, 255);
     display: inline-block;
 }
 
-h1 a:hover, h2 a:hover {
-    text-decoration: none;
-    border-bottom: 3px solid #0056b3;
-}
-
-h3, .h3 {
-    font-size: 1.25em;
-    line-height: 1.3em;
-    margin-top: 1.3em;
-}
-
-h4, .h4 {
-    font-size: 1em;
-    line-height: 1.625em;
-    margin-top: 1.625em;
-    margin-bottom: 0;
-}
-
-h5, .h5 {
-    font-size: 1em;
-    line-height: 1.625em;
-    margin-top: 1.625em;
-    margin-bottom: 0;
-}
-
-/* Increase shadow */
-.shadow-sm {
-    box-shadow: 0 .125rem 1rem rgba(0, 0, 0, .075) !important;
-}
-
-/* First element of card-content (main column) shouldn't have top margin */
-div.card-body > h1, div.card-body :first-child,
-div.card-body div#pageContainer :first-child {
-    margin-top: 0em;
-}
-
-/* Smaller padding in sidebar menu for space */
-div.sidebar .nav-link {
-    padding: .5rem 0.8rem;
-}
-
-/* Menu should be transparant + other styling */
-div.sidebar {
-    background-color: inherit
-}
-
-div.sidebar li.nav-item {
-    border-bottom: 1px solid #eee;
-}
-
-div.sidebar li.nav-item, nav.navbar-top li.nav-item {
-    text-transform: uppercase;
-    letter-spacing: 0.015rem;
-    font-size: 0.8em;
+nav.navbar-top .nav-item {
     position: relative;
-    top: 2px;
-}
-
-a.dropdown-item {
-    /* No caps in dropdown */
-    text-transform: none;
-}
-
-div.sidebar li.nav-item:hover {
-    background-color: #eee;
-}
-
-div.sidebar a.active {
-    color: black;
-}
-
-div.sidebar h1 {
-    font-size: 1em;
-    border-bottom: none;
-}
-
-/* Little more spacing for checkbox */
-
-input[type=checkbox] {
-    margin-right: .3rem !important;
-}
-
-/* Style button */
-
-.btn {
-    border-radius: 2rem;
-}
-
-.btn-primary {
-    color: #007bff;
-    border-color: #DBEDFF;
-    background-color: #fff;
-    border-width: 3px;
+    top: 1px;
 }
 
 /* Sticky footer styles
 -------------------------------------------------- */
+
+body {
+    margin-bottom: 4rem; /* Margin bottom by footer height */
+}
 
 .footer {
     position: absolute;
@@ -159,11 +32,6 @@ input[type=checkbox] {
     width: 100%;
     height: 4rem; /* Set the fixed height of the footer here */
     line-height: 4rem; /* Vertically center the text there */
-}
-
-.headerImage {
-    width: 100%;
-    border-radius: 6px;
 }
 
 .rounded-top-left {
@@ -182,31 +50,7 @@ input[type=checkbox] {
     margin-right: 0;
 }
 
-tbody tr:hover {
-    background-color: #f5f5f5;
-}
-
-table.dataTable {
-    border-collapse: collapse !important;
-}
-
-.table td, .table th {
-    border-top: 0;
-}
-
-/* resultsTable styling */
-
-div#resultsTable_wrapper {
-    font-size: 0.8em;
-    line-height: 1.1em;
-}
-
-div#resultsTable_wrapper button.btn {
-    font-size: 1em;
-}
-
 /* definition lists */
-
 dl.inline dd {
     display: inline;
     margin: 0;
@@ -230,7 +74,6 @@ dl.inline dt:after {
   display: block;
 }
 
-
 /* hide sorting arrows in second hidden header of datatable */
 div.dataTables_scrollBody table.dataTable thead .sorting:before, 
 div.dataTables_scrollBody table.dataTable thead .sorting_asc:before, 
@@ -240,7 +83,7 @@ div.dataTables_scrollBody table.dataTable thead .sorting_desc_disabled:before {
   content: '';
 }
 
-/* float seach box of datatables to the right of metric-toggling box */
+/* float search box of datatables to the right of metric-toggling box */
 div.dataTables_wrapper div.dataTables_filter {
   float: right;
 }
@@ -264,8 +107,4 @@ div.table-responsive .dt-button-collection-title {
 .btn-group-vertical .btn-group+.btn-group,
 .dropdown-menu+.btn {
   margin-left: -3px;
-}
-
-div.table-responsive .dropdown-menu .dropdown-item {
-  font-size: 0.9em;
 }

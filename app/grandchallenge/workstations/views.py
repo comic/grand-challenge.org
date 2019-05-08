@@ -2,7 +2,15 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import (
+    ListView,
+    CreateView,
+    DetailView,
+    UpdateView,
+    RedirectView,
+)
+from rest_framework.permissions import IsAdminUser
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.workstations.forms import (
@@ -14,6 +22,17 @@ from grandchallenge.workstations.models import (
     WorkstationImage,
     Session,
 )
+from grandchallenge.workstations.serializers import SessionSerializer
+from grandchallenge.workstations.utils import (
+    get_workstation_image_or_404,
+    get_or_create_active_session,
+)
+
+
+class SessionViewSet(ReadOnlyModelViewSet):
+    queryset = Session.objects.all()
+    serializer_class = SessionSerializer
+    permission_classes = (IsAdminUser,)
 
 
 class WorkstationList(UserIsStaffMixin, ListView):
@@ -60,6 +79,24 @@ class WorkstationImageUpdate(UserIsStaffMixin, UpdateView):
     template_name_suffix = "_update"
 
 
+class SessionRedirectView(UserIsStaffMixin, RedirectView):
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        workstation_image = get_workstation_image_or_404(**kwargs)
+        session = get_or_create_active_session(
+            user=self.request.user, workstation_image=workstation_image
+        )
+
+        url = session.get_absolute_url()
+
+        qs = self.request.META.get("QUERY_STRING", "")
+        if qs:
+            url = f"{url}?{qs}"
+
+        return url
+
+
 class SessionCreate(UserIsStaffMixin, CreateView):
     model = Session
     fields = []
@@ -67,11 +104,7 @@ class SessionCreate(UserIsStaffMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         workstation = Workstation.objects.get(slug=self.kwargs["slug"])
-        form.instance.workstation_image = (
-            workstation.workstationimage_set.filter(ready=True)
-            .order_by("-created")
-            .first()
-        )
+        form.instance.workstation_image = workstation.latest_ready_image
         return super().form_valid(form)
 
 

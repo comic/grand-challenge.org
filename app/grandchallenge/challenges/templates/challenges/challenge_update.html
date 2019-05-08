@@ -1,14 +1,14 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load crispy_forms_tags %}
 {% load static %}
 
 {# Do not show the footer as this is broken with SummernoteInplaceWidget #}
 {% block footer %}{% endblock %}
 
-{% block title %}Update {{ site.short_name }}{% endblock %}
+{% block title %}Update {{ challenge.short_name }}{% endblock %}
 
 {% block content %}
-    <h2>Update {{ site.short_name }}</h2>
+    <h2>Update {{ challenge.short_name }}</h2>
     {% crispy form %}
 {% endblock %}
 
