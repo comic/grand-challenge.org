@@ -7,3 +7,4 @@ class WorklistFactory(factory.DjangoModelFactory):
         model = Worklist
 
     title = factory.Sequence(lambda n: f"worklist_{n}")
+    user = None
