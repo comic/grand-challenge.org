@@ -11,8 +11,11 @@
                     <h6>{{ request.site.name }}</h6>
                     <ul class="list-unstyled">
                         {% for page in flatpages %}
-                            <li><a class="text-muted"
-                                   href="{{ page.url }}">{{ page.title }}</a>
+                            <li>
+                                <a class="text-muted"
+                                   href="{% url 'django.contrib.flatpages.views.flatpage' url=page.url %}">
+                                    {{ page.title }}
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>
