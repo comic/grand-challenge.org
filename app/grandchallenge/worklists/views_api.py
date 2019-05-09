@@ -18,7 +18,15 @@ class WorklistViewSet(viewsets.ModelViewSet):
         images = data.get("images", "")
 
         if "user" in data and len(data["user"]) > 0:
-            user = User.objects.get(pk=data["user"])
+            user_param = data["user"]
+
+            if user_param is "None":
+                user = None
+            else:
+                try:
+                    user = User.objects.get(pk=data["user"])
+                except User.DoesNotExist as e:
+                    return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
         # Creates worklist, then iterates over the list to add the image relations
         try:
