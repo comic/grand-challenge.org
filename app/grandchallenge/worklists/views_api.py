@@ -25,7 +25,6 @@ class WorklistViewSet(viewsets.ModelViewSet):
             except User.DoesNotExist as e:
                 return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
-
         # Creates worklist, then iterates over the list to add the image relations
         try:
             worklist = Worklist.objects.create(title=title, user=user)
