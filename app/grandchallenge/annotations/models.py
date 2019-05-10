@@ -22,12 +22,14 @@ class AbstractAnnotationModel(UUIDModel):
 
     class Meta:
         abstract = True
+        get_latest_by = "created"
+        ordering = ["-created"]
 
     def save(self, *args, **kwargs):
         """ Override save method to enable setting of permissions for retina users """
         created = self._state.adding
 
-        super(AbstractAnnotationModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         if not created:
             return
@@ -55,7 +57,7 @@ class AbstractSingleAnnotationModel(UUIDModel):
         """ Override save method to enable setting of permissions for retina users """
         created = self._state.adding
 
-        super(AbstractSingleAnnotationModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         if not created:
             return
@@ -79,6 +81,8 @@ class AbstractSingleAnnotationModel(UUIDModel):
 
     class Meta:
         abstract = True
+        get_latest_by = "created"
+        ordering = ["-created"]
 
 
 class AbstractImageAnnotationModel(AbstractAnnotationModel):
