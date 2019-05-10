@@ -129,6 +129,18 @@ class TestPolygonAnnotationSetViewSet:
                 TwoRetinaPolygonAnnotationSets.polygonset1
             ).data
             assert response.data[0] == serialized_data
+        if user_type == "retina_admin":
+            serialized_data = PolygonAnnotationSetSerializer(
+                [
+                    TwoRetinaPolygonAnnotationSets.polygonset1,
+                    TwoRetinaPolygonAnnotationSets.polygonset2,
+                ],
+                many=True,
+            ).data
+            serialized_data_sorted = sorted(
+                serialized_data, key=lambda k: k["created"], reverse=True
+            )
+            assert response.data == serialized_data_sorted
 
     def test_create_view(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
         model_build = PolygonAnnotationSetFactory.build()
@@ -373,8 +385,7 @@ class TestSinglePolygonAnnotationViewSet:
                 many=True,
             ).data
             assert len(response.data) == len(serialized_data)
-            response.data.sort(key=lambda k: k["id"])
-            serialized_data.sort(key=lambda k: k["id"])
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
             assert response.data == serialized_data
         elif user_type == "retina_admin":
             serialized_data = SinglePolygonAnnotationSerializer(
@@ -382,6 +393,7 @@ class TestSinglePolygonAnnotationViewSet:
                 | TwoRetinaPolygonAnnotationSets.polygonset2.singlepolygonannotation_set.all(),
                 many=True,
             ).data
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
             assert response.data == serialized_data
 
     def test_create_view(self, TwoRetinaPolygonAnnotationSets, rf, user_type):
@@ -405,11 +417,7 @@ class TestSinglePolygonAnnotationViewSet:
             model_json,
         )
         if user_type in ("retina_grader", "retina_admin"):
-            model_serialized["id"] = response.data["id"]
-            response.data["annotation_set"] = str(
-                response.data["annotation_set"]
-            )
-            assert response.data == model_serialized
+            assert response.data["value"] == model_serialized["value"]
 
     def test_create_view_wrong_user_id(
         self, TwoRetinaPolygonAnnotationSets, rf, user_type
@@ -434,11 +442,7 @@ class TestSinglePolygonAnnotationViewSet:
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
-            model_serialized["id"] = response.data["id"]
-            response.data["annotation_set"] = str(
-                response.data["annotation_set"]
-            )
-            assert response.data == model_serialized
+            assert response.data["value"] == model_serialized["value"]
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert (
@@ -1002,8 +1006,7 @@ class TestETDRSAnnotationViewSet:
                 MultipleRetinaETDRSAnnotations.etdrss1, many=True
             ).data
             assert len(response.data) == len(serialized_data)
-            response.data.sort(key=lambda k: k["id"])
-            serialized_data.sort(key=lambda k: k["id"])
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
             assert response.data == serialized_data
         elif user_type == "retina_admin":
             serialized_data = ETDRSGridAnnotationSerializer(
@@ -1013,6 +1016,8 @@ class TestETDRSAnnotationViewSet:
                 ],
                 many=True,
             ).data
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
+            assert len(response.data) == len(serialized_data)
             assert response.data == serialized_data
 
     def test_create_view(self, MultipleRetinaETDRSAnnotations, rf, user_type):
