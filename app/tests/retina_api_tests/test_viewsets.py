@@ -124,11 +124,11 @@ class TestPolygonAnnotationSetViewSet:
             rf,
             PolygonAnnotationSetViewSet,
         )
-        if user_type in ("retina_grader", "retina_admin"):
+        if user_type == "retina_grader":
             serialized_data = PolygonAnnotationSetSerializer(
                 TwoRetinaPolygonAnnotationSets.polygonset1
             ).data
-            assert response.data[0] == serialized_data
+            assert response.data == [serialized_data]
         if user_type == "retina_admin":
             serialized_data = PolygonAnnotationSetSerializer(
                 [
