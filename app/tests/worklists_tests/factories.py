@@ -1,5 +1,7 @@
 import factory
+
 from grandchallenge.worklists.models import Worklist
+from tests.factories import UserFactory
 
 
 class WorklistFactory(factory.DjangoModelFactory):
@@ -7,4 +9,4 @@ class WorklistFactory(factory.DjangoModelFactory):
         model = Worklist
 
     title = factory.Sequence(lambda n: f"worklist_{n}")
-    user = None
+    creator = factory.SubFactory(UserFactory)

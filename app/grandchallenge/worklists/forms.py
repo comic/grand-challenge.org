@@ -29,5 +29,5 @@ class WorklistForm(ModelForm):
 
     class Meta:
         model = Worklist
-        fields = ["title", "user", "images"]
+        fields = ["title", "creator", "images"]
         widgets = {"images": Select2MultipleWidget}

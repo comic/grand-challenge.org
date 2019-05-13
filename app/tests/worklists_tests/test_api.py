@@ -6,7 +6,7 @@ from tests.api_utils import assert_api_crud
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "table_reverse, expected_table, factory, invalid_fields",
-    [("api:worklist-list", "Worklist List", WorklistFactory, ["user_id"])],
+    [("api:worklist-list", "Worklist List", WorklistFactory, ["creator_id"])],
 )
 def test_api_pages(
     client, table_reverse, expected_table, factory, invalid_fields

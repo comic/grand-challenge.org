@@ -1,6 +1,4 @@
-from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db.models import Q
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
@@ -52,36 +50,19 @@ class WorklistViewSet(viewsets.ModelViewSet):
     serializer_class = WorklistSerializer
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        user = request.user
-        title = data.get("title")
-        images = data.get("images", "")
+        creator = request.user
+        title = request.data.get("title", "")
+        image_pks = request.data.get("images", "")
 
-        if "user" in data and len(data["user"]) > 0:
-            try:
-                user = User.objects.get(pk=data["user"])
-            except ValueError:
-                user = None
-            except User.DoesNotExist as e:
-                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        images = Image.objects.filter(pk__in=image_pks.split(","))
 
-        # Creates worklist, then iterates over the list to add the image relations
-        try:
-            worklist = Worklist.objects.create(title=title, user=user)
-            if images:
-                for image in images.split():
-                    worklist.images.add(Image.objects.get(pk=image))
-            worklist.save()
+        worklist = Worklist.objects.create(title=title, creator=creator)
+        worklist.images.set(images)
+        worklist.save()
 
-            serialized = WorklistSerializer(worklist)
-            return Response(serialized.data, status=status.HTTP_201_CREATED)
-        except IntegrityError:
-            return Response(
-                serialized.data, status=status.HTTP_400_BAD_REQUEST
-            )
+        serialized = WorklistSerializer(worklist)
+        return Response(serialized.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        queryset = Worklist.objects.filter(
-            Q(user=self.request.user.pk) | Q(user__isnull=True)
-        )
+        queryset = Worklist.objects.filter(creator=self.request.user.pk)
         return queryset

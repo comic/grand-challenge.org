@@ -1,7 +1,7 @@
 import pytest
 
 from tests.worklists_tests.factories import WorklistFactory
-from tests.utils import get_view_for_user, validate_staff_only_view
+from tests.utils import validate_staff_only_view
 
 
 @pytest.mark.django_db
