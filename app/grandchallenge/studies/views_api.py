@@ -1,13 +1,19 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from grandchallenge.core.utils.query import filter_queryset_fields
+
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
 
 
 class StudyViewSet(ReadOnlyModelViewSet):
     serializer_class = StudySerializer
+    queryset = Study.objects.all()
 
     def get_queryset(self):
-        filters = {"patient": self.request.query_params.get("patient", None)}
+        queryset = super().get_queryset()
 
-        return filter_queryset_fields(filters, model=Study)
+        if "patient" in self.request.query_params:
+            queryset = queryset.filter(
+                patient=self.request.query_params["patient"]
+            )
+
+        return queryset

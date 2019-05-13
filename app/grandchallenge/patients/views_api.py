@@ -1,11 +1,12 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from grandchallenge.core.utils.query import filter_queryset_fields
+
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
 
 
 class PatientViewSet(ReadOnlyModelViewSet):
     serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
 
     def get_queryset(self):
         filters = {
@@ -16,7 +17,8 @@ class PatientViewSet(ReadOnlyModelViewSet):
                 "image_type", None
             ),
         }
+        filters = {k: v for k, v in filters.items() if v is not None}
 
-        queryset = filter_queryset_fields(filters, model=Patient)
-        queryset = queryset.distinct()
+        queryset = super().get_queryset().filter(**filters).distinct()
+
         return queryset
