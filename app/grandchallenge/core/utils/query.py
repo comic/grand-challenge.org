@@ -1,12 +1,10 @@
 from django.db.models.query import QuerySet
 
-""" Utility functions for working with django Querysets """
-
 
 def index(queryset, obj):
-    """Give the zero-based index of first occurrence of object in queryset. 
+    """
+    Give the zero-based index of first occurrence of object in queryset.
     Return -1 if not found
-    
     """
     for index, item in enumerate(queryset):
         if item == obj:
@@ -16,7 +14,9 @@ def index(queryset, obj):
 
 
 def filter_queryset_field(field, value, model=None, queryset=None) -> QuerySet:
-    """Filters a passed model or queryset based on the field and value passed."""
+    """
+    Filters a passed model or queryset based on the field and value passed.
+    """
     if queryset is None and model is None:
         raise ValueError("Unable to initialize or utilize queryset.")
 
@@ -33,7 +33,9 @@ def filter_queryset_field(field, value, model=None, queryset=None) -> QuerySet:
 def filter_queryset_fields(
     field_filters, model=None, queryset=None
 ) -> QuerySet:
-    """"Filters a passed model or queryset based on a list of tuples[field, value]."""
+    """
+    Filters a passed model or queryset based on a list of tuples[field, value].
+    """
     if queryset is None and model is None:
         raise ValueError("Unable to initialize or utilize queryset.")
 
