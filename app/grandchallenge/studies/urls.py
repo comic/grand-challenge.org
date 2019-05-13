@@ -1,5 +1,6 @@
 from django.urls import path
-from grandchallenge.studies.views_forms import (
+
+from grandchallenge.studies.views import (
     StudyListView,
     StudyCreateView,
     StudyDetailView,

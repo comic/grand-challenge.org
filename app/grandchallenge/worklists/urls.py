@@ -1,5 +1,6 @@
 from django.urls import path
-from grandchallenge.worklists.views_forms import (
+
+from grandchallenge.worklists.views import (
     WorklistListView,
     WorklistCreateView,
     WorklistDetailView,

@@ -3,9 +3,9 @@ from django.urls import path
 from rest_framework import routers
 
 from grandchallenge.cases.views import ImageViewSet
-from grandchallenge.patients.views_api import PatientViewSet
-from grandchallenge.studies.views_api import StudyViewSet
-from grandchallenge.worklists.views_api import WorklistViewSet
+from grandchallenge.patients.views import PatientViewSet
+from grandchallenge.studies.views import StudyViewSet
+from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"

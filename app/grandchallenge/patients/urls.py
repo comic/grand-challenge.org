@@ -1,5 +1,6 @@
 from django.urls import path
-from grandchallenge.patients.views_forms import (
+
+from grandchallenge.patients.views import (
     PatientList,
     PatientCreate,
     PatientDetail,
