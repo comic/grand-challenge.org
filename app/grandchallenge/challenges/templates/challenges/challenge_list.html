@@ -248,6 +248,9 @@
                                                         {# Note, thumbnail class is 5rem/80px in core.css #}
                                                         {% thumbnail challenge.logo "80x80" crop="center" as im %}
                                                  data-src="{{ im.url }}"
+                                                 data-srcset="{{ im.url }} 1x,
+                                                              {{ im.url|resolution:'1.5x' }} 1.5x,
+                                                              {{ im.url|resolution:'2x' }} 2x"
                                                         {% endthumbnail %}
                                                     {% else %}
                                                  data-src="{{ challenge.gravatar_url }}"
