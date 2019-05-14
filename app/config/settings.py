@@ -413,6 +413,10 @@ SUMMERNOTE_CONFIG = {
     },
 }
 
+# sorl.thumbnail settings
+THUMBNAIL_FORMAT = "PNG"
+THUMBNAIL_ALTERNATIVE_RESOLUTIONS = [1.5, 2]
+
 # Settings for allowed HTML
 BLEACH_ALLOWED_TAGS = [
     "a",

@@ -2,6 +2,7 @@
 {% load grandchallenge_tags %}
 {% load guardian_tags %}
 {% load admin_urls %}
+{% load thumbnail %}
 
 {% block style %}
     {{ block.super }}
@@ -29,7 +30,14 @@
                 <a style="width: 100%;"
                    href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">
                     <img alt="{% firstof challenge.title challenge.short_name %} Banner"
-                         src="{{ challenge.banner.url }}" class="rounded w-100">
+                         class="rounded w-100"
+                            {% thumbnail challenge.banner "1110" as im %}
+                         src="{{ im.url }}"
+                         srcset="{{ im.url }} 1x,
+                                    {{ im.url|resolution:'1.5x' }} 1.5x,
+                                    {{ im.url|resolution:'2x' }} 2x"
+                            {% endthumbnail %}
+                    >
                 </a>
             </div>
         </div>
