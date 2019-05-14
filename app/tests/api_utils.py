@@ -10,14 +10,14 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
-def assert_api_read_only(client, table_reverse, expected_table, factory):
+def assert_api_read_only(client, table_reverse, expected_table, user_field, factory):
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
     # Tests table display
     assert_table_list(client, table_url, token, expected_table)
 
-    record = factory()
+    record = factory(**{user_field: user.pk})
     record_id = str(record.pk)
 
     # Assigns permissions to token user
@@ -31,7 +31,7 @@ def assert_api_read_only(client, table_reverse, expected_table, factory):
 
 
 def assert_api_crud(
-    client, table_reverse, expected_table, factory, invalid_fields
+    client, table_reverse, expected_table, factory, user_field, invalid_fields
 ):
     # Ensures there are no entries present of the current model
     assert factory._meta.model.objects.all().count() == 0
@@ -41,7 +41,7 @@ def assert_api_crud(
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
-    record = factory()
+    record = factory(**{user_field: user.pk})
     record_id = str(record.pk)
     record_dict = get_record_as_dict(factory, invalid_fields)
 
