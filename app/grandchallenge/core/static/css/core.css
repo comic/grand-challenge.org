@@ -19,21 +19,6 @@ nav.navbar-top .nav-item {
     top: 1px;
 }
 
-/* Sticky footer styles
--------------------------------------------------- */
-
-body {
-    margin-bottom: 4rem; /* Margin bottom by footer height */
-}
-
-.footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 4rem; /* Set the fixed height of the footer here */
-    line-height: 4rem; /* Vertically center the text there */
-}
-
 .rounded-top-left {
     border-top-left-radius: 3px;
 }

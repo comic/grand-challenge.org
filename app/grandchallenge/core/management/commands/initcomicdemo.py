@@ -1,6 +1,7 @@
 import base64
 
 from django.conf import settings
+from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
@@ -34,6 +35,13 @@ class Command(BaseCommand):
         site.domain = "gc.localhost"
         site.name = "Grand Challenge"
         site.save()
+
+        page = FlatPage.objects.create(
+            url="/about/",
+            title="About",
+            content="<p>You can add flatpages via django admin</p>",
+        )
+        page.sites.add(site)
 
         demoadmin = UserenaSignup.objects.create_user(
             username="demo",

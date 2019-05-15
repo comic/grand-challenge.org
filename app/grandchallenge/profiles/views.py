@@ -18,12 +18,14 @@ def profile(request):
     Redirect to the profile page of the currently signed in user.
     """
     if request.user.is_authenticated:
-        # print "username:", request.user.username
-        # print "redirect to profile"
-        return redirect("/accounts/" + request.user.username)
-
+        url = reverse(
+            "userena_profile_detail",
+            kwargs={"username": request.user.username},
+        )
     else:
-        return redirect("/accounts/signin")
+        url = reverse("profile_signin")
+
+    return redirect(url)
 
 
 def profile_edit_redirect(request):
@@ -31,17 +33,18 @@ def profile_edit_redirect(request):
     Redirect to the profile edit page of the currently signed in user.
     """
     if request.user.is_authenticated:
-        # print "username: ", request.user.username
-        # print "redirect to profile edit"
         messages.add_message(
             request,
             messages.INFO,
             "Please fill-in the missing information in the form form below.",
         )
-        return redirect("/accounts/" + request.user.username + "/edit")
-
+        url = reverse(
+            "userena_profile_edit", kwargs={"username": request.user.username}
+        )
     else:
-        return redirect("accounts/signin")
+        url = reverse("profile_signin")
+
+    return redirect(url)
 
 
 def profile_edit(*args, **kwargs):
