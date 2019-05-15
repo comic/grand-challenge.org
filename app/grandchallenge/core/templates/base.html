@@ -46,13 +46,7 @@
 
             <div class="my-3 p-3 bg-white rounded shadow-sm">
                 <div class="row">
-                    {% block sidebar %}
-                        <div class="col-12 col-md-3 mb-3">
-                            <ul class="nav nav-pills flex-column">
-                                {% block sidebar_links %}{% endblock %}
-                            </ul>
-                        </div>
-                    {% endblock %}
+                    {% block sidebar %}{% endblock %}
                     <div class="col overflow-auto">
                         {% block content %}{% endblock %}
                     </div>
