@@ -88,7 +88,6 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-    path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
@@ -98,6 +97,7 @@ urlpatterns = [
     # keep this url at the bottom of this list, because urls are checked in
     # order
     path("", include("django.contrib.flatpages.urls")),
+    path("<slug:page_title>/", comicmain, name="mainproject-home"),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar

@@ -37,14 +37,14 @@ class Command(BaseCommand):
             disclaimer="You <b>must</b> delete the admin, demo, demop, and retina_demo users before deploying to production!",
         )
 
-        page = FlatPage.objects.get_or_create(
-            url="/about/",
-            title="About",
-            content="<p>You can add flatpages via django admin</p>",
-        )
-        page.sites.add(site)
-
         if created:
+            page = FlatPage.objects.create(
+                url="/about/",
+                title="About",
+                content="<p>You can add flatpages via django admin</p>",
+            )
+            page.sites.add(site)
+
             Page.objects.create(
                 title="home",
                 challenge=challenge,
