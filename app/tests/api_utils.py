@@ -54,7 +54,7 @@ def assert_api_crud(
     # Creates record model object and serialized record information
     record = factory(**factory_kwargs)
     record_id = str(record.pk)
-    record_dict = get_record_as_dict(factory, invalid_fields)
+    record_dict = get_record_as_dict(factory, factory_kwargs, invalid_fields)
 
     # Assigns permissions to token user
     model_name = factory._meta.model._meta.model_name
@@ -144,8 +144,8 @@ def assert_record_remove(client, url, token, record_id):
 
 
 # Creates a new record and converts it to JSON, removing the original entry afterwards
-def get_record_as_dict(factory, invalid_fields) -> dict:
-    new_record = factory()
+def get_record_as_dict(factory, factory_kwargs, invalid_fields) -> dict:
+    new_record = factory(**factory_kwargs)
     record_dict = model_to_dict(new_record)
 
     count = factory._meta.model.objects.all().count()
