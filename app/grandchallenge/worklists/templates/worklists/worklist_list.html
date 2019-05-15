@@ -16,7 +16,7 @@
             {% for worklist in object_list %}
                 <tr>
                     <td>{{ worklist.title }}</td>
-                    <td>{{ worklist.user }}</td>
+                    <td>{{ worklist.Creator }}</td>
                     <td><a href="{% url 'worklists:detail' worklist.id %}">Details</a></td>
                     <td><a href="{% url 'worklists:update' worklist.id %}">Update</a></td>
                     <td><a href="{% url 'worklists:delete' worklist.id %}">Delete</a></td>
