@@ -16,8 +16,9 @@ def assert_api_read_only(
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
+    factory_kwargs = {}
     if user_field:
-        factory_kwargs = {user_field: user}
+        factory_kwargs[user_field] = user
 
     # Tests table display
     assert_table_list(client, table_url, token, expected_table)
@@ -46,8 +47,9 @@ def assert_api_crud(
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
+    factory_kwargs = {}
     if user_field:
-        factory_kwargs = {user_field: user}
+        factory_kwargs[user_field] = user
 
     # Creates record model object and serialized record information
     record = factory(**factory_kwargs)
