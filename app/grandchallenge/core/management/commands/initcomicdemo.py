@@ -1,6 +1,7 @@
 import base64
 
 from django.conf import settings
+from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
         site.domain = "gc.localhost"
+        site.name = "Grand Challenge"
         site.save()
 
         challenge, created = Challenge.objects.get_or_create(
@@ -35,7 +37,15 @@ class Command(BaseCommand):
             use_registration_page=False,
             disclaimer="You <b>must</b> delete the admin, demo, demop, and retina_demo users before deploying to production!",
         )
+
         if created:
+            page = FlatPage.objects.create(
+                url="/about/",
+                title="About",
+                content="<p>You can add flatpages via django admin</p>",
+            )
+            page.sites.add(site)
+
             Page.objects.create(
                 title="home",
                 challenge=challenge,

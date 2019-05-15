@@ -24,13 +24,13 @@
 </head>
 
 {% block body %}
-    <body class='{% block bodyclass %}{% endblock %}'>
+    <body class="d-flex flex-column min-vh-100">
 
     {% block navbar %}
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=challenge.hide_signin %}
     {% endblock %}
 
-    <main role="main">
+    <main role="main" class="flex-fill">
         <div id="page" class="container pb-3">
 
             {% block messages %}
@@ -46,13 +46,7 @@
 
             <div class="my-3 p-3 bg-white rounded shadow-sm">
                 <div class="row">
-                    {% block sidebar %}
-                        <div class="col-12 col-md-3 mb-3">
-                            <ul class="nav nav-pills flex-column">
-                                {% block sidebar_links %}{% endblock %}
-                            </ul>
-                        </div>
-                    {% endblock %}
+                    {% block sidebar %}{% endblock %}
                     <div class="col overflow-auto">
                         {% block content %}{% endblock %}
                     </div>
