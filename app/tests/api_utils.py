@@ -18,7 +18,7 @@ def assert_api_read_only(
 
     factory_kwargs = {}
     if user_field:
-        factory_kwargs[user_field] = user
+        factory_kwargs[str(user_field)] = user
 
     # Tests table display
     assert_table_list(client, table_url, token, expected_table)
@@ -49,7 +49,7 @@ def assert_api_crud(
 
     factory_kwargs = {}
     if user_field:
-        factory_kwargs[user_field] = user
+        factory_kwargs[str(user_field)] = user
 
     # Creates record model object and serialized record information
     record = factory(**factory_kwargs)
