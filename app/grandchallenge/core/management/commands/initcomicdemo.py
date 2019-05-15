@@ -28,6 +28,7 @@ class Command(BaseCommand):
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
         site.domain = "gc.localhost"
+        site.name = "Grand Challenge"
         site.save()
 
         challenge, created = Challenge.objects.get_or_create(
