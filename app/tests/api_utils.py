@@ -10,14 +10,19 @@ from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 
 
-def assert_api_read_only(client, table_reverse, expected_table, user_field, factory):
+def assert_api_read_only(
+    client, table_reverse, expected_table, user_field, factory
+):
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
+
+    if user_field:
+        factory_kwargs = {user_field: user}
 
     # Tests table display
     assert_table_list(client, table_url, token, expected_table)
 
-    record = factory(**{user_field: user.pk})
+    record = factory(**factory_kwargs)
     record_id = str(record.pk)
 
     # Assigns permissions to token user
@@ -41,7 +46,11 @@ def assert_api_crud(
     user, token = get_staff_user_with_token()
     table_url = reverse(table_reverse)
 
-    record = factory(**{user_field: user.pk})
+    if user_field:
+        factory_kwargs = {user_field: user}
+
+    # Creates record model object and serialized record information
+    record = factory(**factory_kwargs)
     record_id = str(record.pk)
     record_dict = get_record_as_dict(factory, invalid_fields)
 
