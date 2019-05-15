@@ -5,4 +5,4 @@ from grandchallenge.worklists.models import Worklist
 class WorklistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Worklist
-        fields = ("id", "title", "user", "images")
+        fields = ("id", "title", "creator", "images")
