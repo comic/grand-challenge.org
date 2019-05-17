@@ -12,7 +12,7 @@ from tests.api_utils import assert_api_crud
             "Worklist List",
             WorklistFactory,
             "creator",
-            ["creator_id"],
+            [],
         )
     ],
 )
