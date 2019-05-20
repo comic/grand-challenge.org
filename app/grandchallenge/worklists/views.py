@@ -56,7 +56,7 @@ class WorklistViewSet(viewsets.ModelViewSet):
 
         worklist = Worklist.objects.create(title=title, creator=creator)
         images = Image.objects.filter(pk__in=image_pks.split(","))
-        worklist.images.add(images.split(","))
+        worklist.images.add(images)
         worklist.save()
 
         serialized = WorklistSerializer(worklist)
