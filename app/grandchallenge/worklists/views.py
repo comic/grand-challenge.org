@@ -55,10 +55,11 @@ class WorklistViewSet(viewsets.ModelViewSet):
         image_pks = request.data.get("images", "")
 
         images = Image.objects.filter(pk__in=image_pks.split(","))
-
         worklist = Worklist.objects.create(title=title, creator=creator)
-        worklist.images.set(images)
-        worklist.save()
+
+        if images:
+            worklist.images.set(images)
+            worklist.save()
 
         serialized = WorklistSerializer(worklist)
         return Response(serialized.data, status=status.HTTP_201_CREATED)
