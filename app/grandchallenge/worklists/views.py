@@ -56,8 +56,6 @@ class WorklistViewSet(viewsets.ModelViewSet):
 
         worklist = Worklist.objects.create(title=title, creator=creator)
         if image_pks:
-            #images = Image.objects.filter(pk__in=image_pks.split(","))
-            #worklist.images.set(images)
             worklist.add(image_pks.split(","))
             worklist.save()
 
