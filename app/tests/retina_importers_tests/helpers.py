@@ -177,7 +177,12 @@ def get_response_status(
 
 
 def create_element_spacing_request(
-    client, image_name=None, user="import_user", study=None, es=None
+    client,
+    image_name=None,
+    user="import_user",
+    study=None,
+    es=None,
+    is_3d=False,
 ):
     auth_header = get_auth_token_header(user)
     url = reverse("retina:importers:set-element-spacing-for-image")
@@ -189,12 +194,19 @@ def create_element_spacing_request(
         image = ImageFactoryWithImageFile()
         request_data["image_identifier"] = image.name
 
+    if is_3d:
+        request_data["sub_image_name"] = "oct"
+
     if es is not None:
         request_data["element_spacing_x"] = es[0]
         request_data["element_spacing_y"] = es[1]
+        if is_3d:
+            request_data["element_spacing_z"] = es[2]
     else:
         request_data["element_spacing_x"] = 10
         request_data["element_spacing_y"] = 10
+        if is_3d:
+            request_data["element_spacing_z"] = 10
 
     if study is not None:
         request_data["study_identifier"] = study.name
