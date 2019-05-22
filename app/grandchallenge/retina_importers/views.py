@@ -633,21 +633,19 @@ class SetElementSpacingForImage(generics.GenericAPIView):
             image_name = request.data.get("image_identifier")
             study_name = request.data.get("study_identifier")
             sub_image_name = request.data.get("sub_image_name")
-            if sub_image_name.lower() == "oct":
-                image = Image.objects.get(
-                    name=image_name,
-                    study__name=study_name,
-                    modality=ImagingModality.objects.get(
-                        modality=settings.MODALITY_OCT
-                    ),
+            values = {"name": image_name}
+            if sub_image_name is not None and sub_image_name.lower() == "oct":
+                values.update(
+                    {
+                        "modality": ImagingModality.objects.get(
+                            modality=settings.MODALITY_OCT
+                        )
+                    }
                 )
                 is_3d = True
-            elif study_name is not None:
-                image = Image.objects.get(
-                    name=image_name, study__name=study_name
-                )
-            else:
-                image = Image.objects.get(name=image_name)
+            if study_name is not None:
+                values.update({"study__name": study_name})
+            image = Image.objects.get(**values)
         except MultipleObjectsReturned:
             return {"errors": "Image identifiers returns multiple images."}
         except ObjectDoesNotExist:
