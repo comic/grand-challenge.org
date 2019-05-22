@@ -639,7 +639,7 @@ class SetElementSpacingForImage(generics.GenericAPIView):
                     study__name=study_name,
                     modality=ImagingModality.objects.get(
                         modality=settings.MODALITY_OCT
-                    )
+                    ),
                 )
                 is_3d = True
             elif study_name is not None:
