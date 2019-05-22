@@ -628,10 +628,21 @@ class SetElementSpacingForImage(generics.GenericAPIView):
         return JsonResponse(response, status=response_status)
 
     def set_element_spacing(self, request):
+        is_3d = False
         try:
             image_name = request.data.get("image_identifier")
             study_name = request.data.get("study_identifier")
-            if study_name is not None:
+            sub_image_name = request.data.get("sub_image_name")
+            if sub_image_name.lower() == "oct":
+                image = Image.objects.get(
+                    name=image_name,
+                    study__name=study_name,
+                    modality=ImagingModality.objects.get(
+                        modality=settings.MODALITY_OCT
+                    )
+                )
+                is_3d = True
+            elif study_name is not None:
                 image = Image.objects.get(
                     name=image_name, study__name=study_name
                 )
@@ -644,7 +655,11 @@ class SetElementSpacingForImage(generics.GenericAPIView):
 
         es_x = request.data.get("element_spacing_x", 1)
         es_y = request.data.get("element_spacing_y", 1)
-        spacing = (es_x, es_y)
+        if is_3d:
+            es_z = request.data.get("element_spacing_z", 1)
+            spacing = (es_x, es_y, es_z)
+        else:
+            spacing = (es_x, es_y)
 
         try:
             self.set_mhd_element_spacing_header(image, spacing)
