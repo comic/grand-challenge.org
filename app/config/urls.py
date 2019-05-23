@@ -88,7 +88,7 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-    path(
+	path(
         "patients/",
         include("grandchallenge.patients.urls", namespace="patients"),
     ),
@@ -99,15 +99,15 @@ urlpatterns = [
         "worklists/",
         include("grandchallenge.worklists.urls", namespace="worklists"),
     ),
-    # ========== catch all ====================
-    # when all other urls have been checked, try to load page from main project
-    # keep this url at the bottom of this list, because urls are checked in
-    # order
-    path("<slug:page_title>/", comicmain, name="mainproject-home"),
     path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
+    # ========== catch all ====================
+    # when all other urls have been checked, try to load page from flatpages
+    # keep this url at the bottom of this list, because urls are checked in
+    # order
+    path("", include("django.contrib.flatpages.urls")),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar

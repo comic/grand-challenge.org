@@ -9,15 +9,19 @@
             <img class="mugshot"
                  src="{{ user.user_profile.get_mugshot_url }}"
                  alt="User Mugshot"
-                 style="height: 1.5em; vertical-align: middle;"/> {{ user.username }}
+                 style="height: 1.5em; vertical-align: middle;"/>
         </a>
-        <div class="dropdown-menu dropdown-menu-right shadow-sm">
+        <div class="dropdown-menu dropdown-menu-right">
             <a class="dropdown-item"
                href="{% url 'userena_profile_detail' user.username %}">
-                My Profile</a>
+                Signed in as <b>{{ user.username }}</b></a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item"
+               href="{% url 'userena_profile_detail' user.username %}">
+                Your Profile</a>
             <a class="dropdown-item"
                href="{% url 'challenges:users-list' %}">
-                My Challenges</a>
+                Your Challenges</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item"
                href="{% url 'userena_signout' %}?next=/">

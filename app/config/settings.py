@@ -273,8 +273,10 @@ MIDDLEWARE = (
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
@@ -295,6 +297,7 @@ DJANGO_APPS = [
     "django.contrib.humanize",
     "django.contrib.admin",
     "django.contrib.postgres",
+    "django.contrib.flatpages",
 ]
 
 THIRD_PARTY_APPS = [
@@ -413,6 +416,10 @@ SUMMERNOTE_CONFIG = {
         ],
     },
 }
+
+# sorl.thumbnail settings
+THUMBNAIL_FORMAT = "PNG"
+THUMBNAIL_ALTERNATIVE_RESOLUTIONS = [1.5, 2]
 
 # Settings for allowed HTML
 BLEACH_ALLOWED_TAGS = [

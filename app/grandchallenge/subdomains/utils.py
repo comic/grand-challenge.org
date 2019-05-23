@@ -19,12 +19,15 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
 
     if "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")
-        if challenge_short_name.lower() != settings.MAIN_PROJECT_NAME.lower():
-            domain = f"{scheme}://{challenge_short_name}.{host}"
-
+        domain = f"{scheme}://{challenge_short_name}.{host}"
         urlconf = urlconf or settings.SUBDOMAIN_URL_CONF
     else:
         urlconf = urlconf or settings.ROOT_URLCONF
+
+    if "views.flatpage" in viewname.lower() and "url" in kwargs:
+        # Fix for a long standing bug in django flatpages
+        # https://code.djangoproject.com/ticket/15658
+        kwargs.update({"url": kwargs["url"].lstrip("/")})
 
     path = reverse_org(
         viewname,
