@@ -629,22 +629,22 @@ class SetElementSpacingForImage(generics.GenericAPIView):
 
     def set_element_spacing(self, request):
         is_3d = False
+        image_name = request.data.get("image_identifier")
+        study_name = request.data.get("study_identifier")
+        sub_image_name = request.data.get("sub_image_name")
+        values = {"name": image_name}
+        if study_name is not None:
+            values.update({"study__name": study_name})
+        if sub_image_name is not None and sub_image_name.lower() == "oct":
+            values.update(
+                {
+                    "modality": ImagingModality.objects.get(
+                        modality=settings.MODALITY_OCT
+                    )
+                }
+            )
+            is_3d = True
         try:
-            image_name = request.data.get("image_identifier")
-            study_name = request.data.get("study_identifier")
-            sub_image_name = request.data.get("sub_image_name")
-            values = {"name": image_name}
-            if sub_image_name is not None and sub_image_name.lower() == "oct":
-                values.update(
-                    {
-                        "modality": ImagingModality.objects.get(
-                            modality=settings.MODALITY_OCT
-                        )
-                    }
-                )
-                is_3d = True
-            if study_name is not None:
-                values.update({"study__name": study_name})
             image = Image.objects.get(**values)
         except MultipleObjectsReturned:
             return {"errors": "Image identifiers returns multiple images."}
@@ -653,11 +653,8 @@ class SetElementSpacingForImage(generics.GenericAPIView):
 
         es_x = request.data.get("element_spacing_x", 1)
         es_y = request.data.get("element_spacing_y", 1)
-        if is_3d:
-            es_z = request.data.get("element_spacing_z", 1)
-            spacing = (es_x, es_y, es_z)
-        else:
-            spacing = (es_x, es_y)
+        es_z = request.data.get("element_spacing_z", 1)
+        spacing = (es_x, es_y, es_z) if is_3d else (es_x, es_y)
 
         try:
             self.set_mhd_element_spacing_header(image, spacing)
