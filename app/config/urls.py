@@ -88,7 +88,7 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-	path(
+    path(
         "patients/",
         include("grandchallenge.patients.urls", namespace="patients"),
     ),
