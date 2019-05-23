@@ -189,5 +189,5 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         color_space=tiff_file.tags.color_space,
         eye_choice=Image.EYE_UNKNOWN,
         stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
-        field_of_view=Image.FOV_UNKNOWN
+        field_of_view=Image.FOV_UNKNOWN,
     )

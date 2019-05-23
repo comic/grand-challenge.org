@@ -93,7 +93,7 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         assert image_entry.name == resource.name
         assert image_entry.width == tiff_tags["ImageWidth"].value
         assert image_entry.height == tiff_tags["ImageLength"].value
-        assert image_entry.depth is None
+        assert image_entry.depth is 1
         assert image_entry.resolution_levels == len(tiff_file.pages)
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
