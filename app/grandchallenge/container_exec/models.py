@@ -120,7 +120,7 @@ class ContainerImageModel(models.Model):
         ],
         help_text=(
             ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE > IMAGE.tar | gzip'. See "
+            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,
