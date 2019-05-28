@@ -42,3 +42,7 @@ def google_keys(*_, **__):
         "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
         "geochart_api_key": settings.GOOGLE_MAPS_API_KEY,
     }
+
+
+def debug(*_, **__):
+    return {"DEBUG": settings.DEBUG}

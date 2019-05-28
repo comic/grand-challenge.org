@@ -253,6 +253,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
                 "grandchallenge.core.context_processors.google_keys",
+                "grandchallenge.core.context_processors.debug",
             ]
         },
     }
