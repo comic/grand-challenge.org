@@ -10,7 +10,7 @@
         {% endblock %}
 
         <title>
-            {% block title %}{{ main_challenge_name }}{% endblock %}
+            {% block title %}{{ request.site.name }}{% endblock %}
         </title>
 
         {% block head_script %}
@@ -44,14 +44,16 @@
 
             {% block jumbotron %}{% endblock %}
 
-            <div class="my-3 p-3 bg-white rounded shadow-sm">
-                <div class="row">
-                    {% block sidebar %}{% endblock %}
-                    <div class="col overflow-auto">
-                        {% block content %}{% endblock %}
+            {% block outerContent %}
+                <div class="my-3 p-3 bg-white rounded shadow-sm">
+                    <div class="row">
+                        {% block sidebar %}{% endblock %}
+                        <div class="col overflow-auto">
+                            {% block content %}{% endblock %}
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endblock %}
         </div>
     </main>
 

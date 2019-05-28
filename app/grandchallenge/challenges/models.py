@@ -31,11 +31,7 @@ class ChallengeManager(models.Manager):
 
 def validate_nounderscores(value):
     if "_" in value:
-        raise ValidationError(
-            "underscores not allowed. The url \
-            '{}.{}' would not be valid, "
-            "please use hyphens (-)".format(value, settings.MAIN_PROJECT_NAME)
-        )
+        raise ValidationError("Underscores (_) are not allowed.")
 
 
 def validate_short_name(value):

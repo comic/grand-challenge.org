@@ -10,9 +10,6 @@
     {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
 
 
-{% block sidebar %}
-{% endblock %}
-
 {% block content %}
     <div>{{ currentpage.html|clean }}</div>
 {% endblock %}

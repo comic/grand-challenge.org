@@ -2,7 +2,6 @@ import logging
 import re
 
 from django.conf import settings
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseRedirect
 
 from grandchallenge.challenges.models import Challenge
@@ -14,7 +13,7 @@ def subdomain_middleware(get_response):
     def middleware(request):
         """ Adds the subdomain to the request """
         host = request.get_host().lower()
-        domain = get_current_site(request).domain.lower()
+        domain = request.site.domain.lower()
 
         pattern = f"^(?:(?P<subdomain>.*?)\.)?{domain}$"
         matches = re.match(pattern, host)
@@ -50,7 +49,7 @@ def challenge_subdomain_middleware(get_response):
                 )
             except Challenge.DoesNotExist:
                 logger.warning(f"Could not find challenge {challenge_name}")
-                domain = get_current_site(request).domain.lower()
+                domain = request.site.domain.lower()
                 return HttpResponseRedirect(f"{request.scheme}://{domain}/")
 
         response = get_response(request)

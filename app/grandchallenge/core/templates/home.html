@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load static %}
+
+{% block jumbotron %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <a class="w-100"
+               href="{% url 'home' %}">
+                <img alt="{{ request.site.name }} Banner"
+                     class="rounded w-100"
+                     src="{% static 'images/gcheader.png' %}"
+                >
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <h1>Grand Challenges in Biomedical Image Analysis</h1>
+
+    <p>Every year, thousands of papers are published that describe new
+        algorithms
+        to be applied to medical and biomedical images, and various new
+        products appear on the market based on such algorithms. But few papers
+        and products provide a fair and direct comparison of the newly proposed
+        solution with the state-of-the-art. We believe that such comparisons
+        can help the research community and industry to develop better
+        algorithms. We support the organization of these comparative studies
+        and the dissemination of their results.</p>
+
+    <p>Organizing and participating in challenges is not the only way to
+        facilitate
+        better comparisons between new and existing solutions. If it were
+        easy to publish and share your data, and the code you used to evaluate
+        your algorithm's performance on that data, and possibly the algorithm
+        itself, others could directly compare their approach to yours,
+        using the same test data and the same evaluation metrics. With this
+        site we provide tools to make it as easy as possible for you to publish
+        your data and your evaluation for any paper you've written.</p>
+
+    <p><a href="/Why_Challenges/">Why Challenges?</a> describes the rationale
+        for organizing grand challenges, provides advice for those who
+        want to organize such events, and discusses where we hope the
+        field will move to next.<br>
+        <br>
+        <a href="{% url 'challenges:list' %}">All Challenges</a> provides an
+        overview of
+        all previous, ongoing and upcoming challenges in biomedical image
+        analysis that we are aware of. Drop us a note if you want your
+        event listed on this overview.<br>
+        <br>
+        <a href="/Create_your_own_challenge/">Create your own challenge</a>
+        explains how you can set up your own challenge site in a matter of
+        minutes.
+    </p>
+
+    <p>Grand challenges in medical image analysis would not be possible without
+        the support and enthusiasm from all <a href="/Contributors/">contributors</a>.
+    </p>
+
+    <div class="justify-content-center no-gutters row">
+        <div class="card col-md-3">
+            <a href="{% url 'statistics:detail' %}">
+                <div class="card-body text-center"><i
+                        class="fas fa-chart-line fa-3x"></i><br>Site Statistics
+                </div>
+            </a>
+        </div>
+    </div>
+{% endblock %}

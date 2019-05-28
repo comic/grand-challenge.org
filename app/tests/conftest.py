@@ -44,9 +44,6 @@ def django_db_setup(django_db_setup, django_db_blocker):
         site.domain = "testserver"
         site.save()
 
-        # The main project should always exist
-        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
-
 
 @pytest.fixture(scope="session")
 def docker_client():
@@ -79,11 +76,6 @@ def generate_challenge_set():
     participant1 = UserFactory()
     challenge.add_participant(participant1)
     non_participant = UserFactory()
-
-    try:
-        Challenge.objects.get(short_name=settings.MAIN_PROJECT_NAME)
-    except ObjectDoesNotExist:
-        ChallengeFactory(short_name=settings.MAIN_PROJECT_NAME)
 
     return ChallengeSet(
         challenge=challenge,
