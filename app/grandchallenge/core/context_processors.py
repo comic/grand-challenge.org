@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 def challenge(request):
     try:
         challenge = request.challenge
+
+        if challenge is None:
+            return {}
+
     except AttributeError:
         logger.warning(f"Could not get challenge for request: {request}")
         return {}
