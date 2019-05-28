@@ -93,22 +93,6 @@ def _validate_tifffile(
     if Image.COLOR_SPACE_COMPONENTS[color_space] != tif_color_channels:
         raise ValidationError("Image contains invalid amount of channels.")
 
-    # Checks type information
-    try:
-        if str(tags["SampleFormat"].value[0]) == "IEEEFP":
-            if tags["BitsPerSample"].value[0] != 32:
-                raise ValidationError(
-                    "Image data type has an invalid byte size"
-                )
-
-        elif str(tags["SampleFormat"].value[0]) == "UINT":
-            if tags["BitsPerSample"].value[0] not in (8, 16, 32):
-                raise ValidationError(
-                    "Image data type has an invalid byte size"
-                )
-    except KeyError:
-        raise ValidationError("Image lacks sample information")
-
     try:
         image_width = tags["ImageWidth"].value
         image_height = tags["ImageLength"].value
