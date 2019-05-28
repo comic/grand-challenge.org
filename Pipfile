@@ -19,7 +19,7 @@ werkzeug = "*"
 
 [packages]
 "beautifulsoup4" = "*"
-celery = "<4.3"
+celery = "*"
 redis = "*"
 django = "<2.2"
 django-countries = "*"
