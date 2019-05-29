@@ -3,16 +3,16 @@ import zipfile
 from collections import namedtuple
 from pathlib import Path
 from subprocess import call
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 import docker
 import pytest
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group
 
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from tests.factories import (
     UserFactory,
@@ -44,8 +44,17 @@ def django_db_setup(django_db_setup, django_db_blocker):
         site.domain = "testserver"
         site.save()
 
-        # The main project should always exist
-        Challenge.objects.create(short_name=settings.MAIN_PROJECT_NAME)
+
+@pytest.fixture(scope="session")
+def docker_client():
+    return docker.DockerClient(
+        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+    )
+
+
+@pytest.fixture(scope="session")
+def docker_api_client():
+    return docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
 
 
 class ChallengeSet(NamedTuple):
@@ -67,11 +76,6 @@ def generate_challenge_set():
     participant1 = UserFactory()
     challenge.add_participant(participant1)
     non_participant = UserFactory()
-
-    try:
-        Challenge.objects.get(short_name=settings.MAIN_PROJECT_NAME)
-    except ObjectDoesNotExist:
-        ChallengeFactory(short_name=settings.MAIN_PROJECT_NAME)
 
     return ChallengeSet(
         challenge=challenge,
@@ -139,14 +143,11 @@ def challenge_set_with_evaluation(ChallengeSet):
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory):
+def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
     """
     Creates the example evaluation container
     """
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    im, _ = client.images.build(
+    im, _ = docker_client.images.build(
         path=os.path.join(
             os.path.split(__file__)[0],
             "evaluation_tests",
@@ -155,47 +156,43 @@ def evaluation_image(tmpdir_factory):
         ),
         tag="test_evaluation:latest",
     )
-    assert im.id in [x.id for x in client.images.list()]
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
-    image = cli.get_image("test_evaluation:latest")
+    assert im.id in [x.id for x in docker_client.images.list()]
+    image = docker_api_client.get_image("test_evaluation:latest")
     outfile = tmpdir_factory.mktemp("docker").join("evaluation-latest.tar")
+
     with outfile.open(mode="wb") as f:
         for chunk in image:
             f.write(chunk)
-    client.images.remove(image=im.id)
+
+    docker_client.images.remove(image=im.id)
 
     call(["gzip", outfile])
 
-    assert im.id not in [x.id for x in client.images.list()]
+    assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
 
 
 @pytest.fixture(scope="session")
-def alpine_images(tmpdir_factory):
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    client.images.pull("alpine:3.7")
-    client.images.pull("alpine:3.8")
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
+def alpine_images(tmpdir_factory, docker_client, docker_api_client):
+    docker_client.images.pull("alpine:3.7")
+    docker_client.images.pull("alpine:3.8")
+
     # get all images and put them in a tar archive
-    image = cli.get_image("alpine")
-    outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
+    image = docker_api_client.get_image("alpine")
+    outfile = tmpdir_factory.mktemp("alpine").join("alpine_multi.tar")
+
     with outfile.open("wb") as f:
         for chunk in image:
             f.write(chunk)
+
     return outfile
 
 
 @pytest.fixture(scope="session")
-def root_image(tmpdir_factory):
-    client = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
-    client.images.pull("alpine:3.8")
+def root_image(tmpdir_factory, docker_client, docker_api_client):
+    docker_client.images.pull("alpine:3.8")
 
-    cli = docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
-    image = cli.get_image("alpine:3.8")
+    image = docker_api_client.get_image("alpine:3.8")
     outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
 
     with outfile.open("wb") as f:
@@ -203,6 +200,23 @@ def root_image(tmpdir_factory):
             f.write(chunk)
 
     return outfile
+
+
+@pytest.fixture(scope="session")
+def http_image(tmpdir_factory, docker_client, docker_api_client):
+    image_name = "crccheck/hello-world"
+
+    docker_client.images.pull(image_name)
+    sha_256 = docker_client.images.get(image_name).id
+
+    image = docker_api_client.get_image(image_name)
+    outfile = tmpdir_factory.mktemp("http").join("http.tar")
+
+    with outfile.open("wb") as f:
+        for chunk in image:
+            f.write(chunk)
+
+    return outfile, sha_256
 
 
 @pytest.fixture(scope="session")
@@ -234,6 +248,14 @@ def submission_file(tmpdir_factory):
     return testfile
 
 
+def add_to_graders_group(users):
+    # Add to retina_graders group
+    for grader in users:
+        grader.groups.add(
+            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
+        )
+
+
 class AnnotationSet(NamedTuple):
     grader: UserFactory
     measurement: MeasurementAnnotationFactory
@@ -249,10 +271,7 @@ def generate_annotation_set(retina_grader=False):
     grader = UserFactory()
 
     if retina_grader:
-        # Add to retina_graders group
-        grader.groups.add(
-            Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-        )
+        add_to_graders_group([grader])
 
     measurement = MeasurementAnnotationFactory(grader=grader)
     boolean = BooleanClassificationAnnotationFactory(grader=grader)
@@ -284,9 +303,10 @@ def generate_annotation_set(retina_grader=False):
 
 @pytest.fixture(name="AnnotationSet")
 def annotation_set():
-    """ Creates a user with the one of each of the following annotations: Measurement,
-    BooleanClassification, PolygonAnnotationSet (with 10 child annotations), CoordinateList,
-    LandmarkAnnotationSet(with single landmark annotations for 5 images), ETDRSGrid """
+    """ Creates a user with the one of each of the following annotations:
+    Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
+    annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
+    annotations for 5 images), ETDRSGrid """
     return generate_annotation_set()
 
 
@@ -301,11 +321,7 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     graders = (UserFactory(), UserFactory())
 
     if retina_grader:
-        # Add to retina_graders group
-        for grader in graders:
-            grader.groups.add(
-                Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
-            )
+        add_to_graders_group(graders)
 
     polygonsets = (
         PolygonAnnotationSetFactory(grader=graders[0]),
@@ -332,13 +348,134 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
 
 @pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
 def two_retina_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
-    two different graders that both are in the retina_graders group """
+    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
+    belonging to two different graders that both are in the retina_graders
+    group """
     return generate_two_polygon_annotation_sets(retina_grader=True)
 
 
 @pytest.fixture(name="TwoPolygonAnnotationSets")
 def two_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets with each 10 SinglePolygonAnnotations belonging to
-    two different graders """
+    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
+    belonging to two different graders """
     return generate_two_polygon_annotation_sets(retina_grader=False)
+
+
+class MultipleLandmarkAnnotationSets(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    landmarkset1: LandmarkAnnotationSetFactory
+    landmarkset1images: List
+    landmarkset2: LandmarkAnnotationSetFactory
+    landmarkset2images: List
+    landmarkset3: LandmarkAnnotationSetFactory
+    landmarkset3images: List
+
+
+def generate_multiple_landmark_annotation_sets(retina_grader=False):
+    graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        add_to_graders_group(graders)
+
+    landmarksets = (
+        LandmarkAnnotationSetFactory(grader=graders[0]),
+        LandmarkAnnotationSetFactory(grader=graders[1]),
+        LandmarkAnnotationSetFactory(grader=graders[0]),
+    )
+
+    # Create child models for landmark annotation set
+    singlelandmarkbatches = (
+        SingleLandmarkAnnotationFactory.create_batch(
+            2, annotation_set=landmarksets[0]
+        ),
+        SingleLandmarkAnnotationFactory.create_batch(
+            5, annotation_set=landmarksets[1]
+        ),
+        [],
+    )
+
+    images = [
+        Image.objects.filter(
+            singlelandmarkannotation__annotation_set=landmarksets[0].id
+        ),
+        Image.objects.filter(
+            singlelandmarkannotation__annotation_set=landmarksets[1].id
+        ),
+        [],
+    ]
+
+    # Create singlelandmarkannotations with the images of landmarkset1
+    for image in images[0]:
+        singlelandmarkbatches[2].append(
+            SingleLandmarkAnnotationFactory.create(
+                annotation_set=landmarksets[2], image=image
+            )
+        )
+        images[2].append(image)
+    singlelandmarkbatches[2].append(
+        SingleLandmarkAnnotationFactory.create(annotation_set=landmarksets[2])
+    )
+    images[2].append(singlelandmarkbatches[2][-1].image)
+
+    return MultipleLandmarkAnnotationSets(
+        grader1=graders[0],
+        grader2=graders[1],
+        landmarkset1=landmarksets[0],
+        landmarkset1images=images[0],
+        landmarkset2=landmarksets[1],
+        landmarkset2images=images[1],
+        landmarkset3=landmarksets[2],
+        landmarkset3images=images[2],
+    )
+
+
+@pytest.fixture(name="MultipleRetinaLandmarkAnnotationSets")
+def multiple_retina_landmark_annotation_sets():
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
+    SingleLandmarkAnnotations belonging to multiple different graders that
+    both are in the retina_graders group """
+    return generate_multiple_landmark_annotation_sets(retina_grader=True)
+
+
+@pytest.fixture(name="MultipleLandmarkAnnotationSets")
+def multiple_landmark_annotation_sets():
+    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
+    SingleLandmarkAnnotations belonging to multiple different graders """
+    return generate_multiple_landmark_annotation_sets(retina_grader=False)
+
+
+class MultipleETDRSAnnotations(NamedTuple):
+    grader1: UserFactory
+    grader2: UserFactory
+    etdrss1: List
+    etdrss2: List
+
+
+def generate_multiple_etdrs_annotations(retina_grader=False):
+    graders = (UserFactory(), UserFactory())
+
+    if retina_grader:
+        add_to_graders_group(graders)
+
+    etdrss1 = ETDRSGridAnnotationFactory.create_batch(10, grader=graders[0])
+    etdrss2 = ETDRSGridAnnotationFactory.create_batch(5, grader=graders[1])
+
+    return MultipleETDRSAnnotations(
+        grader1=graders[0],
+        grader2=graders[1],
+        etdrss1=etdrss1,
+        etdrss2=etdrss2,
+    )
+
+
+@pytest.fixture(name="MultipleRetinaETDRSAnnotations")
+def multiple_retina_etdrs_annotations():
+    """ Creates 2 retina_grader users with 10 and 5 etdrs annotations"""
+    return generate_multiple_etdrs_annotations(retina_grader=True)
+
+
+@pytest.fixture(name="MultipleETDRSAnnotations")
+def multiple_etdrs_annotations():
+    """ Creates 2 users with 10 and 5 etdrs annotations"""
+    return generate_multiple_etdrs_annotations(retina_grader=False)

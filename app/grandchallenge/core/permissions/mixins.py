@@ -3,7 +3,8 @@ from urllib.parse import urlparse, urlunparse
 from django.contrib import messages
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.http import HttpResponseForbidden, QueryDict, HttpResponseRedirect
+from django.core.exceptions import PermissionDenied
+from django.http import QueryDict, HttpResponseRedirect
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.subdomains.utils import reverse
@@ -20,14 +21,9 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
     """
 
-    permission_denied_message = (
-        "You do not have the correct permissions to access this page"
-    )
-
     def get_login_url(self):
         return reverse("userena_signin")
 
-    # TODO: add a test for this
     def redirect_to_login(
         self, next, login_url=None, redirect_field_name=REDIRECT_FIELD_NAME
     ):
@@ -61,7 +57,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
 
         user_test_result = self.get_test_func()()
         if not user_test_result:
-            return HttpResponseForbidden(self.get_permission_denied_message())
+            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 

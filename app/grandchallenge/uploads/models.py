@@ -20,10 +20,6 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
     if hasattr(uploadmodel, "short_name"):
-        is_comicsite = True
-    else:
-        is_comicsite = False
-    if is_comicsite:
         challenge = uploadmodel
         # Any image uploaded as part of a comcisite is public. These images
         # are only headers and other public things

@@ -118,7 +118,7 @@ def insertedpage(request, page_title, dropboxpath):
     """ show contents of a file from the local dropbox folder for this project
 
     """
-    site = request.challenge
+    challenge = request.challenge
 
     (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
     if mimetype is None:
@@ -132,7 +132,7 @@ def insertedpage(request, page_title, dropboxpath):
     ):
         return inserted_file(request, dropboxpath)
 
-    p = get_object_or_404(Page, challenge=site, title=page_title)
+    p = get_object_or_404(Page, challenge=challenge, title=page_title)
 
     baselink = p.get_absolute_url()
 
@@ -151,7 +151,9 @@ def insertedpage(request, page_title, dropboxpath):
     currentpage = getRenderedPageIfAllowed(p, request)
 
     return render(
-        request, "dropboxpage.html", {"site": site, "currentpage": currentpage}
+        request,
+        "dropboxpage.html",
+        {"challenge": challenge, "currentpage": currentpage},
     )
 
 

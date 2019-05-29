@@ -4,9 +4,7 @@ from grandchallenge.core.utils.email import send_templated_email
 
 
 def send_file_uploaded_notification_email(**kwargs):
-    uploader = kwargs["uploader"]
     challenge = kwargs["challenge"]
-    site = kwargs["site"]
     title = f"[{challenge.short_name.lower()}] New Upload"
     admins = challenge.get_admins()
     if not admins:

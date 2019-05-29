@@ -1,10 +1,11 @@
 import json
 from enum import Enum
 
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication, viewsets
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -14,8 +15,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from rest_framework_guardian import filters
+from rest_framework.exceptions import NotFound
 
 from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.registrations.serializers import (
+    OctObsRegistrationSerializer,
+)
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -29,17 +34,22 @@ from grandchallenge.annotations.models import (
     LandmarkAnnotationSet,
     PolygonAnnotationSet,
     SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    ETDRSGridAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.serving.permissions import user_can_download_image
 
 
 class ArchiveView(APIView):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
 
     @staticmethod
     def create_response_object():
@@ -228,6 +238,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
 class DataView(APIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
 
     class DataType(Enum):
         REGISTRATION = "Registration"
@@ -730,6 +741,7 @@ class PolygonListView(ListAPIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
+    pagination_class = None
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]
@@ -745,6 +757,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
     queryset = PolygonAnnotationSet.objects.all()
 
 
@@ -753,12 +766,14 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
     queryset = SinglePolygonAnnotation.objects.all()
 
 
 class GradersWithPolygonAnnotationsListView(ListAPIView):
     permission_classes = (RetinaAdminAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
+    pagination_class = None
     serializer_class = UserSerializer
 
     def get_queryset(self):
@@ -776,3 +791,75 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
             .distinct()
         )
         return graders
+
+
+class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ETDRSGridAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = ETDRSGridAnnotation.objects.all()
+
+
+class LandmarkAnnotationSetForImageList(ListAPIView):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+
+    def get_queryset(self):
+        user_id = self.kwargs["user_id"]
+        image_ids = self.request.query_params.get("image_ids")
+        if image_ids is None:
+            raise NotFound()
+        image_ids = image_ids.split(",")
+        user = get_object_or_404(get_user_model(), id=user_id)
+        queryset = user.landmarkannotationset_set.filter(
+            singlelandmarkannotation__image__id__in=image_ids
+        ).distinct()
+        return queryset
+
+
+class OctObsRegistrationRetrieve(RetrieveAPIView):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = OctObsRegistrationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    lookup_url_kwarg = "image_id"
+
+    def get_object(self):
+        image_id = self.kwargs.get("image_id")
+        if image_id is None:
+            raise NotFound()
+        image = get_object_or_404(
+            Image.objects.prefetch_related("oct_image", "obs_image"),
+            id=image_id,
+        )
+        if image.oct_image.exists():
+            return image.oct_image.get()
+        elif image.obs_image.exists():
+            return image.obs_image.get()
+        else:
+            raise NotFound()
+
+
+class ImageElementSpacingView(RetinaAPIPermissionMixin, View):
+    raise_exception = True  # Raise 403 on unauthenticated request
+
+    def get(self, request, image_id):
+        image_object = get_object_or_404(Image, pk=image_id)
+
+        if not user_can_download_image(user=request.user, image=image_object):
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+
+        image_itk = image_object.get_sitk_image()
+        if image_itk is None:
+            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+
+        spacing = image_itk.GetSpacing()
+
+        return HttpResponse(
+            json.dumps(spacing), content_type="application/json"
+        )

@@ -4,11 +4,13 @@ from userena import views as userena_views
 
 from grandchallenge.profiles.forms import EditProfileForm
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.profiles.utils import signin_redirect
 
 
 def login_redirect(request):
-    next = request.GET.get("next", "/")
-    return redirect(next)
+    next_uri = request.GET.get("next")
+    redirect_uri = signin_redirect(redirect=next_uri, user=request.user)
+    return redirect(redirect_uri)
 
 
 def profile(request):
@@ -16,12 +18,14 @@ def profile(request):
     Redirect to the profile page of the currently signed in user.
     """
     if request.user.is_authenticated:
-        # print "username:", request.user.username
-        # print "redirect to profile"
-        return redirect("/accounts/" + request.user.username)
-
+        url = reverse(
+            "userena_profile_detail",
+            kwargs={"username": request.user.username},
+        )
     else:
-        return redirect("/accounts/signin")
+        url = reverse("profile_signin")
+
+    return redirect(url)
 
 
 def profile_edit_redirect(request):
@@ -29,17 +33,18 @@ def profile_edit_redirect(request):
     Redirect to the profile edit page of the currently signed in user.
     """
     if request.user.is_authenticated:
-        # print "username: ", request.user.username
-        # print "redirect to profile edit"
         messages.add_message(
             request,
             messages.INFO,
             "Please fill-in the missing information in the form form below.",
         )
-        return redirect("/accounts/" + request.user.username + "/edit")
-
+        url = reverse(
+            "userena_profile_edit", kwargs={"username": request.user.username}
+        )
     else:
-        return redirect("accounts/signin")
+        url = reverse("profile_signin")
+
+    return redirect(url)
 
 
 def profile_edit(*args, **kwargs):
@@ -53,6 +58,16 @@ def signup(request, extra_context=None, **kwargs):
         request=request,
         extra_context=extra_context,
         success_url=success,
+        **kwargs,
+    )
+    return response
+
+
+def signin(request, **kwargs):
+    redirect_signin_function = signin_redirect
+    response = userena_views.signin(
+        request=request,
+        redirect_signin_function=redirect_signin_function,
         **kwargs,
     )
     return response

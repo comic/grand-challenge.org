@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load static %}
+{% load clean from bleach %}
+
+{% block title %}
+    {{ flatpage.title }} - {{ block.super }}
+{% endblock %}
+
+{% block jumbotron %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <a class="w-100"
+               href="{% url 'home' %}">
+                <img alt="{{ request.site.name }} Banner"
+                     class="rounded w-100"
+                     src="{% static 'images/gcheader.png' %}"
+                >
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <h1>{{ flatpage.title }}</h1>
+
+    {{ flatpage.content|clean }}
+{% endblock %}

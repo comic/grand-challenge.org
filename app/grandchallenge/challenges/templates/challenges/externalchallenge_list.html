@@ -1,4 +1,4 @@
-{% extends 'nobanner.html' %}
+{% extends 'base.html' %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 {% load humanize %}
@@ -19,8 +19,8 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-sm" id="challengesTable">
-            <thead>
+        <table class="table table-hover table-borderless table-sm" id="challengesTable">
+            <thead class="thead-light">
             <tr>
                 <th>Name</th>
                 <th>Created</th>

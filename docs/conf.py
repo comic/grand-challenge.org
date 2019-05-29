@@ -21,6 +21,11 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../app"))
 
+os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
+
+import django
+
+django.setup()
 
 # -- General configuration ------------------------------------------------
 
@@ -38,7 +43,13 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
+    "sphinx_autodoc_typehints",
 ]
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

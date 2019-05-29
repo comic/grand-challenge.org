@@ -4,7 +4,7 @@
     <div class="container">
         <a class="navbar-brand mr-md-2 text-capitalize"
            href="{% url 'home' %}">
-            {{ main_challenge_name }}
+            {{ request.site.name }}
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#collapsibleNavbar">
@@ -13,9 +13,12 @@
 
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link"
-                                        href="{% url 'challenges:list' %}">All
-                    Challenges</a></li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'challenges:list' %}active{% endif %}"
+                       href="{% url 'challenges:list' %}">
+                        All Challenges
+                    </a>
+                </li>
             </ul>
             <ul class="navbar-nav">
                 {% if not hide_userlinks %}

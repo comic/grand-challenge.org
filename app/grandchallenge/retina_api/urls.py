@@ -17,6 +17,11 @@ annotation_router.register(
     views.PolygonAnnotationSetViewSet,
     basename="polygonannotationset",
 )
+annotation_router.register(
+    "etdrsgridannotation",
+    views.ETDRSGridAnnotationViewSet,
+    basename="etdrsgridannotation",
+)
 urlpatterns = [
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
@@ -40,6 +45,21 @@ urlpatterns = [
         "annotation/polygon/users/<uuid:image_id>",
         views.GradersWithPolygonAnnotationsListView.as_view(),
         name="polygon-annotation-users-list-view",
+    ),
+    path(
+        "annotation/landmark/users/<int:user_id>",
+        views.LandmarkAnnotationSetForImageList.as_view(),
+        name="landmark-annotation-images-list-view",
+    ),
+    path(
+        "registration/octobs/<uuid:image_id>",
+        views.OctObsRegistrationRetrieve.as_view(),
+        name="octobs-registration-detail-view",
+    ),
+    path(
+        "image/<uuid:image_id>/spacing/",
+        views.ImageElementSpacingView.as_view(),
+        name="image-element-spacing-view",
     ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
 ]

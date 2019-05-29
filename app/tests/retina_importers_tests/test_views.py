@@ -5,12 +5,14 @@ from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.factories import ImageFactory
 from .helpers import (
     create_upload_image_test_data,
     create_upload_image_invalid_test_data,
     read_json_file,
     get_response_status,
     get_auth_token_header,
+    create_element_spacing_request,
 )
 
 
@@ -142,3 +144,91 @@ class TestCheckImageEndpoint:
         if access:
             response = r.json()
             assert response["exists"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user,expected_status, access",
+    [
+        ("anonymous", status.HTTP_401_UNAUTHORIZED, False),
+        ("normal", status.HTTP_403_FORBIDDEN, False),
+        ("staff", status.HTTP_403_FORBIDDEN, False),
+        ("import_user", status.HTTP_200_OK, True),
+    ],
+)
+class TestSetElementSpacingEndpointAuthentication:
+    def test_authentication(self, client, user, expected_status, access):
+        response = create_element_spacing_request(client, user=user)
+        assert response.status_code == expected_status
+        if access:
+            data = response.json()
+            assert data["success"]
+
+
+@pytest.mark.django_db
+class TestSetElementSpacingEndpointErrors:
+    def test_non_existing_image_error(self, client):
+        image = ImageFactoryWithImageFile()
+        image_name = image.name
+        image.delete()
+        response = create_element_spacing_request(
+            client, image_name=image_name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "Image does not exist"
+
+    def test_non_existing_imagefile_error(self, client):
+        image = ImageFactory()
+        response = create_element_spacing_request(
+            client, image_name=image.name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "ImageFile matching query does not exist."
+
+    def test_multiple_images_error(self, client):
+        image = ImageFactoryWithImageFile()
+        ImageFactoryWithImageFile(name=image.name)
+        response = create_element_spacing_request(
+            client, image_name=image.name
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        r = response.json()
+        assert "errors" in r
+        assert r["errors"] == "Image identifiers returns multiple images."
+
+
+@pytest.mark.django_db
+class TestSetElementSpacingEndpoint:
+    def test_spacing_changes(self, client):
+        image = ImageFactoryWithImageFile()
+        element_spacing = (1.5, 0.5)
+        sitk_image = image.get_sitk_image()
+        original_spacing = sitk_image.GetSpacing()
+        assert element_spacing != original_spacing
+
+        response = create_element_spacing_request(
+            client, image_name=image.name, es=element_spacing
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]
+
+        assert element_spacing == image.get_sitk_image().GetSpacing()
+
+    def test_image_with_study(self, client):
+        image = ImageFactoryWithImageFile()
+        ImageFactoryWithImageFile(name=image.name)
+        response = create_element_spacing_request(
+            client, image_name=image.name, study=image.study
+        )
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]

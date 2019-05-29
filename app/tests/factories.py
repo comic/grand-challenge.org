@@ -1,7 +1,11 @@
 import hashlib
+from datetime import timedelta
+from uuid import uuid4
 
 import factory
+import factory.fuzzy
 from django.conf import settings
+from django.utils import timezone
 
 from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
 from grandchallenge.challenges.models import (
@@ -11,12 +15,24 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.evaluation.models import Submission, Job, Method, Result
+from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.workstations.models import (
+    Session,
+    Workstation,
+    WorkstationImage,
+)
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
+
+
+def hash_sha256(s):
+    m = hashlib.sha256()
+    m.update(s.encode())
+    return f"sha256:{m.hexdigest()}"
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -74,12 +90,6 @@ class RegistrationRequestFactory(factory.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     challenge = factory.SubFactory(ChallengeFactory)
-
-
-def hash_sha256(s):
-    m = hashlib.sha256()
-    m.update(s.encode())
-    return f"sha256:{m.hexdigest()}"
 
 
 class MethodFactory(factory.DjangoModelFactory):
@@ -172,3 +182,70 @@ class ImagingModalityFactory(factory.DjangoModelFactory):
         django_get_or_create = ("modality",)
 
     modality = factory.sequence(lambda n: f"Modality {n}")
+
+
+class StagedFileFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = StagedFile
+
+    file_id = factory.LazyFunction(uuid4)
+    file = factory.django.FileField()
+    timeout = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=1))
+    start_byte = 0
+    end_byte = factory.LazyAttribute(lambda s: s.file.size)
+    client_filename = factory.LazyAttribute(lambda s: s.file.name)
+
+
+class WorkstationFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Workstation
+
+    title = factory.sequence(lambda n: f"Workstation {n}")
+    logo = factory.django.ImageField()
+
+
+class WorkstationImageFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorkstationImage
+
+    workstation = factory.SubFactory(WorkstationFactory)
+    creator = factory.SubFactory(UserFactory)
+    image = factory.django.FileField()
+    image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
+
+
+class SessionFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Session
+
+    creator = factory.SubFactory(UserFactory)
+    workstation_image = factory.SubFactory(WorkstationImageFactory)
+
+
+class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
+    def __init__(self, size=None):
+        self.size = size
+
+    def fuzz(self):
+        if self.size is None:
+            size = factory.fuzzy.random.randgen.randint(2, 30)
+        else:
+            size = self.size
+
+        fuzzy_list = []
+        for i in range(size):
+            fuzzy_list.append(
+                [
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
+                    round(
+                        factory.fuzzy.random.randgen.uniform(0.0, 1000.0), 12
+                    ),
+                ]
+            )
+
+        if size == 1:
+            return fuzzy_list[0]
+
+        return fuzzy_list

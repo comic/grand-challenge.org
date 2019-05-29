@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Update The Workstation Image Settings -
+    {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.workstation.get_absolute_url }}">{{ object.workstation }}</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Update The Workstation Image Settings</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input type="submit" value="Save" class="btn btn-primary"/>
+    </form>
+{% endblock %}

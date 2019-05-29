@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load guardian_tags %}
+{% load admin_urls %}
+{% load thumbnail %}
+
+{% block style %}
+    {{ block.super }}
+    {% if challenge.skin %}
+        <style>
+            {% insert_file challenge.skin %}
+        </style>
+    {% endif %}
+{% endblock %}
+
+{% block title %} {{ challenge.short_name }} {% endblock %}
+
+{% block navbar %}
+    {% if challenge.hide_footer %}
+        <!--hidden -->
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block jumbotron %}
+    {% if challenge.banner %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <a style="width: 100%;"
+                   href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">
+                    <img alt="{% firstof challenge.title challenge.short_name %} Banner"
+                         class="rounded w-100"
+                            {% thumbnail challenge.banner "1110" as im %}
+                         src="{{ im.url }}"
+                         srcset="{{ im.url }} 1x,
+                                    {{ im.url|resolution:'1.5x' }} 1.5x,
+                                    {{ im.url|resolution:'2x' }} 2x"
+                            {% endthumbnail %}
+                    >
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block sidebar %}
+    <div class="col-12 col-md-3 col-lg-2 mb-3">
+        <ul class="nav nav-pills flex-column">
+            {% if not challenge.banner %}
+                <li class="nav-item">
+                    <a class="nav-link"
+                       href="{{ challenge.get_absolute_url }}">
+                        {% firstof challenge.title challenge.short_name %}
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for page in pages %}
+                {% if not page.hidden %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if page == currentpage %}active{% endif %}"
+                           href="{{ page.get_absolute_url }}">
+                            {% filter title %}
+                                {% firstof page.display_title page.title %}
+                            {% endfilter %}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if challenge.use_registration_page %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'participants:registration-create' %}active{% endif %}"
+                       href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}">
+                        Join
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if challenge.use_evaluation %}
+                {% if "change_challenge" in challenge_perms or user_is_participant %}
+                    {% if challenge.evaluation_config.use_teams %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
+                               href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' %}active{% endif %}"
+                           href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name %}">Submit</a>
+                    </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:result-list' %}active{% endif %}"
+                       href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">Results</a>
+                </li>
+            {% endif %}
+
+            {% if challenge.hide_footer and not challenge.hide_signin %}
+                {% include "grandchallenge/partials/userlinks.html" %}
+            {% endif %}
+
+            {% if "change_challenge" in challenge_perms %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown"
+                       href="#"
+                       role="button" aria-haspopup="true"
+                       aria-expanded="false">Admin</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item"
+                           href="{% url 'update' challenge_short_name=challenge.short_name %}">Challenge
+                            Settings</a>
+                        <a class="dropdown-item"
+                           href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
+                        <a class="dropdown-item"
+                           href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">Admins</a>
+                        <a class="dropdown-item"
+                           href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">Participants</a>
+                        <a class="dropdown-item"
+                           href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">Participation
+                            Requests</a>
+                        <a class="dropdown-item"
+                           href="{% url 'uploads:list' challenge_short_name=challenge.short_name %}">Uploaded
+                            Files</a>
+                        {% if challenge.use_evaluation %}
+                            <hr/>
+                            <a class="dropdown-item"
+                               href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
+                                Evaluation Settings
+                            </a>
+                            <a class="dropdown-item"
+                               href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
+                                Evaluation Methods
+                            </a>
+                            <a class="dropdown-item"
+                               href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
+                                Evaluation Submissions
+                            </a>
+                            <a class="dropdown-item"
+                               href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">
+                                Evaluation Jobs
+                            </a>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    {% if challenge.hide_footer %}
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}

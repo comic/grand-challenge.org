@@ -17,28 +17,7 @@ from grandchallenge.annotations.models import (
     SingleLandmarkAnnotation,
 )
 from tests.cases_tests.factories import ImageFactory
-from tests.factories import UserFactory
-
-
-class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
-    def __init__(self, size=None):
-        self.size = size
-
-    def fuzz(self):
-        if self.size is None:
-            size = factory.fuzzy.random.randgen.randint(1, 30)
-        else:
-            size = self.size
-
-        fuzzy_list = []
-        for i in range(size):
-            fuzzy_list.append(
-                [
-                    factory.fuzzy.random.randgen.uniform(0.0, 1000.0),
-                    factory.fuzzy.random.randgen.uniform(0.0, 1000.0),
-                ]
-            )
-        return fuzzy_list
+from tests.factories import UserFactory, FuzzyFloatCoordinatesList
 
 
 class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
@@ -57,16 +36,16 @@ class ETDRSGridAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
         model = ETDRSGridAnnotation
 
-    fovea = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
-    optic_disk = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
+    fovea = FuzzyFloatCoordinatesList(1)
+    optic_disk = FuzzyFloatCoordinatesList(1)
 
 
 class MeasurementAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
         model = MeasurementAnnotation
 
-    start_voxel = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
-    end_voxel = [random.uniform(0.0, 50.0), random.uniform(0.0, 50.0)]
+    start_voxel = FuzzyFloatCoordinatesList(1)
+    end_voxel = FuzzyFloatCoordinatesList(1)
 
 
 class DefaultNamedImageAnnotationModelFactory(

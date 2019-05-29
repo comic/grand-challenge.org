@@ -1,5 +1,6 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load grandchallenge_tags %}
+{% load workstations %}
 
 {% block title %}
     Dataset - {{ block.super }}
@@ -11,15 +12,15 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'datasets:imageset-add-images' challenge_short_name=site.short_name pk=object.pk %}">
+           href="{% url 'datasets:imageset-add-images' challenge_short_name=challenge.short_name pk=object.pk %}">
             <i class="fas fa-plus"></i> Add images to this dataset
         </a>
         <a class="btn btn-primary"
-           href="{% url 'datasets:imageset-update' challenge_short_name=site.short_name pk=object.pk %}">
+           href="{% url 'datasets:imageset-update' challenge_short_name=challenge.short_name pk=object.pk %}">
             <i class="fas fa-edit"></i> Update the images used in this dataset
         </a>
         <a class="btn btn-primary"
-           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=object.pk %}">
+           href="{% url 'datasets:annotationset-create' challenge_short_name=challenge.short_name base_pk=object.pk %}">
             <i class="fas fa-plus"></i> Add a set of annotations to this
             dataset
         </a>
@@ -55,8 +56,8 @@
     <h3>Images</h3>
 
     <div class="table-responsive">
-        <table class="table table-sm" id="Images">
-            <thead>
+        <table class="table table-hover table-borderless table-sm" id="Images">
+            <thead class="thead-light">
             <tr>
                 <th>Key</th>
                 <th>Image</th>
@@ -66,7 +67,7 @@
             {% for im in object.images_with_keys %}
                 <tr>
                     <td>{{ im.key }}</td>
-                    <td><a href="{{ im.image.cirrus_link }}"
+                    <td><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=im.image %}"
                            title="View Image">{{ im.image }}</a></td>
                 </tr>
             {% endfor %}

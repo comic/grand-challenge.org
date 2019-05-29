@@ -5,12 +5,14 @@ from rest_framework import status
 from django.core.cache import cache
 
 from grandchallenge.subdomains.utils import reverse
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
     client_login,
 )
+from tests.retina_importers_tests.helpers import create_element_spacing_request
 
 
 @pytest.mark.django_db
@@ -314,3 +316,62 @@ class TestDataAPIEndpoint:
 
 
 batch_test_data_endpoints(TestDataAPIEndpoint)
+
+
+@pytest.mark.django_db
+class TestImageElementSpacingView:
+    @pytest.mark.parametrize(
+        "user", ["anonymous", "normal", "staff", "retina_user"]
+    )
+    def test_no_access(self, client, user):
+        image = ImageFactoryWithImageFile()
+        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
+        client, _ = client_login(client, user=user)
+        response = client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @pytest.mark.parametrize(
+        "user,expected_status",
+        [
+            ("anonymous", status.HTTP_403_FORBIDDEN),
+            ("normal", status.HTTP_403_FORBIDDEN),
+            ("staff", status.HTTP_403_FORBIDDEN),
+            ("retina_user", status.HTTP_200_OK),
+        ],
+    )
+    def test_access(self, client, user, expected_status):
+        image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
+        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
+        client, _ = client_login(client, user=user)
+        response = client.get(url)
+        assert response.status_code == expected_status
+
+    def test_returns_correct_spacing(self, client):
+        image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
+        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
+        client, _ = client_login(client, user="retina_user")
+        response = client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert list(image.get_sitk_image().GetSpacing()) == r
+
+    def test_returns_correct_spacing_changed(self, client):
+        image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
+        element_spacing = (1.5, 0.5)
+        response = create_element_spacing_request(
+            client, image_name=image.name, es=element_spacing
+        )
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]
+        assert element_spacing == image.get_sitk_image().GetSpacing()
+
+        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
+        client, _ = client_login(client, user="retina_user")
+        response = client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert list(image.get_sitk_image().GetSpacing()) == r

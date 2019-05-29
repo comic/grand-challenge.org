@@ -29,5 +29,4 @@ class ImageSerializer(serializers.ModelSerializer):
             "field_of_view",
             "shape_without_color",
             "shape",
-            "cirrus_link",
         )

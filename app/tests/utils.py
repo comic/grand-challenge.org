@@ -1,8 +1,10 @@
 from typing import Callable
 from urllib.parse import urlparse
 
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, Client
 from django.views.generic import View
 
@@ -13,8 +15,10 @@ from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 
 def assert_redirect(uri: str, *args):
     request, response = assert_status(302, *args)
+
     redirect_url = list(urlparse(response.url))[2]
     assert uri == redirect_url
+
     return request, response
 
 
@@ -27,11 +31,20 @@ def assert_status(
 ):
     request = rf.get("/rand")
     request.challenge = challenge
+
     if user is not None:
         request.user = user
+
     view = view.as_view()
-    response = view(request)
-    assert response.status_code == code
+
+    if code == 403:
+        with pytest.raises(PermissionDenied):
+            view(request)
+        response = None
+    else:
+        response = view(request)
+        assert response.status_code == code
+
     return request, response
 
 
@@ -234,7 +247,9 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
         )
 
 
-def validate_staff_only_view(*, client: Client, **kwargs):
+def validate_staff_only_view(
+    *, client: Client, should_redirect=False, **kwargs
+):
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL, client=client, **kwargs
     )
@@ -242,11 +257,16 @@ def validate_staff_only_view(*, client: Client, **kwargs):
     user = UserFactory()
     staff_user = UserFactory(is_staff=True)
 
-    tests = [(200, staff_user), (403, user)]
+    assert_viewname_status(code=403, client=client, user=user, **kwargs)
 
-    for test in tests:
+    if should_redirect:
+        staff_response = assert_viewname_status(
+            code=302, client=client, user=staff_user, **kwargs
+        )
+        assert settings.LOGIN_URL not in staff_response.url
+    else:
         assert_viewname_status(
-            code=test[0], client=client, user=test[1], **kwargs
+            code=200, client=client, user=staff_user, **kwargs
         )
 
 

@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load grandchallenge_tags %}
 
 {% block title %}
@@ -11,7 +11,7 @@
 
     <p>
         <a class="btn btn-primary"
-           href="{% url 'datasets:annotationset-create' challenge_short_name=site.short_name base_pk=view.kwargs.base_pk %}">
+           href="{% url 'datasets:annotationset-create' challenge_short_name=challenge.short_name base_pk=view.kwargs.base_pk %}">
             <i class="fas fa-plus"></i> Add annoations to this dataset
         </a>
     </p>

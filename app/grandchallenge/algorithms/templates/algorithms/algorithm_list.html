@@ -1,4 +1,4 @@
-{% extends "nobanner.html" %}
+{% extends "base.html" %}
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
@@ -6,52 +6,64 @@
     Algorithms - {{ block.super }}
 {% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Algorithms
+        </li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h2>Algorithms</h2>
 
-    <p>
+    <div class="card-columns">
+        {% for algorithm in object_list %}
+            <div class="card">
+                <a href="{{ algorithm.get_absolute_url }}">
+                    <img class="card-img-top img-fluid"
+                         src="{{ algorithm.logo.url }}"
+                         alt="{{ algorithm }} Logo">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ algorithm.title }}</h5>
+                    <p class="card-text">{{ algorithm.description }}</p>
+                    <a href="{{ algorithm.get_absolute_url }}"
+                       class="btn btn-primary"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="View Algorithm">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                    {% if algorithm.ready %}
+                        <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}"
+                           class="btn btn-primary"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Try Out This Algorithm">
+                            <i class="fa fa-flask"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p class="mt-3">
         <a class="btn btn-primary"
            href="{% url 'algorithms:create' %}">
             <i class="fas fa-plus"></i> Add a new algorithm
         </a>
     </p>
-
-    <h2>Existing Algorithms</h2>
-
-    <div class="table-responsive">
-        <table class="table table-sm">
-            <thead>
-            <tr>
-                <th>Title</th>
-                <th>Created</th>
-                <th>Creator</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for algorithm in object_list %}
-                <tr>
-                    <td>
-                        <a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
-                    </td>
-                    <td data-order="{{ algorithm.created|date:"U" }}">{{ algorithm.created }}</td>
-                    <td>{{ algorithm.creator|user_profile_link }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('.table').DataTable({
-                order: [[0, "asc"]],
-                "pageLength": 50,
-                ordering: true
-            });
-        });
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
     </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 {% load guardian_tags %}
@@ -9,7 +9,7 @@
 
     <h2>Submission</h2>
 
-    {{ site.evaluation_config.submission_page_html|clean }}
+    {{ challenge.evaluation_config.submission_page_html|clean }}
 
     <h3>Create a new submission</h3>
 
@@ -18,10 +18,10 @@
         <p>
             As an admin for this challenge you can make as many submissions as
             you like. Challenge participants will be allow to make
-            {{ site.evaluation_config.daily_submission_limit }}
-            submission{{ site.evaluation_config.daily_submission_limit|pluralize }}
+            {{ challenge.evaluation_config.daily_submission_limit }}
+            submission{{ challenge.evaluation_config.daily_submission_limit|pluralize }}
             per day. You can change the Daily Submission Limit in <a
-                href="{% url 'evaluation:config-update' challenge_short_name=site.short_name %}">
+                href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
             Evaluation Settings</a>.
         </p>
 
@@ -34,7 +34,7 @@
             <p>
                 You need to wait until all of your existing submissions have
                 been evaluated before you can make another submission.
-                <a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">
+                <a href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">
                     Click here
                 </a>
                 to see their status.
@@ -59,10 +59,10 @@
 
     {% endif %}
 
-    <h3>View my submissions</h3>
+    <h3>View your submissions</h3>
 
     <p>
-        <a href="{% url 'evaluation:job-list' challenge_short_name=site.short_name %}">Click
+        <a href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">Click
             here</a>
         to view your current submissions to this challenge.</p>
 

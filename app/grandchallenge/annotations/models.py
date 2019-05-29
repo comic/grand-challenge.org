@@ -20,14 +20,16 @@ class AbstractAnnotationModel(UUIDModel):
     # Override inherited 'created' attribute to allow setting of value
     created = models.DateTimeField(default=timezone.now)
 
-    class Meta:
+    class Meta(UUIDModel.Meta):
         abstract = True
+        get_latest_by = "created"
+        ordering = ["-created"]
 
     def save(self, *args, **kwargs):
         """ Override save method to enable setting of permissions for retina users """
         created = self._state.adding
 
-        super(AbstractAnnotationModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         if not created:
             return
@@ -55,7 +57,7 @@ class AbstractSingleAnnotationModel(UUIDModel):
         """ Override save method to enable setting of permissions for retina users """
         created = self._state.adding
 
-        super(AbstractSingleAnnotationModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         if not created:
             return
@@ -77,8 +79,10 @@ class AbstractSingleAnnotationModel(UUIDModel):
                 assign_perm(permission_name, self.annotation_set.grader, self)
                 assign_perm(permission_name, admins_group, self)
 
-    class Meta:
+    class Meta(UUIDModel.Meta):
         abstract = True
+        get_latest_by = "created"
+        ordering = ["-created"]
 
 
 class AbstractImageAnnotationModel(AbstractAnnotationModel):
@@ -96,7 +100,7 @@ class AbstractImageAnnotationModel(AbstractAnnotationModel):
             self.image,
         )
 
-    class Meta:
+    class Meta(AbstractAnnotationModel.Meta):
         abstract = True
 
 
@@ -108,7 +112,7 @@ class AbstractNamedImageAnnotationModel(AbstractImageAnnotationModel):
 
     name = models.CharField(max_length=255)
 
-    class Meta:
+    class Meta(AbstractImageAnnotationModel.Meta):
         # Create unique together constraint to disallow duplicates
         unique_together = ("image", "grader", "created", "name")
         abstract = True
@@ -123,7 +127,7 @@ class MeasurementAnnotation(AbstractImageAnnotationModel):
     start_voxel = ArrayField(models.FloatField(), size=2)
     end_voxel = ArrayField(models.FloatField(), size=2)
 
-    class Meta:
+    class Meta(AbstractImageAnnotationModel.Meta):
         # Create unique together constraint to disallow duplicates
         unique_together = (
             "image",
@@ -186,7 +190,7 @@ class LandmarkAnnotationSet(AbstractAnnotationModel):
     Contains only the fields from AbstractAnnotationModel
     """
 
-    class Meta:
+    class Meta(AbstractAnnotationModel.Meta):
         unique_together = ("grader", "created")
 
 
@@ -204,7 +208,7 @@ class SingleLandmarkAnnotation(AbstractSingleAnnotationModel):
     # General form: [[x1,y1],[x2,y2],...]
     landmarks = ArrayField(ArrayField(models.FloatField(), size=2))
 
-    class Meta:
+    class Meta(AbstractSingleAnnotationModel.Meta):
         # Allow only one LandmarkAnnotation for a specific image in a set
         unique_together = ("image", "annotation_set")
 
@@ -219,5 +223,5 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
     fovea = ArrayField(models.FloatField(), size=2)
     optic_disk = ArrayField(models.FloatField(), size=2)
 
-    class Meta:
+    class Meta(AbstractImageAnnotationModel.Meta):
         unique_together = ("image", "grader", "created")

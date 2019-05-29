@@ -17,6 +17,7 @@ from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     LandmarkAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
+    SingleLandmarkAnnotationSerializer,
 )
 from tests.serializer_helpers import batch_test_serializers
 
@@ -32,7 +33,7 @@ serializers = {
         "unique": True,
         "factory": ETDRSGridAnnotationFactory,
         "serializer": ETDRSGridAnnotationSerializer,
-        "fields": ("grader", "created", "image", "fovea", "optic_disk"),
+        "fields": ("id", "grader", "created", "image", "fovea", "optic_disk"),
     },
     "measurement": {
         "unique": True,
@@ -63,13 +64,19 @@ serializers = {
         "unique": True,
         "factory": SinglePolygonAnnotationFactory,
         "serializer": SinglePolygonAnnotationSerializer,
-        "fields": ("id", "value", "annotation_set"),
+        "fields": ("id", "value", "annotation_set", "created"),
     },
     "landmark": {
         "unique": True,
         "factory": LandmarkAnnotationSetFactory,
         "serializer": LandmarkAnnotationSetSerializer,
-        "fields": ("grader", "created"),
+        "fields": ("id", "grader", "created", "singlelandmarkannotation_set"),
+    },
+    "single_landmark": {
+        "unique": True,
+        "factory": SingleLandmarkAnnotationFactory,
+        "serializer": SingleLandmarkAnnotationSerializer,
+        "fields": ("image", "annotation_set", "landmarks"),
     },
 }
 

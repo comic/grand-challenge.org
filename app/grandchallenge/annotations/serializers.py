@@ -27,11 +27,14 @@ class AbstractAnnotationSerializer(serializers.ModelSerializer):
 class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """
-        Validate that the user that is creating this object equals the annotation_set.grader for retina_graders
+        Validate that the user that is creating this object equals the
+        annotation_set.grader for retina_graders
         """
-        validate_grader_is_current_retina_user(
-            data["annotation_set"].grader, self.context
-        )
+        if data.get("annotation_set") is None:
+            return data
+
+        grader = data["annotation_set"].grader
+        validate_grader_is_current_retina_user(grader, self.context)
         return data
 
     class Meta:
@@ -41,7 +44,7 @@ class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
 class ETDRSGridAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ETDRSGridAnnotation
-        fields = ("grader", "created", "image", "fovea", "optic_disk")
+        fields = ("id", "grader", "created", "image", "fovea", "optic_disk")
 
 
 class MeasurementAnnotationSerializer(AbstractAnnotationSerializer):
@@ -63,7 +66,7 @@ class SinglePolygonAnnotationSerializer(AbstractSingleAnnotationSerializer):
 
     class Meta:
         model = SinglePolygonAnnotation
-        fields = ("id", "value", "annotation_set")
+        fields = ("id", "value", "annotation_set", "created")
 
 
 class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
@@ -83,13 +86,17 @@ class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
         )
 
 
-class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
-    class Meta:
-        model = LandmarkAnnotationSet
-        fields = ("grader", "created")
-
-
 class SingleLandmarkAnnotationSerializer(AbstractSingleAnnotationSerializer):
     class Meta:
         model = SingleLandmarkAnnotation
         fields = ("image", "annotation_set", "landmarks")
+
+
+class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
+    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializer(
+        many=True, read_only=True
+    )
+
+    class Meta:
+        model = LandmarkAnnotationSet
+        fields = ("id", "grader", "created", "singlelandmarkannotation_set")

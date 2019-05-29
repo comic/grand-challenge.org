@@ -1,22 +1,29 @@
-{% extends "nobanner.html" %}
+{% extends "base.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
+{% load workstations %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
 {% endblock %}
 
 {% block content %}
 
     <h2>{{ object.title }}</h2>
 
-    {% if object.description_html %}
-        <iframe srcdoc="{{ object.description_html }}"
-                style="width: 100%; height: 600px;">
-        </iframe>
-    {% endif %}
+    <p>{{ object.description }}</p>
 
     {% if object.ready %}
         <p>
@@ -34,8 +41,8 @@
     <h2>Jobs for this algorithm</h2>
 
     <div class="table-responsive">
-        <table class="table table-sm">
-            <thead>
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
             <tr>
                 <th>Created</th>
                 <th>Creator</th>
@@ -51,7 +58,7 @@
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td>{{ job.image.origin.creator|user_profile_link }}</td>
                     <td>
-                        <a href="{{ job.image.cirrus_link }}">{{ job.image }}</a>
+                        <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image %}">{{ job.image }}</a>
                     </td>
                     <td>
                     <span class="badge
@@ -71,7 +78,7 @@
                     <td>
                         {% if job.result.images.all %}
                             {% for image in job.result.images.all %}
-                                <a href="{{ job.image.cirrus_link }}&amp;{{ CIRRUS_ANNOTATION_QUERY_PARAM }}={{ image.pk }}">
+                                <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image overlay=image %}">
                                     {{ image }}
                                 </a>
                             {% endfor %}

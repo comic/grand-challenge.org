@@ -91,7 +91,7 @@ class MethodForm(forms.ModelForm):
         ],
         help_text=(
             ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE > IMAGE.tar | gzip'. See "
+            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{# 403 Forbidden - the user is signed in but need permission to access this page #}
+
+{% block title %}Forbidden - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h2>Forbidden</h2>
+    <p>
+        You do not have permission to access this content.
+    </p>
+{% endblock %}

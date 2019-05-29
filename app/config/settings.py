@@ -1,4 +1,3 @@
-# Django settings for comic project.
 import glob
 import os
 import re
@@ -6,8 +5,10 @@ import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
+import sentry_sdk
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from config.denylist import USERNAME_DENYLIST
 
@@ -17,7 +18,6 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-# Default COMIC settings, to be included by settings.py
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
@@ -105,10 +105,6 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
-
 ##############################################################################
 #
 # Storage
@@ -185,7 +181,6 @@ CACHES = {
     }
 }
 
-
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
@@ -255,8 +250,9 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                "grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                "grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
+                "grandchallenge.core.context_processors.challenge",
+                "grandchallenge.core.context_processors.google_keys",
+                "grandchallenge.core.context_processors.debug",
             ]
         },
     }
@@ -264,21 +260,23 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Keep whitenoise after security and before all else
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Keep whitenoise after security and before all else
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
-    "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
+    # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
-
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
@@ -294,10 +292,10 @@ DJANGO_APPS = [
     "django.contrib.humanize",
     "django.contrib.admin",
     "django.contrib.postgres",
+    "django.contrib.flatpages",
 ]
 
 THIRD_PARTY_APPS = [
-    "raven.contrib.django.raven_compat",  # error logging
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
@@ -314,6 +312,8 @@ THIRD_PARTY_APPS = [
     "sorl.thumbnail",  # for dynamic thumbnails
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
+    "django_extensions",  # custom extensions
+    "simple_history",  # for object history
 ]
 
 LOCAL_APPS = [
@@ -342,6 +342,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
+    "grandchallenge.workstations",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -409,6 +410,10 @@ SUMMERNOTE_CONFIG = {
     },
 }
 
+# sorl.thumbnail settings
+THUMBNAIL_FORMAT = "PNG"
+THUMBNAIL_ALTERNATIVE_RESOLUTIONS = [1.5, 2]
+
 # Settings for allowed HTML
 BLEACH_ALLOWED_TAGS = [
     "a",
@@ -461,6 +466,9 @@ BLEACH_ALLOWED_ATTRIBUTES = {
         "height",
     ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
+    # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
+    "th": ["scope", "colspan"],
+    "td": ["colspan"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
@@ -481,32 +489,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
-# This configuration writes WARNING and worse errors to an error log file, and
-# sends an email to all admins. It also writes INFO logmessages and worse to a
-# regular log file.
-LOG_FILEPATH = "/tmp/django.log"
-LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
-    "root": {"level": "WARNING", "handlers": ["sentry"]},
-    "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(message)s"
-        }
-    },
+    "disable_existing_loggers": False,
     "handlers": {
-        "sentry": {
-            "level": "ERROR",
-            # To capture more than ERROR, change to WARNING, INFO, etc.
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler"}
     },
     "loggers": {
         "grandchallenge": {
@@ -519,26 +506,27 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "raven": {
-            "level": "DEBUG",
+        "werkzeug": {
             "handlers": ["console"],
-            "propagate": False,
-        },
-        "sentry.errors": {
             "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
+            "propagate": True,
         },
     },
 }
 
-RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
+sentry_sdk.init(
+    dsn=os.environ.get("DJANGO_SENTRY_DSN", ""),
+    integrations=[DjangoIntegration()],
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
+    "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
@@ -569,13 +557,19 @@ CONTAINER_EXEC_MEMORY_LIMIT = os.environ.get(
 )
 CONTAINER_EXEC_IO_IMAGE = "alpine:3.9"
 CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:5cb3aa00f89934411ffba5c063a9bc98ace875d8f92e77d0029543d9f2ef4ad0"
+    "sha256:055936d3920576da37aa9bc460d70c5f212028bda1c08c0879aedf03d7a66ea1"
 )
 CONTAINER_EXEC_CPU_QUOTA = int(
     os.environ.get("CONTAINER_EXEC_CPU_QUOTA", "100000")
 )
 CONTAINER_EXEC_CPU_PERIOD = int(
     os.environ.get("CONTAINER_EXEC_CPU_PERIOD", "100000")
+)
+CONTAINER_EXEC_PIDS_LIMIT = int(
+    os.environ.get("CONTAINER_EXEC_PIDS_LIMIT", "128")
+)
+CONTAINER_EXEC_CPU_SHARES = int(
+    os.environ.get("CONTAINER_EXEC_CPU_SHARES", "1024")  # Default weight
 )
 CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
     "CONTAINER_EXEC_DOCKER_RUNTIME", None
@@ -598,10 +592,18 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
     },
+    "stop_expired_services": {
+        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+        "kwargs": {"app_label": "workstations", "model_name": "session"},
+        "schedule": timedelta(minutes=5),
+    },
 }
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.container_exec.tasks.start_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_service": "workstations",
+    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
@@ -611,10 +613,20 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-# CIRRUS Is an external application that can view images
-CIRRUS_APPLICATION = "https://apps.diagnijmegen.nl/Applications/CIRRUSWeb_master_98d13770/#!/?workstation=BasicWorkstation"
-CIRRUS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-CIRRUS_ANNOTATION_QUERY_PARAM = "grand_challenge_overlay"
+# The workstation that is accessible by all authorised users
+DEFAULT_WORKSTATION_SLUG = os.environ.get(
+    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
+)
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+# The name of the network that the workstations will be attached to
+WORKSTATIONS_NETWORK_NAME = os.environ.get(
+    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
+)
+# The total limit on the number of sessions
+WORKSTATIONS_MAXIMUM_SESSIONS = int(
+    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
+)
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
@@ -649,7 +661,10 @@ if DEBUG:
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
 
-        MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)
+        MIDDLEWARE = (
+            "debug_toolbar.middleware.DebugToolbarMiddleware",
+            *MIDDLEWARE,
+        )
 
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"

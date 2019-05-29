@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Workstation {{ object|yesno:"Update,Create" }} -
+    {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ object|yesno:"Update,Create" }} a Workstation</h2>
+    {% crispy form %}
+{% endblock %}

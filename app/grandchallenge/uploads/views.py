@@ -1,7 +1,6 @@
 from os.path import basename
 
 from django.contrib import messages
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import ListView
@@ -24,18 +23,18 @@ class UploadList(
 
 def upload_handler(request):
     """
-    Upload a file to the given comicsite, display files previously uploaded
+    Upload a file to the given challenge, display files previously uploaded
     """
-    site = request.challenge
+    challenge = request.challenge
 
     view_url = reverse(
-        "uploads:create", kwargs={"challenge_short_name": site.short_name}
+        "uploads:create", kwargs={"challenge_short_name": challenge.short_name}
     )
 
     if request.method == "POST":
         # set values excluded from form here to make the model validate
         uploadedFile = UploadModel(
-            challenge=site,
+            challenge=challenge,
             permission_lvl=UploadModel.ADMIN_ONLY,
             user=request.user,
         )
@@ -56,8 +55,8 @@ def upload_handler(request):
             send_file_uploaded_notification_email(
                 uploader=request.user,
                 filename=filename,
-                challenge=site,
-                site=get_current_site(request),
+                challenge=challenge,
+                site=request.site,
             )
             return HttpResponseRedirect(view_url)
 
@@ -67,15 +66,22 @@ def upload_handler(request):
     else:
         form = UserUploadForm()
 
-    pages = site.page_set.all()
+    pages = challenge.page_set.all()
 
-    if not (site.is_admin(request.user) or site.is_participant(request.user)):
-        p = Page(challenge=site, title="files")
+    if not (
+        challenge.is_admin(request.user)
+        or challenge.is_participant(request.user)
+    ):
+        p = Page(challenge=challenge, title="files")
         currentpage = permissionMessage(request, p)
         response = render(
             request,
             "page.html",
-            {"site": site, "currentpage": currentpage, "pages": pages},
+            {
+                "challenge": challenge,
+                "currentpage": currentpage,
+                "pages": pages,
+            },
         )
         response.status_code = 403
         return response
@@ -83,5 +89,10 @@ def upload_handler(request):
     return render(
         request,
         "uploads/comicupload.html",
-        {"form": form, "upload_url": view_url, "site": site, "pages": pages},
+        {
+            "form": form,
+            "upload_url": view_url,
+            "challenge": challenge,
+            "pages": pages,
+        },
     )

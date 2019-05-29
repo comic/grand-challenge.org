@@ -1,4 +1,4 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
@@ -9,8 +9,8 @@
     {% endblock %}
 
     <div class="table-responsive">
-        <table class="table table-sm" id="usersTable">
-            <thead>
+        <table class="table table-hover table-borderless table-sm" id="usersTable">
+            <thead class="thead-light">
             <tr>
                 <th>Username</th>
                 <th>Name</th>

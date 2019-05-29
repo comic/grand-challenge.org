@@ -1,10 +1,10 @@
-{% extends "site.html" %}
+{% extends "challenge.html" %}
 {% load crispy_forms_tags %}
 {% load static %}
 
 {% block content %}
 
-    <h2>Add another admin to {{ site.short_name }}</h2>
+    <h2>Add another admin to {{ challenge.short_name }}</h2>
 
     <form action="" method="post">
         {% csrf_token %}

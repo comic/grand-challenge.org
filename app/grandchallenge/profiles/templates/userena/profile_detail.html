@@ -1,4 +1,4 @@
-{% extends 'nobanner.html' %}
+{% extends 'base.html' %}
 {% load i18n %}
 {% load url from grandchallenge_tags %}
 
@@ -12,8 +12,6 @@
 
 {% block content %}
     <h2>User details</h2>
-    <div class="white-box">
-
         <div id="details" class="row">
             {% block profile_details %}
                 <div class="col-sm-2">
@@ -92,7 +90,4 @@
                 </div>
             {% endblock %}
         </div>
-
-
-    </div>
 {% endblock %}

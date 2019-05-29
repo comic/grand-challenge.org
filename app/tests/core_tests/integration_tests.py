@@ -4,6 +4,7 @@ from random import choice, randint
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
 from django.core import mail
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -25,27 +26,24 @@ from tests.utils import get_http_host
 PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
-def create_page(comicsite, title, content="testcontent", permission_lvl=None):
+def create_page(challenge, title, content="testcontent", permission_lvl=None):
     if permission_lvl is None:
         permission_lvl = Page.ALL
     return PageFactory(
         title=title,
-        challenge=comicsite,
+        challenge=challenge,
         html=content,
         permission_lvl=permission_lvl,
     )
 
 
-def get_first_page(comicsite):
-    """ Get the first page of comicsite, saves some typing..
-    """
-    return Page.objects.filter(challenge=comicsite)[0]
+def get_first_page(challenge):
+    return Page.objects.filter(challenge=challenge)[0]
 
 
 def extract_form_errors(html):
     """ If something in post to a form url fails, I want to know what the
     problem was.
-    
     """
     errors = re.findall(
         '<ul class="errorlist"(.*)</ul>', html.decode(), re.IGNORECASE
@@ -97,34 +95,14 @@ class ComicframeworkTestCase(TestCase):
     def setUp_base(self):
         """ This setup should be run for all comic framework testcases
         """
-        self._create_main_project_and_root()
+        self._create_root_superuser()
 
     def setUp_extra(self):
         """ Overwrite this method in child classes 
         """
         pass
 
-    def _create_main_project_and_root(self):
-        """ Everything in the framework assumes that there is one main project which
-        is always shown in a bar at the very top of the page. Make sure this exists
-         
-        Do not create this project through admin because admin will throw an error
-        at this point because MAIN_PROJECT can not be found. Chicken Egg. 
-        
-        Create root user to have an admin user for main project. Root is automatically
-        admin for every project
-        """
-        if (
-            len(
-                Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
-            )
-            == 0
-        ):
-            main = Challenge.objects.create(
-                short_name=settings.MAIN_PROJECT_NAME,
-                description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
-            )
-            main.save()
+    def _create_root_superuser(self):
         User = get_user_model()
         try:
             self.root = User.objects.filter(username="root")[0]
@@ -151,7 +129,7 @@ class ComicframeworkTestCase(TestCase):
         # to maximize test coverage.
         # A user who has created a project
         projectadmin = self._create_random_user("projectadmin")
-        testproject = self._create_comicsite_in_admin(
+        testproject = self._create_challenge_in_admin(
             projectadmin, projectname
         )
         create_page(testproject, "testpage1")
@@ -262,7 +240,7 @@ class ComicframeworkTestCase(TestCase):
             username = user.username
         return response, username
 
-    def _signup_user(self, overwrite_data=None, site=None):
+    def _signup_user(self, overwrite_data=None):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
         For example, signup_user({'username':'user1'}) to creates a user called 
@@ -297,7 +275,7 @@ class ComicframeworkTestCase(TestCase):
             % (extract_form_errors(signin_page.content), data),
         )
 
-    def _create_random_user(self, startname="", site=None):
+    def _create_random_user(self, startname=""):
         """ Sign up a user, saves me having to think of a unique name each time
         predend startname if given
         """
@@ -357,14 +335,13 @@ class ComicframeworkTestCase(TestCase):
         query_result = User.objects.filter(username=username)
         return query_result[0]
 
-    def _try_create_comicsite(
+    def _try_create_challenge(
         self, user, short_name, description="test project"
     ):
-        """ split this off from create_comicsite because sometimes you just
+        """ split this off from create_challenge because sometimes you just
         want to assert that creation fails
         """
         url = reverse("challenges:create")
-        factory = RequestFactory()
         storage = DefaultStorage()
         banner = storage._open(
             settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg"
@@ -380,24 +357,17 @@ class ComicframeworkTestCase(TestCase):
             "page_set-INITIAL_FORMS": "0",
             "page_set-MAX_NUM_FORMS": "",
         }
-        success = self._login(user)
+        self._login(user)
         response = self.client.post(url, data)
         return response
 
-    def _create_comicsite_in_admin(
+    def _create_challenge_in_admin(
         self, user, short_name, description="test project"
     ):
-        """ Create a comicsite object as if created through django admin interface.
-        
         """
-        # project = ComicSite.objects.create(short_name=short_name,
-        # description=description,
-        # header_image=settings.COMIC_PUBLIC_FOLDER_NAME+"fakefile2.jpg")
-        # project.save()
-        # because we are creating a comicsite directly, some methods from admin
-        # are not being called as they should. Do this manually
-        # ad = ComicSiteAdmin(project,admin.site)
-        response = self._try_create_comicsite(user, short_name, description)
+        Create a challenge object as if created through django admin interface.
+        """
+        response = self._try_create_challenge(user, short_name, description)
         errors = self._find_errors_in_page(response)
         if errors:
             self.assertFalse(
@@ -465,9 +435,8 @@ class CreateProjectTest(ComicframeworkTestCase):
         # to maximize test coverage.
         # A user who has created a project
         self.projectadmin = self._create_random_user("projectadmin")
-        # self.testproject = self._create_comicsite_in_admin(self.projectadmin,"under_score")
         challenge_short_name = "under_score"
-        response = self._try_create_comicsite(
+        response = self._try_create_challenge(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
@@ -479,7 +448,7 @@ class CreateProjectTest(ComicframeworkTestCase):
             ),
         )
         challenge_short_name = "project with spaces"
-        response = self._try_create_comicsite(
+        response = self._try_create_challenge(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
@@ -491,7 +460,7 @@ class CreateProjectTest(ComicframeworkTestCase):
             ),
         )
         challenge_short_name = "project-with-w#$%^rd-items"
-        response = self._try_create_comicsite(
+        response = self._try_create_challenge(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
@@ -503,7 +472,7 @@ class CreateProjectTest(ComicframeworkTestCase):
             ),
         )
         challenge_short_name = "images"
-        response = self._try_create_comicsite(
+        response = self._try_create_challenge(
             self.projectadmin, challenge_short_name
         )
         errors = self._find_errors_in_page(response)
@@ -537,7 +506,7 @@ class ViewsTest(ComicframeworkTestCase):
         
         """
         user = self._create_user({"username": "user2", "email": "ab@cd.com"})
-        testproject = self._create_comicsite_in_admin(user, "user1project")
+        testproject = self._create_challenge_in_admin(user, "user1project")
         testpage1 = create_page(testproject, "testpage1")
         testpage2 = create_page(testproject, "testpage2")
         self._test_page_can_be_viewed(user, testpage1)
@@ -588,7 +557,7 @@ class ViewsTest(ComicframeworkTestCase):
         # robots.txt for each project, which by bots can be seen as seperate
         # domain beacuse we use dubdomains to designate projects
         robots_url_project = reverse(
-            "comicsite_robots_txt",
+            "subdomain_robots_txt",
             kwargs={"challenge_short_name": self.testproject.short_name},
         )
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in
@@ -680,6 +649,7 @@ class UploadTest(ComicframeworkTestCase):
         request = factory.get(url)
         request.user = user
         request.challenge = self.testproject
+        request.site = get_current_site(request)
         fakecontent = "some uploaded content for" + testfilename
         request.FILES["file"] = SimpleUploadedFile(
             name=testfilename, content=fakecontent.encode()
@@ -969,7 +939,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
     def test_project_login(self):
         # see if login for specific project works. This tests the project
         # centered signup form.
-        self._create_random_user(site=self.testproject)
+        self._create_random_user()
         # see if views work and all urls can be found
         login_url = reverse("userena_signin")
         logout_url = reverse("userena_signout")

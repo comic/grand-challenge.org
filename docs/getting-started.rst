@@ -24,8 +24,9 @@ Installation
 
 You can then navigate to https://gc.localhost in your browser to see the development site,
 this is using a self-signed certificate so you will need to accept the security warning.
-The ``app/`` directory is mounted in the containers, so if you make any changes to the code you will need to restart the processes.
-You can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window, 
+The ``app/`` directory is mounted in the containers,
+``werkzeug`` handles the file monitoring and will restart the process if any changes are detected.
+If you need to manually restart the process you can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window,
 you can also kill the server with ``CTRL+C``.
 
 Running the Tests
@@ -115,9 +116,9 @@ with the service running in the docker container.
     $ cd app
     $ python manage.py migrate
     $ python manage.py check_permissions
-    $ python manage.py initcomicdemo
+    $ python manage.py init_gc_demo
 
-7. You can now start the server using ``python manage.py runserver``.
+7. You can now start the server using ``python manage.py runserver_plus``.
 
 8. To setup PyCharm:
 
@@ -195,6 +196,15 @@ Versions are unpinned in the ``Pipfile``, to update the resolved dependencies us
 and commit the update ``Pipfile.lock``. 
 The containers will need to be rebuilt after running these steps, so stop the ``cycle_docker_compose.sh`` process with ``CTRL+C`` and restart.
 
+Going to Production
+-------------------
+
+The docker compose file included here is for development only.
+If you want to run this in a production environment you will need to make several changes, not limited to:
+
+1. Use ``gunicorn`` rather than run ``runserver_plus`` to run the web process
+1. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
+1. Removing the users that are created by ``init_gc_demo``
 
 .. _TravisCI: https://travis-ci.org/comic/grand-challenge.org
 .. _Docker: https://docs.docker.com/install/

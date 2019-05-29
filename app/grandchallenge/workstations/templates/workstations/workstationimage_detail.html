@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Workstation Container Image - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.workstation.get_absolute_url }}">{{ object.workstation }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Workstation Container Image</h2>
+
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Workstation</dt>
+        <dd>
+            <a href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a>
+        </dd>
+
+        <dt>Creator</dt>
+        <dd>
+            <a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
+        </dd>
+
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        <dt>Image</dt>
+        <dd>
+            {% if object.image %}
+                {{ object.image.name }}
+            {% endif %}
+        </dd>
+
+        <dt>Image SHA256</dt>
+        <dd>{{ object.image_sha256 }}</dd>
+
+        <dt>Ready</dt>
+        <dd>{{ object.ready }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.status }}</dd>
+
+        <dt>Initial Path</dt>
+        <dd>{{ object.initial_path }}</dd>
+
+        <dt>HTTP Port</dt>
+        <dd>{{ object.http_port }}</dd>
+
+        <dt>Websocket Port</dt>
+        <dd>{{ object.websocket_port }}</dd>
+
+    </dl>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:image-update' slug=object.workstation.slug pk=object.pk %}">
+            <i class="fa fa-edit"></i> Edit the image settings
+        </a>
+    </p>
+
+    <h3>Sessions For This Image</h3>
+
+    <ul>
+        {% for session in object.session_set.all %}
+            <li>
+                <a href="{{ session.get_absolute_url }}">{{ session }}, {{ session.get_status_display }}</a>
+            </li>
+        {% empty %}
+            <li>No sessions yet</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -1,19 +1,19 @@
-{% extends 'nobanner.html' %}
+{% extends 'base.html' %}
 {% load url from grandchallenge_tags %}
 {% load user_profile_link from profiles %}
 
-{% block title %}My Challenges{% endblock %}
+{% block title %}Your Challenges - {{ block.super }}{% endblock %}
 
 {% block content %}
 
-    <h2>My Challenges</h2>
+    <h2>Your Challenges</h2>
 
     <p>This is a list of the challenges that you are participating in on
-        {{ site.short_name }}.</p>
+        {{ challenge.short_name }}.</p>
 
     <div class="table-responsive">
-        <table class="table table-sm" id="challengesTable">
-            <thead>
+        <table class="table table-hover table-borderless table-sm" id="challengesTable">
+            <thead class="thead-light">
             <tr>
                 <th>Name</th>
                 <th>Created</th>

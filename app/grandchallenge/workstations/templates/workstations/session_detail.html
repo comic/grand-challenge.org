@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load url from grandchallenge_tags %}
+{% load static %}
+
+{% block title %}{{ object.workstation.slug }} Session -
+    {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation }}</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.workstation_image.get_absolute_url }}">{{ object.workstation_image }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Workstation Session</h2>
+
+    {% if object.status != object.STOPPED and object.status != object.FAILED %}
+        <p>
+            This session will expire in {{ object.expires_at|timeuntil }}.
+        </p>
+    {% endif %}
+
+    <div class="modal fade" id="exampleModal" tabindex="-1"
+         data-keyboard="false" data-backdrop="static" role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" id="sessionState">
+                <div class="modal-body" id="sessionStateBody">
+                    <div class="d-flex align-items-center">
+                        <span class="spinner-border"
+                              role="status"
+                              aria-hidden="true"></span>
+                        <b class="ml-3" id="sessionStateMsg">Loading
+                            Workstation...</b>
+                    </div>
+                </div>
+                <div class="modal-footer d-none" id="sessionStateFooter">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script src="{% static 'workstations/js/session.js' %}"
+            type="text/javascript">
+    </script>
+    <script type="text/javascript">
+        (function () {
+            $('#exampleModal').modal({show: true});
+
+            getSessionStatus(
+                "{% url 'api:session-detail' pk=object.pk %}",
+                document.getElementById("sessionState"),
+                "{{ object.workstation_url }}?{{ request.GET.urlencode|safe }}",
+            );
+        })();
+    </script>
+
+{% endblock %}

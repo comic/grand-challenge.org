@@ -16,13 +16,6 @@ algorithm_upload_widget = uploader.AjaxUploadWidget(
 
 
 class AlgorithmForm(forms.ModelForm):
-    ipython_notebook = forms.FileField(
-        validators=[MimeTypeValidator(allowed_types=("text/plain",))],
-        required=False,
-        help_text=(
-            "Please upload an iPython notebook that describes your algorithm"
-        ),
-    )
     chunked_upload = UploadedAjaxFileList(
         widget=algorithm_upload_widget,
         label="Algorithm Image",
@@ -31,7 +24,7 @@ class AlgorithmForm(forms.ModelForm):
         ],
         help_text=(
             ".tar.gz archive of the container image produced from the command "
-            "'docker save IMAGE > IMAGE.tar | gzip'. See "
+            "'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See "
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
@@ -45,6 +38,7 @@ class AlgorithmForm(forms.ModelForm):
         fields = (
             "title",
             "requires_gpu",
-            "ipython_notebook",
+            "description",
+            "logo",
             "chunked_upload",
         )
