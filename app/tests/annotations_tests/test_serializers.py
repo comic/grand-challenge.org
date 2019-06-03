@@ -64,7 +64,7 @@ serializers = {
         "unique": True,
         "factory": SinglePolygonAnnotationFactory,
         "serializer": SinglePolygonAnnotationSerializer,
-        "fields": ("id", "value", "annotation_set", "created"),
+        "fields": ("id", "value", "annotation_set", "created", "slice_index"),
     },
     "landmark": {
         "unique": True,
