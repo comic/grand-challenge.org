@@ -172,8 +172,9 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
 
 class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
-    General model for a single polygon annotation (list of coordinates).
-    Belongs to a PolygonAnnotationSet
+    General model for a single 2D in-plane polygon annotation (list of coordinates).
+    Belongs to a PolygonAnnotationSet.
+    Plane orientation and location is defined by x_axis_orientation, y_axis_orientation, z
     """
 
     annotation_set = models.ForeignKey(
@@ -182,6 +183,19 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
 
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
+
+    voxel = models.BooleanField(
+        default=True,
+        help_text="Are the coordinates in voxel representation? (As opposed to world coordinates)",
+    )
+
+    x_axis_orientation = ArrayField(
+        models.FloatField(), size=3, default=lambda: [1, 0, 0]
+    )
+    y_axis_orientation = ArrayField(
+        models.FloatField(), size=3, default=lambda: [0, 1, 0]
+    )
+    z = models.FloatField(null=True, blank=True)
 
 
 class LandmarkAnnotationSet(AbstractAnnotationModel):
