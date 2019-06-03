@@ -183,6 +183,8 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
 
+    slice_index = models.PositiveIntegerField(blank=True, null=True)
+
 
 class LandmarkAnnotationSet(AbstractAnnotationModel):
     """
