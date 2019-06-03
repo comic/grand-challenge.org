@@ -170,6 +170,14 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
 
 
+def x_axis_orientation_default():
+    return [1, 0, 0]
+
+
+def y_axis_orientation_default():
+    return [0, 1, 0]
+
+
 class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
     General model for a single 2D in-plane polygon annotation (list of coordinates).
@@ -190,10 +198,10 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     )
 
     x_axis_orientation = ArrayField(
-        models.FloatField(), size=3, default=lambda: [1, 0, 0]
+        models.FloatField(), size=3, default=x_axis_orientation_default
     )
     y_axis_orientation = ArrayField(
-        models.FloatField(), size=3, default=lambda: [0, 1, 0]
+        models.FloatField(), size=3, default=y_axis_orientation_default
     )
     z = models.FloatField(null=True, blank=True)
 
