@@ -4,7 +4,10 @@ import json
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
-from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.cases_tests.factories import (
+    ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile3D,
+)
 from tests.factories import ImageFactory
 from .helpers import (
     create_upload_image_test_data,
@@ -232,3 +235,20 @@ class TestSetElementSpacingEndpoint:
         assert response.status_code == status.HTTP_200_OK
         r = response.json()
         assert r["success"]
+
+    def test_spacing_changes_3d(self, client):
+        image = ImageFactoryWithImageFile3D()
+        element_spacing = (2.5, 1.5, 0.5)
+        sitk_image = image.get_sitk_image()
+        original_spacing = sitk_image.GetSpacing()
+        assert element_spacing != original_spacing
+
+        response = create_element_spacing_request(
+            client, image_name=image.name, es=element_spacing, is_3d=True
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        r = response.json()
+        assert r["success"]
+
+        assert element_spacing == image.get_sitk_image().GetSpacing()

@@ -52,3 +52,21 @@ class ImageFactoryWithImageFile(ImageFactory):
         ImagingModalityFactory, modality=settings.MODALITY_CF
     )
     color_space = Image.COLOR_SPACE_RGB
+
+
+class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            for image in extracted:
+                self.files.add(image)
+        if create and not extracted:
+            ImageFileFactoryWithMHDFile(image=self)
+            ImageFileFactoryWithRAWFile(image=self)
+
+    modality = factory.SubFactory(
+        ImagingModalityFactory, modality=settings.MODALITY_OCT
+    )
