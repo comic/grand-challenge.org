@@ -12,14 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="singlepolygonannotation",
-            name="voxel",
-            field=models.BooleanField(
-                default=True,
-                help_text="Are the coordinates in voxel representation? (As opposed to world coordinates)",
-            ),
-        ),
-        migrations.AddField(
-            model_name="singlepolygonannotation",
             name="x_axis_orientation",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.FloatField(),

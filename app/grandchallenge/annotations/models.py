@@ -181,8 +181,10 @@ def y_axis_orientation_default():
 class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
     General model for a single 2D in-plane polygon annotation (list of coordinates).
-    Belongs to a PolygonAnnotationSet.
-    Plane orientation and location is defined by x_axis_orientation, y_axis_orientation, z
+    Belongs as many-to-one to a PolygonAnnotationSet.
+    Plane orientation is defined by x_axis_orientation and y_axis_orientation in a
+    right-handed coordinate system. The location of the plane is defined by the value
+    of z.
     """
 
     annotation_set = models.ForeignKey(
@@ -191,11 +193,6 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
 
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
-
-    voxel = models.BooleanField(
-        default=True,
-        help_text="Are the coordinates in voxel representation? (As opposed to world coordinates)",
-    )
 
     x_axis_orientation = ArrayField(
         models.FloatField(), size=3, default=x_axis_orientation_default
