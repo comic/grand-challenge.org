@@ -43,4 +43,4 @@ deploy:
     script: bash -c "docker login -u grandchallenge -p "$DOCKER_PASSWORD" && make push"
     on:
       all_branches: true
-      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
+      condition: $BUILD_SOURCEBRANCHNAME =~ ^master|eyra-master|staging$
