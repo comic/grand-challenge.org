@@ -66,7 +66,15 @@ class SinglePolygonAnnotationSerializer(AbstractSingleAnnotationSerializer):
 
     class Meta:
         model = SinglePolygonAnnotation
-        fields = ("id", "value", "annotation_set", "created")
+        fields = (
+            "id",
+            "value",
+            "annotation_set",
+            "created",
+            "x_axis_orientation",
+            "y_axis_orientation",
+            "z",
+        )
 
 
 class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
