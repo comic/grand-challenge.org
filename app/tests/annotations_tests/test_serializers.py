@@ -72,7 +72,6 @@ serializers = {
             "x_axis_orientation",
             "y_axis_orientation",
             "z",
-            "voxel",
         ),
     },
     "landmark": {
