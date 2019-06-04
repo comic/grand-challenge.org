@@ -89,17 +89,6 @@ urlpatterns = [
         ),
     ),
     path(
-        "patients/",
-        include("grandchallenge.patients.urls", namespace="patients"),
-    ),
-    path(
-        "studies/", include("grandchallenge.studies.urls", namespace="studies")
-    ),
-    path(
-        "worklists/",
-        include("grandchallenge.worklists.urls", namespace="worklists"),
-    ),
-    path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
