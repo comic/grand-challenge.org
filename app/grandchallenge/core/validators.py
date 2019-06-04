@@ -68,9 +68,9 @@ class ExtensionValidator(object):
 
     def _validate_filepath(self, s):
         extensions = Path(s).suffixes
-        extension = "".join(extensions)
+        extension = "".join(extensions).lower()
 
-        if extension.lower() not in self.allowed_extensions:
+        if not any(extension.endswith(e) for e in self.allowed_extensions):
             raise ValidationError(
                 f"File of type {extension} is not supported."
                 " Allowed types are "

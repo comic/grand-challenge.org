@@ -129,7 +129,7 @@ with the service running in the docker container.
     $ cd app
     $ python manage.py migrate
     $ python manage.py check_permissions
-    $ python manage.py initcomicdemo
+    $ python manage.py init_gc_demo
 
 7. You can now start the server using ``python manage.py runserver_plus``.
 
@@ -217,7 +217,7 @@ If you want to run this in a production environment you will need to make severa
 
 1. Use ``gunicorn`` rather than run ``runserver_plus`` to run the web process
 1. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
-1. Removing the users that are created by ``initcomicdemo``
+1. Removing the users that are created by ``init_gc_demo``
 
 .. _TravisCI: https://travis-ci.org/comic/grand-challenge.org
 .. _Docker: https://docs.docker.com/install/

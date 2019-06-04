@@ -1,7 +1,6 @@
 from dal import autocomplete
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
-from django.contrib.sites.shortcuts import get_current_site
 from django.views.generic import ListView, FormView
 
 from grandchallenge.admins.forms import AdminsForm
@@ -52,7 +51,5 @@ class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
 
     def form_valid(self, form):
         challenge = self.request.challenge
-        form.add_or_remove_user(
-            challenge=challenge, site=get_current_site(self.request)
-        )
+        form.add_or_remove_user(challenge=challenge, site=self.request.site)
         return super().form_valid(form)

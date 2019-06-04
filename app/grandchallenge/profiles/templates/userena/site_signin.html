@@ -1,9 +1,9 @@
-{% extends "nobanner.html" %}
+{% extends "base.html" %}
 {% load grandchallenge_tags %}
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block title %} {{ main_challenge_name }} - Login {% endblock %}
+{% block title %} {{ request.site.name }} - Login {% endblock %}
 
 {% block navbar %}
     {% include "grandchallenge/partials/navbar.html" with hide_userlinks=True %}

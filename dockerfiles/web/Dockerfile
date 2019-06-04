@@ -1,7 +1,7 @@
 ###################
 #  Base Container #
 ###################
-FROM python:3.6 as base
+FROM python:3.7 as base
 
 RUN apt-get update && \
     apt-get install -y \

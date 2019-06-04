@@ -1,12 +1,11 @@
 from django.conf import settings
 from django.core.files.storage import DefaultStorage
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError, RequestContext
 from django.utils._os import safe_join
+from django.views.generic import TemplateView
 
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.pages.models import Page, ErrorPage
 
 
@@ -81,14 +80,12 @@ def permissionMessage(request, p):
                   <p>This page can only be viewed by participants of this project to view this page please make sure of the following:</p>
                   
                   <ul>
-                      <li>First, log in to {} by using the 'Sign in' button at the top right.</li>
+                      <li>First, log in to this site by using the 'Sign in' button at the top right.</li>
                       <li>Second, you need to join / register with the specific project you are interested in as a participant. 
                       The link to do this is provided by the project organizers on the project website.</li>
                   </ul>
                   <div>
-              """.format(
-            settings.MAIN_PROJECT_NAME
-        )
+              """
         title = p.title
     else:
         msg = (
@@ -132,104 +129,9 @@ def get_data_folder_path(challenge_short_name):
     return safe_join(settings.MEDIA_ROOT, challenge_short_name)
 
 
-def get_dirnames(path):
-    """ Get all directory names in path as list of strings
-            
-    Raises: OSError if directory can not be found
-    """
-    storage = DefaultStorage()
-    dirnames = storage.listdir(path)[0]
-    dirnames.sort()
-    return dirnames
-
-
-def comicmain(request, page_title=""):
-    """ show content as main page item. Loads pages from the main project """
-    challenge_short_name = settings.MAIN_PROJECT_NAME
-
-    try:
-        challenge = Challenge.objects.get(
-            short_name__iexact=challenge_short_name
-        )
-    except Challenge.DoesNotExist:
-        link = reverse("challenges:create")
-        link = link + "?short_name=%s" % challenge_short_name
-        link_html = create_HTML_a(
-            link, "Create project '%s'" % challenge_short_name
-        )
-        html = """I'm trying to show the first page for main project '%s' here,
-        but '%s' does not exist. %s.""" % (
-            challenge_short_name,
-            challenge_short_name,
-            link_html,
-        )
-        page = create_temp_page(title="no_pages_found", html=html)
-
-        return render(
-            request,
-            "temppage.html",
-            {"challenge": page.challenge, "currentpage": page},
-        )
-
-    pages = challenge.page_set.all()
-
-    if len(pages) == 0:
-        link = reverse(
-            "pages:list", kwargs={"challenge_short_name": challenge_short_name}
-        )
-        link_html = create_HTML_a(link, "admin interface")
-        html = """I'm trying to show the first page for main project '%s' here,
-        but '%s' contains no pages. Please add
-        some in the %s.""" % (
-            challenge_short_name,
-            challenge_short_name,
-            link_html,
-        )
-        page = create_temp_page(title="no_pages_found", html=html)
-
-        return render(
-            request,
-            "temppage.html",
-            {"challenge": page.challenge, "currentpage": page},
-        )
-
-    if page_title:
-        pages = [p for p in pages if p.title.lower() == page_title.lower()]
-
-        if len(pages) != 1:
-            raise Http404(
-                f"{len(pages)} pages with title {page_title} were found for {challenge }"
-            )
-
-    page = pages[0]
-    page.html = renderTags(request, page)
-
-    return render(request, "page.html", {"currentpage": page})
-
-
-# ======================================== not called directly from urls.py ==
-def create_HTML_a(link_url, link_text):
-    return '<a href="' + link_url + '">' + link_text + "</a>"
-
-
-def create_HTML_a_img(link_url, image_url):
-    """ create a linked image """
-    img = '<img src="' + image_url + '">'
-    linked_image = create_HTML_a(link_url, img)
-    return linked_image
+class HomeTemplate(TemplateView):
+    template_name = "home.html"
 
 
 def copy_page(page):
     return Page(challenge=page.challenge, title=page.title, html=page.html)
-
-
-def create_temp_page(title="temp_page", html=""):
-    """
-    Create a quick mockup page which you can show, without needing to read
-    anything from database
-    """
-    challenge = Challenge()  # any page requires a challenge
-    challenge.short_name = "Temp"
-    challenge.name = "Temporary page"
-    challenge.skin = ""
-    return Page(challenge=challenge, title=title, html=html)

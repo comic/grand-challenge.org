@@ -35,6 +35,7 @@ def test_extension_validator():
         zip_and_tar_validator([FakeFile("test.zip"), FakeFile("test.tar")])
         is None
     )
+    assert zip_validator(FakeFile("test.1.zip")) is None
     with pytest.raises(ValidationError):
         zip_validator(FakeFile("test.tar"))
     with pytest.raises(ValidationError):

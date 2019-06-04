@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
-from grandchallenge.core.views import comicmain
+from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.views import FaviconView
 
 admin.autodiscover()
@@ -18,7 +18,7 @@ def handler500(request):
 
 
 urlpatterns = [
-    path("", comicmain, name="home"),
+    path("", HomeTemplate.as_view(), name="home"),
     path(
         "robots.txt/",
         TemplateView.as_view(

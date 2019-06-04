@@ -1,7 +1,6 @@
 from os.path import basename
 
 from django.contrib import messages
-from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import ListView
@@ -57,7 +56,7 @@ def upload_handler(request):
                 uploader=request.user,
                 filename=filename,
                 challenge=challenge,
-                site=get_current_site(request),
+                site=request.site,
             )
             return HttpResponseRedirect(view_url)
 

@@ -4,6 +4,7 @@ from random import choice, randint
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
 from django.core import mail
 from django.core.files.storage import DefaultStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -94,34 +95,14 @@ class ComicframeworkTestCase(TestCase):
     def setUp_base(self):
         """ This setup should be run for all comic framework testcases
         """
-        self._create_main_project_and_root()
+        self._create_root_superuser()
 
     def setUp_extra(self):
         """ Overwrite this method in child classes 
         """
         pass
 
-    def _create_main_project_and_root(self):
-        """ Everything in the framework assumes that there is one main project which
-        is always shown in a bar at the very top of the page. Make sure this exists
-         
-        Do not create this project through admin because admin will throw an error
-        at this point because MAIN_PROJECT can not be found. Chicken Egg. 
-        
-        Create root user to have an admin user for main project. Root is automatically
-        admin for every project
-        """
-        if (
-            len(
-                Challenge.objects.filter(short_name=settings.MAIN_PROJECT_NAME)
-            )
-            == 0
-        ):
-            main = Challenge.objects.create(
-                short_name=settings.MAIN_PROJECT_NAME,
-                description="main project, autocreated by comicframeworkTestCase._create_inital_project()",
-            )
-            main.save()
+    def _create_root_superuser(self):
         User = get_user_model()
         try:
             self.root = User.objects.filter(username="root")[0]
@@ -668,6 +649,7 @@ class UploadTest(ComicframeworkTestCase):
         request = factory.get(url)
         request.user = user
         request.challenge = self.testproject
+        request.site = get_current_site(request)
         fakecontent = "some uploaded content for" + testfilename
         request.FILES["file"] = SimpleUploadedFile(
             name=testfilename, content=fakecontent.encode()

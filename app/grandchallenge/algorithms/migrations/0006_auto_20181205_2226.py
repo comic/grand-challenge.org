@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name="image",
             field=models.FileField(
                 blank=True,
-                help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE > IMAGE.tar | gzip'. See https://docs.docker.com/engine/reference/commandline/save/",
+                help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See https://docs.docker.com/engine/reference/commandline/save/",
                 upload_to=grandchallenge.container_exec.models.docker_image_path,
                 validators=[
                     grandchallenge.core.validators.ExtensionValidator(

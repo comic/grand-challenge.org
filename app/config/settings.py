@@ -1,4 +1,3 @@
-# Django settings for comic project.
 import glob
 import os
 import re
@@ -6,8 +5,10 @@ import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
+import sentry_sdk
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from config.denylist import USERNAME_DENYLIST
 
@@ -17,7 +18,6 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-# Default COMIC settings, to be included by settings.py
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
 ADMINS = (
@@ -105,10 +105,6 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# the name of the main project: this project is shown when url is loaded without
-# arguments, and pages in this project appear as menu items throughout the site
-MAIN_PROJECT_NAME = os.environ.get("MAIN_PROJECT_NAME", "comic")
-
 ##############################################################################
 #
 # Storage
@@ -185,7 +181,6 @@ CACHES = {
     }
 }
 
-
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
@@ -256,7 +251,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
-                "grandchallenge.core.context_processors.google_analytics_id",
+                "grandchallenge.core.context_processors.google_keys",
+                "grandchallenge.core.context_processors.debug",
             ]
         },
     }
@@ -264,10 +260,10 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Keep whitenoise after security and before all else
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Keep whitenoise after security and before all else
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
-    "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -281,7 +277,6 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
 )
-
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = "config.wsgi.application"
@@ -301,7 +296,6 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "raven.contrib.django.raven_compat",  # error logging
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
@@ -496,32 +490,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # A sample logging configuration. More info in configuration can be found at
 # https://docs.djangoproject.com/en/dev/topics/logging/ .
-# This configuration writes WARNING and worse errors to an error log file, and
-# sends an email to all admins. It also writes INFO logmessages and worse to a
-# regular log file.
-LOG_FILEPATH = "/tmp/django.log"
-LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": True,
-    "root": {"level": "WARNING", "handlers": ["sentry"]},
-    "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(message)s"
-        }
-    },
+    "disable_existing_loggers": False,
     "handlers": {
-        "sentry": {
-            "level": "ERROR",
-            # To capture more than ERROR, change to WARNING, INFO, etc.
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler"}
     },
     "loggers": {
         "grandchallenge": {
@@ -534,16 +507,6 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "raven": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        "sentry.errors": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
         "werkzeug": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -552,7 +515,10 @@ LOGGING = {
     },
 }
 
-RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
+sentry_sdk.init(
+    dsn=os.environ.get("DJANGO_SENTRY_DSN", ""),
+    integrations=[DjangoIntegration()],
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
