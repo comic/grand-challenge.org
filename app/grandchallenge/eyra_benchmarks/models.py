@@ -25,7 +25,19 @@ class Benchmark(UUIDModel):
     )
     description = models.TextField(
         default="",
-        help_text="Description of this project in markdown.",
+        help_text="Description in markdown.",
+    )
+    data_description = models.TextField(
+        default="",
+        help_text="Description of the data used in this benchmark in markdown.",
+    )
+    truth_description = models.TextField(
+        default="",
+        help_text="Description of the truth data in markdown.",
+    )
+    metrics_description = models.TextField(
+        default="",
+        help_text="Description of the metrics in markdown.",
     )
     name = models.CharField(
         max_length=255,
