@@ -28,3 +28,6 @@ class BenchmarkFactory(factory.DjangoModelFactory):
     name = 'Test-benchmark'
     short_description = 'Test benchmark short description'
     description = 'Test benchmark description'
+    data_description = 'Test bm data description'
+    truth_description = 'Test bm truth description'
+    metrics_description = 'Test bm metrics description'
