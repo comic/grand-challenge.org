@@ -75,6 +75,7 @@ def test_tiff_validation(resource, expected_error_message):
 )
 def test_tiff_image_entry_creation(resource, expected_error_message):
     error_message = ""
+    image_entry = None
 
     try:
         tiff_file = load_tiff_file(path=resource)
@@ -86,7 +87,7 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
     assert error_message == expected_error_message
 
     # Asserts successful creation data
-    try:
+    if not error_message:
         tiff_file = tiff_lib.TiffFile(str(resource.absolute()))
         tiff_tags = tiff_file.pages[0].tags
 
@@ -98,9 +99,6 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
         )
-
-    except ValueError:
-        pass
 
 
 # Integration test of all features being accessed through the image builder
