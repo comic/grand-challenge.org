@@ -342,6 +342,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
+    "grandchallenge.worklists",
     "grandchallenge.workstations",
 ]
 

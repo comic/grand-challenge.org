@@ -39,5 +39,16 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
-    queryset = Image.objects.all()
     serializer_class = ImageSerializer
+    queryset = Image.objects.all()
+
+    def get_queryset(self):
+        filters = {
+            "worklist": self.request.query_params.get("worklist", None),
+            "study": self.request.query_params.get("study", None),
+        }
+        filters = {k: v for k, v in filters.items() if v is not None}
+
+        queryset = super().get_queryset().filter(**filters)
+
+        return queryset

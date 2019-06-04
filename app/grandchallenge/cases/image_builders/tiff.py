@@ -168,7 +168,10 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         name=tiff_file.path.name,
         width=tiff_file.tags.image_width,
         height=tiff_file.tags.image_height,
-        depth=None,
+        depth=1,
         resolution_levels=tiff_file.tags.resolution_levels,
         color_space=tiff_file.tags.color_space,
+        eye_choice=Image.EYE_UNKNOWN,
+        stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
+        field_of_view=Image.FOV_UNKNOWN,
     )

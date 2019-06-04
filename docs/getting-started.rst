@@ -29,6 +29,19 @@ The ``app/`` directory is mounted in the containers,
 If you need to manually restart the process you can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window,
 you can also kill the server with ``CTRL+C``.
 
+Windows
+```````
+
+Running Grand-Challenge within a Windows environment requires additional steps before invoking the ``cycle_docker_compose.sh`` script.
+
+1. Install ``Make`` for an available ``bash`` console
+2. Set an environment variable to enable Windows path conversions for Docker
+
+.. code-block:: console 
+
+	$ export COMPOSE_CONVERT_WINDOWS_PATHS=1
+
+
 Running the Tests
 -----------------
 
@@ -140,7 +153,7 @@ You can do this with
 
 .. code-block:: console
 
-    $ docker-compose run web --rm --user `id -u` python manage.py makemigrations
+    $ docker-compose run --rm --user `id -u` web python manage.py makemigrations
 
 
 add these to git and commit.

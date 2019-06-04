@@ -3,13 +3,20 @@ from django.urls import path
 from rest_framework import routers
 
 from grandchallenge.cases.views import ImageViewSet
+from grandchallenge.patients.views import PatientViewSet
+from grandchallenge.studies.views import StudyViewSet
+from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r"cases/images", ImageViewSet)
+router.register(r"patients", PatientViewSet, basename="patient")
+router.register(r"studies", StudyViewSet, basename="study")
+router.register(r"worklists", WorklistViewSet, basename="worklist")
+router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
+
 urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # evaluation.serializers
