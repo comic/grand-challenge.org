@@ -3,12 +3,13 @@ from tests.annotations_tests.factories import (
     ETDRSGridAnnotationFactory,
     MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    CoordinateListAnnotationFactory,
     PolygonAnnotationSetFactory,
     SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
     SingleLandmarkAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    RetinaImagePathologyAnnotationFactory,
 )
 from grandchallenge.annotations.serializers import (
     ETDRSGridAnnotationSerializer,
@@ -18,6 +19,9 @@ from grandchallenge.annotations.serializers import (
     LandmarkAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
     SingleLandmarkAnnotationSerializer,
+    ImageQualityAnnotationSerializer,
+    ImagePathologyAnnotationSerializer,
+    RetinaImagePathologyAnnotationSerializer,
 )
 from tests.serializer_helpers import (
     do_test_serializer_valid,
@@ -96,6 +100,34 @@ from tests.serializer_helpers import (
                 "factory": SingleLandmarkAnnotationFactory,
                 "serializer": SingleLandmarkAnnotationSerializer,
                 "fields": ("image", "annotation_set", "landmarks"),
+            },
+            {
+                "unique": True,
+                "factory": ImageQualityAnnotationFactory,
+                "serializer": ImageQualityAnnotationSerializer,
+                "fields": ("id", "grader", "image", "quality"),
+            },
+            {
+                "unique": True,
+                "factory": ImagePathologyAnnotationFactory,
+                "serializer": ImagePathologyAnnotationSerializer,
+                "fields": ("id", "grader", "image", "pathology"),
+            },
+            {
+                "unique": True,
+                "factory": RetinaImagePathologyAnnotationFactory,
+                "serializer": RetinaImagePathologyAnnotationSerializer,
+                "fields": (
+                    "id",
+                    "grader",
+                    "image",
+                    "amd_present",
+                    "dr_present",
+                    "oda_present",
+                    "myopia_present",
+                    "cysts_present",
+                    "other_present",
+                ),
             },
         )
     ),
