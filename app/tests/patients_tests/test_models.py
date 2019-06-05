@@ -1,6 +1,5 @@
 import pytest
 from tests.patients_tests.factories import PatientFactory
-from tests.model_helpers import batch_test_factories
 
 
 @pytest.mark.django_db
@@ -13,5 +12,13 @@ class TestPatientsModels:
         )
 
 
-factories = {"archive": PatientFactory}
-batch_test_factories(factories, TestPatientsModels)
+@pytest.mark.django_db
+@pytest.mark.parametrize("factory", (PatientFactory,))
+class TestFactories:
+    def test_factory_creation(self, factory):
+        try:
+            factory()
+        except Exception as e:
+            pytest.fail(
+                f"Failed factory initialization for {str(factory)} with exception: {e}"
+            )

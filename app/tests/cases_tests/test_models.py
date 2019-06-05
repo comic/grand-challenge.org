@@ -10,7 +10,6 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
 )
-from tests.model_helpers import batch_test_factories
 
 
 @pytest.mark.django_db
@@ -21,8 +20,16 @@ class TestRetinaImagesModels:
         assert str(model) == f"Image {model.name} {model.shape_without_color}"
 
 
-factories = {"image": ImageFactory}
-batch_test_factories(factories, TestRetinaImagesModels)
+@pytest.mark.django_db
+@pytest.mark.parametrize("factory", (ImageFactory,))
+class TestFactories:
+    def test_factory_creation(self, factory):
+        try:
+            factory()
+        except Exception as e:
+            pytest.fail(
+                f"Failed factory initialization for {str(factory)} with exception: {e}"
+            )
 
 
 @pytest.mark.django_db

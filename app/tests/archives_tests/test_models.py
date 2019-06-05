@@ -1,6 +1,5 @@
 import pytest
 from tests.archives_tests.factories import ArchiveFactory
-from tests.model_helpers import batch_test_factories
 
 
 @pytest.mark.django_db
@@ -13,5 +12,13 @@ class TestArchivesModels:
         )
 
 
-factories = {"archive": ArchiveFactory}
-batch_test_factories(factories, TestArchivesModels)
+@pytest.mark.django_db
+@pytest.mark.parametrize("factory", (ArchiveFactory,))
+class TestFactories:
+    def test_factory_creation(self, factory):
+        try:
+            factory()
+        except Exception as e:
+            pytest.fail(
+                f"Failed factory initialization for {str(factory)} with exception: {e}"
+            )
