@@ -1,0 +1,14 @@
+ObjectType = Image
+NDims = 3
+BinaryData = True
+BinaryDataByteOrderMSB = False
+CompressedData = True
+CompressedDataSize = 182763
+TransformMatrix = 1 0 0 0 1 0 0 0 1
+Offset = -146.725 -292.725 -330.5
+CenterOfRotation = 0 0 0
+AnatomicalOrientation = RAI
+ElementSpacing = 1.10156 1.10156 1.10208
+DimSize = 256 256 289
+ElementType = MET_UCHAR
+ElementDataFile = lobe.zraw
