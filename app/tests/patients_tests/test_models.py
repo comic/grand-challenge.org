@@ -1,6 +1,6 @@
 import pytest
 
-from tests.model_helpers import test_factory
+from tests.model_helpers import do_test_factory
 from tests.patients_tests.factories import PatientFactory
 
 
@@ -18,4 +18,4 @@ class TestPatientsModels:
 @pytest.mark.parametrize("factory", (PatientFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        test_factory(factory)
+        do_test_factory(factory)

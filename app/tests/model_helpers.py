@@ -1,7 +1,7 @@
 import pytest
 
 
-def test_factory(factory):
+def do_test_factory(factory):
     try:
         factory()
     except Exception as e:

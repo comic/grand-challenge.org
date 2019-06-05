@@ -10,7 +10,7 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
 )
-from tests.model_helpers import test_factory
+from tests.model_helpers import do_test_factory
 
 
 @pytest.mark.django_db
@@ -25,7 +25,7 @@ class TestRetinaImagesModels:
 @pytest.mark.parametrize("factory", (ImageFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        test_factory(factory)
+        do_test_factory(factory)
 
 
 @pytest.mark.django_db

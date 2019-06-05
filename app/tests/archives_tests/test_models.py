@@ -1,6 +1,6 @@
 import pytest
 from tests.archives_tests.factories import ArchiveFactory
-from tests.model_helpers import test_factory
+from tests.model_helpers import do_test_factory
 
 
 @pytest.mark.django_db
@@ -17,4 +17,4 @@ class TestArchivesModels:
 @pytest.mark.parametrize("factory", (ArchiveFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        test_factory(factory)
+        do_test_factory(factory)
