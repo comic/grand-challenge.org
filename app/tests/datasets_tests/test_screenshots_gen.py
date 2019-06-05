@@ -8,7 +8,19 @@ from app.tests.datasets_tests.screenshots_gen import draw_mask_tile_3view_lite, 
 
 
 def test_draw_mask_tile_3view_lite(input_scan_path, input_prediction_path, output_path,
-                                   title=("Segmentation", ), alpha=0.3, flip_axis=0, sparseness=200):
+                                   title=("Segmentation", ), alpha=0.3,
+                                   sparseness=200, duration=1200):
+    """
+
+    :param input_scan_path: a place to store scans in mhd format
+    :param input_prediction_path: a place to store predictions in mhd format
+    :param sparseness: controls sampling sparsity, e.g. 100 means, each 100x100x100 region has only 1 location sampled.
+    :param output_path: output file locations.
+    :param alpha: blending options for showing predictions on top of scans.
+    :param duration: duration for each frame
+    :return:
+    """
+
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -40,8 +52,8 @@ def test_draw_mask_tile_3view_lite(input_scan_path, input_prediction_path, outpu
                                   path,
                                   colors=
                                   [VISUALIZATION_COLOR_TABLE[n] for n in range(len(labels))],
-                                  thickness=[-1] * len(labels), alpha=alpha, flip_axis=flip_axis,
-                                  titles=title)
+                                  thickness=[-1] * len(labels), alpha=alpha,
+                                  titles=title, duration=duration)
 
 
 if __name__ == "__main__":
