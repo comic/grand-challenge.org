@@ -10,6 +10,7 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
 )
+from tests.model_helpers import test_factory
 
 
 @pytest.mark.django_db
@@ -24,12 +25,7 @@ class TestRetinaImagesModels:
 @pytest.mark.parametrize("factory", (ImageFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        try:
-            factory()
-        except Exception as e:
-            pytest.fail(
-                f"Failed factory initialization for {str(factory)} with exception: {e}"
-            )
+        test_factory(factory)
 
 
 @pytest.mark.django_db

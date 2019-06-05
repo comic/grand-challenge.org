@@ -16,6 +16,7 @@ from tests.annotations_tests.factories import (
     ImagePathologyAnnotationFactory,
     RetinaImagePathologyAnnotationFactory,
 )
+from tests.model_helpers import test_factory
 from tests.viewset_helpers import get_user_from_user_type
 
 
@@ -116,9 +117,4 @@ class TestPermissions:
 )
 class TestFactories:
     def test_factory_creation(self, factory):
-        try:
-            factory()
-        except Exception as e:
-            pytest.fail(
-                f"Failed factory initialization for {str(factory)} with exception: {e}"
-            )
+        test_factory(factory)

@@ -1,4 +1,6 @@
 import pytest
+
+from tests.model_helpers import test_factory
 from tests.registrations_tests.factories import OctObsRegistrationFactory
 
 
@@ -12,9 +14,4 @@ class TestRegistrationModels:
 @pytest.mark.parametrize("factory", (OctObsRegistrationFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        try:
-            factory()
-        except Exception as e:
-            pytest.fail(
-                f"Failed factory initialization for {str(factory)} with exception: {e}"
-            )
+        test_factory(factory)
