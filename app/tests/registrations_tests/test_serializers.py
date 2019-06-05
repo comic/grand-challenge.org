@@ -3,22 +3,29 @@ from tests.registrations_tests.factories import OctObsRegistrationFactory
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
-from tests.serializer_helpers import batch_test_serializers
+from tests.serializer_helpers import (
+    do_test_serializer_valid,
+    do_test_serializer_fields,
+)
 
 
 @pytest.mark.django_db
-class TestRegistrationSerializers:
-    # test methods are added dynamically to this class, see below
-    pass
+@pytest.mark.parametrize(
+    "serializer_data",
+    (
+        (
+            {
+                "unique": True,
+                "factory": OctObsRegistrationFactory,
+                "serializer": OctObsRegistrationSerializer,
+                "fields": ("obs_image", "oct_image", "registration_values"),
+            },
+        )
+    ),
+)
+class TestSerializers:
+    def test_serializer_valid(self, serializer_data):
+        do_test_serializer_valid(serializer_data)
 
-
-serializers = {
-    "octobsregistration": {
-        "unique": True,
-        "factory": OctObsRegistrationFactory,
-        "serializer": OctObsRegistrationSerializer,
-        "fields": ("obs_image", "oct_image", "registration_values"),
-    }
-}
-
-batch_test_serializers(serializers, TestRegistrationSerializers)
+    def test_serializer_fields(self, serializer_data):
+        do_test_serializer_fields(serializer_data)

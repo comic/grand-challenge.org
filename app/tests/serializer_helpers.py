@@ -5,10 +5,10 @@ from django.db import models
 def check_if_field_in_serializer(fields, serializer_fields):
     for field in fields:
         if field not in serializer_fields:
-            pytest.fail("Field '{}' missing in serializer".format(field))
+            pytest.fail(f"Field '{field}' missing in serializer")
     for field in serializer_fields:
         if field not in fields:
-            pytest.fail("Serializer field '{}' missing in test".format(field))
+            pytest.fail(f"Serializer field '{field}' missing in test")
 
 
 def check_if_valid(model_or_factory, serializer):
@@ -60,31 +60,8 @@ def check_if_valid_unique(model_or_factory, serializer):
     return valid
 
 
-def batch_test_serializers(serializers, test_class):
-    for name, serializer_data in serializers.items():
-        if not serializer_data.get("no_valid_check"):
-            test_valid_method = create_test_valid_method(serializer_data)
-            test_valid_method.__name__ = "test_{}_serializer_valid".format(
-                name
-            )
-            setattr(test_class, test_valid_method.__name__, test_valid_method)
-
-        if not serializer_data.get("no_contains_check"):
-            test_contains_fields_method = create_test_contains_fields_method(
-                serializer_data
-            )
-            test_contains_fields_method.__name__ = "test_{}_serializer_contains_fields".format(
-                name
-            )
-            setattr(
-                test_class,
-                test_contains_fields_method.__name__,
-                test_contains_fields_method,
-            )
-
-
-def create_test_valid_method(serializer_data):
-    def test_method(self):
+def do_test_serializer_valid(serializer_data):
+    if not serializer_data.get("no_valid_check"):
         if serializer_data["unique"]:
             assert check_if_valid_unique(
                 serializer_data["factory"], serializer_data["serializer"]
@@ -94,16 +71,12 @@ def create_test_valid_method(serializer_data):
                 serializer_data["factory"], serializer_data["serializer"]
             )
 
-    return test_method
 
-
-def create_test_contains_fields_method(serializer_data):
-    def test_method(self):
+def do_test_serializer_fields(serializer_data):
+    if not serializer_data.get("no_contains_check"):
         check_if_field_in_serializer(
             serializer_data["fields"],
             serializer_data["serializer"](
                 serializer_data["factory"]()
             ).data.keys(),
         )
-
-    return test_method
