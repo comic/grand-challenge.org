@@ -22,6 +22,21 @@ annotation_router.register(
     views.ETDRSGridAnnotationViewSet,
     basename="etdrsgridannotation",
 )
+annotation_router.register(
+    "imagequalityannotation",
+    views.ImageQualityAnnotationViewSet,
+    basename="imagequalityannotation",
+)
+annotation_router.register(
+    "imagepathologyannotation",
+    views.ImagePathologyAnnotationViewSet,
+    basename="imagepathologyannotation",
+)
+annotation_router.register(
+    "retinaimagepathologyannotation",
+    views.RetinaImagePathologyAnnotationViewSet,
+    basename="retinaimagepathologyannotation",
+)
 urlpatterns = [
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
