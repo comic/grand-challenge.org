@@ -71,6 +71,7 @@ def mask_sparsity_filtering(mask, block_size, overlap):
             newmask[tuple(one_coord)] = True
     return newmask
 
+
 def draw_2d(image_2d, masks_2d, colors, thickness, alpha=0.5):
     original = np.dstack((image_2d, image_2d, image_2d))
     blending = np.dstack((image_2d, image_2d, image_2d))
