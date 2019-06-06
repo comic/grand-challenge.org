@@ -14,6 +14,8 @@ def create_implementation_job_for_submission(submission: Submission):
         name='output',
         type=submission.benchmark.interface.output_type,
     )
+    job_output.file = f"data_files/{str(job_output.pk)}"
+    job_output.save()
 
     submission.implementation_job = Job.objects.create(
         output=job_output,
@@ -38,6 +40,8 @@ def create_evaluation_job_for_submission(submission: Submission):
         name='output',
         type=interface.output_type,
     )
+    job_output.file = f"data_files/{str(job_output.pk)}"
+    job_output.save()
 
     submission.evaluation_job = Job.objects.create(
         output=job_output,
@@ -73,3 +77,6 @@ def run_submission(submission_pk):
         raise e
 
     run_job(submission.evaluation_job.pk)
+    submission.metrics_json = submission.evaluation_job.output.file.read().decode('ascii')
+    submission.save()
+

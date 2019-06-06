@@ -79,7 +79,7 @@ echo "done"
 
     # the sh script that runs in the init container (uploads output data to S3)
     def output_script(self):
-        s3cmd = s3cmd_prefix + f"put /data/output s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{self.job.output.pk}"
+        s3cmd = f"{s3cmd_prefix} put /data/output s3://{settings.AWS_STORAGE_BUCKET_NAME}/data_files/{self.job.output.pk}"
         return f"""
 set -e
 echo "Uploading output data..."
@@ -253,6 +253,6 @@ echo "Done"
             text_log += f"Pod: {podname}\n"
             for container, log in logs.items():
                 text_log += "\n"
-                text_log += f"Container: {container}"
+                text_log += f"Container: {container}\n"
                 text_log += log
         return text_log
