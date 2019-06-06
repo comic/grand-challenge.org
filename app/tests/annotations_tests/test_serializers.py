@@ -105,13 +105,13 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": ImageQualityAnnotationFactory,
                 "serializer": ImageQualityAnnotationSerializer,
-                "fields": ("id", "grader", "image", "quality"),
+                "fields": ("id", "created", "grader", "image", "quality"),
             },
             {
                 "unique": True,
                 "factory": ImagePathologyAnnotationFactory,
                 "serializer": ImagePathologyAnnotationSerializer,
-                "fields": ("id", "grader", "image", "pathology"),
+                "fields": ("id", "created", "grader", "image", "pathology"),
             },
             {
                 "unique": True,
@@ -120,6 +120,7 @@ from tests.serializer_helpers import (
                 "fields": (
                     "id",
                     "grader",
+                    "created",
                     "image",
                     "amd_present",
                     "dr_present",

@@ -108,13 +108,13 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
 class ImageQualityAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ImageQualityAnnotation
-        fields = ("id", "grader", "image", "quality")
+        fields = ("id", "created", "grader", "image", "quality")
 
 
 class ImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ImagePathologyAnnotation
-        fields = ("id", "grader", "image", "pathology")
+        fields = ("id", "created", "grader", "image", "pathology")
 
 
 class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
@@ -122,6 +122,7 @@ class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
         model = RetinaImagePathologyAnnotation
         fields = (
             "id",
+            "created",
             "grader",
             "image",
             "amd_present",
