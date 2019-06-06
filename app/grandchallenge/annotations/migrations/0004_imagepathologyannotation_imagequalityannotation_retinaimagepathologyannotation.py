@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("cases", "0011_auto_20190314_1453"),
-        ("annotations", "0002_auto_20190510_1046"),
+        ("annotations", "0003_auto_20190603_1208"),
     ]
 
     operations = [
