@@ -107,7 +107,7 @@ echo "Done"
         implementation = self.job.implementation
         main_container = client.V1Container(
             name="main",
-            image=implementation.container,
+            image=implementation.image,
             command=['sh'] if implementation.command else None,
             args=['-c', implementation.command] if implementation.command else None,
             resources=client.V1ResourceRequirements(
