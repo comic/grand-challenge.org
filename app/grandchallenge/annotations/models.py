@@ -170,10 +170,21 @@ class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
 
 
+def x_axis_orientation_default():
+    return [1, 0, 0]
+
+
+def y_axis_orientation_default():
+    return [0, 1, 0]
+
+
 class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
     """
-    General model for a single polygon annotation (list of coordinates).
-    Belongs to a PolygonAnnotationSet
+    General model for a single 2D in-plane polygon annotation (list of coordinates).
+    Belongs as many-to-one to a PolygonAnnotationSet.
+    Plane orientation is defined by x_axis_orientation and y_axis_orientation in a
+    right-handed coordinate system. The location of the plane is defined by the value
+    of z.
     """
 
     annotation_set = models.ForeignKey(
@@ -182,6 +193,14 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
 
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
+
+    x_axis_orientation = ArrayField(
+        models.FloatField(), size=3, default=x_axis_orientation_default
+    )
+    y_axis_orientation = ArrayField(
+        models.FloatField(), size=3, default=y_axis_orientation_default
+    )
+    z = models.FloatField(null=True, blank=True)
 
 
 class LandmarkAnnotationSet(AbstractAnnotationModel):
