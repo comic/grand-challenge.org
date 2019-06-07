@@ -116,7 +116,14 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
 class ImageQualityAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ImageQualityAnnotation
-        fields = ("id", "created", "grader", "image", "quality")
+        fields = (
+            "id",
+            "created",
+            "grader",
+            "image",
+            "quality",
+            "quality_reason",
+        )
 
 
 class ImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):

@@ -113,7 +113,14 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": ImageQualityAnnotationFactory,
                 "serializer": ImageQualityAnnotationSerializer,
-                "fields": ("id", "created", "grader", "image", "quality"),
+                "fields": (
+                    "id",
+                    "created",
+                    "grader",
+                    "image",
+                    "quality",
+                    "quality_reason",
+                ),
             },
             {
                 "unique": True,
