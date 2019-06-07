@@ -140,6 +140,9 @@ class ImageQualityAnnotationFactory(DefaultImageAnnotationModelFactory):
     quality = factory.Iterator(
         [x[0] for x in ImageQualityAnnotation.QUALITY_CHOICES]
     )
+    quality_reason = factory.Iterator(
+        [x[0] for x in ImageQualityAnnotation.QUALITY_REASON_CHOICES]
+    )
 
 
 class ImagePathologyAnnotationFactory(DefaultImageAnnotationModelFactory):
