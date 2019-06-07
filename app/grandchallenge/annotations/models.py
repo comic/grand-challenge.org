@@ -288,10 +288,10 @@ class ImagePathologyAnnotation(AbstractImageAnnotationModel):
     Model to annotate if an pathology is present in an image
     """
 
-    PATHOLOGY_CANNOT_GRADE = 0
-    PATHOLOGY_ABSENT = 1
-    PATHOLOGY_QUESTIONABLE = 2
-    PATHOLOGY_PRESENT = 3
+    PATHOLOGY_CANNOT_GRADE = "C"
+    PATHOLOGY_ABSENT = "A"
+    PATHOLOGY_QUESTIONABLE = "Q"
+    PATHOLOGY_PRESENT = "P"
     PATHOLOGY_CHOICES = (
         (PATHOLOGY_CANNOT_GRADE, "Cannot grade"),
         (PATHOLOGY_ABSENT, "Absent"),
