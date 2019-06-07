@@ -17,9 +17,7 @@
     <meta name="description" content="{{ challenge.description }}">
     <meta property="og:description" content="{{ challenge.description }}">
 
-    {% if challenge.banner %}
-        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.banner.url }}">
-    {% elif challenge.logo %}
+    {% if challenge.logo %}
         <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.logo.url }}">
     {% else %}
         <meta property="og:image" content="{% static 'images/gcheader.png' %}">
