@@ -1,6 +1,35 @@
+{% load url from grandchallenge_tags %}
+{% load static %}
+
 <meta charset="UTF-8">
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-<meta name="description" content="{{ challenge.description }}"/>
-<meta name="keywords"
-      content="open, science, medical, image, computing, validated"/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta property="og:type" content="website">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:site_name" content="{{ request.site }}">
+
+{% if challenge %}
+    <meta name="title" content="{% firstof challenge.title challenge.short_name %} - {{ request.site.name }}">
+    <meta property="og:title" content="{% firstof challenge.title challenge.short_name %} - {{ request.site.name }}">
+
+    <meta name="description" content="{{ challenge.description }}">
+    <meta property="og:description" content="{{ challenge.description }}">
+
+    {% if challenge.banner %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.banner.url }}">
+    {% elif challenge.logo %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.logo.url }}">
+    {% else %}
+        <meta property="og:image" content="{% static 'images/gcheader.png' %}">
+    {% endif %}
+{% else %}
+    <meta name="title" content="{{ request.site.name }}">
+    <meta property="og:title" content="{{ request.site.name }}">
+
+    <meta name="description" content="The home of challenges in biomedical image analysis">
+    <meta property="og:description" content="The home of challenges in biomedical image analysis">
+
+    <meta property="og:image" content="{% static 'images/gcheader.png' %}">
+{% endif %}
