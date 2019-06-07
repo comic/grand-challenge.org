@@ -251,27 +251,35 @@ class ImageQualityAnnotation(AbstractImageAnnotationModel):
     Model to annotate quality of an image
     """
 
-    QUALITY_00 = "00"
-    QUALITY_01 = "01"
-    QUALITY_02 = "02"
-    QUALITY_10 = "10"
-    QUALITY_11 = "11"
-    QUALITY_12 = "12"
-    QUALITY_2 = "2"
+    QUALITY_UNGRADABLE = "U"
+    QUALITY_FAIR = "F"
+    QUALITY_GOOD = "G"
     QUALITY_CHOICES = (
-        (QUALITY_00, "Cannot grade, bad photo"),
-        (QUALITY_01, "Cannot grade, cataract"),
-        (QUALITY_02, "Cannot grade, poor mydriasis"),
-        (QUALITY_10, "Fair, bad photo"),
-        (QUALITY_11, "Fair, cataract"),
-        (QUALITY_12, "Fair, poor mydriasis"),
-        (QUALITY_2, "Good"),
+        (QUALITY_UNGRADABLE, "Cannot grade"),
+        (QUALITY_FAIR, "Fair"),
+        (QUALITY_GOOD, "Good"),
+    )
+
+    QUALITY_REASON_BAD_PHOTO = "BP"
+    QUALITY_REASON_CATARACT = "CA"
+    QUALITY_REASON_POOR_MYDRIASIS = "PM"
+    QUALITY_REASON_CHOICES = (
+        (QUALITY_REASON_BAD_PHOTO, "Bad photo"),
+        (QUALITY_REASON_CATARACT, "Cataract"),
+        (QUALITY_REASON_POOR_MYDRIASIS, "Poor mydriasis"),
     )
 
     quality = models.CharField(
-        max_length=2,
+        max_length=1,
         choices=QUALITY_CHOICES,
         help_text="How do you rate the quality of the image?",
+    )
+    quality_reason = models.CharField(
+        max_length=2,
+        choices=QUALITY_REASON_CHOICES,
+        null=True,
+        blank=True,
+        help_text="If the quality is not good, why not?",
     )
 
 
