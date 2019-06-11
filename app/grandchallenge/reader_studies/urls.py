@@ -6,6 +6,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyCreate,
     ReaderStudyDetail,
     AddImagesToReaderStudy,
+    ReaderStudyUpdate,
 )
 
 app_name = "reader-studies"
@@ -14,6 +15,7 @@ urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
+    path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path("<slug>/add/", AddImagesToReaderStudy.as_view(), name="add-images"),
     path(
         f"<slug>/add/{upload_raw_files_widget.ajax_target_path}",

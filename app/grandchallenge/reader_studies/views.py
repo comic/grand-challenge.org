@@ -1,9 +1,12 @@
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.reader_studies.forms import ReaderStudyCreateForm
+from grandchallenge.reader_studies.forms import (
+    ReaderStudyCreateForm,
+    ReaderStudyUpdateForm,
+)
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
@@ -22,6 +25,11 @@ class ReaderStudyCreate(UserIsStaffMixin, CreateView):
 
 class ReaderStudyDetail(DetailView):
     model = ReaderStudy
+
+
+class ReaderStudyUpdate(UserIsStaffMixin, UpdateView):
+    model = ReaderStudy
+    form_class = ReaderStudyUpdateForm
 
 
 class AddImagesToReaderStudy(CreateView):

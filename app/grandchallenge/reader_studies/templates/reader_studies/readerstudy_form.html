@@ -17,11 +17,11 @@
 {% endblock %}
 
 {% block title %}
-    Create a Reader Study - {{ block.super }}
+    Reader Study {{ object|yesno:"Update,Create" }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-    <h2>Create a Reader Study</h2>
+    <h2>Reader Study {{ object|yesno:"Update,Create" }}</h2>
 
     {% crispy form %}
 {% endblock %}

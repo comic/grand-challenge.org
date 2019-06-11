@@ -29,7 +29,9 @@
 
     <ul>
         {% for image in object.images.all %}
-            <li><a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">{{ image }}</a></li>
+            <li>
+                <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">{{ image }}</a>
+            </li>
         {% endfor %}
     </ul>
 
@@ -37,6 +39,10 @@
         <a class="btn btn-primary"
            href="{% url 'reader-studies:add-images' slug=object.slug %}">
             <i class="fas fa-plus"></i> Add images to this study
+        </a>
+        <a class="btn btn-primary"
+           href="{% url 'reader-studies:update' slug=object.slug %}">
+            <i class="fa fa-edit"></i>
         </a>
     </p>
 {% endblock %}

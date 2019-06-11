@@ -1,9 +1,44 @@
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
+
+
+HANGING_LIST_SCHEMA = {
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "array",
+    "title": "The Hanging List Schema",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "required": ["main"],
+        "additionalProperties": False,
+        "properties": {
+            "main": {
+                "$id": "#/items/properties/main",
+                "type": "string",
+                "title": "The Main Schema",
+                "default": "",
+                "examples": ["im1.mhd"],
+                "pattern": "^(.*)$",
+            },
+            "secondary": {
+                "$id": "#/items/properties/secondary",
+                "type": "string",
+                "title": "The Secondary Schema",
+                "default": "",
+                "examples": ["im2.mhd"],
+                "pattern": "^(.*)$",
+            },
+        },
+    },
+}
 
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
@@ -15,6 +50,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     )
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
+    )
+    hanging_list = JSONField(
+        default=list,
+        blank=True,
+        validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
