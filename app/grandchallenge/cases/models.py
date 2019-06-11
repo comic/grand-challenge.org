@@ -77,6 +77,13 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
+    readerstudy = models.ForeignKey(
+        to="reader_studies.ReaderStudy",
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "

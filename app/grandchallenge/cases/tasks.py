@@ -270,6 +270,9 @@ def build_images(upload_session_uuid: UUID):
                         *collected_images
                     )
 
+                if upload_session.readerstudy:
+                    upload_session.readerstudy.images.add(*collected_images)
+
                 # Delete any touched file data
                 for file in session_files:
                     try:
