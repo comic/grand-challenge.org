@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>Reader Study {{ object.title }}</h1>
+
+    <p>{{ object.description }}</p>
+{% endblock %}
