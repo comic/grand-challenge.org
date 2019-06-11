@@ -35,12 +35,18 @@ from grandchallenge.annotations.models import (
     PolygonAnnotationSet,
     SinglePolygonAnnotation,
     ETDRSGridAnnotation,
+    ImageQualityAnnotation,
+    ImagePathologyAnnotation,
+    RetinaImagePathologyAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
     SinglePolygonAnnotationSerializer,
     ETDRSGridAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
+    ImageQualityAnnotationSerializer,
+    ImagePathologyAnnotationSerializer,
+    RetinaImagePathologyAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.serving.permissions import user_can_download_image
@@ -863,3 +869,30 @@ class ImageElementSpacingView(RetinaAPIPermissionMixin, View):
         return HttpResponse(
             json.dumps(spacing), content_type="application/json"
         )
+
+
+class ImageQualityAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ImageQualityAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = ImageQualityAnnotation.objects.all()
+
+
+class ImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ImagePathologyAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = ImagePathologyAnnotation.objects.all()
+
+
+class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = RetinaImagePathologyAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = RetinaImagePathologyAnnotation.objects.all()

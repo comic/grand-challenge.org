@@ -8,6 +8,9 @@ from .models import (
     SinglePolygonAnnotation,
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
+    ImageQualityAnnotation,
+    ImagePathologyAnnotation,
+    RetinaImagePathologyAnnotation,
 )
 from .validators import validate_grader_is_current_retina_user
 
@@ -108,3 +111,39 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = LandmarkAnnotationSet
         fields = ("id", "grader", "created", "singlelandmarkannotation_set")
+
+
+class ImageQualityAnnotationSerializer(AbstractAnnotationSerializer):
+    class Meta:
+        model = ImageQualityAnnotation
+        fields = (
+            "id",
+            "created",
+            "grader",
+            "image",
+            "quality",
+            "quality_reason",
+        )
+
+
+class ImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
+    class Meta:
+        model = ImagePathologyAnnotation
+        fields = ("id", "created", "grader", "image", "pathology")
+
+
+class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
+    class Meta:
+        model = RetinaImagePathologyAnnotation
+        fields = (
+            "id",
+            "created",
+            "grader",
+            "image",
+            "amd_present",
+            "dr_present",
+            "oda_present",
+            "myopia_present",
+            "cysts_present",
+            "other_present",
+        )

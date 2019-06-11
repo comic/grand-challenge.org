@@ -1,6 +1,7 @@
 import pytest
+
+from tests.model_helpers import do_test_factory
 from tests.patients_tests.factories import PatientFactory
-from tests.model_helpers import batch_test_factories
 
 
 @pytest.mark.django_db
@@ -13,5 +14,8 @@ class TestPatientsModels:
         )
 
 
-factories = {"archive": PatientFactory}
-batch_test_factories(factories, TestPatientsModels)
+@pytest.mark.django_db
+@pytest.mark.parametrize("factory", (PatientFactory,))
+class TestFactories:
+    def test_factory_creation(self, factory):
+        do_test_factory(factory)
