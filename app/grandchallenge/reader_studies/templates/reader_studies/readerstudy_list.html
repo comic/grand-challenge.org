@@ -14,6 +14,12 @@
 {% block content %}
     <h1>Reader Studies</h1>
 
+    <ul>
+    {% for rs in object_list %}
+        <li><a href="{{ rs.get_absolute_url }}">{{ rs }}</a></li>
+    {% endfor %}
+    </ul>
+
     <p class="mt-3">
         <a class="btn btn-primary"
            href="{% url 'reader-studies:create' %}">

@@ -4,6 +4,7 @@ from rest_framework import routers
 
 from grandchallenge.cases.views import ImageViewSet
 from grandchallenge.patients.views import PatientViewSet
+from grandchallenge.reader_studies.views import ReaderStudyViewSet
 from grandchallenge.studies.views import StudyViewSet
 from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -15,6 +16,9 @@ router.register(r"patients", PatientViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(r"cases/images", ImageViewSet, basename="image")
+router.register(
+    r"reader-studies", ReaderStudyViewSet, basename="reader-studies"
+)
 router.register(r"workstations/sessions", SessionViewSet)
 
 urlpatterns = [

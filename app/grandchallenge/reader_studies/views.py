@@ -1,4 +1,5 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -8,6 +9,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyUpdateForm,
 )
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.serializers import ReaderStudySerializer
 
 
 class ReaderStudyList(ListView):
@@ -53,3 +55,8 @@ class AddImagesToReaderStudy(CreateView):
 
     def get_success_url(self):
         return self.object.readerstudy.get_absolute_url()
+
+
+class ReaderStudyViewSet(ReadOnlyModelViewSet):
+    serializer_class = ReaderStudySerializer
+    queryset = ReaderStudy.objects.all()
