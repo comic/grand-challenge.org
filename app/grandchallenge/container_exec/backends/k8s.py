@@ -135,6 +135,7 @@ echo "Done"
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(name=self.job_name()),
             spec=client.V1PodSpec(
+                automount_service_account_token=False,
                 restart_policy="Never",
                 init_containers=[input_container, main_container],
                 containers=[output_container],
