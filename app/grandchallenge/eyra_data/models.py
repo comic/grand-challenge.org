@@ -99,7 +99,7 @@ class DataSet(UUIDModel):
         null=False,
         default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
         help_text=(
-            "DataSet image"
+            "DataSet card image"
         ),
     )
     card_image_alttext = models.CharField(max_length=255, null=True, blank=True)
@@ -109,11 +109,10 @@ class DataSet(UUIDModel):
         null=False,
         default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
         help_text=(
-            "DataSet image"
+            "DataSet banner image"
         ),
     )
     banner_image_alttext = models.CharField(max_length=255, null=True, blank=True)
-
     related_datasets = models.ManyToManyField(
         "eyra_data.DataSet",
         blank = True,

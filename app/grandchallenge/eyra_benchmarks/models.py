@@ -47,13 +47,22 @@ class Benchmark(UUIDModel):
         ),
         unique=True,
     )
-    image = models.CharField(
+    card_image_url = models.CharField(
         max_length=255,
         blank=False,
         null=False,
         default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
         help_text=(
-            "Benchmark image"
+            "Benchmark card image"
+        ),
+    )
+    banner_image_url = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+        help_text=(
+            "Benchmark banner image"
         ),
     )
 
