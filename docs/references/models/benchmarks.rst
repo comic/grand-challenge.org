@@ -5,10 +5,10 @@ Benchmarks
 
 Benchmark
 ~~~~~~~~~
-.. autoclass:: grandchallenge.eyra_benchmarks.models.Benchmark
+.. autoclass:: comic.eyra_benchmarks.models.Benchmark
 
 .. _models.Submission:
 
 Submission
 ~~~~~~~~~~
-.. autoclass:: grandchallenge.eyra_benchmarks.models.Submission
+.. autoclass:: comic.eyra_benchmarks.models.Submission

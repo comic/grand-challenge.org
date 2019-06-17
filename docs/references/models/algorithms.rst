@@ -5,34 +5,34 @@ Algorithms
 
 Interface
 ~~~~~~~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.Interface
+.. autoclass:: comic.eyra_algorithms.models.Interface
 
 .. _models.Input:
 
 Input
 ~~~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.Input
+.. autoclass:: comic.eyra_algorithms.models.Input
 
 .. _models.Algorithm:
 
 Algorithm
 ~~~~~~~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.Algorithm
+.. autoclass:: comic.eyra_algorithms.models.Algorithm
 
 .. _models.Implementation:
 
 Implementation
 ~~~~~~~~~~~~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.Implementation
+.. autoclass:: comic.eyra_algorithms.models.Implementation
 
 .. _models.Job:
 
 Job
 ~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.Job
+.. autoclass:: comic.eyra_algorithms.models.Job
 
 .. _models.JobInput:
 
 JobInput
 ~~~~~~~~
-.. autoclass:: grandchallenge.eyra_algorithms.models.JobInput
+.. autoclass:: comic.eyra_algorithms.models.JobInput
