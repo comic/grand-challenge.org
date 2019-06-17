@@ -31,7 +31,7 @@ ADMINS = (
 )
 
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
+APPS_DIR = os.path.join(SITE_ROOT, "comic")
 
 DATABASES = {
     "default": {
@@ -176,8 +176,8 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                #"grandchallenge.core.contextprocessors.contextprocessors.comic_site",
-                #"grandchallenge.core.contextprocessors.contextprocessors.google_analytics_id",
+                #"comic.core.contextprocessors.contextprocessors.comic_site",
+                #"comic.core.contextprocessors.contextprocessors.google_analytics_id",
             ]
         },
     }
@@ -195,9 +195,9 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "grandchallenge.subdomains.middleware.subdomain_middleware",
-    # "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
-    # "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    # "comic.subdomains.middleware.subdomain_middleware",
+    # "comic.subdomains.middleware.challenge_subdomain_middleware",
+    # "comic.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
 
@@ -239,27 +239,27 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    # "grandchallenge.admins",
-    "grandchallenge.api",
-    # "grandchallenge.challenges",
-    "grandchallenge.core",
-    # "grandchallenge.evaluation",
-    # "grandchallenge.jqfileupload",
-    # "grandchallenge.pages",
-    # "grandchallenge.participants",
-    "grandchallenge.profiles",
-    # "grandchallenge.teams",
-    # "grandchallenge.uploads",
-    # "grandchallenge.cases",
-    # "grandchallenge.algorithms",
-    # "grandchallenge.container_exec",
-    # "grandchallenge.datasets",
-    # "grandchallenge.submission_conversion",
-    # "grandchallenge.statistics",
-    "grandchallenge.eyra_benchmarks",
-    "grandchallenge.eyra_algorithms",
-    "grandchallenge.eyra_data",
-    "grandchallenge.eyra_users",
+    # "comic.admins",
+    "comic.api",
+    # "comic.challenges",
+    "comic.core",
+    # "comic.evaluation",
+    # "comic.jqfileupload",
+    # "comic.pages",
+    # "comic.participants",
+    "comic.profiles",
+    # "comic.teams",
+    # "comic.uploads",
+    # "comic.cases",
+    # "comic.algorithms",
+    # "comic.container_exec",
+    # "comic.datasets",
+    # "comic.submission_conversion",
+    # "comic.statistics",
+    "comic.eyra_benchmarks",
+    "comic.eyra_algorithms",
+    "comic.eyra_data",
+    "comic.eyra_users",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -289,8 +289,8 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.associate_by_email",
     "social_core.pipeline.user.get_username",
     "social_core.pipeline.user.create_user",
-    "grandchallenge.profiles.social_auth.pipeline.profile.create_profile",
-    "grandchallenge.profiles.social_auth.pipeline.profile.add_to_default_group",
+    "comic.profiles.social_auth.pipeline.profile.create_profile",
+    "comic.profiles.social_auth.pipeline.profile.add_to_default_group",
     "social_core.pipeline.social_auth.associate_user",
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
@@ -381,7 +381,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
-    'EXCEPTION_HANDLER': 'grandchallenge.api.errors.custom_exception_handler'
+    'EXCEPTION_HANDLER': 'comic.api.errors.custom_exception_handler'
 }
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
@@ -392,25 +392,25 @@ CELERY_TASK_TIME_LIMIT = 7260
 
 # CELERY_BEAT_SCHEDULE = {
 #     "cleanup_stale_uploads": {
-#         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
+#         "task": "comic.jqfileupload.tasks.cleanup_stale_uploads",
 #         "schedule": timedelta(hours=1),
 #     },
 #     "clear_sessions": {
-#         "task": "grandchallenge.core.tasks.clear_sessions",
+#         "task": "comic.core.tasks.clear_sessions",
 #         "schedule": timedelta(days=1),
 #     },
 #     "update_filter_classes": {
-#         "task": "grandchallenge.challenges.tasks.update_filter_classes",
+#         "task": "comic.challenges.tasks.update_filter_classes",
 #         "schedule": timedelta(minutes=5),
 #     },
 #     "validate_external_challenges": {
-#         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
+#         "task": "comic.challenges.tasks.check_external_challenge_urls",
 #         "schedule": timedelta(days=1),
 #     },
 # }
 
 CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation"
+    "comic.container_exec.tasks.execute_job": "evaluation"
 }
 
 if MEDIA_ROOT[-1] != "/":

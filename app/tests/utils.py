@@ -6,8 +6,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, Client
 from django.views.generic import View
 
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.subdomains.utils import reverse
+from comic.challenges.models import Challenge
+from comic.subdomains.utils import reverse
 from old_tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
 
 

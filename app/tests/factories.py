@@ -1,7 +1,7 @@
 import factory
 from django.conf import settings
 
-from grandchallenge.eyra_benchmarks.models import Benchmark
+from comic.eyra_benchmarks.models import Benchmark
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
