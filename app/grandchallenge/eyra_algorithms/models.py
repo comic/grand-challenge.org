@@ -90,6 +90,11 @@ class Implementation(UUIDModel):
         null=True,
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['algorithm', 'version'], name='unique_version'),
+        ]
+
     def __str__(self):
         return self.name
 
