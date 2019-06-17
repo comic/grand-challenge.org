@@ -17,9 +17,9 @@ sphinx-rtd-theme = "*"
 recommonmark = "*"
 
 [packages]
-boto3 = "==1.9.97"
+boto3 = "*"
 celery = "*"
-django = "<2.2"
+django = "*"
 django-celery-beat = "*"
 django-celery-email = "*"
 django-celery-results = "*"
