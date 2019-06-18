@@ -1,3 +1,6 @@
+from django.http import HttpResponse
+from rest_framework.decorators import list_route, detail_route
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from comic.eyra_data.models import DataFile, DataType, DataSet
@@ -18,6 +21,14 @@ class DataFileViewSet(ModelViewSet):
             # return DataSet.objects.filter(frozen=True)
             return DataFile.objects.all()
         return DataFile.objects.all()
+
+    @detail_route()
+    def download(self, request, *args, **kwargs):
+        data_file = DataFile.objects.get(pk=kwargs['pk'])
+        response = HttpResponse()
+        response["Content-Disposition"] = "attachment; filename={0}".format(data_file.name)
+        response['X-Accel-Redirect'] = str(data_file.file.url)
+        return response
 
 
 class DataTypeViewSet(ModelViewSet):
