@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -25,10 +25,7 @@ class DataFileViewSet(ModelViewSet):
     @detail_route()
     def download(self, request, *args, **kwargs):
         data_file = DataFile.objects.get(pk=kwargs['pk'])
-        response = HttpResponse()
-        response["Content-Disposition"] = "attachment; filename={0}".format(data_file.name)
-        response['X-Accel-Redirect'] = '/download/' + str(data_file.file.url)
-        return response
+        return HttpResponseRedirect(data_file.file.url)
 
 
 class DataTypeViewSet(ModelViewSet):

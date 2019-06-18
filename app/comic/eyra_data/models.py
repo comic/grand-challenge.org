@@ -29,7 +29,7 @@ class DataType(UUIDModel):
 
 
 class DataFile(UUIDModel):
-    """ DataFiasdle """
+    """ DataFile """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         blank=True,
