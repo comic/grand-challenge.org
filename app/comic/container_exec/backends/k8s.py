@@ -16,7 +16,7 @@ if settings.K8S_USE_CLUSTER_CONFIG:
         os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_CERT_FILENAME
 
 # the capacity of the PVC volume used for in/output.
-IO_PVC_CAPACITY = '10Gi'
+IO_PVC_CAPACITY = '50Gi'
 
 # https://github.com/s3tools/s3cmd
 # used for up- & downloading data from s3
