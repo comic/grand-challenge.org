@@ -347,7 +347,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "grandchallenge": {
+        "comic": {
             "level": "WARNING",
             "handlers": ["console"],
             "propagate": True,
@@ -410,7 +410,7 @@ CELERY_TASK_TIME_LIMIT = 7260
 # }
 
 CELERY_TASK_ROUTES = {
-    "comic.container_exec.tasks.execute_job": "evaluation"
+    "comic.eyra_benchmarks.tasks.run_submission": "submission"
 }
 
 if MEDIA_ROOT[-1] != "/":

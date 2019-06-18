@@ -29,6 +29,6 @@ ratings:
   - "**.py"
   - "**.rb"
 exclude_paths:
-  - app/grandchallenge/core/static/**/*
-  - app/grandchallenge/**/migrations/**/*
+  - app/comic/core/static/**/*
+  - app/comic/**/migrations/**/*
   - app/tests/core_tests/resources/**/*

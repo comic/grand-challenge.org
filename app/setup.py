@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="grandchallenge",
+    name="comic",
     version="1.0.0",
     author="Eyra team",
     author_email="t.klaver@esciencecenter.nl",
