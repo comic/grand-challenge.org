@@ -453,3 +453,7 @@ K8S_NAMESPACE = os.environ.get("K8S_NAMESPACE", 'k8s-namespace')
 
 # Set to True when running in the K8S cluster; for local development, set to False to use your local kubectl config.
 K8S_USE_CLUSTER_CONFIG = True
+
+AWS_REGION=os.environ.get('AWS_REGION', 'eu-central-1')
+AWS_ACCESS_KEY_ID=os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY=os.environ.get('AWS_SECRET_ACCESS_KEY', '')
