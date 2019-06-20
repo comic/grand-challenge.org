@@ -8,6 +8,7 @@ from celery.task.control import inspect
 
 from comic.container_exec.backends.k8s import K8sJob
 from comic.eyra_algorithms.models import Job
+from comic.eyra_benchmarks.tasks import run_submission
 
 from django.conf import settings
 
@@ -31,10 +32,10 @@ def autoscale_gpu_node():
     task_names = [task['name'] for task in tasks]
 
     scale_to = 0
-    if run_job.name in task_names:
+    if run_submission.name in task_names:
         scale_to = 1
 
-    print(f"{str(len(tasks))} Submission tasks.. scaling to {str(scale_to)} GPU nodes.")
+    print(f"Scaling to {str(scale_to)} GPU nodes.")
 
     autoscaling_client.set_desired_capacity(
         AutoScalingGroupName='terraform-eks-eyra-prod01-gpu',
