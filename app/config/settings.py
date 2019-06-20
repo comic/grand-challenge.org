@@ -392,7 +392,7 @@ CELERY_TASK_TIME_LIMIT = 7260
 
 CELERY_BEAT_SCHEDULE = {
     "autoscale_gpu_node": {
-        "task": "comic.eyra_algorithms.tasks.autoscale_gpu_node",
+        "task": "comic.eyra_benchmarks.tasks.autoscale_gpu_node",
         "schedule": timedelta(minutes=1),
     },
 }
