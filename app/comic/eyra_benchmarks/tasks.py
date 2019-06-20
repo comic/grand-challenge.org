@@ -96,9 +96,9 @@ def run_submission(submission_pk):
 def autoscale_gpu_node():
     autoscaling_client = boto3.client(
         'autoscaling',
-        region_name=settings.AWS_REGION,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_AUTOSCALING_REGION,
+        aws_access_key_id=settings.AWS_AUTOSCALING_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_AUTOSCALING_SECRET_ACCESS_KEY,
     )
 
     i = inspect()
