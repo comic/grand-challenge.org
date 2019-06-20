@@ -390,24 +390,12 @@ CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = 7200
 CELERY_TASK_TIME_LIMIT = 7260
 
-# CELERY_BEAT_SCHEDULE = {
-#     "cleanup_stale_uploads": {
-#         "task": "comic.jqfileupload.tasks.cleanup_stale_uploads",
-#         "schedule": timedelta(hours=1),
-#     },
-#     "clear_sessions": {
-#         "task": "comic.core.tasks.clear_sessions",
-#         "schedule": timedelta(days=1),
-#     },
-#     "update_filter_classes": {
-#         "task": "comic.challenges.tasks.update_filter_classes",
-#         "schedule": timedelta(minutes=5),
-#     },
-#     "validate_external_challenges": {
-#         "task": "comic.challenges.tasks.check_external_challenge_urls",
-#         "schedule": timedelta(days=1),
-#     },
-# }
+CELERY_BEAT_SCHEDULE = {
+    "autoscale_gpu_node": {
+        "task": "comic.eyra_algorithms.tasks.autoscale_gpu_node",
+        "schedule": timedelta(minutes=1),
+    },
+}
 
 CELERY_TASK_ROUTES = {
     "comic.eyra_benchmarks.tasks.run_submission": "submission"

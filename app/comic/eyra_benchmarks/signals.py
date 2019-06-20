@@ -4,7 +4,17 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from comic.core.utils import disable_for_loaddata
-from comic.eyra_benchmarks.models import Benchmark
+from comic.eyra_benchmarks.models import Benchmark, Submission
+from comic.eyra_benchmarks.tasks import run_submission
+
+
+@receiver(post_save, sender=Submission)
+@disable_for_loaddata
+def run_new_submission(
+    instance: Submission = None, created: bool = False, *_, **__
+):
+    if created:
+        run_submission.delay(str(instance.pk))
 
 
 @receiver(post_save, sender=Benchmark)
