@@ -119,8 +119,8 @@ class Submission(UUIDModel):
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     benchmark = models.ForeignKey(Benchmark, on_delete=models.CASCADE)
     implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE, related_name='submissions')
-    implementation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    implementation_job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
+    evaluation_job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
     metrics = JSONField(null=True, blank=True)
     visualization_url = models.URLField(
         null=True,
