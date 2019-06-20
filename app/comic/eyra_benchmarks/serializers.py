@@ -28,6 +28,7 @@ class BenchmarkSerializer(serializers.ModelSerializer):
 
 class SubmissionSerializer(serializers.ModelSerializer):
     creator = PrimaryKeyRelatedField(read_only=True)
+    metrics = serializers.JSONField()
 
     class Meta:
         model = Submission

@@ -121,7 +121,7 @@ class Submission(UUIDModel):
     implementation = models.ForeignKey(Implementation, on_delete=models.CASCADE, related_name='submissions')
     implementation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     evaluation_job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
-    metrics_json = JSONField(null=True, blank=True)
+    metrics = JSONField(null=True, blank=True)
     visualization_url = models.URLField(
         null=True,
         blank=True,

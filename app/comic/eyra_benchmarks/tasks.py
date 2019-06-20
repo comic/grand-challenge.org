@@ -81,8 +81,8 @@ def run_submission(submission_pk):
     run_job(submission.evaluation_job.pk)
     try:
         eval_output = submission.evaluation_job.output.file.read().decode('ascii')
-        submission.metrics_json = json.dumps(json.loads(eval_output)['metrics'])
+        submission.metrics = json.loads(eval_output)['metrics']
     except:
-        submission.metrics_json = "Error getting 'metrics' value from evaluation output."
+        submission.metrics = "Error getting 'metrics' value from evaluation output."
     submission.save()
 
