@@ -138,3 +138,19 @@ class Submission(UUIDModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.is_private:
+            if not self.benchmark.data_set.private_test_data_file:
+                raise ValidationError('Cannot create private submission, because the Benchmarks dataset has no private_test_data_file')
+            if not self.benchmark.data_set.private_ground_truth_data_file:
+                raise ValidationError('Cannot create private submission, because the Benchmarks dataset has no private_ground_truth_data_file')
+        else:
+            if not self.benchmark.data_set.public_test_data_file:
+                raise ValidationError('Cannot create public submission, because the Benchmarks dataset has no public_test_data_file')
+            if not self.benchmark.data_set.public_ground_truth_data_file:
+                raise ValidationError('Cannot create public submission, because the Benchmarks dataset has no public_ground_truth_data_file')
