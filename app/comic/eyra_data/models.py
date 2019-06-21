@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from comic.core.models import UUIDModel
@@ -119,19 +120,33 @@ class DataSet(UUIDModel):
         related_name='related_data_sets'
     )
 
-    additional_data_files = models.ManyToManyField(
+    participant_data_files = models.ManyToManyField(
         DataFile,
         related_name='data_sets',
         blank=True,
     )
-    test_data_file = models.ForeignKey(
+    public_test_data_file = models.ForeignKey(
         DataFile,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='+'
     )
-    test_ground_truth_data_file = models.ForeignKey(
+    public_ground_truth_data_file = models.ForeignKey(
+        DataFile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+'
+    )
+    private_test_data_file = models.ForeignKey(
+        DataFile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+'
+    )
+    private_ground_truth_data_file = models.ForeignKey(
         DataFile,
         on_delete=models.SET_NULL,
         null=True,
@@ -141,3 +156,16 @@ class DataSet(UUIDModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.public_test_data_file and self.private_test_data_file:
+            if not self.public_test_data_file.type == self.private_test_data_file:
+                raise ValidationError('Public & private test data should have same types.')
+
+        if self.public_ground_truth_data_file and self.private_ground_truth_data_file:
+            if not self.public_ground_truth_data_file.type == self.private_ground_truth_data_file:
+                raise ValidationError('Public & private ground truth should have same types.')

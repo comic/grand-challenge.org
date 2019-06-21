@@ -96,7 +96,7 @@ class Benchmark(UUIDModel):
         if self.interface:
             if self.interface.inputs.count() != 1:
                 raise ValidationError('Benchmark interface should have a single input.')
-            if self.data_set and self.data_set.test_data_file.type != self.interface.inputs.first().type:
+            if self.data_set and self.data_set.public_test_data_file.type != self.interface.inputs.first().type:
                 raise ValidationError('The types of data_set.test_data_file and benchmark interface input should match.')
 
     def __str__(self):
@@ -122,6 +122,12 @@ class Submission(UUIDModel):
     implementation_job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
     evaluation_job = models.ForeignKey(Job, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
     metrics = JSONField(null=True, blank=True)
+    is_private = models.BooleanField(
+        default=False,
+        help_text=(
+            "Submission for private leaderboard"
+        )
+    )
     visualization_url = models.URLField(
         null=True,
         blank=True,
@@ -129,3 +135,6 @@ class Submission(UUIDModel):
             "Visualization URL"
         ),
     )
+
+    def __str__(self):
+        return self.name

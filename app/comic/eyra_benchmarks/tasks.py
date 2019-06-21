@@ -18,7 +18,7 @@ def create_implementation_job_for_submission(submission: Submission):
         raise Exception('Job already exists for submission')
 
     job_output = DataFile.objects.create(
-        name='output',
+        name='implementation job output',
         type=submission.benchmark.interface.output_type,
     )
     job_output.file = f"data_files/{str(job_output.pk)}"
@@ -30,10 +30,14 @@ def create_implementation_job_for_submission(submission: Submission):
     )
     submission.save()
 
+    input_data_file = submission.benchmark.data_set.public_test_data_file
+    if submission.is_private:
+        input_data_file = submission.benchmark.data_set.private_test_data_file
+
     job_input = JobInput.objects.create(
         job=submission.implementation_job,
         input=submission.benchmark.interface.inputs.first(),
-        data_file=submission.benchmark.data_set.test_data_file,
+        data_file=input_data_file,
     )
 
 
@@ -44,7 +48,7 @@ def create_evaluation_job_for_submission(submission: Submission):
     interface = submission.benchmark.evaluator.algorithm.interface
     
     job_output = DataFile.objects.create(
-        name='output',
+        name='evaluation job output',
         type=interface.output_type,
     )
     job_output.file = f"data_files/{str(job_output.pk)}"
@@ -62,10 +66,14 @@ def create_evaluation_job_for_submission(submission: Submission):
         data_file=submission.implementation_job.output,
     )
 
+    ground_truth_data_file = submission.benchmark.data_set.public_ground_truth_data_file
+    if submission.is_private:
+        ground_truth_data_file = submission.benchmark.data_set.private_ground_truth_data_file
+
     job_ground_truth_input = JobInput.objects.create(
         job=submission.evaluation_job,
         input=interface.inputs.get(name='ground_truth'),
-        data_file=submission.benchmark.data_set.test_ground_truth_data_file,
+        data_file=ground_truth_data_file,
     )
 
 
