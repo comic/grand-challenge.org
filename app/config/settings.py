@@ -427,8 +427,9 @@ if strtobool(os.environ.get("WHITENOISE", "False")):
     MIDDLEWARE += ("whitenoise.middleware.WhiteNoiseMiddleware",)
 
 CORS_ORIGIN_REGEX_WHITELIST = (
-    r"^.*\.eyrabenchmark.net",
+    r"^.*\.eyrabenchmark\.net",
     r"https?://localhost:3000",
+    r"^.*\.static\.observableusercontent\.com",
 )
 
 # CORS_ORIGIN_ALLOW_ALL = True
