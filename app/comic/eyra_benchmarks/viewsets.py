@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from comic.eyra_algorithms.models import Implementation
+from comic.eyra_algorithms.models import Implementation, Algorithm
 from comic.eyra_algorithms.serializers import ImplementationSerializer
 from comic.eyra_benchmarks.models import Benchmark, Submission
 from comic.eyra_benchmarks.serializers import BenchmarkSerializer, SubmissionSerializer
@@ -52,11 +52,7 @@ class SubmissionViewSet(ModelViewSet):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def algorithm_submission(request):
-    # fields in request.data:
-    # - description (for algo)
-    # - name (for algo? for submission?)
-    # - container (name of container)
-    # - benchmark (id of benchmark)
+
     benchmark_id = request.data.get('benchmark', None)
     if not benchmark_id:
         raise DRFValidationError("Benchmark UUID required")
@@ -65,17 +61,36 @@ def algorithm_submission(request):
     except (DjangoValidationError, Benchmark.DoesNotExist) as e:
         raise DRFValidationError(f"Invalid benchmark UUID {benchmark_id}")
 
-    algorithm_name = request.data.get('name', None)
+    algorithm_name = request.data.get('algorithm_name', None)
     if not algorithm_name:
-        raise DRFValidationError("Name required")
+        raise DRFValidationError("algorithm_name required")
+    implementation_name = request.data.get('implementation_name', None)
+    if not implementation_name:
+        raise DRFValidationError("implementation_name required")
+    container_name = request.data.get('container_name', None)
+    if not container_name:
+        raise DRFValidationError("container_name required")
+    
+    try:
+        algorithm = Algorithm.objects.get(name=algorithm_name)
+    except Algorithm.DoesNotExist:
+        algorithm = Algorithm(
+            name=algorithm_name,
+            description=algorithm_name,
+            creator=request.user,
+            interface=benchmark.interface,
+        )
+        algorithm.save()
 
     implementation = Implementation(
         creator=request.user,
         # creator=User.objects.first(),
-        interface=benchmark.interface,
-        description=request.data.get('description', ''),
-        container=request.data.get('container', ''),
-        name=algorithm_name,
+        algorithm=algorithm,
+        description=request.data.get('implementation_name'),
+        image=request.data.get('container_name'),
+        name=request.data.get('implementation_name'),
+        version=request.data.get('version'),
+
     )
     try:
         implementation.full_clean(exclude=None)
