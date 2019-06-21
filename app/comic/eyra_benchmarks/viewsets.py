@@ -42,7 +42,7 @@ class SubmissionViewSet(ModelViewSet):
     serializer_class = SubmissionSerializer
     permission_classes = (EyraPermissions,)
     # filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ['benchmark', 'creator']
+    filterset_fields = ['benchmark', 'creator', 'is_private']
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
