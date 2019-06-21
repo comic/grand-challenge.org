@@ -1,3 +1,4 @@
+from django_filters import rest_framework as filters
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from rest_framework.decorators import api_view, permission_classes
@@ -14,10 +15,22 @@ from comic.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoM
     EyraPermissions
 
 
+class BenchmarkFilter(filters.FilterSet):
+    has_admin = filters.NumberFilter(method='has_admin_filter')
+
+    class Meta:
+        model = Benchmark
+        fields = ['creator', 'has_admin']
+
+    def has_admin_filter(self, queryset, name, value):
+        return queryset.filter(admin_group__user__id__contains=value)
+
+
 class BenchmarkViewSet(ModelViewSet):
     queryset = Benchmark.objects.all()
     serializer_class = BenchmarkSerializer
     permission_classes = (EyraPermissions,)
+    filterset_class = BenchmarkFilter
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator

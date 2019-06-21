@@ -11,6 +11,7 @@ class ImplementationViewSet(ModelViewSet):
     queryset = Implementation.objects.all()
     serializer_class = ImplementationSerializer
     permission_classes = (EyraPermissions,)
+    filterset_fields = ['creator']
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
@@ -22,6 +23,7 @@ class AlgorithmViewSet(ModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = (EyraPermissions,)
+    filterset_fields = ['creator']
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator
