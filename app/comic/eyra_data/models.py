@@ -120,11 +120,6 @@ class DataSet(UUIDModel):
         related_name='related_data_sets'
     )
 
-    participant_data_files = models.ManyToManyField(
-        DataFile,
-        related_name='data_sets',
-        blank=True,
-    )
     public_test_data_file = models.ForeignKey(
         DataFile,
         on_delete=models.SET_NULL,
@@ -139,6 +134,19 @@ class DataSet(UUIDModel):
         blank=True,
         related_name='+'
     )
+    public_test_data_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Description of the test data.",
+    )
+    public_test_data_sampling_method = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Sampling method of the test data.",
+    )
+
     private_test_data_file = models.ForeignKey(
         DataFile,
         on_delete=models.SET_NULL,
@@ -152,6 +160,36 @@ class DataSet(UUIDModel):
         null=True,
         blank=True,
         related_name='+'
+    )
+    private_test_data_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Description of the test data.",
+    )
+    private_test_data_sampling_method = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Sampling method of the test data.",
+    )
+
+    participant_data_files = models.ManyToManyField(
+        DataFile,
+        related_name='data_sets',
+        blank=True,
+    )
+    participant_data_description = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Description of the data.",
+    )
+    participant_data_sampling_method = models.TextField(
+        default="",
+        blank=True,
+        null=True,
+        help_text="Sampling method of the data.",
     )
 
     def __str__(self):
