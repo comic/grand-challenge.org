@@ -356,22 +356,3 @@ class TestImageElementSpacingView:
         assert response.status_code == status.HTTP_200_OK
         r = response.json()
         assert list(image.get_sitk_image().GetSpacing()) == r
-
-    def test_returns_correct_spacing_changed(self, client):
-        image = ImageFactoryWithImageFile()
-        image.permit_viewing_by_retina_users()
-        element_spacing = (1.5, 0.5)
-        response = create_element_spacing_request(
-            client, image_name=image.name, es=element_spacing
-        )
-        assert response.status_code == status.HTTP_200_OK
-        r = response.json()
-        assert r["success"]
-        assert element_spacing == image.get_sitk_image().GetSpacing()
-
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user="retina_user")
-        response = client.get(url)
-        assert response.status_code == status.HTTP_200_OK
-        r = response.json()
-        assert list(image.get_sitk_image().GetSpacing()) == r
