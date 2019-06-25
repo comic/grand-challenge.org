@@ -8,7 +8,14 @@ To develop the platform you need to have docker and docker-compose running on yo
 Installation
 ------------
 
-1. Install Docker_ and `Docker Compose`_ 
+1. Download and install Docker
+
+    *Linux*: Docker_ and `Docker Compose`_
+
+    *Windows 10 Pro (Build 15063 or later)*: `Docker for Windows`_
+
+    *Older Windows versions*: `Docker Toolbox`_
+
 2. Clone the repo
 
 .. code-block:: console
@@ -16,7 +23,7 @@ Installation
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-3. You can then start the site by invoking 
+3. You can then start the site by invoking
 
 .. code-block:: console
 
@@ -40,6 +47,43 @@ Running Grand-Challenge within a Windows environment requires additional steps b
 .. code-block:: console 
 
 	$ export COMPOSE_CONVERT_WINDOWS_PATHS=1
+
+3. Add the following line to your hosts file (``C:\Windows\System32\drivers\etc\hosts``)
+
+.. code-block:: console
+
+    # Using Docker for Windows:
+    127.0.0.1 gc.localhost
+
+    # Using Docker Toolbox:
+    192.168.99.100 gc.localhost
+
+
+4. Share the drive where this repository is located with Docker
+
+    *Docker for Windows*
+
+        1. Right-click Docker icon in taskbar and click "Settings"
+        2. Go to "Shared drives" tab
+        3. Mark the checkbox of the drive where this repository is located
+
+    *Docker Toolbox*
+
+        1. Open VirtualBox
+        2. Go to the virtual machine that belongs to docker
+        3. Double click "Shared folders"
+        4. Click on the "Add New Shared Folder" button on the right
+        5. In the Folder Path box, type the drive letter where this repository is located (eg. ``C:\``)
+        6. In the Folder Name box, type the drive letter lowercased (eg. ``c``)
+        7. Restart the docker machine by typing ``docker-machine restart`` in your console
+        8. SSH into the docker VM with ``docker-machine ssh``
+        9. Append the following lines to the file ``/mnt/sda1/var/lib/boot2docker/profile``
+
+.. code-block:: console
+
+    mkdir /home/docker/c # Change the 'c' to your drive letter
+    sudo mount -t vboxsf -o uid=1000,gid=50 c /home/docker/c # Again, change both 'c's to your drive letter
+
 
 
 Running the Tests
@@ -222,4 +266,5 @@ If you want to run this in a production environment you will need to make severa
 .. _TravisCI: https://travis-ci.org/comic/grand-challenge.org
 .. _Docker: https://docs.docker.com/install/
 .. _`Docker Compose`: https://docs.docker.com/compose/install/
-
+.. _`Docker for Windows`: https://docs.docker.com/docker-for-windows/install/
+.. _`Docker Toolbox`: https://docs.docker.com/toolbox/toolbox_install_windows/
