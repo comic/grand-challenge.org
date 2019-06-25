@@ -197,12 +197,7 @@ class Session(UUIDModel):
         -------
             The environment variables that should be set on the container.
         """
-        env = {
-            "GRAND_CHALLENGE_PROXY_URL_MAPPINGS": "",
-            "GRAND_CHALLENGE_QUERY_IMAGE_URL": unquote(
-                reverse("api:image-detail", kwargs={"pk": "{key}"})
-            ),
-        }
+        env = {"GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root"))}
 
         if self.creator:
             env.update(
