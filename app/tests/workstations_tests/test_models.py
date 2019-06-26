@@ -23,11 +23,7 @@ def test_session_environ(settings, debug):
     s = SessionFactory()
     env = s.environment
 
-    assert env["GRAND_CHALLENGE_PROXY_URL_MAPPINGS"] == ""
-    assert "{key}" in env["GRAND_CHALLENGE_QUERY_IMAGE_URL"]
-    assert env["GRAND_CHALLENGE_QUERY_IMAGE_URL"].startswith(
-        "https://testserver"
-    )
+    assert env["GRAND_CHALLENGE_API_ROOT"] == "https://testserver/api/v1/"
     assert (
         Token.objects.get(user=s.creator).key
         in env["GRAND_CHALLENGE_AUTHORIZATION"]

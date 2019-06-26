@@ -15,6 +15,9 @@ from grandchallenge.annotations.models import (
     SinglePolygonAnnotation,
     LandmarkAnnotationSet,
     SingleLandmarkAnnotation,
+    ImageQualityAnnotation,
+    ImagePathologyAnnotation,
+    RetinaImagePathologyAnnotation,
 )
 from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory, FuzzyFloatCoordinatesList
@@ -128,3 +131,38 @@ def create_batch_landmarks():
         )
 
     return landmark_annotation_set, landmark_annotations
+
+
+class ImageQualityAnnotationFactory(DefaultImageAnnotationModelFactory):
+    class Meta:
+        model = ImageQualityAnnotation
+
+    quality = factory.Iterator(
+        [x[0] for x in ImageQualityAnnotation.QUALITY_CHOICES]
+    )
+    quality_reason = factory.Iterator(
+        [x[0] for x in ImageQualityAnnotation.QUALITY_REASON_CHOICES]
+    )
+
+
+class ImagePathologyAnnotationFactory(DefaultImageAnnotationModelFactory):
+    class Meta:
+        model = ImagePathologyAnnotation
+
+    pathology = factory.Iterator(
+        [x[0] for x in ImagePathologyAnnotation.PATHOLOGY_CHOICES]
+    )
+
+
+class RetinaImagePathologyAnnotationFactory(
+    DefaultImageAnnotationModelFactory
+):
+    class Meta:
+        model = RetinaImagePathologyAnnotation
+
+    amd_present = factory.fuzzy.FuzzyChoice([True, False])
+    dr_present = factory.fuzzy.FuzzyChoice([True, False])
+    oda_present = factory.fuzzy.FuzzyChoice([True, False])
+    myopia_present = factory.fuzzy.FuzzyChoice([True, False])
+    cysts_present = factory.fuzzy.FuzzyChoice([True, False])
+    other_present = factory.fuzzy.FuzzyChoice([True, False])

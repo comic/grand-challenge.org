@@ -244,3 +244,88 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
 
     class Meta(AbstractImageAnnotationModel.Meta):
         unique_together = ("image", "grader", "created")
+
+
+class ImageQualityAnnotation(AbstractImageAnnotationModel):
+    """
+    Model to annotate quality of an image
+    """
+
+    QUALITY_UNGRADABLE = "U"
+    QUALITY_FAIR = "F"
+    QUALITY_GOOD = "G"
+    QUALITY_CHOICES = (
+        (QUALITY_UNGRADABLE, "Cannot grade"),
+        (QUALITY_FAIR, "Fair"),
+        (QUALITY_GOOD, "Good"),
+    )
+
+    QUALITY_REASON_BAD_PHOTO = "BP"
+    QUALITY_REASON_CATARACT = "CA"
+    QUALITY_REASON_POOR_MYDRIASIS = "PM"
+    QUALITY_REASON_CHOICES = (
+        (QUALITY_REASON_BAD_PHOTO, "Bad photo"),
+        (QUALITY_REASON_CATARACT, "Cataract"),
+        (QUALITY_REASON_POOR_MYDRIASIS, "Poor mydriasis"),
+    )
+
+    quality = models.CharField(
+        max_length=1,
+        choices=QUALITY_CHOICES,
+        help_text="How do you rate the quality of the image?",
+    )
+    quality_reason = models.CharField(
+        max_length=2,
+        choices=QUALITY_REASON_CHOICES,
+        null=True,
+        blank=True,
+        help_text="If the quality is not good, why not?",
+    )
+
+
+class ImagePathologyAnnotation(AbstractImageAnnotationModel):
+    """
+    Model to annotate if an pathology is present in an image
+    """
+
+    PATHOLOGY_CANNOT_GRADE = "C"
+    PATHOLOGY_ABSENT = "A"
+    PATHOLOGY_QUESTIONABLE = "Q"
+    PATHOLOGY_PRESENT = "P"
+    PATHOLOGY_CHOICES = (
+        (PATHOLOGY_CANNOT_GRADE, "Cannot grade"),
+        (PATHOLOGY_ABSENT, "Absent"),
+        (PATHOLOGY_QUESTIONABLE, "Questionable"),
+        (PATHOLOGY_PRESENT, "Present"),
+    )
+
+    pathology = models.CharField(
+        max_length=1,
+        choices=PATHOLOGY_CHOICES,
+        help_text="Is there a pathology present in the image?",
+    )
+
+
+class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
+    """
+    Model to annotate presence of specific pathologies
+    """
+
+    amd_present = models.BooleanField(
+        help_text="Is Age-related Macular Degeneration present in this image?"
+    )
+    dr_present = models.BooleanField(
+        help_text="Is Diabetic Retinopathy present in this image?"
+    )
+    oda_present = models.BooleanField(
+        help_text="Are optic disc abnormalitites present in this image?"
+    )
+    myopia_present = models.BooleanField(
+        help_text="Is myopia present in this image?"
+    )
+    cysts_present = models.BooleanField(
+        help_text="Are cysts present in this image?"
+    )
+    other_present = models.BooleanField(
+        help_text="Are other findings present in this image?"
+    )

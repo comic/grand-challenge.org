@@ -12,8 +12,11 @@ from tests.annotations_tests.factories import (
     SinglePolygonAnnotationFactory,
     LandmarkAnnotationSetFactory,
     SingleLandmarkAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    RetinaImagePathologyAnnotationFactory,
 )
-from tests.model_helpers import batch_test_factories
+from tests.model_helpers import do_test_factory
 from tests.viewset_helpers import get_user_from_user_type
 
 
@@ -94,15 +97,24 @@ class TestPermissions:
                 assert f"{permission_type}_polygonannotationset" in perms
 
 
-factories = {
-    "etdrs": ETDRSGridAnnotationFactory,
-    "measurement": MeasurementAnnotationFactory,
-    "boolean": BooleanClassificationAnnotationFactory,
-    "integer": IntegerClassificationAnnotationFactory,
-    "coordinates": CoordinateListAnnotationFactory,
-    "polygonset": PolygonAnnotationSetFactory,
-    "singlepolygon": SinglePolygonAnnotationFactory,
-    "landmarkset": LandmarkAnnotationSetFactory,
-    "singlelandmark": SingleLandmarkAnnotationFactory,
-}
-batch_test_factories(factories, TestAnnotationModels)
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory",
+    (
+        ETDRSGridAnnotationFactory,
+        MeasurementAnnotationFactory,
+        BooleanClassificationAnnotationFactory,
+        IntegerClassificationAnnotationFactory,
+        CoordinateListAnnotationFactory,
+        PolygonAnnotationSetFactory,
+        SinglePolygonAnnotationFactory,
+        LandmarkAnnotationSetFactory,
+        SingleLandmarkAnnotationFactory,
+        ImageQualityAnnotationFactory,
+        ImagePathologyAnnotationFactory,
+        RetinaImagePathologyAnnotationFactory,
+    ),
+)
+class TestFactories:
+    def test_factory_creation(self, factory):
+        do_test_factory(factory)
