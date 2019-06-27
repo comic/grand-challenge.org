@@ -53,6 +53,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
     )
+
+    # A hanging_list is a list of dictionaries where the keys are the
+    # view names, and the values are the filenames to place there.
     hanging_list = JSONField(
         default=list,
         blank=True,
@@ -77,14 +80,50 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def hanging_list_valid(self):
+        """
+        Test that all of the study images are included in the hanging list
+        exactly once.
+        """
         return sorted(self.study_image_names) == sorted(
             self.hanging_image_names
         )
 
     @property
     def non_unique_study_image_names(self):
+        """
+        Get all of the image names that are non-unique for this ReaderStudy
+        """
         return [
             name
             for name, count in Counter(self.study_image_names).items()
             if count > 1
         ]
+
+    @property
+    def is_valid(self):
+        """ Is this ReaderStudy valid? """
+        return (
+            self.hanging_list_valid
+            and len(self.non_unique_study_image_names) == 0
+        )
+
+    @property
+    def hanging_list_images(self):
+        """
+        Substitutes the image name for the image detail api url for each image
+        defined in the hanging list.
+        """
+        if not self.is_valid:
+            return None
+
+        study_images = {
+            im.name: reverse("api:image-detail", kwargs={"pk": im.pk})
+            for im in self.images.all()
+        }
+
+        hanging_list_images = [
+            {view: study_images.get(name) for view, name in hanging.items()}
+            for hanging in self.hanging_list
+        ]
+
+        return hanging_list_images
