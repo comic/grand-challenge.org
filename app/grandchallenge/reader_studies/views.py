@@ -59,4 +59,8 @@ class AddImagesToReaderStudy(UserIsStaffMixin, CreateView):
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
-    queryset = ReaderStudy.objects.all()
+    queryset = (
+        ReaderStudy.objects.all()
+        .select_related("creator")
+        .prefetch_related("images")
+    )
