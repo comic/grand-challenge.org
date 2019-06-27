@@ -58,7 +58,12 @@ def test_hanging_list_validation(hanging_list, expected):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "image_names, expected", ((["1", "2"], []), (["1", "1", "2", "1"], ["1"]))
+    "image_names, expected",
+    (
+        (["1", "2"], []),
+        (["1", "1", "2", "1"], ["1"]),
+        (["1", "2", "1", "2", "1", "2"], ["1", "2"]),
+    ),
 )
 def test_non_unique_images(image_names, expected):
     rs = ReaderStudyFactory()
