@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -64,10 +66,25 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
     @property
-    def hanging_list_valid(self):
-        study_image_names = [im.name for im in self.images.all()]
-        hanging_image_names = [
+    def study_image_names(self):
+        return [im.name for im in self.images.all()]
+
+    @property
+    def hanging_image_names(self):
+        return [
             name for hanging in self.hanging_list for name in hanging.values()
         ]
 
-        return sorted(study_image_names) == sorted(hanging_image_names)
+    @property
+    def hanging_list_valid(self):
+        return sorted(self.study_image_names) == sorted(
+            self.hanging_image_names
+        )
+
+    @property
+    def non_unique_study_image_names(self):
+        return [
+            name
+            for name, count in Counter(self.study_image_names).items()
+            if count > 1
+        ]

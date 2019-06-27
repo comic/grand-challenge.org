@@ -41,7 +41,7 @@ from tests.reader_studies_tests.factories import ReaderStudyFactory
         ),
     ),
 )
-def test_validation(hanging_list, expected):
+def test_hanging_list_validation(hanging_list, expected):
     assert (
         JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)(hanging_list) is None
     )
@@ -54,3 +54,15 @@ def test_validation(hanging_list, expected):
     assert rs.images.all().count() == 4
 
     assert rs.hanging_list_valid == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "image_names, expected", ((["1", "2"], []), (["1", "1", "2", "1"], ["1"]))
+)
+def test_non_unique_images(image_names, expected):
+    rs = ReaderStudyFactory()
+    images = [ImageFactory(name=name) for name in image_names]
+    rs.images.set(images)
+    rs.save()
+    assert rs.non_unique_study_image_names == expected
