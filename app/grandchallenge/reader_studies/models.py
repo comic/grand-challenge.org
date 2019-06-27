@@ -62,3 +62,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
+
+    @property
+    def hanging_list_valid(self):
+        study_image_names = [im.name for im in self.images.all()]
+        hanging_image_names = [
+            name for hanging in self.hanging_list for name in hanging.values()
+        ]
+
+        return sorted(study_image_names) == sorted(hanging_image_names)
