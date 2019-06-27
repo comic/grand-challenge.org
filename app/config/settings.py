@@ -260,6 +260,8 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
+    # Keep cors ahead of whitenoise
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Keep whitenoise after security and before all else
     "django.middleware.common.BrokenLinkEmailsMiddleware",
@@ -314,6 +316,7 @@ THIRD_PARTY_APPS = [
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
+    "corsheaders",  # for cross origin requests in development
 ]
 
 LOCAL_APPS = [
@@ -655,6 +658,9 @@ if MEDIA_ROOT[-1] != "/":
     raise ImproperlyConfigured(msg)
 
 ENABLE_DEBUG_TOOLBAR = False
+
+# Allow cors only in debug mode
+CORS_ORIGIN_ALLOW_ALL = DEBUG
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
