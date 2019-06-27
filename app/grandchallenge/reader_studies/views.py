@@ -12,7 +12,7 @@ from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.reader_studies.serializers import ReaderStudySerializer
 
 
-class ReaderStudyList(ListView):
+class ReaderStudyList(UserIsStaffMixin, ListView):
     model = ReaderStudy
 
 
@@ -25,7 +25,7 @@ class ReaderStudyCreate(UserIsStaffMixin, CreateView):
         return super().form_valid(form)
 
 
-class ReaderStudyDetail(DetailView):
+class ReaderStudyDetail(UserIsStaffMixin, DetailView):
     model = ReaderStudy
 
 
@@ -34,7 +34,7 @@ class ReaderStudyUpdate(UserIsStaffMixin, UpdateView):
     form_class = ReaderStudyUpdateForm
 
 
-class AddImagesToReaderStudy(CreateView):
+class AddImagesToReaderStudy(UserIsStaffMixin, CreateView):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "reader_studies/readerstudy_add_images.html"
