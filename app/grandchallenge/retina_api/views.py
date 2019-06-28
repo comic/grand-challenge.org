@@ -896,3 +896,79 @@ class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
     pagination_class = None
     queryset = RetinaImagePathologyAnnotation.objects.all()
+
+
+class ArchiveAPIView(APIView):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    pagination_class = None
+
+    @staticmethod
+    def create_response_object():
+        archives = Archive.objects.all().prefetch_related(
+            "images", "images__study"
+        )
+        patients = Patient.objects.all().prefetch_related(
+            "study_set",
+            "study_set__image_set",
+            "study_set__image_set__modality",
+            "study_set__image_set__obs_image",
+            "study_set__image_set__oct_image",
+            "study_set__image_set__archive_set",
+        )
+
+        def generate_archives(archive_list, patients):
+            for archive in archive_list:
+                archive_only_images = []
+                for image in archive.images.all():
+                    if image.study is None:
+                        archive_only_images.append(image)
+
+                images = generate_images(archive_only_images)
+                subfolders = generate_patients(archive, patients)
+
+                yield {
+                    "id": archive.id,
+                    "name": archive.name,
+                    "subfolders": subfolders,
+                    "images": images,
+                }
+
+        def generate_patients(archive, patients):
+            patient_list = patients.filter(
+                study__image__archive=archive
+            ).distinct()
+            for patient in patient_list:
+                yield {
+                    "id": patient.id,
+                    "name": patient.name,
+                    "subfolders": generate_studies(patient.study_set),
+                    "images": [],
+                }
+
+        def generate_studies(study_list):
+            for study in study_list.all():
+                yield {
+                    "id": study.id,
+                    "name": study.name,
+                    "images": generate_images(study.image_set.all()),
+                    "subfolders": [],
+                }
+
+        def generate_images(image_list):
+            for image in image_list:
+                yield {
+                    "id": image.id,
+                    "name": image.name,
+                    "eye": image.eye_choice,
+                    "modality": image.modality.modality,
+                    "patient": image.study.patient.name,
+                    "study": image.study.name,
+                    "archive": image.archive_set.first().name,  # Always one?
+                }
+
+        response = (generate_archives(archives, patients),)
+        return response
+
+    def get(self, request):
+        return Response(self.create_response_object())
