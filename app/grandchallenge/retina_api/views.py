@@ -967,7 +967,7 @@ class ArchiveAPIView(APIView):
                     "archive": image.archive_set.first().name,  # Always one?
                 }
 
-        response = (generate_archives(archives, patients),)
+        response = generate_archives(archives, patients)
         return response
 
     def get(self, request):
