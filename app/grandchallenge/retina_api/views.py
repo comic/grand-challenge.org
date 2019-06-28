@@ -943,7 +943,7 @@ class ArchiveAPIView(APIView):
                     "id": patient.id,
                     "name": patient.name,
                     "subfolders": generate_studies(patient.study_set),
-                    "images": [],
+                    "images": [],  # TODO patient only images? Propose model change
                 }
 
         def generate_studies(study_list):
@@ -964,11 +964,10 @@ class ArchiveAPIView(APIView):
                     "modality": image.modality.modality,
                     "patient": image.study.patient.name,
                     "study": image.study.name,
-                    "archive": image.archive_set.first().name,  # Always one?
+                    "archive": image.archive_set.first().name,  # TODO Always one? accept multiple?
                 }
 
-        response = generate_archives(archives, patients)
-        return response
+        return generate_archives(archives, patients)
 
     def get(self, request):
         return Response(self.create_response_object())
