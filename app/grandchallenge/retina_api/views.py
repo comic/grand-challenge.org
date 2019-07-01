@@ -964,7 +964,7 @@ class ArchiveAPIView(APIView):
                     "modality": image.modality.modality,
                     "patient": image.study.patient.name,
                     "study": image.study.name,
-                    "archive": image.archive_set.first().name,  # TODO Always one? accept multiple?
+                    "archives": image.archive_set.values(),
                 }
 
         return generate_archives(archives, patients)
