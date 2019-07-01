@@ -32,7 +32,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
     raise_exception = True  # Raise 403 on unauthenticated request
 
-    def get(self, request, image_id):
+    def get(self, request, image_id, width=128, height=128):
         image_object = get_object_or_404(Image, pk=image_id)
 
         if not user_can_download_image(user=request.user, image=image_object):
@@ -47,7 +47,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
             # Get middle slice of image if 3D
             image_nparray = image_nparray[depth // 2]
         image = PILImage.fromarray(image_nparray)
-        image.thumbnail((128, 128), PILImage.ANTIALIAS)
+        image.thumbnail((width, height), PILImage.ANTIALIAS)
         response = HttpResponse(content_type="image/png")
         image.save(response, "png")
         return response
