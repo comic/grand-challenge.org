@@ -82,4 +82,18 @@ urlpatterns = [
         name="image-element-spacing-view",
     ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
+    path(
+        "image/thumbnail/<uuid:image_id>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.B64ThumbnailAPIView.as_view()
+        ),
+        name="image-thumbnail",
+    ),
+    path(
+        "image/thumbnail/<uuid:image_id>/<int:width>/<int:height>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.B64ThumbnailAPIView.as_view()
+        ),
+        name="image-thumbnail",
+    ),
 ]

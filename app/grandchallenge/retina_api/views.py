@@ -1,14 +1,22 @@
+import base64
 import json
 from enum import Enum
+from io import BytesIO
+from PIL import Image as PILImage
+import SimpleITK as sitk
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication, viewsets
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    MultipleObjectsReturned,
+    PermissionDenied,
+)
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
@@ -971,3 +979,44 @@ class ArchiveAPIView(APIView):
 
     def get(self, request):
         return Response(self.create_response_object())
+
+
+class B64ThumbnailAPIView(RetrieveAPIView):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+
+    @staticmethod
+    def get_image_itk(image_id, user):
+        image_object = get_object_or_404(Image, pk=image_id)
+
+        if not user_can_download_image(user=user, image=image_object):
+            raise PermissionDenied
+
+        image_itk = image_object.get_sitk_image()
+        if image_itk is None:
+            raise Http404
+
+        return image_itk
+
+    @staticmethod
+    def convert_itk_to_pil(image_itk):
+        depth = image_itk.GetDepth()
+        image_nparray = sitk.GetArrayFromImage(image_itk)
+        if depth > 0:
+            # Get center slice of image if 3D
+            image_nparray = image_nparray[depth // 2]
+        return PILImage.fromarray(image_nparray)
+
+    @staticmethod
+    def create_thumbnail_as_base64(image_pil, width, height):
+        image_pil.thumbnail((width, height), PILImage.ANTIALIAS)
+        buffer = BytesIO()
+        image_pil.save(buffer, format="png")
+        return base64.b64encode(buffer.getvalue())
+
+    def get(self, request, image_id, width=128, height=128):
+        image_itk = self.get_image_itk(image_id, request.user)
+        image_pil = self.convert_itk_to_pil(image_itk)
+        b64_thumb = self.create_thumbnail_as_base64(image_pil, width, height)
+
+        return HttpResponse(b64_thumb, content_type="text/plain")
