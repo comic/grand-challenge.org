@@ -22,24 +22,34 @@ from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from django.contrib.auth import get_user_model
 
 
-def client_login(client, user=None):
-    # login user
+def get_user_from_str(user=None):
     if user == "staff":
         user = get_user_model().objects.create_superuser(
             **TEST_USER_CREDENTIALS
         )
-        client.login(**TEST_USER_CREDENTIALS)
     elif user == "retina_user":
         user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
         grader_group, group_created = Group.objects.get_or_create(
             name=settings.RETINA_GRADERS_GROUP_NAME
         )
         grader_group.user_set.add(user)
-        client.login(**TEST_USER_CREDENTIALS)
     elif user == "normal":
         user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-        client.login(**TEST_USER_CREDENTIALS)
 
+    return user
+
+
+def client_login(client, user=None):
+    user = get_user_from_str(user)
+    if user is not None and not isinstance(user, str):
+        client.login(**TEST_USER_CREDENTIALS)
+    return client, user
+
+
+def client_force_login(client, user=None):
+    user = get_user_from_str(user)
+    if user is not None and not isinstance(user, str):
+        client.force_login(user=user)
     return client, user
 
 
@@ -239,15 +249,15 @@ def batch_test_data_endpoints(test_class):
             data_type
         )
 
-        test_load_no_auth.__name__ = "test_load_{}_no_auth".format(data_type)
+        test_load_no_auth.__name__ = f"test_load_{data_type}_no_auth"
         test_load_normal_user_no_auth.__name__ = "test_load_{}_normal_user_no_auth".format(
             data_type
         )
-        test_load_no_data.__name__ = "test_load_{}_no_data".format(data_type)
+        test_load_no_data.__name__ = f"test_load_{data_type}_no_data"
         test_load_no_data_wrong_user.__name__ = "test_load_{}_wrong_user".format(
             data_type
         )
-        test_load_save_data.__name__ = "test_load_save_{}".format(data_type)
+        test_load_save_data.__name__ = f"test_load_save_{data_type}"
         setattr(test_class, test_load_no_auth.__name__, test_load_no_auth)
         setattr(
             test_class,
