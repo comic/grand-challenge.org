@@ -18,11 +18,6 @@ urlpatterns = [
         name="image-thumbnail",
     ),
     path(
-        "image/thumbnail/<uuid:image_id>/<int:width>/<int:height>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(ThumbnailView.as_view()),
-        name="image-thumbnail",
-    ),
-    path(
         "image/numpy/<uuid:image_id>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(NumpyView.as_view()),
         name="image-numpy",

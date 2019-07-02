@@ -32,7 +32,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
     raise_exception = True  # Raise 403 on unauthenticated request
 
-    def get(self, request, image_id, width=128, height=128):
+    def get(self, request, image_id):
         image_object = get_object_or_404(Image, pk=image_id)
 
         if not user_can_download_image(user=request.user, image=image_object):
