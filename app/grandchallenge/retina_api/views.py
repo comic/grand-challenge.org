@@ -1014,7 +1014,13 @@ class B64ThumbnailAPIView(RetrieveAPIView):
         image_pil.save(buffer, format="png")
         return base64.b64encode(buffer.getvalue())
 
-    def get(self, request, image_id, width=128, height=128):
+    def get(
+        self,
+        request,
+        image_id,
+        width=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+        height=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+    ):
         image_itk = self.get_image_itk(image_id, request.user)
         image_pil = self.convert_itk_to_pil(image_itk)
         b64_thumb = self.create_thumbnail_as_base64(image_pil, width, height)
