@@ -1,18 +1,28 @@
+import base64
 import json
+import random
+from io import BytesIO
 import pytest
 
+from PIL import Image as PILImage
+import SimpleITK as sitk
 from rest_framework import status
 from django.core.cache import cache
+from rest_framework.authtoken.models import Token
+from django.conf import settings
 
 from grandchallenge.subdomains.utils import reverse
-from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.cases_tests.factories import (
+    ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile3D,
+)
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
     batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
     client_login,
+    client_force_login,
 )
-from tests.retina_importers_tests.helpers import create_element_spacing_request
 
 
 @pytest.mark.django_db
@@ -356,3 +366,92 @@ class TestImageElementSpacingView:
         assert response.status_code == status.HTTP_200_OK
         r = response.json()
         assert list(image.get_sitk_image().GetSpacing()) == r
+
+
+@pytest.mark.django_db
+class TestBase64ThumbnailView:
+    @pytest.mark.parametrize(
+        "user,expected_status",
+        [
+            ("anonymous", status.HTTP_401_UNAUTHORIZED),
+            ("normal", status.HTTP_403_FORBIDDEN),
+            ("staff", status.HTTP_403_FORBIDDEN),
+            ("retina_user", status.HTTP_200_OK),
+        ],
+    )
+    def test_access(self, client, user, expected_status):
+        image = ImageFactoryWithImageFile()
+        image.permit_viewing_by_retina_users()
+        url = reverse("retina:api:image-thumbnail", args=[image.pk])
+        client, user_model = client_force_login(client, user=user)
+        token = ""
+        if user_model is not None and not isinstance(user_model, str):
+            token = f"Token {Token.objects.create(user=user_model).key}"
+        response = client.get(url, HTTP_AUTHORIZATION=token)
+        assert response.status_code == expected_status
+
+    @staticmethod
+    def perform_thumbnail_request(client, image):
+        image.permit_viewing_by_retina_users()
+        url = reverse("retina:api:image-thumbnail", args=[image.pk])
+        client, user_model = client_force_login(client, user="retina_user")
+        token = f"Token {Token.objects.create(user=user_model).key}"
+        response = client.get(url, HTTP_AUTHORIZATION=token)
+        return response
+
+    @staticmethod
+    def get_b64_from_image(image, max_dimension, is_3d=False):
+        image_sitk = image.get_sitk_image()
+        image_nparray = sitk.GetArrayFromImage(image_sitk)
+        if is_3d:
+            depth = image_sitk.GetDepth()
+            assert depth > 0
+            # Get center slice of 3D image
+            image_nparray = image_nparray[depth // 2]
+
+        image_pil = PILImage.fromarray(image_nparray)
+        image_pil.thumbnail((max_dimension, max_dimension), PILImage.ANTIALIAS)
+        buffer = BytesIO()
+        image_pil.save(buffer, format="png")
+        image_base64_str = base64.b64encode(buffer.getvalue())
+        return image_base64_str
+
+    def do_test_thumbnail_creation(self, client, max_dimension, is_3d=False):
+        if is_3d:
+            image = ImageFactoryWithImageFile3D()
+        else:
+            image = ImageFactoryWithImageFile()
+
+        response = self.perform_thumbnail_request(client, image)
+
+        assert response.status_code == status.HTTP_200_OK
+        image_base64_str = self.get_b64_from_image(image, max_dimension, is_3d)
+
+        returned_img = PILImage.open(
+            BytesIO(base64.b64decode(response.content))
+        )
+        assert response.content == image_base64_str
+        width, height = returned_img.size
+        assert max(width, height) <= max_dimension
+
+    def test_correct_image_2d_default_dimensions(self, client):
+        self.do_test_thumbnail_creation(
+            client, settings.RETINA_DEFAULT_THUMBNAIL_SIZE
+        )
+
+    def test_correct_image_2d_custom_dimensions(self, client):
+        custom_dim = random.randint(16, 256)
+        self.do_test_thumbnail_creation(client, custom_dim)
+
+    def test_correct_image_2d_custom_dimensions(self, client):
+        custom_dim = 2
+        self.do_test_thumbnail_creation(client, custom_dim)
+
+    def test_correct_image_3d_default_dimensions(self, client):
+        self.do_test_thumbnail_creation(
+            client, settings.RETINA_DEFAULT_THUMBNAIL_SIZE, is_3d=True
+        )
+
+    def test_correct_image_3d_custom_dimensions(self, client):
+        custom_dim = random.randint(16, 256)
+        self.do_test_thumbnail_creation(client, custom_dim, is_3d=True)
