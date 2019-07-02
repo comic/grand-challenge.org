@@ -47,7 +47,13 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
             # Get middle slice of image if 3D
             image_nparray = image_nparray[depth // 2]
         image = PILImage.fromarray(image_nparray)
-        image.thumbnail((width, height), PILImage.ANTIALIAS)
+        image.thumbnail(
+            (
+                settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+                settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
+            ),
+            PILImage.ANTIALIAS,
+        )
         response = HttpResponse(content_type="image/png")
         image.save(response, "png")
         return response
