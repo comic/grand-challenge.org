@@ -1,10 +1,12 @@
 import base64
+import logging
 
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
+from rest_framework.authtoken.models import Token
 from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
 
@@ -18,6 +20,8 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -69,6 +73,10 @@ class Command(BaseCommand):
         )
         adminuser.is_staff = True
         adminuser.save()
+
+        admintoken, _ = Token.objects.get_or_create(user=adminuser)
+        logger.debug(f"{'*'*80}\n\t admin token is: {admintoken}\n{'*'*80}")
+
         demo = Challenge.objects.create(
             short_name="demo",
             description="demo project",

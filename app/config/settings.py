@@ -664,6 +664,8 @@ if DEBUG:
     MIDDLEWARE = ("corsheaders.middleware.CorsMiddleware", *MIDDLEWARE)
     CORS_ORIGIN_ALLOW_ALL = True
 
+    LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
+
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
 
