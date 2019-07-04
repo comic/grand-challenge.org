@@ -371,6 +371,35 @@ class TestImageElementSpacingView:
 
 
 @pytest.mark.django_db
+class TestArchiveAPIView:
+    @staticmethod
+    def perform_request(client, user):
+        url = reverse("retina:api:archive-data-api-view")
+        client, user_model = client_force_login(client, user=user)
+        token = ""
+        if user_model is not None and not isinstance(user_model, str):
+            token = f"Token {Token.objects.create(user=user_model).key}"
+        return client.get(url, HTTP_AUTHORIZATION=token)
+
+    @pytest.mark.parametrize(
+        "user,expected_status",
+        [
+            ("anonymous", status.HTTP_401_UNAUTHORIZED),
+            ("normal", status.HTTP_403_FORBIDDEN),
+            ("staff", status.HTTP_403_FORBIDDEN),
+            ("retina_user", status.HTTP_200_OK),
+        ],
+    )
+    def test_access(self, client, user, expected_status):
+        response = self.perform_request(client, user)
+        assert response.status_code == expected_status
+
+    def test_empty(self, client):
+        response = self.perform_request(client, "retina_user")
+        assert response.content == b"[]"
+
+
+@pytest.mark.django_db
 class TestBase64ThumbnailView:
     @pytest.mark.parametrize(
         "user,expected_status",
