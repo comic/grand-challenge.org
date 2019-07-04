@@ -444,12 +444,13 @@ class TestBase64ThumbnailView:
             (True, ImageFactoryWithImageFile3DLarge4Slices),
         ],
     )
-    @pytest.mark.parametrize(
-        "max_dimension",
-        [settings.RETINA_DEFAULT_THUMBNAIL_SIZE, random.randint(16, 255)],
-    )
+    @pytest.mark.parametrize("max_dimension", ["default", "random"])
     def test_correct_image(self, client, max_dimension, is_3d, image_factory):
         image = image_factory()
+        if max_dimension == "random":
+            max_dimension = random.randint(1, 255)
+        else:
+            max_dimension = settings.RETINA_DEFAULT_THUMBNAIL_SIZE
         self.do_test_thumbnail_creation(
             client, max_dimension, image, is_3d=is_3d
         )
