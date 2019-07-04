@@ -660,6 +660,8 @@ ENABLE_DEBUG_TOOLBAR = False
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
+    LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
+
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
 
