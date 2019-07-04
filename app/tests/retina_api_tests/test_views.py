@@ -14,7 +14,9 @@ from django.conf import settings
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3D,
+    ImageFactoryWithImageFile3DLarge3Slices,
+    ImageFactoryWithImageFile2DLarge,
+    ImageFactoryWithImageFile3DLarge4Slices,
 )
 from tests.retina_api_tests.helpers import (
     create_datastructures_data,
@@ -391,9 +393,12 @@ class TestBase64ThumbnailView:
         assert response.status_code == expected_status
 
     @staticmethod
-    def perform_thumbnail_request(client, image):
+    def perform_thumbnail_request(client, image, max_dimension):
         image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-thumbnail", args=[image.pk])
+        args = [image.id]
+        if max_dimension != settings.RETINA_DEFAULT_THUMBNAIL_SIZE:
+            args = [image.id, max_dimension, max_dimension]
+        url = reverse("retina:api:image-thumbnail", args=args)
         client, user_model = client_force_login(client, user="retina_user")
         token = f"Token {Token.objects.create(user=user_model).key}"
         response = client.get(url, HTTP_AUTHORIZATION=token)
@@ -416,13 +421,10 @@ class TestBase64ThumbnailView:
         image_base64_str = base64.b64encode(buffer.getvalue())
         return image_base64_str
 
-    def do_test_thumbnail_creation(self, client, max_dimension, is_3d=False):
-        if is_3d:
-            image = ImageFactoryWithImageFile3D()
-        else:
-            image = ImageFactoryWithImageFile()
-
-        response = self.perform_thumbnail_request(client, image)
+    def do_test_thumbnail_creation(
+        self, client, max_dimension, image, is_3d=False
+    ):
+        response = self.perform_thumbnail_request(client, image, max_dimension)
 
         assert response.status_code == status.HTTP_200_OK
         image_base64_str = self.get_b64_from_image(image, max_dimension, is_3d)
@@ -432,26 +434,22 @@ class TestBase64ThumbnailView:
         )
         assert response.content == image_base64_str
         width, height = returned_img.size
-        assert max(width, height) <= max_dimension
+        assert max(width, height) == max_dimension
 
-    def test_correct_image_2d_default_dimensions(self, client):
+    @pytest.mark.parametrize(
+        "is_3d,image_factory",
+        [
+            (False, ImageFactoryWithImageFile2DLarge),
+            (True, ImageFactoryWithImageFile3DLarge3Slices),
+            (True, ImageFactoryWithImageFile3DLarge4Slices),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "max_dimension",
+        [settings.RETINA_DEFAULT_THUMBNAIL_SIZE, random.randint(16, 255)],
+    )
+    def test_correct_image(self, client, max_dimension, is_3d, image_factory):
+        image = image_factory()
         self.do_test_thumbnail_creation(
-            client, settings.RETINA_DEFAULT_THUMBNAIL_SIZE
+            client, max_dimension, image, is_3d=is_3d
         )
-
-    def test_correct_image_2d_custom_dimensions(self, client):
-        custom_dim = random.randint(16, 256)
-        self.do_test_thumbnail_creation(client, custom_dim)
-
-    def test_correct_image_2d_custom_dimensions(self, client):
-        custom_dim = 2
-        self.do_test_thumbnail_creation(client, custom_dim)
-
-    def test_correct_image_3d_default_dimensions(self, client):
-        self.do_test_thumbnail_creation(
-            client, settings.RETINA_DEFAULT_THUMBNAIL_SIZE, is_3d=True
-        )
-
-    def test_correct_image_3d_custom_dimensions(self, client):
-        custom_dim = random.randint(16, 256)
-        self.do_test_thumbnail_creation(client, custom_dim, is_3d=True)
