@@ -660,6 +660,11 @@ ENABLE_DEBUG_TOOLBAR = False
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
+    # Only set the CORS headers in DEBUG mode
+    INSTALLED_APPS += ("corsheaders",)
+    MIDDLEWARE = ("corsheaders.middleware.CorsMiddleware", *MIDDLEWARE)
+    CORS_ORIGIN_ALLOW_ALL = True
+
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
     if ENABLE_DEBUG_TOOLBAR:
