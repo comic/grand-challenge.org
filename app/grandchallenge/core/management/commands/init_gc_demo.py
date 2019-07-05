@@ -1,10 +1,12 @@
 import base64
+import logging
 
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.management import BaseCommand
+from rest_framework.authtoken.models import Token
 from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
 
@@ -19,12 +21,19 @@ from grandchallenge.challenges.models import (
 from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
 
+logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         """
         Creates the main project, demo user and demo challenge
         """
+        if not settings.DEBUG:
+            raise RuntimeError(
+                "Skipping this command, server is not in DEBUG mode."
+            )
+
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
 
@@ -69,6 +78,11 @@ class Command(BaseCommand):
         )
         adminuser.is_staff = True
         adminuser.save()
+
+        admintoken, _ = Token.objects.get_or_create(
+            user=adminuser, key="1b9436200001f2eaf57cd77db075cbb60a49a00a"
+        )
+
         demo = Challenge.objects.create(
             short_name="demo",
             description="demo project",
@@ -178,3 +192,14 @@ class Command(BaseCommand):
             name=settings.RETINA_GRADERS_GROUP_NAME
         )
         retina_demo.groups.add(retina_group)
+
+        retinatoken, _ = Token.objects.get_or_create(
+            user=retina_demo, key="f1f98a1733c05b12118785ffd995c250fe4d90da"
+        )
+
+        logger.debug(
+            f"{'*'*80}\n"
+            f"\tadmin token is: {admintoken}\n"
+            f"\tretina_demo token is: {retinatoken}\n"
+            f"{'*'*80}"
+        )
