@@ -40,6 +40,11 @@ annotation_router.register(
 urlpatterns = [
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
+        "archive_data/",
+        views.ArchiveAPIView.as_view(),
+        name="archive-data-api-view",
+    ),
+    path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
             views.ImageView.as_view()
@@ -77,4 +82,18 @@ urlpatterns = [
         name="image-element-spacing-view",
     ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
+    path(
+        "image/thumbnail/<uuid:image_id>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.B64ThumbnailAPIView.as_view()
+        ),
+        name="image-thumbnail",
+    ),
+    path(
+        "image/thumbnail/<uuid:image_id>/<int:width>/<int:height>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.B64ThumbnailAPIView.as_view()
+        ),
+        name="image-thumbnail",
+    ),
 ]
