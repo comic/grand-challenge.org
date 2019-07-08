@@ -987,8 +987,6 @@ class ArchiveAPIView(APIView):
             "study_set",
             "study_set__image_set",
             "study_set__image_set__modality",
-            "study_set__image_set__obs_image",
-            "study_set__image_set__oct_image",
             "study_set__image_set__archive_set",
         )
         return Response(self.create_response_object(archives, patients))
