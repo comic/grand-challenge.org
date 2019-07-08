@@ -912,19 +912,7 @@ class ArchiveAPIView(APIView):
     pagination_class = None
 
     @staticmethod
-    def create_response_object():
-        archives = Archive.objects.all().prefetch_related(
-            "images", "images__study"
-        )
-        patients = Patient.objects.all().prefetch_related(
-            "study_set",
-            "study_set__image_set",
-            "study_set__image_set__modality",
-            "study_set__image_set__obs_image",
-            "study_set__image_set__oct_image",
-            "study_set__image_set__archive_set",
-        )
-
+    def create_response_object(archives, patients):
         def generate_archives(archive_list, patients):
             for archive in archive_list:
                 archive_only_images = []
@@ -951,7 +939,7 @@ class ArchiveAPIView(APIView):
                     "id": patient.id,
                     "name": patient.name,
                     "subfolders": generate_studies(patient.study_set),
-                    "images": [],  # TODO patient only images? Propose model change
+                    "images": [],
                 }
 
         def generate_studies(study_list):
@@ -978,7 +966,18 @@ class ArchiveAPIView(APIView):
         return generate_archives(archives, patients)
 
     def get(self, request):
-        return Response(self.create_response_object())
+        archives = Archive.objects.all().prefetch_related(
+            "images", "images__study"
+        )
+        patients = Patient.objects.all().prefetch_related(
+            "study_set",
+            "study_set__image_set",
+            "study_set__image_set__modality",
+            "study_set__image_set__obs_image",
+            "study_set__image_set__oct_image",
+            "study_set__image_set__archive_set",
+        )
+        return Response(self.create_response_object(archives, patients))
 
 
 class B64ThumbnailAPIView(RetrieveAPIView):
