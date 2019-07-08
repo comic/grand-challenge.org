@@ -10,7 +10,12 @@ from rest_framework import status
 from django.core.cache import cache
 from rest_framework.authtoken.models import Token
 from django.conf import settings
+from rest_framework.compat import SHORT_SEPARATORS, LONG_SEPARATORS
+from rest_framework.settings import api_settings
+from rest_framework.utils import encoders
 
+from grandchallenge.patients.models import Patient
+from grandchallenge.retina_api.views import ArchiveAPIView
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
@@ -396,7 +401,28 @@ class TestArchiveAPIView:
 
     def test_empty(self, client):
         response = self.perform_request(client, "retina_user")
+        assert response.status_code == status.HTTP_200_OK
         assert response.content == b"[]"
+
+    def test_with_data(self, client, ArchivePatientStudyImageSet):
+        response = self.perform_request(client, "retina_user")
+        assert response.status_code == status.HTTP_200_OK
+        expected_response_json = json.dumps(
+            ArchiveAPIView.create_response_object(
+                [
+                    ArchivePatientStudyImageSet.archive1,
+                    ArchivePatientStudyImageSet.archive2,
+                ],
+                Patient.objects.all(),
+            ),
+            cls=encoders.JSONEncoder,
+            ensure_ascii=not api_settings.UNICODE_JSON,
+            allow_nan=not api_settings.STRICT_JSON,
+            separators=SHORT_SEPARATORS
+            if api_settings.COMPACT_JSON
+            else LONG_SEPARATORS,
+        )
+        assert response.content.decode() == expected_response_json
 
 
 @pytest.mark.django_db
