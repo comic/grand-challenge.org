@@ -498,8 +498,6 @@ class ArchivePatientStudyImageSet(NamedTuple):
     images121: List
     images122: List
     archive2: ArchiveFactory
-    patient21: PatientFactory
-    study211: StudyFactory
     images211: List
 
 
