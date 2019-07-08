@@ -922,8 +922,12 @@ class ArchiveAPIView(APIView):
                     if image.study is None:
                         archive_only_images.append(image)
 
-                images = generate_images(archive_only_images)
-                subfolders = generate_patients(archive, patients)
+                images = sorted(
+                    generate_images(archive_only_images), key=lambda x: x["id"]
+                )
+                subfolders = sorted(
+                    generate_patients(archive, patients), key=lambda x: x["id"]
+                )
 
                 yield {
                     "id": archive.id,
@@ -940,7 +944,10 @@ class ArchiveAPIView(APIView):
                 yield {
                     "id": patient.id,
                     "name": patient.name,
-                    "subfolders": generate_studies(patient.study_set),
+                    "subfolders": sorted(
+                        generate_studies(patient.study_set),
+                        key=lambda x: x["id"],
+                    ),
                     "images": [],
                 }
 
@@ -949,7 +956,10 @@ class ArchiveAPIView(APIView):
                 yield {
                     "id": study.id,
                     "name": study.name,
-                    "images": generate_images(study.image_set.all()),
+                    "images": sorted(
+                        generate_images(study.image_set.all()),
+                        key=lambda x: x["id"],
+                    ),
                     "subfolders": [],
                 }
 
@@ -965,7 +975,9 @@ class ArchiveAPIView(APIView):
                     "archives": image.archive_set.values(),
                 }
 
-        return generate_archives(archives, patients)
+        return sorted(
+            generate_archives(archives, patients), key=lambda x: x["id"]
+        )
 
     def get(self, request):
         archives = Archive.objects.all().prefetch_related(
