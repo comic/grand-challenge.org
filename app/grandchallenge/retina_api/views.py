@@ -8,6 +8,7 @@ import SimpleITK as sitk
 from django.http import HttpResponse, Http404
 from django.utils import timezone
 from django.views import View
+from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -909,6 +910,7 @@ class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
 class ArchiveAPIView(APIView):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.TokenAuthentication,)
+    renderer_classes = (JSONRenderer,)
     pagination_class = None
 
     @staticmethod
