@@ -64,7 +64,21 @@ class ImageFileFactoryWithRAWFile3DLarge4Slices(ImageFileFactory):
     )
 
 
-class ImageFactoryWithImageFile(ImageFactory):
+class ImageFactoryWithoutImageFile(ImageFactory):
+    eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
+    stereoscopic_choice = factory.Iterator(
+        [x[0] for x in Image.STEREOSCOPIC_CHOICES]
+    )
+    field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
+    study = factory.SubFactory(StudyFactory)
+    name = factory.Sequence(lambda n: f"RetinaImage {n}")
+    modality = factory.SubFactory(
+        ImagingModalityFactory, modality=settings.MODALITY_CF
+    )
+    color_space = factory.Iterator([x[0] for x in Image.COLOR_SPACES])
+
+
+class ImageFactoryWithImageFile(ImageFactoryWithoutImageFile):
     @factory.post_generation
     def files(self, create, extracted, **kwargs):
         # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
@@ -77,16 +91,6 @@ class ImageFactoryWithImageFile(ImageFactory):
             ImageFileFactoryWithMHDFile2D(image=self)
             ImageFileFactoryWithRAWFile2D(image=self)
 
-    eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
-    stereoscopic_choice = factory.Iterator(
-        [x[0] for x in Image.STEREOSCOPIC_CHOICES]
-    )
-    field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
-    study = factory.SubFactory(StudyFactory)
-    name = factory.Sequence(lambda n: f"RetinaImage {n}")
-    modality = factory.SubFactory(
-        ImagingModalityFactory, modality=settings.MODALITY_CF
-    )
     color_space = Image.COLOR_SPACE_RGB
 
 
