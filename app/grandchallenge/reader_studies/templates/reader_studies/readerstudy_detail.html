@@ -17,6 +17,13 @@
 
     <p>{{ object.description }}</p>
 
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:default-session-redirect' %}?{% workstation_query reader_study=object %}">
+            <i class="fas fa-eye"></i> Launch this Reader Study
+        </a>
+    </p>
+
     <h2>Upload Sessions</h2>
 
     <ul>

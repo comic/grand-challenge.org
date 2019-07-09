@@ -621,6 +621,7 @@ DEFAULT_WORKSTATION_SLUG = os.environ.get(
 )
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
