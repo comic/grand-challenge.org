@@ -18,6 +18,7 @@ from grandchallenge.annotations.models import (
     ImageQualityAnnotation,
     ImagePathologyAnnotation,
     RetinaImagePathologyAnnotation,
+    ImageTextAnnotation,
 )
 from tests.cases_tests.factories import ImageFactory
 from tests.factories import UserFactory, FuzzyFloatCoordinatesList
@@ -170,6 +171,6 @@ class RetinaImagePathologyAnnotationFactory(
 
 class ImageTextAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
-        model = RetinaImagePathologyAnnotation
+        model = ImageTextAnnotation
 
     text = factory.fuzzy.FuzzyText(prefix="Random text - ")
