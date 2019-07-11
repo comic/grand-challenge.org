@@ -166,3 +166,10 @@ class RetinaImagePathologyAnnotationFactory(
     myopia_present = factory.fuzzy.FuzzyChoice([True, False])
     cysts_present = factory.fuzzy.FuzzyChoice([True, False])
     other_present = factory.fuzzy.FuzzyChoice([True, False])
+
+
+class ImageTextAnnotationFactory(DefaultImageAnnotationModelFactory):
+    class Meta:
+        model = RetinaImagePathologyAnnotation
+
+    text = factory.fuzzy.FuzzyText(prefix="Random text - ")
