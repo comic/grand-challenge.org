@@ -23,6 +23,7 @@ from tests.annotations_tests.factories import (
     ImageQualityAnnotationFactory,
     ImagePathologyAnnotationFactory,
     RetinaImagePathologyAnnotationFactory,
+    ImageTextAnnotationFactory,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
@@ -32,6 +33,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     RetinaImagePathologyAnnotationSerializer,
+    ImageTextAnnotationSerializer,
 )
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.annotations.models import (
@@ -49,6 +51,7 @@ from grandchallenge.retina_api.views import (
     ImageQualityAnnotationViewSet,
     ImagePathologyAnnotationViewSet,
     RetinaImagePathologyAnnotationViewSet,
+    ImageTextAnnotationViewSet,
 )
 from tests.conftest import (
     generate_annotation_set,
@@ -1298,6 +1301,11 @@ class TestETDRSAnnotationViewSet:
             RetinaImagePathologyAnnotationViewSet,
             RetinaImagePathologyAnnotationFactory,
             RetinaImagePathologyAnnotationSerializer,
+        ),
+        (
+            ImageTextAnnotationViewSet,
+            ImageTextAnnotationFactory,
+            ImageTextAnnotationSerializer,
         ),
     ),
 )
