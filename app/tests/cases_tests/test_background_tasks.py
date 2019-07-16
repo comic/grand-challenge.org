@@ -77,7 +77,7 @@ def test_image_file_creation(settings):
     assert session.session_state == UPLOAD_SESSION_STATE.stopped
     assert session.error_message is None
 
-    assert Image.objects.filter(origin=session).count() == 4
+    assert Image.objects.filter(origin=session).count() == 5
 
     for name, db_object in uploaded_images.items():
         name: str

@@ -99,6 +99,7 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+      - .:/code
     group_add:
       - 999 # The docker group is only needed for testing
     healthcheck:

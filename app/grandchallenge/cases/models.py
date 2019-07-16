@@ -1,11 +1,15 @@
 import logging
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from tempfile import TemporaryFile
 from typing import List
+from collections import namedtuple
 
 import SimpleITK as sitk
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.files import File
 from django.db import models
 from guardian.shortcuts import assign_perm
 
@@ -31,7 +35,6 @@ class RawImageUploadSession(UUIDModel):
     task that tries to make sense of the uploaded files to form normalized
     images that can be fed to processing tasks.
     """
-
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -84,7 +87,7 @@ class RawImageUploadSession(UUIDModel):
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
-
+        logger.debug("test debug logging in models.py")
         created = self._state.adding
 
         super().save(*args, **kwargs)
@@ -339,8 +342,10 @@ class Image(UUIDModel):
 class ImageFile(UUIDModel):
     IMAGE_TYPE_MHD = "MHD"
     IMAGE_TYPE_TIFF = "TIFF"
+    IMAGE_TYPE_DZI = "DZI"
 
-    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
+    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"),
+                   (IMAGE_TYPE_DZI, "DZI"))
 
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
@@ -351,3 +356,26 @@ class ImageFile(UUIDModel):
     file = models.FileField(
         upload_to=image_file_path, blank=False, storage=protected_s3_storage
     )
+
+
+class SimpleFile:
+    def __init__(self, image, file, level):
+        self.image = image
+        self.file = file
+        self.level = level
+
+    def save(self):
+        logger.debug("save SimpleFile")
+        logger.debug(self.file)
+        temp_dzi_file = TemporaryFile()
+        with open(self.file, "rb") as open_file:
+            buffer = True
+            while buffer:
+                buffer = open_file.read(1024)
+                temp_dzi_file.write(buffer)
+                
+        path = f"{settings.IMAGE_FILES_SUBDIRECTORY}/{self.image.pk}/out_files" \
+            f"/{self.level}/{os.path.basename(self.file)}"
+
+        protected_s3_storage.save(path, temp_dzi_file)
+        logger.debug(protected_s3_storage.url(path))

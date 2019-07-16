@@ -26,7 +26,6 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
-
         result["upload_session"] = result["object"]
         result["raw_files"] = RawImageFile.objects.filter(
             upload_session=result["object"]

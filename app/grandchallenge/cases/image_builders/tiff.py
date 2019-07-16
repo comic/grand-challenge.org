@@ -1,13 +1,17 @@
+import os
 from pathlib import Path
 from tempfile import TemporaryFile
 from typing import NamedTuple
 
 import tifffile
+import pyvips
 from django.core.exceptions import ValidationError
 from django.core.files import File
-
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, SimpleFile
+import logging
+
+logger = logging.getLogger("grandchallenge")
 
 
 class GrandChallengeTiffFileTags(NamedTuple):
@@ -126,6 +130,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     new_image_files = []
     consumed_files = set()
     invalid_file_errors = {}
+    new_simple_files = []
 
     for file_path in path.iterdir():
         try:
@@ -135,6 +140,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             continue
 
         image = create_tiff_image_entry(tiff_file=tiff_file)
+        image_dzi = create_dzi_image_entry(tiff_file=tiff_file)
 
         temp_file = TemporaryFile()
         with open(tiff_file.path.absolute(), "rb") as open_file:
@@ -151,14 +157,36 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             )
         )
 
+        dzi_output = create_dzi_images(tiff_file=tiff_file)
+
+        temp_dzi_file = TemporaryFile()
+        with open(dzi_output + ".dzi", "rb") as open_file:
+            buffer = True
+            while buffer:
+                buffer = open_file.read(1024)
+                temp_dzi_file.write(buffer)
+
+        new_image_files.append(
+            ImageFile(
+                image=image_dzi,
+                image_type=ImageFile.IMAGE_TYPE_DZI,
+                file=File(temp_dzi_file, name="out.dzi"),
+            )
+        )
+
         new_images.append(image)
+        new_images.append(image_dzi)
         consumed_files.add(tiff_file.path.name)
+        new_simple_files = get_simple_files(dzi_output=dzi_output,
+                                            image_dzi=image_dzi)
+        logger.parent.handlers[0].flush()
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
+        new_simple_files=new_simple_files
     )
 
 
@@ -175,3 +203,47 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
         field_of_view=Image.FOV_UNKNOWN,
     )
+
+
+def create_dzi_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
+    # Builds a new Image model item
+    return Image(
+        name=tiff_file.path.name.replace(".tif", ".dzi"),
+        width=tiff_file.tags.image_width,
+        height=tiff_file.tags.image_height,
+        depth=1,
+        resolution_levels=tiff_file.tags.resolution_levels,
+        color_space=tiff_file.tags.color_space,
+        eye_choice=Image.EYE_UNKNOWN,
+        stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
+        field_of_view=Image.FOV_UNKNOWN,
+    )
+
+
+def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
+    # Creates the .dzi and corresponding tiles
+    dzi_filename = str(tiff_file.path.absolute()).replace(".tif", "")
+
+    image = pyvips.Image.new_from_file(str(tiff_file.path.absolute()),
+                                       access='sequential')
+
+    pyvips.Image.dzsave(image, dzi_filename)
+
+    logger.debug("dzi created: " + dzi_filename)
+
+    return dzi_filename
+
+
+def get_simple_files(*, dzi_output, image_dzi):
+    r = []
+    for entry in os.scandir(dzi_output + "_files"):
+        if entry.is_dir():
+            for file in os.scandir(entry):
+                if file.is_file():
+                    try:
+                        sf = SimpleFile(image_dzi, file.path, entry.name)
+                        r.append(sf)
+                    except IOError:
+                        logger.debug("dzi tile not found: " + file)
+                        continue
+    return r

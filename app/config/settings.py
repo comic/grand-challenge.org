@@ -494,12 +494,14 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler"}
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
+        "fileHandler": {"level": "DEBUG", "class": "logging.FileHandler", "filename":
+            "../../tmp/mylog.log"}
     },
     "loggers": {
         "grandchallenge": {
-            "level": "WARNING",
-            "handlers": ["console"],
+            "level": "DEBUG",
+            "handlers": ["fileHandler"],
             "propagate": True,
         },
         "django.db.backends": {
