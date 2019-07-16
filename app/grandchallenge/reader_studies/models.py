@@ -127,3 +127,23 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ]
 
         return hanging_list_images
+
+
+class Question(UUIDModel):
+    QUESTION_TYPE_BOOL = "B"
+    QUESTION_TYPE_TEXT = "T"
+    QUESTION_TYPE_CHOICES = (
+        (QUESTION_TYPE_BOOL, "Bool"),
+        (QUESTION_TYPE_TEXT, "Text"),
+    )
+
+    label = models.TextField()
+    type = models.CharField(max_length=1, choices=QUESTION_TYPE_CHOICES)
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+
+
+class Answer(UUIDModel):
+    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    hanging_images = JSONField()
+    json = JSONField()
