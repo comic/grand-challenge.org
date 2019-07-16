@@ -10,6 +10,7 @@ from tests.annotations_tests.factories import (
     ImageQualityAnnotationFactory,
     ImagePathologyAnnotationFactory,
     RetinaImagePathologyAnnotationFactory,
+    ImageTextAnnotationFactory,
 )
 from grandchallenge.annotations.serializers import (
     ETDRSGridAnnotationSerializer,
@@ -22,6 +23,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     RetinaImagePathologyAnnotationSerializer,
+    ImageTextAnnotationSerializer,
 )
 from tests.serializer_helpers import (
     do_test_serializer_valid,
@@ -144,6 +146,12 @@ from tests.serializer_helpers import (
                     "cysts_present",
                     "other_present",
                 ),
+            },
+            {
+                "unique": True,
+                "factory": ImageTextAnnotationFactory,
+                "serializer": ImageTextAnnotationSerializer,
+                "fields": ("id", "grader", "created", "image", "text"),
             },
         )
     ),

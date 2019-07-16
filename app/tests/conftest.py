@@ -9,11 +9,11 @@ import docker
 import pytest
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group
 
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import Challenge
+from tests.archives_tests.factories import ArchiveFactory
+from tests.cases_tests.factories import ImageFactoryWithoutImageFile
 from tests.factories import (
     UserFactory,
     ChallengeFactory,
@@ -31,6 +31,8 @@ from tests.annotations_tests.factories import (
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
+from tests.patients_tests.factories import PatientFactory
+from tests.studies_tests.factories import StudyFactory
 
 """ Defines fixtures than can be used across all of the tests """
 
@@ -479,3 +481,66 @@ def multiple_retina_etdrs_annotations():
 def multiple_etdrs_annotations():
     """ Creates 2 users with 10 and 5 etdrs annotations"""
     return generate_multiple_etdrs_annotations(retina_grader=False)
+
+
+class ArchivePatientStudyImageSet(NamedTuple):
+    archive1: ArchiveFactory
+    patient11: PatientFactory
+    patient12: PatientFactory
+    study111: StudyFactory
+    study112: StudyFactory
+    study113: StudyFactory
+    study121: StudyFactory
+    study122: StudyFactory
+    images111: List
+    images112: List
+    images113: List
+    images121: List
+    images122: List
+    archive2: ArchiveFactory
+    images211: List
+
+
+def generate_archive_patient_study_image_set():
+    patient11 = PatientFactory()
+    patient12 = PatientFactory()
+    study111 = StudyFactory(patient=patient11)
+    study112 = StudyFactory(patient=patient11)
+    study113 = StudyFactory(patient=patient11)
+    study121 = StudyFactory(patient=patient12)
+    study122 = StudyFactory(patient=patient12)
+    images111 = ImageFactoryWithoutImageFile.create_batch(4, study=study111)
+    images112 = ImageFactoryWithoutImageFile.create_batch(5, study=study112)
+    images113 = ImageFactoryWithoutImageFile.create_batch(6, study=study113)
+    images121 = ImageFactoryWithoutImageFile.create_batch(2, study=study121)
+    images122 = ImageFactoryWithoutImageFile.create_batch(3, study=study122)
+    images211 = ImageFactoryWithoutImageFile.create_batch(4)
+    archive1 = ArchiveFactory.create(
+        images=[*images111, *images112, *images113, *images121, *images122]
+    )
+    archive2 = ArchiveFactory.create(images=images211)
+    return ArchivePatientStudyImageSet(
+        archive1=archive1,
+        patient11=patient11,
+        patient12=patient12,
+        study111=study111,
+        study112=study112,
+        study113=study113,
+        study121=study121,
+        study122=study122,
+        images111=images111,
+        images112=images112,
+        images113=images113,
+        images121=images121,
+        images122=images122,
+        archive2=archive2,
+        images211=images211,
+    )
+
+
+@pytest.fixture(name="ArchivePatientStudyImageSet")
+def archive_patient_study_images_set():
+    """ Creates an archive with 2 patients, with 3 (4, 5 and 6 images) and 2
+    (2 and 3 images) studies. And another archive with one patient, one study
+    and 4 images"""
+    return generate_archive_patient_study_image_set()
