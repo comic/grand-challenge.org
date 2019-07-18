@@ -7,8 +7,9 @@ from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.reader_studies.forms import (
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
+    QuestionCreateForm,
 )
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import ReaderStudy, Question
 from grandchallenge.reader_studies.serializers import ReaderStudySerializer
 
 
@@ -34,27 +35,45 @@ class ReaderStudyUpdate(UserIsStaffMixin, UpdateView):
     form_class = ReaderStudyUpdateForm
 
 
-class AddImagesToReaderStudy(UserIsStaffMixin, CreateView):
-    model = RawImageUploadSession
-    form_class = UploadRawImagesForm
-    template_name = "reader_studies/readerstudy_add_images.html"
+class AddObjectToReaderStudyMixin:
+    """
+    Mixin that adds an object that has a foreign key to a reader study and a
+    creator. The url to this view must include a slug that points to the slug
+    of the reader study.
+    """
 
     @property
-    def readerstudy(self):
+    def reader_study(self):
         return ReaderStudy.objects.get(slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"object": self.readerstudy})
+        context.update({"object": self.reader_study})
         return context
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.readerstudy = self.readerstudy
+        form.instance.reader_study = self.reader_study
         return super().form_valid(form)
 
     def get_success_url(self):
-        return self.object.readerstudy.get_absolute_url()
+        return self.object.reader_study.get_absolute_url()
+
+
+class AddImagesToReaderStudy(
+    AddObjectToReaderStudyMixin, UserIsStaffMixin, CreateView
+):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "reader_studies/readerstudy_add_images.html"
+
+
+class AddQuestionToReaderStudy(
+    AddObjectToReaderStudyMixin, UserIsStaffMixin, CreateView
+):
+    model = Question
+    form_class = QuestionCreateForm
+    template_name = "reader_studies/readerstudy_add_question.html"
 
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):

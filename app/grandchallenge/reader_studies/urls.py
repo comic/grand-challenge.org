@@ -7,6 +7,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDetail,
     AddImagesToReaderStudy,
     ReaderStudyUpdate,
+    AddQuestionToReaderStudy,
 )
 
 app_name = "reader-studies"
@@ -16,10 +17,19 @@ urlpatterns = [
     path("create/", ReaderStudyCreate.as_view(), name="create"),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
-    path("<slug>/add/", AddImagesToReaderStudy.as_view(), name="add-images"),
     path(
-        f"<slug>/add/{upload_raw_files_widget.ajax_target_path}",
+        "<slug>/images/add/",
+        AddImagesToReaderStudy.as_view(),
+        name="add-images",
+    ),
+    path(
+        f"<slug>/images/add/{upload_raw_files_widget.ajax_target_path}",
         upload_raw_files_widget.handle_ajax,
         name="upload-raw-readerstudy-image-files-ajax",
+    ),
+    path(
+        "<slug>/questions/add/",
+        AddQuestionToReaderStudy.as_view(),
+        name="add-question",
     ),
 ]

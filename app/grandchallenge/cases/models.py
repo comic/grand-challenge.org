@@ -77,7 +77,7 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    readerstudy = models.ForeignKey(
+    reader_study = models.ForeignKey(
         to="reader_studies.ReaderStudy",
         null=True,
         default=None,

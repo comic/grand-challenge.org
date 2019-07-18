@@ -130,16 +130,25 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
 
 class Question(UUIDModel):
-    QUESTION_TYPE_BOOL = "B"
-    QUESTION_TYPE_TEXT = "T"
-    QUESTION_TYPE_CHOICES = (
-        (QUESTION_TYPE_BOOL, "Bool"),
-        (QUESTION_TYPE_TEXT, "Text"),
+    ANSWER_TYPE_BOOL = "B"
+    ANSWER_TYPE_STRING = "S"
+    ANSWER_TYPE_FLOAT = "F"
+    ANSWER_TYPE_CHOICES = (
+        (ANSWER_TYPE_BOOL, "Bool"),
+        (ANSWER_TYPE_STRING, "String"),
+        (ANSWER_TYPE_FLOAT, "Float"),
     )
 
-    label = models.TextField()
-    type = models.CharField(max_length=1, choices=QUESTION_TYPE_CHOICES)
     reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    question_text = models.TextField()
+    answer_type = models.CharField(max_length=1, choices=ANSWER_TYPE_CHOICES)
+    order = models.PositiveSmallIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.question_text} ({self.get_answer_type_display()})"
+
+    class Meta:
+        ordering = ("order", "created")
 
 
 class Answer(UUIDModel):
