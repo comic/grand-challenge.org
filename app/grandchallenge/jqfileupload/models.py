@@ -30,7 +30,6 @@ class StagedFile(models.Model):
         upload_to=generate_upload_filename,
         storage=private_s3_storage,
     )
-
     start_byte = models.BigIntegerField(blank=False)
     end_byte = models.BigIntegerField(blank=False)
     total_size = models.BigIntegerField(null=True)
