@@ -6,6 +6,7 @@ import tifffile
 import pyvips
 from django.core.exceptions import ValidationError
 from django.core.files import File
+
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile, FolderUpload
 
