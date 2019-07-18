@@ -495,13 +495,11 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
-        "fileHandler": {"level": "DEBUG", "class": "logging.FileHandler", "filename":
-            "../../tmp/mylog.log"}
     },
     "loggers": {
         "grandchallenge": {
-            "level": "DEBUG",
-            "handlers": ["fileHandler"],
+            "level": "WARNING",
+            "handlers": ["console"],
             "propagate": True,
         },
         "django.db.backends": {
@@ -656,7 +654,7 @@ if MEDIA_ROOT[-1] != "/":
     )
     raise ImproperlyConfigured(msg)
 
-ENABLE_DEBUG_TOOLBAR = False
+ENABLE_DEBUG_TOOLBAR = True
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
