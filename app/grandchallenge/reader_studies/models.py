@@ -133,13 +133,17 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "B"
     ANSWER_TYPE_STRING = "S"
     ANSWER_TYPE_FLOAT = "F"
+    # Types should match those defined by MeVisLab fields
+    # https://mevislabdownloads.mevis.de/docs/2.3/MeVisLab/Resources/Documentation/Publish/SDK/MDLReference/index.html#SyntaxTagDataTypes
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_BOOL, "Bool"),
         (ANSWER_TYPE_STRING, "String"),
         (ANSWER_TYPE_FLOAT, "Float"),
     )
 
-    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    reader_study = models.ForeignKey(
+        ReaderStudy, on_delete=models.CASCADE, related_name="questions"
+    )
     question_text = models.TextField()
     answer_type = models.CharField(max_length=1, choices=ANSWER_TYPE_CHOICES)
     order = models.PositiveSmallIntegerField(default=1)

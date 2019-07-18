@@ -81,5 +81,5 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     queryset = (
         ReaderStudy.objects.all()
         .select_related("creator")
-        .prefetch_related("images")
+        .prefetch_related("images", "questions")
     )
