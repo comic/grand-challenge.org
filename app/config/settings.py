@@ -654,7 +654,7 @@ if MEDIA_ROOT[-1] != "/":
     )
     raise ImproperlyConfigured(msg)
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
