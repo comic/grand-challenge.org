@@ -137,7 +137,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             continue
 
         image = create_tiff_image_entry(tiff_file=tiff_file)
-        image_dzi = create_dzi_image_entry(tiff_file=tiff_file)
+        dzi_image = create_dzi_image_entry(tiff_file=tiff_file)
 
         temp_file = TemporaryFile()
         with open(tiff_file.path.absolute(), "rb") as open_file:
@@ -155,7 +155,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         )
 
         dzi_output = create_dzi_images(tiff_file=tiff_file)
-        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=image_dzi)
+        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=dzi_image)
 
         temp_dzi_file = TemporaryFile()
         with open(dzi_output + ".dzi", "rb") as open_file:
@@ -166,14 +166,14 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
         new_image_files.append(
             ImageFile(
-                image=image_dzi,
+                image=dzi_image,
                 image_type=ImageFile.IMAGE_TYPE_DZI,
                 file=File(temp_dzi_file, name="out.dzi"),
             )
         )
 
         new_images.append(image)
-        new_images.append(image_dzi)
+        new_images.append(dzi_image)
         consumed_files.add(tiff_file.path.name)
         new_folder_upload.append(dzi_folder_upload)
 
