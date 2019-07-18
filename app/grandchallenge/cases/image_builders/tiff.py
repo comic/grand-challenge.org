@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from tempfile import TemporaryFile
 from typing import NamedTuple
@@ -9,9 +8,6 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile, FolderUpload
-import logging
-
-logger = logging.getLogger("grandchallenge")
 
 
 class GrandChallengeTiffFileTags(NamedTuple):
@@ -179,7 +175,6 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         new_images.append(image_dzi)
         consumed_files.add(tiff_file.path.name)
         new_folder_upload.append(dzi_folder_upload)
-        logger.parent.handlers[0].flush()
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
