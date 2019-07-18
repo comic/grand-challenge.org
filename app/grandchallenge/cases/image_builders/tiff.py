@@ -136,7 +136,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             invalid_file_errors[file_path.name] = e.message
             continue
 
-        image = create_image_entry(tiff_file=tiff_file, name=tiff_file.path.name)
+        image = create_tiff_image_entry(tiff_file=tiff_file)
 
         temp_file = TemporaryFile()
         with open(tiff_file.path.absolute(), "rb") as open_file:
@@ -154,10 +154,6 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         )
 
         dzi_output = create_dzi_images(tiff_file=tiff_file)
-        dzi_image = create_image_entry(tiff_file=tiff_file,
-                                       name=tiff_file.path.name.replace(".tif", ".dzi"))
-
-        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=dzi_image)
 
         temp_dzi_file = TemporaryFile()
         with open(dzi_output + ".dzi", "rb") as open_file:
@@ -168,14 +164,14 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
         new_image_files.append(
             ImageFile(
-                image=dzi_image,
+                image=image,
                 image_type=ImageFile.IMAGE_TYPE_DZI,
                 file=File(temp_dzi_file, name="out.dzi"),
             )
         )
 
+        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=image)
         new_images.append(image)
-        new_images.append(dzi_image)
         consumed_files.add(tiff_file.path.name)
         new_folder_upload.append(dzi_folder_upload)
 
@@ -188,25 +184,10 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     )
 
 
-def create_image_entry(*, tiff_file: GrandChallengeTiffFile, name: name) -> Image:
+def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
     # Builds a new Image model item
     return Image(
         name=tiff_file.path.name,
-        width=tiff_file.tags.image_width,
-        height=tiff_file.tags.image_height,
-        depth=1,
-        resolution_levels=tiff_file.tags.resolution_levels,
-        color_space=tiff_file.tags.color_space,
-        eye_choice=Image.EYE_UNKNOWN,
-        stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
-        field_of_view=Image.FOV_UNKNOWN,
-    )
-
-
-def create_dzi_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
-    # Builds a new Image model item
-    return Image(
-        name=tiff_file.path.name.replace(".tif", ".dzi"),
         width=tiff_file.tags.image_width,
         height=tiff_file.tags.image_height,
         depth=1,
