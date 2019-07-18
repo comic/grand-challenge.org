@@ -27,7 +27,6 @@ WORKDIR /opt/pipenv
 COPY Pipfile /opt/pipenv
 COPY Pipfile.lock /opt/pipenv
 RUN pipenv install --system
-RUN pipenv lock
 
 RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
 
