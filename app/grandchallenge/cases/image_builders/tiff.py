@@ -136,8 +136,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             invalid_file_errors[file_path.name] = e.message
             continue
 
-        image = create_tiff_image_entry(tiff_file=tiff_file)
-        dzi_image = create_dzi_image_entry(tiff_file=tiff_file)
+        image = create_image_entry(tiff_file=tiff_file, name=tiff_file.path.name)
 
         temp_file = TemporaryFile()
         with open(tiff_file.path.absolute(), "rb") as open_file:
@@ -155,6 +154,9 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         )
 
         dzi_output = create_dzi_images(tiff_file=tiff_file)
+        dzi_image = create_image_entry(tiff_file=tiff_file,
+                                       name=tiff_file.path.name.replace(".tif", ".dzi"))
+
         dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=dzi_image)
 
         temp_dzi_file = TemporaryFile()
@@ -186,7 +188,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     )
 
 
-def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
+def create_image_entry(*, tiff_file: GrandChallengeTiffFile, name: name) -> Image:
     # Builds a new Image model item
     return Image(
         name=tiff_file.path.name,
