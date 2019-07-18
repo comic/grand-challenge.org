@@ -2,7 +2,6 @@ import os
 import sys
 
 from django.core.wsgi import get_wsgi_application
-from werkzeug.debug import DebuggedApplication
 
 # Appending app_path to path allows us to easily keep the apps in the subfolder
 app_path = os.path.abspath(
@@ -16,7 +15,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 # file. This includes Django's development server, if the WSGI_APPLICATION
 # setting points here.
 
-application = DebuggedApplication(get_wsgi_application(), evalex=True)
+application = get_wsgi_application()
 
 # Apply WSGI middleware here.
 # from helloworld.wsgi import HelloWorldApplication
