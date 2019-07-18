@@ -2,14 +2,11 @@ import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from tempfile import TemporaryFile
 from typing import List
-from collections import namedtuple
 
 import SimpleITK as sitk
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.files import File
 from django.db import models
 from guardian.shortcuts import assign_perm
 
@@ -87,7 +84,6 @@ class RawImageUploadSession(UUIDModel):
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
-        logger.debug("test debug logging in models.py")
         created = self._state.adding
 
         super().save(*args, **kwargs)
@@ -377,5 +373,5 @@ class FolderUpload:
                 try:
                     save_file(self.image, level.name, file.path)
                 except IOError:
-                    logger.debug("dzi tile not found: " + file)
+                    logger.warning("Dzi tile not found: " + file)
                     continue
