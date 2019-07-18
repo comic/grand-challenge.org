@@ -8,7 +8,7 @@ import pyvips
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.models import Image, ImageFile, SimpleFile
+from grandchallenge.cases.models import Image, ImageFile, FolderUpload
 import logging
 
 logger = logging.getLogger("grandchallenge")
@@ -130,7 +130,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     new_image_files = []
     consumed_files = set()
     invalid_file_errors = {}
-    new_simple_files = []
+    new_folder_upload = []
 
     for file_path in path.iterdir():
         try:
@@ -158,6 +158,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         )
 
         dzi_output = create_dzi_images(tiff_file=tiff_file)
+        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=image_dzi)
 
         temp_dzi_file = TemporaryFile()
         with open(dzi_output + ".dzi", "rb") as open_file:
@@ -177,8 +178,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         new_images.append(image)
         new_images.append(image_dzi)
         consumed_files.add(tiff_file.path.name)
-        new_simple_files = get_simple_files(dzi_output=dzi_output,
-                                            image_dzi=image_dzi)
+        new_folder_upload.append(dzi_folder_upload)
         logger.parent.handlers[0].flush()
 
     return ImageBuilderResult(
@@ -186,7 +186,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_simple_files=new_simple_files
+        new_folder_upload=new_folder_upload
     )
 
 
@@ -229,21 +229,4 @@ def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
 
     pyvips.Image.dzsave(image, dzi_filename)
 
-    logger.debug("dzi created: " + dzi_filename)
-
     return dzi_filename
-
-
-def get_simple_files(*, dzi_output, image_dzi):
-    r = []
-    for entry in os.scandir(dzi_output + "_files"):
-        if entry.is_dir():
-            for file in os.scandir(entry):
-                if file.is_file():
-                    try:
-                        sf = SimpleFile(image_dzi, file.path, entry.name)
-                        r.append(sf)
-                    except IOError:
-                        logger.debug("dzi tile not found: " + file)
-                        continue
-    return r

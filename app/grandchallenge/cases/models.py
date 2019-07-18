@@ -358,24 +358,24 @@ class ImageFile(UUIDModel):
     )
 
 
-class SimpleFile:
-    def __init__(self, image, file, level):
+def save_file(image, level, file):
+    path = f"{settings.IMAGE_FILES_SUBDIRECTORY}/{image.pk}/out_files" \
+        f"/{level}/{os.path.basename(file)}"
+
+    with open(file, "rb") as open_file:
+        protected_s3_storage.save(path, open_file)
+
+
+class FolderUpload:
+    def __init__(self, image, folder):
         self.image = image
-        self.file = file
-        self.level = level
+        self.folder = folder
 
     def save(self):
-        logger.debug("save SimpleFile")
-        logger.debug(self.file)
-        temp_dzi_file = TemporaryFile()
-        with open(self.file, "rb") as open_file:
-            buffer = True
-            while buffer:
-                buffer = open_file.read(1024)
-                temp_dzi_file.write(buffer)
-                
-        path = f"{settings.IMAGE_FILES_SUBDIRECTORY}/{self.image.pk}/out_files" \
-            f"/{self.level}/{os.path.basename(self.file)}"
-
-        protected_s3_storage.save(path, temp_dzi_file)
-        logger.debug(protected_s3_storage.url(path))
+        for level in [d for d in os.scandir(self.folder) if d.is_dir()]:
+            for file in [f for f in os.scandir(level) if f.is_file()]:
+                try:
+                    save_file(self.image, level.name, file.path)
+                except IOError:
+                    logger.debug("dzi tile not found: " + file)
+                    continue

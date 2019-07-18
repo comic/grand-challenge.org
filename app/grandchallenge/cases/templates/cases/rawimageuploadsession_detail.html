@@ -44,9 +44,15 @@
                         <td style="padding-right:1cm;">{{ image.name }}</td>
                         <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
                         <td style="padding-right:1cm;">
-                            <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">
-                                Show image
-                            </a>
+                            {% if ".dzi" in image.name %}
+                                <a href="../show_image/{{ image.pk }}/" >
+                                    Show image in browser
+                                </a>
+                            {% else %}
+                                 <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">
+                                    Show image in workstation
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
