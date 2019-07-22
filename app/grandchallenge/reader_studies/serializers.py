@@ -1,11 +1,12 @@
 from rest_framework.fields import CharField
-from rest_framework.relations import SlugRelatedField
+from rest_framework.relations import SlugRelatedField, HyperlinkedRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
     ModelSerializer,
 )
+from rest_framework_nested.relations import NestedHyperlinkedIdentityField
 
-from grandchallenge.reader_studies.models import ReaderStudy, Question
+from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
 
 
 class QuestionSerializer(ModelSerializer):
@@ -31,3 +32,21 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "questions",
             "hanging_list_images",
         )
+
+
+class AnswerSerializer(HyperlinkedModelSerializer):
+    creator = SlugRelatedField(read_only=True, slug_field="username")
+
+    question = NestedHyperlinkedIdentityField(
+        view_name="reader-study-questions-detail",
+        lookup_url_kwarg="question_pk",
+    )
+    images = HyperlinkedRelatedField(
+        many=True,
+        read_only=True,  # TODO: Provide a queryset
+        view_name="image-detail",
+    )
+
+    class Meta:
+        model = Answer
+        fields = ("pk", "creator", "question", "images", "answer")

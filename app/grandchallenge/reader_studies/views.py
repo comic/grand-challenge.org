@@ -1,5 +1,5 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -9,8 +9,12 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyUpdateForm,
     QuestionCreateForm,
 )
-from grandchallenge.reader_studies.models import ReaderStudy, Question
-from grandchallenge.reader_studies.serializers import ReaderStudySerializer
+from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
+from grandchallenge.reader_studies.serializers import (
+    ReaderStudySerializer,
+    AnswerSerializer,
+    QuestionSerializer,
+)
 
 
 class ReaderStudyList(UserIsStaffMixin, ListView):
@@ -83,3 +87,23 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         .select_related("creator")
         .prefetch_related("images", "questions")
     )
+
+
+class QuestionViewSet(ReadOnlyModelViewSet):
+    serializer_class = QuestionSerializer
+
+    def get_queryset(self):
+        return Question.objects.filter(
+            reader_study__pk=self.kwargs["reader_study_pk"]
+        )
+
+
+class AnswerViewSet(ModelViewSet):
+    serializer_class = AnswerSerializer
+
+    def get_queryset(self):
+        return (
+            Answer.objects.filter(question__pk=self.kwargs["question_pk"])
+            .select_related("creator", "question")
+            .prefetch_related("images")
+        )

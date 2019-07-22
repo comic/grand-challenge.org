@@ -158,5 +158,5 @@ class Question(UUIDModel):
 class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    hanging_images = JSONField()
-    json = JSONField()
+    images = models.ManyToManyField("cases.Image", related_name="answers")
+    answer = JSONField()
