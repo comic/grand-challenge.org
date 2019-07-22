@@ -5,7 +5,7 @@ from grandchallenge.algorithms.models import Algorithm, Job, Result
 class AlgorithmSerializer(serializers.ModelSerializer):
     class Meta:
         model = Algorithm
-        fields = ['pk']
+        fields = ['pk', 'slug', 'title']
 
 
 class ResultSerializer(serializers.ModelSerializer):
