@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import pytest
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
@@ -10,6 +13,15 @@ from grandchallenge.cases.image_builders.tiff import (
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
+
+
+@pytest.fixture(scope="function")
+def clean_up_files_and_folders():
+    yield
+    if os.path.isfile(RESOURCE_PATH / "valid_tiff.dzi"):
+        os.remove(RESOURCE_PATH / "valid_tiff.dzi")
+    if os.path.isdir(RESOURCE_PATH / "valid_tiff_files"):
+        shutil.rmtree(RESOURCE_PATH / "valid_tiff_files")
 
 
 @pytest.mark.parametrize(
@@ -73,7 +85,8 @@ def test_tiff_validation(resource, expected_error_message):
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
     ],
 )
-def test_tiff_image_entry_creation(resource, expected_error_message):
+def test_tiff_image_entry_creation(resource, expected_error_message,
+                                   clean_up_files_and_folders):
     error_message = ""
     image_entry = None
 
@@ -101,12 +114,26 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         )
 
 
+def test_dzi_creation(clean_up_files_and_folders):
+    image_builder_tiff(RESOURCE_PATH)
+    files = 0
+
+    # Asserts successful creation of files
+    assert os.path.isfile(RESOURCE_PATH / "valid_tiff.dzi")
+    assert os.path.isdir(RESOURCE_PATH / "valid_tiff_files")
+
+    for _, _, filenames in os.walk(RESOURCE_PATH / "valid_tiff_files"):
+        files += len(filenames)
+
+    assert files == 12
+
+
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-def test_image_builder_tiff():
+def test_image_builder_tiff(clean_up_files_and_folders):
     image_builder_result = image_builder_tiff(RESOURCE_PATH)
 
     # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
     assert len(image_builder_result.consumed_files) == 1
     assert len(image_builder_result.new_images) == 1
-    assert len(image_builder_result.new_image_files) == 1
+    assert len(image_builder_result.new_image_files) == 2

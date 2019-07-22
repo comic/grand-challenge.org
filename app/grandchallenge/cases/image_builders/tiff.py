@@ -132,6 +132,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     for file_path in path.iterdir():
         try:
             tiff_file = load_tiff_file(path=file_path)
+            dzi_output = create_dzi_images(tiff_file=tiff_file)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message
             continue
@@ -152,8 +153,6 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
                 file=File(temp_file, name="out.tif"),
             )
         )
-
-        dzi_output = create_dzi_images(tiff_file=tiff_file)
 
         temp_dzi_file = TemporaryFile()
         with open(dzi_output + ".dzi", "rb") as open_file:
@@ -203,9 +202,12 @@ def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
     # Creates the .dzi and corresponding tiles
     dzi_filename = str(tiff_file.path.absolute()).replace(".tif", "")
 
-    image = pyvips.Image.new_from_file(str(tiff_file.path.absolute()),
-                                       access='sequential')
+    try:
+        image = pyvips.Image.new_from_file(str(tiff_file.path.absolute()),
+                                           access='sequential')
 
-    pyvips.Image.dzsave(image, dzi_filename)
+        pyvips.Image.dzsave(image, dzi_filename, tile_size=2560)
+    except:
+        raise ValidationError("Image can't be converted to dzi")
 
     return dzi_filename
