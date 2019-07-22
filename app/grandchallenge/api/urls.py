@@ -23,9 +23,7 @@ router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
 
 router.register(
-    r"reader-studies/questions/answers",
-    AnswerViewSet,
-    basename="reader-studies-questions-answer",
+    r"reader-studies/answers", AnswerViewSet, basename="reader-studies-answer"
 )
 router.register(
     r"reader-studies/questions",

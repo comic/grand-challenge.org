@@ -91,9 +91,13 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
 
 class QuestionViewSet(ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
-    queryset = Question.objects.all()
+    queryset = Question.objects.all().select_related("reader_study")
 
 
 class AnswerViewSet(ModelViewSet):
     serializer_class = AnswerSerializer
-    queryset = Answer.objects.all()
+    queryset = (
+        Answer.objects.all()
+        .select_related("creator")
+        .prefetch_related("images")
+    )

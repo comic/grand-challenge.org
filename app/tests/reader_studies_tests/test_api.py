@@ -46,9 +46,7 @@ def test_api_list_is_filtered(client):
     assert response.json()["results"][0]["pk"] == str(q1.pk)
 
     response = get_view_for_user(
-        viewname="api:reader-studies-questions-answer-list",
-        user=user,
-        client=client,
+        viewname="api:reader-studies-answer-list", user=user, client=client
     )
     assert response.status_code == 200
     # assert response.json()["count"] == 1
