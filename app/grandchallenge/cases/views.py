@@ -57,13 +57,16 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
 def show_image(request, *, pk):
     from django.shortcuts import render
+
     try:
-        image_file = ImageFile.objects.select_related('image').get(image=pk,
-                                                                   image_type="DZI")
+        image_file = ImageFile.objects.select_related("image").get(
+            image=pk, image_type="DZI"
+        )
     except Image.DoesNotExist:
         raise Http404("File not found.")
 
     return render(
         request,
         "cases/show_image.html",
-        {"image_file": image_file, "url": image_file.file.url})
+        {"image_file": image_file, "url": image_file.file.url},
+    )

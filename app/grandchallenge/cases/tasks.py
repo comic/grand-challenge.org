@@ -90,8 +90,11 @@ def populate_provisioning_directory(
 
 
 @transaction.atomic
-def store_image(image: Image, all_image_files: Sequence[ImageFile],
-                all_folder_uploads: Sequence[FolderUpload]):
+def store_image(
+    image: Image,
+    all_image_files: Sequence[ImageFile],
+    all_folder_uploads: Sequence[FolderUpload],
+):
     """
     Stores an image in the database in a single transaction (or fails
     accordingly). Associated image files are extracted from the
@@ -122,7 +125,9 @@ def store_image(image: Image, all_image_files: Sequence[ImageFile],
     for af in associated_files:
         af.save()
 
-    associated_folders = [_if for _if in all_folder_uploads if _if.image == image]
+    associated_folders = [
+        _if for _if in all_folder_uploads if _if.image == image
+    ]
     for af in associated_folders:
         af.save()
 
@@ -263,8 +268,11 @@ def build_images(upload_session_uuid: UUID):
 
                 for image in collected_images:
                     image.origin = upload_session
-                    store_image(image, collected_associated_files,
-                                collected_associated_folders)
+                    store_image(
+                        image,
+                        collected_associated_files,
+                        collected_associated_folders,
+                    )
 
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]

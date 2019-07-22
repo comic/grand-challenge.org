@@ -85,8 +85,9 @@ def test_tiff_validation(resource, expected_error_message):
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
     ],
 )
-def test_tiff_image_entry_creation(resource, expected_error_message,
-                                   clean_up_files_and_folders):
+def test_tiff_image_entry_creation(
+    resource, expected_error_message, clean_up_files_and_folders
+):
     error_message = ""
     image_entry = None
 

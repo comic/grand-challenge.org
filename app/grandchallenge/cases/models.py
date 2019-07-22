@@ -32,6 +32,7 @@ class RawImageUploadSession(UUIDModel):
     task that tries to make sense of the uploaded files to form normalized
     images that can be fed to processing tasks.
     """
+
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -340,8 +341,11 @@ class ImageFile(UUIDModel):
     IMAGE_TYPE_TIFF = "TIFF"
     IMAGE_TYPE_DZI = "DZI"
 
-    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"),
-                   (IMAGE_TYPE_DZI, "DZI"))
+    IMAGE_TYPES = (
+        (IMAGE_TYPE_MHD, "MHD"),
+        (IMAGE_TYPE_TIFF, "TIFF"),
+        (IMAGE_TYPE_DZI, "DZI"),
+    )
 
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
@@ -355,8 +359,10 @@ class ImageFile(UUIDModel):
 
 
 def save_file(image, level, file):
-    path = f"{settings.IMAGE_FILES_SUBDIRECTORY}/{image.pk}/out_files" \
+    path = (
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/{image.pk}/out_files"
         f"/{level}/{os.path.basename(file)}"
+    )
 
     with open(file, "rb") as open_file:
         protected_s3_storage.save(path, open_file)

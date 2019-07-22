@@ -169,7 +169,9 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             )
         )
 
-        dzi_folder_upload = FolderUpload(folder=dzi_output + "_files", image=image)
+        dzi_folder_upload = FolderUpload(
+            folder=dzi_output + "_files", image=image
+        )
         new_images.append(image)
         consumed_files.add(tiff_file.path.name)
         new_folder_upload.append(dzi_folder_upload)
@@ -179,7 +181,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=new_folder_upload
+        new_folder_upload=new_folder_upload,
     )
 
 
@@ -203,8 +205,9 @@ def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
     dzi_filename = str(tiff_file.path.absolute()).replace(".tif", "")
 
     try:
-        image = pyvips.Image.new_from_file(str(tiff_file.path.absolute()),
-                                           access='sequential')
+        image = pyvips.Image.new_from_file(
+            str(tiff_file.path.absolute()), access="sequential"
+        )
 
         pyvips.Image.dzsave(image, dzi_filename, tile_size=2560)
     except:
