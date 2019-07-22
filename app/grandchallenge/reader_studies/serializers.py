@@ -6,6 +6,7 @@ from rest_framework.serializers import (
 )
 from rest_framework_nested.relations import NestedHyperlinkedIdentityField
 
+from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
 
 
@@ -42,9 +43,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         lookup_url_kwarg="question_pk",
     )
     images = HyperlinkedRelatedField(
-        many=True,
-        read_only=True,  # TODO: Provide a queryset
-        view_name="image-detail",
+        many=True, queryset=Image.objects.all(), view_name="api:image-detail"
     )
 
     class Meta:
