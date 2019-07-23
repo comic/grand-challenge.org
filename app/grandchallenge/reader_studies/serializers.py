@@ -37,7 +37,8 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
 class AnswerSerializer(HyperlinkedModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
     question = HyperlinkedRelatedField(
-        view_name="api:reader-studies-question-detail", read_only=True
+        view_name="api:reader-studies-question-detail",
+        queryset=Question.objects.all(),
     )
     images = HyperlinkedRelatedField(
         many=True, queryset=Image.objects.all(), view_name="api:image-detail"

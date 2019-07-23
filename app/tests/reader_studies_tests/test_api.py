@@ -1,6 +1,7 @@
 import pytest
 
-from tests.factories import UserFactory
+from grandchallenge.reader_studies.models import Answer
+from tests.factories import UserFactory, ImageFactory
 from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
     QuestionFactory,
@@ -51,3 +52,32 @@ def test_api_list_is_filtered(client):
     assert response.status_code == 200
     # assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(a1.pk)
+
+
+@pytest.mark.django_db
+def test_answer_create(client):
+    user = UserFactory(is_staff=True)
+    im = ImageFactory()
+    q = QuestionFactory()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={
+            "answer": True,
+            "images": [im.get_api_url()],
+            "question": q.get_api_url(),
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    answer = Answer.objects.get(pk=response.data.get("pk"))
+
+    assert answer.creator == user
+    assert answer.images.count() == 1
+    assert answer.images.all()[0] == im
+    assert answer.question == q
+    assert answer.answer == True

@@ -1,5 +1,10 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.mixins import (
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+)
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -94,10 +99,15 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     queryset = Question.objects.all().select_related("reader_study")
 
 
-class AnswerViewSet(ModelViewSet):
+class AnswerViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
         .select_related("creator")
         .prefetch_related("images")
     )
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
