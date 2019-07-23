@@ -35,6 +35,10 @@ class Algorithm(UUIDModel, ContainerImageModel, TitleSlugDescriptionModel):
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
 
+    @property
+    def api_url(self):
+        return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
+
 
 class Result(UUIDModel):
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
@@ -45,6 +49,10 @@ class Result(UUIDModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
+
+    @property
+    def api_url(self):
+        return reverse("api:result-detail", kwargs={"pk": self.pk})
 
 
 class AlgorithmExecutor(Executor):
@@ -61,17 +69,18 @@ class AlgorithmExecutor(Executor):
 
         try:
             with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._output_volume: {"bind": "/output/", "mode": "ro"}
-                    },
-                    name=f"{self._job_label}-reader",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
-                )
+                    self._client.containers.run(
+                        image=self._io_image,
+                        volumes={
+                            self._output_volume: {"bind": "/output/",
+                                                  "mode": "ro"}
+                        },
+                        name=f"{self._job_label}-reader",
+                        detach=True,
+                        tty=True,
+                        labels=self._labels,
+                        **self._run_kwargs,
+                    )
             ) as reader:
                 self._copy_output_files(
                     container=reader, base_dir=Path(self.output_images_dir)
@@ -162,3 +171,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
+
+    @property
+    def api_url(self):
+        return reverse("api:job-detail", kwargs={"pk": self.pk})
