@@ -21,7 +21,7 @@ router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
-router.register(r"algorithms", AlgorithmViewSet)
+router.register(r"algorithms/algorithms", AlgorithmViewSet)
 router.register(r"algorithms/jobs", JobViewSet)
 router.register(r"algorithms/results", ResultViewSet)
 
