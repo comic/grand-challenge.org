@@ -9,15 +9,11 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.algorithms.serializers import (
-    AlgorithmSerializer, 
-    ResultSerializer, 
+    AlgorithmSerializer,
+    ResultSerializer,
     JobSerializer,
 )
-from grandchallenge.algorithms.models import (
-    Algorithm, 
-    Job, 
-    Result,
-)
+from grandchallenge.algorithms.models import Algorithm, Job, Result
 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
@@ -67,7 +63,7 @@ class AlgorithmExecutionSessionCreate(
             "algorithms:detail", kwargs={"slug": self.kwargs["slug"]}
         )
 
-    
+
 class AlgorithmViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
