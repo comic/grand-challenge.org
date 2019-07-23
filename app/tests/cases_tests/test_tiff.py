@@ -14,6 +14,9 @@ from grandchallenge.cases.image_builders.tiff import (
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="function")
@@ -97,7 +100,7 @@ def test_tiff_validation(resource, expected_error_message):
         ),
     ],
 )
-def test_dzi_creation(resource, expected_error_message):
+def test_dzi_creation(resource, expected_error_message, clean_up_files_and_folders):
     error_message = ""
 
     try:
@@ -147,9 +150,17 @@ def test_tiff_image_entry_creation(
         )
 
 
-def test_dzi_creation(clean_up_files_and_folders):
-    image_builder_tiff(RESOURCE_PATH)
+# Integration test of all features being accessed through the image builder
+@pytest.mark.django_db
+def test_image_builder_tiff(clean_up_files_and_folders):
+    image_builder_result = image_builder_tiff(RESOURCE_PATH)
     files = 0
+
+    logger.warning(image_builder_result.file_errors_map)
+    # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
+    assert len(image_builder_result.consumed_files) == 1
+    assert len(image_builder_result.new_images) == 1
+    assert len(image_builder_result.new_image_files) == 2
 
     # Asserts successful creation of files
     assert os.path.isfile(RESOURCE_PATH / "valid_tiff.dzi")
@@ -159,14 +170,3 @@ def test_dzi_creation(clean_up_files_and_folders):
         files += len(filenames)
 
     assert files == 12
-
-
-# Integration test of all features being accessed through the image builder
-@pytest.mark.django_db
-def test_image_builder_tiff(clean_up_files_and_folders):
-    image_builder_result = image_builder_tiff(RESOURCE_PATH)
-
-    # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
-    assert len(image_builder_result.consumed_files) == 1
-    assert len(image_builder_result.new_images) == 1
-    assert len(image_builder_result.new_image_files) == 2
