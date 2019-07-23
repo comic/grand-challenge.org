@@ -65,11 +65,7 @@ def test_answer_create(client):
         user=user,
         client=client,
         method=client.post,
-        data={
-            "answer": True,
-            "images": [im.get_api_url()],
-            "question": q.get_api_url(),
-        },
+        data={"answer": True, "images": [im.api_url], "question": q.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201

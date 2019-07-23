@@ -68,8 +68,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
-    def get_api_url(self):
-        return reverse("api:reader-studies-detail", kwargs={"pk": self.pk})
+    @property
+    def api_url(self):
+        return reverse("api:reader-study-detail", kwargs={"pk": self.pk})
 
     @property
     def study_image_names(self):
@@ -154,7 +155,8 @@ class Question(UUIDModel):
     def __str__(self):
         return f"{self.question_text} ({self.get_answer_type_display()})"
 
-    def get_api_url(self):
+    @property
+    def api_url(self):
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
@@ -169,7 +171,8 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
 
-    def get_api_url(self):
+    @property
+    def api_url(self):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
