@@ -12,12 +12,14 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     reader_study = HyperlinkedRelatedField(
         view_name="api:reader-study-detail", read_only=True
     )
+    form_direction = CharField(source="get_direction_display")
 
     class Meta:
         model = Question
         fields = (
             "answer_type",
             "api_url",
+            "form_direction",
             "pk",
             "question_text",
             "reader_study",
@@ -55,6 +57,8 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     def validate(self, attrs):
         question = attrs["question"]
         images = attrs["images"]
+
+        # TODO: validate the answer type
 
         reader_study_images = question.reader_study.images.all()
         for im in images:

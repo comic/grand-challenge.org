@@ -47,6 +47,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     creator = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
     )
+    # TODO: add the readers group and make the correct permissions
     readers = models.ManyToManyField(
         get_user_model(), related_name="readerstudies"
     )
@@ -120,10 +121,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         if not self.is_valid:
             return None
 
-        study_images = {
-            im.name: reverse("api:image-detail", kwargs={"pk": im.pk})
-            for im in self.images.all()
-        }
+        study_images = {im.name: im.api_url for im in self.images.all()}
 
         hanging_list_images = [
             {view: study_images.get(name) for view, name in hanging.items()}
@@ -134,22 +132,36 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
 
 class Question(UUIDModel):
+    ANSWER_TYPE_SINGLE_LINE_TEXT = "S"
+    ANSWER_TYPE_MULTI_LINE_TEXT = "M"
     ANSWER_TYPE_BOOL = "B"
-    ANSWER_TYPE_STRING = "S"
-    ANSWER_TYPE_FLOAT = "F"
-    # Types should match those defined by MeVisLab fields
-    # https://mevislabdownloads.mevis.de/docs/2.3/MeVisLab/Resources/Documentation/Publish/SDK/MDLReference/index.html#SyntaxTagDataTypes
+    ANSWER_TYPE_HEADING = "H"
     ANSWER_TYPE_CHOICES = (
+        (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
+        (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
         (ANSWER_TYPE_BOOL, "Bool"),
-        (ANSWER_TYPE_STRING, "String"),
-        (ANSWER_TYPE_FLOAT, "Float"),
+        (ANSWER_TYPE_HEADING, "Heading"),
+    )
+
+    DIRECTION_HORIZONTAL = "H"
+    DIRECTION_VERTICAL = "V"
+    DIRECTION_CHOICES = (
+        (DIRECTION_HORIZONTAL, "Horizontal"),
+        (DIRECTION_VERTICAL, "Vertical"),
     )
 
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
     question_text = models.TextField()
-    answer_type = models.CharField(max_length=1, choices=ANSWER_TYPE_CHOICES)
+    answer_type = models.CharField(
+        max_length=1,
+        choices=ANSWER_TYPE_CHOICES,
+        default=ANSWER_TYPE_SINGLE_LINE_TEXT,
+    )
+    direction = models.CharField(
+        max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
+    )
     order = models.PositiveSmallIntegerField(default=1)
 
     def __str__(self):
@@ -176,3 +188,5 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    # TODO: ordering, unique together
