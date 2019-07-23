@@ -210,7 +210,7 @@ def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
         )
 
         pyvips.Image.dzsave(image, dzi_filename, tile_size=2560)
-    except:
-        raise ValidationError("Image can't be converted to dzi")
+    except Exception as e:
+        raise ValidationError("Image can't be converted to dzi: " + str(e))
 
     return dzi_filename
