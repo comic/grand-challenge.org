@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 import pytest
 import tifffile as tiff_lib
@@ -14,18 +15,6 @@ from grandchallenge.cases.image_builders.tiff import (
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope="function")
-def clean_up_files_and_folders():
-    yield
-    if os.path.isfile(RESOURCE_PATH / "valid_tiff.dzi"):
-        os.remove(RESOURCE_PATH / "valid_tiff.dzi")
-    if os.path.isdir(RESOURCE_PATH / "valid_tiff_files"):
-        shutil.rmtree(RESOURCE_PATH / "valid_tiff_files")
 
 
 @pytest.mark.parametrize(
@@ -82,33 +71,44 @@ def test_tiff_validation(resource, expected_error_message):
 
 
 @pytest.mark.parametrize(
-    "resource, expected_error_message",
+    "source_dir, filename, expected_error_message",
     [
-        (RESOURCE_PATH / "valid_tiff.tif", ""),
-        (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
+        (RESOURCE_PATH, "image5x6x7.mhd", "Image isn't a TIFF file"),
         (
-            RESOURCE_PATH / "invalid_meta_data_tiff.tif",
+            RESOURCE_PATH,
+            "invalid_meta_data_tiff.tif",
             "Image contains unauthorized information",
         ),
         (
-            RESOURCE_PATH / "invalid_resolutions_tiff.tif",
+            RESOURCE_PATH,
+            "invalid_resolutions_tiff.tif",
             "Image only has a single resolution level",
         ),
         (
-            RESOURCE_PATH / "invalid_tiles_tiff.tif",
+            RESOURCE_PATH,
+            "invalid_tiles_tiff.tif",
             "Image has incomplete tile information",
         ),
     ],
 )
-def test_dzi_creation(resource, expected_error_message, clean_up_files_and_folders):
+def test_dzi_creation(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
     error_message = ""
 
     try:
-        tiff_file = load_tiff_file(path=resource)
+        # Copy resource file to writable temp folder
+        temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+        shutil.copy(source_dir / filename, temp_file)
+
+        # Load the tiff file and create dzi
+        tiff_file = load_tiff_file(path=temp_file)
         create_dzi_images(tiff_file=tiff_file)
     except ValidationError as e:
         error_message = e.message
 
+    # Assert
     assert error_message == expected_error_message
 
 
@@ -120,9 +120,7 @@ def test_dzi_creation(resource, expected_error_message, clean_up_files_and_folde
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
     ],
 )
-def test_tiff_image_entry_creation(
-    resource, expected_error_message, clean_up_files_and_folders
-):
+def test_tiff_image_entry_creation(resource, expected_error_message):
     error_message = ""
     image_entry = None
 
@@ -152,21 +150,24 @@ def test_tiff_image_entry_creation(
 
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-def test_image_builder_tiff(clean_up_files_and_folders):
-    image_builder_result = image_builder_tiff(RESOURCE_PATH)
+def test_image_builder_tiff(tmpdir_factory):
+    # Copy resource files to writable temp folder
+    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    shutil.copytree(RESOURCE_PATH, temp_dir)
     files = 0
 
-    logger.warning(image_builder_result.file_errors_map)
+    image_builder_result = image_builder_tiff(temp_dir)
+
     # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
     assert len(image_builder_result.consumed_files) == 1
     assert len(image_builder_result.new_images) == 1
     assert len(image_builder_result.new_image_files) == 2
 
     # Asserts successful creation of files
-    assert os.path.isfile(RESOURCE_PATH / "valid_tiff.dzi")
-    assert os.path.isdir(RESOURCE_PATH / "valid_tiff_files")
+    assert os.path.isfile(temp_dir / "valid_tiff.dzi")
+    assert os.path.isdir(temp_dir / "valid_tiff_files")
 
-    for _, _, filenames in os.walk(RESOURCE_PATH / "valid_tiff_files"):
+    for _, _, filenames in os.walk(temp_dir / "valid_tiff_files"):
         files += len(filenames)
 
     assert files == 12
