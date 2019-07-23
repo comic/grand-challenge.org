@@ -58,7 +58,12 @@ def test_api_list_is_filtered(client):
 def test_answer_create(client):
     user = UserFactory(is_staff=True)
     im = ImageFactory()
-    q = QuestionFactory()
+
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+    rs.save()
+
+    q = QuestionFactory(reader_study=rs)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",

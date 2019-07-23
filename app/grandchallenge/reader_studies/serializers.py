@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from rest_framework.fields import CharField
 from rest_framework.relations import SlugRelatedField, HyperlinkedRelatedField
 from rest_framework.serializers import HyperlinkedModelSerializer
@@ -50,6 +51,20 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     images = HyperlinkedRelatedField(
         many=True, queryset=Image.objects.all(), view_name="api:image-detail"
     )
+
+    def validate(self, attrs):
+        question = attrs["question"]
+        images = attrs["images"]
+
+        # Validate that all images belong to this reader study
+        reader_study_images = question.reader_study.images.all()
+        for im in images:
+            if im not in reader_study_images:
+                raise serializers.ValidationError(
+                    f"Image {im} does not belong to this reader study."
+                )
+
+        return attrs
 
     class Meta:
         model = Answer
