@@ -77,19 +77,16 @@ class AlgorithmExecutionSessionCreate(
 class AlgorithmViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
-    lookup_field = "pk"
     permission_classes = [IsAdminUser]
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
-    lookup_field = "pk"
     permission_classes = [IsAdminUser]
 
 
 class JobViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
-    lookup_field = "pk"
     permission_classes = [IsAdminUser]
