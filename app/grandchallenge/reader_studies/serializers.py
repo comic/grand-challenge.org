@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
 from rest_framework.relations import SlugRelatedField, HyperlinkedRelatedField
 from rest_framework.serializers import HyperlinkedModelSerializer
@@ -56,13 +56,21 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         question = attrs["question"]
         images = attrs["images"]
 
-        # Validate that all images belong to this reader study
         reader_study_images = question.reader_study.images.all()
         for im in images:
             if im not in reader_study_images:
-                raise serializers.ValidationError(
+                raise ValidationError(
                     f"Image {im} does not belong to this reader study."
                 )
+
+        creator = self.context.get("request").user
+        if Answer.objects.filter(
+            creator=creator, question=question, images__in=images
+        ).exists():
+            raise ValidationError(
+                f"User {creator} has already answered this question "
+                f"for at least 1 of these images."
+            )
 
         return attrs
 
