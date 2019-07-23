@@ -47,6 +47,7 @@ from grandchallenge.annotations.models import (
     ImageQualityAnnotation,
     ImagePathologyAnnotation,
     RetinaImagePathologyAnnotation,
+    ImageTextAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
@@ -56,6 +57,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     RetinaImagePathologyAnnotationSerializer,
+    ImageTextAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.serving.permissions import user_can_download_image
@@ -1037,3 +1039,12 @@ class B64ThumbnailAPIView(RetrieveAPIView):
         b64_thumb = self.create_thumbnail_as_base64(image_pil, width, height)
 
         return HttpResponse(b64_thumb, content_type="text/plain")
+
+
+class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.SessionAuthentication,)
+    serializer_class = ImageTextAnnotationSerializer
+    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = ImageTextAnnotation.objects.all()

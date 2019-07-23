@@ -37,6 +37,11 @@ annotation_router.register(
     views.RetinaImagePathologyAnnotationViewSet,
     basename="retinaimagepathologyannotation",
 )
+annotation_router.register(
+    "imagetextannotation",
+    views.ImageTextAnnotationViewSet,
+    basename="imagetextannotation",
+)
 urlpatterns = [
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(

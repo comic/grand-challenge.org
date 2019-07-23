@@ -11,6 +11,7 @@ from .models import (
     ImageQualityAnnotation,
     ImagePathologyAnnotation,
     RetinaImagePathologyAnnotation,
+    ImageTextAnnotation,
 )
 from .validators import validate_grader_is_current_retina_user
 
@@ -147,3 +148,9 @@ class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
             "cysts_present",
             "other_present",
         )
+
+
+class ImageTextAnnotationSerializer(AbstractAnnotationSerializer):
+    class Meta:
+        model = ImageTextAnnotation
+        fields = ("id", "created", "grader", "image", "text")
