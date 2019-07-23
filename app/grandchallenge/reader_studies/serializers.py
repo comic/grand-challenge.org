@@ -14,7 +14,13 @@ class QuestionSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = Question
-        fields = ("answer_type", "api_url", "question_text", "reader_study")
+        fields = (
+            "answer_type",
+            "api_url",
+            "pk",
+            "question_text",
+            "reader_study",
+        )
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
@@ -29,6 +35,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "description",
             "hanging_list_images",
             "is_valid",
+            "pk",
             "questions",
             "title",
         )
@@ -46,4 +53,4 @@ class AnswerSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = Answer
-        fields = ("answer", "api_url", "creator", "images", "question")
+        fields = ("answer", "api_url", "creator", "images", "pk", "question")
