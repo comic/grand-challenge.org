@@ -25,7 +25,7 @@ class ResultSerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     algorithm = HyperlinkedRelatedField(
-        read_only=True, view_name="api:algorithm-detail",
+        read_only=True, view_name="api:algorithm-detail"
     )
 
     class Meta:

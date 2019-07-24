@@ -60,3 +60,75 @@ def test_algorithm_list(client):
         "job"
     ] == "http://testserver/api/v1/algorithms/jobs/{}/".format(job2.pk)
     assert response.json()["results"][1]["output"] == {"cancer_score": 0.5}
+
+
+@pytest.mark.django_db
+def test_algorithm_api_permissions(client):
+    tests = [(UserFactory(), 403), (UserFactory(is_staff=True), 200)]
+    algorithm = AlgorithmFactory()
+
+    for test in tests:
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithm-list",
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithm-detail",
+            reverse_kwargs={"pk": algorithm.pk},
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+def test_job_api_permissions(client):
+    tests = [(UserFactory(), 403), (UserFactory(is_staff=True), 200)]
+    job = JobFactory()
+
+    for test in tests:
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithms-job-list",
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithms-job-detail",
+            reverse_kwargs={"pk": job.pk},
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+def test_result_api_permissions(client):
+    tests = [(UserFactory(), 403), (UserFactory(is_staff=True), 200)]
+    result = ResultFactory()
+
+    for test in tests:
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithms-result-list",
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+        response = get_view_for_user(
+            client=client,
+            viewname="api:algorithms-result-detail",
+            reverse_kwargs={"pk": result.pk},
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
