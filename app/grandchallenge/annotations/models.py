@@ -329,3 +329,11 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     other_present = models.BooleanField(
         help_text="Are other findings present in this image?"
     )
+
+
+class ImageTextAnnotation(AbstractImageAnnotationModel):
+    """
+    Model to annotate a textual comment for an image
+    """
+
+    text = models.TextField()

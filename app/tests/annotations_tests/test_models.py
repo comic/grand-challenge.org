@@ -15,6 +15,7 @@ from tests.annotations_tests.factories import (
     ImageQualityAnnotationFactory,
     ImagePathologyAnnotationFactory,
     RetinaImagePathologyAnnotationFactory,
+    ImageTextAnnotationFactory,
 )
 from tests.model_helpers import do_test_factory
 from tests.viewset_helpers import get_user_from_user_type
@@ -113,6 +114,7 @@ class TestPermissions:
         ImageQualityAnnotationFactory,
         ImagePathologyAnnotationFactory,
         RetinaImagePathologyAnnotationFactory,
+        ImageTextAnnotationFactory,
     ),
 )
 class TestFactories:
