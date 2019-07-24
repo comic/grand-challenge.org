@@ -92,10 +92,8 @@ class AddQuestionToReaderStudy(
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
-    queryset = (
-        ReaderStudy.objects.all()
-        .select_related("creator")
-        .prefetch_related("images", "questions")
+    queryset = ReaderStudy.objects.all().prefetch_related(
+        "images", "questions"
     )
 
 

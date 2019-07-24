@@ -9,7 +9,6 @@ class ReaderStudyFactory(factory.DjangoModelFactory):
         model = ReaderStudy
 
     title = factory.Sequence(lambda n: f"test_reader_study_{n:04}")
-    creator = factory.SubFactory(UserFactory)
 
 
 class QuestionFactory(factory.DjangoModelFactory):

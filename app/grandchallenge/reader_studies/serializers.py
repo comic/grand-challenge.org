@@ -27,14 +27,12 @@ class QuestionSerializer(HyperlinkedModelSerializer):
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
-    creator = SlugRelatedField(read_only=True, slug_field="username")
     questions = QuestionSerializer(many=True, read_only=True)
 
     class Meta:
         model = ReaderStudy
         fields = (
             "api_url",
-            "creator",
             "description",
             "hanging_list_images",
             "is_valid",
