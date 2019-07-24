@@ -33,6 +33,8 @@ class RawImageUploadSession(UUIDModel):
     images that can be fed to processing tasks.
     """
 
+    max_length_error_message = 256
+
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -47,7 +49,10 @@ class RawImageUploadSession(UUIDModel):
     processing_task = models.UUIDField(null=True, default=None)
 
     error_message = models.CharField(
-        max_length=256, blank=False, null=True, default=None
+        max_length=max_length_error_message,
+        blank=False,
+        null=True,
+        default=None,
     )
 
     imageset = models.ForeignKey(
@@ -358,26 +363,25 @@ class ImageFile(UUIDModel):
     )
 
 
-def save_file(image, level, file):
-    path = (
-        f"{settings.IMAGE_FILES_SUBDIRECTORY}/{image.pk}/out_files"
-        f"/{level}/{os.path.basename(file)}"
-    )
-
-    with open(file, "rb") as open_file:
-        protected_s3_storage.save(path, open_file)
-
-
 class FolderUpload:
     def __init__(self, image, folder):
         self.image = image
         self.folder = folder
 
+    def destination_filename(self, file_path):
+        return (
+            f"{settings.IMAGE_FILES_SUBDIRECTORY}/{self.image.pk}/"
+            f"{file_path.parent.parent.stem}/{file_path.parent.stem}/{file_path.name}"
+        )
+
     def save(self):
-        for level in [d for d in os.scandir(self.folder) if d.is_dir()]:
-            for file in [f for f in os.scandir(level) if f.is_file()]:
+        for root, _, files in os.walk(self.folder):
+            for file in files:
+                source_filename = Path(root) / file
+                destination_filename = self.destination_filename(source_filename)
                 try:
-                    save_file(self.image, level.name, file.path)
-                except IOError:
-                    logger.warning("Dzi tile not found: " + file)
+                    with open(source_filename, "rb") as open_file:
+                        protected_s3_storage.save(destination_filename,open_file)
+                except IOError as err:
+                    logger.warning("Dzi tile not found: " + str(err))
                     continue

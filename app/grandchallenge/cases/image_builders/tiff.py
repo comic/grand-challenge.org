@@ -6,6 +6,7 @@ import tifffile
 import pyvips
 from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.conf import settings
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile, FolderUpload
@@ -201,16 +202,15 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
 
 
 def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
-    # Creates the .dzi and corresponding tiles
-    dzi_filename = str(tiff_file.path.absolute()).replace(".tif", "")
-
+    # Creates a dzi file(out.dzi) and corresponding tiles in folder out_files
+    dzi_output = str(tiff_file.path.parent)+ "/out"
     try:
         image = pyvips.Image.new_from_file(
             str(tiff_file.path.absolute()), access="sequential"
         )
 
-        pyvips.Image.dzsave(image, dzi_filename, tile_size=2560)
+        pyvips.Image.dzsave(image, dzi_output, tile_size=settings.DZI_TILE_SIZE)
     except Exception as e:
         raise ValidationError("Image can't be converted to dzi: " + str(e))
 
-    return dzi_filename
+    return dzi_output

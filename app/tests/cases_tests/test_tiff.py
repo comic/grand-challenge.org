@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+import glob
 
 import pytest
 import tifffile as tiff_lib
@@ -96,12 +97,11 @@ def test_dzi_creation(
     source_dir, filename, expected_error_message, tmpdir_factory
 ):
     error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
 
     try:
-        # Copy resource file to writable temp folder
-        temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
-        shutil.copy(source_dir / filename, temp_file)
-
         # Load the tiff file and create dzi
         tiff_file = load_tiff_file(path=temp_file)
         create_dzi_images(tiff_file=tiff_file)
@@ -154,7 +154,6 @@ def test_image_builder_tiff(tmpdir_factory):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(RESOURCE_PATH, temp_dir)
-    files = 0
 
     image_builder_result = image_builder_tiff(temp_dir)
 
@@ -164,10 +163,7 @@ def test_image_builder_tiff(tmpdir_factory):
     assert len(image_builder_result.new_image_files) == 2
 
     # Asserts successful creation of files
-    assert os.path.isfile(temp_dir / "valid_tiff.dzi")
-    assert os.path.isdir(temp_dir / "valid_tiff_files")
+    assert os.path.isfile(temp_dir / "out.dzi")
+    assert os.path.isdir(temp_dir / "out_files")
 
-    for _, _, filenames in os.walk(temp_dir / "valid_tiff_files"):
-        files += len(filenames)
-
-    assert files == 12
+    assert len(list(temp_dir.glob("**/*.jpeg"))) == 12
