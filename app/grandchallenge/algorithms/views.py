@@ -36,9 +36,7 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
         return super().form_valid(form)
 
 
-class AlgorithmDetail(
-    UserIsStaffMixin, DetailView
-):  # TODO: Should it be UserIsChallengeAdminMixin?
+class AlgorithmDetail(UserIsStaffMixin, DetailView):
     model = Algorithm
 
 

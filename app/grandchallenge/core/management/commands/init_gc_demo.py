@@ -1,5 +1,7 @@
 import base64
 import logging
+from io import BytesIO
+from PIL import Image
 
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
@@ -9,6 +11,7 @@ from django.core.management import BaseCommand
 from rest_framework.authtoken.models import Token
 from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from grandchallenge.challenges.models import (
     Challenge,
@@ -24,6 +27,20 @@ import grandchallenge.algorithms.models
 import grandchallenge.cases.models
 
 logger = logging.getLogger(__name__)
+
+
+def get_temporary_image():
+    """ Copied from workstation_test/test_views.py"""
+    io = BytesIO()
+    size = (200, 200)
+    color = (255, 0, 0)
+    image = Image.new("RGB", size, color)
+    image.save(io, format="JPEG")
+    image_file = InMemoryUploadedFile(
+        io, None, "foo.jpg", "jpeg", image.size, None
+    )
+    image_file.seek(0)
+    return image_file
 
 
 class Command(BaseCommand):
@@ -214,22 +231,6 @@ class Command(BaseCommand):
             color_space="RGB",
         )
         cases_image.save()
-        from io import BytesIO
-        from PIL import Image
-        from django.core.files.uploadedfile import InMemoryUploadedFile
-
-        def get_temporary_image():
-            """ Copied from workstation_test/test_views.py"""
-            io = BytesIO()
-            size = (200, 200)
-            color = (255, 0, 0)
-            image = Image.new("RGB", size, color)
-            image.save(io, format="JPEG")
-            image_file = InMemoryUploadedFile(
-                io, None, "foo.jpg", "jpeg", image.size, None
-            )
-            image_file.seek(0)
-            return image_file
 
         algorithms_algorithm = grandchallenge.algorithms.models.Algorithm(
             creator=demoadmin,
