@@ -16,6 +16,9 @@ class ResultSerializer(serializers.ModelSerializer):
     job = HyperlinkedRelatedField(
         view_name="api:algorithms-job-detail", queryset=Job.objects.all()
     )
+    images = HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="api:image-detail"
+    )
 
     class Meta:
         model = Result
