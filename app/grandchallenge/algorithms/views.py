@@ -42,14 +42,6 @@ class AlgorithmDetail(
     model = Algorithm
 
 
-class JobDetail(UserIsStaffMixin, DetailView):
-    model = Job
-
-
-class ResultDetail(UserIsStaffMixin, DetailView):
-    model = Result
-
-
 class AlgorithmExecutionSessionCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
 ):

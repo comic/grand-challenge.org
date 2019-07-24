@@ -1,7 +1,6 @@
 import base64
 import logging
 
-
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
@@ -246,6 +245,7 @@ class Command(BaseCommand):
         )
         algorithms_job.save()
 
-        grandchallenge.algorithms.models.Result.objects.create(
+        algorithms_result = grandchallenge.algorithms.models.Result(
             output={"cancer_score": 0.5}, job=algorithms_job
         )
+        algorithms_result.save()

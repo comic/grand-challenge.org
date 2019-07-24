@@ -332,6 +332,10 @@ class Image(UUIDModel):
             group = Group.objects.get(name=group_name)
             assign_perm("view_image", group, self)
 
+    @property
+    def api_url(self):
+        return reverse("api:image-detail", kwargs={"pk": self.pk})
+
     class Meta:
         ordering = ("name",)
 
