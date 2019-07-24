@@ -182,7 +182,7 @@ class ArchiveView(APIView):
                     }
                 elif (
                     image.modality.modality == settings.MODALITY_CF
-                    and image.name.endswith("OCT.fds")
+                    and image.name.endswith(".fds")
                 ):
                     # OBS image, skip because this is already in fds
                     pass
