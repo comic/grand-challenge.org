@@ -1,4 +1,5 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from guardian.mixins import PermissionListMixin, LoginRequiredMixin
 from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
@@ -22,8 +23,11 @@ from grandchallenge.reader_studies.serializers import (
 )
 
 
-class ReaderStudyList(UserIsStaffMixin, ListView):
+class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
+    )
 
 
 class ReaderStudyCreate(UserIsStaffMixin, CreateView):
@@ -31,8 +35,9 @@ class ReaderStudyCreate(UserIsStaffMixin, CreateView):
     form_class = ReaderStudyCreateForm
 
     def form_valid(self, form):
-        form.instance.creator = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        self.object.editors_group.user_set.add(self.request.user)
+        return response
 
 
 class ReaderStudyDetail(UserIsStaffMixin, DetailView):

@@ -1,9 +1,11 @@
 from collections import Counter
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONSchemaValidator
@@ -44,12 +46,17 @@ HANGING_LIST_SCHEMA = {
 
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
-    creator = models.ForeignKey(
-        get_user_model(), null=True, on_delete=models.SET_NULL
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"editors_of_readerstudy",
     )
-    # TODO: add the readers group and make the correct permissions
-    readers = models.ManyToManyField(
-        get_user_model(), related_name="readerstudies"
+    readers_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"readers_of_readerstudy",
     )
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
@@ -72,6 +79,32 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def api_url(self):
         return reverse("api:reader-study-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.editors_group = Group.objects.create(
+                name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+            )
+            self.readers_group = Group.objects.create(
+                name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_readers"
+            )
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            # Allow the admins group to change this study
+            assign_perm(
+                f"change_{self._meta.model_name}", self.editors_group, self
+            )
+            # Allow the admins and readers groups to view this study
+            assign_perm(
+                f"view_{self._meta.model_name}", self.editors_group, self
+            )
+            assign_perm(
+                f"view_{self._meta.model_name}", self.readers_group, self
+            )
 
     @property
     def study_image_names(self):
