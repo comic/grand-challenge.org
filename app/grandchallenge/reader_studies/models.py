@@ -206,6 +206,24 @@ class Question(UUIDModel):
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            # Allow the editors and readers groups to view this question
+            assign_perm(
+                f"view_{self._meta.model_name}",
+                self.reader_study.editors_group,
+                self,
+            )
+            assign_perm(
+                f"view_{self._meta.model_name}",
+                self.reader_study.readers_group,
+                self,
+            )
+
     class Meta:
         ordering = ("order", "created")
 
@@ -221,5 +239,19 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            # Allow the editors and creator to view this answer
+            assign_perm(
+                f"view_{self._meta.model_name}",
+                self.question.reader_study.editors_group,
+                self,
+            )
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
 
     # TODO: ordering, unique together
