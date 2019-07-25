@@ -1,9 +1,6 @@
-from io import BytesIO
-
 import pytest
-from PIL import Image
+
 from django.conf import settings
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
@@ -15,21 +12,7 @@ from tests.factories import (
     WorkstationImageFactory,
     SessionFactory,
 )
-from tests.utils import get_view_for_user
-
-
-def get_temporary_image():
-    """ Quick hack, credit to https://stackoverflow.com/questions/43135771/ """
-    io = BytesIO()
-    size = (200, 200)
-    color = (255, 0, 0)
-    image = Image.new("RGB", size, color)
-    image.save(io, format="JPEG")
-    image_file = InMemoryUploadedFile(
-        io, None, "foo.jpg", "jpeg", image.size, None
-    )
-    image_file.seek(0)
-    return image_file
+from tests.utils import get_view_for_user, get_temporary_image
 
 
 @pytest.mark.django_db

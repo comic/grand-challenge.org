@@ -1,5 +1,7 @@
 import base64
 import logging
+from io import BytesIO
+from PIL import Image
 
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
@@ -9,6 +11,7 @@ from django.core.management import BaseCommand
 from rest_framework.authtoken.models import Token
 from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from grandchallenge.challenges.models import (
     Challenge,
@@ -20,8 +23,24 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
+import grandchallenge.algorithms.models
+import grandchallenge.cases.models
 
 logger = logging.getLogger(__name__)
+
+
+def get_temporary_image():
+    """ Copied from workstation_test/test_views.py"""
+    io = BytesIO()
+    size = (200, 200)
+    color = (255, 0, 0)
+    image = Image.new("RGB", size, color)
+    image.save(io, format="JPEG")
+    image_file = InMemoryUploadedFile(
+        io, None, "foo.jpg", "jpeg", image.size, None
+    )
+    image_file.seek(0)
+    return image_file
 
 
 class Command(BaseCommand):
@@ -198,8 +217,37 @@ class Command(BaseCommand):
         )
 
         logger.debug(
-            f"{'*'*80}\n"
+            f"{'*' * 80}\n"
             f"\tadmin token is: {admintoken}\n"
             f"\tretina_demo token is: {retinatoken}\n"
-            f"{'*'*80}"
+            f"{'*' * 80}"
         )
+
+        cases_image = grandchallenge.cases.models.Image(
+            name="test_image.mha",
+            modality=mr_modality,
+            width=128,
+            height=128,
+            color_space="RGB",
+        )
+        cases_image.save()
+
+        algorithms_algorithm = grandchallenge.algorithms.models.Algorithm(
+            creator=demoadmin,
+            title="test_algorithm",
+            logo=get_temporary_image(),
+        )
+        container = ContentFile(base64.b64decode(b""))
+        algorithms_algorithm.image.save("test_algorithm.tar", container)
+        algorithms_algorithm.save()
+
+        algorithms_job = grandchallenge.algorithms.models.Job(
+            algorithm=algorithms_algorithm, image=cases_image
+        )
+        algorithms_job.save()
+
+        algorithms_result = grandchallenge.algorithms.models.Result(
+            output={"cancer_score": 0.5}, job=algorithms_job
+        )
+        algorithms_result.save()
+        algorithms_result.images.add(cases_image)
