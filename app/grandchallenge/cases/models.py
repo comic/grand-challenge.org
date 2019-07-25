@@ -375,6 +375,8 @@ class FolderUpload:
         )
 
     def save(self):
+        # Saves all the files in the folder, respecting the parents folder structure
+        # 2 directories deep
         for root, _, files in os.walk(self.folder):
             for file in files:
                 source_filename = Path(root) / file
