@@ -380,10 +380,14 @@ class FolderUpload:
         for root, _, files in os.walk(self.folder):
             for file in files:
                 source_filename = Path(root) / file
-                destination_filename = self.destination_filename(source_filename)
+                destination_filename = self.destination_filename(
+                    source_filename
+                )
                 try:
                     with open(source_filename, "rb") as open_file:
-                        protected_s3_storage.save(destination_filename,open_file)
+                        protected_s3_storage.save(
+                            destination_filename, open_file
+                        )
                 except IOError as err:
                     logger.warning("Dzi tile not found: " + str(err))
                     continue

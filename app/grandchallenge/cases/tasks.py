@@ -308,7 +308,9 @@ def build_images(upload_session_uuid: UUID):
                         pass
 
             except Exception as e:
-                upload_session.error_message = str(e)[0:upload_session.max_length_error_message-1]
+                upload_session.error_message = str(e)[
+                    0 : upload_session.max_length_error_message - 1
+                ]
         finally:
             if tmp_dir is not None:
                 shutil.rmtree(tmp_dir)
