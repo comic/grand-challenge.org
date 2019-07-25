@@ -120,14 +120,23 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         if adding:
             self.assign_permissions()
 
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        return user.groups.add(self.editors_group)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
     def is_reader(self, user):
         return user.groups.filter(pk=self.readers_group.pk).exists()
 
-    def add_editor(self, user):
-        return self.editors_group.user_set.add(user)
-
     def add_reader(self, user):
-        return self.readers_group.user_set.add(user)
+        return user.groups.add(self.readers_group)
+
+    def remove_reader(self, user):
+        return user.groups.remove(self.readers_group)
 
     @property
     def study_image_names(self):
