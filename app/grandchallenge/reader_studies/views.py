@@ -29,6 +29,17 @@ class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "user_can_add_reader_study": self.request.user.has_perm(
+                    f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
+                )
+            }
+        )
+        return context
+
 
 class ReaderStudyCreate(UserIsStaffMixin, CreateView):
     model = ReaderStudy
