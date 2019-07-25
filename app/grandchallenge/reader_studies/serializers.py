@@ -55,6 +55,10 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     def validate(self, attrs):
         question = attrs["question"]
         images = attrs["images"]
+        creator = self.context.get("request").user
+
+        if not question.reader_study.is_reader(user=creator):
+            raise ValidationError("This user is not a reader for this study.")
 
         # TODO: validate the answer type
 
@@ -65,7 +69,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                     f"Image {im} does not belong to this reader study."
                 )
 
-        creator = self.context.get("request").user
         if Answer.objects.filter(
             creator=creator, question=question, images__in=images
         ).exists():
