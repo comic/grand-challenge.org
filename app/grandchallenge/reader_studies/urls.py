@@ -5,11 +5,12 @@ from grandchallenge.reader_studies.views import (
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     EditorsUpdate,
-    EditorsUpdateAutocomplete,
     ReaderStudyCreate,
     ReaderStudyDetail,
     ReaderStudyList,
     ReaderStudyUpdate,
+    ReaderStudyUserAutocomplete,
+    ReadersUpdate,
 )
 
 app_name = "reader-studies"
@@ -19,7 +20,7 @@ urlpatterns = [
     path("create/", ReaderStudyCreate.as_view(), name="create"),
     path(
         "users-autocomplete/",
-        EditorsUpdateAutocomplete.as_view(),
+        ReaderStudyUserAutocomplete.as_view(),
         name="users-autocomplete",
     ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
@@ -43,5 +44,10 @@ urlpatterns = [
         "<slug>/editors/update/",
         EditorsUpdate.as_view(),
         name="editors-update",
+    ),
+    path(
+        "<slug>/readers/update/",
+        ReadersUpdate.as_view(),
+        name="readers-update",
     ),
 ]

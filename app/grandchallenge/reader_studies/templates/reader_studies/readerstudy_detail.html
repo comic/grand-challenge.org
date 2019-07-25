@@ -24,6 +24,34 @@
         </a>
     </p>
 
+    <h2>Editors</h2>
+    <ul>
+        {% for user in object.editors_group.user_set.all %}
+            <li>{{ user }}</li>
+        {% endfor %}
+    </ul>
+
+    <p class="mt-3">
+        <a class="btn btn-primary"
+           href="{% url 'reader-studies:editors-update' slug=object.slug %}">
+            <i class="fas fa-plus"></i> Add editors
+        </a>
+    </p>
+
+    <h2>Readers</h2>
+    <ul>
+        {% for user in object.readers_group.user_set.all %}
+            <li>{{ user }}</li>
+        {% endfor %}
+    </ul>
+
+        <p class="mt-3">
+        <a class="btn btn-primary"
+           href="{% url 'reader-studies:readers-update' slug=object.slug %}">
+            <i class="fas fa-plus"></i> Add readers
+        </a>
+    </p>
+
     <h2>Upload Sessions</h2>
 
     <ul>
@@ -61,7 +89,7 @@
         </a>
         <a class="btn btn-primary"
            href="{% url 'reader-studies:update' slug=object.slug %}">
-            <i class="fa fa-edit"></i>
+            <i class="fa fa-edit"></i> Edit this reader study
         </a>
     </p>
 {% endblock %}

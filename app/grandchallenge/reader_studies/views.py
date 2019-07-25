@@ -33,6 +33,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyUpdateForm,
     QuestionCreateForm,
     EditorsForm,
+    ReadersForm,
 )
 from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
 from grandchallenge.reader_studies.serializers import (
@@ -94,7 +95,9 @@ class ReaderStudyUpdate(
     )
 
 
-class AddObjectToReaderStudyMixin:
+class AddObjectToReaderStudyMixin(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     """
     Mixin that adds an object that has a foreign key to a reader study and a
     creator. The url to this view must include a slug that points to the slug
@@ -128,29 +131,19 @@ class AddObjectToReaderStudyMixin:
         return self.object.reader_study.get_absolute_url()
 
 
-class AddImagesToReaderStudy(
-    LoginRequiredMixin,
-    AddObjectToReaderStudyMixin,
-    ObjectPermissionRequiredMixin,
-    CreateView,
-):
+class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "reader_studies/readerstudy_add_images.html"
 
 
-class AddQuestionToReaderStudy(
-    LoginRequiredMixin,
-    AddObjectToReaderStudyMixin,
-    ObjectPermissionRequiredMixin,
-    CreateView,
-):
+class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     model = Question
     form_class = QuestionCreateForm
     template_name = "reader_studies/readerstudy_add_question.html"
 
 
-class EditorsUpdateAutocomplete(
+class ReaderStudyUserAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
 ):
     def test_func(self):
@@ -170,15 +163,13 @@ class EditorsUpdateAutocomplete(
         return qs
 
 
-class EditorsUpdate(
+class ReaderStudyUserGroupUpdateMixin(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     FormView,
 ):
-    form_class = EditorsForm
-    template_name = "reader_studies/readerstudy_editors_form.html"
-    success_message = "Editors successfully updated"
+    template_name = "reader_studies/readerstudy_user_groups_form.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
@@ -192,7 +183,9 @@ class EditorsUpdate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"object": self.reader_study})
+        context.update(
+            {"object": self.reader_study, "role": self.get_form().role}
+        )
         return context
 
     def get_success_url(self):
@@ -201,6 +194,16 @@ class EditorsUpdate(
     def form_valid(self, form):
         form.add_or_remove_user(reader_study=self.reader_study)
         return super().form_valid(form)
+
+
+class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
+    form_class = EditorsForm
+    success_message = "Editors successfully updated"
+
+
+class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
+    form_class = ReadersForm
+    success_message = "Readers successfully updated"
 
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):

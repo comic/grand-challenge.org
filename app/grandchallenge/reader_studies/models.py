@@ -126,6 +126,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def add_editor(self, user):
         return self.editors_group.user_set.add(user)
 
+    def add_reader(self, user):
+        return self.readers_group.user_set.add(user)
+
     @property
     def study_image_names(self):
         return [im.name for im in self.images.all()]

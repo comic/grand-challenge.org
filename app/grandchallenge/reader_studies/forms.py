@@ -48,16 +48,13 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
         fields = ("question_text", "answer_type", "order")
 
 
-class EditorsForm(SaveFormInitMixin, Form):
+class UserGroupForm(SaveFormInitMixin, Form):
     ADD = "ADD"
     REMOVE = "REMOVE"
-    CHOICES = ((ADD, "Add editor"), (REMOVE, "Remove editor"))
+    CHOICES = ((ADD, "Add"), (REMOVE, "Remove"))
     user = ModelChoiceField(
         queryset=get_user_model().objects.all().order_by("username"),
-        help_text=(
-            "Select a user that will be added to the admins group for "
-            "this reader study."
-        ),
+        help_text=("Select a user that will be added to the group"),
         required=True,
         widget=autocomplete.ModelSelect2(
             url="reader-studies:users-autocomplete",
@@ -75,11 +72,23 @@ class EditorsForm(SaveFormInitMixin, Form):
     def clean_user(self):
         user = self.cleaned_data["user"]
         if user == get_anonymous_user():
-            raise ValidationError("You cannot add this user as an editor!")
+            raise ValidationError("You cannot add this user!")
         return user
 
     def add_or_remove_user(self, *, reader_study):
         if self.cleaned_data["action"] == EditorsForm.ADD:
-            reader_study.add_editor(self.cleaned_data["user"])
+            getattr(reader_study, f"add_{self.role}")(
+                self.cleaned_data["user"]
+            )
         elif self.cleaned_data["action"] == EditorsForm.REMOVE:
-            reader_study.remove_editor(self.cleaned_data["user"])
+            getattr(reader_study, f"remove_{self.role}")(
+                self.cleaned_data["user"]
+            )
+
+
+class EditorsForm(UserGroupForm):
+    role = "editor"
+
+
+class ReadersForm(UserGroupForm):
+    role = "reader"
