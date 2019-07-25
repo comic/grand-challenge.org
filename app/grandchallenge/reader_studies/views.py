@@ -119,7 +119,9 @@ class AddObjectToReaderStudyMixin(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({"object": self.reader_study})
+        context.update(
+            {"object": self.reader_study, "type_to_add": self.type_to_add}
+        )
         return context
 
     def form_valid(self, form):
@@ -134,13 +136,15 @@ class AddObjectToReaderStudyMixin(
 class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
-    template_name = "reader_studies/readerstudy_add_images.html"
+    template_name = "reader_studies/readerstudy_add_object.html"
+    type_to_add = "images"
 
 
 class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     model = Question
     form_class = QuestionCreateForm
-    template_name = "reader_studies/readerstudy_add_question.html"
+    template_name = "reader_studies/readerstudy_add_object.html"
+    type_to_add = "question"
 
 
 class ReaderStudyUserAutocomplete(

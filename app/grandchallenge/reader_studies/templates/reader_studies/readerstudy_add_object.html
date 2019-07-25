@@ -4,11 +4,11 @@
 {% load static %}
 
 {% block title %}
-    Add images to {{ object }} - {{ block.super }}
+    Add {{ type_to_add }} to {{ object }} - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-    <h2>Add images to {{ object }}</h2>
+    <h2>Add {{ type_to_add }} to {{ object }}</h2>
 
     {% crispy form %}
 {% endblock %}
