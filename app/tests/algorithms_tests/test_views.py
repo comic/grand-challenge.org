@@ -68,3 +68,16 @@ def test_algorithm_create_detail(client):
     response = get_view_for_user(url=response.url, client=client, user=user)
     assert title in response.rendered_content
     assert description in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_algorithm_run(client):
+    user = UserFactory(is_staff=True)
+    a1 = AlgorithmFactory()
+    response = get_view_for_user(
+        viewname="algorithms:execution-session-create",
+        reverse_kwargs={"slug": slugify(a1.title)},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
