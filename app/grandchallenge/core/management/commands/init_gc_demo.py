@@ -197,6 +197,17 @@ class Command(BaseCommand):
             user=retina_demo, key="f1f98a1733c05b12118785ffd995c250fe4d90da"
         )
 
+        rs_creator = UserenaSignup.objects.create_user(
+            username="rscreator",
+            email="rscreator@example.com",
+            password="rscreator",
+            active=True,
+        )
+        rs_group = Group.objects.get(
+            name=settings.READER_STUDY_CREATORS_GROUP_NAME
+        )
+        rs_creator.groups.add(rs_group)
+
         logger.debug(
             f"{'*'*80}\n"
             f"\tadmin token is: {admintoken}\n"
