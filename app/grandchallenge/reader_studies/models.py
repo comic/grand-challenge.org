@@ -123,6 +123,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def is_reader(self, user):
         return user.groups.filter(pk=self.readers_group.pk).exists()
 
+    def add_editor(self, user):
+        return self.editors_group.user_set.add(user)
+
     @property
     def study_image_names(self):
         return [im.name for im in self.images.all()]

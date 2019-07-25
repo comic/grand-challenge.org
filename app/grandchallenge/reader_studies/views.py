@@ -1,5 +1,17 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from dal import autocomplete
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
+from django.contrib.messages.views import SuccessMessageMixin
+from django.views.generic import (
+    ListView,
+    CreateView,
+    DetailView,
+    UpdateView,
+    FormView,
+)
 from guardian.mixins import (
     PermissionListMixin,
     LoginRequiredMixin,
@@ -20,6 +32,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
     QuestionCreateForm,
+    EditorsForm,
 )
 from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
 from grandchallenge.reader_studies.serializers import (
@@ -58,7 +71,7 @@ class ReaderStudyCreate(
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        self.object.editors_group.user_set.add(self.request.user)
+        self.object.add_editor(self.request.user)
         return response
 
 
@@ -90,6 +103,10 @@ class AddObjectToReaderStudyMixin:
     Must be placed to the left of ObjectPermissionRequiredMixin.
     """
 
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+
     def get_permission_object(self):
         return self.reader_study
 
@@ -120,9 +137,6 @@ class AddImagesToReaderStudy(
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "reader_studies/readerstudy_add_images.html"
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
 
 
 class AddQuestionToReaderStudy(
@@ -134,9 +148,59 @@ class AddQuestionToReaderStudy(
     model = Question
     form_class = QuestionCreateForm
     template_name = "reader_studies/readerstudy_add_question.html"
+
+
+class EditorsUpdateAutocomplete(
+    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
+):
+    def test_func(self):
+        group_pks = (
+            ReaderStudy.objects.all()
+            .select_related("editors_group")
+            .values_list("editors_group__pk", flat=True)
+        )
+        return self.request.user.groups.filter(pk__in=group_pks).exists()
+
+    def get_queryset(self):
+        qs = get_user_model().objects.all().order_by("username")
+
+        if self.q:
+            qs = qs.filter(username__istartswith=self.q)
+
+        return qs
+
+
+class EditorsUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = EditorsForm
+    template_name = "reader_studies/readerstudy_editors_form.html"
+    success_message = "Editors successfully updated"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @property
+    def reader_study(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.reader_study})
+        return context
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+    def form_valid(self, form):
+        form.add_or_remove_user(reader_study=self.reader_study)
+        return super().form_valid(form)
 
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):

@@ -2,12 +2,14 @@ from django.urls import path
 
 from grandchallenge.cases.forms import upload_raw_files_widget
 from grandchallenge.reader_studies.views import (
-    ReaderStudyList,
+    AddImagesToReaderStudy,
+    AddQuestionToReaderStudy,
+    EditorsUpdate,
+    EditorsUpdateAutocomplete,
     ReaderStudyCreate,
     ReaderStudyDetail,
-    AddImagesToReaderStudy,
+    ReaderStudyList,
     ReaderStudyUpdate,
-    AddQuestionToReaderStudy,
 )
 
 app_name = "reader-studies"
@@ -15,6 +17,11 @@ app_name = "reader-studies"
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
+    path(
+        "users-autocomplete/",
+        EditorsUpdateAutocomplete.as_view(),
+        name="users-autocomplete",
+    ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path(
@@ -31,5 +38,10 @@ urlpatterns = [
         "<slug>/questions/add/",
         AddQuestionToReaderStudy.as_view(),
         name="add-question",
+    ),
+    path(
+        "<slug>/editors/update/",
+        EditorsUpdate.as_view(),
+        name="editors-update",
     ),
 ]
