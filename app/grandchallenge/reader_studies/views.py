@@ -1,5 +1,10 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
-from guardian.mixins import PermissionListMixin, LoginRequiredMixin
+from guardian.mixins import (
+    PermissionListMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
@@ -9,7 +14,6 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.reader_studies.forms import (
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
@@ -41,9 +45,14 @@ class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
         return context
 
 
-class ReaderStudyCreate(UserIsStaffMixin, CreateView):
+class ReaderStudyCreate(
+    LoginRequiredMixin, PermissionRequiredMixin, CreateView
+):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
+    )
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -51,13 +60,23 @@ class ReaderStudyCreate(UserIsStaffMixin, CreateView):
         return response
 
 
-class ReaderStudyDetail(UserIsStaffMixin, DetailView):
+class ReaderStudyDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
+    )
 
 
-class ReaderStudyUpdate(UserIsStaffMixin, UpdateView):
+class ReaderStudyUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
     model = ReaderStudy
     form_class = ReaderStudyUpdateForm
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
 
 
 class AddObjectToReaderStudyMixin:
@@ -65,7 +84,12 @@ class AddObjectToReaderStudyMixin:
     Mixin that adds an object that has a foreign key to a reader study and a
     creator. The url to this view must include a slug that points to the slug
     of the reader study.
+
+    Must be placed to the left of ObjectPermissionRequiredMixin.
     """
+
+    def get_permission_object(self):
+        return self.reader_study
 
     @property
     def reader_study(self):
@@ -86,19 +110,31 @@ class AddObjectToReaderStudyMixin:
 
 
 class AddImagesToReaderStudy(
-    AddObjectToReaderStudyMixin, UserIsStaffMixin, CreateView
+    LoginRequiredMixin,
+    AddObjectToReaderStudyMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "reader_studies/readerstudy_add_images.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
 
 
 class AddQuestionToReaderStudy(
-    AddObjectToReaderStudyMixin, UserIsStaffMixin, CreateView
+    LoginRequiredMixin,
+    AddObjectToReaderStudyMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = Question
     form_class = QuestionCreateForm
     template_name = "reader_studies/readerstudy_add_question.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
 
 
 class ReaderStudyViewSet(ReadOnlyModelViewSet):
