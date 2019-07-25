@@ -1,10 +1,13 @@
 from typing import Callable
 from urllib.parse import urlparse
+from io import BytesIO
 
 import pytest
+from PIL import Image
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test import RequestFactory, Client
 from django.views.generic import View
 
@@ -299,3 +302,17 @@ def validate_admin_only_text_in_page(
             **kwargs,
         )
         assert (expected_text in str(response.content)) == test[0]
+
+
+def get_temporary_image():
+    """ Quick hack, credit to https://stackoverflow.com/questions/43135771/ """
+    io = BytesIO()
+    size = (200, 200)
+    color = (255, 0, 0)
+    image = Image.new("RGB", size, color)
+    image.save(io, format="JPEG")
+    image_file = InMemoryUploadedFile(
+        io, None, "foo.jpg", "jpeg", image.size, None
+    )
+    image_file.seek(0)
+    return image_file
