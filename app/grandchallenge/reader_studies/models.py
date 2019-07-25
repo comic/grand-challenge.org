@@ -80,31 +80,45 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def api_url(self):
         return reverse("api:reader-study-detail", kwargs={"pk": self.pk})
 
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.readers_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_readers"
+        )
+
+    def assign_permissions(self):
+        # Allow the editors group to change this study
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
+        )
+        # Allow the editors and readers groups to view this study
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
+        # Allow editors to add questions (globally), adding them to this reader
+        # study is checked in the views
+        assign_perm(
+            f"{Question._meta.app_label}.add_{Question._meta.model_name}",
+            self.editors_group,
+        )
+        # Allow readers to add answers (globally), adding them to this reader
+        # study is checked in the serializers
+        assign_perm(
+            f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
+            self.readers_group,
+        )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
         if adding:
-            self.editors_group = Group.objects.create(
-                name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
-            )
-            self.readers_group = Group.objects.create(
-                name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_readers"
-            )
+            self.create_groups()
 
         super().save(*args, **kwargs)
 
         if adding:
-            # Allow the admins group to change this study
-            assign_perm(
-                f"change_{self._meta.model_name}", self.editors_group, self
-            )
-            # Allow the admins and readers groups to view this study
-            assign_perm(
-                f"view_{self._meta.model_name}", self.editors_group, self
-            )
-            assign_perm(
-                f"view_{self._meta.model_name}", self.readers_group, self
-            )
+            self.assign_permissions()
 
     def is_reader(self, user):
         return user.groups.filter(pk=self.readers_group.pk).exists()
@@ -215,17 +229,20 @@ class Question(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            # Allow the editors and readers groups to view this question
-            assign_perm(
-                f"view_{self._meta.model_name}",
-                self.reader_study.editors_group,
-                self,
-            )
-            assign_perm(
-                f"view_{self._meta.model_name}",
-                self.reader_study.readers_group,
-                self,
-            )
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Allow the editors and readers groups to view this question
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.reader_study.readers_group,
+            self,
+        )
 
     class Meta:
         ordering = ("order", "created")
@@ -249,12 +266,15 @@ class Answer(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            # Allow the editors and creator to view this answer
-            assign_perm(
-                f"view_{self._meta.model_name}",
-                self.question.reader_study.editors_group,
-                self,
-            )
-            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Allow the editors and creator to view this answer
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.question.reader_study.editors_group,
+            self,
+        )
+        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
 
     # TODO: ordering, unique together
