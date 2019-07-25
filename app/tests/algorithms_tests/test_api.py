@@ -36,7 +36,6 @@ def test_algorithm_list(client):
         viewname="api:algorithms-job-list", user=user, client=client
     )
     assert response.status_code == 200
-    print("response json is = {}".format(response.json()))
     assert response.json()["results"][0]["pk"] == str(job1.pk)
     assert response.json()["results"][0][
         "algorithm"
