@@ -277,4 +277,5 @@ class Answer(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
 
-    # TODO: ordering, unique together
+    class Meta:
+        ordering = ("creator", "created")
