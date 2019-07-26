@@ -12,8 +12,9 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_api_list_is_filtered(client):
-    user = UserFactory(is_staff=True)
     rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1_editor = UserFactory()
+    rs1.add_editor(rs1_editor)
     q1, q2 = (
         QuestionFactory(reader_study=rs1),
         QuestionFactory(reader_study=rs2),
@@ -24,50 +25,55 @@ def test_api_list_is_filtered(client):
     )
 
     response = get_view_for_user(
-        viewname="api:reader-study-list", user=user, client=client
+        viewname="api:reader-study-list", user=rs1_editor, client=client
     )
     assert response.status_code == 200
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 1
 
     response = get_view_for_user(
         viewname="api:reader-study-detail",
         reverse_kwargs={"pk": rs1.pk},
-        user=user,
+        user=rs1_editor,
         client=client,
     )
     assert response.status_code == 200
     assert len(response.json()["questions"]) == 1
 
     response = get_view_for_user(
-        viewname="api:reader-studies-question-list", user=user, client=client
+        viewname="api:reader-studies-question-list",
+        user=rs1_editor,
+        client=client,
     )
     assert response.status_code == 200
-    # TODO: Add Filters
-    # assert response.json()["count"] == 1
+    assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(q1.pk)
 
     response = get_view_for_user(
-        viewname="api:reader-studies-answer-list", user=user, client=client
+        viewname="api:reader-studies-answer-list",
+        user=rs1_editor,
+        client=client,
     )
     assert response.status_code == 200
-    # assert response.json()["count"] == 1
+    assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(a1.pk)
 
 
 @pytest.mark.django_db
 def test_answer_create(client):
-    user = UserFactory(is_staff=True)
     im = ImageFactory()
 
     rs = ReaderStudyFactory()
     rs.images.add(im)
     rs.save()
 
+    reader = UserFactory()
+    rs.add_reader(reader)
+
     q = QuestionFactory(reader_study=rs)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
-        user=user,
+        user=reader,
         client=client,
         method=client.post,
         data={"answer": True, "images": [im.api_url], "question": q.api_url},
@@ -77,7 +83,7 @@ def test_answer_create(client):
 
     answer = Answer.objects.get(pk=response.data.get("pk"))
 
-    assert answer.creator == user
+    assert answer.creator == reader
     assert answer.images.count() == 1
     assert answer.images.all()[0] == im
     assert answer.question == q
