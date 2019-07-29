@@ -166,4 +166,4 @@ def test_image_builder_tiff(tmpdir_factory):
     assert os.path.isfile(temp_dir / "out.dzi")
     assert os.path.isdir(temp_dir / "out_files")
 
-    assert len(list(temp_dir.glob("**/*.jpeg"))) == 12
+    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9

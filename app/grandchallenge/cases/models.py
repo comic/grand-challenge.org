@@ -383,11 +383,7 @@ class FolderUpload:
                 destination_filename = self.destination_filename(
                     source_filename
                 )
-                try:
-                    with open(source_filename, "rb") as open_file:
-                        protected_s3_storage.save(
-                            destination_filename, open_file
-                        )
-                except IOError as err:
-                    logger.warning("Dzi tile not found: " + str(err))
-                    continue
+                with open(source_filename, "rb") as open_file:
+                    protected_s3_storage.save(
+                        destination_filename, open_file
+                )
