@@ -20,6 +20,7 @@ from grandchallenge.cases.models import (
     Image,
     ImageFile,
     RawImageFile,
+    FolderUpload,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     StagedAjaxFile,
@@ -89,7 +90,11 @@ def populate_provisioning_directory(
 
 
 @transaction.atomic
-def store_image(image: Image, all_image_files: Sequence[ImageFile]):
+def store_image(
+    image: Image,
+    all_image_files: Sequence[ImageFile],
+    all_folder_uploads: Sequence[FolderUpload],
+):
     """
     Stores an image in the database in a single transaction (or fails
     accordingly). Associated image files are extracted from the
@@ -107,10 +112,23 @@ def store_image(image: Image, all_image_files: Sequence[ImageFile]):
         to the image provided as the first argument. The function automatically
         extracts related images from the all_image_files argument to store
         alongside the given image.
+
+    all_folder_uploads: list of :class:`FolderUpload`
+        An unordered list of FolderUpload objects that might or might not belong
+        to the image provided as the first argument. The function automatically
+        extracts related folders from the all_folder_uploads argument to store
+        alongside the given image. The files in this folder will be saved to
+        the storage but not added to the database.
     """
     associated_files = [_if for _if in all_image_files if _if.image == image]
     image.save()
     for af in associated_files:
+        af.save()
+
+    associated_folders = [
+        _if for _if in all_folder_uploads if _if.image == image
+    ]
+    for af in associated_folders:
         af.save()
 
 
@@ -218,6 +236,7 @@ def build_images(upload_session_uuid: UUID):
 
                 collected_images = []
                 collected_associated_files = []
+                collected_associated_folders = []
                 for algorithm in IMAGE_BUILDER_ALGORITHMS:
                     algorithm_result = algorithm(
                         tmp_dir
@@ -226,6 +245,10 @@ def build_images(upload_session_uuid: UUID):
                     collected_images += list(algorithm_result.new_images)
                     collected_associated_files += list(
                         algorithm_result.new_image_files
+                    )
+
+                    collected_associated_folders += list(
+                        algorithm_result.new_folder_upload
                     )
 
                     for filename in algorithm_result.consumed_files:
@@ -245,7 +268,11 @@ def build_images(upload_session_uuid: UUID):
 
                 for image in collected_images:
                     image.origin = upload_session
-                    store_image(image, collected_associated_files)
+                    store_image(
+                        image,
+                        collected_associated_files,
+                        collected_associated_folders,
+                    )
 
                 for unconsumed_filename in unconsumed_filenames:
                     raw_file = filename_lookup[unconsumed_filename]
@@ -281,7 +308,9 @@ def build_images(upload_session_uuid: UUID):
                         pass
 
             except Exception as e:
-                upload_session.error_message = str(e)
+                upload_session.error_message = str(e)[
+                    0 : upload_session.max_length_error_message - 1
+                ]
         finally:
             if tmp_dir is not None:
                 shutil.rmtree(tmp_dir)

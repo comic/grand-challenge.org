@@ -13,7 +13,8 @@ RUN apt-get update && \
     libxft-dev \
     libffi-dev \
     wget \
-    gettext
+    gettext \
+    libvips-dev
 
 ENV PYTHONUNBUFFERED 1
 

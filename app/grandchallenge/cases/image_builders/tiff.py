@@ -3,11 +3,13 @@ from tempfile import TemporaryFile
 from typing import NamedTuple
 
 import tifffile
+import pyvips
 from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.conf import settings
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, FolderUpload
 
 
 class GrandChallengeTiffFileTags(NamedTuple):
@@ -126,10 +128,12 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     new_image_files = []
     consumed_files = set()
     invalid_file_errors = {}
+    new_folder_upload = []
 
     for file_path in path.iterdir():
         try:
             tiff_file = load_tiff_file(path=file_path)
+            dzi_output = create_dzi_images(tiff_file=tiff_file)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message
             continue
@@ -151,14 +155,34 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             )
         )
 
+        temp_dzi_file = TemporaryFile()
+        with open(dzi_output + ".dzi", "rb") as open_file:
+            buffer = True
+            while buffer:
+                buffer = open_file.read(1024)
+                temp_dzi_file.write(buffer)
+
+        new_image_files.append(
+            ImageFile(
+                image=image,
+                image_type=ImageFile.IMAGE_TYPE_DZI,
+                file=File(temp_dzi_file, name="out.dzi"),
+            )
+        )
+
+        dzi_folder_upload = FolderUpload(
+            folder=dzi_output + "_files", image=image
+        )
         new_images.append(image)
         consumed_files.add(tiff_file.path.name)
+        new_folder_upload.append(dzi_folder_upload)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
+        new_folder_upload=new_folder_upload,
     )
 
 
@@ -175,3 +199,20 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
         field_of_view=Image.FOV_UNKNOWN,
     )
+
+
+def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
+    # Creates a dzi file(out.dzi) and corresponding tiles in folder out_files
+    dzi_output = str(tiff_file.path.parent) + "/out"
+    try:
+        image = pyvips.Image.new_from_file(
+            str(tiff_file.path.absolute()), access="sequential"
+        )
+
+        pyvips.Image.dzsave(
+            image, dzi_output, tile_size=settings.DZI_TILE_SIZE
+        )
+    except Exception as e:
+        raise ValidationError("Image can't be converted to dzi: " + str(e))
+
+    return dzi_output
