@@ -73,6 +73,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
 
+    def __str__(self):
+        return f"{self.title}"
+
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
@@ -229,6 +232,9 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=1)
 
+    class Meta:
+        ordering = ("order", "created")
+
     def __str__(self):
         return f"{self.question_text} ({self.get_answer_type_display()})"
 
@@ -259,15 +265,18 @@ class Question(UUIDModel):
             self,
         )
 
-    class Meta:
-        ordering = ("order", "created")
-
 
 class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
+
+    class Meta:
+        ordering = ("creator", "created")
+
+    def __str__(self):
+        return f"{self.question.question_text} {self.answer} ({self.creator})"
 
     @property
     def api_url(self):
@@ -291,6 +300,3 @@ class Answer(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-
-    class Meta:
-        ordering = ("creator", "created")
