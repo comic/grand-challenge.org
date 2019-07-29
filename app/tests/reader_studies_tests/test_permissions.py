@@ -36,8 +36,8 @@ def test_rs_list_permissions(client):
     )
     assert response.status_code == 200
     assert "Add a new reader study" not in response.rendered_content
-    assert str(rs1.pk) not in response.rendered_content
-    assert str(rs2.pk) not in response.rendered_content
+    assert rs1.slug not in response.rendered_content
+    assert rs2.slug not in response.rendered_content
 
     rs1.add_reader(user=reader1)
 
@@ -46,8 +46,8 @@ def test_rs_list_permissions(client):
     )
     assert response.status_code == 200
     assert "Add a new reader study" not in response.rendered_content
-    assert str(rs1.pk) in response.rendered_content
-    assert str(rs2.pk) not in response.rendered_content
+    assert rs1.slug in response.rendered_content
+    assert rs2.slug not in response.rendered_content
 
     editor2 = UserFactory()
     rs2.add_editor(user=editor2)
@@ -58,8 +58,8 @@ def test_rs_list_permissions(client):
     )
     assert response.status_code == 200
     assert "Add a new reader study" not in response.rendered_content
-    assert str(rs1.pk) not in response.rendered_content
-    assert str(rs2.pk) in response.rendered_content
+    assert rs1.slug not in response.rendered_content
+    assert rs2.slug in response.rendered_content
 
 
 @pytest.mark.django_db
