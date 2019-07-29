@@ -17,12 +17,14 @@ from guardian.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
     ListModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
@@ -244,3 +246,21 @@ class AnswerViewSet(
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+    @action(detail=False)
+    def mine(self, request):
+        """
+        An endpoint that returns the questions that have been answered by
+        the current user.
+        """
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(creator=request.user)
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
