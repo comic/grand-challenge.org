@@ -7,6 +7,7 @@ from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
@@ -61,6 +62,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
     )
+    logo = models.ImageField(upload_to=get_logo_path)
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
