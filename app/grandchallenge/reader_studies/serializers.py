@@ -60,7 +60,10 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         if not question.reader_study.is_reader(user=creator):
             raise ValidationError("This user is not a reader for this study.")
 
-        # TODO: validate the answer type
+        if len(images) == 0:
+            raise ValidationError(
+                "You must specify the images that this answer corresponds to."
+            )
 
         reader_study_images = question.reader_study.images.all()
         for im in images:
