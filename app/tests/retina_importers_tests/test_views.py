@@ -4,18 +4,13 @@ import json
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
-from tests.cases_tests.factories import (
-    ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3D,
-)
-from tests.factories import ImageFactory
+from tests.cases_tests.factories import ImageFactoryWithImageFile
 from .helpers import (
     create_upload_image_test_data,
     create_upload_image_invalid_test_data,
     read_json_file,
     get_response_status,
     get_auth_token_header,
-    create_element_spacing_request,
 )
 
 
