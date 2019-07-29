@@ -384,6 +384,4 @@ class FolderUpload:
                     source_filename
                 )
                 with open(source_filename, "rb") as open_file:
-                    protected_s3_storage.save(
-                        destination_filename, open_file
-                )
+                    protected_s3_storage.save(destination_filename, open_file)
