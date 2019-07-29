@@ -1,3 +1,8 @@
+import os
+import shutil
+from pathlib import Path
+import glob
+
 import pytest
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
@@ -7,6 +12,7 @@ from grandchallenge.cases.image_builders.tiff import (
     create_tiff_image_entry,
     get_color_space,
     load_tiff_file,
+    create_dzi_images,
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
@@ -65,6 +71,47 @@ def test_tiff_validation(resource, expected_error_message):
     assert error_message == expected_error_message
 
 
+@pytest.mark.parametrize(
+    "source_dir, filename, expected_error_message",
+    [
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
+        (RESOURCE_PATH, "image5x6x7.mhd", "Image isn't a TIFF file"),
+        (
+            RESOURCE_PATH,
+            "invalid_meta_data_tiff.tif",
+            "Image contains unauthorized information",
+        ),
+        (
+            RESOURCE_PATH,
+            "invalid_resolutions_tiff.tif",
+            "Image only has a single resolution level",
+        ),
+        (
+            RESOURCE_PATH,
+            "invalid_tiles_tiff.tif",
+            "Image has incomplete tile information",
+        ),
+    ],
+)
+def test_dzi_creation(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
+    error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
+
+    try:
+        # Load the tiff file and create dzi
+        tiff_file = load_tiff_file(path=temp_file)
+        create_dzi_images(tiff_file=tiff_file)
+    except ValidationError as e:
+        error_message = e.message
+
+    # Assert
+    assert error_message == expected_error_message
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "resource, expected_error_message",
@@ -103,10 +150,20 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
 
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-def test_image_builder_tiff():
-    image_builder_result = image_builder_tiff(RESOURCE_PATH)
+def test_image_builder_tiff(tmpdir_factory):
+    # Copy resource files to writable temp folder
+    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    shutil.copytree(RESOURCE_PATH, temp_dir)
+
+    image_builder_result = image_builder_tiff(temp_dir)
 
     # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
     assert len(image_builder_result.consumed_files) == 1
     assert len(image_builder_result.new_images) == 1
-    assert len(image_builder_result.new_image_files) == 1
+    assert len(image_builder_result.new_image_files) == 2
+
+    # Asserts successful creation of files
+    assert os.path.isfile(temp_dir / "out.dzi")
+    assert os.path.isdir(temp_dir / "out_files")
+
+    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9

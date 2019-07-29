@@ -12,6 +12,11 @@ from grandchallenge.reader_studies.views import (
 from grandchallenge.studies.views import StudyViewSet
 from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstations.views import SessionViewSet
+from grandchallenge.algorithms.views import (
+    AlgorithmViewSet,
+    JobViewSet,
+    ResultViewSet,
+)
 
 app_name = "api"
 
@@ -21,6 +26,11 @@ router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
+router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
+router.register(
+    r"algorithms/results", ResultViewSet, basename="algorithms-result"
+)
+router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 router.register(
     r"reader-studies/answers", AnswerViewSet, basename="reader-studies-answer"

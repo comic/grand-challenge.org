@@ -708,6 +708,9 @@ MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268435456  # == 256 mb
 
+# Tile size in pixels to be used when creating dzi for tif files
+DZI_TILE_SIZE = 2560
+
 # Default maximum width or height for thumbnails in retina workstation
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 

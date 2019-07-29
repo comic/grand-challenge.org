@@ -197,4 +197,5 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
+        new_folder_upload=[],
     )

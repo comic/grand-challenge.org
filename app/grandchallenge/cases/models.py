@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
@@ -32,6 +33,8 @@ class RawImageUploadSession(UUIDModel):
     images that can be fed to processing tasks.
     """
 
+    max_length_error_message = 256
+
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -46,7 +49,10 @@ class RawImageUploadSession(UUIDModel):
     processing_task = models.UUIDField(null=True, default=None)
 
     error_message = models.CharField(
-        max_length=256, blank=False, null=True, default=None
+        max_length=max_length_error_message,
+        blank=False,
+        null=True,
+        default=None,
     )
 
     imageset = models.ForeignKey(
@@ -91,7 +97,6 @@ class RawImageUploadSession(UUIDModel):
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
-
         created = self._state.adding
 
         super().save(*args, **kwargs)
@@ -350,8 +355,13 @@ class Image(UUIDModel):
 class ImageFile(UUIDModel):
     IMAGE_TYPE_MHD = "MHD"
     IMAGE_TYPE_TIFF = "TIFF"
+    IMAGE_TYPE_DZI = "DZI"
 
-    IMAGE_TYPES = ((IMAGE_TYPE_MHD, "MHD"), (IMAGE_TYPE_TIFF, "TIFF"))
+    IMAGE_TYPES = (
+        (IMAGE_TYPE_MHD, "MHD"),
+        (IMAGE_TYPE_TIFF, "TIFF"),
+        (IMAGE_TYPE_DZI, "DZI"),
+    )
 
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
@@ -362,3 +372,27 @@ class ImageFile(UUIDModel):
     file = models.FileField(
         upload_to=image_file_path, blank=False, storage=protected_s3_storage
     )
+
+
+class FolderUpload:
+    def __init__(self, image, folder):
+        self.image = image
+        self.folder = folder
+
+    def destination_filename(self, file_path):
+        return (
+            f"{settings.IMAGE_FILES_SUBDIRECTORY}/{self.image.pk}/"
+            f"{file_path.parent.parent.stem}/{file_path.parent.stem}/{file_path.name}"
+        )
+
+    def save(self):
+        # Saves all the files in the folder, respecting the parents folder structure
+        # 2 directories deep
+        for root, _, files in os.walk(self.folder):
+            for file in files:
+                source_filename = Path(root) / file
+                destination_filename = self.destination_filename(
+                    source_filename
+                )
+                with open(source_filename, "rb") as open_file:
+                    protected_s3_storage.save(destination_filename, open_file)

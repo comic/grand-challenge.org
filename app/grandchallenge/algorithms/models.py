@@ -35,6 +35,10 @@ class Algorithm(UUIDModel, ContainerImageModel, TitleSlugDescriptionModel):
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
 
+    @property
+    def api_url(self):
+        return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
+
 
 class Result(UUIDModel):
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
@@ -45,6 +49,10 @@ class Result(UUIDModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
+
+    @property
+    def api_url(self):
+        return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
 
 
 class AlgorithmExecutor(Executor):
@@ -162,3 +170,7 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
+
+    @property
+    def api_url(self):
+        return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})

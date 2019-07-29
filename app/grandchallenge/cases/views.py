@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.views.generic import CreateView, DetailView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -7,6 +8,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
     UPLOAD_SESSION_STATE,
     Image,
+    ImageFile,
 )
 from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
@@ -26,7 +28,6 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
-
         result["upload_session"] = result["object"]
         result["raw_files"] = RawImageFile.objects.filter(
             upload_session=result["object"]
@@ -52,3 +53,20 @@ class ImageViewSet(ReadOnlyModelViewSet):
         queryset = super().get_queryset().filter(**filters)
 
         return queryset
+
+
+def show_image(request, *, pk):
+    from django.shortcuts import render
+
+    try:
+        image_file = ImageFile.objects.select_related("image").get(
+            image=pk, image_type="DZI"
+        )
+    except Image.DoesNotExist:
+        raise Http404("File not found.")
+
+    return render(
+        request,
+        "cases/show_image.html",
+        {"image_file": image_file, "url": image_file.file.url},
+    )

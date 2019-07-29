@@ -1,0 +1,100 @@
+{% load static %}
+{% load grandchallenge_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        {% block meta %}
+            {% include "grandchallenge/partials/meta.html" %}
+        {% endblock %}
+
+        <title>
+            {% block title %}{{ request.site.name }}{% endblock %}
+        </title>
+
+        {% block head_script %}
+            {% include "grandchallenge/partials/head_script.html" %}
+        {% endblock %}
+
+        {% block style %}
+            {% include "grandchallenge/partials/style.html" %}
+        {% endblock %}
+    {% endblock %}
+</head>
+
+{% block body %}
+    <body class="d-flex flex-column min-vh-100">
+
+    {% block navbar %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=challenge.hide_signin %}
+    {% endblock %}
+
+    <main role="main" class="flex-fill">
+        <div id="page" class="container pb-3">
+
+            {% block messages %}
+                {% include "grandchallenge/partials/messages.html" %}
+            {% endblock %}
+
+            <nav aria-label="breadcrumb">
+                {% block breadcrumbs %}
+                {% endblock %}
+            </nav>
+
+            {% block jumbotron %}{% endblock %}
+
+            {% block outerContent %}
+                <div class="my-3 p-3 bg-white rounded shadow-sm">
+                    <div class="row">
+                        {% block sidebar %}{% endblock %}
+                        <div class="col overflow-auto">
+                            {% block content %}
+{#                            <script src="{% static 'cases/openseadragon.min.js' %}"></script>#}
+
+                                <h2>Image</h2>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-borderless table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding-right:1cm;">{{ image_file.image.name }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div id="openseadragonview" style="width: 100%; height: 600px;"></div>
+                                </div>
+
+                        {% endblock %}
+                        </div>
+                    </div>
+                </div>
+            {% endblock %}
+        </div>
+    </main>
+
+    {% block footer %}
+        {% include "grandchallenge/partials/footer.html" %}
+    {% endblock %}
+
+    {% block script %}
+        {% include "grandchallenge/partials/script.html" %}
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/openseadragon.min.js"
+            integrity="sha256-qIiBj8XqCj196KLyEX8fBJ0HiHUZmXYmYFciVQZ7nls="
+            crossorigin="anonymous"></script>{% endblock %}
+
+        <script type="text/javascript">
+            let viewer = OpenSeadragon({
+                id: "openseadragonview",
+                prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/images/",
+                tileSources: "{{ url }}",
+                debugMode:  false,
+                });
+        </script>
+    </body>
+{% endblock %}
+</html>
+
+
+
