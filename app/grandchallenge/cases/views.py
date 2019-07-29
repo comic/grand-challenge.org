@@ -1,6 +1,8 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
@@ -42,6 +44,18 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = ImageSerializer
     queryset = Image.objects.all()
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoObjectPermissionsFilter]
+
+    def filter_queryset(self, queryset):
+        """
+        Bypasses the filtering for staff users, who have permission to view
+        all images (see serving/permissions.py).
+        """
+        if self.request.user.is_staff:
+            return queryset
+        else:
+            return super().filter_queryset(queryset)
 
     def get_queryset(self):
         filters = {
