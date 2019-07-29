@@ -30,11 +30,11 @@ from .helpers import (
     ],
 )
 @pytest.mark.parametrize(
-    "endpoint_type,reverse_name,annotation_data",
+    "endpoint_type,reverse_name",
     [
-        ("upload_image_rsbmes", "retina:importers:upload-image", False),
-        ("upload_image_kappa", "retina:importers:upload-image", False),
-        ("upload_image_areds", "retina:importers:upload-image", False),
+        ("upload_image_rsbmes", "retina:importers:upload-image"),
+        ("upload_image_kappa", "retina:importers:upload-image"),
+        ("upload_image_areds", "retina:importers:upload-image"),
     ],
 )
 class TestCustomUploadEndpoints:
@@ -43,7 +43,6 @@ class TestCustomUploadEndpoints:
         client,
         endpoint_type,
         reverse_name,
-        annotation_data,
         user,
         status_valid,
         status_invalid,
@@ -61,9 +60,7 @@ class TestCustomUploadEndpoints:
             valid_str = "valid" if valid else "invalid"
             data = read_json_file(f"{endpoint_type}_{valid_str}_data.json")
 
-        response_status = get_response_status(
-            client, reverse_name, data, user, annotation_data
-        )
+        response_status = get_response_status(client, reverse_name, data, user)
         if valid:
             assert response_status == status_valid
         else:
