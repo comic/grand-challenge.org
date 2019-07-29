@@ -87,4 +87,4 @@ def test_answer_create(client):
     assert answer.images.count() == 1
     assert answer.images.all()[0] == im
     assert answer.question == q
-    assert answer.answer == True
+    assert answer.answer is True

@@ -17,6 +17,7 @@ def test_editor_update_form(client):
     assert rs.editors_group.user_set.count() == 1
 
     new_editor = UserFactory()
+    assert not rs.is_editor(user=new_editor)
     response = get_view_for_user(
         viewname="reader-studies:editors-update",
         client=client,
@@ -30,6 +31,22 @@ def test_editor_update_form(client):
 
     rs.refresh_from_db()
     assert rs.editors_group.user_set.count() == 2
+    assert rs.is_editor(user=new_editor)
+
+    response = get_view_for_user(
+        viewname="reader-studies:editors-update",
+        client=client,
+        method=client.post,
+        data={"user": new_editor.pk, "action": "REMOVE"},
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    rs.refresh_from_db()
+    assert rs.editors_group.user_set.count() == 1
+    assert not rs.is_editor(user=new_editor)
 
 
 @pytest.mark.django_db
@@ -42,6 +59,7 @@ def test_editor_update_form(client):
     assert rs.readers_group.user_set.count() == 0
 
     new_reader = UserFactory()
+    assert not rs.is_reader(user=new_reader)
     response = get_view_for_user(
         viewname="reader-studies:readers-update",
         client=client,
@@ -55,6 +73,22 @@ def test_editor_update_form(client):
 
     rs.refresh_from_db()
     assert rs.readers_group.user_set.count() == 1
+    assert rs.is_reader(user=new_reader)
+
+    response = get_view_for_user(
+        viewname="reader-studies:readers-update",
+        client=client,
+        method=client.post,
+        data={"user": new_reader.pk, "action": "REMOVE"},
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    rs.refresh_from_db()
+    assert rs.readers_group.user_set.count() == 0
+    assert not rs.is_reader(user=new_reader)
 
 
 @pytest.mark.django_db

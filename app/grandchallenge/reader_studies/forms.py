@@ -54,7 +54,7 @@ class UserGroupForm(SaveFormInitMixin, Form):
     CHOICES = ((ADD, "Add"), (REMOVE, "Remove"))
     user = ModelChoiceField(
         queryset=get_user_model().objects.all().order_by("username"),
-        help_text=("Select a user that will be added to the group"),
+        help_text="Select a user that will be added to the group",
         required=True,
         widget=autocomplete.ModelSelect2(
             url="reader-studies:users-autocomplete",
