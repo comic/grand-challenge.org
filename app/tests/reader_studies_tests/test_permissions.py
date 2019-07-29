@@ -1,6 +1,5 @@
 import pytest
 from django.conf import settings
-from django.contrib.auth.models import Group
 
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import (
@@ -8,14 +7,8 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     AnswerFactory,
 )
+from tests.reader_studies_tests.utils import get_rs_creator
 from tests.utils import get_view_for_user
-
-
-def get_rs_creator():
-    creator = UserFactory()
-    g = Group.objects.get(name=settings.READER_STUDY_CREATORS_GROUP_NAME)
-    g.user_set.add(creator)
-    return creator
 
 
 class TwoReaderStudies:
