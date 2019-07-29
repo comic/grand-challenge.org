@@ -1,9 +1,9 @@
 import pytest
 
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import ReaderStudy, Question
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.reader_studies_tests.utils import get_rs_creator
+from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
 from tests.utils import get_view_for_user
 
 
@@ -77,3 +77,25 @@ def test_reader_study_create(client):
     assert rs.slug == "foo-bar"
     assert rs.is_editor(user=creator)
     assert not rs.is_reader(user=creator)
+
+
+@pytest.mark.django_db
+def test_question_create(client):
+    rs_set = TwoReaderStudies()
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-question",
+        client=client,
+        method=client.post,
+        data={"question_text": "What?", "answer_type": "S", "order": 1},
+        reverse_kwargs={"slug": rs_set.rs1.slug},
+        follow=True,
+        user=rs_set.editor1,
+    )
+    assert response.status_code == 200
+
+    qs = Question.objects.all()
+
+    assert len(qs) == 1
+    assert qs[0].reader_study == rs_set.rs1
+    assert qs[0].question_text == "What?"
