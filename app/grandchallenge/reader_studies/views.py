@@ -1,4 +1,5 @@
 from dal import autocomplete
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -164,7 +165,12 @@ class ReaderStudyUserAutocomplete(
         return self.request.user.groups.filter(pk__in=group_pks).exists()
 
     def get_queryset(self):
-        qs = get_user_model().objects.all().order_by("username")
+        qs = (
+            get_user_model()
+            .objects.all()
+            .order_by("username")
+            .exclude(username=settings.ANONYMOUS_USER_NAME)
+        )
 
         if self.q:
             qs = qs.filter(username__istartswith=self.q)
