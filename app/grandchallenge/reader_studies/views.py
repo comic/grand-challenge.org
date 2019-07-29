@@ -83,6 +83,7 @@ class ReaderStudyDetail(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
+    raise_exception = True
 
 
 class ReaderStudyUpdate(
@@ -93,6 +94,7 @@ class ReaderStudyUpdate(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    raise_exception = True
 
 
 class AddObjectToReaderStudyMixin(
@@ -109,6 +111,7 @@ class AddObjectToReaderStudyMixin(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    raise_exception = True
 
     def get_permission_object(self):
         return self.reader_study
@@ -177,6 +180,7 @@ class ReaderStudyUserGroupUpdateMixin(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    raise_exception = True
 
     def get_permission_object(self):
         return self.reader_study
