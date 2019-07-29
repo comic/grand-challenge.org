@@ -14,6 +14,23 @@ def get_rs_creator():
     return creator
 
 
+class TwoReaderStudies:
+    def __init__(self):
+        self.creator = get_rs_creator()
+        self.rs1, self.rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+        self.editor1, self.reader1, self.editor2, self.reader2 = (
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+            UserFactory(),
+        )
+        self.rs1.add_editor(user=self.editor1)
+        self.rs2.add_editor(user=self.editor2)
+        self.rs1.add_reader(user=self.reader1)
+        self.rs2.add_reader(user=self.reader2)
+        self.u = UserFactory()
+
+
 @pytest.mark.django_db
 def test_rs_list_permissions(client):
     # Users should login
@@ -89,36 +106,24 @@ def test_rs_create_permissions(client):
 
 
 @pytest.mark.django_db
-def test_rs_detail_view(client):
-    creator = get_rs_creator()
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
-    editor1, reader1, editor2, reader2 = (
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-    )
-    rs1.add_editor(user=editor1)
-    rs2.add_editor(user=editor2)
-    rs1.add_reader(user=reader1)
-    rs2.add_reader(user=reader2)
-    u = UserFactory()
+def test_rs_detail_view_permissions(client):
+    rs_set = TwoReaderStudies()
 
     tests = (
-        (None, rs1, 302),
-        (None, rs2, 302),
-        (creator, rs1, 403),
-        (creator, rs2, 403),
-        (editor1, rs1, 200),
-        (editor1, rs2, 403),
-        (reader1, rs1, 200),
-        (reader1, rs2, 403),
-        (editor2, rs1, 403),
-        (editor2, rs2, 200),
-        (reader2, rs1, 403),
-        (reader2, rs2, 200),
-        (u, rs1, 403),
-        (u, rs2, 403),
+        (None, rs_set.rs1, 302),
+        (None, rs_set.rs2, 302),
+        (rs_set.creator, rs_set.rs1, 403),
+        (rs_set.creator, rs_set.rs2, 403),
+        (rs_set.editor1, rs_set.rs1, 200),
+        (rs_set.editor1, rs_set.rs2, 403),
+        (rs_set.reader1, rs_set.rs1, 200),
+        (rs_set.reader1, rs_set.rs2, 403),
+        (rs_set.editor2, rs_set.rs1, 403),
+        (rs_set.editor2, rs_set.rs2, 200),
+        (rs_set.reader2, rs_set.rs1, 403),
+        (rs_set.reader2, rs_set.rs2, 200),
+        (rs_set.u, rs_set.rs1, 403),
+        (rs_set.u, rs_set.rs2, 403),
     )
 
     for test in tests:
@@ -139,36 +144,24 @@ def test_rs_detail_view(client):
         "readers-update",
     ],
 )
-def test_rs_edit_view(client, view_name):
-    creator = get_rs_creator()
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
-    editor1, reader1, editor2, reader2 = (
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-    )
-    rs1.add_editor(user=editor1)
-    rs2.add_editor(user=editor2)
-    rs1.add_reader(user=reader1)
-    rs2.add_reader(user=reader2)
-    u = UserFactory()
+def test_rs_edit_view_permissions(client, view_name):
+    rs_set = TwoReaderStudies()
 
     tests = (
-        (None, rs1, 302),
-        (None, rs2, 302),
-        (creator, rs1, 403),
-        (creator, rs2, 403),
-        (editor1, rs1, 200),
-        (editor1, rs2, 403),
-        (reader1, rs1, 403),
-        (reader1, rs2, 403),
-        (editor2, rs1, 403),
-        (editor2, rs2, 200),
-        (reader2, rs1, 403),
-        (reader2, rs2, 403),
-        (u, rs1, 403),
-        (u, rs2, 403),
+        (None, rs_set.rs1, 302),
+        (None, rs_set.rs2, 302),
+        (rs_set.creator, rs_set.rs1, 403),
+        (rs_set.creator, rs_set.rs2, 403),
+        (rs_set.editor1, rs_set.rs1, 200),
+        (rs_set.editor1, rs_set.rs2, 403),
+        (rs_set.reader1, rs_set.rs1, 403),
+        (rs_set.reader1, rs_set.rs2, 403),
+        (rs_set.editor2, rs_set.rs1, 403),
+        (rs_set.editor2, rs_set.rs2, 200),
+        (rs_set.reader2, rs_set.rs1, 403),
+        (rs_set.reader2, rs_set.rs2, 403),
+        (rs_set.u, rs_set.rs1, 403),
+        (rs_set.u, rs_set.rs2, 403),
     )
 
     for test in tests:
@@ -182,29 +175,17 @@ def test_rs_edit_view(client, view_name):
 
 
 @pytest.mark.django_db
-def test_user_autocomplete(client):
-    creator = get_rs_creator()
-    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
-    editor1, reader1, editor2, reader2 = (
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-        UserFactory(),
-    )
-    rs1.add_editor(user=editor1)
-    rs2.add_editor(user=editor2)
-    rs1.add_reader(user=reader1)
-    rs2.add_reader(user=reader2)
-    u = UserFactory()
+def test_user_autocomplete_permissions(client):
+    rs_set = TwoReaderStudies()
 
     tests = (
         (None, 302),
-        (creator, 403),
-        (editor1, 200),
-        (reader1, 403),
-        (editor2, 200),
-        (reader2, 403),
-        (u, 403),
+        (rs_set.creator, 403),
+        (rs_set.editor1, 200),
+        (rs_set.reader1, 403),
+        (rs_set.editor2, 200),
+        (rs_set.reader2, 403),
+        (rs_set.u, 403),
     )
 
     for test in tests:
