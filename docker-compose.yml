@@ -79,7 +79,7 @@ services:
       python manage.py migrate
       && python manage.py check_permissions
       && python manage.py init_gc_demo
-      && python manage.py runserver_plus 0.0.0.0:8000 --nopin
+      && gunicorn -w 4 -b 0.0.0.0 config.wsgi
       "
     restart: always
     depends_on:

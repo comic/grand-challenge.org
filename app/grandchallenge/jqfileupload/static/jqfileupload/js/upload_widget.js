@@ -48,7 +48,8 @@ function upload_fold_unfold(element) {
                 maxRetries: 50,
                 headers: {
                     "X-CSRFToken": csrf_token
-                }
+                },
+                limitConcurrentUploads: 3,
             });
 
         var drop_overlay_timer = null;
