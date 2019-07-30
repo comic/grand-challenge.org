@@ -21,3 +21,6 @@ class ReaderStudiesConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(init_reader_study_creators_group, sender=self)
+
+        # noinspection PyUnresolvedReferences
+        import grandchallenge.reader_studies.signals

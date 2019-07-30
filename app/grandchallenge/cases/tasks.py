@@ -300,12 +300,6 @@ def build_images(upload_session_uuid: UUID):
 
                 if upload_session.reader_study:
                     upload_session.reader_study.images.add(*collected_images)
-                    for image in collected_images:
-                        assign_perm(
-                            "view_image",
-                            upload_session.reader_study.readers_group,
-                            image,
-                        )
 
                 # Delete any touched file data
                 for file in session_files:
