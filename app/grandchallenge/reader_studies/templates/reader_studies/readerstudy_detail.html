@@ -21,10 +21,12 @@
     <p>{{ object.description }}</p>
 
     <p>
-        <a class="btn btn-primary"
-           href="{% url 'workstations:default-session-redirect' %}?{% workstation_query reader_study=object %}">
-            <i class="fas fa-eye"></i> Launch this Reader Study
-        </a>
+        {% if user_is_reader %}
+            <a class="btn btn-primary"
+               href="{% url 'workstations:default-session-redirect' %}?{% workstation_query reader_study=object %}">
+                <i class="fas fa-eye"></i> Launch this Reader Study
+            </a>
+        {% endif %}
         {% if "change_readerstudy" in readerstudy_perms %}
             <a class="btn btn-primary"
                href="{% url 'reader-studies:update' slug=object.slug %}">

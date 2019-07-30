@@ -52,8 +52,8 @@ class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context.update(
             {
                 "user_can_add_reader_study": self.request.user.has_perm(
@@ -87,6 +87,13 @@ class ReaderStudyDetail(
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"user_is_reader": self.object.is_reader(user=self.request.user)}
+        )
+        return context
 
 
 class ReaderStudyUpdate(
