@@ -7,6 +7,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     AnswerFactory,
 )
+from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.utils import get_view_for_user
 
 
@@ -88,3 +89,36 @@ def test_answer_create(client):
     assert answer.images.all()[0] == im
     assert answer.question == q
     assert answer.answer is True
+
+
+@pytest.mark.django_db
+def test_answer_creator_is_reader(client):
+    rs_set = TwoReaderStudies()
+
+    im = ImageFactory()
+    rs_set.rs1.images.add(im)
+
+    q = QuestionFactory(reader_study=rs_set.rs1)
+
+    tests = (
+        (rs_set.editor1, 403),
+        (rs_set.reader1, 201),
+        (rs_set.editor2, 403),
+        (rs_set.reader2, 400),  # 400 as the check is done in validation
+        (rs_set.u, 403),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="api:reader-studies-answer-list",
+            user=test[0],
+            client=client,
+            method=client.post,
+            data={
+                "answer": True,
+                "images": [im.api_url],
+                "question": q.api_url,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]

@@ -117,19 +117,31 @@ def test_reader_study_create(client):
 def test_question_create(client):
     rs_set = TwoReaderStudies()
 
-    response = get_view_for_user(
-        viewname="reader-studies:add-question",
-        client=client,
-        method=client.post,
-        data={"question_text": "What?", "answer_type": "S", "order": 1},
-        reverse_kwargs={"slug": rs_set.rs1.slug},
-        follow=True,
-        user=rs_set.editor1,
+    tests = (
+        (None, 0, 302),
+        (rs_set.editor1, 1, 302),
+        (rs_set.reader1, 0, 403),
+        (rs_set.editor2, 0, 403),
+        (rs_set.reader2, 0, 403),
+        (rs_set.u, 0, 403),
     )
-    assert response.status_code == 200
 
-    qs = Question.objects.all()
+    for test in tests:
+        response = get_view_for_user(
+            viewname="reader-studies:add-question",
+            client=client,
+            method=client.post,
+            data={"question_text": "What?", "answer_type": "S", "order": 1},
+            reverse_kwargs={"slug": rs_set.rs1.slug},
+            user=test[0],
+        )
+        assert response.status_code == test[2]
 
-    assert len(qs) == 1
-    assert qs[0].reader_study == rs_set.rs1
-    assert qs[0].question_text == "What?"
+        qs = Question.objects.all()
+
+        assert len(qs) == test[1]
+        if test[1] > 0:
+            question = qs[0]
+            assert question.reader_study == rs_set.rs1
+            assert question.question_text == "What?"
+            question.delete()
