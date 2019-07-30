@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -11,6 +12,16 @@ from comic.eyra_algorithms.models import Job, Implementation, Interface
 from comic.eyra_data.models import DataFile, DataSet
 
 logger = logging.getLogger(__name__)
+
+
+def get_banner_image_filename(obj, filename=None):
+    extension = os.path.splitext(filename)[1]
+    return 'benchmarks/'+str(obj.id)+'/banner_image'+extension
+
+
+def get_card_image_filename(obj, filename=None):
+    extension = os.path.splitext(filename)[1]
+    return 'benchmarks/'+str(obj.id)+'/card_image'+extension
 
 
 class Benchmark(UUIDModel):
@@ -47,23 +58,35 @@ class Benchmark(UUIDModel):
         ),
         unique=True,
     )
-    card_image_url = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
-        help_text=(
-            "Benchmark card image"
-        ),
+    # card_image_url = models.CharField(
+    #     max_length=255,
+    #     blank=False,
+    #     null=False,
+    #     default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+    #     help_text=(
+    #         "Benchmark card image"
+    #     ),
+    # )
+    # banner_image_url = models.CharField(
+    #     max_length=255,
+    #     blank=False,
+    #     null=False,
+    #     default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
+    #     help_text=(
+    #         "Benchmark banner image"
+    #     ),
+    # )
+
+    banner_image = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=get_banner_image_filename
     )
-    banner_image_url = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        default="https://www.staging.eyrabenchmark.net/static/media/logo.3fc4ddae.png",
-        help_text=(
-            "Benchmark banner image"
-        ),
+
+    card_image = models.FileField(
+        blank=True,
+        null=True,
+        upload_to=get_card_image_filename
     )
 
     evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
