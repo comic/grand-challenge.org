@@ -18,10 +18,16 @@
 
     <h1>Reader Study {{ object.title }}</h1>
 
+    {% if not object.is_valid %}
+        <div class="alert alert-danger">
+        This reader study is not ready to be used. Please update the configuration.
+        </div>
+    {% endif %}
+
     <p>{{ object.description }}</p>
 
     <p>
-        {% if user_is_reader %}
+        {% if user_is_reader and object.is_valid %}
             <a class="btn btn-primary"
                href="{% url 'workstations:default-session-redirect' %}?{% workstation_query reader_study=object %}">
                 <i class="fas fa-eye"></i> Launch this Reader Study
@@ -76,13 +82,7 @@
 
         <h2>Images</h2>
 
-        <ul>
-            {% for image in object.images.all %}
-                <li>
-                    <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">{{ image }}</a>
-                </li>
-            {% endfor %}
-        </ul>
+        <p>There are {{ object.images.all.count }} image(s) in this reader study.</p>
 
         <p class="mt-3">
             <a class="btn btn-primary"
