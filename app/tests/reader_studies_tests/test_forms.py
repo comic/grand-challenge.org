@@ -4,7 +4,7 @@ from grandchallenge.reader_studies.models import ReaderStudy, Question
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
-from tests.utils import get_view_for_user
+from tests.utils import get_view_for_user, get_temporary_image
 
 
 @pytest.mark.django_db
@@ -50,7 +50,7 @@ def test_editor_update_form(client):
 
 
 @pytest.mark.django_db
-def test_editor_update_form(client):
+def test_reader_update_form(client):
     rs, _ = ReaderStudyFactory(), ReaderStudyFactory()
 
     editor = UserFactory()
@@ -100,7 +100,7 @@ def test_reader_study_create(client):
         viewname="reader-studies:create",
         client=client,
         method=client.post,
-        data={"title": "foo bar"},
+        data={"title": "foo bar", "logo": get_temporary_image()},
         follow=True,
         user=creator,
     )

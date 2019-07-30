@@ -9,6 +9,7 @@ class ReaderStudyFactory(factory.DjangoModelFactory):
         model = ReaderStudy
 
     title = factory.Sequence(lambda n: f"test_reader_study_{n:04}")
+    logo = factory.django.ImageField()
 
 
 class QuestionFactory(factory.DjangoModelFactory):
