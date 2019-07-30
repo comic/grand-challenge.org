@@ -6,14 +6,13 @@ from uuid import UUID
 
 from celery import shared_task
 from django.db import transaction
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
+from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     RawImageUploadSession,
