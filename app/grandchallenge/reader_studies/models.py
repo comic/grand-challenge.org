@@ -213,6 +213,15 @@ class Question(UUIDModel):
         (ANSWER_TYPE_HEADING, "Heading"),
     )
 
+    # A callable for every answer type that would validate the given answer
+    ANSWER_TYPE_VALIDATOR = {
+        ANSWER_TYPE_SINGLE_LINE_TEXT: lambda o: isinstance(o, str)
+        and len(o.splitlines()) == 1,
+        ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
+        ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
+        ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
+    }
+
     DIRECTION_HORIZONTAL = "H"
     DIRECTION_VERTICAL = "V"
     DIRECTION_CHOICES = (
@@ -266,6 +275,9 @@ class Question(UUIDModel):
             self.reader_study.readers_group,
             self,
         )
+
+    def is_answer_valid(self, *, answer):
+        return self.ANSWER_TYPE_VALIDATOR[self.answer_type](answer)
 
 
 class Answer(UUIDModel):

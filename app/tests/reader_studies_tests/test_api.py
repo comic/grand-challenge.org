@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.reader_studies.models import Answer
+from grandchallenge.reader_studies.models import Answer, Question
 from tests.factories import UserFactory, ImageFactory
 from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
@@ -70,7 +70,7 @@ def test_answer_create(client):
     reader = UserFactory()
     rs.add_reader(reader)
 
-    q = QuestionFactory(reader_study=rs)
+    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
@@ -98,7 +98,9 @@ def test_answer_creator_is_reader(client):
     im = ImageFactory()
     rs_set.rs1.images.add(im)
 
-    q = QuestionFactory(reader_study=rs_set.rs1)
+    q = QuestionFactory(
+        reader_study=rs_set.rs1, answer_type=Question.ANSWER_TYPE_BOOL
+    )
 
     tests = (
         (rs_set.editor1, 403),
@@ -122,3 +124,43 @@ def test_answer_creator_is_reader(client):
             content_type="application/json",
         )
         assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,answer,expected",
+    (
+        (Question.ANSWER_TYPE_BOOL, True, 201),
+        (Question.ANSWER_TYPE_BOOL, "True", 400),
+        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds", 201),
+        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfs\ngdsgfds", 400),
+        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, True, 400),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds", 201),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfs\ngdsgfds", 201),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, True, 400),
+        (Question.ANSWER_TYPE_HEADING, True, 400),
+        (Question.ANSWER_TYPE_HEADING, "fdsa", 400),
+    ),
+)
+def test_answer_is_correct_type(client, answer_type, answer, expected):
+
+    im = ImageFactory()
+
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+    rs.save()
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q = QuestionFactory(reader_study=rs, answer_type=answer_type)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={"answer": answer, "images": [im.api_url], "question": q.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == expected

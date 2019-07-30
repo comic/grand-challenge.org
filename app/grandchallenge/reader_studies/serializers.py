@@ -55,10 +55,18 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     def validate(self, attrs):
         question = attrs["question"]
         images = attrs["images"]
+        answer = attrs["answer"]
         creator = self.context.get("request").user
 
         if not question.reader_study.is_reader(user=creator):
             raise ValidationError("This user is not a reader for this study.")
+
+        if not question.is_answer_valid(answer=answer):
+            raise ValidationError(
+                f"You answer is not the correct type. "
+                f"{question.get_answer_type_display()} expected, "
+                f"{type(answer)} found."
+            )
 
         if len(images) == 0:
             raise ValidationError(
