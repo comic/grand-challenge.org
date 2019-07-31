@@ -6,6 +6,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     JobFactory,
     ResultFactory,
+    ImageFactory,
 )
 
 
@@ -131,3 +132,22 @@ def test_result_api_permissions(client):
             content_type="application/json",
         )
         assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+def test_job_create(client):
+    im = ImageFactory()
+
+    algo = AlgorithmFactory()
+
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="api:algorithms-job-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={"image": im.api_url, "algorithm": algo.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
