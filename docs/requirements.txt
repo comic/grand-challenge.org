@@ -10,7 +10,7 @@ beautifulsoup4==4.8.0
 billiard==3.6.0.0
 black==19.3b0
 bleach==3.1.0
-boto3==1.9.198
+boto3==1.9.199
 botocore==1.12.198
 Brotli==1.0.7
 celery==4.3.0
