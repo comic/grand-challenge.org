@@ -130,7 +130,7 @@ sphinxcontrib-serializinghtml==1.1.3
 sqlparse==0.3.0
 testpath==0.4.2
 text-unidecode==1.2
-tifffile==2019.1.4
+tifffile==2019.7.26
 tldextract==2.2.1
 tokenize-rt==3.2.0
 toml==0.10.0
