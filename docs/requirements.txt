@@ -104,7 +104,7 @@ pytz==2019.1
 pyupgrade==1.21.0
 pyvips==2.1.8
 PyYAML==5.1.1
-redis==3.3.2
+redis==3.3.4
 requests==2.22.0
 requests-file==1.4.3
 requests-oauthlib==1.2.0
