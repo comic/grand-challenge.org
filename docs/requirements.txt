@@ -46,7 +46,7 @@ django-userena-ce==4.1.1
 djangorestframework==3.10.2
 djangorestframework-guardian==0.2.0
 docker==4.0.2
-docutils==0.14
+docutils==0.15.2
 easy-thumbnails==2.6
 entrypoints==0.3
 execnet==1.6.1
