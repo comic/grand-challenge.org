@@ -101,6 +101,9 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
 
+    class Meta:
+        ordering = ["-created"]
+
 
 class Session(UUIDModel):
     """
@@ -322,3 +325,6 @@ class Session(UUIDModel):
             start_service.apply_async(kwargs=self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
             stop_service.apply_async(kwargs=self.task_kwargs)
+
+    class Meta:
+        ordering = ["-created"]
