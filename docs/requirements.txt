@@ -120,6 +120,7 @@ soupsieve==1.9.2
 Sphinx==2.1.2
 sphinx-autobuild==0.7.1
 sphinx-autodoc-typehints==1.7.0
+sphinx-rtd-theme==0.4.3
 sphinxcontrib-applehelp==1.0.1
 sphinxcontrib-devhelp==1.0.1
 sphinxcontrib-htmlhelp==1.0.2
