@@ -201,9 +201,9 @@ class DataSet(UUIDModel):
 
     def clean(self):
         if self.public_test_data_file and self.private_test_data_file:
-            if not self.public_test_data_file.type == self.private_test_data_file:
+            if not self.public_test_data_file.type == self.private_test_data_file.type:
                 raise ValidationError('Public & private test data should have same types.')
 
         if self.public_ground_truth_data_file and self.private_ground_truth_data_file:
-            if not self.public_ground_truth_data_file.type == self.private_ground_truth_data_file:
+            if not self.public_ground_truth_data_file.type == self.private_ground_truth_data_file.type:
                 raise ValidationError('Public & private ground truth should have same types.')
