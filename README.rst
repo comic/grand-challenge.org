@@ -13,6 +13,8 @@ grand-challenge.org
    :alt: Documentation Status
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
+.. image:: https://zenodo.org/badge/4557968.svg
+   :target: https://zenodo.org/badge/latestdoi/4557968
 
 Fair and objective comparisons of machine learning algorithms improves the
 quality of research outputs in both academia and industry. This repo
