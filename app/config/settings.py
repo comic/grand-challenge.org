@@ -314,7 +314,8 @@ if os.environ.get('DJANGO_SENTRY_DSN', False):
     )
     sentry_sdk.init(
         dsn=os.environ.get('DJANGO_SENTRY_DSN'),
-        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
+        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging],
+        environment=os.environ.get('ENVIRONMENT', 'unknown')
     )
 
 REST_FRAMEWORK = {
