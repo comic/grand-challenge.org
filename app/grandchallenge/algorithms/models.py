@@ -3,9 +3,9 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
-from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -148,11 +148,8 @@ class AlgorithmExecutor(Executor):
 
 
 class Job(UUIDModel, ContainerExecJobModel):
-    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
-    image = models.ManyToManyField(
-        "cases.Image", related_name="algorithm_jobs"
-    )
+    image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
 
     @property
     def container(self):
@@ -171,12 +168,12 @@ class Job(UUIDModel, ContainerExecJobModel):
         instance.output = result
         instance.save()
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
 
     @property
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)

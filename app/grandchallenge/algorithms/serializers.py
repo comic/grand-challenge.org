@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
+from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import Algorithm, Job, Result
 from grandchallenge.cases.models import Image
@@ -25,14 +25,13 @@ class ResultSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
-    creator = SlugRelatedField(read_only=True, slug_field="username")
     algorithm = HyperlinkedRelatedField(
-        read_only=True, view_name="api:algorithm-detail"
+        queryset=Algorithm.objects.all(), view_name="api:algorithm-detail"
     )
     image = HyperlinkedRelatedField(
-        many=True, queryset=Image.objects.all(), view_name="api:image-detail"
+        queryset=Image.objects.all(), view_name="api:image-detail"
     )
 
     class Meta:
         model = Job
-        fields = ["pk", "algorithm", "image", "api_url", "creator"]
+        fields = ["pk", "algorithm", "image", "api_url"]

@@ -1,5 +1,7 @@
 import pytest
 
+from grandchallenge.algorithms.models import Job
+
 from tests.utils import get_view_for_user
 from tests.factories import UserFactory
 from tests.algorithms_tests.factories import (
@@ -151,3 +153,8 @@ def test_job_create(client):
         content_type="application/json",
     )
     assert response.status_code == 201
+
+    job = Job.objects.get(pk=response.data.get("pk"))
+
+    assert job.image == im
+    assert job.algorithm == algo
