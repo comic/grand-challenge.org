@@ -44,6 +44,7 @@ script:
   - pytest app
 
 after_success:
+  - docker pull eyra/comic:latest
   - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
 
 deploy:
@@ -51,4 +52,4 @@ deploy:
     script: bash -c "docker login -u eyrabenchmark1 -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
     on:
       all_branches: true
-      condition: $TRAVIS_BRANCH =~ ^master|eyra-master|staging$
+      condition: $TRAVIS_BRANCH =~ ^master$
