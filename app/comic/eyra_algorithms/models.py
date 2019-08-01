@@ -82,7 +82,7 @@ class Implementation(UUIDModel):
     )
     image = models.CharField(max_length=64, unique=True, validators=[IdExistsInDockerRegistryValidator])
     command = models.CharField(max_length=255, blank=True, null=True)
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, blank=True, null=True, related_name='implementations')
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE, blank=False, null=False, related_name='implementations')
     version = models.CharField(
         max_length=64,
         help_text="The Algorithm version",
