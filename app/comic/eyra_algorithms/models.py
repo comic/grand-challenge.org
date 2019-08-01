@@ -25,7 +25,7 @@ class Interface(UUIDModel):
 
 class Input(UUIDModel):
     created = models.DateTimeField(auto_now_add=True)
-    name = models.CharField(max_length=64, unique=True)
+    name = models.CharField(max_length=64)
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='inputs')
     type = models.ForeignKey(
         DataType,

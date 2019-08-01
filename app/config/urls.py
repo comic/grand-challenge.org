@@ -11,7 +11,7 @@ from django.views.generic import TemplateView
 admin.autodiscover()
 
 def trigger_error(request):
-    division_by_zero = 1 / 0
+    errortje()
 
 
 def handler500(request):
