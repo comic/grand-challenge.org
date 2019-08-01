@@ -29,6 +29,7 @@ def setup_benchmark_admin_group(
         instance.save()
 
         assign_perm("change_benchmark", admin_group, instance)
+        assign_perm("change_group", admin_group, admin_group)
 
         # add current user to admins for this site
         try:

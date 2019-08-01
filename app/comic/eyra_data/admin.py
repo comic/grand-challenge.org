@@ -10,6 +10,7 @@ class DataTypeAdmin(admin.ModelAdmin):
 class DataFileAdmin(admin.ModelAdmin):
     list_display = ('name', 'size', 'creator', 'created')
 
+
 class DataSetAdmin(admin.ModelAdmin):
     list_display = ('name', 'creator', 'created')
 

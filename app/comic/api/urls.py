@@ -1,22 +1,21 @@
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.urls import path
 # from drf_yasg import openapi
 # from drf_yasg.views import get_schema_view
-from rest_framework import routers, permissions
+from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 
-from comic.api.views import (
-    UserViewSet,
-    GroupViewSet,
+from comic.eyra_users.views import (
     rest_api_complete,
     rest_api_auth,
     CurrentUserView,
 )
+
 from comic.eyra_algorithms.viewsets import ImplementationViewSet, JobViewSet, InterfaceViewSet, \
     AlgorithmViewSet
 from comic.eyra_benchmarks.viewsets import BenchmarkViewSet, SubmissionViewSet, algorithm_submission
 from comic.eyra_data.viewsets import DataFileViewSet, DataTypeViewSet, DataSetViewSet
-from comic.eyra_users.viewsets import RegisterViewSet, LoginView
+from comic.eyra_users.viewsets import RegisterViewSet, LoginView, UserViewSet, GroupViewSet
 
 app_name = "api"
 

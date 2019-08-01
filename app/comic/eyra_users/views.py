@@ -1,15 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
-from comic.api.serializers import (
+from comic.eyra_users.serializers import (
     UserSerializer,
     GroupSerializer,
 )
 
 from django.contrib.auth import REDIRECT_FIELD_NAME, logout
-from django.contrib.auth.models import User, Group
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
@@ -19,8 +17,6 @@ from social_core.actions import do_complete, do_auth
 from social_django.utils import psa
 from social_django.views import _do_login
 
-from comic.eyra_users.permissions import EyraDjangoModelPermissions, EyraDjangoModelOrObjectPermissions
-
 
 class CurrentUserView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -28,18 +24,6 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
-
-
-class UserViewSet(ModelViewSet):
-    queryset = User.objects.all() # filter(~Q(username="AnonymousUser"))
-    serializer_class = UserSerializer
-    permission_classes = (EyraDjangoModelPermissions & EyraDjangoModelOrObjectPermissions,)
-
-
-class GroupViewSet(ReadOnlyModelViewSet):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = (IsAuthenticated,)
 
 
 # The social_django app works with only one URL namespace, and only one LOGIN_REDIRECT_URL.
