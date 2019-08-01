@@ -77,13 +77,13 @@ class Benchmark(UUIDModel):
     #     ),
     # )
 
-    banner_image = models.FileField(
+    banner_image = models.ImageField(
         blank=True,
         null=True,
         upload_to=get_banner_image_filename
     )
 
-    card_image = models.FileField(
+    card_image = models.ImageField(
         blank=True,
         null=True,
         upload_to=get_card_image_filename
