@@ -125,7 +125,7 @@ def autoscale_gpu_node():
 
     print(f"Scaling to {str(scale_to)} GPU nodes.")
 
-    autoscaling_client.set_desired_capacity(
+    print(autoscaling_client.set_desired_capacity(
         AutoScalingGroupName='terraform-eks-eyra-prod01-gpu',
         DesiredCapacity=scale_to
-    )
+    ))

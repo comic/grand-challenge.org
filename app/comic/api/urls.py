@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.urls import path
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
+# from drf_yasg import openapi
+# from drf_yasg.views import get_schema_view
 from rest_framework import routers, permissions
 from rest_framework.authtoken.views import obtain_auth_token
 
@@ -48,25 +48,25 @@ urlpatterns = [
     path("v1/login/", obtain_auth_token),
     path("v1/", include(router.urls)),
 ]
-
-schema_view = get_schema_view(
-   openapi.Info(
-      title="Eyra Benchmark REST API",
-      default_version='v1',
-      description="Eyra Benchmark REST API v1.",
-      terms_of_service="https://www.eyrabenchmark.net/",
-      contact=openapi.Contact(email="info@eyrabenchmark.net"),
-      license=openapi.License(name="Apache 2.0"),
-   ),
-   validators=['flex', 'ssv'],
-   public=True,
-   permission_classes=(permissions.AllowAny,),
-   patterns=urlpatterns[-3:],
-)
+#
+# schema_view = get_schema_view(
+#    openapi.Info(
+#       title="Eyra Benchmark REST API",
+#       default_version='v1',
+#       description="Eyra Benchmark REST API v1.",
+#       terms_of_service="https://www.eyrabenchmark.net/",
+#       contact=openapi.Contact(email="info@eyrabenchmark.net"),
+#       license=openapi.License(name="Apache 2.0"),
+#    ),
+#    validators=['flex', 'ssv'],
+#    public=True,
+#    permission_classes=(permissions.AllowAny,),
+#    patterns=urlpatterns[-3:],
+# )
 
 urlpatterns = [
     *urlpatterns[:-1],
-    url(r'^v1/$', schema_view.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
+    # url(r'^v1/$', schema_view.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
     urlpatterns[-1]
 ]
 

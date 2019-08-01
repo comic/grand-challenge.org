@@ -10,6 +10,9 @@ from django.views.generic import TemplateView
 
 admin.autodiscover()
 
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
 
 def handler500(request):
     context = {"request": request}
@@ -22,6 +25,7 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("comic.api.urls", namespace="api")),
+    path('sentry-debug/', trigger_error),
     # Used for logging in and managing comic.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project

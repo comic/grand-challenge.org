@@ -1,5 +1,6 @@
 # Django settings for comic project.
 import glob
+import logging
 import os
 import re
 import traceback
@@ -9,11 +10,16 @@ from distutils.util import strtobool as strtobool_i
 
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
-from raven.contrib.django.models import client
 from rest_framework.response import Response
 
 from config.denylist import USERNAME_DENYLIST
 import environ
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
 
 env = environ.Env()
 
@@ -22,9 +28,7 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-# Default COMIC settings, to be included by settings.py
 DEBUG = env.bool("DEBUG", default=True)
-# DEBUG = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -90,15 +94,6 @@ USE_L10N = False
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = "/media/"
-
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
@@ -144,18 +139,6 @@ X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
 # Serve files using django (debug only)
 STATIC_URL = "/static/"
 
-# List of finder classes that know how to find static files in
-# various locations.
-# STATICFILES_FINDERS = (
-#     "django.contrib.staticfiles.finders.FileSystemFinder",
-#     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-#        # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
-# )
-
-# STATICFILES_STORAGE = (
-#     "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-# )
-
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "d=%^l=xa02an9jn-$!*hy1)5yox$a-$2(ejt-2smimh=j4%8*b"
@@ -176,8 +159,6 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
-                #"comic.core.contextprocessors.contextprocessors.comic_site",
-                #"comic.core.contextprocessors.contextprocessors.google_analytics_id",
             ]
         },
     }
@@ -187,7 +168,6 @@ MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
-    "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -195,9 +175,6 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "comic.subdomains.middleware.subdomain_middleware",
-    # "comic.subdomains.middleware.challenge_subdomain_middleware",
-    # "comic.subdomains.middleware.subdomain_urlconf_middleware",
 )
 
 
@@ -217,45 +194,22 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "raven.contrib.django.raven_compat",  # error logging
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
-    # "userena",  # user profiles
     "guardian",  # userena dependency, per object permissions
-    # "easy_thumbnails",  # userena dependency
     "social_django",  # social authentication with oauth2
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
-    # "crispy_forms",  # bootstrap forms
-    # "favicon",  # favicon management
-    # "django_select2",  # for multiple choice widgets
-    # "django_summernote",  # for WYSIWYG page editing
-    # "rest_framework_swagger",  # REST API Swagger spec
     "corsheaders",  # To manage CORS headers for frontend on different domain
     "django_extensions",
     "django_filters",
-    "drf_yasg",
 ]
 
 LOCAL_APPS = [
-    # "comic.admins",
     "comic.api",
-    # "comic.challenges",
     "comic.core",
-    # "comic.evaluation",
-    # "comic.jqfileupload",
-    # "comic.pages",
-    # "comic.participants",
     "comic.profiles",
-    # "comic.teams",
-    # "comic.uploads",
-    # "comic.cases",
-    # "comic.algorithms",
-    # "comic.container_exec",
-    # "comic.datasets",
-    # "comic.submission_conversion",
-    # "comic.statistics",
     "comic.eyra_benchmarks",
     "comic.eyra_algorithms",
     "comic.eyra_data",
@@ -268,7 +222,6 @@ ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
 AUTHENTICATION_BACKENDS = (
     "social_core.backends.google.GoogleOAuth2",
-    # "userena.backends.UserenaAuthenticationBackend",
     "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 )
@@ -327,7 +280,6 @@ LOG_FILEPATH_ERROR = "/tmp/django_error.log"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
-    "root": {"level": "WARNING", "handlers": ["sentry"]},
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
@@ -335,11 +287,6 @@ LOGGING = {
         }
     },
     "handlers": {
-        "sentry": {
-            "level": "ERROR",
-            # To capture more than ERROR, change to WARNING, INFO, etc.
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
@@ -356,24 +303,19 @@ LOGGING = {
             "level": "ERROR",
             "handlers": ["console"],
             "propagate": False,
-        },
-        "raven": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        "sentry.errors": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
+        }
     },
 }
 
-if strtobool(os.environ.get('SENTRY_DISABLE', 'False')):
-    RAVEN_CONFIG = {"dsn" : ""}
-else:
-    RAVEN_CONFIG = {"dsn": os.environ.get("DJANGO_SENTRY_DSN", "")}
+if os.environ.get('DJANGO_SENTRY_DSN', False):
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,  # Capture info and above as breadcrumbs
+        event_level=logging.ERROR  # Send errors as events
+    )
+    sentry_sdk.init(
+        dsn=os.environ.get('DJANGO_SENTRY_DSN'),
+        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging]
+    )
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
@@ -400,14 +342,6 @@ CELERY_BEAT_SCHEDULE = {
 CELERY_TASK_ROUTES = {
     "comic.eyra_benchmarks.tasks.run_submission": "submission"
 }
-
-if MEDIA_ROOT[-1] != "/":
-    msg = (
-        "MEDIA_ROOT setting should end in a slash. Found '"
-        + MEDIA_ROOT
-        + "'. Please add a slash"
-    )
-    raise ImproperlyConfigured(msg)
 
 ENABLE_DEBUG_TOOLBAR = False
 

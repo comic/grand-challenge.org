@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from rest_framework.decorators import list_route, detail_route
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
@@ -22,7 +22,7 @@ class DataFileViewSet(ModelViewSet):
             return DataFile.objects.all()
         return DataFile.objects.all()
 
-    @detail_route()
+    @action(detail=True)
     def download(self, request, *args, **kwargs):
         data_file = DataFile.objects.get(pk=kwargs['pk'])
         return HttpResponseRedirect(data_file.file.url)
