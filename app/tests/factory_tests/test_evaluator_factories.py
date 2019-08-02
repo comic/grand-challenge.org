@@ -1,12 +1,10 @@
 from rest_framework.test import APITestCase
 
-from comic.eyra_algorithms.models import Algorithm
-from tests.factories import AlgorithmFactory, UserFactory, InterfaceFactory, EvaluationInterfaceFactory, \
-    BenchmarkFactory, ImplementationFactory
+from tests.factories import AlgorithmFactory, EvaluationInterfaceFactory, BenchmarkFactory, ImplementationFactory
 
 
-class InterfaceFactoryTest(APITestCase):
-    def test_can_create(self):
+class EvaluatorFactoriesTest(APITestCase):
+    def test_eval_factories(self):
         interface = EvaluationInterfaceFactory()
         eval_algorithm = AlgorithmFactory(interface=interface)
         evaluator = ImplementationFactory(algorithm=eval_algorithm)

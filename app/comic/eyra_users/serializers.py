@@ -1,8 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User, Group
+from guardian.shortcuts import get_perms
 from rest_framework import serializers
-
-from comic.profiles.social_auth.pipeline.profile import create_profile, add_to_default_group
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -19,8 +18,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         validated_data['username'] = validated_data['email']
         user = super().create(validated_data)
-        create_profile(user, True)
-        add_to_default_group(user, True)
         return user
 
     def to_representation(self, instance):
@@ -45,3 +42,15 @@ class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ("id", "name", "user_set")
+
+
+class Permissions(serializers.Field):
+    def to_representation(self, instance):
+        user = self.context['request'].user
+        return get_perms(user, instance)
+
+    class Meta:
+        swagger_schema_fields = {
+            'type': 'array',
+            'items': {'type': 'integer'}
+        }

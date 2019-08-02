@@ -209,7 +209,6 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "comic.api",
     "comic.core",
-    "comic.profiles",
     "comic.eyra_benchmarks",
     "comic.eyra_algorithms",
     "comic.eyra_data",

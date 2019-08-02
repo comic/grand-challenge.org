@@ -29,3 +29,9 @@ class AlgorithmAdminTest(APITestCase):
         # other user has no permissions
         self.assertFalse(other_user.has_perm('change_algorithm', algorithm))
         self.assertFalse(other_user.has_perm('change_group', algorithm.admin_group))
+
+    def test_default_user_permissions(self):
+        user = UserFactory()
+        self.assertTrue(user.has_perm('eyra_algorithms.add_algorithm'))
+        self.assertTrue(user.has_perm('eyra_algorithms.add_implementation'))
+        self.assertTrue(user.has_perm('eyra_benchmarks.add_submission'))

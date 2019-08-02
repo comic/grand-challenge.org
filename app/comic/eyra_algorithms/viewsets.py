@@ -1,3 +1,4 @@
+from django_filters import rest_framework as filters
 from rest_framework.viewsets import ModelViewSet
 
 from comic.eyra_algorithms.models import Implementation, Job, Interface, Algorithm
@@ -18,12 +19,23 @@ class ImplementationViewSet(ModelViewSet):
         serializer.save(creator=self.request.user)
 
 
+class AlgorithmFilter(filters.FilterSet):
+    has_admin = filters.NumberFilter(method='has_admin_filter')
+
+    class Meta:
+        model = Algorithm
+        fields = ['creator', 'has_admin']
+
+    def has_admin_filter(self, queryset, name, value):
+        return queryset.filter(admin_group__user__id__contains=value)
+
+
 class AlgorithmViewSet(ModelViewSet):
     # queryset = Algorithm.objects.exclude(output_type__name__exact='OutputMetrics')
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = (EyraPermissions,)
-    filterset_fields = ['creator']
+    filterset_class = AlgorithmFilter
 
     def perform_create(self, serializer):
         # Add the logged in user as the challenge creator

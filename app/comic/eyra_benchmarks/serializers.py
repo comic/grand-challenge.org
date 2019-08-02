@@ -3,18 +3,7 @@ from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
 from comic.eyra_benchmarks.models import Benchmark, Submission
-
-
-class Permissions(serializers.Field):
-    def to_representation(self, instance):
-        user = self.context['request'].user
-        return get_perms(user, instance)
-
-    class Meta:
-        swagger_schema_fields = {
-            'type': 'array',
-            'items': {'type': 'integer'}
-        }
+from comic.eyra_users.serializers import Permissions
 
 
 class BenchmarkSerializer(serializers.ModelSerializer):
