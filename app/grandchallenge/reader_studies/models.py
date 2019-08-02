@@ -101,14 +101,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         # Allow the editors and readers groups to view this study
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
         assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
-        # Allow editors to add questions (globally), adding them to this reader
-        # study is checked in the views
-        assign_perm(
-            f"{Question._meta.app_label}.add_{Question._meta.model_name}",
-            self.editors_group,
-        )
         # Allow readers to add answers (globally), adding them to this reader
-        # study is checked in the serializers
+        # study is checked in the serializers as there is no
+        # get_permission_object in django rest framework.
         assign_perm(
             f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
             self.readers_group,
