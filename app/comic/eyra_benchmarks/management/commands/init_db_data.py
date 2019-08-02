@@ -30,9 +30,12 @@ class Command(BaseCommand):
         create_default_group()
         assign_anon_permissions()
 
-        output_metrics_type, created = DataType.objects.get_or_create(
-            name='OutputMetrics',
-            description='Metrics (.json)'
-        )
-        output_metrics_type.save()
+        try:
+            output_metrics_type, created = DataType.objects.get_or_create(
+                name='OutputMetrics',
+                description='Metrics (.json)'
+            )
+            output_metrics_type.save()
+        except:
+            pass
 
