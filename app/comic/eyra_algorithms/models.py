@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import models
 
 from comic.core.models import UUIDModel
@@ -20,7 +21,9 @@ class Interface(UUIDModel):
     )
 
     def __str__(self):
-        return self.name
+        # example: FRB Evaluator: (ground_truth: CSV file, implementation_output: FRB Candidates -> OutputMetrics)
+        input_str = ', '.join([f'{i.name}: {i.type}' for i in self.inputs.all()])
+        return f'{self.name} ({input_str} -> {self.output_type.name})'
 
 
 class Input(UUIDModel):
@@ -56,6 +59,13 @@ class Algorithm(UUIDModel):
         help_text="Description of this solution in markdown.",
     )
     interface = models.ForeignKey(Interface, on_delete=models.CASCADE, related_name='algorithms')
+    admin_group = models.OneToOneField(
+        Group,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="algorithm",
+    )
 
     def __str__(self):
         return self.name
