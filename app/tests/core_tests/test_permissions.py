@@ -12,23 +12,16 @@ class AnonymousUserTest(APITestCase):
         # should be created by guardian
         anon_user = User.objects.get(username=settings.ANONYMOUS_USER_NAME)
 
-    def test_anon_list_benchmarks_no_permission_gives_401(self):
-        url = '/api/v1/benchmarks/'
-        response = self.client.get(url, format="json")
-        self.assertEqual(401, response.status_code)
-
-    def test_anon_list_benchmarks_with_permission_gives_200(self):
-        anon_user = User.get_anonymous()
-        assign_perm('eyra_benchmarks.view_benchmark', anon_user)
+    def test_anon_list_benchmarks_gives_200(self):
         url = '/api/v1/benchmarks/'
         response = self.client.get(url, format="json")
         self.assertEqual(200, response.status_code)
 
-    def test_anon_get_benchmark_no_permission_gives_401(self):
+    def test_anon_get_benchmark_gives_200(self):
         benchmark = BenchmarkFactory()
         url = f'/api/v1/benchmarks/{benchmark.pk}/'
         response = self.client.get(url, format="json")
-        self.assertEqual(401, response.status_code)
+        self.assertEqual(200, response.status_code)
 
     def test_anon_get_benchmark_model_permission_gives_200(self):
         benchmark = BenchmarkFactory()
