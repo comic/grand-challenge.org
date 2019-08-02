@@ -215,8 +215,7 @@ class Question(UUIDModel):
 
     # A callable for every answer type that would validate the given answer
     ANSWER_TYPE_VALIDATOR = {
-        ANSWER_TYPE_SINGLE_LINE_TEXT: lambda o: isinstance(o, str)
-        and len(o.splitlines()) == 1,
+        ANSWER_TYPE_SINGLE_LINE_TEXT: lambda o: isinstance(o, str),
         ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
         ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
