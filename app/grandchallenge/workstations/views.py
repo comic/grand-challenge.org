@@ -1,3 +1,7 @@
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -39,9 +43,14 @@ class WorkstationList(UserIsStaffMixin, ListView):
     model = Workstation
 
 
-class WorkstationCreate(UserIsStaffMixin, CreateView):
+class WorkstationCreate(
+    LoginRequiredMixin, PermissionRequiredMixin, CreateView
+):
     model = Workstation
     form_class = WorkstationForm
+    permission_required = (
+        f"{Workstation._meta.app_label}.add_{Workstation._meta.model_name}"
+    )
 
 
 class WorkstationDetail(UserIsStaffMixin, DetailView):
