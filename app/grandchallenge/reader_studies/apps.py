@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models.signals import post_migrate
 
 
-def init_reader_study_creators_group(sender, **kwargs):
+def init_reader_study_creators_group(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
     from grandchallenge.reader_studies.models import ReaderStudy
