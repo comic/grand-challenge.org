@@ -37,7 +37,7 @@ If you need to manually restart the process you can do this when running ``cycle
 you can also kill the server with ``CTRL+C``.
 
 Windows
-```````
+~~~~~~~
 
 Running Grand-Challenge within a Windows environment requires additional steps before invoking the ``cycle_docker_compose.sh`` script.
 
@@ -197,16 +197,36 @@ You can do this with
 
 .. code-block:: console
 
+    $ make migrations
+
+or, more explicitly
+
+.. code-block:: console
+
     $ docker-compose run --rm --user `id -u` web python manage.py makemigrations
 
 
 add these to git and commit.
 
 
-Building the docs
------------------
+Building the documentation
+--------------------------
 
-To build the docs you need to install the environment on your local machine, we use pipenv for this.
+Using docker
+~~~~~~~~~~~~
+
+Having built the web container with ``cycle_docker_compose.sh`` you can use this to generate the docs with
+
+.. code-block:: console
+
+    $ make docs
+
+This will create the docs in the ``docs/_build/html`` directory.
+
+Using pipenv
+~~~~~~~~~~~~
+
+Alternatively, to build the docs locally you need to install the environment on your local machine, we use pipenv for this.
 
 1. Install pipenv
 
@@ -214,7 +234,7 @@ To build the docs you need to install the environment on your local machine, we 
 
     $ pip install pipenv
 
-2. Install the environment from the root of the ``grand-challenge.org`` repo  with
+2. Install the environment from the root of the ``grand-challenge.org`` repo with
 
 .. code-block:: console
 
@@ -228,7 +248,6 @@ To build the docs you need to install the environment on your local machine, we 
     $ cd docs
     $ make html
 
-This will create the docs in the ``docs/_build/html`` directory.
 
 
 Adding new dependencies
@@ -260,8 +279,8 @@ The docker compose file included here is for development only.
 If you want to run this in a production environment you will need to make several changes, not limited to:
 
 1. Use ``gunicorn`` rather than run ``runserver_plus`` to run the web process
-1. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
-1. Removing the users that are created by ``init_gc_demo``
+2. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
+3. Removing the users that are created by ``init_gc_demo``
 
 .. _TravisCI: https://travis-ci.org/comic/grand-challenge.org
 .. _Docker: https://docs.docker.com/install/

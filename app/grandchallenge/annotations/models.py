@@ -240,7 +240,9 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
 
     # Fields for location of fovea and optic disk on the images: (x,y) coordinates
     fovea = ArrayField(models.FloatField(), size=2)
-    optic_disk = ArrayField(models.FloatField(), size=2)
+    optic_disk = ArrayField(
+        models.FloatField(), size=2, default=list, blank=True
+    )
 
     class Meta(AbstractImageAnnotationModel.Meta):
         unique_together = ("image", "grader", "created")

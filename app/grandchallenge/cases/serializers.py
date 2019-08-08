@@ -6,7 +6,7 @@ from grandchallenge.cases.models import Image, ImageFile
 class ImageFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImageFile
-        fields = ("pk", "image", "file")
+        fields = ("pk", "image", "file", "image_type")
 
 
 class ImageSerializer(serializers.ModelSerializer):
