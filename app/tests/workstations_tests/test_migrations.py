@@ -1,39 +1,35 @@
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.management import call_command
-
-from tests.factories import WorkstationFactory
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 
 
 @pytest.mark.django_db
-def test_workstation_group_migration():
-    # Migration 0004 is not reversible if data already exists in the table
-    # so start with migration 0003 (post data migration to add the groups)
-    call_command("migrate", "workstations", "0003")
+def test_workstation_group_migration(transactional_db):
+    executor = MigrationExecutor(connection)
+    app = "workstations"
+    migrate_from = [(app, "0001_initial")]
+    migrate_to = [(app, "0004_auto_20190809_0920")]
 
-    ws = WorkstationFactory()
+    executor.migrate(migrate_from)
+    old_apps = executor.loader.project_state(migrate_from).apps
 
-    assert ws.editors_group
-    assert ws.users_group
+    Workstation = old_apps.get_model(app, "Workstation")
+    old_ws = Workstation.objects.create(title="foo")
 
-    # Test group removal
-    call_command("migrate", "workstations", "0002")
+    assert not hasattr(old_ws, "editors_group")
+    assert not hasattr(old_ws, "users_group")
 
-    ws.refresh_from_db()
+    # Reload
+    executor.loader.build_graph()
+    # Migrate forwards
+    executor.migrate(migrate_to)
 
-    with pytest.raises(ObjectDoesNotExist):
-        assert ws.editors_group is None
+    new_apps = executor.loader.project_state(migrate_to).apps
 
-    with pytest.raises(ObjectDoesNotExist):
-        assert ws.users_group is None
+    Workstation = new_apps.get_model(app, "Workstation")
+    new_ws = Workstation.objects.get(title="foo")
 
-    # Test group addition
-    call_command("migrate", "workstations", "0003")
-
-    ws.refresh_from_db()
-
-    assert ws.editors_group
-    assert ws.users_group
-
-    # Test that 0004 does not error out
-    call_command("migrate", "workstations", "0004")
+    assert new_ws.editors_group
+    assert new_ws.users_group
+    assert new_ws.slug == old_ws.slug
+    assert new_ws.title == old_ws.title
