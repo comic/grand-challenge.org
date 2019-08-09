@@ -1,6 +1,7 @@
 import pytest
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
@@ -18,6 +19,9 @@ from tests.utils import get_view_for_user, get_temporary_image
 @pytest.mark.django_db
 def test_workstation_create_detail(client):
     user = UserFactory(is_staff=True)
+
+    g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
+    g.user_set.add(user)
 
     title = "my Workstation"
     description = "my AWESOME workstation"

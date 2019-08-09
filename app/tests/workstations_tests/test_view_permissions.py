@@ -14,7 +14,6 @@ from tests.utils import validate_staff_only_view
     "view",
     [
         "workstations:list",
-        "workstations:create",
         "workstations:update",
         "workstations:detail",
         "workstations:image-create",

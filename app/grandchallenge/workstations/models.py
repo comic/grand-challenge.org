@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -33,6 +34,18 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """ This model holds the title and description of a workstation. """
 
     logo = models.ImageField(upload_to=get_logo_path)
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="editors_of_workstation",
+    )
+    users_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="users_of_workstation",
+    )
 
     @property
     def latest_ready_image(self):
@@ -52,6 +65,28 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})
+
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.users_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def assign_permissions(self):
+        pass
+
+    def save(self, *args, force_group_creation=False, **kwargs):
+        adding = self._state.adding
+
+        if adding or force_group_creation:
+            self.create_groups()
+
+        super().save(*args, **kwargs)
+
+        if adding or force_group_creation:
+            self.assign_permissions()
 
 
 class WorkstationImage(UUIDModel, ContainerImageModel):
