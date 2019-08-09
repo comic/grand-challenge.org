@@ -3,8 +3,8 @@ from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
 
-@pytest.mark.django_db
-def test_workstation_group_migration(transactional_db):
+@pytest.mark.django_db(transaction=True)
+def test_workstation_group_migration():
     executor = MigrationExecutor(connection)
     app = "workstations"
     migrate_from = [(app, "0001_initial")]

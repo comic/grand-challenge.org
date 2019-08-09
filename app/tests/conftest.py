@@ -37,6 +37,30 @@ from tests.studies_tests.factories import StudyFactory
 """ Defines fixtures than can be used across all of the tests """
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--transactions",
+        action="store_true",
+        help="Only run transaction tests.",
+    )
+
+
+def pytest_runtest_setup(item):
+    only_transaction_tests = item.config.getoption("--transactions")
+    django_marker = item.get_closest_marker("django_db")
+
+    if django_marker is None:
+        transaction_required = False
+    else:
+        transaction_required = django_marker.kwargs.get("transaction", False)
+
+    if not (transaction_required == only_transaction_tests):
+        # Only run this test if
+        #  - it (does not) require transactions
+        #  - and we're (not) running transaction tests
+        pytest.skip("Skipping (non) transaction tests.")
+
+
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup, django_db_blocker):
     """ Ensure that the main challenge has been created """
