@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.shortcuts import assign_perm
 from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
 
@@ -75,7 +76,8 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def assign_permissions(self):
-        pass
+        # Allow the editors groups to view this study
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
 
     def save(self, *args, force_group_creation=False, **kwargs):
         adding = self._state.adding
@@ -87,6 +89,24 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
         if adding or force_group_creation:
             self.assign_permissions()
+
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        return user.groups.add(self.editors_group)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_user(self, user):
+        return user.groups.filter(pk=self.users_group.pk).exists()
+
+    def add_user(self, user):
+        return user.groups.add(self.users_group)
+
+    def remove_user(self, user):
+        return user.groups.remove(self.users_group)
 
 
 class WorkstationImage(UUIDModel, ContainerImageModel):

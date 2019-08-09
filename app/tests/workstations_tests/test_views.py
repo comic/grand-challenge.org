@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user, get_temporary_image
 
 @pytest.mark.django_db
 def test_workstation_create_detail(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
     g.user_set.add(user)
@@ -50,6 +50,8 @@ def test_workstation_create_detail(client):
     w = Workstation.objects.get(title=title)
     assert w.title == title
     assert w.description == description
+
+    assert w.is_editor(user=user)
 
     response = get_view_for_user(url=response.url, client=client, user=user)
     assert title in response.rendered_content

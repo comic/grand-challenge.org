@@ -15,7 +15,6 @@ from tests.utils import validate_staff_only_view
     [
         "workstations:list",
         "workstations:update",
-        "workstations:detail",
         "workstations:image-create",
         "workstations:image-detail",
         "workstations:image-update",
@@ -26,7 +25,6 @@ from tests.utils import validate_staff_only_view
 def test_workstations_staff_views(client, view):
     if view in [
         "workstations:update",
-        "workstations:detail",
         "workstations:image-create",
         "workstations:session-create",
     ]:

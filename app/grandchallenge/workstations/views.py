@@ -1,7 +1,4 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -12,6 +9,10 @@ from django.views.generic import (
     DetailView,
     UpdateView,
     RedirectView,
+)
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.permissions import IsAdminUser
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -52,9 +53,19 @@ class WorkstationCreate(
         f"{Workstation._meta.app_label}.add_{Workstation._meta.model_name}"
     )
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.object.add_editor(user=self.request.user)
+        return response
 
-class WorkstationDetail(UserIsStaffMixin, DetailView):
+
+class WorkstationDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Workstation
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
 
 
 class WorkstationUpdate(UserIsStaffMixin, UpdateView):
