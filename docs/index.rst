@@ -14,7 +14,7 @@ Welcome to grand-challenge.org's documentation!
     evaluation
     processor
     workstations
-
+    design
 
 
 Indices and tables
