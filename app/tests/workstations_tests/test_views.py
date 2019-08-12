@@ -1,5 +1,4 @@
 import pytest
-
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
@@ -61,16 +60,16 @@ def test_workstation_create_detail(client):
 @pytest.mark.django_db
 def test_workstation_list_view(client):
     w1, w2 = WorkstationFactory(), WorkstationFactory()
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="workstations:list", client=client, user=user
     )
 
-    assert w1.get_absolute_url() in response.rendered_content
-    assert w2.get_absolute_url() in response.rendered_content
+    assert w1.get_absolute_url() not in response.rendered_content
+    assert w2.get_absolute_url() not in response.rendered_content
 
-    w1.delete()
+    w2.add_editor(user=user)
 
     response = get_view_for_user(
         viewname="workstations:list", client=client, user=user
@@ -78,6 +77,16 @@ def test_workstation_list_view(client):
 
     assert w1.get_absolute_url() not in response.rendered_content
     assert w2.get_absolute_url() in response.rendered_content
+
+    w1u = UserFactory()
+    w1.add_user(user=w1u)
+
+    response = get_view_for_user(
+        viewname="workstations:list", client=client, user=w1u
+    )
+
+    assert w1.get_absolute_url() in response.rendered_content
+    assert w2.get_absolute_url() not in response.rendered_content
 
 
 @pytest.mark.django_db

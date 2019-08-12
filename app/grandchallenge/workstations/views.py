@@ -12,6 +12,7 @@ from django.views.generic import (
 )
 from guardian.mixins import (
     LoginRequiredMixin,
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.permissions import IsAdminUser
@@ -40,8 +41,11 @@ class SessionViewSet(ReadOnlyModelViewSet):
     permission_classes = (IsAdminUser,)
 
 
-class WorkstationList(UserIsStaffMixin, ListView):
+class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Workstation
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
 
 
 class WorkstationCreate(
