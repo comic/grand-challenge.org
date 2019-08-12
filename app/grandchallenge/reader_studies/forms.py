@@ -31,12 +31,18 @@ class SaveFormInitMixin:
 class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = ReaderStudy
-        fields = ("title", "logo", "description")
+        fields = ("title", "logo", "description", "workstation")
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
     class Meta(ReaderStudyCreateForm.Meta):
-        fields = ("title", "logo", "description", "hanging_list")
+        fields = (
+            "title",
+            "logo",
+            "description",
+            "workstation",
+            "hanging_list",
+        )
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA)
         }

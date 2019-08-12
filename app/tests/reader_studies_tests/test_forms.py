@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.reader_studies.models import ReaderStudy, Question
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
 from tests.utils import get_view_for_user, get_temporary_image
@@ -95,12 +95,17 @@ def test_reader_update_form(client):
 def test_reader_study_create(client):
     # The study creator should automatically get added to the editors group
     creator = get_rs_creator()
+    ws = WorkstationFactory()
 
     response = get_view_for_user(
         viewname="reader-studies:create",
         client=client,
         method=client.post,
-        data={"title": "foo bar", "logo": get_temporary_image()},
+        data={
+            "title": "foo bar",
+            "logo": get_temporary_image(),
+            "workstation": ws.pk,
+        },
         follow=True,
         user=creator,
     )
