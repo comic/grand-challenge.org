@@ -13,7 +13,6 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "workstations:image-detail",
         "workstations:image-update",
         "workstations:session-create",
         "workstations:session-update",

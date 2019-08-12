@@ -161,6 +161,28 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
             kwargs={"slug": self.workstation.slug, "pk": self.pk},
         )
 
+    def assign_permissions(self):
+        # Allow the editors group to view this workstation image
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.workstation.editors_group,
+            self,
+        )
+        # Allow the editors to change this workstation image
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.workstation.editors_group,
+            self,
+        )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
 
 class Session(UUIDModel):
     """

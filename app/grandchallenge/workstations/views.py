@@ -110,8 +110,12 @@ class WorkstationImageCreate(
         return super().form_valid(form)
 
 
-class WorkstationImageDetail(UserIsStaffMixin, DetailView):
+class WorkstationImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = WorkstationImage
+    permission_required = f"{WorkstationImage._meta.app_label}.view_{WorkstationImage._meta.model_name}"
+    raise_exception = True
 
 
 class WorkstationImageUpdate(UserIsStaffMixin, UpdateView):

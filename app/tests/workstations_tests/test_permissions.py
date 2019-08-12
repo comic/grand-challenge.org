@@ -4,8 +4,12 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 
-from grandchallenge.workstations.models import Workstation
-from tests.factories import UserFactory, WorkstationFactory
+from grandchallenge.workstations.models import Workstation, WorkstationImage
+from tests.factories import (
+    UserFactory,
+    WorkstationFactory,
+    WorkstationImageFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -36,6 +40,7 @@ class WorkstationSet(NamedTuple):
     workstation: Workstation
     editor: User
     user: User
+    image: WorkstationImage
 
 
 class TwoWorkstationSets(NamedTuple):
@@ -45,8 +50,9 @@ class TwoWorkstationSets(NamedTuple):
 
 def workstation_set():
     ws = WorkstationFactory()
+    wsi = WorkstationImageFactory(workstation=ws)
     e, u = UserFactory(), UserFactory()
-    wss = WorkstationSet(workstation=ws, editor=e, user=u)
+    wss = WorkstationSet(workstation=ws, editor=e, user=u, image=wsi)
     wss.workstation.add_editor(user=e)
     wss.workstation.add_user(user=u)
     return wss
@@ -59,7 +65,12 @@ def two_workstation_sets() -> TwoWorkstationSets:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "viewname", ["workstations:update", "workstations:image-create"]
+    "viewname",
+    [
+        "workstations:update",
+        "workstations:image-create",
+        "workstations:image-detail",
+    ],
 )
 def test_update_view_permissions(client, two_workstation_sets, viewname):
     tests = (
@@ -72,11 +83,16 @@ def test_update_view_permissions(client, two_workstation_sets, viewname):
         (None, 302),
     )
 
+    kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
+
+    if viewname in ["workstations:image-detail"]:
+        kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
+
     for test in tests:
         response = get_view_for_user(
             viewname=viewname,
             client=client,
             user=test[0],
-            reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
+            reverse_kwargs=kwargs,
         )
         assert response.status_code == test[1]

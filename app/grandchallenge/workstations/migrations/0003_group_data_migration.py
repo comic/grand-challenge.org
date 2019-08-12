@@ -22,6 +22,9 @@ def create_workstation_groups(apps, schema_editor):
     for ws in Workstation.objects.all():
         ws.save(force_group_creation=True)
 
+        for wsi in ws.workstationimage_set.all():
+            wsi.assign_permissions()
+
 
 class Migration(migrations.Migration):
 
