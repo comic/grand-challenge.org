@@ -129,8 +129,17 @@ class WorkstationImageUpdate(
     raise_exception = True
 
 
-class SessionRedirectView(UserIsStaffMixin, RedirectView):
+class SessionRedirectView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, RedirectView
+):
     permanent = False
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return get_workstation_image_or_404(**self.kwargs).workstation
 
     def get_redirect_url(self, *args, **kwargs):
         workstation_image = get_workstation_image_or_404(**kwargs)

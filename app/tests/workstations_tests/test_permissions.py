@@ -4,7 +4,11 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 
-from grandchallenge.workstations.models import Workstation, WorkstationImage
+from grandchallenge.workstations.models import (
+    Workstation,
+    WorkstationImage,
+    Session,
+)
 from tests.factories import (
     UserFactory,
     WorkstationFactory,
@@ -145,3 +149,58 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
             reverse_kwargs=kwargs,
         )
         assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname",
+    [
+        "workstations:default-session-redirect",
+        "workstations:workstation-session-redirect",
+        "workstations:workstation-image-session-redirect",
+    ],
+)
+def test_workstation_redirect_permissions(
+    client, two_workstation_sets, viewname
+):
+    two_workstation_sets.ws1.workstation.slug = (
+        settings.DEFAULT_WORKSTATION_SLUG
+    )
+    two_workstation_sets.ws1.workstation.save()
+
+    two_workstation_sets.ws1.image.ready = True
+    two_workstation_sets.ws1.image.save()
+
+    tests = (
+        (two_workstation_sets.ws1.editor, 302),
+        (two_workstation_sets.ws1.user, 302),
+        (two_workstation_sets.ws2.editor, 403),
+        (two_workstation_sets.ws2.user, 403),
+        (UserFactory(), 403),
+        (UserFactory(is_staff=True), 403),
+        (None, 302),
+    )
+
+    kwargs = {}
+
+    if viewname in [
+        "workstations:workstation-session-redirect",
+        "workstations:workstation-image-session-redirect",
+    ]:
+        kwargs.update({"slug": two_workstation_sets.ws1.workstation.slug})
+
+    if viewname == "workstations:workstation-image-session-redirect":
+        kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            user=test[0],
+            reverse_kwargs=kwargs,
+        )
+        assert response.status_code == test[1]
+
+        if test[1] == 302 and test[0] is not None:
+            session = Session.objects.get(creator=test[0])
+            assert response.url == session.get_absolute_url()

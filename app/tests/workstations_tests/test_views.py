@@ -280,10 +280,12 @@ def test_session_update(client):
 
 @pytest.mark.django_db
 def test_session_redirect(client):
-    user = UserFactory(is_staff=True)
-    WorkstationImageFactory(
+    user = UserFactory()
+    wsi = WorkstationImageFactory(
         workstation__title=settings.DEFAULT_WORKSTATION_SLUG, ready=True
     )
+
+    wsi.workstation.add_user(user=user)
 
     response = get_view_for_user(
         client=client,
