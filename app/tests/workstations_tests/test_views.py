@@ -167,12 +167,14 @@ def test_workstationimage_create(client):
 
 @pytest.mark.django_db
 def test_workstationimage_detail(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     ws = WorkstationFactory()
     wsi1, wsi2 = (
         WorkstationImageFactory(workstation=ws),
         WorkstationImageFactory(workstation=ws),
     )
+
+    ws.add_editor(user=user)
 
     response = get_view_for_user(
         viewname="workstations:image-detail",
@@ -188,8 +190,10 @@ def test_workstationimage_detail(client):
 
 @pytest.mark.django_db
 def test_workstationimage_update(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     wsi = WorkstationImageFactory()
+
+    wsi.workstation.add_editor(user=user)
 
     assert wsi.initial_path != ""
     assert wsi.websocket_port != 1337

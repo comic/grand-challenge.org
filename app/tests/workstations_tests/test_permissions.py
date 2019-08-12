@@ -70,6 +70,7 @@ def two_workstation_sets() -> TwoWorkstationSets:
         "workstations:update",
         "workstations:image-create",
         "workstations:image-detail",
+        "workstations:image-update",
     ],
 )
 def test_update_view_permissions(client, two_workstation_sets, viewname):
@@ -85,7 +86,7 @@ def test_update_view_permissions(client, two_workstation_sets, viewname):
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in ["workstations:image-detail"]:
+    if viewname in ["workstations:image-detail", "workstations:image-update"]:
         kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
 
     for test in tests:
