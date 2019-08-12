@@ -5,13 +5,13 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
-
+from grandchallenge.workstations.models import Workstation
 
 HANGING_LIST_SCHEMA = {
     "definitions": {},
@@ -112,6 +112,21 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             self.readers_group,
         )
 
+    def assign_workstation_permissions(self):
+        perm = f"view_{Workstation._meta.model_name}"
+        group = self.readers_group
+
+        workstations = get_objects_for_group(
+            group=group, perms=perm, klass=Workstation
+        )
+
+        if (self.workstation not in workstations) or workstations.count() > 1:
+            for ws in workstations:
+                remove_perm(perm=perm, user_or_group=group, obj=ws)
+
+            # Allow readers to view the workstation used for this reader study
+            assign_perm(perm=perm, user_or_group=group, obj=self.workstation)
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -122,6 +137,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         if adding:
             self.assign_permissions()
+
+        self.assign_workstation_permissions()
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
