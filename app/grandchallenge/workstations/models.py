@@ -48,6 +48,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         related_name="users_of_workstation",
     )
 
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        ordering = ("created", "title")
+
     @property
     def latest_ready_image(self):
         """
@@ -152,6 +155,9 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
         ],
     )
 
+    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+        ordering = ("created", "creator")
+
     def __str__(self):
         return f"Workstation Image {self.pk}"
 
@@ -235,6 +241,9 @@ class Session(UUIDModel):
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
     history = HistoricalRecords()
+
+    class Meta(UUIDModel.Meta):
+        ordering = ("created", "creator")
 
     def __str__(self):
         return f"Session {self.pk}"

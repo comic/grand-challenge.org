@@ -62,6 +62,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
     )
+    workstation = models.ForeignKey(
+        "workstations.Workstation", on_delete=models.CASCADE
+    )
     logo = models.ImageField(upload_to=get_logo_path)
 
     # A hanging_list is a list of dictionaries where the keys are the
