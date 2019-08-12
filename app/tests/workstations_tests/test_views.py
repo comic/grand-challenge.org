@@ -254,7 +254,6 @@ def test_session_create(client):
 
 @pytest.mark.django_db
 def test_session_update(client):
-    user = UserFactory(is_staff=True)
     session = SessionFactory()
 
     assert session.user_finished == False
@@ -267,7 +266,7 @@ def test_session_update(client):
             "slug": session.workstation_image.workstation.slug,
             "pk": session.pk,
         },
-        user=user,
+        user=session.creator,
         data={"user_finished": True},
     )
 

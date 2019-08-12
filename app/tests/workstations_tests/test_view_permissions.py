@@ -1,25 +1,8 @@
 import pytest
 from django.conf import settings
 
-from tests.factories import WorkstationImageFactory, SessionFactory
+from tests.factories import WorkstationImageFactory
 from tests.utils import validate_staff_only_view
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("view", ["workstations:session-update"])
-def test_workstations_staff_views(client, view):
-    if view in ["workstations:session-update"]:
-        session = SessionFactory()
-        reverse_kwargs = {
-            "slug": session.workstation_image.workstation.slug,
-            "pk": session.pk,
-        }
-    else:
-        reverse_kwargs = {}
-
-    validate_staff_only_view(
-        client=client, viewname=view, reverse_kwargs=reverse_kwargs
-    )
 
 
 @pytest.mark.django_db

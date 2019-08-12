@@ -110,6 +110,7 @@ def test_workstation_editor_permissions(
         "workstations:detail",
         "workstations:session-create",
         "workstations:session-detail",
+        "workstations:session-update",
     ],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
@@ -125,7 +126,10 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in ["workstations:session-detail"]:
+    if viewname in [
+        "workstations:session-detail",
+        "workstations:session-update",
+    ]:
         s = SessionFactory(
             workstation_image=two_workstation_sets.ws1.image,
             creator=two_workstation_sets.ws1.user,
