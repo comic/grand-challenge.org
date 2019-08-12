@@ -175,8 +175,14 @@ class SessionUpdate(UserIsStaffMixin, UpdateView):
     fields = ["user_finished"]
 
 
-class SessionDetail(UserIsStaffMixin, DetailView):
+class SessionDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Session
+    permission_required = (
+        f"{Session._meta.app_label}.view_{Session._meta.model_name}"
+    )
+    raise_exception = True
 
 
 def session_proxy(request, *, pk, path, **_):

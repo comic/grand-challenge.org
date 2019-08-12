@@ -301,7 +301,6 @@ def test_session_redirect(client):
 
 @pytest.mark.django_db
 def test_session_detail(client):
-    user = UserFactory(is_staff=True)
     s1, s2 = SessionFactory(), SessionFactory()
 
     response = get_view_for_user(
@@ -311,7 +310,7 @@ def test_session_detail(client):
             "slug": s1.workstation_image.workstation.slug,
             "pk": s1.pk,
         },
-        user=user,
+        user=s1.creator,
     )
 
     assert response.status_code == 200

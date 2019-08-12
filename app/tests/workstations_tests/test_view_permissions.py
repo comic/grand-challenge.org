@@ -6,11 +6,9 @@ from tests.utils import validate_staff_only_view
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view", ["workstations:session-detail", "workstations:session-update"]
-)
+@pytest.mark.parametrize("view", ["workstations:session-update"])
 def test_workstations_staff_views(client, view):
-    if view in ["workstations:session-detail", "workstations:session-update"]:
+    if view in ["workstations:session-update"]:
         session = SessionFactory()
         reverse_kwargs = {
             "slug": session.workstation_image.workstation.slug,

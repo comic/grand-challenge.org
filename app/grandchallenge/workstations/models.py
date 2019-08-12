@@ -389,6 +389,22 @@ class Session(UUIDModel):
             },
         )
 
+    def assign_permissions(self):
+        # Allow the editors group to view and change this session
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.workstation_image.workstation.editors_group,
+            self,
+        )
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.workstation_image.workstation.editors_group,
+            self,
+        )
+        # Allow the session creator to view or change this
+        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+
     def save(self, *args, **kwargs) -> None:
         """
         Saves the session instance, starting or stopping the service if needed.
@@ -401,6 +417,7 @@ class Session(UUIDModel):
         super().save(*args, **kwargs)
 
         if created:
+            self.assign_permissions()
             start_service.apply_async(kwargs=self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
             stop_service.apply_async(kwargs=self.task_kwargs)

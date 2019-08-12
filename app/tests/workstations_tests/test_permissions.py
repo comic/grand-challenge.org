@@ -9,6 +9,7 @@ from tests.factories import (
     UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
+    SessionFactory,
 )
 from tests.utils import get_view_for_user
 
@@ -40,6 +41,7 @@ class WorkstationSet(NamedTuple):
     workstation: Workstation
     editor: User
     user: User
+    user1: User
     image: WorkstationImage
 
 
@@ -51,8 +53,8 @@ class TwoWorkstationSets(NamedTuple):
 def workstation_set():
     ws = WorkstationFactory()
     wsi = WorkstationImageFactory(workstation=ws)
-    e, u = UserFactory(), UserFactory()
-    wss = WorkstationSet(workstation=ws, editor=e, user=u, image=wsi)
+    e, u, u1 = UserFactory(), UserFactory(), UserFactory()
+    wss = WorkstationSet(workstation=ws, editor=e, user=u, user1=u1, image=wsi)
     wss.workstation.add_editor(user=e)
     wss.workstation.add_user(user=u)
     return wss
@@ -103,7 +105,12 @@ def test_workstation_editor_permissions(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "viewname", ["workstations:detail", "workstations:session-create"]
+    "viewname",
+    [
+        "workstations:detail",
+        "workstations:session-create",
+        "workstations:session-detail",
+    ],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     tests = (
@@ -117,6 +124,14 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     )
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
+
+    if viewname in ["workstations:session-detail"]:
+        s = SessionFactory(
+            workstation_image=two_workstation_sets.ws1.image,
+            creator=two_workstation_sets.ws1.user,
+        )
+        kwargs.update({"pk": s.pk})
+        tests += ((two_workstation_sets.ws1.user1, 403),)
 
     for test in tests:
         response = get_view_for_user(
