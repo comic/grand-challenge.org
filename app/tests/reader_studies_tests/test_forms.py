@@ -97,18 +97,28 @@ def test_reader_study_create(client):
     creator = get_rs_creator()
     ws = WorkstationFactory()
 
-    response = get_view_for_user(
-        viewname="reader-studies:create",
-        client=client,
-        method=client.post,
-        data={
-            "title": "foo bar",
-            "logo": get_temporary_image(),
-            "workstation": ws.pk,
-        },
-        follow=True,
-        user=creator,
-    )
+    def try_create_rs():
+        return get_view_for_user(
+            viewname="reader-studies:create",
+            client=client,
+            method=client.post,
+            data={
+                "title": "foo bar",
+                "logo": get_temporary_image(),
+                "workstation": ws.pk,
+            },
+            follow=True,
+            user=creator,
+        )
+
+    response = try_create_rs()
+    assert "error_1_id_workstation" in response.rendered_content
+
+    # The editor must have view permissions for the workstation to add it
+    ws.add_user(user=creator)
+
+    response = try_create_rs()
+    assert "error_1_id_workstation" not in response.rendered_content
     assert response.status_code == 200
 
     rs = ReaderStudy.objects.get(title="foo bar")

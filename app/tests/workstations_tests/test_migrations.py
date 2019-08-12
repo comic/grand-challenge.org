@@ -8,7 +8,7 @@ def test_workstation_group_migration():
     executor = MigrationExecutor(connection)
     app = "workstations"
     migrate_from = [(app, "0001_initial")]
-    migrate_to = [(app, "0004_auto_20190809_0920")]
+    migrate_to = [(app, "0004_auto_20190812_1443")]
 
     executor.migrate(migrate_from)
     old_apps = executor.loader.project_state(migrate_from).apps

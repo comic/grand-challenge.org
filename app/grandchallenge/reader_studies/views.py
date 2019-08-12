@@ -73,6 +73,11 @@ class ReaderStudyCreate(
         f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def form_valid(self, form):
         response = super().form_valid(form)
         self.object.add_editor(self.request.user)
@@ -105,6 +110,11 @@ class ReaderStudyUpdate(
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
 
 class AddObjectToReaderStudyMixin(
