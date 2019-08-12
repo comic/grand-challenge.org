@@ -76,9 +76,13 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def assign_permissions(self):
-        # Allow the editors and users groups to view this study
+        # Allow the editors and users groups to view this workstation
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
         assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Allow the editors to change this workstation
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
+        )
 
     def save(self, *args, force_group_creation=False, **kwargs):
         adding = self._state.adding

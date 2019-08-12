@@ -15,12 +15,17 @@ from tests.factories import (
 from tests.utils import get_view_for_user, get_temporary_image
 
 
-@pytest.mark.django_db
-def test_workstation_create_detail(client):
-    user = UserFactory()
-
+@pytest.fixture
+def workstation_creator():
+    u = UserFactory()
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
-    g.user_set.add(user)
+    g.user_set.add(u)
+    return u
+
+
+@pytest.mark.django_db
+def test_workstation_create_detail(client, workstation_creator):
+    user = workstation_creator
 
     title = "my Workstation"
     description = "my AWESOME workstation"
@@ -92,7 +97,9 @@ def test_workstation_list_view(client):
 @pytest.mark.django_db
 def test_workstation_update_view(client):
     w = WorkstationFactory()
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
+    w.add_editor(user=user)
+
     title = "my Workstation"
     description = "my AWESOME workstation"
 

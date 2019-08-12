@@ -13,8 +13,6 @@ from tests.utils import validate_staff_only_view
 @pytest.mark.parametrize(
     "view",
     [
-        "workstations:list",
-        "workstations:update",
         "workstations:image-create",
         "workstations:image-detail",
         "workstations:image-update",
@@ -23,11 +21,7 @@ from tests.utils import validate_staff_only_view
     ],
 )
 def test_workstations_staff_views(client, view):
-    if view in [
-        "workstations:update",
-        "workstations:image-create",
-        "workstations:session-create",
-    ]:
+    if view in ["workstations:image-create", "workstations:session-create"]:
         reverse_kwargs = {"slug": WorkstationFactory().slug}
     elif view in ["workstations:image-detail", "workstations:image-update"]:
         wsi = WorkstationImageFactory()

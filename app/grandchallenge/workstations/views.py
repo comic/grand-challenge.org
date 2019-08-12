@@ -72,9 +72,15 @@ class WorkstationDetail(
     )
 
 
-class WorkstationUpdate(UserIsStaffMixin, UpdateView):
+class WorkstationUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
     model = Workstation
     form_class = WorkstationForm
+    permission_required = (
+        f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
 
 
 class WorkstationImageCreate(UserIsStaffMixin, CreateView):
