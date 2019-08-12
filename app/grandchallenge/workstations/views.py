@@ -15,10 +15,10 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
@@ -38,7 +38,8 @@ from grandchallenge.workstations.utils import (
 class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = (DjangoObjectPermissionsFilter,)
 
 
 class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):

@@ -236,3 +236,45 @@ def test_session_proxy_permissions(client, two_workstation_sets):
             },
         )
         assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname", ["api:session-detail", "api:session-list"]
+)
+def test_session_api_permissions(client, two_workstation_sets, viewname):
+    tests = (
+        (two_workstation_sets.ws1.editor, 200),
+        (two_workstation_sets.ws1.user, 200),
+        (two_workstation_sets.ws1.user1, 404),
+        (two_workstation_sets.ws2.editor, 404),
+        (two_workstation_sets.ws2.user, 404),
+        (UserFactory(), 404),
+        (UserFactory(is_staff=True), 404),
+        (None, 401),
+    )
+
+    s = SessionFactory(
+        workstation_image=two_workstation_sets.ws1.image,
+        creator=two_workstation_sets.ws1.user,
+    )
+
+    if viewname == "api:session-detail":
+        kwargs = {"pk": s.pk}
+    else:
+        kwargs = {}
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            user=test[0],
+            reverse_kwargs=kwargs,
+        )
+        if viewname == "api:session-list" and test[0] is not None:
+            if test[1] == 200:
+                assert response.json()["count"] == 1
+            else:
+                assert response.json()["count"] == 0
+        else:
+            assert response.status_code == test[1]
