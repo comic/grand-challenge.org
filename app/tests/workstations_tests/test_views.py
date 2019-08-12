@@ -220,8 +220,10 @@ def test_workstationimage_update(client):
 
 @pytest.mark.django_db
 def test_session_create(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     ws = WorkstationFactory()
+
+    ws.add_user(user=user)
 
     # Create some workstations and pretend that they're ready
     wsi_old = WorkstationImageFactory(workstation=ws, ready=True)

@@ -70,6 +70,7 @@ class WorkstationDetail(
     permission_required = (
         f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
     )
+    raise_exception = True
 
 
 class WorkstationUpdate(
@@ -146,14 +147,26 @@ class SessionRedirectView(UserIsStaffMixin, RedirectView):
         return url
 
 
-class SessionCreate(UserIsStaffMixin, CreateView):
+class SessionCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = Session
     fields = []
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def workstation(self):
+        return Workstation.objects.get(slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.workstation
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        workstation = Workstation.objects.get(slug=self.kwargs["slug"])
-        form.instance.workstation_image = workstation.latest_ready_image
+        form.instance.workstation_image = self.workstation.latest_ready_image
         return super().form_valid(form)
 
 

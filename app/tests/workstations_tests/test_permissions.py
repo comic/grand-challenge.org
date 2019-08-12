@@ -73,7 +73,9 @@ def two_workstation_sets() -> TwoWorkstationSets:
         "workstations:image-update",
     ],
 )
-def test_update_view_permissions(client, two_workstation_sets, viewname):
+def test_workstation_editor_permissions(
+    client, two_workstation_sets, viewname
+):
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 403),
@@ -88,6 +90,33 @@ def test_update_view_permissions(client, two_workstation_sets, viewname):
 
     if viewname in ["workstations:image-detail", "workstations:image-update"]:
         kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            user=test[0],
+            reverse_kwargs=kwargs,
+        )
+        assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname", ["workstations:detail", "workstations:session-create"]
+)
+def test_workstation_user_permissions(client, two_workstation_sets, viewname):
+    tests = (
+        (two_workstation_sets.ws1.editor, 200),
+        (two_workstation_sets.ws1.user, 200),
+        (two_workstation_sets.ws2.editor, 403),
+        (two_workstation_sets.ws2.user, 403),
+        (UserFactory(), 403),
+        (UserFactory(is_staff=True), 403),
+        (None, 302),
+    )
+
+    kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
     for test in tests:
         response = get_view_for_user(
