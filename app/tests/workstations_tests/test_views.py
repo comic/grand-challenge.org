@@ -124,10 +124,12 @@ def test_workstation_update_view(client):
 
 @pytest.mark.django_db
 def test_workstationimage_create(client):
-    UserFactory()
-    u2 = UserFactory(is_staff=True)
+    u2 = UserFactory()
     w1 = WorkstationFactory()
     w2 = WorkstationFactory()
+
+    w2.add_editor(user=u2)
+
     staged_file = StagedFileFactory(file__filename="example.tar.gz")
 
     assert w1.workstationimage_set.count() == 0

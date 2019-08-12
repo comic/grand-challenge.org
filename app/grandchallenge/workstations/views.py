@@ -83,15 +83,26 @@ class WorkstationUpdate(
     raise_exception = True
 
 
-class WorkstationImageCreate(UserIsStaffMixin, CreateView):
+class WorkstationImageCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = WorkstationImage
     form_class = WorkstationImageForm
+    permission_required = (
+        f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def workstation(self):
+        return Workstation.objects.get(slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.workstation
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.workstation = Workstation.objects.get(
-            slug=self.kwargs["slug"]
-        )
+        form.instance.workstation = self.workstation
 
         uploaded_file = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid

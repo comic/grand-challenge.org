@@ -58,8 +58,10 @@ def two_workstation_sets() -> TwoWorkstationSets:
 
 
 @pytest.mark.django_db
-def test_update_view_permissions(client, two_workstation_sets):
-
+@pytest.mark.parametrize(
+    "viewname", ["workstations:update", "workstations:image-create"]
+)
+def test_update_view_permissions(client, two_workstation_sets, viewname):
     tests = (
         (two_workstation_sets.ws1.editor, 200),
         (two_workstation_sets.ws1.user, 403),
@@ -72,7 +74,7 @@ def test_update_view_permissions(client, two_workstation_sets):
 
     for test in tests:
         response = get_view_for_user(
-            viewname="workstations:update",
+            viewname=viewname,
             client=client,
             user=test[0],
             reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
