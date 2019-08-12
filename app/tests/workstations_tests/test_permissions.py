@@ -204,3 +204,35 @@ def test_workstation_redirect_permissions(
         if test[1] == 302 and test[0] is not None:
             session = Session.objects.get(creator=test[0])
             assert response.url == session.get_absolute_url()
+
+
+@pytest.mark.django_db
+def test_session_proxy_permissions(client, two_workstation_sets):
+    tests = (
+        (two_workstation_sets.ws1.editor, 403),
+        (two_workstation_sets.ws1.user, 200),
+        (two_workstation_sets.ws1.user1, 403),
+        (two_workstation_sets.ws2.editor, 403),
+        (two_workstation_sets.ws2.user, 403),
+        (UserFactory(), 403),
+        (UserFactory(is_staff=True), 403),
+        (None, 403),
+    )
+
+    s = SessionFactory(
+        workstation_image=two_workstation_sets.ws1.image,
+        creator=two_workstation_sets.ws1.user,
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="workstations:session-proxy",
+            client=client,
+            user=test[0],
+            reverse_kwargs={
+                "slug": s.workstation_image.workstation.slug,
+                "pk": s.pk,
+                "path": "foo/bar/../../baz",
+            },
+        )
+        assert response.status_code == test[1]
