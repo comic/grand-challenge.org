@@ -31,7 +31,15 @@
             </a>
         </p>
 
-        <h3>Editors</h3>
+        <h3>Users</h3>
+
+        <p>
+            {{ num_users_with_access }}
+            user{{ num_users_with_access|pluralize }} can access this
+            workstation.
+        </p>
+
+        <h4>Editors</h4>
         <p>The following users are able to edit and use this workstation:</p>
 
         <ul>
@@ -49,10 +57,8 @@
             </a>
         </p>
 
-        <h3>Users</h3>
-        <p>The following users are able to use this workstation:</p>
-
         <h4>Workstation Users Group</h4>
+        <p>The following users are able to use this workstation:</p>
 
         <ul>
             {% for user in object.users_group.user_set.all %}
