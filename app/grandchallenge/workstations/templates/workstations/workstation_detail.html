@@ -24,93 +24,93 @@
 
     {% if "change_workstation" in workstation_perms %}
 
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'workstations:update' slug=object.slug %}">
-            <i class="fa fa-edit"></i> Edit this workstation
-        </a>
-    </p>
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'workstations:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this workstation
+            </a>
+        </p>
 
-    <h3>Editors</h3>
-    <p>The following users are able to edit and use this workstation:</p>
+        <h3>Editors</h3>
+        <p>The following users are able to edit and use this workstation:</p>
 
-    <ul>
-        {% for user in object.editors_group.user_set.all %}
-            <li>{{ user|user_profile_link }}</li>
-        {% empty %}
-            <li>There are no editors for this workstation</li>
-        {% endfor %}
-    </ul>
-
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'workstations:editors-update' slug=object.slug %}">
-            <i class="fa fa-plus"></i> Add an editor for this workstation
-        </a>
-    </p>
-
-    <h3>Users</h3>
-    <p>The following users are able to use this workstation:</p>
-
-    <h4>Workstation Users Group</h4>
-
-    <ul>
-        {% for user in object.users_group.user_set.all %}
-            <li>{{ user|user_profile_link }}</li>
-        {% empty %}
-            <li>There are no users in this workstations user group.</li>
-        {% endfor %}
-    </ul>
-
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'workstations:users-update' slug=object.slug %}">
-            <i class="fa fa-plus"></i> Add a user for this workstation
-        </a>
-    </p>
-
-    <h4>Reader Study Groups</h4>
-
-    <p>
-        The following reader studies are using this workstation,
-        which allows their readers to use this workstation.
-    </p>
-
-    {% for rs in object.reader_studies.all %}
-        <h5>{{ rs }}</h5>
         <ul>
-            {% for user in rs.readers_group.user_set.all %}
+            {% for user in object.editors_group.user_set.all %}
                 <li>{{ user|user_profile_link }}</li>
             {% empty %}
-                <li>There are no readers for <a
-                        href="{{ rs.get_absolute_url }}">this reader study</a>.
+                <li>There are no editors for this workstation</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'workstations:editors-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add an editor for this workstation
+            </a>
+        </p>
+
+        <h3>Users</h3>
+        <p>The following users are able to use this workstation:</p>
+
+        <h4>Workstation Users Group</h4>
+
+        <ul>
+            {% for user in object.users_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no users in this workstations user group.</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'workstations:users-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add a user for this workstation
+            </a>
+        </p>
+
+        <h4>Reader Study Groups</h4>
+
+        <p>
+            The following reader studies are using this workstation,
+            which allows their readers to use this workstation.
+        </p>
+
+        {% for rs in object.readerstudy_set.all %}
+            <h5>{{ rs }}</h5>
+            <ul>
+                {% for user in rs.readers_group.user_set.all %}
+                    <li>{{ user|user_profile_link }}</li>
+                {% empty %}
+                    <li>There are no readers for <a
+                            href="{{ rs.get_absolute_url }}">{{ rs }}</a>.
+                    </li>
+                {% endfor %}
+            </ul>
+        {% empty %}
+            <ul>
+                <li>No reader studies are using this workstation.</li>
+            </ul>
+        {% endfor %}
+
+
+
+        <h3>Container Images</h3>
+
+        <ul>
+            {% for image in object.workstationimage_set.all %}
+                <li><a href="{{ image.get_absolute_url }}">{{ image }}</a>
                 </li>
             {% endfor %}
         </ul>
-    {% empty %}
-        <ul>
-            <li>No reader studies are using this workstation.</li>
-        </ul>
-    {% endfor %}
 
-
-
-    <h3>Container Images</h3>
-
-    <ul>
-        {% for image in object.workstationimage_set.all %}
-            <li><a href="{{ image.get_absolute_url }}">{{ image }}</a>
-            </li>
-        {% endfor %}
-    </ul>
-
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'workstations:image-create' slug=object.slug %}">
-            <i class="fa fa-plus"></i> Upload a new container image for this
-            workstation
-        </a>
-    </p>
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'workstations:image-create' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Upload a new container image for
+                this workstation
+            </a>
+        </p>
 
     {% endif %}
 
