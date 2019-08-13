@@ -175,5 +175,3 @@ class Job(UUIDModel, ContainerExecJobModel):
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)

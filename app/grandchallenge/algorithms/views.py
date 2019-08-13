@@ -84,5 +84,4 @@ class JobViewSet(
     serializer_class = JobSerializer
     queryset = Job.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save()
+
