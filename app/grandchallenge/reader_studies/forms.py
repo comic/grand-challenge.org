@@ -1,5 +1,3 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,6 +12,7 @@ from django.forms import (
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.models import (
     ReaderStudy,
@@ -21,13 +20,6 @@ from grandchallenge.reader_studies.models import (
     Question,
 )
 from grandchallenge.workstations.models import Workstation
-
-
-class SaveFormInitMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
 
 
 class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
@@ -92,11 +84,11 @@ class UserGroupForm(SaveFormInitMixin, Form):
         return user
 
     def add_or_remove_user(self, *, reader_study):
-        if self.cleaned_data["action"] == EditorsForm.ADD:
+        if self.cleaned_data["action"] == self.ADD:
             getattr(reader_study, f"add_{self.role}")(
                 self.cleaned_data["user"]
             )
-        elif self.cleaned_data["action"] == EditorsForm.REMOVE:
+        elif self.cleaned_data["action"] == self.REMOVE:
             getattr(reader_study, f"remove_{self.role}")(
                 self.cleaned_data["user"]
             )

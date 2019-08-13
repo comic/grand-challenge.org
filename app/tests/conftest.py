@@ -34,7 +34,9 @@ from tests.annotations_tests.factories import (
 from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 
-""" Defines fixtures than can be used across all of the tests """
+# Import fixtures that are used throughout a module
+# noinspection PyUnresolvedReferences
+from tests.workstations_tests.fixtures import two_workstation_sets
 
 
 def pytest_addoption(parser):

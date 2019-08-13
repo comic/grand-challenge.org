@@ -2,24 +2,31 @@ from django.urls import path
 
 from grandchallenge.workstations.forms import workstation_image_upload_widget
 from grandchallenge.workstations.views import (
-    WorkstationList,
-    WorkstationCreate,
-    WorkstationDetail,
-    WorkstationUpdate,
-    WorkstationImageCreate,
-    WorkstationImageDetail,
+    session_proxy,
     SessionCreate,
     SessionDetail,
-    SessionUpdate,
-    session_proxy,
-    WorkstationImageUpdate,
     SessionRedirectView,
+    SessionUpdate,
+    WorkstationCreate,
+    WorkstationDetail,
+    WorkstationEditorsUpdate,
+    WorkstationImageCreate,
+    WorkstationImageDetail,
+    WorkstationImageUpdate,
+    WorkstationList,
+    WorkstationUpdate,
+    WorkstationUserAutocomplete,
 )
 
 app_name = "workstations"
 
 urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
+    path(
+        "users-autocomplete/",
+        WorkstationUserAutocomplete.as_view(),
+        name="users-autocomplete",
+    ),
     path("create/", WorkstationCreate.as_view(), name="create"),
     path(
         "load/", SessionRedirectView.as_view(), name="default-session-redirect"
@@ -33,6 +40,11 @@ urlpatterns = [
         "<slug>/images/<uuid:pk>/load/",
         SessionRedirectView.as_view(),
         name="workstation-image-session-redirect",
+    ),
+    path(
+        "<slug>/editors/update/",
+        WorkstationEditorsUpdate.as_view(),
+        name="editors-update",
     ),
     path("<slug>/", WorkstationDetail.as_view(), name="detail"),
     path("<slug>/update/", WorkstationUpdate.as_view(), name="update"),

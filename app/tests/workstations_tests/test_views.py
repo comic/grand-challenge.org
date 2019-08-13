@@ -348,3 +348,45 @@ def test_workstation_proxy(client):
     response = get_view_for_user(client=client, url=url, user=u2)
     assert not response.has_header("X-Accel-Redirect")
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_group_update(client, two_workstation_sets):
+    new_editor = UserFactory()
+
+    assert not two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="workstations:editors-update",
+        method=client.post,
+        reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
+        user=two_workstation_sets.ws1.editor,
+        data={"action": "ADD", "user": new_editor.pk},
+        follow=True,
+    )
+    assert response.status_code == 200
+
+    assert two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="workstations:editors-update",
+        method=client.post,
+        reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
+        user=two_workstation_sets.ws1.editor,
+        data={"action": "REMOVE", "user": new_editor.pk},
+        follow=True,
+    )
+    assert response.status_code == 200
+
+    assert not two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)

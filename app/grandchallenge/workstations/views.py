@@ -1,4 +1,11 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from dal import autocomplete
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -9,6 +16,7 @@ from django.views.generic import (
     DetailView,
     UpdateView,
     RedirectView,
+    FormView,
 )
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -22,6 +30,7 @@ from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
+    EditorsForm,
 )
 from grandchallenge.workstations.models import (
     Workstation,
@@ -83,6 +92,70 @@ class WorkstationUpdate(
         f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
     )
     raise_exception = True
+
+
+class WorkstationUserAutocomplete(
+    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
+):
+    def test_func(self):
+        group_pks = (
+            Workstation.objects.all()
+            .select_related("editors_group")
+            .values_list("editors_group__pk", flat=True)
+        )
+        return self.request.user.groups.filter(pk__in=group_pks).exists()
+
+    def get_queryset(self):
+        qs = (
+            get_user_model()
+            .objects.all()
+            .order_by("username")
+            .exclude(username=settings.ANONYMOUS_USER_NAME)
+        )
+
+        if self.q:
+            qs = qs.filter(username__istartswith=self.q)
+
+        return qs
+
+
+class WorkstationGroupUpdateMixin(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    template_name = "workstations/workstation_user_groups_form.html"
+    permission_required = (
+        f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.workstation
+
+    @property
+    def workstation(self):
+        return Workstation.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"object": self.workstation, "role": self.get_form().role}
+        )
+        return context
+
+    def get_success_url(self):
+        return self.workstation.get_absolute_url()
+
+    def form_valid(self, form):
+        form.add_or_remove_user(workstation=self.workstation)
+        return super().form_valid(form)
+
+
+class WorkstationEditorsUpdate(WorkstationGroupUpdateMixin):
+    form_class = EditorsForm
+    success_message = "Editors successfully updated"
 
 
 class WorkstationImageCreate(
