@@ -1,0 +1,81 @@
+{
+    "description": "<p>This is the first monthly release of the grand-challenge.org codebase.</p>\n<p><strong>New features</strong></p>\n<ul>\n<li>Added support for serving and converting TIFF files to Deep Zoom Images</li>\n<li>Added a read only algorithm API</li>\n<li>Added image browser API endpoints</li>\n</ul>", 
+    "license": "other-open", 
+    "title": "comic/grand-challenge.org: Monthly Release August 2019", 
+    "version": "v2019.08", 
+    "upload_type": "software", 
+    "publication_date": "2019-07-31", 
+    "creators": [
+        {
+            "affiliation": "@DIAGNijmegen", 
+            "name": "James"
+        }, 
+        {
+            "name": "HarmvZ"
+        }, 
+        {
+            "name": "Marcel Koek"
+        }, 
+        {
+            "name": "pkcakeout"
+        }, 
+        {
+            "affiliation": "Medical Imaging Research Center", 
+            "name": "Bart De Dobbelaer"
+        }, 
+        {
+            "affiliation": "Build Succeeded", 
+            "name": "Hans Pinckaers"
+        }, 
+        {
+            "affiliation": "@UMCUGenetics", 
+            "name": "Carl Shneider"
+        }, 
+        {
+            "affiliation": "Radboud University Medical Center", 
+            "name": "Haimasree"
+        }, 
+        {
+            "name": "Roel Zinkstok"
+        }, 
+        {
+            "affiliation": "radboudumc", 
+            "name": "Ecem Sogancioglu"
+        }, 
+        {
+            "name": "CristinaGGonzalo"
+        }, 
+        {
+            "name": "Hans Meine"
+        }, 
+        {
+            "name": "Alexander K\u00f6hn"
+        }, 
+        {
+            "name": "miriam-groeneveld"
+        }, 
+        {
+            "affiliation": "@NLeSC @SportySpots", 
+            "name": "Tom Klaver"
+        }, 
+        {
+            "name": "Karelger"
+        }, 
+        {
+            "name": "Dar\u00edo Here\u00f1\u00fa"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://github.com/comic/grand-challenge.org/tree/v2019.08", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.3356819", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
