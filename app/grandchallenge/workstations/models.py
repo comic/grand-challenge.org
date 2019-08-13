@@ -145,7 +145,7 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
     )
     initial_path = models.CharField(
         max_length=256,
-        default="Applications/GrandChallengeViewer/index.html",
+        default="Applications/CIRRUSCoreWeb/DIAG/CIRRUSCore/Modules/www/index.html",
         blank=True,
         validators=[
             RegexValidator(
