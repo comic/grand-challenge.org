@@ -43,25 +43,6 @@ def get_temporary_image():
 
 
 class Command(BaseCommand):
-    @staticmethod
-    def _create_users(usernames):
-        users = {}
-
-        for username in usernames:
-            users[username] = UserenaSignup.objects.create_user(
-                username=username,
-                email=f"{username}@example.com",
-                password=username,
-                active=True,
-            )
-
-        return users
-
-    @staticmethod
-    def _log_tokens():
-        out = [f"\t{t.user} token is: {t}\n" for t in Token.objects.all()]
-        logger.debug(f"{'*' * 80}\n{''.join(out)}{'*' * 80}")
-
     def handle(self, *args, **options):
         """
         Creates the main project, demo user and demo challenge
@@ -82,6 +63,8 @@ class Command(BaseCommand):
         site.name = "Grand Challenge"
         site.save()
 
+        self._create_flatpages(site)
+
         default_users = [
             "demo",
             "demop",
@@ -89,10 +72,18 @@ class Command(BaseCommand):
             "admin",
             "retina",
             "readerstudy",
+            "workstation",
         ]
+        self.users = self._create_users(usernames=default_users)
 
-        users = self._create_users(usernames=default_users)
+        self._set_user_permissions()
+        self._create_user_tokens()
+        self._create_demo_challenge()
+        self._create_external_challenge()
+        self._create_algorithm_demo()
+        self._log_tokens()
 
+    def _create_flatpages(self, site):
         page = FlatPage.objects.create(
             url="/about/",
             title="About",
@@ -100,37 +91,69 @@ class Command(BaseCommand):
         )
         page.sites.add(site)
 
-        # Set the staff bit
-        users["admin"].is_staff = True
-        users["admin"].save()
+    @staticmethod
+    def _create_users(usernames):
+        users = {}
 
-        # Create tokens
+        for username in usernames:
+            users[username] = UserenaSignup.objects.create_user(
+                username=username,
+                email=f"{username}@example.com",
+                password=username,
+                active=True,
+            )
+
+        return users
+
+    def _set_user_permissions(self):
+        self.users["admin"].is_staff = True
+        self.users["admin"].save()
+
+        retina_group = Group.objects.get(
+            name=settings.RETINA_GRADERS_GROUP_NAME
+        )
+        self.users["retina"].groups.add(retina_group)
+
+        rs_group = Group.objects.get(
+            name=settings.READER_STUDY_CREATORS_GROUP_NAME
+        )
+        self.users["readerstudy"].groups.add(rs_group)
+
+        workstation_group = Group.objects.get(
+            name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
+        )
+        self.users["workstation"].groups.add(workstation_group)
+
+    def _create_user_tokens(self):
         Token.objects.get_or_create(
-            user=users["admin"], key="1b9436200001f2eaf57cd77db075cbb60a49a00a"
+            user=self.users["admin"],
+            key="1b9436200001f2eaf57cd77db075cbb60a49a00a",
         )
         Token.objects.get_or_create(
-            user=users["retina"],
+            user=self.users["retina"],
             key="f1f98a1733c05b12118785ffd995c250fe4d90da",
         )
 
+    def _create_demo_challenge(self):
         demo = Challenge.objects.create(
             short_name="demo",
             description="demo project",
-            creator=users["demo"],
+            creator=self.users["demo"],
             use_evaluation=True,
             hidden=False,
         )
-        demo.add_participant(users["demop"])
+        demo.add_participant(self.users["demop"])
+
         Page.objects.create(challenge=demo, title="all", permission_lvl="ALL")
         Page.objects.create(challenge=demo, title="reg", permission_lvl="REG")
         Page.objects.create(challenge=demo, title="adm", permission_lvl="ADM")
 
-        method = Method(challenge=demo, creator=users["demo"])
+        method = Method(challenge=demo, creator=self.users["demo"])
         container = ContentFile(base64.b64decode(b""))
         method.image.save("test.tar", container)
         method.save()
 
-        submission = Submission(challenge=demo, creator=users["demop"])
+        submission = Submission(challenge=demo, creator=self.users["demop"])
         content = ContentFile(base64.b64decode(b""))
         submission.file.save("test.csv", content)
         submission.save()
@@ -158,8 +181,9 @@ class Command(BaseCommand):
         ]
         demo.evaluation_config.save()
 
+    def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(
-            creator=users["demo"],
+            creator=self.users["demo"],
             homepage="https://www.example.com",
             short_name="EXAMPLE2018",
             title="Example External Challenge 2018",
@@ -203,7 +227,6 @@ class Command(BaseCommand):
             "TEM",
             "Histology",
         )
-
         for modality in modalities:
             ImagingModality.objects.create(modality=modality)
 
@@ -211,19 +234,10 @@ class Command(BaseCommand):
         ex_challenge.modalities.add(mr_modality)
         ex_challenge.save()
 
-        retina_group = Group.objects.get(
-            name=settings.RETINA_GRADERS_GROUP_NAME
-        )
-        users["retina"].groups.add(retina_group)
-
-        rs_group = Group.objects.get(
-            name=settings.READER_STUDY_CREATORS_GROUP_NAME
-        )
-        users["readerstudy"].groups.add(rs_group)
-
+    def _create_algorithm_demo(self):
         cases_image = grandchallenge.cases.models.Image(
             name="test_image.mha",
-            modality=mr_modality,
+            modality=ImagingModality.objects.get(modality="MR"),
             width=128,
             height=128,
             color_space="RGB",
@@ -231,10 +245,11 @@ class Command(BaseCommand):
         cases_image.save()
 
         algorithms_algorithm = grandchallenge.algorithms.models.Algorithm(
-            creator=users["demo"],
+            creator=self.users["demo"],
             title="test_algorithm",
             logo=get_temporary_image(),
         )
+
         container = ContentFile(base64.b64decode(b""))
         algorithms_algorithm.image.save("test_algorithm.tar", container)
         algorithms_algorithm.save()
@@ -250,4 +265,7 @@ class Command(BaseCommand):
         algorithms_result.save()
         algorithms_result.images.add(cases_image)
 
-        self._log_tokens()
+    @staticmethod
+    def _log_tokens():
+        out = [f"\t{t.user} token is: {t}\n" for t in Token.objects.all()]
+        logger.debug(f"{'*' * 80}\n{''.join(out)}{'*' * 80}")
