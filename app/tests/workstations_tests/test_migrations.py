@@ -1,6 +1,10 @@
 import pytest
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
+from guardian.shortcuts import get_perms
+
+from grandchallenge.workstations.models import Workstation
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db(transaction=True)
@@ -13,8 +17,9 @@ def test_workstation_group_migration():
     executor.migrate(migrate_from)
     old_apps = executor.loader.project_state(migrate_from).apps
 
-    Workstation = old_apps.get_model(app, "Workstation")
-    old_ws = Workstation.objects.create(title="foo")
+    user = UserFactory()
+    OldWorkstation = old_apps.get_model(app, "Workstation")
+    old_ws = OldWorkstation.objects.create(title="foo")
 
     assert not hasattr(old_ws, "editors_group")
     assert not hasattr(old_ws, "users_group")
@@ -24,12 +29,11 @@ def test_workstation_group_migration():
     # Migrate forwards
     executor.migrate(migrate_to)
 
-    new_apps = executor.loader.project_state(migrate_to).apps
-
-    Workstation = new_apps.get_model(app, "Workstation")
     new_ws = Workstation.objects.get(title="foo")
+    new_ws.add_user(user=user)
 
     assert new_ws.editors_group
     assert new_ws.users_group
     assert new_ws.slug == old_ws.slug
     assert new_ws.title == old_ws.title
+    assert "view_workstation" in get_perms(user, new_ws)
