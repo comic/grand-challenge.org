@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+{% load guardian_tags %}
 
 {% block title %}{{ object.slug }} - {{ block.super }}{% endblock %}
 
@@ -14,9 +16,13 @@
 {% endblock %}
 
 {% block content %}
+    {% get_obj_perms request.user for object as "workstation_perms" %}
+
     <h2>{{ object.title }}</h2>
 
     <p>{{ object.description }}</p>
+
+    {% if "change_workstation" in workstation_perms %}
 
     <p>
         <a class="btn btn-primary"
@@ -24,6 +30,68 @@
             <i class="fa fa-edit"></i> Edit this workstation
         </a>
     </p>
+
+    <h3>Editors</h3>
+    <p>The following users are able to edit and use this workstation:</p>
+
+    <ul>
+        {% for user in object.editors_group.user_set.all %}
+            <li>{{ user|user_profile_link }}</li>
+        {% empty %}
+            <li>There are no editors for this workstation</li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:editors-update' slug=object.slug %}">
+            <i class="fa fa-plus"></i> Add an editor for this workstation
+        </a>
+    </p>
+
+    <h3>Users</h3>
+    <p>The following users are able to use this workstation:</p>
+
+    <h4>Workstation Users Group</h4>
+
+    <ul>
+        {% for user in object.users_group.user_set.all %}
+            <li>{{ user|user_profile_link }}</li>
+        {% empty %}
+            <li>There are no users in this workstations user group.</li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'workstations:users-update' slug=object.slug %}">
+            <i class="fa fa-plus"></i> Add a user for this workstation
+        </a>
+    </p>
+
+    <h4>Reader Study Groups</h4>
+
+    <p>
+        The following reader studies are using this workstation,
+        which allows their readers to use this workstation.
+    </p>
+
+    {% for rs in object.reader_studies.all %}
+        <h5>{{ rs }}</h5>
+        <ul>
+            {% for user in rs.readers_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no readers for <a
+                        href="{{ rs.get_absolute_url }}">this reader study</a>.
+                </li>
+            {% endfor %}
+        </ul>
+    {% empty %}
+        <ul>
+            <li>No reader studies are using this workstation.</li>
+        </ul>
+    {% endfor %}
 
     {% if object.workstationimage_set.count != 0 %}
 
@@ -67,4 +135,5 @@
         </a>
     </p>
 
+    {% endif %}
 {% endblock %}
