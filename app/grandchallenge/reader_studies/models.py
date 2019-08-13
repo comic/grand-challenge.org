@@ -121,8 +121,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         )
 
         if (self.workstation not in workstations) or workstations.count() > 1:
-            for ws in workstations:
-                remove_perm(perm=perm, user_or_group=group, obj=ws)
+            remove_perm(perm=perm, user_or_group=group, obj=workstations)
 
             # Allow readers to view the workstation used for this reader study
             assign_perm(perm=perm, user_or_group=group, obj=self.workstation)
