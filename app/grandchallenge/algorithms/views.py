@@ -83,5 +83,3 @@ class JobViewSet(
 ):
     serializer_class = JobSerializer
     queryset = Job.objects.all()
-
-

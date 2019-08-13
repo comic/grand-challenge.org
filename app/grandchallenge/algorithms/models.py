@@ -174,4 +174,3 @@ class Job(UUIDModel, ContainerExecJobModel):
     @property
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
-
