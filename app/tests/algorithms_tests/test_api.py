@@ -158,3 +158,33 @@ def test_job_create(client):
 
     assert job.image == im
     assert job.algorithm == algo
+
+
+@pytest.mark.django_db
+def test_job_post_permissions(client):
+    # Staff users should be able to post a job
+    staff_user = UserFactory(is_staff=True)
+    im = ImageFactory()
+    algo = AlgorithmFactory()
+
+    response = get_view_for_user(
+        viewname="api:algorithms-job-list",
+        user=staff_user,
+        client=client,
+        method=client.post,
+        data={"image": im.api_url, "algorithm": algo.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    # Normal users should have permission denied
+    normal_user = UserFactory()
+    response = get_view_for_user(
+        viewname="api:algorithms-job-list",
+        user=normal_user,
+        client=client,
+        method=client.post,
+        data={"image": im.api_url, "algorithm": algo.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
