@@ -15,7 +15,8 @@ from grandchallenge.workstations.views import (
     WorkstationImageUpdate,
     WorkstationList,
     WorkstationUpdate,
-    WorkstationUserAutocomplete,
+    WorkstationUsersAutocomplete,
+    WorkstationUsersUpdate,
 )
 
 app_name = "workstations"
@@ -24,7 +25,7 @@ urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
     path(
         "users-autocomplete/",
-        WorkstationUserAutocomplete.as_view(),
+        WorkstationUsersAutocomplete.as_view(),
         name="users-autocomplete",
     ),
     path("create/", WorkstationCreate.as_view(), name="create"),
@@ -45,6 +46,11 @@ urlpatterns = [
         "<slug>/editors/update/",
         WorkstationEditorsUpdate.as_view(),
         name="editors-update",
+    ),
+    path(
+        "<slug>/users/update/",
+        WorkstationUsersUpdate.as_view(),
+        name="users-update",
     ),
     path("<slug>/", WorkstationDetail.as_view(), name="detail"),
     path("<slug>/update/", WorkstationUpdate.as_view(), name="update"),

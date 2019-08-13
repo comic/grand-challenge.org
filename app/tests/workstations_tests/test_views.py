@@ -351,42 +351,46 @@ def test_workstation_proxy(client):
 
 
 @pytest.mark.django_db
-def test_group_update(client, two_workstation_sets):
-    new_editor = UserFactory()
+@pytest.mark.parametrize("new_user", [False, True])
+def test_workstation_group_update(client, two_workstation_sets, new_user):
+    new_editor = not new_user  # Only tests for editors and users groups
+    group = "users" if new_user else "editors"
 
-    assert not two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)
+    u = UserFactory()
+
+    assert not two_workstation_sets.ws1.workstation.is_editor(user=u)
+    assert not two_workstation_sets.ws1.workstation.is_user(user=u)
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=u)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=u)
 
     response = get_view_for_user(
         client=client,
-        viewname="workstations:editors-update",
+        viewname=f"workstations:{group}-update",
         method=client.post,
         reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
         user=two_workstation_sets.ws1.editor,
-        data={"action": "ADD", "user": new_editor.pk},
+        data={"action": "ADD", "user": u.pk},
         follow=True,
     )
     assert response.status_code == 200
 
-    assert two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)
+    assert two_workstation_sets.ws1.workstation.is_editor(user=u) == new_editor
+    assert two_workstation_sets.ws1.workstation.is_user(user=u) == new_user
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=u)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=u)
 
     response = get_view_for_user(
         client=client,
-        viewname="workstations:editors-update",
+        viewname=f"workstations:{group}-update",
         method=client.post,
         reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
         user=two_workstation_sets.ws1.editor,
-        data={"action": "REMOVE", "user": new_editor.pk},
+        data={"action": "REMOVE", "user": u.pk},
         follow=True,
     )
     assert response.status_code == 200
 
-    assert not two_workstation_sets.ws1.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws1.workstation.is_user(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_editor(user=new_editor)
-    assert not two_workstation_sets.ws2.workstation.is_user(user=new_editor)
+    assert not two_workstation_sets.ws1.workstation.is_editor(user=u)
+    assert not two_workstation_sets.ws1.workstation.is_user(user=u)
+    assert not two_workstation_sets.ws2.workstation.is_editor(user=u)
+    assert not two_workstation_sets.ws2.workstation.is_user(user=u)

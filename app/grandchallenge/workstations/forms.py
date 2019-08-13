@@ -101,3 +101,7 @@ class UserGroupForm(SaveFormInitMixin, Form):
 
 class EditorsForm(UserGroupForm):
     role = "editor"
+
+
+class UsersForm(UserGroupForm):
+    role = "user"

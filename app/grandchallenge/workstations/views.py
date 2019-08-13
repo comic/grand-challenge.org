@@ -31,6 +31,7 @@ from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
     EditorsForm,
+    UsersForm,
 )
 from grandchallenge.workstations.models import (
     Workstation,
@@ -94,7 +95,7 @@ class WorkstationUpdate(
     raise_exception = True
 
 
-class WorkstationUserAutocomplete(
+class WorkstationUsersAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
 ):
     def test_func(self):
@@ -156,6 +157,11 @@ class WorkstationGroupUpdateMixin(
 class WorkstationEditorsUpdate(WorkstationGroupUpdateMixin):
     form_class = EditorsForm
     success_message = "Editors successfully updated"
+
+
+class WorkstationUsersUpdate(WorkstationGroupUpdateMixin):
+    form_class = UsersForm
+    success_message = "Users successfully updated"
 
 
 class WorkstationImageCreate(

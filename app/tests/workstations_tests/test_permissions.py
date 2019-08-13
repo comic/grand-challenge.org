@@ -60,6 +60,7 @@ def test_user_autocomplete_permissions(client, two_workstation_sets):
         "workstations:image-detail",
         "workstations:image-update",
         "workstations:editors-update",
+        "workstations:users-update",
     ],
 )
 def test_workstation_editor_permissions(
