@@ -25,10 +25,6 @@ in database:
 - :class:`cases.models.Image`
 - :class:`cases.models.ImageFile`
 
-Historically, these objectswere designed to behave different from what they do
-now. Through bad communication, the planned design diverged from factual use
-of these objects.
-
 In the current design, the Image-object denotes a container object for an image.
 This image can have one or more *representations*. A representation consists of one
 or more files with a given data type, which are stored as ImageFile objects
