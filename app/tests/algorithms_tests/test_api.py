@@ -161,30 +161,21 @@ def test_job_create(client):
 
 
 @pytest.mark.django_db
-def test_job_post_permissions(client):
+@pytest.mark.parametrize(
+    "is_staff, expected_response", [(False, 403), (True, 201)]
+)
+def test_job_post_permissions(client, is_staff, expected_response):
     # Staff users should be able to post a job
-    staff_user = UserFactory(is_staff=True)
+    user = UserFactory(is_staff=is_staff)
     im = ImageFactory()
     algo = AlgorithmFactory()
 
     response = get_view_for_user(
         viewname="api:algorithms-job-list",
-        user=staff_user,
+        user=user,
         client=client,
         method=client.post,
         data={"image": im.api_url, "algorithm": algo.api_url},
         content_type="application/json",
     )
-    assert response.status_code == 201
-
-    # Normal users should have permission denied
-    normal_user = UserFactory()
-    response = get_view_for_user(
-        viewname="api:algorithms-job-list",
-        user=normal_user,
-        client=client,
-        method=client.post,
-        data={"image": im.api_url, "algorithm": algo.api_url},
-        content_type="application/json",
-    )
-    assert response.status_code == 403
+    assert response.status_code == expected_response
