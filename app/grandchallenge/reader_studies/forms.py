@@ -53,7 +53,13 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 class QuestionCreateForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Question
-        fields = ("question_text", "answer_type", "order")
+        fields = (
+            "question_text",
+            "answer_type",
+            "image_port",
+            "direction",
+            "order",
+        )
 
 
 class UserGroupForm(SaveFormInitMixin, Form):

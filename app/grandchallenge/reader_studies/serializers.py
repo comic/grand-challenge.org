@@ -13,6 +13,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
         view_name="api:reader-study-detail", read_only=True
     )
     form_direction = CharField(source="get_direction_display")
+    image_port = CharField(source="get_image_port_display")
 
     class Meta:
         model = Question
@@ -20,6 +21,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_type",
             "api_url",
             "form_direction",
+            "image_port",
             "pk",
             "question_text",
             "reader_study",

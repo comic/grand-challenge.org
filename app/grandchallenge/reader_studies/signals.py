@@ -19,20 +19,22 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
 
     if reverse:
         images = Image.objects.filter(pk=instance.pk)
-        try:
-            reader_studies = model.objects.filter(pk__in=pk_set)
-        except TypeError:
-            # When a clear method is used pk_set is none and a TypeError raised
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
             reader_studies = instance.readerstudies.all()
+        else:
+            reader_studies = model.objects.filter(pk__in=pk_set)
 
         reader_studies = reader_studies.select_related("readers_group")
     else:
         reader_studies = [instance]
-        try:
-            images = model.objects.filter(pk__in=pk_set)
-        except TypeError:
-            # When a clear method is used pk_set is none and a TypeError raised
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
             images = instance.images.all()
+        else:
+            images = model.objects.filter(pk__in=pk_set)
 
     op = assign_perm if "add" in action else remove_perm
 

@@ -146,7 +146,13 @@ def test_question_create(client):
             viewname="reader-studies:add-question",
             client=client,
             method=client.post,
-            data={"question_text": "What?", "answer_type": "S", "order": 1},
+            data={
+                "question_text": "What?",
+                "answer_type": "STXT",
+                "order": 1,
+                "image_port": "",
+                "direction": "H",
+            },
             reverse_kwargs={"slug": rs_set.rs1.slug},
             user=test[0],
         )
@@ -160,3 +166,47 @@ def test_question_create(client):
             assert question.reader_study == rs_set.rs1
             assert question.question_text == "What?"
             question.delete()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,port,questions_created",
+    (
+        ("STXT", "", 1),
+        ("STXT", "M", 0),
+        ("STXT", "S", 0),
+        ("HEAD", "", 1),
+        ("HEAD", "M", 0),
+        ("HEAD", "S", 0),
+        ("BOOL", "", 1),
+        ("BOOL", "M", 0),
+        ("BOOL", "S", 0),
+        ("2DBB", "", 0),
+        ("2DBB", "M", 1),
+        ("2DBB", "S", 1),
+    ),
+)
+def test_image_port_only_with_bounding_box(
+    client, answer_type, port, questions_created
+):
+    # The image_port should only be set when using a bounding box
+    rs_set = TwoReaderStudies()
+
+    assert Question.objects.all().count() == 0
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-question",
+        client=client,
+        method=client.post,
+        data={
+            "question_text": "What?",
+            "answer_type": answer_type,
+            "order": 1,
+            "image_port": port,
+            "direction": "H",
+        },
+        reverse_kwargs={"slug": rs_set.rs1.slug},
+        user=rs_set.editor1,
+    )
+
+    assert Question.objects.all().count() == questions_created
