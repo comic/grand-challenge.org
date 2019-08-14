@@ -3,6 +3,7 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
@@ -197,14 +198,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
 
 class Question(UUIDModel):
-    ANSWER_TYPE_SINGLE_LINE_TEXT = "S"
-    ANSWER_TYPE_MULTI_LINE_TEXT = "M"
-    ANSWER_TYPE_BOOL = "B"
-    ANSWER_TYPE_HEADING = "H"
+    ANSWER_TYPE_SINGLE_LINE_TEXT = "STXT"
+    ANSWER_TYPE_MULTI_LINE_TEXT = "MTXT"
+    ANSWER_TYPE_BOOL = "BOOL"
+    ANSWER_TYPE_HEADING = "HEAD"
+    ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
+    # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
         (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
         (ANSWER_TYPE_BOOL, "Bool"),
+        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
         (ANSWER_TYPE_HEADING, "Heading"),
     )
 
@@ -214,8 +218,11 @@ class Question(UUIDModel):
         ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
         ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
+        ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: True,  # TODO: pkg validate 2DBB
     }
 
+    # What is the orientation of the question form when presented on the
+    # front end?
     DIRECTION_HORIZONTAL = "H"
     DIRECTION_VERTICAL = "V"
     DIRECTION_CHOICES = (
@@ -223,14 +230,25 @@ class Question(UUIDModel):
         (DIRECTION_VERTICAL, "Vertical"),
     )
 
+    # What image port should be used for a drawn annotation?
+    IMAGE_PORT_MAIN = "M"
+    IMAGE_PORT_SECONDARY = "S"
+    IMAGE_PORT_CHOICES = (
+        (IMAGE_PORT_MAIN, "Main"),
+        (IMAGE_PORT_SECONDARY, "Secondary"),
+    )
+
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
     question_text = models.TextField()
     answer_type = models.CharField(
-        max_length=1,
+        max_length=4,
         choices=ANSWER_TYPE_CHOICES,
         default=ANSWER_TYPE_SINGLE_LINE_TEXT,
+    )
+    image_port = models.CharField(
+        max_length=1, choices=IMAGE_PORT_CHOICES, blank=True, default=""
     )
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
@@ -269,6 +287,16 @@ class Question(UUIDModel):
             self.reader_study.readers_group,
             self,
         )
+
+    def clean(self):
+        # Make sure that the image port is only set when using drawn
+        # annotations. At the moment 2D bounding boxes are the only drawn type.
+        if (self.answer_type == self.ANSWER_TYPE_2D_BOUNDING_BOX) != bool(
+            self.image_port
+        ):
+            raise ValidationError(
+                "The image port must (only) be set for bounding box questions."
+            )
 
     def is_answer_valid(self, *, answer):
         return self.ANSWER_TYPE_VALIDATOR[self.answer_type](answer)
