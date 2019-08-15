@@ -15,8 +15,12 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.algorithms.models import Algorithm, Job, Result
 
-from rest_framework import viewsets
-from rest_framework.permissions import IsAdminUser
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.mixins import (
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,19 +68,18 @@ class AlgorithmExecutionSessionCreate(
         )
 
 
-class AlgorithmViewSet(viewsets.ReadOnlyModelViewSet):
+class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
-    permission_classes = [IsAdminUser]
 
 
-class ResultViewSet(viewsets.ReadOnlyModelViewSet):
+class ResultViewSet(ReadOnlyModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
-    permission_classes = [IsAdminUser]
 
 
-class JobViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Job.objects.all()
+class JobViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     serializer_class = JobSerializer
-    permission_classes = [IsAdminUser]
+    queryset = Job.objects.all()

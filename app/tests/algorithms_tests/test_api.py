@@ -1,11 +1,14 @@
 import pytest
 
+from grandchallenge.algorithms.models import Job
+
 from tests.utils import get_view_for_user
 from tests.factories import UserFactory
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     JobFactory,
     ResultFactory,
+    ImageFactory,
 )
 
 
@@ -131,3 +134,48 @@ def test_result_api_permissions(client):
             content_type="application/json",
         )
         assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+def test_job_create(client):
+    im = ImageFactory()
+
+    algo = AlgorithmFactory()
+
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="api:algorithms-job-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={"image": im.api_url, "algorithm": algo.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    job = Job.objects.get(pk=response.data.get("pk"))
+
+    assert job.image == im
+    assert job.algorithm == algo
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "is_staff, expected_response", [(False, 403), (True, 201)]
+)
+def test_job_post_permissions(client, is_staff, expected_response):
+    # Staff users should be able to post a job
+    user = UserFactory(is_staff=is_staff)
+    im = ImageFactory()
+    algo = AlgorithmFactory()
+
+    response = get_view_for_user(
+        viewname="api:algorithms-job-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={"image": im.api_url, "algorithm": algo.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == expected_response
