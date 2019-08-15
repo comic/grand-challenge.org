@@ -23,7 +23,6 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_users_with_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
@@ -83,17 +82,6 @@ class WorkstationDetail(
         f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
     )
     raise_exception = True
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "num_users_with_access": get_users_with_perms(
-                    obj=self.object
-                ).count()
-            }
-        )
-        return context
 
 
 class WorkstationUpdate(
