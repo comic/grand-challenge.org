@@ -21,6 +21,19 @@ from grandchallenge.reader_studies.models import (
 )
 from grandchallenge.workstations.models import Workstation
 
+READER_STUDY_HELP_TEXTS = {
+    "title": "The title of this reader study",
+    "logo": "The logo for this reader study",
+    "description": "Describe what this reader study is for",
+    "workstation": (
+        "Which workstation should be used for this reader study? "
+        "Note that in order to add a workstation you must be a member "
+        "of that workstations users group. "
+        "If you do not see the workstation that you want to use, "
+        "please contact the admin for that workstation."
+    ),
+}
+
 
 class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, user, **kwargs):
@@ -34,6 +47,7 @@ class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = ReaderStudy
         fields = ("title", "logo", "description", "workstation")
+        help_texts = READER_STUDY_HELP_TEXTS
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
@@ -48,6 +62,15 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA)
         }
+        help_texts = {
+            **READER_STUDY_HELP_TEXTS,
+            "hanging_list": (
+                "A list of hangings. "
+                "The hanging defines which image (the hanging value) "
+                "should be assigned to which image port. "
+                'e.g., [{"main":"im1.mhd","secondary":"im2.mhd"}]'
+            ),
+        }
 
 
 class QuestionCreateForm(SaveFormInitMixin, ModelForm):
@@ -60,6 +83,30 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
             "direction",
             "order",
         )
+        help_texts = {
+            "question_text": (
+                "The question that will be presented to the user. "
+                "e.g. 'Is there pathology present in these images?'"
+            ),
+            "answer_type": "The type of answer that the user will give.",
+            "image_port": (
+                "If the user is expected to draw a bounding box, "
+                "on which image port should they do it? "
+                "Note, "
+                "that this will be the same image port for every hanging."
+            ),
+            "direction": (
+                "The format of the question, "
+                "vertical means that the question text "
+                "goes above the answer box, "
+                "horizontal means that the question text "
+                "will be on the same row as the answer box."
+            ),
+            "order": (
+                "Where should this question be in the form? "
+                "Lower numbers put this question to the top."
+            ),
+        }
 
 
 class UserGroupForm(SaveFormInitMixin, Form):
