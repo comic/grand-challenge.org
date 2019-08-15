@@ -138,6 +138,36 @@ def test_answer_creator_is_reader(client):
         (Question.ANSWER_TYPE_MULTI_LINE_TEXT, True, 400),
         (Question.ANSWER_TYPE_HEADING, True, 400),
         (Question.ANSWER_TYPE_HEADING, "fdsa", 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, "", 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, True, 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, False, 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, 134, 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, "dsfuag", 400),
+        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, {}, 400),
+        (
+            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "single rect",
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            '{"version": {"major": 1, "minor": 0}, "type": "single rect", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
+            400,
+        ),  # Valid json, but a string
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):

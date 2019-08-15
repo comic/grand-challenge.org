@@ -216,6 +216,42 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return hanging_list_images
 
 
+ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "version": {
+            "type": "object",
+            "additionalProperties": {"type": "number"},
+            "required": ["major", "minor"],
+        },
+        "type": {"enum": ["single rect"]},
+        "corners": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {"type": "number"},
+                "minItems": 3,
+                "maxItems": 3,
+            },
+            "minItems": 4,
+            "maxItems": 4,
+        },
+        "name": {"type": "string"},
+    },
+    "required": ["version", "type", "corners"],
+}
+
+
+def validate_answer_json(schema: dict, obj: object) -> bool:
+    """ The answer type validators must return true or false """
+    try:
+        JSONSchemaValidator(schema=schema)(obj)
+        return True
+    except ValidationError:
+        return False
+
+
 class Question(UUIDModel):
     ANSWER_TYPE_SINGLE_LINE_TEXT = "STXT"
     ANSWER_TYPE_MULTI_LINE_TEXT = "MTXT"
@@ -237,7 +273,9 @@ class Question(UUIDModel):
         ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
         ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
-        ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: True,  # TODO: pkg validate 2DBB
+        ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
+            ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA, o
+        ),
     }
 
     # What is the orientation of the question form when presented on the
