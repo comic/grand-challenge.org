@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load url from grandchallenge_tags %}
+{% load workstations %}
+{% load guardian_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "readerstudy_perms" %}
+
+    <h1>Reader Study {{ object.title }}</h1>
+
+    {% if not object.is_valid %}
+        <div class="alert alert-danger">
+        This reader study is not ready to be used. Please update the configuration.
+        </div>
+    {% endif %}
+
+    <p>{{ object.description }}</p>
+
+    <p>
+        {% if user_is_reader and object.is_valid %}
+            <a class="btn btn-primary"
+               href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
+                <i class="fas fa-eye"></i> Launch this Reader Study
+            </a>
+        {% endif %}
+        {% if "change_readerstudy" in readerstudy_perms %}
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this reader study
+            </a>
+        {% endif %}
+    </p>
+
+    {% if "change_readerstudy" in readerstudy_perms %}
+
+        <h2>Editors</h2>
+        <ul>
+            {% for user in object.editors_group.user_set.all %}
+                <li>{{ user }}</li>
+            {% endfor %}
+        </ul>
+
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:editors-update' slug=object.slug %}">
+                <i class="fas fa-plus"></i> Add editors
+            </a>
+        </p>
+
+        <h2>Readers</h2>
+        <ul>
+            {% for user in object.readers_group.user_set.all %}
+                <li>{{ user }}</li>
+            {% endfor %}
+        </ul>
+
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:readers-update' slug=object.slug %}">
+                <i class="fas fa-plus"></i> Add readers
+            </a>
+        </p>
+
+        <h2>Upload Sessions</h2>
+
+        <ul>
+            {% for session in object.rawimageuploadsession_set.all %}
+                <li><a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h2>Images</h2>
+
+        <p>There are {{ object.images.all.count }} image(s) in this reader study.</p>
+
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:add-images' slug=object.slug %}">
+                <i class="fas fa-plus"></i> Add images to this study
+            </a>
+        </p>
+
+        <h2>Questions</h2>
+
+        <ul>
+            {% for question in object.questions.all %}
+                <li>{{ question }}</li>
+            {% endfor %}
+        </ul>
+
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:add-question' slug=object.slug %}">
+                <i class="fas fa-plus"></i> Add a question to this study
+            </a>
+        </p>
+
+    {% endif %}
+{% endblock %}

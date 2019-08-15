@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+    </ol>
+{% endblock %}
+
+{% block title %}
+    Reader Study {{ object|yesno:"Update,Create" }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h2>Reader Study {{ object|yesno:"Update,Create" }}</h2>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

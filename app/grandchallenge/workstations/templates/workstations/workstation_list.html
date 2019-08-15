@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load url from grandchallenge_tags %}
+{% load guardian_tags %}
 
 {% block title %}Workstations - {{ block.super }}{% endblock %}
 
@@ -33,24 +34,31 @@
                        title="View Workstation">
                         <i class="fa fa-eye"></i>
                     </a>
-                    <a href="{% url 'workstations:update' slug=workstation.slug %}"
-                       class="btn btn-primary"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
-                       title="Edit Workstation">
-                        <i class="fa fa-edit"></i>
-                    </a>
+                    {% get_obj_perms request.user for workstation as "workstation_perms" %}
+                    {% if "change_workstation" in workstation_perms %}
+                        <a href="{% url 'workstations:update' slug=workstation.slug %}"
+                           class="btn btn-primary"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Edit Workstation">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
+        {% empty %}
+            <p>No workstations available.</p>
         {% endfor %}
     </div>
 
-    <p class="mt-3">
-        <a class="btn btn-primary"
-           href="{% url 'workstations:create' %}">
-            <i class="fas fa-plus"></i> Add a new workstation
-        </a>
-    </p>
+    {% if perms.workstations.add_workstation %}
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'workstations:create' %}">
+                <i class="fas fa-plus"></i> Add a new workstation
+            </a>
+        </p>
+    {% endif %}
 {% endblock %}
 
 {% block script %}

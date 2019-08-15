@@ -77,6 +77,12 @@ urlpatterns = [
         "workstations/",
         include("grandchallenge.workstations.urls", namespace="workstations"),
     ),
+    path(
+        "reader-studies/",
+        include(
+            "grandchallenge.reader_studies.urls", namespace="reader-studies"
+        ),
+    ),
     path("summernote/", include("django_summernote.urls")),
     path(
         "retina/",

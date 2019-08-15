@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    Add {{ type_to_add }} to {{ object }} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h2>Add {{ type_to_add }} to {{ object }}</h2>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}

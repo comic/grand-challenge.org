@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load url from grandchallenge_tags %}
+
+{% block title %}Reader Studies - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Reader Studies
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Reader Studies</h2>
+
+    <div class="card-columns">
+        {% for reader_study in object_list %}
+            <div class="card">
+                <a href="{{ reader_study.get_absolute_url }}">
+                    <img class="card-img-top img-fluid"
+                         src="{{ reader_study.logo.url }}"
+                         alt="{{ reader_study }} Logo">
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ reader_study.title }}</h5>
+                    <p class="card-text">{{ reader_study.description }}</p>
+                    <a href="{{ reader_study.get_absolute_url }}"
+                       class="btn btn-primary"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="View Reader Study">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        {% empty %}
+            <p>No reader studies available.</p>
+        {% endfor %}
+    </div>
+
+    {% if perms.reader_studies.add_readerstudy %}
+        <p class="mt-3">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:create' %}">
+                <i class="fas fa-plus"></i> Add a new reader study
+            </a>
+        </p>
+    {% endif %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+{% endblock %}

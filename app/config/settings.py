@@ -344,6 +344,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_api",
     "grandchallenge.worklists",
     "grandchallenge.workstations",
+    "grandchallenge.reader_studies",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -614,12 +615,16 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
+# The name of the group whose members will be able to create reader studies
+READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
+
 # The workstation that is accessible by all authorised users
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
 )
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
@@ -628,6 +633,8 @@ WORKSTATIONS_NETWORK_NAME = os.environ.get(
 WORKSTATIONS_MAXIMUM_SESSIONS = int(
     os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
 )
+# The name of the group whose members will be able to create workstations
+WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [

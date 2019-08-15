@@ -34,7 +34,33 @@ from tests.annotations_tests.factories import (
 from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 
-""" Defines fixtures than can be used across all of the tests """
+# Import fixtures that are used throughout a module
+# noinspection PyUnresolvedReferences
+from tests.workstations_tests.fixtures import two_workstation_sets
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--transactions",
+        action="store_true",
+        help="Only run transaction tests.",
+    )
+
+
+def pytest_runtest_setup(item):
+    only_transaction_tests = item.config.getoption("--transactions")
+    django_marker = item.get_closest_marker("django_db")
+
+    if django_marker is None:
+        transaction_required = False
+    else:
+        transaction_required = django_marker.kwargs.get("transaction", False)
+
+    if not (transaction_required == only_transaction_tests):
+        # Only run this test if
+        #  - it (does not) require transactions
+        #  - and we're (not) running transaction tests
+        pytest.skip("Skipping (non) transaction tests.")
 
 
 @pytest.fixture(scope="session")
