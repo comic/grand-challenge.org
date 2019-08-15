@@ -87,15 +87,15 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
             f"change_{self._meta.model_name}", self.editors_group, self
         )
 
-    def save(self, *args, force_group_creation=False, **kwargs):
+    def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if adding or force_group_creation:
+        if adding:
             self.create_groups()
 
         super().save(*args, **kwargs)
 
-        if adding or force_group_creation:
+        if adding:
             self.assign_permissions()
 
     def is_editor(self, user):

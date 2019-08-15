@@ -20,7 +20,9 @@ def create_workstation_groups(apps, schema_editor):
     from grandchallenge.workstations.models import Workstation
 
     for ws in Workstation.objects.all():
-        ws.save(force_group_creation=True)
+        ws.create_groups()
+        ws.save()
+        ws.assign_permissions()
 
         for wsi in ws.workstationimage_set.all():
             wsi.assign_permissions()
