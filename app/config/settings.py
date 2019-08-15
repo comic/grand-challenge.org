@@ -633,6 +633,8 @@ WORKSTATIONS_NETWORK_NAME = os.environ.get(
 WORKSTATIONS_MAXIMUM_SESSIONS = int(
     os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
 )
+# The name of the group whose members will be able to create workstations
+WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [

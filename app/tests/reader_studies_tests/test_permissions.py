@@ -1,7 +1,8 @@
 import pytest
 from django.conf import settings
+from guardian.shortcuts import get_perms, assign_perm
 
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
     QuestionFactory,
@@ -432,3 +433,38 @@ def test_api_rs_answer_mine_list_permissions(client):
 
             for pk in test[2]:
                 assert str(pk) in pks
+
+
+@pytest.mark.django_db
+def test_workstation_changes(client):
+    # Ensure that read permissions are kept up to date if the workstation
+    # changes
+    ws1, ws2 = WorkstationFactory(), WorkstationFactory()
+    reader = UserFactory()
+
+    rs = ReaderStudyFactory(workstation=ws1)
+
+    assert "view_workstation" not in get_perms(reader, ws1)
+    assert "view_workstation" not in get_perms(reader, ws2)
+
+    rs.add_reader(user=reader)
+
+    assert "view_workstation" in get_perms(reader, ws1)
+    assert "view_workstation" not in get_perms(reader, ws2)
+
+    rs.workstation = ws2
+    rs.save()
+
+    assert "view_workstation" not in get_perms(reader, ws1)
+    assert "view_workstation" in get_perms(reader, ws2)
+
+    # Test permission cleanup
+    assign_perm("view_workstation", rs.readers_group, ws1)
+
+    assert "view_workstation" in get_perms(reader, ws1)
+    assert "view_workstation" in get_perms(reader, ws2)
+
+    rs.save()
+
+    assert "view_workstation" not in get_perms(reader, ws1)
+    assert "view_workstation" in get_perms(reader, ws2)

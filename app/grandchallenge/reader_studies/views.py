@@ -52,17 +52,6 @@ class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "user_can_add_reader_study": self.request.user.has_perm(
-                    f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
-                )
-            }
-        )
-        return context
-
 
 class ReaderStudyCreate(
     LoginRequiredMixin, PermissionRequiredMixin, CreateView
@@ -72,6 +61,11 @@ class ReaderStudyCreate(
     permission_required = (
         f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
     )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -105,6 +99,11 @@ class ReaderStudyUpdate(
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
 
 class AddObjectToReaderStudyMixin(

@@ -29,7 +29,7 @@
     <p>
         {% if user_is_reader and object.is_valid %}
             <a class="btn btn-primary"
-               href="{% url 'workstations:default-session-redirect' %}?{% workstation_query reader_study=object %}">
+               href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
                 <i class="fas fa-eye"></i> Launch this Reader Study
             </a>
         {% endif %}

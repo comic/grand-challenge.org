@@ -1,7 +1,7 @@
 import factory
 
 from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 
 
 class ReaderStudyFactory(factory.DjangoModelFactory):
@@ -10,6 +10,7 @@ class ReaderStudyFactory(factory.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"test_reader_study_{n:04}")
     logo = factory.django.ImageField()
+    workstation = factory.SubFactory(WorkstationFactory)
 
 
 class QuestionFactory(factory.DjangoModelFactory):

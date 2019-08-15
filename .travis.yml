@@ -31,11 +31,11 @@ install:
   - docker-compose up -d
 
 script:
-  - docker-compose run -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report= --cov=. -n 2"
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=. -n 2"
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
 
 after_success:
-  - mv /tmp/coverage/.coverage .coverage.docker
-  - coverage combine
+  - coverage combine /tmp/coverage/
   - codecov
 
 deploy:
