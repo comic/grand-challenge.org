@@ -225,7 +225,7 @@ ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
             "additionalProperties": {"type": "number"},
             "required": ["major", "minor"],
         },
-        "type": {"enum": ["single rect"]},
+        "type": {"enum": ["2D bounding box"]},
         "corners": {
             "type": "array",
             "items": {

@@ -148,7 +148,7 @@ def test_answer_creator_is_reader(client):
             Question.ANSWER_TYPE_2D_BOUNDING_BOX,
             {
                 "version": {"major": 1, "minor": 0},
-                "type": "single rect",
+                "type": "2D bounding box",
                 "name": "test_name",
                 "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
             },
@@ -165,7 +165,7 @@ def test_answer_creator_is_reader(client):
         ),
         (
             Question.ANSWER_TYPE_2D_BOUNDING_BOX,
-            '{"version": {"major": 1, "minor": 0}, "type": "single rect", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
+            '{"version": {"major": 1, "minor": 0}, "type": "2D bounding box", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
             400,
         ),  # Valid json, but a string
     ),
