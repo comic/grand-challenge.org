@@ -21,6 +21,7 @@ class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
         context["IS_RETINA_ADMIN"] = self.request.user.groups.filter(
             name=settings.RETINA_ADMINS_GROUP_NAME
         ).exists()
+        context["DEBUG"] = settings.DEBUG
         return context
 
 

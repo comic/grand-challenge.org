@@ -9,7 +9,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-
+    <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" integrity="sha384-pGTFmbQfua2KiaV2+ZLlfowPdd5VMT2xU4zCBcuJr7TVQozMO+I1FmPuVHY3u8KB" crossorigin="anonymous"></script>
+    <script>
+        {% if not DEBUG %}
+            // Setup sentry in production before anything else loads
+            Sentry.init({ dsn: 'https://8428444977064be1870761cfc2c1bf35@sentry.io/303639' });
+        {% endif %}
+    </script>
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -18,7 +24,7 @@
     {% placeFavicon %}
 
     {% block css %}
-    
+
         <!-- Latest compiled and minified Bootstrap 4.1.1 CSS -->
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 
@@ -31,8 +37,8 @@
         <link href="{% static 'css/_styles.css' %}" rel="stylesheet">
         <link href="{% static 'css/main.css' %}" rel="stylesheet">
         <link href="{% static 'css/rotterdam_australia.css' %}" rel="stylesheet">
-    
-    
+
+
     {% endblock %}
 
   </head>
@@ -61,7 +67,7 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     {% block javascript %}
-      
+
       <!-- Required by Bootstrap v4.1.1 -->
       <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
