@@ -22,6 +22,7 @@ class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
             name=settings.RETINA_ADMINS_GROUP_NAME
         ).exists()
         context["DEBUG"] = settings.DEBUG
+        context["SENTRY_DSN"] = settings.SENTRY_DSN
         return context
 
 

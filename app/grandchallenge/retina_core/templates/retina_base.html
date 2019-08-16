@@ -13,7 +13,7 @@
     <script>
         {% if not DEBUG %}
             // Setup sentry in production before anything else loads
-            Sentry.init({ dsn: 'https://8428444977064be1870761cfc2c1bf35@sentry.io/303639' });
+            Sentry.init({ dsn: SENTRY_DSN });
         {% endif %}
     </script>
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
