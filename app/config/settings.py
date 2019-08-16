@@ -515,11 +515,9 @@ LOGGING = {
         },
     },
 }
+SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
 
-sentry_sdk.init(
-    dsn=os.environ.get("DJANGO_SENTRY_DSN", ""),
-    integrations=[DjangoIntegration()],
-)
+sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()])
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
