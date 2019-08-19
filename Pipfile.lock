@@ -240,11 +240,10 @@
         },
         "kubernetes": {
             "hashes": [
-                "sha256:0e24771ceb63ae18ab0d6a7b31e208a0ace7941adae785260840b123888f706c",
-                "sha256:70bff95703a09f0a67473a22d13be36a158ab6e8facc59e64454a26b14690908"
+                "sha256:3770a496663396ad1def665eeadb947b3f45217a08b64b10c01a57e981ac8592",
+                "sha256:a6dee02a1b39ea4bb9c4c2cc415ea0ada33d8ea0a920f7d4fb6d166989dcac01"
             ],
-            "index": "pypi",
-            "version": "==10.0.0"
+            "version": "==10.0.1"
         },
         "oauthlib": {
             "hashes": [
