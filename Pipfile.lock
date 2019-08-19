@@ -789,10 +789,10 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:6ef6d06de77ce2961156013e9dff62f1b2688aa04d0dc244299fe7d67e09370d",
-                "sha256:a736fed91c12681a7b34617c8fcefe39ea04599ca72c608751c31d89579a3f77"
+                "sha256:3805d095f1ea279b9870c3eeae5dddf8a81b10952c8835cd628cf1875b0ef031",
+                "sha256:abc562321c2d190dd63c2faadf70b86b7af21a553b61f0df5f5e1270717dc5a3"
             ],
-            "version": "==5.0.1"
+            "version": "==5.1.0"
         },
         "pytest-cov": {
             "hashes": [
