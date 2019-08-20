@@ -292,6 +292,12 @@ class Config(UUIDModel):
             "result."
         ),
     )
+    display_all_metrics = models.BooleanField(
+        default=True,
+        help_text=(
+            "Should all of the metrics be displayed on the Result detail page?"
+        ),
+    )
     submission_join_key = models.CharField(
         blank=True,
         default="",
