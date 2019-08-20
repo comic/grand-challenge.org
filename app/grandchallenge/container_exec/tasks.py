@@ -1,14 +1,17 @@
 import json
 import tarfile
 import uuid
+from datetime import timedelta
 
 from celery import shared_task
 from django.apps import apps
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import ExpressionWrapper, F, DateTimeField
 from django.utils import timezone
+from django.utils.timezone import now
 
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -169,6 +172,33 @@ def execute_job(
     job.update_status(status=job.SUCCESS)
 
     return result
+
+
+@shared_task
+def mark_long_running_jobs_failed(*, app_label: str, model_name: str):
+    """
+    Mark jobs that have been started but did not finish (maybe due to
+    an unrecoverable hardware error). It will mark tasks FAILED that have the
+    status STARTED after 5x the task limit (which is different for each queue),
+    so, this must be scheduled on the same queue that the execute_job task is
+    run for this app_label and model_name.
+
+    The implications of this is that a task will need to be scheduled in
+    4x the CELERY_TASK_TIME_LIMIT. If the task is still running on Celery then
+    it will still be able to report as passed later.
+    """
+    Job = apps.get_model(app_label=app_label, model_name=model_name)
+
+    jobs_to_mark = Job.objects.filter(
+        created__lt=now()
+        - 5 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
+        status=Job.STARTED,
+    )
+
+    for j in jobs_to_mark:
+        j.update_status(status=Job.FAILURE, output="Evaluation timed out")
+
+    return [j.pk for j in jobs_to_mark]
 
 
 @shared_task
