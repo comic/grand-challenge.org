@@ -111,6 +111,34 @@
     </dl>
 
     <h3>Metrics</h3>
-    <pre>{{ object.metrics|json_dumps }}</pre>
+    {% if challenge.evaluation_config.display_all_metrics %}
+        <pre>{{ object.metrics|json_dumps }}</pre>
+    {% else %}
+        <dl>
+            <dt>
+                {{ challenge.evaluation_config.score_title }}
+            </dt>
+            <dd>
+                {{ object.metrics|get_jsonpath:challenge.evaluation_config.score_jsonpath|floatformat:challenge.evaluation_config.score_decimal_places }}
+                {% if challenge.evaluation_config.score_error_jsonpath %}
+                    &nbsp;±&nbsp;
+                    {{ object.metrics|get_jsonpath:challenge.evaluation_config.score_error_jsonpath|floatformat:challenge.evaluation_config.score_decimal_places }}
+                {% endif %}
+            </dd>
+
+            {% for col in challenge.evaluation_config.extra_results_columns %}
+                <dt>
+                    {{ col.title }}
+                </dt>
+                <dd>
+                    {{ object.metrics|get_jsonpath:col.path|floatformat:challenge.evaluation_config.score_decimal_places }}
+                    {% if col.error_path %}
+                        &nbsp;±&nbsp;
+                        {{ object.metrics|get_jsonpath:col.error_path|floatformat:challenge.evaluation_config.score_decimal_places }}
+                    {% endif %}
+                </dd>
+            {% endfor %}
+        </dl>
+    {% endif %}
 
 {% endblock %}

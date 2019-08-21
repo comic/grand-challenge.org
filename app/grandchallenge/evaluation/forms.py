@@ -44,7 +44,7 @@ leaderboard_options = (
     "show_publication_url",
 )
 
-result_detail_options = ("submission_join_key",)
+result_detail_options = ("display_all_metrics", "submission_join_key")
 
 
 class ConfigForm(forms.ModelForm):

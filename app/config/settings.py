@@ -597,6 +597,13 @@ CELERY_BEAT_SCHEDULE = {
         "kwargs": {"app_label": "workstations", "model_name": "session"},
         "schedule": timedelta(minutes=5),
     },
+    # Cleanup evaluation jobs on the evaluation queue
+    "mark_long_running_evaluation_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {"app_label": "evaluation", "model_name": "job"},
+        "options": {"queue": "evaluation"},
+        "schedule": timedelta(hours=1),
+    },
 }
 
 CELERY_TASK_ROUTES = {
