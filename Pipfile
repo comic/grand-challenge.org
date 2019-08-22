@@ -1,22 +1,27 @@
 [[source]]
+
 verify_ssl = true
 url = "https://pypi.python.org/simple"
 name = "pypi"
 
+
 [dev-packages]
+
 pytest-django = "*"
 pytest-cov = "*"
 pytest-mock = "*"
 factory-boy = "*"
 django-debug-toolbar = "*"
-black = "==18.6b4"
+black = "==19.3b0"
 sphinx-autobuild = "*"
 sphinx = "*"
 pydot = "*"
 sphinx-rtd-theme = "*"
 recommonmark = "*"
 
+
 [packages]
+
 boto3 = "*"
 celery = "*"
 django = "*"
@@ -28,7 +33,7 @@ django-filter = "*"
 django-storages = "*"
 gunicorn = "*"
 kubernetes = "*"
-"psycopg2" = "*"
+psycopg2 = "*"
 python-memcached = "*"
 pytz = "*"
 redis = "*"
