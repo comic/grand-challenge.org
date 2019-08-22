@@ -180,7 +180,11 @@ http {
 
       # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
       proxy_buffering off;
+      proxy_http_version 1.1;
       proxy_set_header Host $http_host;
+      proxy_read_timeout 15m; # Default value is 60s which is not sufficient for MinIO.
+      proxy_send_timeout 15m; # Default value is 60s which is not sufficient for MinIO.
+      proxy_request_buffering off; # Disable any internal request buffering.
       proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
     
