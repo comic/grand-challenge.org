@@ -37,3 +37,10 @@ def test_workstation_group_migration():
     assert new_ws.slug == old_ws.slug
     assert new_ws.title == old_ws.title
     assert "view_workstation" in get_perms(user, new_ws)
+
+    # For some reason this migration is removed but not added back?
+    # E psycopg2.errors.FeatureNotSupported: cannot truncate a table referenced
+    #   in a foreign key constraint
+    # E DETAIL:  Table "algorithms_algorithm" references "auth_user".
+    executor.loader.build_graph()
+    executor.migrate([("algorithms", "0009_auto_20190826_0951")])
