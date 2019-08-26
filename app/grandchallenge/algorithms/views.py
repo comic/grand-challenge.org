@@ -57,14 +57,14 @@ class AlgorithmExecutionSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm_image = AlgorithmImage.objects.get(
+        form.instance.algorithm = AlgorithmImage.objects.get(
             slug=self.kwargs["slug"]
         )
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
-            "algorithms:detail", kwargs={"slug": self.kwargs["slug"]}
+            "algorithms:image-detail", kwargs={"slug": self.kwargs["slug"]}
         )
 
 
