@@ -1,6 +1,6 @@
 from django.contrib import admin
-from grandchallenge.algorithms.models import Algorithm, Job, Result
+from grandchallenge.algorithms.models import AlgorithmImage, Job, Result
 
-admin.site.register(Algorithm)
+admin.site.register(AlgorithmImage)
 admin.site.register(Job)
 admin.site.register(Result)

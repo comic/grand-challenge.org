@@ -29,15 +29,17 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 logger = logging.getLogger(__name__)
 
 
-class Algorithm(UUIDModel, ContainerImageModel, TitleSlugDescriptionModel):
+class AlgorithmImage(
+    UUIDModel, ContainerImageModel, TitleSlugDescriptionModel
+):
     logo = models.ImageField(upload_to=get_logo_path, null=True)
 
     def get_absolute_url(self):
-        return reverse("algorithms:detail", kwargs={"slug": self.slug})
+        return reverse("algorithms:image-detail", kwargs={"slug": self.slug})
 
     @property
     def api_url(self):
-        return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
+        return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 
 
 class Result(UUIDModel):
@@ -148,12 +150,14 @@ class AlgorithmExecutor(Executor):
 
 
 class Job(UUIDModel, ContainerExecJobModel):
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, on_delete=models.CASCADE
+    )
     image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
 
     @property
     def container(self):
-        return self.algorithm
+        return self.algorithm_image
 
     @property
     def input_files(self):
