@@ -5,10 +5,14 @@ from pathlib import Path
 
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
-from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django_extensions.db.models import TitleSlugDescriptionModel
+from django.utils.translation import ugettext_lazy as _
+from django_extensions.db.fields import AutoSlugField
+from django_extensions.db.models import (
+    TitleSlugDescriptionModel,
+    TitleDescriptionModel,
+)
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.challenges.models import get_logo_path
@@ -22,16 +26,15 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmImage(
-    UUIDModel, ContainerImageModel, TitleSlugDescriptionModel
-):
+class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
+    slug = AutoSlugField(_("slug"), populate_from="title", db_index=False)
     logo = models.ImageField(upload_to=get_logo_path, null=True)
 
     def get_absolute_url(self):

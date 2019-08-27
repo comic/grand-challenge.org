@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import migrations
+import django_extensions.db.fields
 
 
 class Migration(migrations.Migration):
@@ -18,5 +19,16 @@ class Migration(migrations.Migration):
         ),
         migrations.RenameField(
             model_name="job", old_name="algorithm", new_name="algorithm_image"
+        ),
+        migrations.AlterField(
+            model_name="algorithmimage",
+            name="slug",
+            field=django_extensions.db.fields.AutoSlugField(
+                blank=True,
+                db_index=False,
+                editable=False,
+                populate_from="title",
+                verbose_name="slug",
+            ),
         ),
     ]
