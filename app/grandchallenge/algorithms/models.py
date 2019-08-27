@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
@@ -33,9 +34,38 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
+class Algorithm(UUIDModel, TitleSlugDescriptionModel):
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"editors_of_algorithm",
+    )
+    users_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"users_of_algorithm",
+    )
+    logo = models.ImageField(upload_to=get_logo_path)
+    workstation = models.ForeignKey(
+        "workstations.Workstation", on_delete=models.CASCADE
+    )
+
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        ordering = ("created",)
+
+
 class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
     slug = AutoSlugField(_("slug"), populate_from="title", db_index=False)
     logo = models.ImageField(upload_to=get_logo_path, null=True)
+    # TODO remove null=true
+    algorithm = models.ForeignKey(
+        Algorithm, on_delete=models.CASCADE, null=True
+    )
+
+    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+        ordering = ("created", "creator")
 
     def get_absolute_url(self):
         return reverse("algorithms:image-detail", kwargs={"slug": self.slug})
