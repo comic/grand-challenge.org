@@ -70,7 +70,7 @@ class RawImageUploadSession(UUIDModel):
     )
 
     algorithm = models.ForeignKey(
-        to="algorithms.Algorithm",
+        to="algorithms.AlgorithmImage",
         null=True,
         default=None,
         on_delete=models.CASCADE,

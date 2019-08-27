@@ -289,7 +289,8 @@ def build_images(upload_session_uuid: UUID):
                 if upload_session.algorithm:
                     for image in collected_images:
                         Job.objects.create(
-                            algorithm=upload_session.algorithm, image=image
+                            algorithm_image=upload_session.algorithm,
+                            image=image,
                         )
 
                 if upload_session.algorithm_result:
