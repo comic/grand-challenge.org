@@ -92,6 +92,25 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         return w
 
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        # using .pk is required here as it is called from a data migration
+        return user.groups.add(self.editors_group.pk)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_user(self, user):
+        return user.groups.filter(pk=self.users_group.pk).exists()
+
+    def add_user(self, user):
+        return user.groups.add(self.users_group)
+
+    def remove_user(self, user):
+        return user.groups.remove(self.users_group)
+
 
 class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
     slug = AutoSlugField(_("slug"), populate_from="title", db_index=False)

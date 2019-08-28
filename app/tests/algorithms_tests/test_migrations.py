@@ -2,6 +2,7 @@ import pytest
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
+from tests.factories import UserFactory
 from tests.utils import get_temporary_image
 
 
@@ -15,8 +16,10 @@ def test_algorithm_image_data_migration(admin_user):
     executor.migrate(migrate_from)
     old_apps = executor.loader.project_state(migrate_from).apps
 
+    user = UserFactory()
     OldAlgorithmImage = old_apps.get_model(app, "AlgorithmImage")
     old_ai = OldAlgorithmImage.objects.create(
+        creator_id=user.pk,
         title="foo",
         description="my awesome algorithm",
         logo=get_temporary_image(),
@@ -40,4 +43,11 @@ def test_algorithm_image_data_migration(admin_user):
     assert new_alg.logo == old_ai.logo
     assert new_alg.workstation_id
 
-    # TODO:check groups, users, and foreign keys
+    images = new_alg.algorithmimage_set.all()
+    assert [i.pk for i in images] == [old_ai.pk]
+
+    assert new_alg.editors_group
+    assert new_alg.users_group
+
+    assert user.groups.filter(pk=new_alg.editors_group.pk).exists()
+    assert not user.groups.filter(pk=new_alg.users_group.pk).exists()

@@ -4,7 +4,22 @@ from django.db import migrations
 
 def algorithm_images_to_algorithms_reverse(apps, schema_editor):
     # Reverse, create AlgorithmImage from Algorithm
-    pass
+    Algorithm = apps.get_model("algorithms", "Algorithm")
+    AlgorithmImage = apps.get_model("algorithms", "AlgorithmImage")
+
+    for a in Algorithm.objects.all():
+        for im in a.algorithmimage_set.all():
+            AlgorithmImage.objects.create(
+                title=a.title,
+                logo=a.logo,
+                creator=im.creator,
+                image=im.image,
+                requires_gpu=im.requires_gpu,
+                requires_gpu_memory_gb=im.requires_gpu_memory_gb,
+                requires_memory_gb=im.requires_memory_gb,
+                requires_cpu_cores=im.requires_cpu_cores,
+                status=im.status,
+            )
 
 
 def algorithm_images_to_algorithms_forward(apps, schema_editor):
@@ -14,7 +29,15 @@ def algorithm_images_to_algorithms_forward(apps, schema_editor):
     AlgorithmImage = apps.get_model("algorithms", "AlgorithmImage")
 
     for ai in AlgorithmImage.objects.all():
-        Algorithm.objects.create(title=ai.title, slug=ai.slug, logo=ai.logo)
+        a = Algorithm.objects.create(
+            title=ai.title, slug=ai.slug, logo=ai.logo
+        )
+
+        ai.algorithm_id = a.pk
+        ai.save()
+
+        if ai.creator:
+            a.add_editor(ai.creator)
 
 
 class Migration(migrations.Migration):
