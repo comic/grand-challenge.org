@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.files import File
@@ -30,6 +31,7 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,41 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.create_groups()
+            self.workstation_id = (
+                self.workstation_id or self.default_workstation.pk
+            )
+
+        super().save(*args, **kwargs)
+
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.users_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    @property
+    def default_workstation(self):
+        """
+        Returns the default workstation, creating it if it does not already
+        exist.
+        """
+        w, created = Workstation.objects.get_or_create(
+            slug=settings.DEFAULT_WORKSTATION_SLUG
+        )
+
+        if created:
+            w.title = settings.DEFAULT_WORKSTATION_SLUG
+            w.save()
+
+        return w
 
 
 class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
