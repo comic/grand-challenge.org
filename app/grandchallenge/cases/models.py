@@ -224,7 +224,7 @@ class Image(UUIDModel):
     )
 
     name = models.CharField(max_length=128)
-    study = models.ForeignKey(Study, on_delete=models.PROTECT, null=True)
+    study = models.ForeignKey(Study, on_delete=models.CASCADE, null=True)
     origin = models.ForeignKey(
         to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
     )
@@ -364,7 +364,7 @@ class ImageFile(UUIDModel):
     )
 
     image = models.ForeignKey(
-        to=Image, null=True, on_delete=models.SET_NULL, related_name="files"
+        to=Image, null=True, on_delete=models.CASCADE, related_name="files"
     )
     image_type = models.CharField(
         max_length=4, blank=False, choices=IMAGE_TYPES, default=IMAGE_TYPE_MHD
