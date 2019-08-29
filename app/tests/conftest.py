@@ -305,6 +305,8 @@ def generate_annotation_set(retina_grader=False, image=False):
     create_options = {"grader": grader}
     if image:
         create_options_with_image = {"image": image, **create_options}
+    else:
+        create_options_with_image = create_options
 
     measurement = MeasurementAnnotationFactory(**create_options_with_image)
     boolean = BooleanClassificationAnnotationFactory(
