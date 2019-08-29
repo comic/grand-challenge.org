@@ -292,6 +292,7 @@ class AnnotationSet(NamedTuple):
     polygon: PolygonAnnotationSetFactory
     coordinatelist: CoordinateListAnnotationFactory
     landmark: LandmarkAnnotationSetFactory
+    singlelandmarks: List
     etdrs: ETDRSGridAnnotationFactory
 
 
@@ -323,10 +324,15 @@ def generate_annotation_set(retina_grader=False, image=False):
     SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygon)
 
     # Create child models for landmark annotation set (3 per image)
+    single_landmarks = []
     for i in range(5):
         if i > 0 or not image:
             image = ImageFactory()
-        SingleLandmarkAnnotationFactory(annotation_set=landmark, image=image)
+        single_landmarks.append(
+            SingleLandmarkAnnotationFactory(
+                annotation_set=landmark, image=image
+            )
+        )
 
     return AnnotationSet(
         grader=grader,
@@ -335,6 +341,7 @@ def generate_annotation_set(retina_grader=False, image=False):
         polygon=polygon,
         coordinatelist=coordinatelist,
         landmark=landmark,
+        singlelandmarks=single_landmarks,
         etdrs=etdrs,
         integer=integer,
     )
