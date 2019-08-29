@@ -1,6 +1,7 @@
 from django.db import models
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
+from grandchallenge.patients.models import Patient
 
 
 class Archive(UUIDModel):
@@ -13,4 +14,9 @@ class Archive(UUIDModel):
     images = models.ManyToManyField(Image)
 
     def __str__(self):
-        return "<{} {}>".format(self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__} {self.name}>"
+
+    def delete(self, *args, **kwargs):
+        # Remove all related patients and other models via cascading
+        Patient.objects.filter(study__image__archive__id=self.id).delete()
+        super().delete(*args, **kwargs)
