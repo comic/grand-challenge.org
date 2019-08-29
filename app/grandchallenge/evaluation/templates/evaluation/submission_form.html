@@ -40,6 +40,10 @@
                 to see their status.
             </p>
 
+        {% elif challenge.evaluation_config.daily_submission_limit == 0 %}
+
+            <p>Submissions are closed for this challenge.</p>
+
         {% elif remaining_submissions <= 0 %}
 
             <p>
