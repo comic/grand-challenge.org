@@ -336,7 +336,7 @@ class Question(UUIDModel):
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
     )
-    order = models.PositiveSmallIntegerField(default=1)
+    order = models.PositiveSmallIntegerField(default=100)
 
     class Meta:
         ordering = ("order", "created")
