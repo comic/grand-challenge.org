@@ -21,6 +21,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_type",
             "api_url",
             "form_direction",
+            "help_text",
             "image_port",
             "pk",
             "question_text",

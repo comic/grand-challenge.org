@@ -325,6 +325,7 @@ class Question(UUIDModel):
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
     question_text = models.TextField()
+    help_text = models.TextField(blank=True)
     answer_type = models.CharField(
         max_length=4,
         choices=ANSWER_TYPE_CHOICES,

@@ -78,6 +78,7 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
         model = Question
         fields = (
             "question_text",
+            "help_text",
             "answer_type",
             "required",
             "image_port",
@@ -86,8 +87,13 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
         )
         help_texts = {
             "question_text": (
-                "The question that will be presented to the user. "
+                "The question that will be presented to the user, "
+                "should be short. "
                 "e.g. 'Is there pathology present in these images?'"
+            ),
+            "help_text": (
+                "This can be used to provide extra information or "
+                "clarification to the reader about this question."
             ),
             "answer_type": "The type of answer that the user will give.",
             "image_port": (
