@@ -8,6 +8,7 @@ from django.forms import (
     ModelChoiceField,
     ChoiceField,
     HiddenInput,
+    TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
@@ -118,6 +119,7 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
                 "user can skip it."
             ),
         }
+        widgets = {"question_text": TextInput}
 
 
 class UserGroupForm(SaveFormInitMixin, Form):
