@@ -91,7 +91,7 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
             ),
             "answer_type": "The type of answer that the user will give.",
             "image_port": (
-                "If the user is expected to draw a bounding box, "
+                "If the user will make a bounding box or measurement, "
                 "on which image port should they do it? "
                 "Note, "
                 "that this will be the same image port for every hanging."
