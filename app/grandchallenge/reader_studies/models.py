@@ -242,6 +242,27 @@ ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
     "required": ["version", "type", "corners"],
 }
 
+ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "start": {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 3,
+            "maxItems": 3,
+        },
+        "end": {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 3,
+            "maxItems": 3,
+        },
+    },
+    "required": ["version", "type", "start", "end"],
+}
+
 
 def validate_answer_json(schema: dict, obj: object) -> bool:
     """ The answer type validators must return true or false """
@@ -258,13 +279,15 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "BOOL"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
+    ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
         (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
         (ANSWER_TYPE_BOOL, "Bool"),
-        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
         (ANSWER_TYPE_HEADING, "Heading"),
+        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
+        (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
     )
 
     # A callable for every answer type that would validate the given answer
@@ -275,6 +298,9 @@ class Question(UUIDModel):
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
         ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
             ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA, o
+        ),
+        ANSWER_TYPE_DISTANCE_MEASUREMENT: lambda o: validate_answer_json(
+            ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA, o
         ),
     }
 
@@ -347,12 +373,16 @@ class Question(UUIDModel):
 
     def clean(self):
         # Make sure that the image port is only set when using drawn
-        # annotations. At the moment 2D bounding boxes are the only drawn type.
-        if (self.answer_type == self.ANSWER_TYPE_2D_BOUNDING_BOX) != bool(
-            self.image_port
-        ):
+        # annotations.
+        if (
+            self.answer_type
+            in [
+                self.ANSWER_TYPE_2D_BOUNDING_BOX,
+                self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            ]
+        ) != bool(self.image_port):
             raise ValidationError(
-                "The image port must (only) be set for bounding box questions."
+                "The image port must (only) be set for annotation questions."
             )
 
     def is_answer_valid(self, *, answer):
