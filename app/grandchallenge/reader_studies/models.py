@@ -333,6 +333,7 @@ class Question(UUIDModel):
     image_port = models.CharField(
         max_length=1, choices=IMAGE_PORT_CHOICES, blank=True, default=""
     )
+    required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
     )
@@ -342,7 +343,15 @@ class Question(UUIDModel):
         ordering = ("order", "created")
 
     def __str__(self):
-        return f"{self.question_text} ({self.get_answer_type_display()})"
+        return (
+            f"{self.question_text} "
+            "("
+            f"{self.get_answer_type_display()}, "
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}"
+            f"{'' if self.required else 'not'} required, "
+            f"order {self.order}"
+            ")"
+        )
 
     @property
     def api_url(self):
@@ -383,6 +392,12 @@ class Question(UUIDModel):
         ) != bool(self.image_port):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
+            )
+
+        if self.answer_type == self.ANSWER_TYPE_BOOL and self.required:
+            raise ValidationError(
+                "Bool answer types should not have Required checked "
+                "(otherwise the user will need to tick a box for each image!)"
             )
 
     def is_answer_valid(self, *, answer):

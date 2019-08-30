@@ -25,6 +25,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "pk",
             "question_text",
             "reader_study",
+            "required",
         )
 
 

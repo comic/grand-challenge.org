@@ -79,6 +79,7 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
         fields = (
             "question_text",
             "answer_type",
+            "required",
             "image_port",
             "direction",
             "order",
@@ -105,6 +106,10 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
             "order": (
                 "Where should this question be in the form? "
                 "Lower numbers put this question to the top."
+            ),
+            "required": (
+                "If true, the user must answer this question, otherwise the "
+                "user can skip it."
             ),
         }
 
