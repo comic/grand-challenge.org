@@ -25,6 +25,7 @@ from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
 import grandchallenge.algorithms.models
 import grandchallenge.cases.models
+from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ class Command(BaseCommand):
         self._create_demo_challenge()
         self._create_external_challenge()
         self._create_algorithm_demo()
+        self._create_workstation()
         self._log_tokens()
 
     def _create_flatpages(self, site):
@@ -264,6 +266,12 @@ class Command(BaseCommand):
         )
         algorithms_result.save()
         algorithms_result.images.add(cases_image)
+
+    def _create_workstation(self):
+        w = Workstation.objects.create(
+            title=settings.DEFAULT_WORKSTATION_SLUG, logo=get_temporary_image()
+        )
+        w.add_user(user=self.users["readerstudy"])
 
     @staticmethod
     def _log_tokens():
