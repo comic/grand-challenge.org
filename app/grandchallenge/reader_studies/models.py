@@ -75,6 +75,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
     )
+    shuffle_hanging_list = models.BooleanField(default=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
