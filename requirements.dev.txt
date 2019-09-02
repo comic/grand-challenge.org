@@ -1,3 +1,4 @@
 sphinx==2.2.0
 recommonmark==0.6.0
 sphinx_rtd_theme==0.4.3
+sphinx-autobuild==0.7.1
