@@ -1,7 +1,10 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
 from rest_framework.relations import SlugRelatedField, HyperlinkedRelatedField
-from rest_framework.serializers import HyperlinkedModelSerializer
+from rest_framework.serializers import (
+    HyperlinkedModelSerializer,
+    SerializerMethodField,
+)
 
 from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
@@ -32,6 +35,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
+    hanging_list_images = SerializerMethodField()
 
     class Meta:
         model = ReaderStudy
@@ -43,6 +47,12 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "pk",
             "questions",
             "title",
+        )
+
+    def get_hanging_list_images(self, obj: ReaderStudy):
+        """ Used by hanging_list_images serializer field """
+        return obj.get_hanging_list_images_for_user(
+            user=self.context["request"].user
         )
 
 

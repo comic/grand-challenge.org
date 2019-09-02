@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from numpy.random.mtrand import RandomState
 
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
@@ -215,6 +216,21 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ]
 
         return hanging_list_images
+
+    def get_hanging_list_images_for_user(self, *, user):
+        """
+        Returns a shuffled list of the hanging list images for a particular
+        user. The shuffle is seeded with the users pk, and using RandomState
+        from numpy guarantees that the ordering will be consistent across
+        python/library versions. Returns the normal list if
+        shuffle_hanging_list is false.
+        """
+        if self.shuffle_hanging_list:
+            return RandomState(seed=int(user.pk)).shuffle(
+                self.hanging_list_images
+            )
+        else:
+            return self.hanging_list_images
 
 
 ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
