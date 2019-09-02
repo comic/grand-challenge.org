@@ -225,12 +225,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         python/library versions. Returns the normal list if
         shuffle_hanging_list is false.
         """
-        if self.shuffle_hanging_list:
-            return RandomState(seed=int(user.pk)).shuffle(
-                self.hanging_list_images
-            )
-        else:
-            return self.hanging_list_images
+        hanging_list = self.hanging_list_images
+
+        if self.shuffle_hanging_list and hanging_list is not None:
+            # In place shuffle
+            RandomState(seed=int(user.pk)).shuffle(hanging_list)
+
+        return hanging_list
 
 
 ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
