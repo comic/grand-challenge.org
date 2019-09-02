@@ -1,10 +1,8 @@
 {
     "description": "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging", 
     "license": "Apache-2.0", 
-    "title": "Grand Challenge.org", 
-    "version": "v2019.08", 
+    "title": "Grand Challenge.org",  
     "upload_type": "software", 
-    "publication_date": "2019-07-31", 
     "creators": [
         {
             "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands", 
@@ -82,17 +80,5 @@
             "name": "Bram van Ginneken"
         }
     ], 
-    "access_right": "open", 
-    "related_identifiers": [
-        {
-            "scheme": "url", 
-            "identifier": "https://github.com/comic/grand-challenge.org/tree/v2019.08", 
-            "relation": "isSupplementTo"
-        }, 
-        {
-            "scheme": "doi", 
-            "identifier": "10.5281/zenodo.3356819", 
-            "relation": "isVersionOf"
-        }
-    ]
+    "access_right": "open"
 }
