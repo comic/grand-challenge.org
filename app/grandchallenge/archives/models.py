@@ -18,5 +18,7 @@ class Archive(UUIDModel):
 
     def delete(self, *args, **kwargs):
         # Remove all related patients and other models via cascading
-        Patient.objects.filter(study__image__archive__id=self.id).delete()
+        Patient.objects.filter(study__image__archive__id=self.id).delete(
+            *args, **kwargs
+        )
         super().delete(*args, **kwargs)
