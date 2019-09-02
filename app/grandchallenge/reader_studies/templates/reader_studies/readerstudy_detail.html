@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
 {% load workstations %}
 {% load guardian_tags %}
 
@@ -46,7 +47,7 @@
         <h2>Editors</h2>
         <ul>
             {% for user in object.editors_group.user_set.all %}
-                <li>{{ user }}</li>
+                <li>{{ user|user_profile_link }}</li>
             {% endfor %}
         </ul>
 
@@ -60,7 +61,7 @@
         <h2>Readers</h2>
         <ul>
             {% for user in object.readers_group.user_set.all %}
-                <li>{{ user }}</li>
+                <li>{{ user|user_profile_link }}</li>
             {% endfor %}
         </ul>
 

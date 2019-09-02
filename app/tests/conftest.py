@@ -569,7 +569,7 @@ def generate_archive_patient_study_image_set():
     images113 = ImageFactoryWithoutImageFile.create_batch(6, study=study113)
     images121 = ImageFactoryWithoutImageFile.create_batch(2, study=study121)
     images122 = ImageFactoryWithoutImageFile.create_batch(3, study=study122)
-    images211 = ImageFactoryWithoutImageFile.create_batch(4)
+    images211 = ImageFactoryWithoutImageFile.create_batch(4, study=None)
     archive1 = ArchiveFactory.create(
         images=[*images111, *images112, *images113, *images121, *images122]
     )

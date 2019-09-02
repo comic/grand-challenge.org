@@ -168,6 +168,27 @@ def test_answer_creator_is_reader(client):
             '{"version": {"major": 1, "minor": 0}, "type": "2D bounding box", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
             400,
         ),  # Valid json, but a string
+        (
+            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": (1, 2, 3),
+                "end": (4, 5, 6),
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "end": (4, 5, 6),
+            },
+            400,
+        ),
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):

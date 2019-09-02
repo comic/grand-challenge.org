@@ -79,13 +79,14 @@ class DockerConnection:
         # Retry and exponential backoff of the prune command as only 1 prune
         # operation can occur at a time on a docker host
         num_retries = 0
-        e = APIError
-        while num_retries < 3:
+        e = Exception
+        while num_retries < 10:
             try:
                 obj.prune(filters=filters)
                 break
-            except (APIError, HTTPError) as e:
+            except (APIError, HTTPError) as _e:
                 num_retries += 1
+                e = _e
                 sleep((2 ** num_retries) + (randint(0, 1000) / 1000))
         else:
             raise e

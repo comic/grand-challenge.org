@@ -925,7 +925,8 @@ class ArchiveAPIView(APIView):
                         archive_only_images.append(image)
 
                 images = sorted(
-                    generate_images(archive_only_images), key=lambda x: x["id"]
+                    generate_images(archive_only_images, archive_only=True),
+                    key=lambda x: x["id"],
                 )
                 subfolders = sorted(
                     generate_patients(archive, patients), key=lambda x: x["id"]
@@ -965,17 +966,23 @@ class ArchiveAPIView(APIView):
                     "subfolders": [],
                 }
 
-        def generate_images(image_list):
+        def generate_images(image_list, archive_only=False):
             for image in image_list:
-                yield {
+                yield_obj = {
                     "id": image.id,
                     "name": image.name,
                     "eye": image.eye_choice,
                     "modality": image.modality.modality,
-                    "patient": image.study.patient.name,
-                    "study": image.study.name,
                     "archives": image.archive_set.values(),
                 }
+                if not archive_only:
+                    yield_obj.update(
+                        {
+                            "study": image.study.name,
+                            "patient": image.study.patient.name,
+                        }
+                    )
+                yield yield_obj
 
         return sorted(
             generate_archives(archives, patients), key=lambda x: x["id"]
