@@ -4,6 +4,14 @@ EYRA documentation
 
 .. include:: ../README.rst
 
+
+.. toctree::
+   :caption: Docs
+   :maxdepth: 1
+
+   docs/building
+
+
 .. toctree::
    :caption: Platform
    :maxdepth: 1
