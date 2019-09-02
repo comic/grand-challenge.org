@@ -51,7 +51,7 @@ class Interface(UUIDModel):
     )
     output_type = models.ForeignKey(
         DataType,
-        on_delete = models.CASCADE,
+        on_delete=models.CASCADE,
         related_name='+',
         help_text="Output DataType"
     )
@@ -79,7 +79,7 @@ class Input(UUIDModel):
     )
     type = models.ForeignKey(
         DataType,
-        on_delete = models.CASCADE,
+        on_delete=models.CASCADE,
         related_name='+',
         help_text="Data type"
     )

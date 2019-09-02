@@ -25,61 +25,99 @@ def get_card_image_filename(obj, filename=None):
 
 
 class Benchmark(UUIDModel):
+    """
+    A `Benchmark` defines a specific challenge.
+
+    To be a valid `Benchmark`, for which submissions can be created which can be evaluated, a couple of things need
+    to be specified:
+
+    `data_set` field:
+        Sets the :class:`~comic.eyra_data.models.DataSet` to be used in this benchmark. Determines which files are used
+        as test data and ground truth in the evaluation pipeline.
+
+    `interface` field:
+        The interface for user :class:`Submission` s.
+
+    `evaluator` field:
+        The evaluator field sets which :class:`~comic.eyra_algorithms.models.Implementation` (docker image) is
+        used to evaluate the output of a user :class:`Submission`.
+    """
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="Creator of the benchmark",
     )
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
     short_description = models.TextField(
         default="",
-        help_text="Short description in markdown.",
+        help_text="Short description in markdown",
     )
     description = models.TextField(
         default="",
-        help_text="Description in markdown.",
+        help_text="Description in markdown",
     )
     data_description = models.TextField(
         default="",
-        help_text="Description of the data used in this benchmark in markdown.",
+        help_text="Description of the data used in this benchmark in markdown",
     )
     truth_description = models.TextField(
         default="",
-        help_text="Description of the truth data in markdown.",
+        help_text="Description of the truth data in markdown",
     )
     metrics_description = models.TextField(
         default="",
-        help_text="Description of the metrics in markdown.",
+        help_text="Description of the metrics in markdown",
     )
     name = models.CharField(
         max_length=255,
         blank=False,
-        help_text=(
-            "The name of the benchmark"
-        ),
+        help_text="The name of the benchmark",
         unique=True,
     )
-
     banner_image = models.ImageField(
         blank=True,
         null=True,
-        upload_to=get_banner_image_filename
+        upload_to=get_banner_image_filename,
+        help_text="Banner image (wide image that shows in header of benchmark details page)",
     )
-
     card_image = models.ImageField(
         blank=True,
         null=True,
-        upload_to=get_card_image_filename
+        upload_to=get_card_image_filename,
+        help_text="Image to show in small card of this benchmark",
     )
-
-    evaluator = models.ForeignKey(Implementation, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
-    data_set = models.ForeignKey(DataSet, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
-    interface = models.ForeignKey(Interface, on_delete=models.SET_NULL, null=True, blank=True, related_name='benchmarks')
+    evaluator = models.ForeignKey(
+        Implementation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='benchmarks',
+        help_text="Evaluation implementation. Generates " +
+                  "OutputMetrics using ground truth and output of the previous step"
+    )
+    data_set = models.ForeignKey(
+        DataSet,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='benchmarks',
+        help_text="Data set used in this benchmark",
+    )
+    interface = models.ForeignKey(
+        Interface,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='benchmarks',
+        help_text="Interface for submissions to this benchmark"
+    )
     admin_group = models.OneToOneField(
         Group,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
         related_name="benchmark",
+        help_text="Admin group for this benchmark"
     )
 
     def save(self, *args, **kwargs):
@@ -113,6 +151,15 @@ class Benchmark(UUIDModel):
 
 
 class Submission(UUIDModel):
+    """
+    A `Submission` indicates an (user-created) :class:`~comic.eyra_algorithms.models.Implementation` tested against a
+    :class:`Benchmark`. Whenever a `Submission` is created, two :class:`Jobs <comic.eyra_algorithms.models.Job>`
+    are created: the implementation_job (which runs first) and the evaluation_job (which runs second, using the output
+    of the first :class:`~comic.eyra_algorithms.models.Job`.
+
+    When the evaluation :class:`~comic.eyra_algorithms.models.Job` succeeds, the field `metrics` in its JSON output
+    will be copied to this models `metrics`.
+    """
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
