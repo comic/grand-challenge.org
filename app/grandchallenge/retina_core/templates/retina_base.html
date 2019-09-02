@@ -9,13 +9,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" integrity="sha384-pGTFmbQfua2KiaV2+ZLlfowPdd5VMT2xU4zCBcuJr7TVQozMO+I1FmPuVHY3u8KB" crossorigin="anonymous"></script>
-    <script>
-        {% if not DEBUG %}
+    {% if not DEBUG %}
+        <script src="https://browser.sentry-cdn.com/5.6.1/bundle.min.js" integrity="sha384-pGTFmbQfua2KiaV2+ZLlfowPdd5VMT2xU4zCBcuJr7TVQozMO+I1FmPuVHY3u8KB" crossorigin="anonymous"></script>
+        <script>
             // Setup sentry in production before anything else loads
             Sentry.init({ dsn: '{{ SENTRY_DSN }}' });
-        {% endif %}
-    </script>
+        </script>
+    {% endif %}
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -95,6 +95,12 @@
               USER_ID = {{ user.id }};
               USER_NAME = "{{ user.get_username }}";
               IS_RETINA_ADMIN = {{ IS_RETINA_ADMIN|yesno:"true,false" }};
+
+              {% if not DEBUG %}
+                  Sentry.configureScope((scope) => {
+                    scope.setUser({"username": USER_NAME, "id": USER_ID});
+                  });
+              {%  endif %}
           {% endif %}
       </script>
     {% endblock javascript %}
