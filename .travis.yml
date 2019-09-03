@@ -44,10 +44,9 @@ before_script:
     done
 
 script:
-  - pytest app
+  - cd app && python manage.py test
 
 after_success:
-  - docker pull eyra/comic:latest
   - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
 
 deploy:
