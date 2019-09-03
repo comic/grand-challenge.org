@@ -24,35 +24,50 @@ class Archive(UUIDModel):
         Removes all patients, studies, images, imagefiles and annotations that belong
         exclusively to this archive
         """
+
+        def find_protected_studies_and_patients(images):
+            """
+            Returns a tuple containing a set of Study ids and a set of Patient ids
+            that are "protected". Where "protected" means that these Study and Patient
+            objects contain images that are not in the given list of images. Therefore,
+            when deleting an archive and it's related objects, these Study and Patient
+            objects should not be deleted since that would also delete other images,
+            because of the cascading delete behavior of the many-to-one relation.
+            :param images: list of image objects that are going to be removed
+            :return: tuple containing a set of Study ids and a set of Patient ids
+            that should not be removed
+            """
+            protected_study_ids = set()
+            protected_patient_ids = set()
+            for image in images:
+                if image.study is None:
+                    continue
+                for other_study_image in image.study.image_set.all():
+                    if other_study_image not in images_to_remove:
+                        protected_study_ids.add(image.study.id)
+                        protected_patient_ids.add(image.study.patient.id)
+                        break
+
+            return protected_study_ids, protected_patient_ids
+
         images_to_remove = (
             Image.objects.annotate(num_archives=Count("archive"))
             .filter(archive__id=self.id, num_archives=1)
             .all()
         )
-        protected_study_ids = set()
-        protected_patient_ids = set()
-        for image in images_to_remove:
-            if image.study is None:
-                continue
-            for image1 in image.study.image_set.all():
-                if image1 not in images_to_remove:
-                    protected_study_ids.add(image.study.id)
-                    protected_patient_ids.add(image.study.patient.id)
-                    break
 
-        related_patients = Patient.objects.filter(
+        protected_study_ids, protected_patient_ids = find_protected_studies_and_patients(
+            images_to_remove
+        )
+
+        Patient.objects.filter(
             study__image__in=images_to_remove
-        ).distinct()
-        related_studies = Study.objects.filter(
-            image__in=images_to_remove
-        ).distinct()
-        for patient in related_patients:
-            if patient.id not in protected_patient_ids:
-                patient.delete(*args, **kwargs)
-        for study in related_studies:
-            if study.id not in protected_study_ids:
-                study.delete(*args, **kwargs)
-
+        ).distinct().exclude(pk__in=protected_patient_ids).delete(
+            *args, **kwargs
+        )
+        Study.objects.filter(image__in=images_to_remove).distinct().exclude(
+            pk__in=protected_study_ids
+        ).delete(*args, **kwargs)
         images_to_remove.delete(*args, **kwargs)
 
         super().delete(*args, **kwargs)
