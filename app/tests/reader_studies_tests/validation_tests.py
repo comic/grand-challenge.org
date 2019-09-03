@@ -83,7 +83,8 @@ def test_hanging_list_shuffle_per_user(client):
     rs.images.set(images)
     rs.save()
 
-    u1, u2 = UserFactory(), UserFactory()
+    # The shuffling is seeded with the users pk, so needs to stay constant
+    u1, u2 = UserFactory(pk=1_000_000), UserFactory(pk=1_000_001)
 
     rs.add_reader(user=u1)
     rs.add_reader(user=u2)
@@ -115,16 +116,16 @@ def test_hanging_list_shuffle_per_user(client):
     # changed their implementation
     api_to_image = {im.api_url: im.name for im in images}
     assert [api_to_image[h["main"]] for h in u1_list] == [
-        "image_5",
-        "image_4",
-        "image_1",
-        "image_2",
-        "image_9",
-        "image_6",
-        "image_7",
-        "image_0",
-        "image_3",
         "image_8",
+        "image_3",
+        "image_7",
+        "image_1",
+        "image_4",
+        "image_9",
+        "image_0",
+        "image_5",
+        "image_6",
+        "image_2",
     ]
 
     # Check that the api is hooked up
