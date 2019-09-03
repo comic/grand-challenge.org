@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
+from django.utils.timezone import now
 from django.views.generic import (
     ListView,
     CreateView,
@@ -23,8 +26,13 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.mixins import (
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    ListModelMixin,
+)
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
 from grandchallenge.workstations.forms import (
@@ -45,11 +53,39 @@ from grandchallenge.workstations.utils import (
 )
 
 
-class SessionViewSet(ReadOnlyModelViewSet):
+class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
+    """ Workaround for using object permissions without setting model perms """
+
+    def has_permission(self, request, view):
+        # Workaround to ensure DjangoModelPermissions are not applied
+        # to the root view when using DefaultRouter.
+        if getattr(view, "_ignore_model_permissions", False):
+            return True
+
+        if not request.user or (
+            not request.user.is_authenticated and self.authenticated_users_only
+        ):
+            return False
+
+        return True
+
+
+class SessionViewSet(
+    RetrieveModelMixin, UpdateModelMixin, ListModelMixin, GenericViewSet
+):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
-    permission_classes = (DjangoObjectPermissions,)
+    permission_classes = (DjangoObjectOnlyPermissions,)
     filter_backends = (DjangoObjectPermissionsFilter,)
+
+    def perform_update(self, serializer):
+        """ Increase the maximum duration of the session, up to the maximum """
+        instance = self.get_object()
+        max_duration = min(
+            now() + timedelta(minutes=5) - instance.created,
+            timedelta(seconds=settings.WORKSTATIONS_MAXIMUM_TIMEOUT),
+        )
+        serializer.save(maximum_duration=max_duration)
 
 
 class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
