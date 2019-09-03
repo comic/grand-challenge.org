@@ -41,6 +41,30 @@ required configuration, run :code:`microk8s.kubectl config view --raw`, and save
 or merge with your existing kubeconfig file (typically set in `KUBECONFIG` env var). To activate the microk8s config you can then
 run :code:`kubectl config use-context microk8s`.
 
+~~~~~~~~~~~~~~~
+Using Multipass
+~~~~~~~~~~~~~~~
+
+On a Mac, you have to install MicroK8S inside a Multipass VM.
+
+1. Download and install `Multipass <https://multipass.run>`_
+2. Create a VM: ``multipass launch --name microk8s-vm --mem 4G --disk 40G``
+3. Launch the multipass shell in the VM: ``multipass shell microk8s-vm``
+
+You can now install MicroK8S and the EYRA Helm chart by following the instructions.
+
+Useful commands:
+
+* To shutdown the VM, run ``multipass stop microk8s-vm``.
+* To start it again: ``multipass start microk8s-vm``.
+* To check the status of your VMs, run ``multipass ls``.
+* To delete and cleanup the VM run:
+
+  .. code-block:: bash
+
+    multipass delete microk8s-vm
+    multipass purge
+
 Minikube
 ~~~~~~~~
 
