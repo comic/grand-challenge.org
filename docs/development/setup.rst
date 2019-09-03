@@ -75,6 +75,7 @@ Clone the EYRA k8s repository and install it:
     cd eyra-k8s
     # setup secrets
     unzip -p eyra-chart/templates/secrets.dev.zip > eyra-chart/templates/secrets.yaml
+    helm dependency update eyra-chart
     helm install ./eyra-chart --name eyra-dev -f ./eyra-chart/values.dev.yaml
 
 This should install EYRA (takes a while). When done, you can check the following
