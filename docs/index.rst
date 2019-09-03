@@ -17,7 +17,6 @@ EYRA documentation
    :maxdepth: 1
 
    platform/overview
-   platform/installation
 
 
 .. toctree::

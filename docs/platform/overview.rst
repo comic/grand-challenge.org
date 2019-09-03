@@ -1,8 +1,5 @@
-Overview
-========
-
-Entities & relations
---------------------
+Overview of entities and relations
+==================================
 
 .. image:: ../../erd.png
    :target: ../_images/erd.png

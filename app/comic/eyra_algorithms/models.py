@@ -279,7 +279,7 @@ class Job(UUIDModel):
 
 class JobInput(UUIDModel):
     """
-    Input of a Job, a link between the :class:`Input` of an :class:`Implementation` and a specific
+    Input of a :class:`Job`, a link between the :class:`Input` of an :class:`Implementation` and a specific
     :class:`~comic.eyra_data.models.DataFile`.
     """
     input = models.ForeignKey(
