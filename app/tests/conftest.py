@@ -292,30 +292,49 @@ class AnnotationSet(NamedTuple):
     polygon: PolygonAnnotationSetFactory
     coordinatelist: CoordinateListAnnotationFactory
     landmark: LandmarkAnnotationSetFactory
+    singlelandmarks: List
     etdrs: ETDRSGridAnnotationFactory
 
 
-def generate_annotation_set(retina_grader=False):
+def generate_annotation_set(retina_grader=False, image=False):
     grader = UserFactory()
 
     if retina_grader:
         add_to_graders_group([grader])
 
-    measurement = MeasurementAnnotationFactory(grader=grader)
-    boolean = BooleanClassificationAnnotationFactory(grader=grader)
-    integer = IntegerClassificationAnnotationFactory(grader=grader)
-    polygon = PolygonAnnotationSetFactory(grader=grader)
-    coordinatelist = CoordinateListAnnotationFactory(grader=grader)
-    landmark = LandmarkAnnotationSetFactory(grader=grader)
-    etdrs = ETDRSGridAnnotationFactory(grader=grader)
+    create_options = {"grader": grader}
+    if image:
+        create_options_with_image = {"image": image, **create_options}
+    else:
+        create_options_with_image = create_options
+
+    measurement = MeasurementAnnotationFactory(**create_options_with_image)
+    boolean = BooleanClassificationAnnotationFactory(
+        **create_options_with_image
+    )
+    integer = IntegerClassificationAnnotationFactory(
+        **create_options_with_image
+    )
+    polygon = PolygonAnnotationSetFactory(**create_options_with_image)
+    coordinatelist = CoordinateListAnnotationFactory(
+        **create_options_with_image
+    )
+    etdrs = ETDRSGridAnnotationFactory(**create_options_with_image)
+    landmark = LandmarkAnnotationSetFactory(**create_options)
 
     # Create child models for polygon annotation set
     SinglePolygonAnnotationFactory.create_batch(10, annotation_set=polygon)
 
     # Create child models for landmark annotation set (3 per image)
+    single_landmarks = []
     for i in range(5):
-        image = ImageFactory()
-        SingleLandmarkAnnotationFactory(annotation_set=landmark, image=image)
+        if i > 0 or not image:
+            image = ImageFactory()
+        single_landmarks.append(
+            SingleLandmarkAnnotationFactory(
+                annotation_set=landmark, image=image
+            )
+        )
 
     return AnnotationSet(
         grader=grader,
@@ -324,6 +343,7 @@ def generate_annotation_set(retina_grader=False):
         polygon=polygon,
         coordinatelist=coordinatelist,
         landmark=landmark,
+        singlelandmarks=single_landmarks,
         etdrs=etdrs,
         integer=integer,
     )
@@ -336,6 +356,15 @@ def annotation_set():
     annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
     annotations for 5 images), ETDRSGrid """
     return generate_annotation_set()
+
+
+@pytest.fixture(name="AnnotationSetForImage")
+def annotation_set_for_image():
+    """ Creates a user with the one of each of the following annotations:
+    Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
+    annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
+    annotations for 5 images), ETDRSGrid """
+    return generate_annotation_set
 
 
 class TwoPolygonAnnotationSets(NamedTuple):
