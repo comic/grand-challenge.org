@@ -375,6 +375,9 @@ CORS_ORIGIN_REGEX_WHITELIST = (
     r"https?://localhost:3000",
     r"^.*\.static\.observableusercontent\.com",
 )
+if strtobool(os.environ.get("CORS_ALLOW_ALL", "False")):
+    CORS_ORIGIN_REGEX_WHITELIST += (r'.*',)
+
 
 # CORS_ORIGIN_ALLOW_ALL = True
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
