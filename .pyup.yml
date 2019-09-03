@@ -38,8 +38,8 @@ search: False
 #      update: insecure
 #      pin: True
 requirements:
-  - Pipfile
-  - Pipfile.lock
+  - requirements.txt
+  - requirements.dev.txt
 
 # add a label to pull requests, default is not set
 # requires private repo permissions, even on public repos

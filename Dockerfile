@@ -14,19 +14,18 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/pipenv /app /static
-RUN python -m pip install -U pip
-RUN python -m pip install -U pipenv
+RUN mkdir -p /app /static
+
+WORKDIR /app
 
 # Install base python packages
-WORKDIR /opt/pipenv
-ADD Pipfile /opt/pipenv
-ADD Pipfile.lock /opt/pipenv
-RUN pipenv install --system
+ADD requirements.txt /app
+ADD requirements.dev.txt /app
+RUN pip install -r requirements.txt && pip install -r requirements.dev.txt
 
 RUN chown 2001:2001 /static
 
 USER 2001:2001
-WORKDIR /app
+
 ADD --chown=2001:2001 ./app/ /app/
 RUN python manage.py collectstatic
