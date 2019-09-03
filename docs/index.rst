@@ -24,7 +24,7 @@ EYRA documentation
    :caption: Development
    :maxdepth: 2
 
-   development/local
+   development/setup
 
 
 .. toctree::

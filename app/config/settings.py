@@ -115,6 +115,7 @@ DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
+
 SESSION_COOKIE_SECURE = strtobool(
     os.environ.get("SESSION_COOKIE_SECURE", "False")
 )
@@ -122,6 +123,8 @@ CSRF_COOKIE_SECURE = strtobool(os.environ.get("CSRF_COOKIE_SECURE", "False"))
 
 # Set the allowed hosts to the cookie domain
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN, "web"]
+if strtobool(os.environ.get("ALLOW_ALL_HOSTS", "False")):
+    ALLOWED_HOSTS = ["*"]
 
 # Security options
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
@@ -317,15 +320,19 @@ LOGGING = {
 }
 
 if os.environ.get('DJANGO_SENTRY_DSN', False):
-    sentry_logging = LoggingIntegration(
-        level=logging.INFO,  # Capture info and above as breadcrumbs
-        event_level=logging.ERROR  # Send errors as events
-    )
-    sentry_sdk.init(
-        dsn=os.environ.get('DJANGO_SENTRY_DSN'),
-        integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging],
-        environment=os.environ.get('ENVIRONMENT', 'unknown')
-    )
+    try:
+        sentry_logging = LoggingIntegration(
+            level=logging.INFO,  # Capture info and above as breadcrumbs
+            event_level=logging.ERROR  # Send errors as events
+        )
+        sentry_sdk.init(
+            dsn=os.environ.get('DJANGO_SENTRY_DSN'),
+            integrations=[DjangoIntegration(), CeleryIntegration(), sentry_logging],
+            environment=os.environ.get('ENVIRONMENT', 'unknown')
+        )
+    except Exception as e:
+        print("WARNING: couldn't init sentry")
+        print(e)
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),

@@ -1,5 +1,5 @@
 Building these docs
--------------------
+===================
 
 - Install dependencies from :code:`requirements.dev.txt` and :code:`requirements.prod.txt`.
 

@@ -1,8 +1,8 @@
 Overview
---------
+========
 
 Entities & relations
-====================
+--------------------
 
 .. image:: ../../erd.png
    :target: ../_images/erd.png
