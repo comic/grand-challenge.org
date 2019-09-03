@@ -1,7 +1,7 @@
 Building these docs
 ===================
 
-- Install dependencies from :code:`requirements.dev.txt` and :code:`requirements.prod.txt`.
+- Install dependencies from :code:`requirements.dev.txt` and :code:`requirements.txt`.
 
 - When developing, you can use :code:`sphinx-autobuild` to get an development server that automatically refreshes on
   changes:
