@@ -31,10 +31,12 @@ from rest_framework.mixins import (
     UpdateModelMixin,
     ListModelMixin,
 )
-from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
@@ -51,23 +53,6 @@ from grandchallenge.workstations.utils import (
     get_workstation_image_or_404,
     get_or_create_active_session,
 )
-
-
-class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
-    """ Workaround for using object permissions without setting model perms """
-
-    def has_permission(self, request, view):
-        # Workaround to ensure DjangoModelPermissions are not applied
-        # to the root view when using DefaultRouter.
-        if getattr(view, "_ignore_model_permissions", False):
-            return True
-
-        if not request.user or (
-            not request.user.is_authenticated and self.authenticated_users_only
-        ):
-            return False
-
-        return True
 
 
 class SessionViewSet(
