@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -262,3 +264,40 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
                 assert response.json()["count"] == 0
         else:
             assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("method", ["put", "patch"])
+def test_session_api_patch_permissions(client, two_workstation_sets, method):
+    tests = (
+        (two_workstation_sets.ws1.editor, 200, True),
+        (two_workstation_sets.ws1.user, 200, True),
+        (two_workstation_sets.ws1.user1, 404, False),
+        (two_workstation_sets.ws2.editor, 404, False),
+        (two_workstation_sets.ws2.user, 404, False),
+        (UserFactory(), 404, False),
+        (UserFactory(is_staff=True), 404, False),
+        (None, 401, False),
+    )
+
+    for test in tests:
+        s = SessionFactory(
+            workstation_image=two_workstation_sets.ws1.image,
+            creator=two_workstation_sets.ws1.user,
+        )
+
+        response = get_view_for_user(
+            viewname="api:session-detail",
+            client=client,
+            method=getattr(client, method),
+            data={"pk": s.pk, "status": "Stopped"} if method == "put" else {},
+            user=test[0],
+            reverse_kwargs={"pk": s.pk},
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+        # The maximum duration should have changed from the default
+        s.refresh_from_db()
+        assert s.status == s.QUEUED  # Read only, always unchanged
+        assert (s.maximum_duration == timedelta(minutes=10)) is not test[2]
