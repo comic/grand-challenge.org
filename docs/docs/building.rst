@@ -12,7 +12,7 @@ Building these docs
     # Auto reload dev server:
     sphinx-autobuild docs docs/_build/html
 
-- To make a 'production' build of the docs, run :code:`make` from the :code:`docs/` folder. This will
+- To make a 'production' build of the docs, run :code:`make html` from the :code:`docs/` folder. This will
   generate a html based structure in :code:`docs/_build/html`.
 
 .. code-block:: bash
