@@ -36,7 +36,7 @@ class Benchmark(UUIDModel):
         as test data and ground truth in the evaluation pipeline.
 
     `interface` field:
-        The interface for user :class:`Submission` s.
+        The interface for user :class:`Submission`\s.
 
     `evaluator` field:
         The evaluator field sets which :class:`~comic.eyra_algorithms.models.Implementation` (docker image) is
