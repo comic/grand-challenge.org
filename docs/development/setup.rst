@@ -65,6 +65,13 @@ Useful commands:
     multipass delete microk8s-vm
     multipass purge
 
+* Set a proxy, so you can access the services running in the VM from the host computer.
+  In a separate terminal type: ``multipass exec microk8s-vm --
+  /snap/bin/microk8s.kubectl proxy --address='0.0.0.0' --accept-hosts='.*'``
+  and leave the terminal window open. You can now access services by going to
+  ``http://<microk8s-vm ip-address>:8001/api/v1/namespaces/default/services/<service name>/proxy``
+  in your browser.
+
 Minikube
 ~~~~~~~~
 
