@@ -155,3 +155,47 @@ Now services are reachable like this (both from the host and from inside a pod):
     - :code:`eyra-dev-web.default.svc.cluster.local`
     - :code:`eyra-dev-postgresql.default.svc.cluster.local`
 
+
+Using a local postgresql database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, install postgres. Next, create the comic database, user, and set
+permissions (we are using the values from the ``.env.dev`` file,
+**please only use these for development!**):
+
+.. code-block:: bash
+
+    $ psql postgres
+    CREATE DATABASE comic;
+    CREATE USER comic WITH PASSWORD 'postgres';
+    GRANT ALL PRIVILEGES ON DATABASE comic TO comic;
+    ALTER USER comic CREATEDB;
+    \q
+
+Clone the comic github repo and install the dependencies:
+
+.. code-block:: bash
+
+    git clone https://github.com/EYRA-Benchmark/comic.git
+    cd comic
+    pip install -r requirements.txt
+    pip install -r requirements.dev.txt
+    cd app
+    python manage.py migrate
+    python manage.py init_db_data
+
+**Remark**: When running ``python manage.py migrate`` I get an error
+``ERROR 2019-09-04 15:25:29,168 signals 6084 4623660480 cannot add user to
+default group: Group matching query does not exist.``
+
+For running the tests:
+
+.. code-block:: bash
+
+    pip install codecov pytest-cov pytest-django factory_boy
+    pytest  # or pytest app (when running from the root directory)
+
+**Question**: why are ``pytest-django`` and ``factory_boy`` not in the dependencies?
+(The tests succeed on travis without them, but it doesn't work locally.)
+
+Now you can do test-driven development!
