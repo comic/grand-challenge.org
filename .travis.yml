@@ -42,7 +42,8 @@ before_script:
     done
 
 script:
-  - pytest --cov=app/comic app
+  - sonar-scanner
+  #- pytest --cov=app/comic app
 
 jobs:
   include:
@@ -53,3 +54,9 @@ jobs:
       before_script: skip
       script: docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
       after_success: bash -c "docker login -u eyrabenchmark1 -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
+
+addons:
+  sonarcloud:
+    organization: "eyra-benchmark"
+    token:
+      secure: "XgcSnZ+Kk+Zhs2Wx9D/z6OaE7ZO6mPpPEk1IgROjaowK0rNFQ0n5l1wgkGNGwhPpycpy23CwRV5surXZu5yjAcF6sal/BX27san117DUKpxLrvPGiYK/1pdiLckKB/s1/PnoRHlqNGhV0dcswOuj0F5qLGdibYX6nk6g5ZOI7qKSW8aVpa6/flLKDCsfmxvfgAZ9/aXGPKECig+fxPG2csIFOsohTIc/y3Ry9k2GnTEYoH7D3/6ILkfjgBA5Z1Z30h1TcJ3pWMKAnsdoFJ9UUj+06XdVzQESvgV0Fr4eKm0VHk/cb6ON5btcpub5rm/6mH/9rggw6jAgFTHoGPiAdbopetPTBk2NhNSpnqOLA2Jg/E6+ls7cI5MJT4N1c0o2L/qTOzxeG4WiUKMVT8kAi2rmFTfNijWkmrUu0yFxYVUA+KksCrzzfMrUd54YICW1mZBtgO5KBxH2nlEi0Deuw3laksccEmxIVo0XnFn1mjhvrzttOMwlw3TTBK2w8secWz0Upy87qPHfYp8uig4Vna0bEiSD+jWalCMPHr0QRrF8MbElJQ+JSsmsx7WgbJx+eTMVJ0lxs7N6CYcTAgImcXo5sM4chQ8cOAxCLpzFMR/mY9p/vc9Y627/lxuvRIE2g/Af4qm8S5Tu/QnTYe3E8U1RyJSDKfs9VkWy/7noaP8="
