@@ -3,8 +3,7 @@ sudo: required
 language: python
 
 python:
-  - 3.6
-  - 3.7
+  - "3.6"
 
 services:
   - docker
@@ -47,7 +46,6 @@ script:
   - pytest app
 
 after_success:
-  - docker pull eyra/comic:latest
   - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
 
 deploy:
