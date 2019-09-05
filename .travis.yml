@@ -43,14 +43,14 @@ before_script:
     done
 
 script:
-  - pytest app
+  - pytest --cov=app/comic app
 
-after_success:
-  - docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
-
-deploy:
-  - provider: script
-    script: bash -c "docker login -u eyrabenchmark1 -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
-    on:
-      all_branches: true
-      condition: $TRAVIS_BRANCH =~ ^master$
+jobs:
+  include:
+    - stage: deploy
+      if: branch = master
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: docker build . -t eyra/comic:latest -t eyra/comic:$TRAVIS_BUILD_NUMBER
+      after_success: bash -c "docker login -u eyrabenchmark1 -p $DOCKER_PASSWORD && docker push eyra/comic:$TRAVIS_BUILD_NUMBER && docker push eyra/comic:latest"
