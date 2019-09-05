@@ -94,3 +94,5 @@ postgres_data/
 
 # Local env
 .env.staging
+
+coverage.xml
