@@ -267,8 +267,7 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("method", ["put", "patch"])
-def test_session_api_patch_permissions(client, two_workstation_sets, method):
+def test_session_api_patch_permissions(client, two_workstation_sets):
     tests = (
         (two_workstation_sets.ws1.editor, 200, True),
         (two_workstation_sets.ws1.user, 200, True),
@@ -287,10 +286,9 @@ def test_session_api_patch_permissions(client, two_workstation_sets, method):
         )
 
         response = get_view_for_user(
-            viewname="api:session-detail",
+            viewname="api:session-keep-alive",
             client=client,
-            method=getattr(client, method),
-            data={"pk": s.pk, "status": "Stopped"} if method == "put" else {},
+            method=client.patch,
             user=test[0],
             reverse_kwargs={"pk": s.pk},
             content_type="application/json",

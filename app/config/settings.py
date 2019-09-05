@@ -640,8 +640,8 @@ WORKSTATIONS_MAXIMUM_SESSIONS = int(
 )
 # The name of the group whose members will be able to create workstations
 WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
-WORKSTATIONS_MAXIMUM_TIMEOUT = int(
-    os.environ.get("WORKSTATIONS_MAXIMUM_TIMEOUT", "10000")
+WORKSTATIONS_SESSION_DURATION_LIMIT = int(
+    os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
 
 # Disallow some challenge names due to subdomain or media folder clashes

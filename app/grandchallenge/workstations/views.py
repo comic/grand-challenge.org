@@ -26,12 +26,10 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework.mixins import (
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    ListModelMixin,
-)
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
 from grandchallenge.core.permissions.rest_framework import (
@@ -55,22 +53,33 @@ from grandchallenge.workstations.utils import (
 )
 
 
-class SessionViewSet(
-    RetrieveModelMixin, UpdateModelMixin, ListModelMixin, GenericViewSet
-):
+class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = (DjangoObjectOnlyPermissions,)
     filter_backends = (DjangoObjectPermissionsFilter,)
 
-    def perform_update(self, serializer):
-        """ Increase the maximum duration of the session, up to the maximum """
-        instance = self.get_object()
-        max_duration = min(
-            now() + timedelta(minutes=5) - instance.created,
-            timedelta(seconds=settings.WORKSTATIONS_MAXIMUM_TIMEOUT),
+    @action(detail=True, methods=["patch"])
+    def keep_alive(self, *_, **__):
+        """ Increase the maximum duration of the session, up to the limit """
+        session = self.get_object()
+
+        new_duration = now() + timedelta(minutes=5) - session.created
+        duration_limit = timedelta(
+            seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
         )
-        serializer.save(maximum_duration=max_duration)
+
+        if new_duration < duration_limit:
+            session.maximum_duration = new_duration
+            session.save()
+            return Response({"status": "session extended"})
+        else:
+            session.maximum_duration = duration_limit
+            session.save()
+            return Response(
+                {"status": "session duration limit reached"},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
 
 class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):

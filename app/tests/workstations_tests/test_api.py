@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.utils.timezone import now
 
 from tests.factories import UserFactory, SessionFactory
 from tests.utils import get_view_for_user
@@ -61,7 +62,7 @@ def test_session_update_read_only_fails(client):
     response = get_view_for_user(
         client=client,
         method=client.patch,
-        viewname="api:session-detail",
+        viewname="api:session-keep-alive",
         reverse_kwargs={"pk": s.pk},
         user=user,
         data={"status": "Stopped"},
@@ -84,10 +85,9 @@ def test_session_update_extends_timeout(client):
     response = get_view_for_user(
         client=client,
         method=client.patch,
-        viewname="api:session-detail",
+        viewname="api:session-keep-alive",
         reverse_kwargs={"pk": s.pk},
         user=user,
-        data={},
         content_type="application/json",
     )
 
@@ -96,3 +96,30 @@ def test_session_update_extends_timeout(client):
     s.refresh_from_db()
     # Just check that it changed from the default
     assert s.maximum_duration != timedelta(minutes=10)
+
+
+@pytest.mark.django_db
+def test_session_keep_alive_limit(client, settings):
+    user = UserFactory()
+    s = SessionFactory(creator=user)
+
+    assert s.maximum_duration == timedelta(minutes=10)
+
+    s.created = now() - timedelta(days=1)
+    s.save()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.patch,
+        viewname="api:session-keep-alive",
+        reverse_kwargs={"pk": s.pk},
+        user=user,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+
+    s.refresh_from_db()
+    assert s.maximum_duration == timedelta(
+        seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
+    )
