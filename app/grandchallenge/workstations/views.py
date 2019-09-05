@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
+from django.utils.timezone import now
 from django.views.generic import (
     ListView,
     CreateView,
@@ -23,10 +26,15 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.workstations.forms import (
     WorkstationForm,
     WorkstationImageForm,
@@ -48,8 +56,30 @@ from grandchallenge.workstations.utils import (
 class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
-    permission_classes = (DjangoObjectPermissions,)
+    permission_classes = (DjangoObjectOnlyPermissions,)
     filter_backends = (DjangoObjectPermissionsFilter,)
+
+    @action(detail=True, methods=["patch"])
+    def keep_alive(self, *_, **__):
+        """ Increase the maximum duration of the session, up to the limit """
+        session = self.get_object()
+
+        new_duration = now() + timedelta(minutes=5) - session.created
+        duration_limit = timedelta(
+            seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
+        )
+
+        if new_duration < duration_limit:
+            session.maximum_duration = new_duration
+            session.save()
+            return Response({"status": "session extended"})
+        else:
+            session.maximum_duration = duration_limit
+            session.save()
+            return Response(
+                {"status": "session duration limit reached"},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
 
 class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):

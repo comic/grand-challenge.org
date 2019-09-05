@@ -5,7 +5,7 @@ from grandchallenge.workstations.models import Session
 
 
 class SessionSerializer(ModelSerializer):
-    status = CharField(source="get_status_display")
+    status = CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = Session
