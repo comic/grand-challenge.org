@@ -1,9 +1,12 @@
+dist: xenial   # required for Python >= 3.7
+
 sudo: required
 
 language: python
 
 python:
   - "3.6"
+  - "3.7"
 
 services:
   - docker
@@ -11,7 +14,6 @@ services:
 cache:
   directories:
     - $HOME/.cache/pip
-#    - $HOME/.cache/pipenv
 
 env:
   global:
@@ -31,8 +33,6 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install -r requirements.dev.txt
-#  - pip install pipenv
-#  - pipenv install --dev
 
 before_script:
   - |

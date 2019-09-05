@@ -7,7 +7,7 @@ Overview of entities and relations
 
 The platform contains :ref:`models.DataFile`, which represent both data (the bits themselves) and metadata. Each
 :ref:`models.DataFile` is of a specific :ref:`models.DataType`. A :ref:`models.DataSet` is a collection of
-:ref:`models.DataFile`'s.
+:ref:`models.DataFile`\s.
 
 An :ref:`models.Interface` represents the interface of one or many :ref:`models.Implementation`'s, e.g. it defines
 the names and :ref:`models.DataType`'s as :ref:`models.Input` and defines a single output :ref:`models.DataType`.
