@@ -42,8 +42,10 @@ before_script:
     done
 
 script:
+  - pytest --cov=app/comic --cov-report=xml app
+
+after_script:
   - sonar-scanner
-  #- pytest --cov=app/comic app
 
 jobs:
   include:
