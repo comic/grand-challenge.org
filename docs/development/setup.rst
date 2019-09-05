@@ -1,8 +1,12 @@
 Setting up a dev environment
 ============================
 
-Local K8s cluster
------------------
+.. contents::
+   :depth: 2
+   :local:
+
+Local K8s cluster?
+------------------
 
 EYRA runs in a kubernetes cluster in production. To get the development environment similar to production, it is best
 to develop in a local kubernetes cluster. Two options are:
@@ -13,8 +17,9 @@ to develop in a local kubernetes cluster. Two options are:
 Preferably use microk8s, since the networking is a bit easier in that case (all pods are reachable by their IP address
 from the host system, whereas minikube runs in an isolated VM).
 
-Alternatively, you can develop on the frontend against the `staging` backend, or develop on the `backend/comic` if you
-run a local postgresql database.
+If you don't need a full environment, and just want to develop on the `backend/comic` (without
+having access to other servics normally available in the clustre), you can run a local
+postgresql database (you can skip the Kubernetes setup, and go to `Using a local PostgreSQL database`_).
 
 MicroK8S
 ~~~~~~~~
@@ -156,11 +161,41 @@ Now services are reachable like this (both from the host and from inside a pod):
     - :code:`eyra-dev-postgresql.default.svc.cluster.local`
 
 
-Using a local postgresql database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using a local PostgreSQL database
+---------------------------------
 
-First, install postgres. Next, create the comic database, user, and set
-permissions (we are using the values from the ``.env.dev`` file,
+.. hint::
+    Easiest is to use Docker to run a PostgreSQL database. Running
+    a new database is as simple as
+
+    .. code-block:: bash
+
+       docker run -d --name comic-postgresql \
+       -e POSTGRESQL_USERNAME=comic \
+       -e POSTGRESQL_PASSWORD=postgres \
+       -e POSTGRESQL_DATABASE=comic \
+       -p 5432:5432 \
+       bitnami/postgresql:latest
+
+
+    Make sure port `5432` is not occupied on your machine. This takes
+    care of installing PostgreSQL, and setting up a database and
+    user. To stop the container, run ``docker stop comic-postgresql``,
+    to start it again run ``docker start comic-postgresql``. Data is
+    persisted until the container is removed using
+    ``docker rm comic-postgresql``.
+
+    Alternatively, you can bind a
+    local folder by adding a parameter to the Docker command:
+    ``-v </local/path>:/bitnami/postgresql`` (replace `</local/path>`
+    with you local path). For more information, see the
+    `Docker documentation on volumes
+    <https://docs.docker.com/storage/volumes/>`_.
+
+If using Docker is not an option, you can install `Postgres` (server)
+and `psql` client on your own machine. Next, create the comic
+database, user, and set permissions (we are using the values
+from the ``.env.dev`` file,
 **please only use these for development!**):
 
 .. code-block:: bash
@@ -184,18 +219,26 @@ Clone the comic github repo and install the dependencies:
     python manage.py migrate
     python manage.py init_db_data
 
-**Remark**: When running ``python manage.py migrate`` I get an error
-``ERROR 2019-09-04 15:25:29,168 signals 6084 4623660480 cannot add user to
-default group: Group matching query does not exist.``
+.. note::
+    When running ``python manage.py migrate`` you'll get an error:
+
+    .. code-block:: log
+
+        ERROR 2019-09-04 15:25:29,168 signals 6084 4623660480 cannot add user to
+        default group: Group matching query does not exist.
+
+    This is because one of
+    our dependencies, `django-guardian`, creates a `User` called
+    `AnonymousUser`, which represents not-logged in users. Regular users are,
+    when created, added to a default `Group`. This Group is only created when running
+    ``python manage.py init_db_data``. The `AnonymousUser` should not be a member
+    of this group, so this error can be safely ignored.
+
 
 For running the tests:
 
 .. code-block:: bash
 
-    pip install codecov pytest-cov pytest-django factory_boy
     pytest  # or pytest app (when running from the root directory)
-
-**Question**: why are ``pytest-django`` and ``factory_boy`` not in the dependencies?
-(The tests succeed on travis without them, but it doesn't work locally.)
 
 Now you can do test-driven development!
