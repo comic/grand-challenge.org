@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpRequest, JsonResponse
 def handle_auth(request: HttpRequest):
     scope = request.GET.get('scope')
     print(request.headers)
+    print(request.GET)
     path = Path('/home/tom/Projects/eyra/registry/registry.key')
     with open(path, 'r') as file:
         key = file.read()
@@ -23,6 +24,11 @@ def handle_auth(request: HttpRequest):
                 'type': 'repository',
                 'name': 'alpine',
                 'actions': ['pull', 'push']
+            },
+            {
+                'type': 'registry',
+                'name': 'catalog',
+                'actions': ['*']
             }
         ]
 
