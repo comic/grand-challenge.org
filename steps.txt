@@ -1,0 +1,10 @@
+openssl ecparam -name prime256v1 -genkey -out registry.key
+openssl req -new -sha256 -x509 -days 10000 -key registry.key -out registry.crt
+openssl x509 -in registry.crt -text -noout
+
+openssl x509 -in registry.crt -pubkey -noout | openssl ec -pubin -inform pem -outform der | openssl dgst -sha256 -binary | dd bs=1 count=30 status=none | base32 | sed 's/\(....\)/\1:/g'
+
+docker run --rm --network host --name registry \
+ -v `pwd`/registry.crt:/token.crt \
+ -v `pwd`/docker.yaml:/etc/docker/registry/config.yml \
+ registry:2

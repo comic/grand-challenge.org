@@ -7,6 +7,7 @@ from django.views.generic import TemplateView
 
 # from comic.core.views import comicmain
 # from comic.pages.views import FaviconView
+from comic.docker_registry_auth.auth import handle_auth
 
 admin.autodiscover()
 
@@ -26,6 +27,7 @@ urlpatterns = [
     # all of the serializers
     path("api/", include("comic.api.urls", namespace="api")),
     path('sentry-debug/', trigger_error),
+    path('docker-registry-auth', handle_auth)
     # Used for logging in and managing comic.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
