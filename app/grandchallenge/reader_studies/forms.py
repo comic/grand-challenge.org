@@ -8,6 +8,7 @@ from django.forms import (
     ModelChoiceField,
     ChoiceField,
     HiddenInput,
+    TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
@@ -57,6 +58,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "logo",
             "description",
             "workstation",
+            "shuffle_hanging_list",
             "hanging_list",
         )
         widgets = {
@@ -64,6 +66,12 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
+            "shuffle_hanging_list": (
+                "If true, each reader will read the images in a unique "
+                "order. The ordering for each user will be consistent over "
+                "time. If false, the readers will all read the images in the "
+                "order that you define in the hanging_list field."
+            ),
             "hanging_list": (
                 "A list of hangings. "
                 "The hanging defines which image (the hanging value) "
@@ -78,19 +86,26 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
         model = Question
         fields = (
             "question_text",
+            "help_text",
             "answer_type",
+            "required",
             "image_port",
             "direction",
             "order",
         )
         help_texts = {
             "question_text": (
-                "The question that will be presented to the user. "
+                "The question that will be presented to the user, "
+                "should be short. "
                 "e.g. 'Is there pathology present in these images?'"
+            ),
+            "help_text": (
+                "This can be used to provide extra information or "
+                "clarification to the reader about this question."
             ),
             "answer_type": "The type of answer that the user will give.",
             "image_port": (
-                "If the user is expected to draw a bounding box, "
+                "If the user will make a bounding box or measurement, "
                 "on which image port should they do it? "
                 "Note, "
                 "that this will be the same image port for every hanging."
@@ -106,7 +121,12 @@ class QuestionCreateForm(SaveFormInitMixin, ModelForm):
                 "Where should this question be in the form? "
                 "Lower numbers put this question to the top."
             ),
+            "required": (
+                "If true, the user must answer this question, otherwise the "
+                "user can skip it."
+            ),
         }
+        widgets = {"question_text": TextInput}
 
 
 class UserGroupForm(SaveFormInitMixin, Form):

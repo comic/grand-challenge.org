@@ -1,81 +1,85 @@
 {
-    "description": "<p>This is the first monthly release of the grand-challenge.org codebase.</p>\n<p><strong>New features</strong></p>\n<ul>\n<li>Added support for serving and converting TIFF files to Deep Zoom Images</li>\n<li>Added a read only algorithm API</li>\n<li>Added image browser API endpoints</li>\n</ul>", 
-    "license": "other-open", 
-    "title": "comic/grand-challenge.org: Monthly Release August 2019", 
-    "version": "v2019.08", 
+    "description": "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging", 
+    "license": "Apache-2.0", 
+    "title": "Grand Challenge.org",  
     "upload_type": "software", 
-    "publication_date": "2019-07-31", 
     "creators": [
         {
-            "affiliation": "@DIAGNijmegen", 
-            "name": "James"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands", 
+            "name": "James Meakin"
         }, 
         {
-            "name": "HarmvZ"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Harm van Zeeland"
         }, 
         {
+            "affiliation": "Department of Radiology and Medical Informatics, Erasmus MC University Medical Center, Rotterdam, Netherlands",
             "name": "Marcel Koek"
         }, 
         {
-            "name": "pkcakeout"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Paul K. Gerke"
         }, 
         {
-            "affiliation": "Medical Imaging Research Center", 
-            "name": "Bart De Dobbelaer"
+            "affiliation": "Medical Image Computing (PSI), Faculty of Engineering, Katholieke Universiteit Leuven, Leuven, Belgium", 
+            "name": "Bart de Dobbelaer"
         }, 
         {
-            "affiliation": "Build Succeeded", 
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands", 
             "name": "Hans Pinckaers"
         }, 
         {
-            "affiliation": "@UMCUGenetics", 
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands", 
             "name": "Carl Shneider"
         }, 
         {
-            "affiliation": "Radboud University Medical Center", 
-            "name": "Haimasree"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands", 
+            "name": "Haimasree Bhattacharya"
         }, 
         {
+            "affiliation": "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands",
             "name": "Roel Zinkstok"
         }, 
         {
-            "affiliation": "radboudumc", 
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
             "name": "Ecem Sogancioglu"
         }, 
         {
-            "name": "CristinaGGonzalo"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Cristina González-Gonzalo"
         }, 
         {
+            "affiliation": "Fraunhofer Institute for Digital Medicine MEVIS, Bremen, Germany",
             "name": "Hans Meine"
         }, 
         {
+            "affiliation": "Fraunhofer Institute for Digital Medicine MEVIS, Bremen, Germany",
             "name": "Alexander K\u00f6hn"
         }, 
         {
-            "name": "miriam-groeneveld"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Miriam Groeneveld"
         }, 
         {
-            "affiliation": "@NLeSC @SportySpots", 
+            "affiliation": "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands", 
             "name": "Tom Klaver"
         }, 
         {
-            "name": "Karelger"
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Karel Gerbrands"
         }, 
         {
             "name": "Dar\u00edo Here\u00f1\u00fa"
+        },
+        {
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Sjoerd Kerkstra"
+        },
+        {
+            "orcid": "0000-0003-2028-8972",
+            "affiliation": "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands",
+            "name": "Bram van Ginneken"
         }
     ], 
-    "access_right": "open", 
-    "related_identifiers": [
-        {
-            "scheme": "url", 
-            "identifier": "https://github.com/comic/grand-challenge.org/tree/v2019.08", 
-            "relation": "isSupplementTo"
-        }, 
-        {
-            "scheme": "doi", 
-            "identifier": "10.5281/zenodo.3356819", 
-            "relation": "isVersionOf"
-        }
-    ]
+    "access_right": "open"
 }

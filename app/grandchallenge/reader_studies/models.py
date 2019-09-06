@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from numpy.random.mtrand import RandomState
 
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
@@ -75,6 +76,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
     )
+    shuffle_hanging_list = models.BooleanField(default=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -215,6 +217,22 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         return hanging_list_images
 
+    def get_hanging_list_images_for_user(self, *, user):
+        """
+        Returns a shuffled list of the hanging list images for a particular
+        user. The shuffle is seeded with the users pk, and using RandomState
+        from numpy guarantees that the ordering will be consistent across
+        python/library versions. Returns the normal list if
+        shuffle_hanging_list is false.
+        """
+        hanging_list = self.hanging_list_images
+
+        if self.shuffle_hanging_list and hanging_list is not None:
+            # In place shuffle
+            RandomState(seed=int(user.pk)).shuffle(hanging_list)
+
+        return hanging_list
+
 
 ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -242,6 +260,27 @@ ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
     "required": ["version", "type", "corners"],
 }
 
+ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "start": {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 3,
+            "maxItems": 3,
+        },
+        "end": {
+            "type": "array",
+            "items": {"type": "number"},
+            "minItems": 3,
+            "maxItems": 3,
+        },
+    },
+    "required": ["version", "type", "start", "end"],
+}
+
 
 def validate_answer_json(schema: dict, obj: object) -> bool:
     """ The answer type validators must return true or false """
@@ -258,13 +297,15 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "BOOL"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
+    ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
         (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
         (ANSWER_TYPE_BOOL, "Bool"),
-        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
         (ANSWER_TYPE_HEADING, "Heading"),
+        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
+        (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
     )
 
     # A callable for every answer type that would validate the given answer
@@ -275,6 +316,9 @@ class Question(UUIDModel):
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
         ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
             ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA, o
+        ),
+        ANSWER_TYPE_DISTANCE_MEASUREMENT: lambda o: validate_answer_json(
+            ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA, o
         ),
     }
 
@@ -299,6 +343,7 @@ class Question(UUIDModel):
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
     question_text = models.TextField()
+    help_text = models.TextField(blank=True)
     answer_type = models.CharField(
         max_length=4,
         choices=ANSWER_TYPE_CHOICES,
@@ -307,16 +352,25 @@ class Question(UUIDModel):
     image_port = models.CharField(
         max_length=1, choices=IMAGE_PORT_CHOICES, blank=True, default=""
     )
+    required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
     )
-    order = models.PositiveSmallIntegerField(default=1)
+    order = models.PositiveSmallIntegerField(default=100)
 
     class Meta:
         ordering = ("order", "created")
 
     def __str__(self):
-        return f"{self.question_text} ({self.get_answer_type_display()})"
+        return (
+            f"{self.question_text} "
+            "("
+            f"{self.get_answer_type_display()}, "
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}"
+            f"{'' if self.required else 'not'} required, "
+            f"order {self.order}"
+            ")"
+        )
 
     @property
     def api_url(self):
@@ -347,12 +401,22 @@ class Question(UUIDModel):
 
     def clean(self):
         # Make sure that the image port is only set when using drawn
-        # annotations. At the moment 2D bounding boxes are the only drawn type.
-        if (self.answer_type == self.ANSWER_TYPE_2D_BOUNDING_BOX) != bool(
-            self.image_port
-        ):
+        # annotations.
+        if (
+            self.answer_type
+            in [
+                self.ANSWER_TYPE_2D_BOUNDING_BOX,
+                self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            ]
+        ) != bool(self.image_port):
             raise ValidationError(
-                "The image port must (only) be set for bounding box questions."
+                "The image port must (only) be set for annotation questions."
+            )
+
+        if self.answer_type == self.ANSWER_TYPE_BOOL and self.required:
+            raise ValidationError(
+                "Bool answer types should not have Required checked "
+                "(otherwise the user will need to tick a box for each image!)"
             )
 
     def is_answer_valid(self, *, answer):

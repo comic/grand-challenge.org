@@ -25,7 +25,7 @@ class SignupFormExtra(userena_forms.SignupForm):
         help_text=_("Department you represent."),
     )
     country = forms.ChoiceField(
-        label=_("Country"),
+        label=_("Location"),
         choices=tuple([("00", _("-" * 9))] + list(countries)),
         required=True,
     )
