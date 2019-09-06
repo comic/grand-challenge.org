@@ -136,7 +136,7 @@ http {
 
       set $ref "/";
 
-      if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/session/[^/]*)/.*$) {
+      if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/sessions/[^/]*)/.*$) {
 	    set $ref $1;
 	  }
 
