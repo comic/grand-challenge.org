@@ -400,11 +400,15 @@ class TestArchiveAPIView:
         assert response.status_code == expected_status
 
     def test_empty(self, client):
+        # Clear cache manually
+        cache.clear()
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
         assert response.content == b"[]"
 
     def test_with_data(self, client, ArchivePatientStudyImageSet):
+        # Clear cache manually
+        cache.clear()
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
         expected_response_json = json.dumps(
