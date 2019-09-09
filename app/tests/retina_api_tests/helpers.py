@@ -1,7 +1,6 @@
 import json
 from rest_framework import status
 from django.urls import reverse as django_reverse
-from django.db.utils import IntegrityError
 from grandchallenge.subdomains.utils import reverse
 from django.conf import settings
 from django.contrib.auth.models import Group
