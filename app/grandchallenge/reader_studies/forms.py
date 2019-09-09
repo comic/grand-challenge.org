@@ -58,6 +58,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "logo",
             "description",
             "workstation",
+            "shuffle_hanging_list",
             "hanging_list",
         )
         widgets = {
@@ -65,6 +66,12 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
+            "shuffle_hanging_list": (
+                "If true, each reader will read the images in a unique "
+                "order. The ordering for each user will be consistent over "
+                "time. If false, the readers will all read the images in the "
+                "order that you define in the hanging_list field."
+            ),
             "hanging_list": (
                 "A list of hangings. "
                 "The hanging defines which image (the hanging value) "

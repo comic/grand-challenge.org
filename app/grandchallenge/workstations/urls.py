@@ -75,22 +75,22 @@ urlpatterns = [
         name="image-update",
     ),
     path(
-        "<slug>/session/create/",
+        "<slug>/sessions/create/",
         SessionCreate.as_view(),
         name="session-create",
     ),
     path(
-        "<slug>/session/<uuid:pk>/",
+        "<slug>/sessions/<uuid:pk>/",
         SessionDetail.as_view(),
         name="session-detail",
     ),
     path(
-        "<slug>/session/<uuid:pk>/update/",
+        "<slug>/sessions/<uuid:pk>/update/",
         SessionUpdate.as_view(),
         name="session-update",
     ),
     path(
-        "<slug>/session/<uuid:pk>/<path:path>",
+        "<slug>/sessions/<uuid:pk>/<path:path>",
         session_proxy,
         name="session-proxy",
     ),
