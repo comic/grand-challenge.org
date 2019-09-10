@@ -127,6 +127,11 @@ class Algorithm(UUIDModel):
         help_text="The admin group associated with this algorithm",
     )
 
+    def delete(self, *args, **kwargs):
+        if self.admin_group:
+            self.admin_group.delete()
+        return super().delete(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
