@@ -43,10 +43,18 @@ annotation_router.register(
     basename="imagetextannotation",
 )
 urlpatterns = [
-    path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
+    path(
+        "archives/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.ArchiveView.as_view()
+        ),
+        name="archives-api-view",
+    ),
     path(
         "archive_data/",
-        views.ArchiveAPIView.as_view(),
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.ArchiveAPIView.as_view()
+        ),
         name="archive-data-api-view",
     ),
     path(

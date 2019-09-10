@@ -23,20 +23,28 @@ from django.contrib.auth import get_user_model
 
 
 def get_user_from_str(user=None):
-    if user == "staff":
-        user = get_user_model().objects.create_superuser(
-            **TEST_USER_CREDENTIALS
+    try:
+        return get_user_model().objects.get(
+            username=TEST_USER_CREDENTIALS["username"]
         )
-    elif user == "retina_user":
-        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-        grader_group, group_created = Group.objects.get_or_create(
-            name=settings.RETINA_GRADERS_GROUP_NAME
-        )
-        grader_group.user_set.add(user)
-    elif user == "normal":
-        user = get_user_model().objects.create_user(**TEST_USER_CREDENTIALS)
-
-    return user
+    except get_user_model().DoesNotExist:
+        if user == "staff":
+            user = get_user_model().objects.create_superuser(
+                **TEST_USER_CREDENTIALS
+            )
+        elif user == "retina_user":
+            user = get_user_model().objects.create_user(
+                **TEST_USER_CREDENTIALS
+            )
+            grader_group, group_created = Group.objects.get_or_create(
+                name=settings.RETINA_GRADERS_GROUP_NAME
+            )
+            grader_group.user_set.add(user)
+        elif user == "normal":
+            user = get_user_model().objects.create_user(
+                **TEST_USER_CREDENTIALS
+            )
+        return user
 
 
 def client_login(client, user=None):
