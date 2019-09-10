@@ -7,12 +7,10 @@ import hashlib
 from collections import Iterable
 from datetime import timedelta
 from io import BufferedIOBase
-from tempfile import TemporaryFile
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
 from django.http import HttpResponse
