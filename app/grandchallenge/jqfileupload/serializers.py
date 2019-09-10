@@ -5,10 +5,22 @@ from grandchallenge.jqfileupload.models import StagedFile
 
 
 class StagedFileSerializer(ModelSerializer):
-    filename = CharField(source="client_filename", read_only=True)
-    uuid = UUIDField(source="file_id", read_only=True)
+    filename = CharField(source="client_filename")
+    uuid = UUIDField(source="file_id")
     extra_attrs = DictField(read_only=True)
 
     class Meta:
         model = StagedFile
-        fields = ("filename", "uuid", "extra_attrs")
+        fields = (
+            "client_id",
+            "csrf",  # TODO: Should be kept private?
+            "end_byte",
+            "extra_attrs",
+            "file",
+            "filename",
+            "start_byte",
+            "timeout",
+            "total_size",
+            "upload_path_sha256",
+            "uuid",
+        )

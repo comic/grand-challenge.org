@@ -13,3 +13,4 @@ def test_single_chunk_api(client):
     )
 
     assert response.status_code == 201
+    assert len(response.json()) == 1
