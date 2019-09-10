@@ -1,4 +1,5 @@
 import logging
+from typing import Optional, Union, Sequence
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -127,10 +128,11 @@ class Algorithm(UUIDModel):
         help_text="The admin group associated with this algorithm",
     )
 
-    def delete(self, *args, **kwargs):
-        if self.admin_group:
-            self.admin_group.delete()
-        return super().delete(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        from comic.eyra_algorithms.utils import set_algorithm_admin_group, set_algorithm_default_permissions
+        set_algorithm_admin_group(self)
+        super().save(*args, **kwargs)
+        set_algorithm_default_permissions(self)
 
     def __str__(self):
         return self.name

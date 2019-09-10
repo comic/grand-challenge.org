@@ -121,8 +121,11 @@ class Benchmark(UUIDModel):
     )
 
     def save(self, *args, **kwargs):
+        from comic.eyra_benchmarks.utils import set_benchmark_admin_group, set_benchmark_default_permissions
+        set_benchmark_admin_group(self)
         self.full_clean()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+        set_benchmark_default_permissions(self)
 
     def clean(self):
         if self.evaluator:

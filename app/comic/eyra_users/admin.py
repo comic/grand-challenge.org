@@ -10,7 +10,7 @@ class UserAdmin(OriginalUserAdmin, GuardedModelAdmin):
 
 
 class UserInLine(admin.TabularInline):
-    model = Group.user_set.through
+    model = User.groups.through
     extra = 0
 
 

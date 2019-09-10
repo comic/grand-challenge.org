@@ -96,3 +96,5 @@ postgres_data/
 .env.staging
 
 coverage.xml
+.mypy_cache
+*.egg-info/
