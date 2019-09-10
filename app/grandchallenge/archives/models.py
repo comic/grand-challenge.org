@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Count
 
 from grandchallenge.core.models import UUIDModel
@@ -60,14 +60,17 @@ class Archive(UUIDModel):
             images_to_remove
         )
 
-        Patient.objects.filter(
-            study__image__in=images_to_remove
-        ).distinct().exclude(pk__in=protected_patient_ids).delete(
-            *args, **kwargs
-        )
-        Study.objects.filter(image__in=images_to_remove).distinct().exclude(
-            pk__in=protected_study_ids
-        ).delete(*args, **kwargs)
-        images_to_remove.delete(*args, **kwargs)
+        with transaction.atomic():
+            Patient.objects.filter(
+                study__image__in=images_to_remove
+            ).distinct().exclude(pk__in=protected_patient_ids).delete(
+                *args, **kwargs
+            )
+            Study.objects.filter(
+                image__in=images_to_remove
+            ).distinct().exclude(pk__in=protected_study_ids).delete(
+                *args, **kwargs
+            )
+            images_to_remove.delete(*args, **kwargs)
 
-        super().delete(*args, **kwargs)
+            super().delete(*args, **kwargs)
