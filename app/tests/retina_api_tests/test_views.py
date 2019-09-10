@@ -316,6 +316,21 @@ class TestArchiveIndexAPIEndpoints:
 
         assert response_data == expected_response_data
 
+    def test_caching(self, client):
+        # Clear cache manually
+        cache.clear()
+        # Perform normal request
+        datastructures, _, _, _ = create_datastructures_data()
+        client, _ = client_login(client, user="retina_user")
+        url = reverse("retina:api:archives-api-view")
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        response_data = json.loads(response.content)
+        # Remove archive and perform request again
+        datastructures["archive"].delete()
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        # Check that response is cached so it is not changed
+        assert json.loads(response.content) == response_data
+
 
 @pytest.mark.django_db
 class TestImageAPIEndpoint:
