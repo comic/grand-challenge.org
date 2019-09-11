@@ -41,7 +41,7 @@ def test_single_chunk_api(client):
 
 
 @pytest.mark.django_db
-def test_single_upload_api(client):
+def test_single_chunk_client_api(client):
     filename = "test.bin"
     content = load_test_data()
     token = Token.objects.create(user=UserFactory())
@@ -106,6 +106,64 @@ def test_rfc7233_implementation_api(client):
         len(content),
         url=url,
         extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+    )
+    assert part_3_response.status_code == 201
+
+    parsed_json = part_3_response.json()
+    staged_file = StagedAjaxFile(uuid.UUID(parsed_json[0]["uuid"]))
+
+    with staged_file.open() as f:
+        staged_content = f.read()
+
+    assert len(staged_content) == len(content)
+    assert hash(staged_content) == hash(content)
+    assert staged_content == content
+
+
+def create_chunked_request(filename, content, upload_id, start_byte, end_byte):
+    return {
+        "data": {
+            filename: BytesIO(content[start_byte:end_byte]),
+            "X-Upload-ID": upload_id,
+        },
+        "HTTP_CONTENT_RANGE": f"bytes {start_byte}-{end_byte-1}/{len(content)}",
+    }
+
+
+@pytest.mark.django_db
+def test_rfc7233_implementation_client_api(client):
+    content = load_test_data()
+    upload_id = generate_new_upload_id(
+        test_rfc7233_implementation_client_api, content
+    )
+    token = Token.objects.create(user=UserFactory())
+    filename = "whatever.bin"
+
+    part_1_response = client.post(
+        path=reverse("api:staged-file-list"),
+        format="multipart",
+        HTTP_AUTHORIZATION=f"Token {token}",
+        **create_chunked_request(filename, content, upload_id, 0, 10),
+    )
+    assert part_1_response.status_code == 201
+
+    part_2_response = client.post(
+        path=reverse("api:staged-file-list"),
+        format="multipart",
+        HTTP_AUTHORIZATION=f"Token {token}",
+        **create_chunked_request(
+            filename, content, upload_id, 10, len(content) // 2
+        ),
+    )
+    assert part_2_response.status_code == 201
+
+    part_3_response = client.post(
+        path=reverse("api:staged-file-list"),
+        format="multipart",
+        HTTP_AUTHORIZATION=f"Token {token}",
+        **create_chunked_request(
+            filename, content, upload_id, len(content) // 2, len(content)
+        ),
     )
     assert part_3_response.status_code == 201
 
