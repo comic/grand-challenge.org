@@ -1,9 +1,11 @@
+import json
 import uuid
 
 import pytest
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
+from tests.jqfileupload_tests.test_widgets_widget import force_post_update
 from tests.jqfileupload_tests.utils import (
     create_upload_file_request,
     load_test_data,
@@ -77,3 +79,82 @@ def test_wrong_upload_headers(client):
 
     response = create_upload_file_request(client, url=url, method="put")
     assert response.status_code == 405
+
+
+@pytest.mark.django_db
+def test_wrong_upload_headers_rfc7233_api(client):
+    content = load_test_data()
+    upload_id = generate_new_upload_id(
+        test_wrong_upload_headers_rfc7233_api, content
+    )
+    url = reverse("api:staged-file-list")
+
+    response = create_partial_upload_file_request(
+        client, upload_id, content, 0, 10, url=url
+    )
+    assert response.status_code == 201
+
+    response = create_partial_upload_file_request(
+        client, None, content, 0, 10, url=url
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        http_content_range="corrupted data: 54343-3223/21323",
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        http_content_range="bytes 54343-3223/21323",
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        http_content_range="bytes 54343-3223/*",
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        http_content_range="bytes 1000-3000/2000",
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        http_content_range="bytes 1000-2000/*",
+    )
+    assert response.status_code == 400
+
+    response = create_partial_upload_file_request(
+        client, "a" * 1000, content, 0, 10, url=url
+    )
+    assert response.status_code == 400

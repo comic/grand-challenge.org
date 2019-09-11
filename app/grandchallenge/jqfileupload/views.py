@@ -4,6 +4,8 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
 
 from grandchallenge.jqfileupload.models import StagedFile
@@ -18,8 +20,17 @@ class StagedFileViewSet(ModelViewSet):
     queryset = StagedFile.objects.all()
     permission_classes = [AllowAny]  # TODO: Should be IsAuthenticated
 
-    def get_serializer(self, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        if "HTTP_CONTENT_RANGE" in self.request.META:
+            if not self.range_header or not self.range_match:
+                return Response(
+                    {"status": "Client did not supply valid Content-Range"},
+                    status=HTTP_400_BAD_REQUEST,
+                )
 
+        return super().create(request, *args, **kwargs)
+
+    def get_serializer(self, *args, **kwargs):
         if "HTTP_CONTENT_RANGE" in self.request.META:
             handler = self._handle_chunked
         else:
@@ -40,9 +51,24 @@ class StagedFileViewSet(ModelViewSet):
     def csrf(self):
         return self.request.META.get("CSRF_COOKIE")
 
+    @property
+    def client_id(self):
+        return self.request.POST.get("X-Upload-ID")
+
+    @property
+    def range_header(self):
+        return self.request.META.get("HTTP_CONTENT_RANGE")
+
+    @property
+    def range_match(self):
+        return re.match(
+            r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
+            self.range_header,
+        )
+
     def _handle_complete(self, uploaded_file):
         return {
-            "client_id": None,
+            "client_id": self.client_id,
             "csrf": self.csrf,
             "end_byte": uploaded_file.size - 1,
             "file": uploaded_file,
@@ -60,35 +86,17 @@ class StagedFileViewSet(ModelViewSet):
         #
         # according to rfc7233 are accepted. See here:
         # https://tools.ietf.org/html/rfc7233#appendix-C
-        range_header = self.request.META.get("HTTP_CONTENT_RANGE")
-
-        if not range_header:
-            raise ValidationError("Client did not supply Content-Range")
-
-        range_match = re.match(
-            r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
-            range_header,
-        )
-        if not range_match:
-            raise ValidationError("Supplied invalid Content-Range")
-
-        start_byte = int(range_match.group("start"))
-        end_byte = int(range_match.group("end"))
-        if (range_match.group("length") is None) or (
-            range_match.group("length") == "*"
+        start_byte = int(self.range_match.group("start"))
+        end_byte = int(self.range_match.group("end"))
+        if (self.range_match.group("length") is None) or (
+            self.range_match.group("length") == "*"
         ):
             total_size = None
         else:
-            total_size = int(range_match.group("length"))
-
-        client_id = self.request.META.get(
-            "X-Upload-ID", self.request.POST.get("X-Upload-ID")
-        )
-        if not client_id:
-            raise ValidationError("Client did not supply a X-Upload-ID")
+            total_size = int(self.range_match.group("length"))
 
         return {
-            "client_id": client_id,
+            "client_id": self.client_id,
             "csrf": self.csrf,
             "end_byte": end_byte,
             "file": uploaded_file,

@@ -59,12 +59,16 @@ class StagedFile(models.Model):
             raise ValidationError("Invalid start-end byte range")
 
         if self.is_chunked:
+            if not self.client_id:
+                raise ValidationError("Client did not supply a X-Upload-ID")
+
             # Verify consistency and generate file ids
             other_chunks = StagedFile.objects.filter(
                 csrf=self.csrf,
                 client_id=self.client_id,
                 upload_path_sha256=self.upload_path_sha256,
             ).all()
+
             if other_chunks.exists():
                 chunk_intersects = other_chunks.filter(
                     start_byte__lte=self.end_byte,
