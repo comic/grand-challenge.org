@@ -49,10 +49,6 @@ class NotFoundError(FileNotFoundError):
     pass
 
 
-class InvalidRequestException(Exception):
-    pass
-
-
 class AjaxUploadWidget(Widget):
     """
     A widget that implements asynchronous file uploads for forms. It creates
@@ -148,16 +144,14 @@ class AjaxUploadWidget(Widget):
         # https://tools.ietf.org/html/rfc7233#appendix-C
         range_header = request.META.get("HTTP_CONTENT_RANGE", None)
         if not range_header:
-            raise InvalidRequestException(
-                "Client did not supply Content-Range"
-            )
+            raise ValidationError("Client did not supply Content-Range")
 
         range_match = re.match(
             r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
             range_header,
         )
         if not range_match:
-            raise InvalidRequestException("Supplied invalid Content-Range")
+            raise ValidationError("Supplied invalid Content-Range")
 
         start_byte = int(range_match.group("start"))
         end_byte = int(range_match.group("end"))
@@ -172,12 +166,10 @@ class AjaxUploadWidget(Widget):
             "X-Upload-ID", request.POST.get("X-Upload-ID", None)
         )
         if not client_id:
-            raise InvalidRequestException(
-                "Client did not supply a X-Upload-ID"
-            )
+            raise ValidationError("Client did not supply a X-Upload-ID")
 
         if len(client_id) > 128:
-            raise InvalidRequestException("X-Upload-ID is too long")
+            raise ValidationError("X-Upload-ID is too long")
 
         # Verify consistency and generate file ids
         other_chunks = StagedFile.objects.filter(
@@ -192,15 +184,13 @@ class AjaxUploadWidget(Widget):
                 start_byte__lte=end_byte, end_byte__gte=start_byte
             ).exists()
             if chunk_intersects:
-                raise InvalidRequestException("Overlapping chunks")
+                raise ValidationError("Overlapping chunks")
 
             inconsistent_filenames = other_chunks.exclude(
                 client_filename=uploaded_file.name
             ).exists()
             if inconsistent_filenames:
-                raise InvalidRequestException(
-                    "Chunks have inconsistent filenames"
-                )
+                raise ValidationError("Chunks have inconsistent filenames")
 
             if total_size is not None:
                 inconsistent_total_size = (
@@ -209,7 +199,7 @@ class AjaxUploadWidget(Widget):
                     .exists()
                 )
                 if inconsistent_total_size:
-                    raise InvalidRequestException("Inconsistent total size")
+                    raise ValidationError("Inconsistent total size")
 
             file_id = other_chunks[0].file_id
 
@@ -262,7 +252,7 @@ class AjaxUploadWidget(Widget):
 
             for uploaded_file in request.FILES.values():
                 result.append(handler(request, csrf_token, uploaded_file))
-        except (InvalidRequestException, ValidationError) as e:
+        except ValidationError as e:
             return HttpResponseBadRequest(str(e))
 
         return JsonResponse(result, safe=False)
