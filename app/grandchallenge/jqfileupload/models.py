@@ -1,6 +1,7 @@
 import os
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from grandchallenge.core.storage import private_s3_storage
@@ -20,7 +21,7 @@ class StagedFile(models.Model):
     """
 
     csrf = models.CharField(max_length=128)
-    client_id = models.CharField(max_length=128, null=True)
+    client_id = models.CharField(max_length=128, null=True, blank=True)
     client_filename = models.CharField(max_length=128, blank=False)
     file_id = models.UUIDField(blank=False)
     timeout = models.DateTimeField(blank=False)
@@ -37,3 +38,15 @@ class StagedFile(models.Model):
     # Support for disambiguating between different upload widgets on the same
     # website
     upload_path_sha256 = models.CharField(max_length=64)
+
+    def clean(self):
+        if self.start_byte > self.end_byte:
+            raise ValidationError("Supplied invalid Content-Range")
+
+        if (self.total_size is not None) and (
+            self.end_byte >= self.total_size
+        ):
+            raise ValidationError("End byte exceeds total file size")
+
+        if self.end_byte - self.start_byte + 1 != self.file.size:
+            raise ValidationError("Invalid start-end byte range")

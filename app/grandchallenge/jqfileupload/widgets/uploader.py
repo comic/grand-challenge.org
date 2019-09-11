@@ -112,7 +112,8 @@ class AjaxUploadWidget(Widget):
         csrf_token: str,
         uploaded_file: UploadedFile,
     ) -> dict:
-        new_staged_file = StagedFile.objects.create(
+
+        new_staged_file = StagedFile(
             csrf=csrf_token,
             client_id=None,
             client_filename=uploaded_file.name,
@@ -124,6 +125,9 @@ class AjaxUploadWidget(Widget):
             total_size=uploaded_file.size,
             upload_path_sha256=generate_upload_path_hash(request),
         )
+        new_staged_file.full_clean()
+        new_staged_file.save()
+
         return {
             "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
@@ -163,14 +167,6 @@ class AjaxUploadWidget(Widget):
             total_size = None
         else:
             total_size = int(range_match.group("length"))
-        if start_byte > end_byte:
-            raise InvalidRequestException("Supplied invalid Content-Range")
-
-        if (total_size is not None) and (end_byte >= total_size):
-            raise InvalidRequestException("End byte exceeds total file size")
-
-        if end_byte - start_byte + 1 != uploaded_file.size:
-            raise InvalidRequestException("Invalid start-end byte range")
 
         client_id = request.META.get(
             "X-Upload-ID", request.POST.get("X-Upload-ID", None)
@@ -216,7 +212,8 @@ class AjaxUploadWidget(Widget):
                     raise InvalidRequestException("Inconsistent total size")
 
             file_id = other_chunks[0].file_id
-        new_staged_file = StagedFile.objects.create(
+
+        new_staged_file = StagedFile(
             csrf=csrf_token,
             client_id=client_id,
             client_filename=uploaded_file.name,
@@ -228,6 +225,9 @@ class AjaxUploadWidget(Widget):
             total_size=total_size,
             upload_path_sha256=generate_upload_path_hash(request),
         )
+        new_staged_file.full_clean()
+        new_staged_file.save()
+
         return {
             "filename": new_staged_file.client_filename,
             "uuid": new_staged_file.file_id,
@@ -262,7 +262,7 @@ class AjaxUploadWidget(Widget):
 
             for uploaded_file in request.FILES.values():
                 result.append(handler(request, csrf_token, uploaded_file))
-        except InvalidRequestException as e:
+        except (InvalidRequestException, ValidationError) as e:
             return HttpResponseBadRequest(str(e))
 
         return JsonResponse(result, safe=False)
