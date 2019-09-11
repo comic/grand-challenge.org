@@ -1,4 +1,5 @@
 import uuid
+from io import BytesIO
 
 import pytest
 from rest_framework.authtoken.models import Token
@@ -30,6 +31,33 @@ def test_single_chunk_api(client):
 
     parsed_json = response.json()
 
+    assert parsed_json[0]["filename"] == filename
+    assert "uuid" in parsed_json[0]
+    assert "extra_attrs" in parsed_json[0]
+    staged_file = StagedAjaxFile(uuid.UUID(parsed_json[0]["uuid"]))
+    with staged_file.open() as f:
+        staged_content = f.read()
+    assert staged_content == load_test_data()
+
+
+@pytest.mark.django_db
+def test_single_upload_api(client):
+    filename = "test.bin"
+    content = load_test_data()
+    token = Token.objects.create(user=UserFactory())
+
+    response = client.post(
+        path=reverse("api:staged-file-list"),
+        data={filename: BytesIO(content)},
+        format="multipart",
+        HTTP_AUTHORIZATION=f"Token {token}",
+    )
+
+    assert response.status_code == 201
+
+    parsed_json = response.json()
+
+    assert len(parsed_json) == 1
     assert parsed_json[0]["filename"] == filename
     assert "uuid" in parsed_json[0]
     assert "extra_attrs" in parsed_json[0]

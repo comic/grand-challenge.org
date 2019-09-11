@@ -43,7 +43,13 @@ class StagedFileViewSet(ModelViewSet):
 
     @property
     def csrf(self):
-        return self.request.META.get("CSRF_COOKIE")
+        csrf = self.request.META.get("CSRF_COOKIE")
+
+        if csrf is None:
+            # TODO: Check to see if this is the intention of this field
+            csrf = str(self.request.user.pk)
+
+        return csrf
 
     @property
     def client_id(self):
