@@ -37,9 +37,6 @@ class StagedFileViewSet(ModelViewSet):
         )
         return super().get_serializer(*args, **kwargs)
 
-    def perform_create(self, serializer):
-        serializer.save(csrf=self.csrf)
-
     @property
     def csrf(self):
         return self.request.META.get("CSRF_COOKIE")
@@ -47,6 +44,7 @@ class StagedFileViewSet(ModelViewSet):
     def _handle_complete(self, uploaded_file):
         return {
             "client_id": None,
+            "csrf": self.csrf,
             "end_byte": uploaded_file.size - 1,
             "file": uploaded_file,
             "filename": uploaded_file.name,
@@ -125,6 +123,7 @@ class StagedFileViewSet(ModelViewSet):
 
         return {
             "client_id": client_id,
+            "csrf": self.csrf,
             "end_byte": end_byte,
             "file": uploaded_file,
             "filename": uploaded_file.name,

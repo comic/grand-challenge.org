@@ -65,3 +65,15 @@ def test_rfc7233_implementation_api(client):
     assert len(staged_content) == len(content)
     assert hash(staged_content) == hash(content)
     assert staged_content == content
+
+
+@pytest.mark.django_db
+def test_wrong_upload_headers(client):
+    url = reverse("api:staged-file-list")
+
+    response = create_upload_file_request(client, csrf_token=None, url=url)
+    assert response.status_code == 400
+    assert response.json()[0]["csrf"][0] == "This field may not be null."
+
+    response = create_upload_file_request(client, url=url, method="put")
+    assert response.status_code == 405

@@ -25,6 +25,7 @@ def create_upload_file_request(
     extra_fields: dict = {},
     extra_headers: dict = {},
     url: str = "/ajax",
+    method: str = "post",
 ):
     if content is None:
         content = load_test_data()
@@ -52,7 +53,7 @@ Content-Disposition: form-data; name="{key}"\r
     headers = {"X-CSRFToken": csrf_token}
     headers.update(extra_headers)
     headers["CSRF_COOKIE"] = csrf_token
-    return rf.post(
+    return getattr(rf, method)(
         url,
         data=data,
         content_type=f"multipart/form-data; boundary={boundary}",

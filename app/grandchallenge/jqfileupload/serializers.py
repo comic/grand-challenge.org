@@ -13,6 +13,7 @@ class StagedFileSerializer(ModelSerializer):
         model = StagedFile
         fields = (
             "client_id",
+            "csrf",
             "end_byte",
             "extra_attrs",
             "file",
@@ -23,6 +24,7 @@ class StagedFileSerializer(ModelSerializer):
             "upload_path_sha256",
             "uuid",
         )
+        extra_kwargs = {"csrf": {"write_only": True}}
 
     def get_extra_attrs(self, *_):
         return {}
