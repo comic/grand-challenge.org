@@ -158,3 +158,56 @@ def test_wrong_upload_headers_rfc7233_api(client):
         client, "a" * 1000, content, 0, 10, url=url
     )
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_inconsistent_chunks_rfc7233(client):
+    content = load_test_data()
+    url = reverse("api:staged-file-list")
+
+    # Overlapping chunks
+    upload_id = generate_new_upload_id(
+        test_inconsistent_chunks_rfc7233, content
+    )
+    part_1 = create_partial_upload_file_request(
+        client, upload_id, content, 0, 10, url=url
+    )
+    assert part_1.status_code == 201
+    part_2 = create_partial_upload_file_request(
+        client, upload_id, content, 5, 15, url=url
+    )
+    assert part_2.status_code == 400
+
+    # Inconsistent filenames
+    upload_id += "x"
+    part_1 = create_partial_upload_file_request(
+        client, upload_id, content, 0, 10, filename="a", url=url
+    )
+    assert part_1.status_code == 201
+    part_2 = create_partial_upload_file_request(
+        client, upload_id, content, 10, 20, filename="b", url=url
+    )
+    assert part_2.status_code == 400
+
+    # Inconsistent total size
+    upload_id += "x"
+    part_1 = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content[:20],
+        0,
+        10,
+        url=url,
+        http_content_range="bytes 0-9/20",
+    )
+    assert part_1.status_code == 201
+    part_2 = create_partial_upload_file_request(
+        client,
+        upload_id,
+        content[:20],
+        10,
+        20,
+        url=url,
+        http_content_range="bytes 10-19/30",
+    )
+    assert part_2.status_code == 400
