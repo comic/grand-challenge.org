@@ -13,7 +13,6 @@ class StagedFileSerializer(ModelSerializer):
         model = StagedFile
         fields = (
             "client_id",
-            "csrf",  # TODO: Should be kept private?
             "end_byte",
             "extra_attrs",
             "file",
