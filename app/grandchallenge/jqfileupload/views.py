@@ -2,7 +2,7 @@ import re
 from datetime import timedelta
 
 from django.utils.timezone import now
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
@@ -17,7 +17,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 class StagedFileViewSet(ModelViewSet):
     serializer_class = StagedFileSerializer
     queryset = StagedFile.objects.all()
-    permission_classes = [AllowAny]  # TODO: Should be IsAuthenticated
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         if "HTTP_CONTENT_RANGE" in self.request.META:

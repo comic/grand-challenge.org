@@ -1,11 +1,11 @@
-import json
 import uuid
 
 import pytest
+from rest_framework.authtoken.models import Token
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
-from tests.jqfileupload_tests.test_widgets_widget import force_post_update
+from tests.factories import UserFactory
 from tests.jqfileupload_tests.utils import (
     create_upload_file_request,
     load_test_data,
@@ -17,9 +17,13 @@ from tests.jqfileupload_tests.utils import (
 @pytest.mark.django_db
 def test_single_chunk_api(client):
     filename = "test.bin"
+    token = Token.objects.create(user=UserFactory())
 
     response = create_upload_file_request(
-        rf=client, filename=filename, url=reverse("api:staged-file-list")
+        rf=client,
+        filename=filename,
+        url=reverse("api:staged-file-list"),
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
 
     assert response.status_code == 201
@@ -42,19 +46,38 @@ def test_rfc7233_implementation_api(client):
         test_rfc7233_implementation_api, content
     )
     url = reverse("api:staged-file-list")
+    token = Token.objects.create(user=UserFactory())
 
     part_1_response = create_partial_upload_file_request(
-        client, upload_id, content, 0, 10, url=url
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_1_response.status_code == 201
 
     part_2_response = create_partial_upload_file_request(
-        client, upload_id, content, 10, len(content) // 2, url=url
+        client,
+        upload_id,
+        content,
+        10,
+        len(content) // 2,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_2_response.status_code == 201
 
     part_3_response = create_partial_upload_file_request(
-        client, upload_id, content, len(content) // 2, len(content), url=url
+        client,
+        upload_id,
+        content,
+        len(content) // 2,
+        len(content),
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_3_response.status_code == 201
 
@@ -72,12 +95,23 @@ def test_rfc7233_implementation_api(client):
 @pytest.mark.django_db
 def test_wrong_upload_headers(client):
     url = reverse("api:staged-file-list")
+    token = Token.objects.create(user=UserFactory())
 
-    response = create_upload_file_request(client, csrf_token=None, url=url)
+    response = create_upload_file_request(
+        client,
+        csrf_token=None,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+    )
     assert response.status_code == 400
     assert response.json()[0]["csrf"][0] == "This field may not be null."
 
-    response = create_upload_file_request(client, url=url, method="put")
+    response = create_upload_file_request(
+        client,
+        url=url,
+        method="put",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+    )
     assert response.status_code == 405
 
 
@@ -88,14 +122,27 @@ def test_wrong_upload_headers_rfc7233_api(client):
         test_wrong_upload_headers_rfc7233_api, content
     )
     url = reverse("api:staged-file-list")
+    token = Token.objects.create(user=UserFactory())
 
     response = create_partial_upload_file_request(
-        client, upload_id, content, 0, 10, url=url
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 201
 
     response = create_partial_upload_file_request(
-        client, None, content, 0, 10, url=url
+        client,
+        None,
+        content,
+        0,
+        10,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -107,6 +154,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="corrupted data: 54343-3223/21323",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -118,6 +166,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 54343-3223/21323",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -129,6 +178,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 54343-3223/*",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -140,6 +190,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 1000-3000/2000",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -151,11 +202,18 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 1000-2000/*",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
     response = create_partial_upload_file_request(
-        client, "a" * 1000, content, 0, 10, url=url
+        client,
+        "a" * 1000,
+        content,
+        0,
+        10,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert response.status_code == 400
 
@@ -164,28 +222,55 @@ def test_wrong_upload_headers_rfc7233_api(client):
 def test_inconsistent_chunks_rfc7233(client):
     content = load_test_data()
     url = reverse("api:staged-file-list")
+    token = Token.objects.create(user=UserFactory())
 
     # Overlapping chunks
     upload_id = generate_new_upload_id(
         test_inconsistent_chunks_rfc7233, content
     )
     part_1 = create_partial_upload_file_request(
-        client, upload_id, content, 0, 10, url=url
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
-        client, upload_id, content, 5, 15, url=url
+        client,
+        upload_id,
+        content,
+        5,
+        15,
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_2.status_code == 400
 
     # Inconsistent filenames
     upload_id += "x"
     part_1 = create_partial_upload_file_request(
-        client, upload_id, content, 0, 10, filename="a", url=url
+        client,
+        upload_id,
+        content,
+        0,
+        10,
+        filename="a",
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
-        client, upload_id, content, 10, 20, filename="b", url=url
+        client,
+        upload_id,
+        content,
+        10,
+        20,
+        filename="b",
+        url=url,
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_2.status_code == 400
 
@@ -199,6 +284,7 @@ def test_inconsistent_chunks_rfc7233(client):
         10,
         url=url,
         http_content_range="bytes 0-9/20",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
@@ -209,5 +295,6 @@ def test_inconsistent_chunks_rfc7233(client):
         20,
         url=url,
         http_content_range="bytes 10-19/30",
+        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_2.status_code == 400

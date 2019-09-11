@@ -22,11 +22,17 @@ def create_upload_file_request(
     boundary: str = "RandomBoundaryFTWBlablablablalba8923475278934578",
     content: bytes = None,
     csrf_token: str = "tests_csrf_token",
-    extra_fields: dict = {},
-    extra_headers: dict = {},
+    extra_fields: dict = None,
+    extra_headers: dict = None,
     url: str = "/ajax",
     method: str = "post",
 ):
+    if extra_headers is None:
+        extra_headers = {}
+
+    if extra_fields is None:
+        extra_fields = {}
+
     if content is None:
         content = load_test_data()
     ##### Basic request #####
@@ -71,11 +77,15 @@ def create_partial_upload_file_request(
     url: str = "/ajax",
     csrf_token: str = "tests_csrf_token",
     http_content_range=None,
+    extra_headers=None,
 ):
     content_range = f"bytes {start_byte}-{end_byte-1}/{len(content)}"
 
     if http_content_range is None:
         http_content_range = content_range
+
+    if extra_headers is None:
+        extra_headers = {}
 
     extra_fields = {}
     if upload_identifer:
@@ -88,6 +98,7 @@ def create_partial_upload_file_request(
         extra_headers={
             "Content-Range": content_range,
             "HTTP_CONTENT_RANGE": http_content_range,
+            **extra_headers,
         },
         extra_fields=extra_fields,
         url=url,
