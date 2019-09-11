@@ -168,9 +168,6 @@ class AjaxUploadWidget(Widget):
         if not client_id:
             raise ValidationError("Client did not supply a X-Upload-ID")
 
-        if len(client_id) > 128:
-            raise ValidationError("X-Upload-ID is too long")
-
         # Verify consistency and generate file ids
         other_chunks = StagedFile.objects.filter(
             csrf=csrf_token,
