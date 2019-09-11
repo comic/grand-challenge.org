@@ -24,7 +24,16 @@ class StagedFileSerializer(ModelSerializer):
             "upload_path_sha256",
             "uuid",
         )
-        extra_kwargs = {"csrf": {"write_only": True}}
+        extra_kwargs = {
+            "client_id": {"write_only": True},
+            "csrf": {"write_only": True},
+            "end_byte": {"write_only": True},
+            "file": {"write_only": True},
+            "start_byte": {"write_only": True},
+            "timeout": {"write_only": True},
+            "total_size": {"write_only": True},
+            "upload_path_sha256": {"write_only": True},
+        }
 
     def get_extra_attrs(self, *_):
         return {}

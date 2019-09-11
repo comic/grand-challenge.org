@@ -185,15 +185,6 @@ def test_wrong_upload_headers(client):
 
     response = create_upload_file_request(
         client,
-        csrf_token=None,
-        url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
-    )
-    assert response.status_code == 400
-    assert response.json()[0]["csrf"][0] == "This field may not be null."
-
-    response = create_upload_file_request(
-        client,
         url=url,
         method="put",
         extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
