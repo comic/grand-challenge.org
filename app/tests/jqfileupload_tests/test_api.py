@@ -139,35 +139,31 @@ def test_rfc7233_implementation_client_api(client):
     token = Token.objects.create(user=UserFactory())
     filename = "whatever.bin"
 
-    part_1_response = client.post(
-        path=reverse("api:staged-file-list"),
-        format="multipart",
-        HTTP_AUTHORIZATION=f"Token {token}",
-        **create_chunked_request(filename, content, upload_id, 0, 10),
-    )
-    assert part_1_response.status_code == 201
+    start_byte = 0
+    content_io = BytesIO(content)
+    max_chunk_length = 2 ** 15
 
-    part_2_response = client.post(
-        path=reverse("api:staged-file-list"),
-        format="multipart",
-        HTTP_AUTHORIZATION=f"Token {token}",
-        **create_chunked_request(
-            filename, content, upload_id, 10, len(content) // 2
-        ),
-    )
-    assert part_2_response.status_code == 201
+    assert len(content) > 3 * max_chunk_length
 
-    part_3_response = client.post(
-        path=reverse("api:staged-file-list"),
-        format="multipart",
-        HTTP_AUTHORIZATION=f"Token {token}",
-        **create_chunked_request(
-            filename, content, upload_id, len(content) // 2, len(content)
-        ),
-    )
-    assert part_3_response.status_code == 201
+    while True:
+        chunk = content_io.read(max_chunk_length)
+        if not chunk:
+            break
 
-    parsed_json = part_3_response.json()
+        end_byte = start_byte + len(chunk)
+
+        response = client.post(
+            path=reverse("api:staged-file-list"),
+            data={filename: BytesIO(chunk), "X-Upload-ID": upload_id},
+            format="multipart",
+            HTTP_CONTENT_RANGE=f"bytes {start_byte}-{end_byte - 1}/{len(content)}",
+            HTTP_AUTHORIZATION=f"Token {token}",
+        )
+        assert response.status_code == 201
+
+        start_byte += len(chunk)
+
+    parsed_json = response.json()
     staged_file = StagedAjaxFile(uuid.UUID(parsed_json[0]["uuid"]))
 
     with staged_file.open() as f:
