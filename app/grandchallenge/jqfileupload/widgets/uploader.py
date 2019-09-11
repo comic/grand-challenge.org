@@ -113,7 +113,6 @@ class AjaxUploadWidget(Widget):
             csrf=csrf_token,
             client_id=None,
             client_filename=uploaded_file.name,
-            file_id=uuid.uuid4(),
             timeout=timezone.now() + self.timeout,
             file=uploaded_file,
             start_byte=0,
@@ -168,43 +167,10 @@ class AjaxUploadWidget(Widget):
         if not client_id:
             raise ValidationError("Client did not supply a X-Upload-ID")
 
-        # Verify consistency and generate file ids
-        other_chunks = StagedFile.objects.filter(
-            csrf=csrf_token,
-            client_id=client_id,
-            upload_path_sha256=generate_upload_path_hash(request),
-        ).all()
-        if len(other_chunks) == 0:
-            file_id = uuid.uuid4()
-        else:
-            chunk_intersects = other_chunks.filter(
-                start_byte__lte=end_byte, end_byte__gte=start_byte
-            ).exists()
-            if chunk_intersects:
-                raise ValidationError("Overlapping chunks")
-
-            inconsistent_filenames = other_chunks.exclude(
-                client_filename=uploaded_file.name
-            ).exists()
-            if inconsistent_filenames:
-                raise ValidationError("Chunks have inconsistent filenames")
-
-            if total_size is not None:
-                inconsistent_total_size = (
-                    other_chunks.exclude(total_size=None)
-                    .exclude(total_size=total_size)
-                    .exists()
-                )
-                if inconsistent_total_size:
-                    raise ValidationError("Inconsistent total size")
-
-            file_id = other_chunks[0].file_id
-
         new_staged_file = StagedFile(
             csrf=csrf_token,
             client_id=client_id,
             client_filename=uploaded_file.name,
-            file_id=file_id,
             timeout=timezone.now() + self.timeout,
             file=uploaded_file,
             start_byte=start_byte,

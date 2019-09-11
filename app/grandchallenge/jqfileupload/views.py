@@ -1,6 +1,5 @@
 import re
 from datetime import timedelta
-from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
@@ -52,7 +51,6 @@ class StagedFileViewSet(ModelViewSet):
             "timeout": now() + timedelta(hours=2),
             "total_size": uploaded_file.size,
             "upload_path_sha256": generate_upload_path_hash(self.request),
-            "uuid": uuid4(),
         }
 
     def _handle_chunked(self, uploaded_file):
@@ -84,42 +82,10 @@ class StagedFileViewSet(ModelViewSet):
             total_size = int(range_match.group("length"))
 
         client_id = self.request.META.get(
-            "X-Upload-ID", self.request.POST.get("X-Upload-ID", None)
+            "X-Upload-ID", self.request.POST.get("X-Upload-ID")
         )
         if not client_id:
             raise ValidationError("Client did not supply a X-Upload-ID")
-
-        # Verify consistency and generate file ids
-        other_chunks = StagedFile.objects.filter(
-            csrf=self.csrf,
-            client_id=client_id,
-            upload_path_sha256=generate_upload_path_hash(self.request),
-        ).all()
-        if len(other_chunks) == 0:
-            file_id = uuid4()
-        else:
-            chunk_intersects = other_chunks.filter(
-                start_byte__lte=end_byte, end_byte__gte=start_byte
-            ).exists()
-            if chunk_intersects:
-                raise ValidationError("Overlapping chunks")
-
-            inconsistent_filenames = other_chunks.exclude(
-                client_filename=uploaded_file.name
-            ).exists()
-            if inconsistent_filenames:
-                raise ValidationError("Chunks have inconsistent filenames")
-
-            if total_size is not None:
-                inconsistent_total_size = (
-                    other_chunks.exclude(total_size=None)
-                    .exclude(total_size=total_size)
-                    .exists()
-                )
-                if inconsistent_total_size:
-                    raise ValidationError("Inconsistent total size")
-
-            file_id = other_chunks[0].file_id
 
         return {
             "client_id": client_id,
@@ -131,5 +97,4 @@ class StagedFileViewSet(ModelViewSet):
             "timeout": now() + timedelta(hours=2),
             "total_size": total_size,
             "upload_path_sha256": generate_upload_path_hash(self.request),
-            "uuid": file_id,
         }

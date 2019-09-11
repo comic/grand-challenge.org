@@ -6,7 +6,7 @@ from grandchallenge.jqfileupload.models import StagedFile
 
 class StagedFileSerializer(ModelSerializer):
     filename = CharField(source="client_filename")
-    uuid = UUIDField(source="file_id")
+    uuid = UUIDField(source="file_id", read_only=True)
     extra_attrs = SerializerMethodField(source="get_extra_attrs")
 
     class Meta:
@@ -28,3 +28,12 @@ class StagedFileSerializer(ModelSerializer):
 
     def get_extra_attrs(self, *_):
         return {}
+
+    def validate(self, attrs):
+        instance = StagedFile(**attrs)
+        instance.clean()
+
+        # This is set in the clean method
+        attrs.update({"file_id": instance.file_id})
+
+        return attrs
