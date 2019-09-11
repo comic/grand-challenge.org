@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField, UUIDField, HiddenField, DictField
+from rest_framework.fields import CharField, UUIDField, SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.jqfileupload.models import StagedFile
@@ -7,7 +7,7 @@ from grandchallenge.jqfileupload.models import StagedFile
 class StagedFileSerializer(ModelSerializer):
     filename = CharField(source="client_filename")
     uuid = UUIDField(source="file_id")
-    extra_attrs = DictField(read_only=True)
+    extra_attrs = SerializerMethodField(source="get_extra_attrs")
 
     class Meta:
         model = StagedFile
@@ -24,3 +24,6 @@ class StagedFileSerializer(ModelSerializer):
             "upload_path_sha256",
             "uuid",
         )
+
+    def get_extra_attrs(self, *_):
+        return {}
