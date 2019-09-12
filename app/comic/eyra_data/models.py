@@ -91,7 +91,7 @@ class DataFile(UUIDModel):
     def get_download_url(self):
         storage = self.file.storage
         if storage.bucket:  # s3 storage
-            storage.bucket.meta.client.generate_presigned_url(
+            return storage.bucket.meta.client.generate_presigned_url(
                 'get_object',
                 Params={
                     'Bucket': storage.bucket.name,
