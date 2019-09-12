@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from comic.eyra_data.models import DataFile, DataType, DataSet
 
@@ -12,9 +13,7 @@ class DataTypeSerializer(serializers.ModelSerializer):
 
 class FileField(serializers.FileField):
     def to_representation(self, value):
-        if not getattr(value, 'url', None):
-            return None
-        return self.parent.instance.get_download_url()
+        return reverse('api:data_files-download', kwargs={'pk': value.instance.id}, request=self.context['request'])
 
 
 class DataFileSerializer(serializers.ModelSerializer):

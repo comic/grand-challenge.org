@@ -27,7 +27,7 @@ router.register(r"implementations", ImplementationViewSet)
 router.register(r"algorithms", AlgorithmViewSet)
 router.register(r"interfaces", InterfaceViewSet)
 router.register(r"jobs", JobViewSet)
-router.register(r"data_files", DataFileViewSet)
+router.register(r"data_files", DataFileViewSet, base_name='data_files')
 router.register(r"data_types", DataTypeViewSet)
 router.register(r"data_sets", DataSetViewSet)
 router.register(r"users", UserViewSet)
@@ -45,7 +45,7 @@ urlpatterns = [
     path("v1/social/", include((urlpatterns_social, "social"))),
     path("v1/me/", CurrentUserView.as_view()),
     path("v1/login/", obtain_auth_token),
-    path("v1/", include(router.urls)),
+    path("v1/", include(router.urls), name='drf'),
 ]
 #
 # schema_view = get_schema_view(

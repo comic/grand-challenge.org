@@ -101,5 +101,5 @@ class DataFileFactory(factory.DjangoModelFactory):
         model = DataFile
 
     creator = factory.SubFactory(UserFactory)
-    file = 'test/file.txt'
+    file = factory.PostGeneration(lambda obj, create, extracted, **kwargs: f'data_files/{obj.id}')
     type = factory.SubFactory(DataTypeFactory, name='OutputMetrics')
