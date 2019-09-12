@@ -6,7 +6,7 @@ from django.conf import settings
 
 from comic.eyra_algorithms.models import Algorithm, Interface, Input, Implementation
 from comic.eyra_benchmarks.models import Benchmark
-from comic.eyra_data.models import DataType
+from comic.eyra_data.models import DataType, DataFile
 
 fake = faker.Faker()
 
@@ -94,3 +94,12 @@ class ImplementationFactory(factory.DjangoModelFactory):
     image = 'eyra/test:latest'
     version = '1'
     algorithm = factory.SubFactory(AlgorithmFactory)
+
+
+class DataFileFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = DataFile
+
+    creator = factory.SubFactory(UserFactory)
+    file = 'test/file.txt'
+    type = factory.SubFactory(DataTypeFactory, name='OutputMetrics')

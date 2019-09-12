@@ -10,22 +10,16 @@ class DataTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class FileField(serializers.Field):
-#     def to_representation(self, value):
-#         if value._file:
-#             return {
-#                 'size': value.size,
-#                 'url': value.url
-#             }
-#         else:
-#             return {
-#                 'size': 0,
-#                 'url': ''
-#             }
-#
+class FileField(serializers.FileField):
+    def to_representation(self, value):
+        if not getattr(value, 'url', None):
+            return None
+        return self.parent.instance.get_download_url()
+
 
 class DataFileSerializer(serializers.ModelSerializer):
-    # file = FileField(read_only=True)
+    file = FileField()
+
     class Meta:
         model = DataFile
         fields = '__all__'
