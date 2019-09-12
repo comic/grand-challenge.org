@@ -3,6 +3,7 @@ from typing import Optional, Union, Sequence
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from comic.core.models import UUIDModel
@@ -126,6 +127,21 @@ class Algorithm(UUIDModel):
         on_delete=models.CASCADE,
         related_name="algorithm",
         help_text="The admin group associated with this algorithm",
+    )
+    tags = ArrayField(
+        models.CharField(max_length=30, blank=False, null=False),
+        blank=True,
+        help_text="Tags associated with this algorithm",
+    )
+    source_code_link = models.URLField(
+        null=True,
+        blank=True,
+        help_text="Link to the source code"
+    )
+    paper_link = models.URLField(
+        null=True,
+        blank=True,
+        help_text="Link to a paper or blog post"
     )
 
     def save(self, *args, **kwargs):
