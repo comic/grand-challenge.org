@@ -1,9 +1,14 @@
+import random
+
 import factory
+from factory.faker import faker
 from django.conf import settings
 
 from comic.eyra_algorithms.models import Algorithm, Interface, Input, Implementation
 from comic.eyra_benchmarks.models import Benchmark
 from comic.eyra_data.models import DataType
+
+fake = faker.Faker()
 
 SUPER_SECURE_TEST_PASSWORD = "testpasswd"
 
@@ -75,6 +80,8 @@ class AlgorithmFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: "Test algorithm %03d" % n)
     description = 'Test benchmark description'
     interface = factory.SubFactory(InterfaceFactory)
+
+    tags = [fake.color_name() for i in range(0, random.randint(1, 4))]
 
 
 class ImplementationFactory(factory.DjangoModelFactory):

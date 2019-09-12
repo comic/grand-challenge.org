@@ -18,6 +18,8 @@ env:
     - POSTGRES_PASSWORD=comic
     - POSTGRES_USER=comic
     - POSTGRES_PORT=5432
+    - AWS_ACCESS_KEY_ID=1
+    - AWS_SECRET_ACCESS_KEY=2
 
 jobs:
   include:
