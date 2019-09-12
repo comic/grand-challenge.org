@@ -4,10 +4,6 @@ sudo: required
 
 language: python
 
-python:
-  - "3.6"
-  - "3.7"
-
 services:
   - docker
 
@@ -23,34 +19,41 @@ env:
     - POSTGRES_USER=comic
     - POSTGRES_PORT=5432
 
-before_install:
-  - sudo service postgresql stop
-  - docker run -d -p $POSTGRES_PORT:5432 -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:10.4
-  - sudo mkdir -p /tmp/coverage
-  - sudo chmod a+w /tmp/coverage
-
-install:
-  - pip install -r requirements.txt
-  - pip install -r requirements.dev.txt
-
-before_script:
-  - |
-    RETRIES=10
-    until pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --timeout=1 || [ $RETRIES -eq 0 ]; do
-        RETRIES=$((RETRIES-1))
-        sleep 1
-    done
-
-script:
-  - pytest --cov=app/comic --cov-report=xml app
-
-after_script:
-  - sonar-scanner
-
 jobs:
   include:
+    - &test
+      stage: test
+      if: branch = master AND type = pull_request
+      language: python
+      python: "3.6"
+      before_install:
+        - sudo service postgresql stop
+        - docker run -d -p $POSTGRES_PORT:5432 -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:10.4
+        - sudo mkdir -p /tmp/coverage
+        - sudo chmod a+w /tmp/coverage
+
+      install:
+        - pip install -r requirements.txt
+        - pip install -r requirements.dev.txt
+
+      before_script:
+        - |
+          RETRIES=10
+          until pg_isready --host=$POSTGRES_HOST --port=$POSTGRES_PORT --username=$POSTGRES_USER --timeout=1 || [ $RETRIES -eq 0 ]; do
+              RETRIES=$((RETRIES-1))
+              sleep 1
+          done
+
+      script:
+        - pytest --cov=app/comic --cov-report=xml app
+
+    - <<: *test
+      python: "3.7"
+      after_script:
+        - sonar-scanner
+
     - stage: deploy
-      if: branch = master
+      if: branch = master AND type = push
       before_install: skip
       install: skip
       before_script: skip
