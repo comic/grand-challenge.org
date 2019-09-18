@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter, SimpleRouter
+from rest_framework.routers import SimpleRouter
 from grandchallenge.retina_api import views
 from django.views.decorators.cache import cache_page
 from django.conf import settings
@@ -96,14 +96,14 @@ urlpatterns = [
     ),
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
     path(
-        "image/thumbnail/<uuid:image_id>/",
+        "image/thumbnail/<uuid:pk>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
             views.B64ThumbnailAPIView.as_view()
         ),
         name="image-thumbnail",
     ),
     path(
-        "image/thumbnail/<uuid:image_id>/<int:width>/<int:height>/",
+        "image/thumbnail/<uuid:pk>/<int:width>/<int:height>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
             views.B64ThumbnailAPIView.as_view()
         ),
