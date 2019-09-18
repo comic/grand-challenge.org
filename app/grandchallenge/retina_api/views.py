@@ -1,11 +1,7 @@
-import base64
 import json
 from enum import Enum
-from io import BytesIO
-from PIL import Image as PILImage
-import SimpleITK as sitk
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views import View
 from rest_framework.renderers import JSONRenderer
@@ -13,11 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, authentication, viewsets
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    MultipleObjectsReturned,
-    PermissionDenied,
-)
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
@@ -26,6 +18,7 @@ from django.conf import settings
 from rest_framework_guardian import filters
 from rest_framework.exceptions import NotFound
 
+from grandchallenge.cases.permissions import ImagePermission
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
@@ -60,7 +53,9 @@ from grandchallenge.annotations.serializers import (
     ImageTextAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.retina_api.serializers import BytesImageSerializer
 from grandchallenge.serving.permissions import user_can_download_image
+from grandchallenge.retina_api.renderers import Base64Renderer
 
 
 class ArchiveView(APIView):
@@ -1002,50 +997,19 @@ class ArchiveAPIView(APIView):
 
 
 class B64ThumbnailAPIView(RetrieveAPIView):
-    permission_classes = (RetinaAPIPermission,)
+    permission_classes = (ImagePermission, RetinaAPIPermission)
     authentication_classes = (authentication.TokenAuthentication,)
+    renderer_classes = (Base64Renderer,)
+    queryset = Image.objects.all()
+    serializer_class = BytesImageSerializer
 
-    @staticmethod
-    def get_image_itk(image_id, user):
-        image_object = get_object_or_404(Image, pk=image_id)
-
-        if not user_can_download_image(user=user, image=image_object):
-            raise PermissionDenied
-
-        image_itk = image_object.get_sitk_image()
-        if image_itk is None:
-            raise Http404
-
-        return image_itk
-
-    @staticmethod
-    def convert_itk_to_pil(image_itk):
-        depth = image_itk.GetDepth()
-        image_nparray = sitk.GetArrayFromImage(image_itk)
-        if depth > 0:
-            # Get center slice of image if 3D
-            image_nparray = image_nparray[depth // 2]
-        return PILImage.fromarray(image_nparray)
-
-    @staticmethod
-    def create_thumbnail_as_base64(image_pil, width, height):
-        image_pil.thumbnail((width, height), PILImage.ANTIALIAS)
-        buffer = BytesIO()
-        image_pil.save(buffer, format="png")
-        return base64.b64encode(buffer.getvalue())
-
-    def get(
-        self,
-        request,
-        image_id,
-        width=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
-        height=settings.RETINA_DEFAULT_THUMBNAIL_SIZE,
-    ):
-        image_itk = self.get_image_itk(image_id, request.user)
-        image_pil = self.convert_itk_to_pil(image_itk)
-        b64_thumb = self.create_thumbnail_as_base64(image_pil, width, height)
-
-        return HttpResponse(b64_thumb, content_type="text/plain")
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        width = kwargs.get("width", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
+        height = kwargs.get("height", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
+        serializer_context = {"width": width, "height": height}
+        serializer = BytesImageSerializer(instance, context=serializer_context)
+        return Response(serializer.data)
 
 
 class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
