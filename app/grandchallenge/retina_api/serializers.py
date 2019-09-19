@@ -12,11 +12,13 @@ class PILImageSerializer(serializers.BaseSerializer):
     Read-only serializer that returns a PIL image from a Image instance.
     If "width" and "height" are passed as extra serializer content, the
     PIL image will be resized to those dimensions.
+    If the image is 3D it will return the center slice of the image.
     """
 
     def to_representation(self, instance):
-        image_itk = instance.get_sitk_image()
-        if image_itk is None:
+        try:
+            image_itk = instance.get_sitk_image()
+        except:
             raise Http404
         pil_image = self.convert_itk_to_pil(image_itk)
         try:
