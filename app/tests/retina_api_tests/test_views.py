@@ -29,6 +29,7 @@ from tests.retina_api_tests.helpers import (
     batch_test_data_endpoints,
     client_login,
     client_force_login,
+    get_user_from_str,
 )
 
 
@@ -475,11 +476,12 @@ class TestBase64ThumbnailView:
         image = ImageFactoryWithImageFile()
         image.permit_viewing_by_retina_users()
         url = reverse("retina:api:image-thumbnail", kwargs={"pk": image.pk})
-        client, user_model = client_force_login(client, user=user)
-        token = ""
+        user_model = get_user_from_str(user)
+        kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
-            token = f"Token {Token.objects.create(user=user_model).key}"
-        response = client.get(url, HTTP_AUTHORIZATION=token)
+            token_object, _ = Token.objects.get_or_create(user=user_model)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        response = client.get(url, **kwargs)
         assert response.status_code == expected_status
 
     @staticmethod
