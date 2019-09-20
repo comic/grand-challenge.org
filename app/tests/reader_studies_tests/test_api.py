@@ -189,6 +189,69 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                ],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [{"start": (1, 2, 3)}],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [
+                    {"start": (1, 2, 3)},
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                ],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "type": "Multiple distance measurements",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            400,
+        ),
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):
