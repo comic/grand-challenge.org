@@ -43,6 +43,8 @@ class PILImageSerializer(serializers.BaseSerializer):
 class BytesImageSerializer(PILImageSerializer):
     """
     Read-only serializer that returns a BytesIO image from an Image instance.
+    Subclasses PILImageSerializer, so the image may be resized and only the central
+    slice of a 3d image will be returned
     """
 
     def to_representation(self, instance):
