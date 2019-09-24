@@ -281,7 +281,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             },
             "required": ["start", "end"],
         },
-        "MIST": {
+        "MDIS": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
@@ -306,7 +306,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
     "anyOf": [
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
-        {"$ref": "#/definitions/MIST"},
+        {"$ref": "#/definitions/MDIS"},
     ],
 }
 
@@ -327,7 +327,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
-    ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MIST"
+    ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
