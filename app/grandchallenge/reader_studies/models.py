@@ -265,6 +265,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Distance measurement"]},
                 "start": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -284,6 +285,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Multiple distance measurements"]},
                 "lines": {
                     "type": "array",
                     "items": {"anyOf": [{"$ref": "#/definitions/DIST"}]},
@@ -293,6 +295,13 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
         },
     },
     "type": "object",
+    "properties": {
+        "version": {
+            "type": "object",
+            "additionalProperties": {"type": "number"},
+            "required": ["major", "minor"],
+        }
+    },
     "required": ["version", "type"],
     "anyOf": [
         {"$ref": "#/definitions/2DBB"},
