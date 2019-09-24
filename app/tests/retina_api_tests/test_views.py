@@ -396,12 +396,12 @@ class TestArchiveAPIView:
     @staticmethod
     def perform_request(client, user):
         url = reverse("retina:api:archive-data-api-view")
-        client, user_model = client_force_login(client, user=user)
-        token = ""
+        user_model = get_user_from_str(user)
+        kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
             token_object, _ = Token.objects.get_or_create(user=user_model)
-            token = f"Token {token_object.key}"
-        return client.get(url, HTTP_AUTHORIZATION=token)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        return client.get(url, **kwargs)
 
     @pytest.mark.parametrize(
         "user,expected_status",
