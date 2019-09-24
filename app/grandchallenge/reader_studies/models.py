@@ -259,7 +259,26 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
                 },
                 "name": {"type": "string"},
             },
-            "required": ["corners"],
+            "required": ["version", "type", "corners"],
+        },
+        "line-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "start": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "end": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["start", "end"],
         },
         "DIST": {
             "type": "object",
@@ -279,7 +298,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
                     "maxItems": 3,
                 },
             },
-            "required": ["start", "end"],
+            "required": ["version", "type", "start", "end"],
         },
         "MDIS": {
             "type": "object",
@@ -288,10 +307,12 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
                 "type": {"enum": ["Multiple distance measurements"]},
                 "lines": {
                     "type": "array",
-                    "items": {"anyOf": [{"$ref": "#/definitions/DIST"}]},
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/line-object"}]
+                    },
                 },
             },
-            "required": ["lines"],
+            "required": ["version", "type", "lines"],
         },
     },
     "type": "object",
@@ -302,7 +323,6 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "required": ["major", "minor"],
         }
     },
-    "required": ["version", "type"],
     "anyOf": [
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
@@ -316,7 +336,10 @@ def validate_answer_json(schema: dict, obj: object) -> bool:
     try:
         JSONSchemaValidator(schema=schema)(obj)
         return True
-    except ValidationError:
+    except ValidationError as error:
+        import sys
+
+        print(str(error), file=sys.stderr)
         return False
 
 
