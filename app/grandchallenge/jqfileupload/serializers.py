@@ -24,6 +24,7 @@ class StagedFileSerializer(ModelSerializer):
             "upload_path_sha256",
             "uuid",
         )
+        # TODO: ensure that all of these are cleaned before creation
         extra_kwargs = {
             "client_id": {"write_only": True},
             "csrf": {"write_only": True},

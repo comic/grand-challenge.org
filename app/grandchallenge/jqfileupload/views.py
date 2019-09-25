@@ -30,15 +30,14 @@ class StagedFileViewSet(ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def get_serializer(self, *args, **kwargs):
-        kwargs.update(
-            {
-                "many": True,
-                "data": [
-                    self._handle_file(uploaded_file)
-                    for uploaded_file in self.request.FILES.values()
-                ],
-            }
-        )
+        data = [
+            self._handle_file(uploaded_file)
+            for uploaded_file in self.request.FILES.values()
+        ]
+
+        if data:
+            kwargs.update({"many": True, "data": data})
+
         return super().get_serializer(*args, **kwargs)
 
     @property
