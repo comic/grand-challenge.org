@@ -336,10 +336,7 @@ def validate_answer_json(schema: dict, obj: object) -> bool:
     try:
         JSONSchemaValidator(schema=schema)(obj)
         return True
-    except ValidationError as error:
-        import sys
-
-        print(str(error), file=sys.stderr)
+    except ValidationError:
         return False
 
 
