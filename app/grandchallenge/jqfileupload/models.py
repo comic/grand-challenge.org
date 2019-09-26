@@ -2,8 +2,10 @@ import os
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.storage import private_s3_storage
 
@@ -39,6 +41,17 @@ class StagedFile(models.Model):
     # Support for disambiguating between different upload widgets on the same
     # website
     upload_path_sha256 = models.CharField(max_length=64)
+
+    @property
+    def creator(self):
+        # Note, in the DRF implementation the csrf key stores the users pk
+        # This show be refactored to include a FK to the user later.
+        try:
+            user = get_user_model().objects.get(pk=self.csrf)
+        except (ObjectDoesNotExist, ValueError):
+            return None
+
+        return user
 
     @property
     def is_chunked(self):
@@ -93,3 +106,16 @@ class StagedFile(models.Model):
                         raise ValidationError("Inconsistent total size")
 
                 self.file_id = other_chunks[0].file_id
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Allow the creator to view this upload
+        if self.creator:
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)

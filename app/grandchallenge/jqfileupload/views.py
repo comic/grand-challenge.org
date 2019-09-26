@@ -7,7 +7,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
+from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.serializers import StagedFileSerializer
 from grandchallenge.jqfileupload.widgets.uploader import (
@@ -18,8 +22,9 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 class StagedFileViewSet(ModelViewSet):
     serializer_class = StagedFileSerializer
     queryset = StagedFile.objects.all()
-    permission_classes = (IsAuthenticated,)
     parser_classes = (FormParser, MultiPartParser)
+    permission_classes = (DjangoObjectOnlyPermissions,)
+    filter_backends = (DjangoObjectPermissionsFilter,)
 
     def create(self, request, *args, **kwargs):
         if "HTTP_CONTENT_RANGE" in self.request.META:
