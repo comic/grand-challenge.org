@@ -2,6 +2,7 @@ import re
 from datetime import timedelta
 
 from django.utils.timezone import now
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -17,7 +18,8 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 class StagedFileViewSet(ModelViewSet):
     serializer_class = StagedFileSerializer
     queryset = StagedFile.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (FormParser, MultiPartParser)
 
     def create(self, request, *args, **kwargs):
         if "HTTP_CONTENT_RANGE" in self.request.META:
@@ -42,13 +44,7 @@ class StagedFileViewSet(ModelViewSet):
 
     @property
     def csrf(self):
-        csrf = self.request.META.get("CSRF_COOKIE")
-
-        if csrf is None:
-            # TODO: Check to see if this is the intention of this field
-            csrf = str(self.request.user.pk)
-
-        return csrf
+        return str(self.request.user.pk)
 
     @property
     def client_id(self):
