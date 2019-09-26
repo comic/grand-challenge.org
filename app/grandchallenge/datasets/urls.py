@@ -26,11 +26,6 @@ urlpatterns = [
         name="imageset-add-images",
     ),
     path(
-        f"<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
-        upload_raw_files_widget.handle_ajax,
-        name="upload-raw-imageset-image-files-ajax",
-    ),
-    path(
         "<uuid:pk>/update/", ImageSetUpdate.as_view(), name="imageset-update"
     ),
     path(
@@ -49,19 +44,9 @@ urlpatterns = [
         name="annotationset-add-images",
     ),
     path(
-        f"annotations/<uuid:pk>/add/{upload_raw_files_widget.ajax_target_path}",
-        upload_raw_files_widget.handle_ajax,
-        name="upload-raw-annotationset-image-files-ajax",
-    ),
-    path(
         "annotations/<uuid:pk>/label/",
         AnnotationSetUpdateLabels.as_view(),
         name="annotationset-update-labels",
-    ),
-    path(
-        f"annotations/<uuid:pk>/label/{labels_upload_widget.ajax_target_path}",
-        labels_upload_widget.handle_ajax,
-        name="labels-upload-ajax",
     ),
     path(
         "annotations/<uuid:pk>/",

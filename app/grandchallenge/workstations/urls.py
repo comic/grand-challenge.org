@@ -60,11 +60,6 @@ urlpatterns = [
         name="image-create",
     ),
     path(
-        f"<slug>/images/create/{workstation_image_upload_widget.ajax_target_path}",
-        workstation_image_upload_widget.handle_ajax,
-        name="image-upload-ajax",
-    ),
-    path(
         "<slug>/images/<uuid:pk>/",
         WorkstationImageDetail.as_view(),
         name="image-detail",

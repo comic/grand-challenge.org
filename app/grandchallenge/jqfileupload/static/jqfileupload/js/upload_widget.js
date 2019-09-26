@@ -1,22 +1,6 @@
 "use strict";
 
-var upload_csrf_token;
-
-function upload_fold_unfold(element) {
-    // Find the parent-foldable element
-    element = $(element);
-    while (!element.hasClass("foldable")) {
-        element = element.parent();
-        if (element.length === 0) {
-            throw Error("No parent element with class 'foldable' found");
-        }
-    }
-    element.toggleClass("folded");
-}
-
 (function () {
-    var csrf_token = null;
-
     function init_upload(upload_element) {
         upload_element = $(upload_element);
         var dropzone = upload_element;
@@ -47,7 +31,7 @@ function upload_fold_unfold(element) {
                 retryTimeout: 500,
                 maxRetries: 50,
                 headers: {
-                    "X-CSRFToken": csrf_token
+                    "Authorization": "Token dfshkjlg"
                 },
                 limitConcurrentUploads: 3,
             });
@@ -127,7 +111,7 @@ function upload_fold_unfold(element) {
             update_hidden_form_element();
 
             if (is_autocommit &&
-                    (succeeded_uploads_list.length === total_expected_files)) {
+                (succeeded_uploads_list.length === total_expected_files)) {
                 total_expected_files = 0; // In case we submit does not work
                 upload_element.closest('form').submit();
             }
@@ -203,27 +187,12 @@ function upload_fold_unfold(element) {
             }
 
         });
-
     }
 
     $(function () {
-        if (typeof upload_csrf_token !== 'undefined') {
-            csrf_token = upload_csrf_token;
-        } else {
-            // Try to find a django-hidden control with the correct value
-            var elements = $("input[name='csrfmiddlewaretoken']");
-            if (elements.length > 0) {
-                csrf_token = elements.attr("value");
-            }
-        }
-
-        if (!csrf_token) {
-            throw Error("Could not find a CSRF token, the uploads will not work!");
-        } else {
-            var file_uploads = $(".file-upload");
-            for (var i = 0; i < file_uploads.length; i++) {
-                init_upload(file_uploads[i]);
-            }
+        var file_uploads = $(".file-upload");
+        for (var i = 0; i < file_uploads.length; i++) {
+            init_upload(file_uploads[i]);
         }
     });
 })();

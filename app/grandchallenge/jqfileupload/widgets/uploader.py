@@ -60,15 +60,6 @@ class AjaxUploadWidget(Widget):
        - jQuery-ui (1.12.1)
        - blueimp-file-upload (9.19.1)
      - The website must render the media associated with the widget
-     - The website must define a djang csfr-token by either:
-       - defining a hidden input element with the name 'csrfmiddlewaretoken'
-         (use the {% csrf_token %} template function for this).
-       - define the csfr_token by defining the global javascript variable
-         'upload_csrf_token'
-     - For each widget a valid ajax-receiver must be installed. Each instance
-       of an AjaxUploadWidget exposes the function 'handle_ajax' as handler
-       for ajax requests. During initialization, the ajax-path must be
-       defined using the 'ajax_target_path' named parameter
      - Add cleanup service call to cleanup_stale_files in a background worker
 
     Notes
@@ -93,10 +84,8 @@ class AjaxUploadWidget(Widget):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        if ajax_target_path is None:
-            raise ValueError("AJAX target path required")
 
-        self.ajax_target_path = ajax_target_path
+        self.user = None
         self.timeout = timedelta(hours=2)
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
@@ -220,26 +209,28 @@ class AjaxUploadWidget(Widget):
 
         return JsonResponse(result, safe=False)
 
-    def render(self, name, value, attrs=None, renderer=None):
+    @property
+    def template_name(self):
         if self.__multifile:
-            template = get_template("widgets/multi_uploader.html")
+            return "widgets/multi_uploader.html"
         else:
-            template = get_template("widgets/single_uploader.html")
-        if isinstance(value, Iterable):
-            value = ",".join(str(x) for x in value)
-        elif value in (None, ""):
-            value = ""
-        else:
-            value = str(value)
-        context = {
-            "target": self.ajax_target_path,
-            "value": value,
-            "name": name,
-            "attrs": attrs,
-            "multi_upload": "true" if self.__multifile else "false",
-            "auto_commit": "true" if self.__auto_commit else "false",
-        }
-        return template.render(context=context)
+            return "widgets/single_uploader.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+
+        if self.user is None:
+            raise RuntimeError("The user must be set on the upload widget!")
+
+        context.update(
+            {
+                "user": self.user,
+                "multi_upload": "true" if self.__multifile else "false",
+                "auto_commit": "true" if self.__auto_commit else "false",
+            }
+        )
+
+        return context
 
     def __validate_uploaded_file(self, request, uploaded_file):
         for validator in self.__upload_validators:

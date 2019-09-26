@@ -1,8 +1,13 @@
+{% load url from grandchallenge_tags %}
+
+<h1>{{ user }}</h1>
+
 <div class="file-upload drop-here-floater"
-     id="{{ attr.id }}"
-     upload_target="{{ target }}"
+     id="{{ widget.attrs.id }}"
+     upload_target="{% url 'api:staged-file-list' %}"
      multi_upload="{{ multi_upload }}"
-     auto_commit="{{ auto_commit }}">
+     auto_commit="{{ auto_commit }}"
+>
 
     <div class="top-row">
         <span class="btn btn-primary fileinput-button">
@@ -22,8 +27,6 @@
     <div class="failed-list">
     </div>
 
-    <input name="{{ name }}" type="hidden" value="{{ value }}"/>
+    <input name="{{ widget.name }}" type="hidden" value="{{ widget.value }}"/>
 
 </div>
-
-

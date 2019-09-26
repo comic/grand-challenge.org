@@ -31,11 +31,6 @@ urlpatterns = [
         name="add-images",
     ),
     path(
-        f"<slug>/images/add/{upload_raw_files_widget.ajax_target_path}",
-        upload_raw_files_widget.handle_ajax,
-        name="upload-raw-readerstudy-image-files-ajax",
-    ),
-    path(
         "<slug>/questions/add/",
         AddQuestionToReaderStudy.as_view(),
         name="add-question",
