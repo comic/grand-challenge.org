@@ -40,7 +40,7 @@ def reject_duplicate_filenames(
         Raised if a duplicate file has been detected.
 
     """
-    csrf_token = request.META.get("CSRF_COOKIE", None)
+    csrf_token = str(request.user.pk)
     client_id = request.META.get(
         "X-Upload-ID", request.POST.get("X-Upload-ID", None)
     )

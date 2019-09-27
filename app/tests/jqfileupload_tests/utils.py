@@ -58,7 +58,6 @@ Content-Disposition: form-data; name="{key}"\r
         data = extra_field_data + data
     headers = {"X-CSRFToken": csrf_token}
     headers.update(extra_headers)
-    headers["CSRF_COOKIE"] = csrf_token
     return getattr(rf, method)(
         url,
         data=data,

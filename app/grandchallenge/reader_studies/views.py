@@ -125,11 +125,6 @@ class AddObjectToReaderStudyMixin(
     def get_permission_object(self):
         return self.reader_study
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
-
     @property
     def reader_study(self):
         return ReaderStudy.objects.get(slug=self.kwargs["slug"])
@@ -155,6 +150,11 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
     form_class = UploadRawImagesForm
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "images"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
 
 class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):

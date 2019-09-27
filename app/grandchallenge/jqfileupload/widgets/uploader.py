@@ -1,26 +1,13 @@
-import os
-import re
-import uuid
-import json
 import hashlib
-
-from collections import Iterable
-from datetime import timedelta
+import os
+import uuid
 from io import BufferedIOBase
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
-from django.http import HttpResponse
 from django.http.request import HttpRequest
-from django.http.response import (
-    HttpResponseBadRequest,
-    JsonResponse,
-    HttpResponseForbidden,
-)
-from django.template.loader import get_template
 from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
@@ -86,128 +73,9 @@ class AjaxUploadWidget(Widget):
         super().__init__(*args, **kwargs)
 
         self.user = user
-        self.timeout = timedelta(hours=2)
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
         self.__upload_validators = tuple(upload_validators)
-
-    def _handle_complete(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
-
-        new_staged_file = StagedFile(
-            csrf=csrf_token,
-            client_id=None,
-            client_filename=uploaded_file.name,
-            timeout=timezone.now() + self.timeout,
-            file=uploaded_file,
-            start_byte=0,
-            end_byte=uploaded_file.size - 1,
-            total_size=uploaded_file.size,
-            upload_path_sha256=generate_upload_path_hash(request),
-        )
-        new_staged_file.full_clean()
-        new_staged_file.save()
-
-        return {
-            "filename": new_staged_file.client_filename,
-            "uuid": new_staged_file.file_id,
-            "extra_attrs": {},
-        }
-
-    def _handle_chunked(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
-        # Only content ranges of the form
-        #
-        #   bytes-unit SP byte-range-resp
-        #
-        # according to rfc7233 are accepted. See here:
-        # https://tools.ietf.org/html/rfc7233#appendix-C
-        range_header = request.META.get("HTTP_CONTENT_RANGE", None)
-        if not range_header:
-            raise ValidationError("Client did not supply Content-Range")
-
-        range_match = re.match(
-            r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
-            range_header,
-        )
-        if not range_match:
-            raise ValidationError("Supplied invalid Content-Range")
-
-        start_byte = int(range_match.group("start"))
-        end_byte = int(range_match.group("end"))
-        if (range_match.group("length") is None) or (
-            range_match.group("length") == "*"
-        ):
-            total_size = None
-        else:
-            total_size = int(range_match.group("length"))
-
-        client_id = request.META.get(
-            "X-Upload-ID", request.POST.get("X-Upload-ID", None)
-        )
-        if not client_id:
-            raise ValidationError("Client did not supply a X-Upload-ID")
-
-        new_staged_file = StagedFile(
-            csrf=csrf_token,
-            client_id=client_id,
-            client_filename=uploaded_file.name,
-            timeout=timezone.now() + self.timeout,
-            file=uploaded_file,
-            start_byte=start_byte,
-            end_byte=end_byte,
-            total_size=total_size,
-            upload_path_sha256=generate_upload_path_hash(request),
-        )
-        new_staged_file.full_clean()
-        new_staged_file.save()
-
-        return {
-            "filename": new_staged_file.client_filename,
-            "uuid": new_staged_file.file_id,
-            "extra_attrs": {},
-        }
-
-    def handle_ajax(self, request: HttpRequest, **kwargs) -> HttpResponse:
-        if request.method != "POST":
-            return HttpResponseBadRequest()
-
-        csrf_token = request.META.get("CSRF_COOKIE", None)
-        if not csrf_token:
-            return HttpResponseForbidden(
-                "CSRF token is missing", content_type="text/plain"
-            )
-
-        if "HTTP_CONTENT_RANGE" in request.META:
-            handler = self._handle_chunked
-        else:
-            handler = self._handle_complete
-        result = []
-        try:
-            for uploaded_file in request.FILES.values():
-                try:
-                    self.__validate_uploaded_file(request, uploaded_file)
-                except ValidationError as e:
-                    print(e, type(e))
-                    return HttpResponseForbidden(
-                        json.dumps(list(e.messages)),
-                        content_type="application/json",
-                    )
-
-            for uploaded_file in request.FILES.values():
-                result.append(handler(request, csrf_token, uploaded_file))
-        except ValidationError as e:
-            return HttpResponseBadRequest(str(e))
-
-        return JsonResponse(result, safe=False)
 
     @property
     def template_name(self):

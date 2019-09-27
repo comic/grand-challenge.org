@@ -67,7 +67,6 @@ def test_upload_validator_using_wrong_extension(rf: RequestFactory):
             ExtensionValidator(allowed_extensions=(".allowed-extension",))
         ]
     )
-    widget.timeout = timedelta(seconds=1)
     content = load_test_data()
 
     upload_id = generate_new_upload_id(
