@@ -4,12 +4,9 @@ functions to create uploaded_file objects in various ways.
 """
 import random
 from pathlib import Path
-from typing import Optional, Sequence, overload
-
-from django.http import HttpResponse, HttpRequest
-from django.test import Client, RequestFactory
 
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.subdomains.utils import reverse
 from tests.jqfileupload_tests.test_widgets_uploaded_file import (
     create_uploaded_file,
 )
@@ -103,23 +100,7 @@ class UploadSession:
             f"-{hex(random.randint(0, 1000000000000000000))[2:]}"
         )
 
-    @overload
-    def single_chunk_upload(
-        self, client: Client, filename: str, content: bytes, endpoint: str
-    ) -> HttpResponse:
-        ...
-
-    @overload
-    def single_chunk_upload(
-        self,
-        client: RequestFactory,
-        filename: str,
-        content: bytes,
-        endpoint: str,
-    ) -> HttpRequest:
-        ...
-
-    def single_chunk_upload(self, client, filename, content, endpoint):
+    def single_chunk_upload(self, *, client, filename, content, endpoint=None):
         """
         Executes a single-chunk upload with the given content. In contrast to
         the `create_file_*` functions, this function utilizes the django-router and
@@ -141,6 +122,9 @@ class UploadSession:
         -------
         HttpResponse resulting from the request.
         """
+        if endpoint is None:
+            endpoint = reverse("api:staged-file-list")
+
         return create_upload_file_request(
             client,
             filename=filename,
@@ -149,29 +133,9 @@ class UploadSession:
             csrf_token=self.__csrf_token,
         )
 
-    @overload
     def multi_chunk_upload(
-        self,
-        client: Client,
-        filename: str,
-        content: bytes,
-        endpoint: str,
-        chunks: int = 1,
-    ) -> Sequence[HttpResponse]:
-        ...
-
-    @overload
-    def multi_chunk_upload(
-        self,
-        client: RequestFactory,
-        filename: str,
-        content: bytes,
-        endpoint: str,
-        chunks: int = 1,
-    ) -> Sequence[HttpRequest]:
-        ...
-
-    def multi_chunk_upload(self, client, filename, content, endpoint, chunks):
+        self, *, client, filename, content, endpoint=None, chunks=1
+    ):
         """
         Executes a multi-chunk upload with the given content. The chunks option
         allows to specify how many equally sized chunks should be sent. If not
@@ -198,6 +162,9 @@ class UploadSession:
         -------
         A list of HttpResponse objects for each submitted chunk.
         """
+        if endpoint is None:
+            endpoint = reverse("api:staged-file-list")
+
         self.__upload_counter += 1
         upload_identifier = f"{self.__csrf_token}_{self.__upload_counter}"
 

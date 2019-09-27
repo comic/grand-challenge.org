@@ -36,9 +36,7 @@ class AnnotationSetForm(forms.ModelForm):
         fields = ("kind",)
 
 
-labels_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/submission-upload/", multifile=False
-)
+labels_upload_widget = uploader.AjaxUploadWidget(multifile=False)
 
 
 class AnnotationSetUpdateLabelsForm(forms.ModelForm):

@@ -13,7 +13,6 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 )
 
 upload_raw_files_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/raw_files/",
     multifile=True,
     auto_commit=False,
     upload_validators=[reject_duplicate_filenames],

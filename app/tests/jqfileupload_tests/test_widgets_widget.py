@@ -17,6 +17,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     StagedAjaxFile,
     UploadedAjaxFileList,
 )
+from tests.factories import UserFactory
 from tests.jqfileupload_tests.utils import (
     create_upload_file_request,
     load_test_data,
@@ -34,14 +35,9 @@ def force_post_update(request, key: str, value: object):
     return request
 
 
-def test_invalid_initialization():
-    with pytest.raises(ValueError):
-        AjaxUploadWidget()
-
-
 @pytest.mark.django_db
 def test_single_chunk(rf: RequestFactory):
-    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget = AjaxUploadWidget()
     widget.timeout = timedelta(seconds=1)
     filename = "test.bin"
     post_request = create_upload_file_request(rf, filename=filename)
@@ -69,7 +65,7 @@ def test_rfc7233_implementation(rf: RequestFactory):
     part_3 = create_partial_upload_file_request(
         rf, upload_id, content, len(content) // 2, len(content)
     )
-    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget = AjaxUploadWidget()
     widget.timeout = timedelta(seconds=1)
     response = widget.handle_ajax(part_1)
     assert isinstance(response, JsonResponse)
@@ -86,7 +82,7 @@ def test_rfc7233_implementation(rf: RequestFactory):
 
 @pytest.mark.django_db
 def test_wrong_upload_headers(rf: RequestFactory):
-    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget = AjaxUploadWidget()
     widget.timeout = timedelta(seconds=1)
     post_request = create_upload_file_request(rf)
     post_request.META["CSRF_COOKIE"] = None
@@ -98,7 +94,7 @@ def test_wrong_upload_headers(rf: RequestFactory):
 
 @pytest.mark.django_db
 def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
-    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget = AjaxUploadWidget()
     widget.timeout = timedelta(seconds=1)
     content = load_test_data()
     upload_id = generate_new_upload_id(
@@ -151,7 +147,7 @@ def test_wrong_upload_headers_rfc7233(rf: RequestFactory):
 
 @pytest.mark.django_db
 def test_inconsistent_chunks_rfc7233(rf: RequestFactory):
-    widget = AjaxUploadWidget(ajax_target_path="/ajax")
+    widget = AjaxUploadWidget()
     widget.timeout = timedelta(seconds=1)
     content = load_test_data()
     # Overlapping chunks
@@ -186,15 +182,21 @@ def test_inconsistent_chunks_rfc7233(rf: RequestFactory):
     assert isinstance(widget.handle_ajax(part_2), HttpResponseBadRequest)
 
 
+@pytest.mark.django_db
 def test_render():
-    widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=True)
+    user = UserFactory()
+
+    widget = AjaxUploadWidget(multifile=True, user=user)
     render_result = widget.render("some_name", None)
     assert isinstance(render_result, str)
+
     render_result = widget.render("some_name", (uuid.uuid4(), uuid.uuid4()))
     assert isinstance(render_result, str)
-    widget = AjaxUploadWidget(ajax_target_path="/ajax", multifile=False)
+
+    widget = AjaxUploadWidget(multifile=False, user=user)
     render_result = widget.render("some_name", None)
     assert isinstance(render_result, str)
+
     render_result = widget.render("some_name", (uuid.uuid4(), uuid.uuid4()))
     assert isinstance(render_result, str)
 
@@ -225,10 +227,9 @@ def test_form_field_prepare_value_not_implemented():
 @pytest.mark.django_db
 def test_upload_validator_using_wrong_extension(rf: RequestFactory):
     widget = AjaxUploadWidget(
-        ajax_target_path="/ajax",
         upload_validators=[
             ExtensionValidator(allowed_extensions=(".allowed-extension",))
-        ],
+        ]
     )
     widget.timeout = timedelta(seconds=1)
     content = load_test_data()

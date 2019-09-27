@@ -6,9 +6,7 @@ from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
-algorithm_image_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/algorithm-image-upload/", multifile=False
-)
+algorithm_image_upload_widget = uploader.AjaxUploadWidget(multifile=False)
 
 
 class AlgorithmImageForm(forms.ModelForm):

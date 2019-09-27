@@ -77,9 +77,7 @@ class ConfigForm(forms.ModelForm):
         }
 
 
-method_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/method-upload/", multifile=False
-)
+method_upload_widget = uploader.AjaxUploadWidget(multifile=False)
 
 
 class MethodForm(forms.ModelForm):
@@ -106,9 +104,7 @@ class MethodForm(forms.ModelForm):
         fields = ["chunked_upload"]
 
 
-submission_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/submission-upload/", multifile=False
-)
+submission_upload_widget = uploader.AjaxUploadWidget(multifile=False)
 
 submission_fields = (
     "comment",

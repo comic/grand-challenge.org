@@ -30,9 +30,7 @@ class WorkstationForm(ModelForm):
         fields = ("title", "logo", "description")
 
 
-workstation_image_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/workstation-image-upload/", multifile=False
-)
+workstation_image_upload_widget = uploader.AjaxUploadWidget(multifile=False)
 
 
 class WorkstationImageForm(ModelForm):

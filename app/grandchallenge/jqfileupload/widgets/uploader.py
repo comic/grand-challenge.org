@@ -77,15 +77,15 @@ class AjaxUploadWidget(Widget):
     def __init__(
         self,
         *args,
-        ajax_target_path: str = None,
         multifile=True,
         auto_commit=True,
         upload_validators=(),
+        user=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        self.user = None
+        self.user = user
         self.timeout = timedelta(hours=2)
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
