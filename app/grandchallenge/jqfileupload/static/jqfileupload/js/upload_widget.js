@@ -8,11 +8,9 @@
         var failed_files_list = upload_element.find("div.failed-list");
         var total_expected_files = 0;
 
-        var is_multiupload = upload_element.attr("multi_upload") === "true";
-        var is_autocommit = upload_element.attr("auto_commit") === "true";
-
-        var target_url = upload_element.attr("upload_target");
-
+        var is_multiupload = upload_element.data("multi-upload");
+        var is_autocommit = upload_element.data("auto-commit");
+        var target_url = upload_element.data("upload-target");
         var auth_token = upload_element.data("auth-token");
 
         var client_upload_session_key = generate_labeled_id("client_upload_session");
