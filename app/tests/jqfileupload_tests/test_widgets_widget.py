@@ -1,21 +1,13 @@
 import uuid
-from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.test.client import RequestFactory
 
-from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets.uploader import (
     AjaxUploadWidget,
     UploadedAjaxFileList,
 )
 from tests.factories import UserFactory
-from tests.jqfileupload_tests.utils import (
-    create_upload_file_request,
-    load_test_data,
-    generate_new_upload_id,
-)
 
 
 @pytest.mark.django_db
@@ -60,29 +52,3 @@ def test_form_field_to_python():
 def test_form_field_prepare_value_not_implemented():
     form_field = UploadedAjaxFileList()
     assert form_field.prepare_value("") is None
-
-
-@pytest.mark.django_db
-def test_upload_validator_using_wrong_extension(rf: RequestFactory):
-    widget = AjaxUploadWidget(
-        upload_validators=[
-            ExtensionValidator(allowed_extensions=(".allowed-extension",))
-        ]
-    )
-    content = load_test_data()
-
-    upload_id = generate_new_upload_id(
-        test_upload_validator_using_wrong_extension, content
-    )
-
-    request = create_upload_file_request(
-        rf, content=b"should error", filename="test.wrong_extension"
-    )
-    response = widget.handle_ajax(request)
-    assert response.status_code == 403
-
-    request = create_upload_file_request(
-        rf, content=b"should error", filename="test.allowed-extension"
-    )
-    response = widget.handle_ajax(request)
-    assert response.status_code == 200
