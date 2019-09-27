@@ -6,6 +6,7 @@ from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
 import sentry_sdk
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -534,6 +535,7 @@ REST_FRAMEWORK = {
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https://\w+{re.escape(SESSION_COOKIE_DOMAIN)}$"
 ]
+CORS_ALLOW_HEADERS = list(default_headers) + ["content-range"]
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
