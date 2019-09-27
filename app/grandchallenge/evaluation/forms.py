@@ -96,9 +96,10 @@ class MethodForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = Method
@@ -127,6 +128,7 @@ class SubmissionForm(forms.ModelForm):
     def __init__(
         self,
         *args,
+        user,
         display_comment_field=False,
         supplementary_file_choice=Config.OFF,
         supplementary_file_label="",
@@ -162,6 +164,8 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["publication_url"]
 
         self.helper = FormHelper(self)
+
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = Submission

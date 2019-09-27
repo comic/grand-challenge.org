@@ -27,10 +27,11 @@ class UploadRawImagesForm(forms.ModelForm):
         help_text=("Upload images for creating a new archive"),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit("save", "Submit"))
+        self.fields["files"].widget.user = user
 
     def save(self, commit=True):
         instance = super().save(commit=False)  # type: RawImageUploadSession

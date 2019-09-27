@@ -25,9 +25,10 @@ class AlgorithmImageForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = AlgorithmImage

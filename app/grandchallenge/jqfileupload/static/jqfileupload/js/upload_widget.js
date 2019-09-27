@@ -13,6 +13,8 @@
 
         var target_url = upload_element.attr("upload_target");
 
+        var auth_token = upload_element.data("auth-token");
+
         var client_upload_session_key = generate_labeled_id("client_upload_session");
         target_url = target_url + "?client_session=" + client_upload_session_key;
 
@@ -31,7 +33,7 @@
                 retryTimeout: 500,
                 maxRetries: 50,
                 headers: {
-                    "Authorization": "Token dfshkjlg"
+                    "Authorization": "Token " + auth_token
                 },
                 limitConcurrentUploads: 3,
             });

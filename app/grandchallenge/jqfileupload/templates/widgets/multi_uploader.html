@@ -1,12 +1,12 @@
 {% load url from grandchallenge_tags %}
-
-<h1>{{ user }}</h1>
+{% load auth_token %}
 
 <div class="file-upload drop-here-floater"
      id="{{ widget.attrs.id }}"
      upload_target="{% url 'api:staged-file-list' %}"
      multi_upload="{{ multi_upload }}"
      auto_commit="{{ auto_commit }}"
+     data-auth-token="{% auth_token user %}"
 >
 
     <div class="top-row">

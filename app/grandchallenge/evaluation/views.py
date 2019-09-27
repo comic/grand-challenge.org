@@ -41,6 +41,11 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
     model = Method
     form_class = MethodForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.challenge = self.request.challenge
@@ -83,6 +88,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         kwargs.update(
             {
+                "user": self.request.user,
                 "display_comment_field": config.allow_submission_comments,
                 "supplementary_file_choice": config.supplementary_file_choice,
                 "supplementary_file_label": config.supplementary_file_label,

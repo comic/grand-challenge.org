@@ -204,6 +204,11 @@ class WorkstationImageCreate(
     )
     raise_exception = True
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     @property
     def workstation(self):
         return Workstation.objects.get(slug=self.kwargs["slug"])
