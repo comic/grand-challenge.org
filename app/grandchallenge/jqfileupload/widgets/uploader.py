@@ -48,13 +48,6 @@ class AjaxUploadWidget(Widget):
        - blueimp-file-upload (9.19.1)
      - The website must render the media associated with the widget
      - Add cleanup service call to cleanup_stale_files in a background worker
-
-    Notes
-    -----
-    There are potential security risks with the implementation. First of all,
-    uploads are not linked to any session or similar. Anyone who can guess
-    a valid database id referring to a file, can also refer to this file. What
-    this means depends on the actual app that uses this widget.
     """
 
     class Media:
@@ -67,12 +60,11 @@ class AjaxUploadWidget(Widget):
         multifile=True,
         auto_commit=True,
         upload_validators=(),
-        user=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        self.user = user
+        self.user = None
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
         self.__upload_validators = tuple(upload_validators)

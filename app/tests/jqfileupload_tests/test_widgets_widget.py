@@ -22,14 +22,16 @@ from tests.jqfileupload_tests.utils import (
 def test_render():
     user = UserFactory()
 
-    widget = AjaxUploadWidget(multifile=True, user=user)
+    widget = AjaxUploadWidget(multifile=True)
+    widget.user = user
     render_result = widget.render("some_name", None)
     assert isinstance(render_result, str)
 
     render_result = widget.render("some_name", (uuid.uuid4(), uuid.uuid4()))
     assert isinstance(render_result, str)
 
-    widget = AjaxUploadWidget(multifile=False, user=user)
+    widget = AjaxUploadWidget(multifile=False)
+    widget.user = user
     render_result = widget.render("some_name", None)
     assert isinstance(render_result, str)
 
