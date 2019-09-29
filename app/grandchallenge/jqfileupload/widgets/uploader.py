@@ -60,11 +60,12 @@ class AjaxUploadWidget(Widget):
         multifile=True,
         auto_commit=True,
         upload_validators=(),
+        user=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        self.user = None
+        self.user = user
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
         self.__upload_validators = tuple(upload_validators)

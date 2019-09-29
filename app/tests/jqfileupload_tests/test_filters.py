@@ -1,7 +1,5 @@
 import pytest
 
-from django.test import Client, RequestFactory
-
 from grandchallenge.jqfileupload.filters import reject_duplicate_filenames
 from grandchallenge.jqfileupload.widgets.uploader import AjaxUploadWidget
 from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
