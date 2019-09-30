@@ -1,6 +1,6 @@
 import factory
 from django.conf import settings
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from tests.studies_tests.factories import StudyFactory
 from tests.factories import (
     ImageFactory,
@@ -152,3 +152,8 @@ class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
         if create and not extracted:
             ImageFileFactoryWithMHDFile3DLarge4Slices(image=self)
             ImageFileFactoryWithRAWFile3DLarge4Slices(image=self)
+
+
+class RawImageUploadSessionFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = RawImageUploadSession
