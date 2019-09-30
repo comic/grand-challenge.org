@@ -92,13 +92,14 @@ class UploadSession:
     and used for every upload request.  
     """
 
-    def __init__(self, sender):
+    def __init__(self, sender, *, auth_token):
         self.__upload_counter = 0
         self.__csrf_token = (
             f"{__file__}"
             f"-{id(sender)}"
             f"-{hex(random.randint(0, 1000000000000000000))[2:]}"
         )
+        self._auth_token = auth_token
 
     def single_chunk_upload(self, *, client, filename, content, endpoint=None):
         """
@@ -131,6 +132,7 @@ class UploadSession:
             content=content,
             url=endpoint,
             csrf_token=self.__csrf_token,
+            extra_headers={"HTTP_AUTHORIZATION": f"Token {self._auth_token}"},
         )
 
     def multi_chunk_upload(
@@ -184,6 +186,9 @@ class UploadSession:
                     filename,
                     url=endpoint,
                     csrf_token=self.__csrf_token,
+                    extra_headers={
+                        "HTTP_AUTHORIZATION": f"Token {self._auth_token}"
+                    },
                 )
             )
             start = end
