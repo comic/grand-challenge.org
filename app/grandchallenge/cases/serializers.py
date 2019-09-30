@@ -66,6 +66,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RawImageUploadSession
         fields = [
+            "pk",
             "creator",
             "session_state",
             "error_message",

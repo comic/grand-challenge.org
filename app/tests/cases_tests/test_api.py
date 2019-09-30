@@ -8,6 +8,8 @@ from tests.algorithms_tests.factories import (
 )
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
+from grandchallenge.cases.models import RawImageUploadSession
+
 
 @pytest.mark.django_db
 def test_upload_session_list(client):
@@ -52,8 +54,16 @@ def test_upload_sessions_create(client):
         },
         content_type="application/json",
     )
-    print(response.json())
     assert response.status_code == 201
+
+    upload_session = RawImageUploadSession.objects.get(
+        pk=response.data.get("pk")
+    )
+    assert upload_session.imageset is None
+    assert upload_session.algorithm == algo
+    assert upload_session.algorithm_result == result
+    assert upload_session.annotationset is None
+    assert upload_session.reader_study is None
 
 
 @pytest.mark.django_db
