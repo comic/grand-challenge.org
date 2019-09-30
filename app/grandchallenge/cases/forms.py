@@ -3,6 +3,7 @@ from typing import List
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.jqfileupload.widgets import uploader
@@ -28,6 +29,14 @@ class UploadRawImagesForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.add_input(Submit("save", "Submit"))
         self.fields["files"].widget.user = user
+
+    def clean_files(self):
+        files = self.cleaned_data["files"]
+
+        if len({f.name for f in files}) != len(files):
+            raise ValidationError("Filenames must be unique.")
+
+        return files
 
     def save(self, commit=True):
         instance = super().save(commit=False)  # type: RawImageUploadSession
