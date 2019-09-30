@@ -1,8 +1,15 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+
+from rest_framework.mixins import (
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+)
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
@@ -12,7 +19,10 @@ from grandchallenge.cases.models import (
     Image,
     ImageFile,
 )
-from grandchallenge.cases.serializers import ImageSerializer
+from grandchallenge.cases.serializers import (
+    ImageSerializer,
+    RawImageUploadSessionSerializer,
+)
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
 
@@ -89,3 +99,10 @@ def show_image(request, *, pk):
         "cases/show_image.html",
         {"image_file": image_file, "url": image_file.file.url},
     )
+
+
+class RawImageUploadSessionViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
+    serializer_class = RawImageUploadSessionSerializer
+    queryset = RawImageUploadSession.objects.all()
