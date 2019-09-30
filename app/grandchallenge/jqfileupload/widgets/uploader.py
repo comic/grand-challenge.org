@@ -55,20 +55,13 @@ class AjaxUploadWidget(Widget):
         js = ("jqfileupload/js/upload_widget.js",)
 
     def __init__(
-        self,
-        *args,
-        multifile=True,
-        auto_commit=True,
-        upload_validators=(),
-        user=None,
-        **kwargs,
+        self, *args, multifile=True, auto_commit=True, user=None, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
         self.user = user
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
-        self.__upload_validators = tuple(upload_validators)
 
     @property
     def template_name(self):
@@ -92,15 +85,6 @@ class AjaxUploadWidget(Widget):
         )
 
         return context
-
-    def __validate_uploaded_file(self, request, uploaded_file):
-        for validator in self.__upload_validators:
-            kwargs = {}
-            if hasattr(validator, "_filter_marker_requires_request_object"):
-                # noinspection PyProtectedMember
-                if validator._filter_marker_requires_request_object:
-                    kwargs["request"] = request
-            validator(uploaded_file, **kwargs)
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):

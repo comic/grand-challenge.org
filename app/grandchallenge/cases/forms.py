@@ -5,7 +5,6 @@ from crispy_forms.layout import Submit
 from django import forms
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
-from grandchallenge.jqfileupload.filters import reject_duplicate_filenames
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import (
     UploadedAjaxFileList,
@@ -13,9 +12,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 )
 
 upload_raw_files_widget = uploader.AjaxUploadWidget(
-    multifile=True,
-    auto_commit=False,
-    upload_validators=[reject_duplicate_filenames],
+    multifile=True, auto_commit=False
 )
 
 
