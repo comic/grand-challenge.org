@@ -21,7 +21,6 @@ def create_upload_file_request(
     filename: str = "test.bin",
     boundary: str = "RandomBoundaryFTWBlablablablalba8923475278934578",
     content: bytes = None,
-    csrf_token: str = "tests_csrf_token",
     extra_fields: dict = None,
     extra_headers: dict = None,
     url: str = "/ajax",
@@ -56,13 +55,11 @@ Content-Disposition: form-data; name="{key}"\r
 {value}\r
 """.lstrip().encode()
         data = extra_field_data + data
-    headers = {"X-CSRFToken": csrf_token}
-    headers.update(extra_headers)
     return getattr(rf, method)(
         url,
         data=data,
         content_type=f"multipart/form-data; boundary={boundary}",
-        **headers,
+        **extra_headers,
     )
 
 
@@ -74,7 +71,6 @@ def create_partial_upload_file_request(
     end_byte: int,
     filename: str = "test.bin",
     url: str = "/ajax",
-    csrf_token: str = "tests_csrf_token",
     http_content_range=None,
     extra_headers=None,
 ):
@@ -101,5 +97,4 @@ def create_partial_upload_file_request(
         },
         extra_fields=extra_fields,
         url=url,
-        csrf_token=csrf_token,
     )

@@ -23,7 +23,7 @@ class StagedFile(models.Model):
     Files uploaded but not committed to other forms.
     """
 
-    csrf = models.CharField(max_length=128)
+    user_pk_str = models.CharField(max_length=128)
     client_id = models.CharField(max_length=128, null=True, blank=True)
     client_filename = models.CharField(max_length=128, blank=False)
     file_id = models.UUIDField(blank=False, default=uuid4)
@@ -43,7 +43,7 @@ class StagedFile(models.Model):
         # Note, in the DRF implementation the csrf key stores the users pk
         # This show be refactored to include a FK to the user later.
         try:
-            user = get_user_model().objects.get(pk=self.csrf)
+            user = get_user_model().objects.get(pk=self.user_pk_str)
         except (ObjectDoesNotExist, ValueError):
             return None
 
@@ -73,7 +73,7 @@ class StagedFile(models.Model):
 
             # Verify consistency and generate file ids
             other_chunks = StagedFile.objects.filter(
-                csrf=self.csrf, client_id=self.client_id
+                user_pk_str=self.user_pk_str, client_id=self.client_id
             ).all()
 
             if other_chunks.exists():

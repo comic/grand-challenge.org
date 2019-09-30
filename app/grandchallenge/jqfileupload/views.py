@@ -44,7 +44,7 @@ class StagedFileViewSet(ModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     @property
-    def csrf(self):
+    def user_pk_str(self):
         return str(self.request.user.pk)
 
     @property
@@ -79,11 +79,11 @@ class StagedFileViewSet(ModelViewSet):
 
         return {
             "client_id": self.client_id,
-            "csrf": self.csrf,
             "end_byte": end_byte,
             "file": uploaded_file,
             "filename": uploaded_file.name,
             "start_byte": start_byte if start_byte is not None else 0,
-            "timeout": now() + timedelta(hours=2),
+            "timeout": now() + timedelta(hours=6),
             "total_size": total_size,
+            "user_pk_str": self.user_pk_str,
         }

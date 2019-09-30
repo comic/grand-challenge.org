@@ -22,4 +22,7 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name="stagedfile", name="upload_path_sha256"
         ),
+        migrations.RenameField(
+            model_name="stagedfile", old_name="csrf", new_name="user_pk_str"
+        ),
     ]

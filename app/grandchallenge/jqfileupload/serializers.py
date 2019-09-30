@@ -13,7 +13,6 @@ class StagedFileSerializer(ModelSerializer):
         model = StagedFile
         fields = (
             "client_id",
-            "csrf",
             "end_byte",
             "extra_attrs",
             "file",
@@ -21,16 +20,16 @@ class StagedFileSerializer(ModelSerializer):
             "start_byte",
             "timeout",
             "total_size",
+            "user_pk_str",
             "uuid",
         )
-        # TODO: ensure that all of these are cleaned before creation
         extra_kwargs = {
             "client_id": {"write_only": True},
-            "csrf": {"write_only": True},
             "end_byte": {"write_only": True},
             "file": {"write_only": True},
             "start_byte": {"write_only": True},
             "timeout": {"write_only": True},
+            "user_pk_str": {"write_only": True},
             "total_size": {"write_only": True},
         }
 
