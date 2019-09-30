@@ -3,7 +3,7 @@ from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.algorithms.models import AlgorithmImage, Result
-from grandchallenge.datasets.models import AnnotationSet
+from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
@@ -38,11 +38,29 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     algorithm = HyperlinkedRelatedField(
+        allow_null=True,
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
     algorithm_result = HyperlinkedRelatedField(
-        queryset=Result.objects.all(), view_name="api:algorithms-result-detail"
+        allow_null=True,
+        queryset=Result.objects.all(),
+        view_name="api:algorithms-result-detail",
+    )
+    annotationset = HyperlinkedRelatedField(
+        allow_null=True,
+        queryset=AnnotationSet.objects.all(),
+        view_name="datasets:annotationset-detail",
+    )
+    imageset = HyperlinkedRelatedField(
+        allow_null=True,
+        queryset=ImageSet.objects.all(),
+        view_name="api:image-detail",
+    )
+    reader_study = HyperlinkedRelatedField(
+        allow_null=True,
+        queryset=ReaderStudy.objects.all(),
+        view_name="api:reader-study-detail",
     )
 
     class Meta:
@@ -54,5 +72,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "imageset",
             "algorithm",
             "algorithm_result",
+            "annotationset",
+            "reader_study",
             "api_url",
         ]
