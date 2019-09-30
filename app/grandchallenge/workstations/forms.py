@@ -30,14 +30,9 @@ class WorkstationForm(ModelForm):
         fields = ("title", "logo", "description")
 
 
-workstation_image_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/workstation-image-upload/", multifile=False
-)
-
-
 class WorkstationImageForm(ModelForm):
     chunked_upload = uploader.UploadedAjaxFileList(
-        widget=workstation_image_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Workstation Image",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
@@ -49,9 +44,10 @@ class WorkstationImageForm(ModelForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = WorkstationImage

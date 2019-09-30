@@ -20,6 +20,11 @@ class UploadRawFiles(UserIsStaffMixin, CreateView):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def form_valid(self, form):
         form.instance.creator = self.request.user
         return super().form_valid(form)

@@ -1,22 +1,6 @@
 "use strict";
 
-var upload_csrf_token;
-
-function upload_fold_unfold(element) {
-    // Find the parent-foldable element
-    element = $(element);
-    while (!element.hasClass("foldable")) {
-        element = element.parent();
-        if (element.length === 0) {
-            throw Error("No parent element with class 'foldable' found");
-        }
-    }
-    element.toggleClass("folded");
-}
-
 (function () {
-    var csrf_token = null;
-
     function init_upload(upload_element) {
         upload_element = $(upload_element);
         var dropzone = upload_element;
@@ -24,10 +8,10 @@ function upload_fold_unfold(element) {
         var failed_files_list = upload_element.find("div.failed-list");
         var total_expected_files = 0;
 
-        var is_multiupload = upload_element.attr("multi_upload") === "true";
-        var is_autocommit = upload_element.attr("auto_commit") === "true";
-
-        var target_url = upload_element.attr("upload_target");
+        var is_multiupload = upload_element.data("multi-upload");
+        var is_autocommit = upload_element.data("auto-commit");
+        var target_url = upload_element.data("upload-target");
+        var auth_token = upload_element.data("auth-token");
 
         var client_upload_session_key = generate_labeled_id("client_upload_session");
         target_url = target_url + "?client_session=" + client_upload_session_key;
@@ -47,7 +31,7 @@ function upload_fold_unfold(element) {
                 retryTimeout: 500,
                 maxRetries: 50,
                 headers: {
-                    "X-CSRFToken": csrf_token
+                    "Authorization": "Token " + auth_token
                 },
                 limitConcurrentUploads: 3,
             });
@@ -127,7 +111,7 @@ function upload_fold_unfold(element) {
             update_hidden_form_element();
 
             if (is_autocommit &&
-                    (succeeded_uploads_list.length === total_expected_files)) {
+                (succeeded_uploads_list.length === total_expected_files)) {
                 total_expected_files = 0; // In case we submit does not work
                 upload_element.closest('form').submit();
             }
@@ -203,27 +187,12 @@ function upload_fold_unfold(element) {
             }
 
         });
-
     }
 
     $(function () {
-        if (typeof upload_csrf_token !== 'undefined') {
-            csrf_token = upload_csrf_token;
-        } else {
-            // Try to find a django-hidden control with the correct value
-            var elements = $("input[name='csrfmiddlewaretoken']");
-            if (elements.length > 0) {
-                csrf_token = elements.attr("value");
-            }
-        }
-
-        if (!csrf_token) {
-            throw Error("Could not find a CSRF token, the uploads will not work!");
-        } else {
-            var file_uploads = $(".file-upload");
-            for (var i = 0; i < file_uploads.length; i++) {
-                init_upload(file_uploads[i]);
-            }
+        var file_uploads = $(".file-upload");
+        for (var i = 0; i < file_uploads.length; i++) {
+            init_upload(file_uploads[i]);
         }
     });
 })();

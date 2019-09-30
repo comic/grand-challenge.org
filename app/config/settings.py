@@ -6,6 +6,7 @@ from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
 import sentry_sdk
+from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -262,6 +263,7 @@ MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Keep whitenoise after security and before all else
+    "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -314,6 +316,7 @@ THIRD_PARTY_APPS = [
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
+    "corsheaders",  # to allow api communication from subdomains
 ]
 
 LOCAL_APPS = [
@@ -529,6 +532,11 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
 }
 
+CORS_ORIGIN_REGEX_WHITELIST = [
+    rf"^https://\w+{re.escape(SESSION_COOKIE_DOMAIN)}$"
+]
+CORS_ALLOW_HEADERS = list(default_headers) + ["content-range"]
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
@@ -674,10 +682,8 @@ ENABLE_DEBUG_TOOLBAR = False
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-    # Only set the CORS headers in DEBUG mode
-    INSTALLED_APPS += ("corsheaders",)
-    MIDDLEWARE = ("corsheaders.middleware.CorsMiddleware", *MIDDLEWARE)
-    CORS_ORIGIN_ALLOW_ALL = True
+    # Allow localhost in development
+    CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
@@ -725,7 +731,7 @@ DZI_TILE_SIZE = 2560
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 
 # Retina specific settings
-RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24
+RETINA_IMAGE_CACHE_TIME = 60 * 60 * 24 * 7
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"

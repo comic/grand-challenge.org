@@ -36,21 +36,17 @@ class AnnotationSetForm(forms.ModelForm):
         fields = ("kind",)
 
 
-labels_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/submission-upload/", multifile=False
-)
-
-
 class AnnotationSetUpdateLabelsForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=labels_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Labels File",
         validators=[ExtensionValidator(allowed_extensions=(".csv",))],
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = AnnotationSet

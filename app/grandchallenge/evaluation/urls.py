@@ -1,9 +1,5 @@
 from django.urls import path
 
-from grandchallenge.evaluation.forms import (
-    method_upload_widget,
-    submission_upload_widget,
-)
 from grandchallenge.evaluation.views import (
     MethodCreate,
     SubmissionCreate,
@@ -27,11 +23,6 @@ urlpatterns = [
     path("config/", ConfigUpdate.as_view(), name="config-update"),
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
-    path(
-        f"methods/create/{method_upload_widget.ajax_target_path}",
-        method_upload_widget.handle_ajax,
-        name="method-upload-ajax",
-    ),
     path("methods/<uuid:pk>/", MethodDetail.as_view(), name="method-detail"),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
     path(
@@ -43,16 +34,6 @@ urlpatterns = [
         "submissions/create-legacy/",
         LegacySubmissionCreate.as_view(),
         name="submission-create-legacy",
-    ),
-    path(
-        f"submissions/create-legacy/{submission_upload_widget.ajax_target_path}",
-        submission_upload_widget.handle_ajax,
-        name="submission-upload-legacy-ajax",
-    ),
-    path(
-        f"submissions/create/{submission_upload_widget.ajax_target_path}",
-        submission_upload_widget.handle_ajax,
-        name="submission-upload-ajax",
     ),
     path(
         "submissions/<uuid:pk>/",

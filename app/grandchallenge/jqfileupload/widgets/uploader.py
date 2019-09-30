@@ -1,28 +1,13 @@
-import os
-import re
-import uuid
-import json
 import hashlib
-
-from collections import Iterable
-from datetime import timedelta
+import os
+import uuid
 from io import BufferedIOBase
-from tempfile import TemporaryFile
 
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
-from django.core.files.uploadedfile import UploadedFile
 from django.forms.widgets import Widget
-from django.http import HttpResponse
 from django.http.request import HttpRequest
-from django.http.response import (
-    HttpResponseBadRequest,
-    JsonResponse,
-    HttpResponseForbidden,
-)
-from django.template.loader import get_template
 from django.utils import timezone
 
 from grandchallenge.jqfileupload.models import StagedFile
@@ -51,10 +36,6 @@ class NotFoundError(FileNotFoundError):
     pass
 
 
-class InvalidRequestException(Exception):
-    pass
-
-
 class AjaxUploadWidget(Widget):
     """
     A widget that implements asynchronous file uploads for forms. It creates
@@ -66,23 +47,7 @@ class AjaxUploadWidget(Widget):
        - jQuery-ui (1.12.1)
        - blueimp-file-upload (9.19.1)
      - The website must render the media associated with the widget
-     - The website must define a djang csfr-token by either:
-       - defining a hidden input element with the name 'csrfmiddlewaretoken'
-         (use the {% csrf_token %} template function for this).
-       - define the csfr_token by defining the global javascript variable
-         'upload_csrf_token'
-     - For each widget a valid ajax-receiver must be installed. Each instance
-       of an AjaxUploadWidget exposes the function 'handle_ajax' as handler
-       for ajax requests. During initialization, the ajax-path must be
-       defined using the 'ajax_target_path' named parameter
      - Add cleanup service call to cleanup_stale_files in a background worker
-
-    Notes
-    -----
-    There are potential security risks with the implementation. First of all,
-    uploads are not linked to any session or similar. Anyone who can guess
-    a valid database id referring to a file, can also refer to this file. What
-    this means depends on the actual app that uses this widget.
     """
 
     class Media:
@@ -90,214 +55,36 @@ class AjaxUploadWidget(Widget):
         js = ("jqfileupload/js/upload_widget.js",)
 
     def __init__(
-        self,
-        *args,
-        ajax_target_path: str = None,
-        multifile=True,
-        auto_commit=True,
-        upload_validators=(),
-        **kwargs,
+        self, *args, multifile=True, auto_commit=True, user=None, **kwargs
     ):
         super().__init__(*args, **kwargs)
-        if ajax_target_path is None:
-            raise ValueError("AJAX target path required")
 
-        self.ajax_target_path = ajax_target_path
-        self.timeout = timedelta(hours=2)
+        self.user = user
         self.__multifile = bool(multifile)
         self.__auto_commit = bool(auto_commit)
-        self.__upload_validators = tuple(upload_validators)
 
-    def _handle_complete(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
-        new_staged_file = StagedFile.objects.create(
-            csrf=csrf_token,
-            client_id=None,
-            client_filename=uploaded_file.name,
-            file_id=uuid.uuid4(),
-            timeout=timezone.now() + self.timeout,
-            file=uploaded_file,
-            start_byte=0,
-            end_byte=uploaded_file.size - 1,
-            total_size=uploaded_file.size,
-            upload_path_sha256=generate_upload_path_hash(request),
-        )
-        return {
-            "filename": new_staged_file.client_filename,
-            "uuid": new_staged_file.file_id,
-            "extra_attrs": {},
-        }
-
-    def _handle_chunked(
-        self,
-        request: HttpRequest,
-        csrf_token: str,
-        uploaded_file: UploadedFile,
-    ) -> dict:
-        # Only content ranges of the form
-        #
-        #   bytes-unit SP byte-range-resp
-        #
-        # according to rfc7233 are accepted. See here:
-        # https://tools.ietf.org/html/rfc7233#appendix-C
-        range_header = request.META.get("HTTP_CONTENT_RANGE", None)
-        if not range_header:
-            raise InvalidRequestException(
-                "Client did not supply Content-Range"
-            )
-
-        range_match = re.match(
-            r"bytes (?P<start>[0-9]{1,32})-(?P<end>[0-9]{1,32})/(?P<length>\*|[0-9]{1,32})",
-            range_header,
-        )
-        if not range_match:
-            raise InvalidRequestException("Supplied invalid Content-Range")
-
-        start_byte = int(range_match.group("start"))
-        end_byte = int(range_match.group("end"))
-        if (range_match.group("length") is None) or (
-            range_match.group("length") == "*"
-        ):
-            total_size = None
-        else:
-            total_size = int(range_match.group("length"))
-        if start_byte > end_byte:
-            raise InvalidRequestException("Supplied invalid Content-Range")
-
-        if (total_size is not None) and (end_byte >= total_size):
-            raise InvalidRequestException("End byte exceeds total file size")
-
-        if end_byte - start_byte + 1 != uploaded_file.size:
-            raise InvalidRequestException("Invalid start-end byte range")
-
-        client_id = request.META.get(
-            "X-Upload-ID", request.POST.get("X-Upload-ID", None)
-        )
-        if not client_id:
-            raise InvalidRequestException(
-                "Client did not supply a X-Upload-ID"
-            )
-
-        if len(client_id) > 128:
-            raise InvalidRequestException("X-Upload-ID is too long")
-
-        # Verify consistency and generate file ids
-        other_chunks = StagedFile.objects.filter(
-            csrf=csrf_token,
-            client_id=client_id,
-            upload_path_sha256=generate_upload_path_hash(request),
-        ).all()
-        if len(other_chunks) == 0:
-            file_id = uuid.uuid4()
-        else:
-            chunk_intersects = other_chunks.filter(
-                start_byte__lte=end_byte, end_byte__gte=start_byte
-            ).exists()
-            if chunk_intersects:
-                raise InvalidRequestException("Overlapping chunks")
-
-            inconsistent_filenames = other_chunks.exclude(
-                client_filename=uploaded_file.name
-            ).exists()
-            if inconsistent_filenames:
-                raise InvalidRequestException(
-                    "Chunks have inconsistent filenames"
-                )
-
-            if total_size is not None:
-                inconsistent_total_size = (
-                    other_chunks.exclude(total_size=None)
-                    .exclude(total_size=total_size)
-                    .exists()
-                )
-                if inconsistent_total_size:
-                    raise InvalidRequestException("Inconsistent total size")
-
-            file_id = other_chunks[0].file_id
-        new_staged_file = StagedFile.objects.create(
-            csrf=csrf_token,
-            client_id=client_id,
-            client_filename=uploaded_file.name,
-            file_id=file_id,
-            timeout=timezone.now() + self.timeout,
-            file=uploaded_file,
-            start_byte=start_byte,
-            end_byte=end_byte,
-            total_size=total_size,
-            upload_path_sha256=generate_upload_path_hash(request),
-        )
-        return {
-            "filename": new_staged_file.client_filename,
-            "uuid": new_staged_file.file_id,
-            "extra_attrs": {},
-        }
-
-    def handle_ajax(self, request: HttpRequest, **kwargs) -> HttpResponse:
-        if request.method != "POST":
-            return HttpResponseBadRequest()
-
-        csrf_token = request.META.get("CSRF_COOKIE", None)
-        if not csrf_token:
-            return HttpResponseForbidden(
-                "CSRF token is missing", content_type="text/plain"
-            )
-
-        if "HTTP_CONTENT_RANGE" in request.META:
-            handler = self._handle_chunked
-        else:
-            handler = self._handle_complete
-        result = []
-        try:
-            for uploaded_file in request.FILES.values():
-                try:
-                    self.__validate_uploaded_file(request, uploaded_file)
-                except ValidationError as e:
-                    print(e, type(e))
-                    return HttpResponseForbidden(
-                        json.dumps(list(e.messages)),
-                        content_type="application/json",
-                    )
-
-            for uploaded_file in request.FILES.values():
-                result.append(handler(request, csrf_token, uploaded_file))
-        except InvalidRequestException as e:
-            return HttpResponseBadRequest(str(e))
-
-        return JsonResponse(result, safe=False)
-
-    def render(self, name, value, attrs=None, renderer=None):
+    @property
+    def template_name(self):
         if self.__multifile:
-            template = get_template("widgets/multi_uploader.html")
+            return "widgets/multi_uploader.html"
         else:
-            template = get_template("widgets/single_uploader.html")
-        if isinstance(value, Iterable):
-            value = ",".join(str(x) for x in value)
-        elif value in (None, ""):
-            value = ""
-        else:
-            value = str(value)
-        context = {
-            "target": self.ajax_target_path,
-            "value": value,
-            "name": name,
-            "attrs": attrs,
-            "multi_upload": "true" if self.__multifile else "false",
-            "auto_commit": "true" if self.__auto_commit else "false",
-        }
-        return template.render(context=context)
+            return "widgets/single_uploader.html"
 
-    def __validate_uploaded_file(self, request, uploaded_file):
-        for validator in self.__upload_validators:
-            kwargs = {}
-            if hasattr(validator, "_filter_marker_requires_request_object"):
-                # noinspection PyProtectedMember
-                if validator._filter_marker_requires_request_object:
-                    kwargs["request"] = request
-            validator(uploaded_file, **kwargs)
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+
+        if self.user is None:
+            raise RuntimeError("The user must be set on the upload widget!")
+
+        context.update(
+            {
+                "user": self.user,
+                "multi_upload": "true" if self.__multifile else "false",
+                "auto_commit": "true" if self.__auto_commit else "false",
+            }
+        )
+
+        return context
 
 
 class OpenedStagedAjaxFile(BufferedIOBase):

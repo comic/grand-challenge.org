@@ -316,6 +316,21 @@ class TestArchiveIndexAPIEndpoints:
 
         assert response_data == expected_response_data
 
+    def test_caching(self, client):
+        # Clear cache manually
+        cache.clear()
+        # Perform normal request
+        datastructures, _, _, _ = create_datastructures_data()
+        client, _ = client_login(client, user="retina_user")
+        url = reverse("retina:api:archives-api-view")
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        response_data = json.loads(response.content)
+        # Remove archive and perform request again
+        datastructures["archive"].delete()
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        # Check that response is cached so it is not changed
+        assert json.loads(response.content) == response_data
+
 
 @pytest.mark.django_db
 class TestImageAPIEndpoint:
@@ -383,7 +398,8 @@ class TestArchiveAPIView:
         client, user_model = client_force_login(client, user=user)
         token = ""
         if user_model is not None and not isinstance(user_model, str):
-            token = f"Token {Token.objects.create(user=user_model).key}"
+            token_object, _ = Token.objects.get_or_create(user=user_model)
+            token = f"Token {token_object.key}"
         return client.get(url, HTTP_AUTHORIZATION=token)
 
     @pytest.mark.parametrize(
@@ -400,11 +416,15 @@ class TestArchiveAPIView:
         assert response.status_code == expected_status
 
     def test_empty(self, client):
+        # Clear cache manually
+        cache.clear()
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
         assert response.content == b"[]"
 
     def test_with_data(self, client, ArchivePatientStudyImageSet):
+        # Clear cache manually
+        cache.clear()
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
         expected_response_json = json.dumps(
@@ -423,6 +443,21 @@ class TestArchiveAPIView:
             else LONG_SEPARATORS,
         )
         assert response.content.decode() == expected_response_json
+
+    def test_caching(self, client, ArchivePatientStudyImageSet):
+        # Clear cache manually
+        cache.clear()
+        # Perform normal request
+        response = self.perform_request(client, "retina_user")
+        assert response.status_code == status.HTTP_200_OK
+        json_response = response.content.decode()
+        # Remove data
+        ArchivePatientStudyImageSet.archive1.delete()
+        ArchivePatientStudyImageSet.archive2.delete()
+        # Perform request again and expect unchanged response
+        response = self.perform_request(client, "retina_user")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.content.decode() == json_response
 
 
 @pytest.mark.django_db

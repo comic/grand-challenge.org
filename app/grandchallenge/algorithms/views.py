@@ -33,6 +33,11 @@ class AlgorithmImageCreate(UserIsStaffMixin, CreateView):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def form_valid(self, form):
         form.instance.creator = self.request.user
         uploaded_file = form.cleaned_data["chunked_upload"][0]
@@ -54,6 +59,11 @@ class AlgorithmExecutionSessionCreate(
         "Your images have been uploaded, "
         "please check back here to see the processing status."
     )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
     def form_valid(self, form):
         form.instance.creator = self.request.user

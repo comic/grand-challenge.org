@@ -18,7 +18,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 def create_uploaded_file(
     content: bytes,
     chunks=None,
-    csrf="test_csrf",
+    user_pk_str="test_user_pk",
     client_id="test_client_id",
     client_filename="test_client_filename_{uuid}",
     timeout=timedelta(minutes=1),
@@ -37,7 +37,7 @@ def create_uploaded_file(
         total_size = None
     for chunk in chunks:
         staged_file = StagedFile(
-            csrf=csrf,
+            user_pk_str=user_pk_str,
             client_id=client_id,
             client_filename=client_filename,
             file_id=new_uuid,

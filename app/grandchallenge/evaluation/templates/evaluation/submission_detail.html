@@ -5,18 +5,40 @@
 
     <h2>Submission {{ object.id }}</h2>
 
-    <p><strong>Challenge:</strong> <a
-            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
-    </p>
-    <p><strong>Creator:</strong> <a
-            href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
-    </p>
-    <p><b>Comment:</b> {{ object.comment }}</p>
+    <dl>
+
+        <dt>Challenge</dt>
+        <dd>
+            <a href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
+        </dd>
+
+        <dt>Creator</dt>
+        <dd>
+            <a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
+        </dd>
+
+        <dt>Comment</dt>
+        <dd>
+            {{ object.comment }}
+        </dd>
+
+        {% if "change_challenge" in challenge_perms %}
+            <dt>Submission File</dt>
+            <dd>
+                <a href="{{ object.file.url }}">
+                    <i class="fa fa-file"></i>
+                    Download the submission file
+                </a>
+            </dd>
+        {% endif %}
+
+    </dl>
 
     <h3>Evaluations for this submission</h3>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm" id="evaluationTable">
+        <table class="table table-hover table-borderless table-sm"
+               id="evaluationTable">
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
