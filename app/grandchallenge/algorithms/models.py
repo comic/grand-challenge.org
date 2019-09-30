@@ -125,7 +125,7 @@ class AlgorithmExecutor(Executor):
             django_file = File(get_file(container=container, src=file))
 
             staged_file = StagedFile(
-                csrf="staging_conversion_csrf",
+                user_pk_str="staging_conversion_user_pk",
                 client_id=self._job_id,
                 client_filename=file.name,
                 file_id=new_uuid,

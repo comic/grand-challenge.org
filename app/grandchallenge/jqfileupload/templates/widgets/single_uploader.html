@@ -1,8 +1,13 @@
+{% load url from grandchallenge_tags %}
+{% load auth_token %}
+
 <div class="file-upload drop-here-floater"
-     id="{{ attr.id }}"
-     upload_target="{{ target }}"
-     multi_upload="{{ multi_upload }}"
-     auto_commit="{{ auto_commit }}">
+     id="{{ widget.attrs.id }}"
+     data-upload-target="{% url 'api:staged-file-list' %}"
+     data-multi-upload="{{ multi_upload }}"
+     data-auto-commit="{{ auto_commit }}"
+     data-auth-token="{% auth_token user %}"
+>
 
     <span class="btn btn-primary fileinput-button">
         <span>Choose File</span>
@@ -17,8 +22,6 @@
         </div>
     </div>
 
-    <input name="{{ name }}" type="hidden" value="{{ value }}"/>
+    <input name="{{ widget.name }}" type="hidden" value="{{ widget.value }}"/>
 
 </div>
-
-

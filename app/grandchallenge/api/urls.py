@@ -3,6 +3,7 @@ from django.urls import path
 from rest_framework import routers
 
 from grandchallenge.cases.views import ImageViewSet
+from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.reader_studies.views import (
     ReaderStudyViewSet,
@@ -43,6 +44,7 @@ router.register(
     basename="reader-studies-question",
 )
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
+router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
 
 urlpatterns = [

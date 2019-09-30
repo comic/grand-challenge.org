@@ -77,14 +77,9 @@ class ConfigForm(forms.ModelForm):
         }
 
 
-method_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/method-upload/", multifile=False
-)
-
-
 class MethodForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=method_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Evaluation Method Container",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
@@ -96,18 +91,15 @@ class MethodForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = Method
         fields = ["chunked_upload"]
 
-
-submission_upload_widget = uploader.AjaxUploadWidget(
-    ajax_target_path="ajax/submission-upload/", multifile=False
-)
 
 submission_fields = (
     "comment",
@@ -119,7 +111,7 @@ submission_fields = (
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=submission_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Predictions File",
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )
@@ -127,6 +119,7 @@ class SubmissionForm(forms.ModelForm):
     def __init__(
         self,
         *args,
+        user,
         display_comment_field=False,
         supplementary_file_choice=Config.OFF,
         supplementary_file_label="",
@@ -162,6 +155,8 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["publication_url"]
 
         self.helper = FormHelper(self)
+
+        self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = Submission

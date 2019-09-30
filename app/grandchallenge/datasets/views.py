@@ -24,6 +24,11 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
     form_class = UploadRawImagesForm
     template_name = "datasets/imageset_add_images.html"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
@@ -96,6 +101,11 @@ class AddImagesToAnnotationSet(
     form_class = UploadRawImagesForm
     template_name = "datasets/annotationset_add_images.html"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         annotationset = AnnotationSet.objects.get(pk=self.kwargs["pk"])
@@ -124,6 +134,11 @@ class AnnotationSetUpdateLabels(
     model = AnnotationSet
     form_class = AnnotationSetUpdateLabelsForm
     template_name_suffix = "_update_labels"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
     def form_valid(self, form):
         uploaded_file = form.cleaned_data["chunked_upload"][0]
