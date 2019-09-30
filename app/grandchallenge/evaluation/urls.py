@@ -1,9 +1,5 @@
 from django.urls import path
 
-from grandchallenge.evaluation.forms import (
-    method_upload_widget,
-    submission_upload_widget,
-)
 from grandchallenge.evaluation.views import (
     MethodCreate,
     SubmissionCreate,

@@ -77,12 +77,9 @@ class ConfigForm(forms.ModelForm):
         }
 
 
-method_upload_widget = uploader.AjaxUploadWidget(multifile=False)
-
-
 class MethodForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=method_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Evaluation Method Container",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
@@ -104,8 +101,6 @@ class MethodForm(forms.ModelForm):
         fields = ["chunked_upload"]
 
 
-submission_upload_widget = uploader.AjaxUploadWidget(multifile=False)
-
 submission_fields = (
     "comment",
     "supplementary_file",
@@ -116,7 +111,7 @@ submission_fields = (
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=submission_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Predictions File",
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )

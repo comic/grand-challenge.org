@@ -30,12 +30,9 @@ class WorkstationForm(ModelForm):
         fields = ("title", "logo", "description")
 
 
-workstation_image_upload_widget = uploader.AjaxUploadWidget(multifile=False)
-
-
 class WorkstationImageForm(ModelForm):
     chunked_upload = uploader.UploadedAjaxFileList(
-        widget=workstation_image_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Workstation Image",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))

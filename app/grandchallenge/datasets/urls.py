@@ -1,7 +1,5 @@
 from django.urls import path
 
-from grandchallenge.cases.forms import upload_raw_files_widget
-from grandchallenge.datasets.forms import labels_upload_widget
 from grandchallenge.datasets.views import (
     ImageSetList,
     ImageSetDetail,

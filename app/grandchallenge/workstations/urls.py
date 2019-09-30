@@ -1,6 +1,5 @@
 from django.urls import path
 
-from grandchallenge.workstations.forms import workstation_image_upload_widget
 from grandchallenge.workstations.views import (
     session_proxy,
     SessionCreate,

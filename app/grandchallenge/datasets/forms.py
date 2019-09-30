@@ -36,12 +36,9 @@ class AnnotationSetForm(forms.ModelForm):
         fields = ("kind",)
 
 
-labels_upload_widget = uploader.AjaxUploadWidget(multifile=False)
-
-
 class AnnotationSetUpdateLabelsForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=labels_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Labels File",
         validators=[ExtensionValidator(allowed_extensions=(".csv",))],
     )

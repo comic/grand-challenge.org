@@ -1,6 +1,5 @@
 from django.urls import path
 
-from grandchallenge.cases.forms import upload_raw_files_widget
 from grandchallenge.reader_studies.views import (
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,

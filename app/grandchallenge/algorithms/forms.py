@@ -6,12 +6,10 @@ from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
-algorithm_image_upload_widget = uploader.AjaxUploadWidget(multifile=False)
-
 
 class AlgorithmImageForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=algorithm_image_upload_widget,
+        widget=uploader.AjaxUploadWidget(multifile=False),
         label="Algorithm Image",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))

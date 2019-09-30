@@ -12,14 +12,10 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     StagedAjaxFile,
 )
 
-upload_raw_files_widget = uploader.AjaxUploadWidget(
-    multifile=True, auto_commit=False
-)
-
 
 class UploadRawImagesForm(forms.ModelForm):
     files = UploadedAjaxFileList(
-        widget=upload_raw_files_widget,
+        widget=uploader.AjaxUploadWidget(multifile=True, auto_commit=False),
         label="Image files",
         help_text=("Upload images for creating a new archive"),
     )
