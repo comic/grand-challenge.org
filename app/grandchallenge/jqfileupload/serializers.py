@@ -21,7 +21,6 @@ class StagedFileSerializer(ModelSerializer):
             "start_byte",
             "timeout",
             "total_size",
-            "upload_path_sha256",
             "uuid",
         )
         # TODO: ensure that all of these are cleaned before creation
@@ -33,7 +32,6 @@ class StagedFileSerializer(ModelSerializer):
             "start_byte": {"write_only": True},
             "timeout": {"write_only": True},
             "total_size": {"write_only": True},
-            "upload_path_sha256": {"write_only": True},
         }
 
     def get_extra_attrs(self, *_):

@@ -38,10 +38,6 @@ class StagedFile(models.Model):
     end_byte = models.BigIntegerField(blank=False)
     total_size = models.BigIntegerField(null=True)
 
-    # Support for disambiguating between different upload widgets on the same
-    # website
-    upload_path_sha256 = models.CharField(max_length=64)
-
     @property
     def creator(self):
         # Note, in the DRF implementation the csrf key stores the users pk
@@ -77,9 +73,7 @@ class StagedFile(models.Model):
 
             # Verify consistency and generate file ids
             other_chunks = StagedFile.objects.filter(
-                csrf=self.csrf,
-                client_id=self.client_id,
-                upload_path_sha256=self.upload_path_sha256,
+                csrf=self.csrf, client_id=self.client_id
             ).all()
 
             if other_chunks.exists():

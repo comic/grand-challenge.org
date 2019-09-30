@@ -13,9 +13,6 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.serializers import StagedFileSerializer
-from grandchallenge.jqfileupload.widgets.uploader import (
-    generate_upload_path_hash,
-)
 
 
 class StagedFileViewSet(ModelViewSet):
@@ -89,5 +86,4 @@ class StagedFileViewSet(ModelViewSet):
             "start_byte": start_byte if start_byte is not None else 0,
             "timeout": now() + timedelta(hours=2),
             "total_size": total_size,
-            "upload_path_sha256": generate_upload_path_hash(self.request),
         }

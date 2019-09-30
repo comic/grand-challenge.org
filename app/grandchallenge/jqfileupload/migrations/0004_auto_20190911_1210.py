@@ -19,4 +19,7 @@ class Migration(migrations.Migration):
             name="file_id",
             field=models.UUIDField(default=uuid.uuid4),
         ),
+        migrations.RemoveField(
+            model_name="stagedfile", name="upload_path_sha256"
+        ),
     ]
