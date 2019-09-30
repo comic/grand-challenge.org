@@ -157,6 +157,15 @@ def test_answer_creator_is_reader(client):
         (
             Question.ANSWER_TYPE_2D_BOUNDING_BOX,
             {
+                "type": "2D bounding box",
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            {
                 "version": {"major": 1, "minor": 0},
                 "name": "test_name",
                 "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
@@ -186,6 +195,79 @@ def test_answer_creator_is_reader(client):
                 "type": "Distance measurement",
                 "name": "test",
                 "end": (4, 5, 6),
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                ],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurements",
+                "name": "test",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [{"start": (1, 2, 3)}],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [
+                    {"start": (1, 2, 3)},
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                ],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "type": "Multiple distance measurements",
+                "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
             },
             400,
         ),

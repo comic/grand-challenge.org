@@ -234,51 +234,100 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return hanging_list
 
 
-ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA = {
+ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "2DBB": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "object",
+                    "additionalProperties": {"type": "number"},
+                    "required": ["major", "minor"],
+                },
+                "type": {"enum": ["2D bounding box"]},
+                "corners": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 4,
+                    "maxItems": 4,
+                },
+                "name": {"type": "string"},
+            },
+            "required": ["version", "type", "corners"],
+        },
+        "line-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "start": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "end": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["start", "end"],
+        },
+        "DIST": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Distance measurement"]},
+                "start": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "end": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["version", "type", "start", "end"],
+        },
+        "MDIS": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple distance measurements"]},
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/line-object"}]
+                    },
+                },
+            },
+            "required": ["version", "type", "lines"],
+        },
+    },
     "type": "object",
     "properties": {
         "version": {
             "type": "object",
             "additionalProperties": {"type": "number"},
             "required": ["major", "minor"],
-        },
-        "type": {"enum": ["2D bounding box"]},
-        "corners": {
-            "type": "array",
-            "items": {
-                "type": "array",
-                "items": {"type": "number"},
-                "minItems": 3,
-                "maxItems": 3,
-            },
-            "minItems": 4,
-            "maxItems": 4,
-        },
-        "name": {"type": "string"},
+        }
     },
-    "required": ["version", "type", "corners"],
-}
-
-ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "start": {
-            "type": "array",
-            "items": {"type": "number"},
-            "minItems": 3,
-            "maxItems": 3,
-        },
-        "end": {
-            "type": "array",
-            "items": {"type": "number"},
-            "minItems": 3,
-            "maxItems": 3,
-        },
-    },
-    "required": ["version", "type", "start", "end"],
+    "anyOf": [
+        {"$ref": "#/definitions/2DBB"},
+        {"$ref": "#/definitions/DIST"},
+        {"$ref": "#/definitions/MDIS"},
+    ],
 }
 
 
@@ -298,6 +347,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
+    ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -306,6 +356,10 @@ class Question(UUIDModel):
         (ANSWER_TYPE_HEADING, "Heading"),
         (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
         (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
+        (
+            ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            "Multiple distance measurements",
+        ),
     )
 
     # A callable for every answer type that would validate the given answer
@@ -315,10 +369,13 @@ class Question(UUIDModel):
         ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
         ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
         ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
-            ANSWER_TYPE_2D_BOUNDING_BOX_SCHEMA, o
+            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
         ),
         ANSWER_TYPE_DISTANCE_MEASUREMENT: lambda o: validate_answer_json(
-            ANSWER_TYPE_DISTANCE_MEASUREMENT_SCHEMA, o
+            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
+        ),
+        ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS: lambda o: validate_answer_json(
+            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
         ),
     }
 
@@ -407,6 +464,7 @@ class Question(UUIDModel):
             in [
                 self.ANSWER_TYPE_2D_BOUNDING_BOX,
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+                self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             ]
         ) != bool(self.image_port):
             raise ValidationError(
