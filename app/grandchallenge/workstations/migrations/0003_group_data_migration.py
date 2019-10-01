@@ -7,8 +7,8 @@ def delete_workstation_groups(apps, schema_editor):
     Workstation = apps.get_model("workstations", "Workstation")
 
     for ws in Workstation.objects.all():
-        ws.editors_group.delete()
-        ws.users_group.delete()
+        ws.editors_group.delete(keep_parents=True)
+        ws.users_group.delete(keep_parents=True)
 
         ws.editors_group = None
         ws.users_group = None
