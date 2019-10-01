@@ -124,8 +124,11 @@ def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
     """
     Use a signal rather than delete() override to catch usages of bulk_delete
     """
-    instance.editors_group.delete(using=using)
-    instance.users_group.delete(using=using)
+    if instance.editors_group:
+        instance.editors_group.delete(using=using)
+
+    if instance.users_group:
+        instance.users_group.delete(using=using)
 
 
 class WorkstationImage(UUIDModel, ContainerImageModel):

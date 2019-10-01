@@ -525,8 +525,11 @@ def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
     """
     Use a signal rather than delete() override to catch usages of bulk_delete
     """
-    instance.admins_group.delete(using=using)
-    instance.participants_group.delete(using=using)
+    if instance.admins_group:
+        instance.admins_group.delete(using=using)
+
+    if instance.participants_group:
+        instance.participants_group.delete(using=using)
 
 
 class ExternalChallenge(ChallengeBase):

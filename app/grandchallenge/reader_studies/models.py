@@ -241,8 +241,11 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
     Use a signal rather than delete() override to catch usages of bulk_delete
     """
-    instance.editors_group.delete(using=using)
-    instance.readers_group.delete(using=using)
+    if instance.editors_group:
+        instance.editors_group.delete(using=using)
+
+    if instance.readers_group:
+        instance.readers_group.delete(using=using)
 
 
 ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
