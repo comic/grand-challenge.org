@@ -29,6 +29,7 @@ from tests.retina_api_tests.helpers import (
     batch_test_data_endpoints,
     client_login,
     client_force_login,
+    get_user_from_str,
 )
 
 
@@ -395,12 +396,12 @@ class TestArchiveAPIView:
     @staticmethod
     def perform_request(client, user):
         url = reverse("retina:api:archive-data-api-view")
-        client, user_model = client_force_login(client, user=user)
-        token = ""
+        user_model = get_user_from_str(user)
+        kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
             token_object, _ = Token.objects.get_or_create(user=user_model)
-            token = f"Token {token_object.key}"
-        return client.get(url, HTTP_AUTHORIZATION=token)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        return client.get(url, **kwargs)
 
     @pytest.mark.parametrize(
         "user,expected_status",
@@ -471,24 +472,25 @@ class TestBase64ThumbnailView:
             ("retina_user", status.HTTP_200_OK),
         ],
     )
-    def test_access(self, client, user, expected_status):
+    def test_access_and_defaults(self, client, user, expected_status):
         image = ImageFactoryWithImageFile()
         image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-thumbnail", args=[image.pk])
-        client, user_model = client_force_login(client, user=user)
-        token = ""
+        url = reverse("retina:api:image-thumbnail", kwargs={"pk": image.pk})
+        user_model = get_user_from_str(user)
+        kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
-            token = f"Token {Token.objects.create(user=user_model).key}"
-        response = client.get(url, HTTP_AUTHORIZATION=token)
+            token_object, _ = Token.objects.get_or_create(user=user_model)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        response = client.get(url, **kwargs)
         assert response.status_code == expected_status
 
     @staticmethod
     def perform_thumbnail_request(client, image, max_dimension):
         image.permit_viewing_by_retina_users()
-        args = [image.id]
+        kwargs = {"pk": image.id}
         if max_dimension != settings.RETINA_DEFAULT_THUMBNAIL_SIZE:
-            args = [image.id, max_dimension, max_dimension]
-        url = reverse("retina:api:image-thumbnail", args=args)
+            kwargs.update({"width": max_dimension, "height": max_dimension})
+        url = reverse("retina:api:image-thumbnail", kwargs=kwargs)
         client, user_model = client_force_login(client, user="retina_user")
         token = f"Token {Token.objects.create(user=user_model).key}"
         response = client.get(url, HTTP_AUTHORIZATION=token)
