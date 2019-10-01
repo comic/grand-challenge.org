@@ -1,12 +1,17 @@
 from datetime import timedelta
 
 import pytest
+from django.core.exceptions import ObjectDoesNotExist
 from docker.errors import NotFound
 from rest_framework.authtoken.models import Token
 
 from grandchallenge.container_exec.tasks import stop_expired_services
-from grandchallenge.workstations.models import Session
-from tests.factories import SessionFactory, WorkstationImageFactory
+from grandchallenge.workstations.models import Session, Workstation
+from tests.factories import (
+    SessionFactory,
+    WorkstationImageFactory,
+    WorkstationFactory,
+)
 
 
 def stop_all_sessions():
@@ -191,3 +196,21 @@ def test_session_limit(http_image, docker_client, settings):
         assert s3.status == s3.STARTED
     finally:
         stop_all_sessions()
+
+
+@pytest.mark.django_db
+def test_group_deletion():
+    ws = WorkstationFactory()
+    users_group = ws.users_group
+    editors_group = ws.editors_group
+
+    assert users_group
+    assert editors_group
+
+    Workstation.objects.filter(pk__in=[ws.pk]).delete()
+
+    with pytest.raises(ObjectDoesNotExist):
+        users_group.refresh_from_db()
+
+    with pytest.raises(ObjectDoesNotExist):
+        editors_group.refresh_from_db()

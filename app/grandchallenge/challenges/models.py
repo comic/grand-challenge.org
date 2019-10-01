@@ -11,6 +11,8 @@ from django.contrib.postgres.fields import CICharField, ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils._os import safe_join
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -429,13 +431,6 @@ class Challenge(ChallengeBase):
         editable=False, blank=True, null=True
     )
 
-    # TODO check whether short name is really clean and short!
-    def delete(self, using=None, keep_parents=False):
-        """ Ensure that there are no orphans """
-        self.admins_group.delete(using)
-        self.participants_group.delete(using)
-        super().delete(using, keep_parents)
-
     def get_project_data_folder(self):
         """ Full path to root folder for all data belonging to this project
         """
@@ -523,6 +518,15 @@ class Challenge(ChallengeBase):
     class Meta:
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
+
+
+@receiver(post_delete, sender=Challenge)
+def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
+    """
+    Use a signal rather than delete() override to catch usages of bulk_delete
+    """
+    instance.admins_group.delete(using=using)
+    instance.participants_group.delete(using=using)
 
 
 class ExternalChallenge(ChallengeBase):
