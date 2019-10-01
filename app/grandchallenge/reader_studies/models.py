@@ -3,8 +3,10 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from numpy.random.mtrand import RandomState
@@ -232,6 +234,22 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             RandomState(seed=int(user.pk)).shuffle(hanging_list)
 
         return hanging_list
+
+
+@receiver(post_delete, sender=ReaderStudy)
+def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
+    """
+    Use a signal rather than delete() override to catch usages of bulk_delete
+    """
+    try:
+        instance.editors_group.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
+
+    try:
+        instance.readers_group.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
 
 
 ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
