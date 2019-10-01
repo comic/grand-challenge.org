@@ -77,3 +77,19 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "reader_study",
             "api_url",
         ]
+
+    def validate(self, data):
+        if all(
+            x is None
+            for x in [
+                data["algorithm"],
+                data["algorithm_result"],
+                data["imageset"],
+                data["reader_study"],
+                data["annotationset"],
+            ]
+        ):
+            raise serializers.ValidationError(
+                "Provide atleast one valid algorithm/algorithm_result/imageset/reader_study/annotationset"
+            )
+        return data

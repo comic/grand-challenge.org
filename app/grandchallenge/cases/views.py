@@ -106,3 +106,6 @@ class RawImageUploadSessionViewSet(
 ):
     serializer_class = RawImageUploadSessionSerializer
     queryset = RawImageUploadSession.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)

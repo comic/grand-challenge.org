@@ -67,6 +67,33 @@ def test_upload_sessions_create(client):
 
 
 @pytest.mark.django_db
+def test_invalid_upload_sessions(client):
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="api:upload-sessions-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={
+            "imageset": None,
+            "algorithm": None,
+            "algorithm_result": None,
+            "annotationset": None,
+            "reader_study": None,
+        },
+        content_type="application/json",
+    )
+    print(response.json())
+    assert response.status_code == 400
+    assert response.json() == {
+        "non_field_errors": [
+            "Provide atleast one valid algorithm/algorithm_result/imageset/reader_study/annotationset"
+        ]
+    }
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "is_staff, expected_response", [(False, 403), (True, 201)]
 )
