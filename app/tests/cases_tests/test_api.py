@@ -2,11 +2,7 @@ import pytest
 from tests.utils import get_view_for_user
 from tests.factories import UserFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.algorithms_tests.factories import (
-    AlgorithmImageFactory,
-    ResultFactory,
-)
-from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.algorithms_tests.factories import AlgorithmImageFactory
 
 from grandchallenge.cases.models import RawImageUploadSession
 
@@ -37,7 +33,6 @@ def test_upload_session_list(client):
 @pytest.mark.django_db
 def test_upload_sessions_create(client):
     algo = AlgorithmImageFactory()
-    result = ResultFactory()
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
@@ -45,13 +40,7 @@ def test_upload_sessions_create(client):
         user=user,
         client=client,
         method=client.post,
-        data={
-            "imageset": None,
-            "algorithm": algo.api_url,
-            "algorithm_result": result.api_url,
-            "annotationset": None,
-            "reader_study": None,
-        },
+        data={"algorithm": algo.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -59,11 +48,7 @@ def test_upload_sessions_create(client):
     upload_session = RawImageUploadSession.objects.get(
         pk=response.data.get("pk")
     )
-    assert upload_session.imageset is None
     assert upload_session.algorithm == algo
-    assert upload_session.algorithm_result == result
-    assert upload_session.annotationset is None
-    assert upload_session.reader_study is None
 
 
 @pytest.mark.django_db
@@ -75,22 +60,27 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={
-            "imageset": None,
-            "algorithm": None,
-            "algorithm_result": None,
-            "annotationset": None,
-            "reader_study": None,
-        },
+        data={"algorithm": None},
         content_type="application/json",
     )
-    print(response.json())
     assert response.status_code == 400
-    assert response.json() == {
-        "non_field_errors": [
-            "Provide atleast one valid algorithm/algorithm_result/imageset/reader_study/annotationset"
-        ]
-    }
+    assert response.json() == {"algorithm": ["This field may not be null."]}
+
+
+@pytest.mark.django_db
+def test_empty_data_upload_sessions(client):
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="api:upload-sessions-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+    assert response.json() == {"algorithm": ["This field is required."]}
 
 
 @pytest.mark.django_db
@@ -100,20 +90,12 @@ def test_invalid_upload_sessions(client):
 def test_upload_session_post_permissions(client, is_staff, expected_response):
     user = UserFactory(is_staff=is_staff)
     algo = AlgorithmImageFactory()
-    result = ResultFactory()
-    rs = ReaderStudyFactory()
     response = get_view_for_user(
         viewname="api:upload-sessions-list",
         user=user,
         client=client,
         method=client.post,
-        data={
-            "imageset": None,
-            "algorithm": algo.api_url,
-            "algorithm_result": result.api_url,
-            "annotationset": None,
-            "reader_study": rs.api_url,
-        },
+        data={"algorithm": algo.api_url},
         content_type="application/json",
     )
     assert response.status_code == expected_response
