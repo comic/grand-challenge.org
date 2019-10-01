@@ -214,3 +214,25 @@ def test_group_deletion():
 
     with pytest.raises(ObjectDoesNotExist):
         editors_group.refresh_from_db()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("group", ["users_group", "editors_group"])
+def test_group_deletion_reverse(group):
+    ws = WorkstationFactory()
+    users_group = ws.users_group
+    editors_group = ws.editors_group
+
+    assert users_group
+    assert editors_group
+
+    getattr(ws, group).delete()
+
+    with pytest.raises(ObjectDoesNotExist):
+        users_group.refresh_from_db()
+
+    with pytest.raises(ObjectDoesNotExist):
+        editors_group.refresh_from_db()
+
+    with pytest.raises(ObjectDoesNotExist):
+        ws.refresh_from_db()
