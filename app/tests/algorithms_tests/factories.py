@@ -21,8 +21,7 @@ class AlgorithmImageFactory(factory.DjangoModelFactory):
     class Meta:
         model = AlgorithmImage
 
-    title = factory.sequence(lambda n: f"Algorithm {n}")
-    logo = factory.django.ImageField()
+    algorithm = factory.SubFactory(AlgorithmFactory)
 
 
 class JobFactory(factory.DjangoModelFactory):

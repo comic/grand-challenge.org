@@ -3,9 +3,12 @@ import pytest
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
 
-from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmFactory,
+)
 from tests.factories import UserFactory, StagedFileFactory
 from tests.utils import get_view_for_user, get_temporary_image
 
@@ -35,12 +38,14 @@ def test_algorithm_list_view(client):
 @pytest.mark.django_db
 def test_algorithm_create_detail(client):
     user = UserFactory(is_staff=True)
+    algorithm = AlgorithmFactory()
 
-    title = "Test algorithm"
-    description = "Description of test algorithm"
     algorithm_image = StagedFileFactory(file__filename="test_image.tar.gz")
     response = get_view_for_user(
-        client=client, viewname="algorithms:image-create", user=user
+        client=client,
+        viewname="algorithms:image-create",
+        reverse_kwargs={"slug": algorithm.slug},
+        user=user,
     )
     assert response.status_code == 200
 
@@ -48,26 +53,16 @@ def test_algorithm_create_detail(client):
         client=client,
         method=client.post,
         viewname="algorithms:image-create",
+        reverse_kwargs={"slug": algorithm.slug},
         user=user,
-        data={
-            "title": title,
-            "description": description,
-            "logo": get_temporary_image(),
-            "chunked_upload": algorithm_image.file_id,
-        },
+        data={"chunked_upload": algorithm_image.file_id},
     )
     assert response.status_code == 302
     assert response.url == reverse(
-        "algorithms:image-detail", kwargs={"slug": slugify(title)}
+        "algorithms:image-detail", kwargs={"slug": algorithm.slug}
     )
 
-    ai = AlgorithmImage.objects.get(title=title)
-    assert ai.title == title
-    assert ai.description == description
-
-    response = get_view_for_user(url=response.url, client=client, user=user)
-    assert title in response.rendered_content
-    assert description in response.rendered_content
+    # TODO: test that the algorithm is correctly set
 
 
 @pytest.mark.django_db
@@ -76,7 +71,7 @@ def test_algorithm_run(client):
     ai1 = AlgorithmImageFactory()
     response = get_view_for_user(
         viewname="algorithms:execution-session-create",
-        reverse_kwargs={"slug": slugify(ai1.title)},
+        reverse_kwargs={"slug": slugify(ai1.algorithm.slug)},
         client=client,
         user=user,
     )

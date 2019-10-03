@@ -13,7 +13,12 @@ from grandchallenge.algorithms.serializers import (
     ResultSerializer,
     JobSerializer,
 )
-from grandchallenge.algorithms.models import AlgorithmImage, Job, Result
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    Job,
+    Result,
+    Algorithm,
+)
 
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from rest_framework.mixins import (
@@ -33,6 +38,10 @@ class AlgorithmImageCreate(UserIsStaffMixin, CreateView):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
 
+    @property
+    def algorithm(self):
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
@@ -40,8 +49,11 @@ class AlgorithmImageCreate(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+        form.instance.algorithm = self.algorithm
+
         uploaded_file = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid
+
         return super().form_valid(form)
 
 

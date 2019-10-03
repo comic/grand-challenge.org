@@ -28,10 +28,4 @@ class AlgorithmImageForm(forms.ModelForm):
 
     class Meta:
         model = AlgorithmImage
-        fields = (
-            "title",
-            "requires_gpu",
-            "description",
-            "logo",
-            "chunked_upload",
-        )
+        fields = ("requires_gpu", "chunked_upload")

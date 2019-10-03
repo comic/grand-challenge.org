@@ -8,7 +8,7 @@ from grandchallenge.cases.models import Image
 class AlgorithmImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlgorithmImage
-        fields = ["pk", "slug", "title", "api_url"]
+        fields = ["pk", "api_url"]
 
 
 class ResultSerializer(serializers.ModelSerializer):

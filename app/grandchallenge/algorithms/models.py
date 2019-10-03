@@ -131,19 +131,16 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
-class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
-    slug = AutoSlugField(_("slug"), populate_from="title", db_index=False)
-    logo = models.ImageField(upload_to=get_logo_path, null=True)
-    # TODO remove null=true
-    algorithm = models.ForeignKey(
-        Algorithm, on_delete=models.CASCADE, null=True
-    )
+class AlgorithmImage(UUIDModel, ContainerImageModel):
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
     class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
         ordering = ("created", "creator")
 
     def get_absolute_url(self):
-        return reverse("algorithms:image-detail", kwargs={"slug": self.slug})
+        return reverse(
+            "algorithms:image-detail", kwargs={"slug": self.algorithm.slug}
+        )
 
     @property
     def api_url(self):

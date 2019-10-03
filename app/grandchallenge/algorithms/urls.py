@@ -11,7 +11,11 @@ app_name = "algorithms"
 
 urlpatterns = [
     path("", AlgorithmImageList.as_view(), name="image-list"),
-    path("create/", AlgorithmImageCreate.as_view(), name="image-create"),
+    path(
+        "<slug:slug>/create/",
+        AlgorithmImageCreate.as_view(),
+        name="image-create",
+    ),
     path("<slug:slug>/", AlgorithmImageDetail.as_view(), name="image-detail"),
     path(
         "<slug:slug>/run/",
