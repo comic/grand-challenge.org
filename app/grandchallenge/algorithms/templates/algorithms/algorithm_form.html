@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load grandchallenge_tags %}
+
+{% block title %}
+    Create An Algorithm - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+
+    <h2>Create An Algorithm</h2>
+
+    {% crispy form %}
+
+{% endblock %}

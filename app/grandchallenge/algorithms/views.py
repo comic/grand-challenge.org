@@ -9,7 +9,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
-from grandchallenge.algorithms.forms import AlgorithmImageForm
+from grandchallenge.algorithms.forms import AlgorithmImageForm, AlgorithmForm
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
     Job,
@@ -27,6 +27,11 @@ from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
+
+
+class AlgorithmCreate(UserIsStaffMixin, CreateView):
+    model = Algorithm
+    form_class = AlgorithmForm
 
 
 class AlgorithmList(UserIsStaffMixin, ListView):

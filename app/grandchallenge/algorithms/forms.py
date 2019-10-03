@@ -1,13 +1,20 @@
 from crispy_forms.helper import FormHelper
-from django import forms
+from django.forms import ModelForm
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 
-class AlgorithmImageForm(forms.ModelForm):
+class AlgorithmForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = Algorithm
+        fields = ("title", "description", "logo", "workstation")
+
+
+class AlgorithmImageForm(ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=uploader.AjaxUploadWidget(multifile=False),
         label="Algorithm Image",

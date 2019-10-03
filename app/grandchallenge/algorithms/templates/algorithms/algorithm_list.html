@@ -49,6 +49,14 @@
             </div>
         {% endfor %}
     </div>
+
+    <p>
+        <a href="{% url "algorithms:create" %}"
+           class="btn btn-primary">
+            <i class="fa fa-plus"></i>
+        </a>
+    </p>
+
 {% endblock %}
 
 {% block script %}

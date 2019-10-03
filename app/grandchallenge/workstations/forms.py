@@ -1,5 +1,4 @@
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -19,12 +18,7 @@ from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.workstations.models import Workstation, WorkstationImage
 
 
-class WorkstationForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
+class WorkstationForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Workstation
         fields = ("title", "logo", "description")
