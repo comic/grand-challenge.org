@@ -31,7 +31,7 @@ router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
-    basename="upload-sessions",
+    basename="upload-session",
 )
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)

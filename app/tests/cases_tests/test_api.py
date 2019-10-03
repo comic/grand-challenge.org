@@ -16,13 +16,13 @@ def test_upload_session_list(client):
 
     user = UserFactory(is_staff=True)
     response = get_view_for_user(
-        viewname="api:upload-sessions-list", user=user, client=client
+        viewname="api:upload-session-list", user=user, client=client
     )
     assert response.status_code == 200
     assert response.json()["count"] == 2
 
     response = get_view_for_user(
-        viewname="api:upload-sessions-detail",
+        viewname="api:upload-session-detail",
         reverse_kwargs={"pk": upload_session_1.pk},
         user=user,
         client=client,
@@ -36,7 +36,7 @@ def test_upload_sessions_create(client):
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        viewname="api:upload-sessions-list",
+        viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
@@ -56,7 +56,7 @@ def test_invalid_upload_sessions(client):
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        viewname="api:upload-sessions-list",
+        viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
@@ -72,7 +72,7 @@ def test_empty_data_upload_sessions(client):
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        viewname="api:upload-sessions-list",
+        viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
@@ -91,7 +91,7 @@ def test_upload_session_post_permissions(client, is_staff, expected_response):
     user = UserFactory(is_staff=is_staff)
     algo = AlgorithmImageFactory()
     response = get_view_for_user(
-        viewname="api:upload-sessions-list",
+        viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,

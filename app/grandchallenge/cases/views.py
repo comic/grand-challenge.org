@@ -3,7 +3,6 @@ from django.views.generic import CreateView, DetailView
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
 from rest_framework.mixins import (
     CreateModelMixin,
