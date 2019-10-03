@@ -35,7 +35,7 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class RawImageUploadSessionSerializer(serializers.ModelSerializer):
-    algorithm = HyperlinkedRelatedField(
+    algorithm_image = HyperlinkedRelatedField(
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
@@ -47,6 +47,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "creator",
             "session_state",
             "error_message",
-            "algorithm",
+            "algorithm_image",
             "api_url",
         ]

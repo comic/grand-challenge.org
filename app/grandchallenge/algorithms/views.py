@@ -82,7 +82,7 @@ class AlgorithmExecutionSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm = AlgorithmImage.objects.get(
+        form.instance.algorithm_image = AlgorithmImage.objects.get(
             slug=self.kwargs["slug"]
         )
         return super().form_valid(form)
