@@ -2,7 +2,10 @@ from django.conf.urls import include
 from django.urls import path
 from rest_framework import routers
 
-from grandchallenge.cases.views import ImageViewSet
+from grandchallenge.cases.views import (
+    ImageViewSet,
+    RawImageUploadSessionViewSet,
+)
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.reader_studies.views import (
@@ -25,6 +28,11 @@ router = routers.DefaultRouter()
 router.register(r"patients", PatientViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
 router.register(r"worklists", WorklistViewSet, basename="worklist")
+router.register(
+    r"cases/upload-sessions",
+    RawImageUploadSessionViewSet,
+    basename="upload-session",
+)
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")

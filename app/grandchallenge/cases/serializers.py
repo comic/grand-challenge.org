@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from rest_framework.relations import HyperlinkedRelatedField
 
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.algorithms.models import AlgorithmImage
 
 
 class ImageFileSerializer(serializers.ModelSerializer):
@@ -30,3 +32,21 @@ class ImageSerializer(serializers.ModelSerializer):
             "shape_without_color",
             "shape",
         )
+
+
+class RawImageUploadSessionSerializer(serializers.ModelSerializer):
+    algorithm = HyperlinkedRelatedField(
+        queryset=AlgorithmImage.objects.all(),
+        view_name="api:algorithms-image-detail",
+    )
+
+    class Meta:
+        model = RawImageUploadSession
+        fields = [
+            "pk",
+            "creator",
+            "session_state",
+            "error_message",
+            "algorithm",
+            "api_url",
+        ]

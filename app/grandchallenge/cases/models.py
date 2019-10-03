@@ -128,6 +128,10 @@ class RawImageUploadSession(UUIDModel):
             "cases:raw-files-session-detail", kwargs={"pk": self.pk}
         )
 
+    @property
+    def api_url(self):
+        return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
+
 
 class RawImageFile(UUIDModel):
     """
