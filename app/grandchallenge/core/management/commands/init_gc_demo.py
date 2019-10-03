@@ -13,6 +13,7 @@ from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
@@ -23,7 +24,6 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
-import grandchallenge.algorithms.models
 import grandchallenge.cases.models
 from grandchallenge.workstations.models import Workstation
 
@@ -246,12 +246,14 @@ class Command(BaseCommand):
         )
         cases_image.save()
 
-        algorithm_image = grandchallenge.algorithms.models.AlgorithmImage(
-            creator=self.users["demo"],
-            title="test_algorithm",
-            logo=get_temporary_image(),
+        algorithm = Algorithm.objects.create(
+            title="Test Algorithm", logo=get_temporary_image()
         )
+        algorithm.editors_group.user_set.add(self.users["demo"])
 
+        algorithm_image = AlgorithmImage(
+            creator=self.users["demo"], algorithm=algorithm
+        )
         container = ContentFile(base64.b64decode(b""))
         algorithm_image.image.save("test_algorithm.tar", container)
         algorithm_image.save()
