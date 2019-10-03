@@ -81,8 +81,8 @@ class Command(BaseCommand):
         self._create_user_tokens()
         self._create_demo_challenge()
         self._create_external_challenge()
-        self._create_algorithm_demo()
         self._create_workstation()
+        self._create_algorithm_demo()
         self._log_tokens()
 
     def _create_flatpages(self, site):
