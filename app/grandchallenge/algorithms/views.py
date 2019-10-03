@@ -1,37 +1,40 @@
 import logging
 
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import CreateView, DetailView, ListView
+from rest_framework.mixins import (
+    CreateModelMixin,
+    RetrieveModelMixin,
+    ListModelMixin,
+)
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 
 from grandchallenge.algorithms.forms import AlgorithmImageForm
-from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.subdomains.utils import reverse
-from grandchallenge.algorithms.serializers import (
-    AlgorithmImageSerializer,
-    ResultSerializer,
-    JobSerializer,
-)
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
     Job,
     Result,
     Algorithm,
 )
-
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework.mixins import (
-    CreateModelMixin,
-    RetrieveModelMixin,
-    ListModelMixin,
+from grandchallenge.algorithms.serializers import (
+    AlgorithmImageSerializer,
+    ResultSerializer,
+    JobSerializer,
 )
+from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmImageList(UserIsStaffMixin, ListView):
-    model = AlgorithmImage
+class AlgorithmList(UserIsStaffMixin, ListView):
+    model = Algorithm
+
+
+class AlgorithmDetail(UserIsStaffMixin, DetailView):
+    model = Algorithm
 
 
 class AlgorithmImageCreate(UserIsStaffMixin, CreateView):

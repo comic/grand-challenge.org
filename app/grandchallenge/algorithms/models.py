@@ -60,6 +60,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
 
+    def get_absolute_url(self):
+        return reverse("algorithms:detail", kwargs={"slug": self.slug})
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -139,7 +142,8 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
 
     def get_absolute_url(self):
         return reverse(
-            "algorithms:image-detail", kwargs={"slug": self.algorithm.slug}
+            "algorithms:image-detail",
+            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
         )
 
     @property
