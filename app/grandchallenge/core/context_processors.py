@@ -40,3 +40,10 @@ def google_keys(*_, **__):
 
 def debug(*_, **__):
     return {"DEBUG": settings.DEBUG}
+
+
+def sentry_dsn(*_, **__):
+    return {
+        "SENTRY_DSN": settings.SENTRY_DSN,
+        "SENTRY_ENABLE_JS_REPORTING": settings.SENTRY_ENABLE_JS_REPORTING,
+    }
