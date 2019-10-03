@@ -1,6 +1,20 @@
 import factory
-from grandchallenge.algorithms.models import AlgorithmImage, Job, Result
-from tests.factories import ImageFactory
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    Job,
+    Result,
+    Algorithm,
+)
+from tests.factories import ImageFactory, WorkstationFactory
+
+
+class AlgorithmFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Algorithm
+
+    title = factory.sequence(lambda n: f"Algorithm {n}")
+    logo = factory.django.ImageField()
+    workstation = factory.SubFactory(WorkstationFactory)
 
 
 class AlgorithmImageFactory(factory.DjangoModelFactory):
