@@ -9,7 +9,9 @@ import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 from config.denylist import USERNAME_DENYLIST
 
@@ -254,6 +256,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.challenge",
                 "grandchallenge.core.context_processors.google_keys",
                 "grandchallenge.core.context_processors.debug",
+                "grandchallenge.core.context_processors.sentry_dsn",
             ]
         },
     }
@@ -518,9 +521,20 @@ LOGGING = {
         },
     },
 }
-SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
 
-sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()])
+SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
+SENTRY_ENABLE_JS_REPORTING = strtobool(
+    os.environ.get("SENTRY_ENABLE_JS_REPORTING", "False")
+)
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=[
+        DjangoIntegration(),
+        CeleryIntegration(),
+        RedisIntegration(),
+    ],
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
@@ -535,7 +549,7 @@ REST_FRAMEWORK = {
 CORS_ORIGIN_REGEX_WHITELIST = [
     rf"^https://\w+{re.escape(SESSION_COOKIE_DOMAIN)}$"
 ]
-CORS_ALLOW_HEADERS = list(default_headers) + ["content-range"]
+CORS_ALLOW_HEADERS = [*default_headers, "content-range", "content-disposition"]
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
