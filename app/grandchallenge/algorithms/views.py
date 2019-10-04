@@ -1,7 +1,9 @@
 import logging
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, DetailView, ListView
+from guardian.mixins import LoginRequiredMixin
 from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
@@ -29,12 +31,20 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmCreate(UserIsStaffMixin, CreateView):
+class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Algorithm
     form_class = AlgorithmForm
+    permission_required = (
+        f"{Algorithm._meta.app_label}.add_{Algorithm._meta.model_name}"
+    )
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        self.object.add_editor(self.request.user)
+        return response
 
 
-class AlgorithmList(ListView):
+class AlgorithmList(LoginRequiredMixin, ListView):
     model = Algorithm
 
 

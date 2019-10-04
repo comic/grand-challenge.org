@@ -18,6 +18,7 @@ from django_extensions.db.models import (
     TitleSlugDescriptionModel,
     TitleDescriptionModel,
 )
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.challenges.models import get_logo_path
@@ -74,12 +75,24 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
+        if adding:
+            self.assign_permissions()
+
     def create_groups(self):
         self.editors_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
         )
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def assign_permissions(self):
+        # Editors and users can view this algorithm
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Editors can change this algorithm
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
         )
 
     @property
