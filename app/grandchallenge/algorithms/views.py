@@ -76,18 +76,27 @@ class AlgorithmUpdate(
     raise_exception = True
 
 
-class AlgorithmImageCreate(UserIsStaffMixin, CreateView):
+class AlgorithmImageCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
-
-    @property
-    def algorithm(self):
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
         return kwargs
+
+    @property
+    def algorithm(self):
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
 
     def form_valid(self, form):
         form.instance.creator = self.request.user

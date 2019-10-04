@@ -84,8 +84,9 @@ def test_creator_added_to_editors_group(client, settings):
 
 @pytest.mark.django_db
 def test_algorithm_create_detail(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
 
     algorithm_image = StagedFileFactory(file__filename="test_image.tar.gz")
     response = get_view_for_user(

@@ -81,7 +81,7 @@ def test_algorithm_detail_view_permissions(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["update"])
+@pytest.mark.parametrize("view_name", ["update", "image-create"])
 def test_algorithm_edit_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
