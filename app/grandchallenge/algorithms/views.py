@@ -34,7 +34,7 @@ class AlgorithmCreate(UserIsStaffMixin, CreateView):
     form_class = AlgorithmForm
 
 
-class AlgorithmList(UserIsStaffMixin, ListView):
+class AlgorithmList(ListView):
     model = Algorithm
 
 

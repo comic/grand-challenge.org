@@ -666,6 +666,9 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
 
+# The name of the group whose members will be able to create algorithms
+ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
+
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
     "m",

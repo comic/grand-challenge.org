@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
@@ -51,3 +52,8 @@ def test_algorithm_image_data_migration(admin_user):
 
     assert user.groups.filter(pk=new_alg.editors_group.pk).exists()
     assert not user.groups.filter(pk=new_alg.users_group.pk).exists()
+
+
+@pytest.mark.django_db
+def test_algorithm_creators_group_exists(settings):
+    assert Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)

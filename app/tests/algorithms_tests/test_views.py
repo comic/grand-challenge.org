@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -9,6 +10,24 @@ from tests.algorithms_tests.factories import (
 )
 from tests.factories import UserFactory, StagedFileFactory
 from tests.utils import get_view_for_user
+
+
+@pytest.mark.django_db
+def test_create_link_view(client, settings):
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="algorithms:list", client=client, user=user
+    )
+    assert reverse("algorithms:create") not in response.rendered_content
+
+    g = Group.objects.get(name=settings.ALGORITHM_CREATORS_GROUP_NAME)
+    g.user_set.add(user)
+
+    response = get_view_for_user(
+        viewname="algorithms:list", client=client, user=user
+    )
+    assert reverse("algorithms:create") in response.rendered_content
 
 
 @pytest.mark.django_db

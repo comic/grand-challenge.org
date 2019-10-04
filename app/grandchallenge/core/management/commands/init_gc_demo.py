@@ -74,6 +74,7 @@ class Command(BaseCommand):
             "retina",
             "readerstudy",
             "workstation",
+            "algorithm",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -125,6 +126,11 @@ class Command(BaseCommand):
             name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
         )
         self.users["workstation"].groups.add(workstation_group)
+
+        algorithm_group = Group.objects.get(
+            name=settings.ALGORITHMS_CREATORS_GROUP_NAME
+        )
+        self.users["algorithm"].groups.add(algorithm_group)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
