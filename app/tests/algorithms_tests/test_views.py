@@ -21,7 +21,7 @@ def test_create_link_view(client, settings):
     )
     assert reverse("algorithms:create") not in response.rendered_content
 
-    g = Group.objects.get(name=settings.ALGORITHM_CREATORS_GROUP_NAME)
+    g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
     g.user_set.add(user)
 
     response = get_view_for_user(
