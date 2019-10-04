@@ -546,8 +546,9 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
 }
 
+VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
-    rf"^https://\w+{re.escape(SESSION_COOKIE_DOMAIN)}$"
+    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$"
 ]
 CORS_ALLOW_HEADERS = [
     *default_headers,
