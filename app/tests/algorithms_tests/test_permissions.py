@@ -78,3 +78,35 @@ def test_algorithm_detail_view_permissions(client):
             url=test[1].get_absolute_url(), client=client, user=test[0]
         )
         assert response.status_code == test[2]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("view_name", ["update"])
+def test_algorithm_edit_view_permissions(client, view_name):
+    alg_set = TwoAlgorithms()
+
+    tests = (
+        (None, alg_set.alg1, 302),
+        (None, alg_set.alg2, 302),
+        (alg_set.creator, alg_set.alg1, 403),
+        (alg_set.creator, alg_set.alg2, 403),
+        (alg_set.editor1, alg_set.alg1, 200),
+        (alg_set.editor1, alg_set.alg2, 403),
+        (alg_set.user1, alg_set.alg1, 403),
+        (alg_set.user1, alg_set.alg2, 403),
+        (alg_set.editor2, alg_set.alg1, 403),
+        (alg_set.editor2, alg_set.alg2, 200),
+        (alg_set.user2, alg_set.alg1, 403),
+        (alg_set.user2, alg_set.alg2, 403),
+        (alg_set.u, alg_set.alg1, 403),
+        (alg_set.u, alg_set.alg2, 403),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=f"algorithms:{view_name}",
+            client=client,
+            user=test[0],
+            reverse_kwargs={"slug": test[1].slug},
+        )
+        assert response.status_code == test[2]

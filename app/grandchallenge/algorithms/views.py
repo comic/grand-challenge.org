@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -61,6 +61,17 @@ class AlgorithmDetail(
     model = Algorithm
     permission_required = (
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+
+class AlgorithmUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = Algorithm
+    form_class = AlgorithmForm
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
 
