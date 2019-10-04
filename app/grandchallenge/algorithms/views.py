@@ -3,7 +3,11 @@ import logging
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, DetailView, ListView
-from guardian.mixins import LoginRequiredMixin
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionListMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
@@ -44,12 +48,21 @@ class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return response
 
 
-class AlgorithmList(LoginRequiredMixin, ListView):
+class AlgorithmList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Algorithm
+    permission_required = {
+        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
+    }
 
 
-class AlgorithmDetail(UserIsStaffMixin, DetailView):
+class AlgorithmDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Algorithm
+    permission_required = (
+        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
 
 
 class AlgorithmImageCreate(UserIsStaffMixin, CreateView):

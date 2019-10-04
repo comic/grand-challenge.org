@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import get_group_perms
 
 from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
@@ -49,3 +50,31 @@ def test_algorithm_create_page(client, settings):
         viewname="algorithms:create", client=client, user=user
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_algorithm_detail_view_permissions(client):
+    alg_set = TwoAlgorithms()
+
+    tests = (
+        (None, alg_set.alg1, 302),
+        (None, alg_set.alg2, 302),
+        (alg_set.creator, alg_set.alg1, 403),
+        (alg_set.creator, alg_set.alg2, 403),
+        (alg_set.editor1, alg_set.alg1, 200),
+        (alg_set.editor1, alg_set.alg2, 403),
+        (alg_set.user1, alg_set.alg1, 200),
+        (alg_set.user1, alg_set.alg2, 403),
+        (alg_set.editor2, alg_set.alg1, 403),
+        (alg_set.editor2, alg_set.alg2, 200),
+        (alg_set.user2, alg_set.alg1, 403),
+        (alg_set.user2, alg_set.alg2, 200),
+        (alg_set.u, alg_set.alg1, 403),
+        (alg_set.u, alg_set.alg2, 403),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            url=test[1].get_absolute_url(), client=client, user=test[0]
+        )
+        assert response.status_code == test[2]

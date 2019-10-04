@@ -35,6 +35,9 @@ def test_algorithm_list_view(client):
     alg1, alg2 = AlgorithmFactory(), AlgorithmFactory()
     user = UserFactory()
 
+    alg1.add_user(user)
+    alg2.add_user(user)
+
     response = get_view_for_user(
         viewname="algorithms:list", client=client, user=user
     )
@@ -42,7 +45,7 @@ def test_algorithm_list_view(client):
     assert alg1.get_absolute_url() in response.rendered_content
     assert alg2.get_absolute_url() in response.rendered_content
 
-    alg1.delete()
+    alg1.remove_user(user)
 
     response = get_view_for_user(
         viewname="algorithms:list", client=client, user=user
