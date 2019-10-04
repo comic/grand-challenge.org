@@ -122,3 +122,40 @@ def test_algorithm_edit_view_permissions(client, view_name):
             reverse_kwargs={"slug": test[1].slug},
         )
         assert response.status_code == test[2]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("view_name", ["image-detail", "image-update"])
+def test_algorithm_edit_view_permissions(client, view_name):
+    alg_set = TwoAlgorithms()
+
+    im1, im2 = (
+        AlgorithmImageFactory(algorithm=alg_set.alg1),
+        AlgorithmImageFactory(algorithm=alg_set.alg2),
+    )
+
+    tests = (
+        (None, im1, 302),
+        (None, im2, 302),
+        (alg_set.creator, im1, 403),
+        (alg_set.creator, im2, 403),
+        (alg_set.editor1, im1, 200),
+        (alg_set.editor1, im2, 403),
+        (alg_set.user1, im1, 403),
+        (alg_set.user1, im2, 403),
+        (alg_set.editor2, im1, 403),
+        (alg_set.editor2, im2, 200),
+        (alg_set.user2, im1, 403),
+        (alg_set.user2, im2, 403),
+        (alg_set.u, im1, 403),
+        (alg_set.u, im2, 403),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=f"algorithms:{view_name}",
+            client=client,
+            user=test[0],
+            reverse_kwargs={"slug": test[1].algorithm.slug, "pk": test[1].pk},
+        )
+        assert response.status_code == test[2]

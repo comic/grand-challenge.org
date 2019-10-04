@@ -108,8 +108,21 @@ class AlgorithmImageCreate(
         return super().form_valid(form)
 
 
-class AlgorithmImageDetail(UserIsStaffMixin, DetailView):
+class AlgorithmImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = AlgorithmImage
+    permission_required = f"{AlgorithmImage._meta.app_label}.view_{AlgorithmImage._meta.model_name}"
+    raise_exception = True
+
+
+class AlgorithmImageUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = AlgorithmImage
+    fields = ("requires_gpu",)
+    permission_required = f"{AlgorithmImage._meta.app_label}.change_{AlgorithmImage._meta.model_name}"
+    raise_exception = True
 
 
 class AlgorithmExecutionSessionCreate(

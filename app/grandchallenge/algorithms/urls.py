@@ -8,6 +8,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmDetail,
     AlgorithmCreate,
     AlgorithmUpdate,
+    AlgorithmImageUpdate,
 )
 
 app_name = "algorithms"
@@ -26,6 +27,11 @@ urlpatterns = [
         "<slug:slug>/images/<uuid:pk>/",
         AlgorithmImageDetail.as_view(),
         name="image-detail",
+    ),
+    path(
+        "<slug:slug>/images/<uuid:pk>/update/",
+        AlgorithmImageUpdate.as_view(),
+        name="image-update",
     ),
     path(
         "<slug:slug>/run/",
