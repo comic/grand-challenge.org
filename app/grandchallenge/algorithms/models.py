@@ -163,6 +163,26 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
     def api_url(self):
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors and users can view this algorithm
+        assign_perm(
+            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
+        )
+        # Editors can change this algorithm
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm.editors_group,
+            self,
+        )
+
 
 class Result(UUIDModel):
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)

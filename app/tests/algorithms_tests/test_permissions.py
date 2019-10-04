@@ -2,7 +2,10 @@ import pytest
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_group_perms
 
-from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+)
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
@@ -17,7 +20,7 @@ def test_algorithm_creators_group_has_perm(settings):
 
 
 @pytest.mark.django_db
-def test_groups_permissions_are_assigned():
+def test_algorithm_groups_permissions_are_assigned():
     alg = AlgorithmFactory()
 
     editors_perms = get_group_perms(alg.editors_group, alg)
@@ -27,6 +30,15 @@ def test_groups_permissions_are_assigned():
     users_perms = get_group_perms(alg.users_group, alg)
     assert "view_algorithm" in users_perms
     assert "change_algorithm" not in users_perms
+
+
+@pytest.mark.django_db
+def test_algorithm_image_group_permissions_are_assigned():
+    ai = AlgorithmImageFactory()
+
+    perms = get_group_perms(ai.algorithm.editors_group, ai)
+    assert "view_algorithmimage" in perms
+    assert "change_algorithmimage" in perms
 
 
 @pytest.mark.django_db

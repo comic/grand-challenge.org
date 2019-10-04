@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
+from guardian.shortcuts import get_group_perms
 
 from tests.factories import UserFactory
 from tests.utils import get_temporary_image
@@ -52,6 +53,13 @@ def test_algorithm_image_data_migration(admin_user):
 
     assert user.groups.filter(pk=new_alg.editors_group.pk).exists()
     assert not user.groups.filter(pk=new_alg.users_group.pk).exists()
+
+    # Ensure that the group permissions are assigned
+    perms = get_group_perms(
+        Group.objects.get(name=new_alg.editors_group.name), images[0]
+    )
+    assert "view_algorithmimage" in perms
+    assert "change_algorithmimage" in perms
 
 
 @pytest.mark.django_db

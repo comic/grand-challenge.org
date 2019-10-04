@@ -39,6 +39,10 @@ def algorithm_images_to_algorithms_forward(apps, schema_editor):
         if ai.creator:
             a.add_editor(ai.creator)
 
+    for alg in Algorithm.objects.all():
+        for ai in alg.algorithmimage_set.all():
+            ai.assign_permissions()
+
 
 class Migration(migrations.Migration):
 
