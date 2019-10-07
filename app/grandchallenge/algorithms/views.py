@@ -192,3 +192,5 @@ class JobViewSet(
 ):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoObjectPermissionsFilter]

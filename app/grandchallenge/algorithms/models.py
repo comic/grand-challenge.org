@@ -311,6 +311,9 @@ class Job(UUIDModel, ContainerExecJobModel):
         AlgorithmImage, on_delete=models.CASCADE
     )
     image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
 
     @property
     def container(self):
@@ -335,3 +338,20 @@ class Job(UUIDModel, ContainerExecJobModel):
     @property
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors and creators can view this job
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self,
+        )
+        assign_perm(f"view_{self._meta.model_name}", self.creator, self)

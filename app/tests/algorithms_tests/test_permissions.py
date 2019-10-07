@@ -5,6 +5,7 @@ from guardian.shortcuts import get_group_perms
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmJobFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.factories import UserFactory
@@ -199,7 +200,7 @@ def test_api_algorithm_list_permissions(client):
 
 
 @pytest.mark.django_db
-def test_api_algorithm_list_permissions(client):
+def test_api_algorithm_image_list_permissions(client):
     alg_set = TwoAlgorithms()
 
     alg1_image_pk = AlgorithmImageFactory(algorithm=alg_set.alg1).pk
@@ -218,6 +219,50 @@ def test_api_algorithm_list_permissions(client):
     for test in tests:
         response = get_view_for_user(
             viewname="api:algorithms-image-list",
+            client=client,
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == test[1]
+
+        if test[1] != 401:
+            # We provided auth details and get a response
+            assert response.json()["count"] == len(test[2])
+
+            pks = [obj["pk"] for obj in response.json()["results"]]
+
+            for pk in test[2]:
+                assert str(pk) in pks
+
+
+@pytest.mark.django_db
+def test_api_algorithm_image_list_permissions(client):
+    alg_set = TwoAlgorithms()
+
+    j1_creator, j2_creator = UserFactory(), UserFactory()
+
+    alg1_job_pk = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
+    ).pk
+    alg2_job_pk = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
+    ).pk
+
+    tests = (
+        (None, 401, []),
+        (alg_set.creator, 200, []),
+        (alg_set.editor1, 200, [alg1_job_pk]),
+        (alg_set.user1, 200, []),
+        (j1_creator, 200, [alg1_job_pk]),
+        (alg_set.editor2, 200, [alg2_job_pk]),
+        (alg_set.user2, 200, []),
+        (j2_creator, 200, [alg2_job_pk]),
+        (alg_set.u, 200, []),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="api:algorithms-job-list",
             client=client,
             user=test[0],
             content_type="application/json",

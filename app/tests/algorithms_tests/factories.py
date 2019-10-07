@@ -5,7 +5,7 @@ from grandchallenge.algorithms.models import (
     Result,
     Algorithm,
 )
-from tests.factories import ImageFactory, WorkstationFactory
+from tests.factories import ImageFactory, WorkstationFactory, UserFactory
 
 
 class AlgorithmFactory(factory.DjangoModelFactory):
@@ -24,16 +24,17 @@ class AlgorithmImageFactory(factory.DjangoModelFactory):
     algorithm = factory.SubFactory(AlgorithmFactory)
 
 
-class JobFactory(factory.DjangoModelFactory):
+class AlgorithmJobFactory(factory.DjangoModelFactory):
     class Meta:
         model = Job
 
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
     image = factory.SubFactory(ImageFactory)
+    creator = factory.SubFactory(UserFactory)
 
 
 class ResultFactory(factory.DjangoModelFactory):
     class Meta:
         model = Result
 
-    job = factory.SubFactory(JobFactory)
+    job = factory.SubFactory(AlgorithmJobFactory)

@@ -6,7 +6,9 @@ from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.container_exec.tasks import mark_long_running_jobs_failed
 from grandchallenge.evaluation.models import Job as EvaluationJob
 
-from tests.algorithms_tests.factories import JobFactory as AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmJobFactory as AlgorithmJobFactory,
+)
 from tests.factories import JobFactory as EvaluationJobFactory
 
 
