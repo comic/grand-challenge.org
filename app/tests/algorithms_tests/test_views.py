@@ -120,12 +120,15 @@ def test_algorithm_create_detail(client):
 
 @pytest.mark.django_db
 def test_algorithm_run(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     ai1 = AlgorithmImageFactory()
+    ai1.algorithm.users_group.user_set.add(user)
+
     response = get_view_for_user(
         viewname="algorithms:execution-session-create",
         reverse_kwargs={"slug": slugify(ai1.algorithm.slug)},
         client=client,
         user=user,
     )
+
     assert response.status_code == 200

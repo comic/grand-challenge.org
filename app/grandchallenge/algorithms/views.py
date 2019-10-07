@@ -26,6 +26,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     ResultSerializer,
     JobSerializer,
+    AlgorithmSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -163,6 +164,11 @@ class AlgorithmExecutionSessionCreate(
         return reverse(
             "algorithms:image-detail", kwargs={"slug": self.kwargs["slug"]}
         )
+
+
+class AlgorithmViewSet(ReadOnlyModelViewSet):
+    queryset = Algorithm.objects.all()
+    serializer_class = AlgorithmSerializer
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):

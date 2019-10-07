@@ -12,8 +12,6 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields import AutoSlugField
 from django_extensions.db.models import (
     TitleSlugDescriptionModel,
     TitleDescriptionModel,
@@ -63,6 +61,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
+
+    @property
+    def api_url(self):
+        return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
