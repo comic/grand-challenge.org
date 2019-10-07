@@ -8,13 +8,8 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from rest_framework.mixins import (
-    CreateModelMixin,
-    RetrieveModelMixin,
-    ListModelMixin,
-)
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import AlgorithmImageForm, AlgorithmForm
@@ -182,9 +177,7 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     filter_backends = [DjangoObjectPermissionsFilter]
 
 
-class JobViewSet(
-    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
-):
+class JobViewSet(ReadOnlyModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]

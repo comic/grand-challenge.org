@@ -371,4 +371,5 @@ class Job(UUIDModel, ContainerExecJobModel):
             self.algorithm_image.algorithm.editors_group,
             self,
         )
-        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+        if self.creator:
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
