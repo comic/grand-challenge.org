@@ -65,7 +65,8 @@ def test_algorithm_create_page(client, settings):
 
 
 @pytest.mark.django_db
-def test_algorithm_detail_view_permissions(client):
+@pytest.mark.parametrize("view_name", ["detail", "execution-session-create"])
+def test_algorithm_detail_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
     tests = (
@@ -87,7 +88,10 @@ def test_algorithm_detail_view_permissions(client):
 
     for test in tests:
         response = get_view_for_user(
-            url=test[1].get_absolute_url(), client=client, user=test[0]
+            viewname=f"algorithms:{view_name}",
+            reverse_kwargs={"slug": test[1].slug},
+            client=client,
+            user=test[0],
         )
         assert response.status_code == test[2]
 
@@ -126,7 +130,7 @@ def test_algorithm_edit_view_permissions(client, view_name):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("view_name", ["image-detail", "image-update"])
-def test_algorithm_edit_view_permissions(client, view_name):
+def test_algorithm_image_edit_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
     im1, im2 = (

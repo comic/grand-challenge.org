@@ -96,6 +96,19 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
 
     @property
+    def latest_ready_image(self):
+        """
+        Returns
+        -------
+            The most recent container image for this algorithm
+        """
+        return (
+            self.algorithmimage_set.filter(ready=True)
+            .order_by("-created")
+            .first()
+        )
+
+    @property
     def default_workstation(self):
         """
         Returns the default workstation, creating it if it does not already

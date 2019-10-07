@@ -29,7 +29,6 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -126,7 +125,10 @@ class AlgorithmImageUpdate(
 
 
 class AlgorithmExecutionSessionCreate(
-    UserIsStaffMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
@@ -135,6 +137,17 @@ class AlgorithmExecutionSessionCreate(
         "Your images have been uploaded, "
         "please check back here to see the processing status."
     )
+    permission_required = (
+        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def algorithm(self) -> Algorithm:
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -143,9 +156,7 @@ class AlgorithmExecutionSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm_image = AlgorithmImage.objects.get(
-            slug=self.kwargs["slug"]
-        )
+        form.instance.algorithm_image = self.algorithm.latest_ready_image
         return super().form_valid(form)
 
     def get_success_url(self):
