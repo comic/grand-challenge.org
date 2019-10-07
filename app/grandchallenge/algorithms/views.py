@@ -13,7 +13,9 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     ListModelMixin,
 )
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import AlgorithmImageForm, AlgorithmForm
 from grandchallenge.algorithms.models import (
@@ -169,11 +171,15 @@ class AlgorithmExecutionSessionCreate(
 class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoObjectPermissionsFilter]
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     queryset = AlgorithmImage.objects.all()
     serializer_class = AlgorithmImageSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoObjectPermissionsFilter]
 
 
 class ResultViewSet(ReadOnlyModelViewSet):
@@ -184,5 +190,5 @@ class ResultViewSet(ReadOnlyModelViewSet):
 class JobViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
-    serializer_class = JobSerializer
     queryset = Job.objects.all()
+    serializer_class = JobSerializer

@@ -187,11 +187,11 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
             self.assign_permissions()
 
     def assign_permissions(self):
-        # Editors and users can view this algorithm
+        # Editors and users can view this algorithm image
         assign_perm(
             f"view_{self._meta.model_name}", self.algorithm.editors_group, self
         )
-        # Editors can change this algorithm
+        # Editors can change this algorithm image
         assign_perm(
             f"change_{self._meta.model_name}",
             self.algorithm.editors_group,

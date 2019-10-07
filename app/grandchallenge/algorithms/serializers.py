@@ -11,13 +11,19 @@ from grandchallenge.cases.models import Image
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
-    algorithm_images = HyperlinkedRelatedField(
+    algorithmimage_set = HyperlinkedRelatedField(
         many=True, read_only=True, view_name="api:algorithm-image-detail"
     )
 
     class Meta:
         model = Algorithm
-        fields = ["pk", "api_url", "title", "description", "algorithm_images"]
+        fields = [
+            "pk",
+            "api_url",
+            "title",
+            "description",
+            "algorithmimage_set",
+        ]
 
 
 class AlgorithmImageSerializer(serializers.ModelSerializer):
