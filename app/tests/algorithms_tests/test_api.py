@@ -7,7 +7,7 @@ from tests.factories import UserFactory
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
-    ResultFactory,
+    AlgorithmResultFactory,
     ImageFactory,
 )
 
@@ -21,8 +21,8 @@ def test_algorithm_image_list(client):
         AlgorithmJobFactory(algorithm_image=algoi2),
     )
     result1, result2 = (
-        ResultFactory(job=job1, output={"cancer_score": 0.01}),
-        ResultFactory(job=job2, output={"cancer_score": 0.5}),
+        AlgorithmResultFactory(job=job1, output={"cancer_score": 0.01}),
+        AlgorithmResultFactory(job=job2, output={"cancer_score": 0.5}),
     )
     response = get_view_for_user(
         viewname="api:algorithms-image-list", user=user, client=client
@@ -122,7 +122,7 @@ def test_job_api_permissions(client):
 @pytest.mark.django_db
 def test_result_api_permissions(client):
     tests = [(UserFactory(), 403), (UserFactory(is_staff=True), 200)]
-    result = ResultFactory()
+    result = AlgorithmResultFactory()
 
     for test in tests:
         response = get_view_for_user(

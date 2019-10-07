@@ -213,6 +213,23 @@ class Result(UUIDModel):
     def api_url(self):
         return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Algorithm editors and job creators can view this result
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.job.algorithm_image.algorithm.editors_group,
+            self,
+        )
+        assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
+
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):

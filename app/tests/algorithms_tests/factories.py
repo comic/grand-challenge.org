@@ -33,7 +33,7 @@ class AlgorithmJobFactory(factory.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
 
 
-class ResultFactory(factory.DjangoModelFactory):
+class AlgorithmResultFactory(factory.DjangoModelFactory):
     class Meta:
         model = Result
 

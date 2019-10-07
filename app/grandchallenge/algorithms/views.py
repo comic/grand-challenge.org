@@ -182,15 +182,17 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     filter_backends = [DjangoObjectPermissionsFilter]
 
 
-class ResultViewSet(ReadOnlyModelViewSet):
-    queryset = Result.objects.all()
-    serializer_class = ResultSerializer
-
-
 class JobViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoObjectPermissionsFilter]
+
+
+class ResultViewSet(ReadOnlyModelViewSet):
+    queryset = Result.objects.all()
+    serializer_class = ResultSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoObjectPermissionsFilter]
