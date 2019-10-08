@@ -163,7 +163,8 @@ def test_image_builder_tiff(tmpdir_factory):
     assert len(image_builder_result.new_image_files) == 2
 
     # Asserts successful creation of files
-    assert os.path.isfile(temp_dir / "out.dzi")
-    assert os.path.isdir(temp_dir / "out_files")
+    new_image_pk = image_builder_result.new_images[0].pk
+    assert os.path.isfile(temp_dir / f"{new_image_pk}.dzi")
+    assert os.path.isdir(temp_dir / f"{new_image_pk}_files")
 
     assert len(list(temp_dir.glob("**/*.jpeg"))) == 9

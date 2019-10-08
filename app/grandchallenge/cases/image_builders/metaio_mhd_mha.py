@@ -7,6 +7,7 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 from pathlib import Path
 from tempfile import TemporaryDirectory, TemporaryFile
 from typing import Mapping, Union, Sequence, Tuple
+from uuid import uuid4
 
 import SimpleITK as sitk
 from django.core.files import File
@@ -128,10 +129,14 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         with TemporaryDirectory() as work_dir:
             work_dir = Path(work_dir)
 
-            sitk.WriteImage(simple_itk_image, str(work_dir / "out.mhd"), True)
+            pk = uuid4()
+            sitk.WriteImage(
+                simple_itk_image, str(work_dir / f"{pk}.mhd"), True
+            )
 
             depth = simple_itk_image.GetDepth()
             db_image = Image(
+                pk=pk,
                 name=filename.name,
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
