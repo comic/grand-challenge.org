@@ -56,6 +56,21 @@ def test_algorithm_list_view(client):
 
 
 @pytest.mark.django_db
+def test_algorithm_list_view_filter(client):
+    user = UserFactory()
+    alg1, alg2, = AlgorithmFactory(), AlgorithmFactory()
+    alg1.add_user(user)
+
+    response = get_view_for_user(
+        viewname="algorithms:list", client=client, user=user
+    )
+
+    assert response.status_code == 200
+    assert alg1.get_absolute_url() in response.rendered_content
+    assert alg2.get_absolute_url() not in response.rendered_content
+
+
+@pytest.mark.django_db
 def test_creator_added_to_editors_group(client, settings):
     user = UserFactory()
     Group.objects.get(
@@ -83,7 +98,38 @@ def test_creator_added_to_editors_group(client, settings):
 
 
 @pytest.mark.django_db
-def test_algorithm_create_detail(client):
+def test_algorithm_image_create_link_view(client):
+    alg = AlgorithmFactory()
+    expected_url = reverse(
+        "algorithms:image-create", kwargs={"slug": alg.slug}
+    )
+    user = UserFactory()
+
+    alg.add_user(user)
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
+    assert expected_url not in response.rendered_content
+
+    alg.add_editor(user)
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=user,
+    )
+    assert response.status_code == 200
+    assert expected_url in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_algorithm_image_create_detail(client):
     user = UserFactory()
     algorithm = AlgorithmFactory()
     algorithm.add_editor(user)
