@@ -105,7 +105,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             The most recent container image for this algorithm
         """
         return (
-            self.algorithmimage_set.filter(ready=True)
+            self.algorithm_container_images.filter(ready=True)
             .order_by("-created")
             .first()
         )
@@ -163,7 +163,11 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
 
 
 class AlgorithmImage(UUIDModel, ContainerImageModel):
-    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.CASCADE,
+        related_name="algorithm_container_images",
+    )
 
     class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
         ordering = ("created", "creator")

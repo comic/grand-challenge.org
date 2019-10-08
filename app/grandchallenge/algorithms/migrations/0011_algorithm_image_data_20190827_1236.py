@@ -2,13 +2,13 @@
 from django.db import migrations
 
 
-def algorithm_images_to_algorithms_reverse(apps, schema_editor):
+def algorithm_container_images_to_algorithms_reverse(apps, schema_editor):
     # Reverse, create AlgorithmImage from Algorithm
     Algorithm = apps.get_model("algorithms", "Algorithm")
     AlgorithmImage = apps.get_model("algorithms", "AlgorithmImage")
 
     for a in Algorithm.objects.all():
-        for im in a.algorithmimage_set.all():
+        for im in a.algorithm_container_images.all():
             AlgorithmImage.objects.create(
                 title=a.title,
                 logo=a.logo,
@@ -22,7 +22,7 @@ def algorithm_images_to_algorithms_reverse(apps, schema_editor):
             )
 
 
-def algorithm_images_to_algorithms_forward(apps, schema_editor):
+def algorithm_container_images_to_algorithms_forward(apps, schema_editor):
     # Forward, create Algorithm from AlgorithmImage
     from grandchallenge.algorithms.models import Algorithm
 
@@ -40,7 +40,7 @@ def algorithm_images_to_algorithms_forward(apps, schema_editor):
             a.add_editor(ai.creator)
 
     for alg in Algorithm.objects.all():
-        for ai in alg.algorithmimage_set.all():
+        for ai in alg.algorithm_container_images.all():
             ai.assign_permissions()
 
 
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            algorithm_images_to_algorithms_forward,
-            algorithm_images_to_algorithms_reverse,
+            algorithm_container_images_to_algorithms_forward,
+            algorithm_container_images_to_algorithms_reverse,
         )
     ]

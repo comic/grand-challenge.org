@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import (
@@ -11,19 +12,29 @@ from grandchallenge.cases.models import Image
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
-    algorithmimage_set = HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:algorithm-image-detail"
+    algorithm_container_images = HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="api:algorithms-image-detail"
     )
+    latest_ready_image = SerializerMethodField()
 
     class Meta:
         model = Algorithm
         fields = [
-            "pk",
+            "algorithm_container_images",
             "api_url",
-            "title",
             "description",
-            "algorithmimage_set",
+            "latest_ready_image",
+            "pk",
+            "title",
         ]
+
+    def get_latest_ready_image(self, obj: Algorithm):
+        """ Used by latest_container_image SerializerMethodField """
+        ci = obj.latest_ready_image
+        if ci:
+            return ci.api_url
+        else:
+            return None
 
 
 class AlgorithmImageSerializer(serializers.ModelSerializer):

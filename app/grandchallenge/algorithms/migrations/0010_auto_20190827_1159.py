@@ -92,6 +92,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
+                related_name="algorithm_container_images",
                 to="algorithms.Algorithm",
             ),
         ),

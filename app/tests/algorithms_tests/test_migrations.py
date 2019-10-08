@@ -45,7 +45,7 @@ def test_algorithm_image_data_migration(admin_user):
     assert new_alg.logo == old_ai.logo
     assert new_alg.workstation_id
 
-    images = new_alg.algorithmimage_set.all()
+    images = new_alg.algorithm_container_images.all()
     assert [i.pk for i in images] == [old_ai.pk]
 
     assert new_alg.editors_group
